@@ -1,6 +1,7 @@
 FROM node:22
 
-COPY ./entrypoint.sh /root/entrypoint.sh
+COPY install/docker/backend/entrypoint.sh /root/entrypoint.sh
+COPY packages/code-replay /opt/hydro-addons/code-replay
 
 RUN yarn global add pm2 hydrooj @hydrooj/ui-default \
     @hydrooj/vjudge \

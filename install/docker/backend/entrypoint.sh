@@ -3,7 +3,7 @@
 ROOT=/root/.hydro
 
 if [ ! -f "$ROOT/addon.json" ]; then
-    echo '["@hydrooj/ui-default"]' > "$ROOT/addon.json"
+    echo '["@hydrooj/ui-default","/opt/hydro-addons/code-replay"]' > "$ROOT/addon.json"
 fi
 
 if [ ! -f "$ROOT/config.json" ]; then

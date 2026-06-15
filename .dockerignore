@@ -1,0 +1,8 @@
+.git
+node_modules
+**/node_modules
+install/docker/data
+data
+coverage
+dist
+build/cache

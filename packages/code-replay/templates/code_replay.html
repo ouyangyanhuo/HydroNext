@@ -1,0 +1,25 @@
+{% extends "layout/basic.html" %}
+{% block content %}
+<div class="row">
+  <div class="medium-12 columns">
+    <div class="section">
+      <div class="section__header">
+        <h1 class="section__title">{{ _('Code Replay') }}</h1>
+        <div class="section__tools">
+          {% if rdoc %}
+          <a class="rounded button" href="{{ url('record_detail', rid=rdoc._id) }}">
+            <span class="icon icon-chevron_left"></span>
+            {{ _('Back') }}
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="section__body">
+        <div id="code-replay-player">
+          <div class="loader-container"><div class="loader"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

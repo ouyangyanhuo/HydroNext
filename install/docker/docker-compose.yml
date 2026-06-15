@@ -14,7 +14,9 @@ services:
       retries: 5
       start_period: 30s
   oj-backend:
-    build: ./backend
+    build:
+      context: ../..
+      dockerfile: install/docker/backend/Dockerfile
     container_name: oj-backend
     restart: always
     depends_on:

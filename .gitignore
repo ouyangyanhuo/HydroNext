@@ -69,3 +69,4 @@ packages/*/public/assets
 node_modules.*
 
 docs/*
+install/docker/data/*
