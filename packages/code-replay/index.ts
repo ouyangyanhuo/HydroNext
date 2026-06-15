@@ -82,11 +82,11 @@ function trimCode(code: string) {
 function normalizeEvent(event: any): ReplayEvent | null {
     if (!event || typeof event !== 'object') return null;
     const changes = event.changes instanceof Array ? event.changes : [];
+    // Support both new compact format (o/l/t) and legacy format (rangeOffset/rangeLength/text)
     const normalizedChanges = changes.map((change) => ({
-        rangeOffset: Number(change.rangeOffset),
-        rangeLength: Number(change.rangeLength),
-        text: String(change.text || ''),
-        range: change.range,
+        rangeOffset: Number(change.o ?? change.rangeOffset),
+        rangeLength: Number(change.l ?? change.rangeLength),
+        text: String(change.t ?? change.text ?? ''),
     })).filter((change) => (
         Number.isSafeInteger(change.rangeOffset)
         && Number.isSafeInteger(change.rangeLength)
@@ -100,6 +100,19 @@ function normalizeEvent(event: any): ReplayEvent | null {
         selections: event.selections instanceof Array ? event.selections : undefined,
         lang: typeof event.lang === 'string' ? event.lang : undefined,
     };
+    // Preserve anti-cheat features if present
+    if (event.paste && typeof event.paste === 'object') {
+        (normalized as any).paste = {
+            len: Number(event.paste.len) || 0,
+            lines: Number(event.paste.lines) || 0,
+        };
+    }
+    if (event.burst && typeof event.burst === 'object') {
+        (normalized as any).burst = {
+            count: Number(event.burst.count) || 0,
+            duration: Number(event.burst.duration) || 0,
+        };
+    }
     if (JSON.stringify(normalized).length > MAX_EVENT_SIZE) return null;
     return normalized;
 }
