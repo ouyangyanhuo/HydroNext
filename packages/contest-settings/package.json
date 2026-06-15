@@ -1,0 +1,10 @@
+{
+    "name": "@hydrooj/contest-settings",
+    "version": "0.0.1",
+    "main": "index.ts",
+    "author": "Hydro contributors",
+    "license": "AGPL-3.0-or-later",
+    "dependencies": {
+        "@hydrooj/ui-default": "*"
+    }
+}

@@ -1,0 +1,41 @@
+{% import "components/user.html" as user with context %}
+<div class="section side section--problem-sidebar">
+{% if page_name != 'contest_detail_problem' %}
+  <div class="section__header">
+    <h1 class="section__title">{{ pdoc['title'] }}</h1>
+  </div>
+{% endif %}
+  <div>
+    <ol class="menu">
+    {% if mode == 'contest' or mode == 'correction' %}
+    {% if page_name == 'contest_detail_problem' and handler.ctx.setting.get('ui-default.enableScratchpad') %}
+      <li class="menu__item scratchpad--hide nojs--hide"><a class="menu__link highlight" name="problem-sidebar__open-scratchpad" href="javascript:;" data-global-hotkey="alt+e">
+        <span class="icon icon-enlarge"></span> {{ _('Open Scratchpad') }} (Alt+E)
+      </a></li>
+      <li class="menu__item non-scratchpad--hide"><a class="menu__link" name="problem-sidebar__quit-scratchpad" href="javascript:;" data-global-hotkey="alt+q">
+        <span class="icon icon-enlarge"></span> {{ _('Quit Scratchpad') }} (Alt+Q)
+      </a></li>
+    {% else %}
+      <li class="menu__item"><a class="menu__link" href="{{ url('problem_detail', pid=pdoc.pid|default(pdoc.docId), query={tid:tdoc.docId}) }}">
+        <span class="icon icon-flag"></span> {{ _('View Problem') }}
+      </a></li>
+    {% endif %}
+    {# Submit button removed — only Scratchpad (online coding) mode is available #}
+    {% endif %}
+    {% if mode != 'none' and model.contest.isDone(tdoc) %}
+      <li class="menu__item"><a class="menu__link" href="{{ url('problem_detail', pid=pdoc.pid|default(pdoc.docId)) }}">
+        <span class="icon icon-send"></span> {{ _('Open in Problem Set') }}
+      </a></li>
+    {% endif %}
+    {% if handler.user.own(pdoc, perm.PERM_EDIT_PROBLEM_SELF) or handler.user.hasPerm(perm.PERM_EDIT_PROBLEM) %}
+      <li class="menu__seperator"></li>
+      <li class="menu__item"><a class="menu__link{% if page_name == 'problem_edit' %} active{% endif %}" href="{{ url('problem_edit', pid=pdoc.pid|default(pdoc.docId)) }}">
+        <span class="icon icon-edit"></span> {{ _('Edit') }}
+      </a></li>
+      <li class="menu__item"><a class="menu__link{% if page_name == 'problem_files' %} active{% endif %}" href="{{ url('problem_files', pid=pdoc.pid|default(pdoc.docId)) }}">
+        <span class="icon icon-file"></span> {{ _('Files') }}
+      </a></li>
+    {% endif %}
+    </ol>
+  </div>
+</div>
