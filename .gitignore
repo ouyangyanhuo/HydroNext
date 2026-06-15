@@ -67,3 +67,5 @@ __*
 
 packages/*/public/assets
 node_modules.*
+
+docs/*
