@@ -76,3 +76,5 @@ install/docker/data/*
 
 AGENT.md
 CLAUDE.md
+install/docker/backend/entrypoint.sh
+install/docker/judge/judge.yaml
