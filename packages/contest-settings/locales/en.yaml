@@ -1,0 +1,71 @@
+__langname: English
+'File IO: {0}': 'File IO: {0}'
+'Tip: You are entering sudo mode.': 'Tip: You are entering <a href="https://docs.github.com/articles/sudo-mode">sudo mode</a>.'
+Can be Extended For: Extension
+Current Status: Status
+Handled Requests: Req
+Hint::icon::difficulty: The difficulty of the problems in HNTOU OJ will be calculated by algorithm, depending on current submission, sometimes the difficulty may not so exact.
+Hint::icon::switch_account: As a superadmin, you can switch to anyone's account.
+manage: System Manage
+no_translation_warn: <blockquote class="warn">This part of content is under translation.</blockquote>
+page.problem_detail.sidebar.show_category: Click to Show
+page.training_detail.invalid_when_not_enrolled: You cannot view problem details unless enrolled.
+pager_first: « First
+pager_last: Last »
+pager_next: Next ›
+pager_previous: ‹ Previous
+perm_contest: Contests
+perm_discussion: Discussions
+perm_general: General
+perm_problem_solution: Problem Solutions
+perm_problem: Problems
+perm_record: Records
+perm_training: Trainings
+preferredPrefix_hint: This is used for re-organizing problem IDs. For example, if the ID of the problem in the problemset are P1001, P1002, P1003, and you set "T" in this option, those problem will be imported with ID T1001, T1002 and T1003.
+problem_create: Problem Create
+problem_edit: Problem Edit
+problem_import: Import Problem
+problem_main: Problem Set
+problem_solution: Problem Solution
+problem_submit: Problem Submit
+problem_type.communication: 'Type: Communication'
+problem_type.default: 'Type: Default'
+problem_type.interactive: 'Type: Interactive'
+problem_type.objective: 'Type: Objective'
+problem_type.remote_judge: 'Type: RemoteJudge'
+problem_type.submit_answer: 'Type: SubmitAnswer'
+problem-category-delim: '|'
+problem-subcategory-delim: ', '
+problem.import.additional_file: '## Additional Files'
+problem.import.hint: '## Hint'
+problem.import.input_format: '## Input Format'
+problem.import.limit_and_hint: '## Limits'
+problem.import.output_format: '## Output Format'
+problem.import.problem_description: '## Description'
+ranking: Ranking
+record_detail: Record Detail
+record_main: Record
+rpDetailText_contest: Contest
+rpDetailText_problem: Problem
+setting_customize: Customize
+setting_display: Display Preference
+setting_function: Function
+setting_info_domain: Personal Info
+setting_info: Personal Info
+setting_preference: Preference
+setting_privacy: Privacy
+setting_usage: Usage Preference
+sort::default: Default
+sort::recent: Recent
+tasks_list: Task list
+timeago_locale: en_US
+training_create: Training Create
+training_edit: Training Edit
+training_main: Training
+user_detail: User Detail
+user_login: Login
+user_logout: Logout
+user_lostpass: Lost Password
+user_register: Register
+wiki_help: Help
+You can also upload your avatar to Gravatar and it will be automatically updated here.: You can also upload your avatar to Gravatar and it will be automatically updated here.

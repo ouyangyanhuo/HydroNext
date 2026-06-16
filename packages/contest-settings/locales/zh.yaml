@@ -1,0 +1,1137 @@
+__langname: 简体中文
+'"{data}" copied to clipboard!': “{data}”已复制到剪贴板！
+'[Richtext message]': '[富文本消息]'
+'{0} comments': '{0} 条评论'
+'{0} discussions': '{0} 条讨论'
+'{0} is a moderator of this domain.': '{0}是这个域的管理者之一。'
+'{0} is a superuser.': '{0}是超级管理员。'
+'{0} limit exceeded (limit: {2} operations in {1} seconds).': '{0} 超过频率限制。限制：{1} 秒内最多 {2} 次操作。'
+'{0} problem(s) selected': '{0} 道题目已选中'
+'{0} problems': '{0} 道题'
+'{0} sections': '{0} 小节'
+'{0} solutions': '{0} 条题解'
+'{0} views': '{0} 次查看'
+'{0}: Groups': '{0}: 小组'
+'{0}: Permissions': '{0}: 权限'
+'{0}: Roles': '{0}: 角色'
+'{0}: Users': '{0}: 用户'
+'# My Submissions': '我的递交数'
+'# Submissions': '递交数'
+'↓ # Comments': '↓ 评论数'
+'↓ # Enrollees': '↓ 参与人数'
+'↓ # Likes': '↓ 赞数'
+'↓ # Stars': '↓ 收藏数'
+'↓ Create Time': '↓ 创建时间'
+'↓ Update Time': '↓ 更新时间'
+'A domain ID cannot be changed after creation. It is supposed to be:': '创建后将无法更改 ID。ID 必须满足以下条件：'
+'Copy "{data}" failed :(': '复制“{data}”失败 :('
+'Copy failed :(': '复制失败 :('
+'Current dataset: {0}': '当前测试数据: {0}'
+'Discussion: Terms Of Service': 讨论区服务条款
+'Drag and drop testcases here:': '拖拽测试点到此处：'
+'Enter a new name for the file: ': 请输入新的文件名：
+'Failed to get credential: {0}': '获取认证数据失败: {0}'
+'File IO: {0}': 文件IO：{0}
+'File upload failed: {0}': 文件上传失败：{0}
+'Format: category 1, category 2, ..., category n': 格式：分类1, 分类2, ..., 分类n
+'Hello, {0}! You can click following link to active your new email of your {1} account:': 您好，{0}！您可以点击以下链接来激活您 {1} 账户的新电子邮件地址：
+'Hello, {0}! You can click following link to reset the password of your {1} account:': 您好，{0}！您可以点击以下链接来重置您 {1} 账户的密码：
+'Hello! You can click following link to sign up your {0} account:': 您好！您可以点击以下链接来注册您的 {0} 账户：
+'Join {0}': '加入 {0}'
+'No': 否
+'Note: Problem title may not be hidden.': 注意：题目标题可能不会被隐藏。
+'Or use the following link:': 或使用以下链接：
+'Packages have new version: {0}': '以下组件有新版本： {0}'
+'Please use your two factor authentication app to scan the qrcode below:': '请使用你的两步验证APP扫描此二维码:'
+'Role {1} already exists in domain {0}.': '域 {0} 中已存在角色 {1}。'
+'Solved {0} problems, RP: {1} (No. {2})': '解决了 {0} 道题目，RP: {1} (No. {2})'
+'The domain owner:': 域所有者：
+'The value `{1}` of {0} already exists.': '{0} 的值 `{1}` 已经存在。'
+'Tip: You are entering sudo mode.': '提示：您正在进行<a href="https://docs.github.com/articles/sudo-mode">身份验证</a>。'
+'Yes': 是
+"After you've performed a sudo-protected action, you'll only be asked to re-authenticate again after a few hours of inactivity.": 在您执行受保护的操作后，只有账户连续数小时不活动时，系统才会再次要求您重新验证身份。
+"Effects only when Difficulty is not 'Use algorithm calculated'.": 仅当难度不为“使用算法计算”时才起效。
+"Split by ', '.": 由“, ”或“，”分隔。
+"View other's records": 查看他人的记录
+"What's file?": 什么是文件？
+(All Problems): (所有题目)
+(leave blank if none): （若不需要则留空）
+(None): (无)
+(Not changed): 未更改
+6-Digit Code: 6位代码
+A data generator is a program that generates testdata. It should output result to stdout.: 数据生成器是一个生成测试数据的程序。它应该将结果输出到标准输出。
+A standard program is a program that solves the problem. It should output answer to stdout.: 标准程序是一个解决问题的程序。它应该将答案输出到标准输出。
+Aborted: 已放弃
+About {0}: 关于 {0}
+About Markdown: 关于 Markdown
+About test data: 关于测试数据
+about: 关于
+About: 关于
+AC Message: 通过消息
+Accept: 通过
+Accepted Problems: 通过的题目
+Accepted Ratio: 通过率
+Accepted: 已通过
+Access Control: 访问控制
+According to the contest rules, you cannot view your submission details at current.: 根据比赛规则，你现在不能查看你的评测记录详情。
+Account Settings: 账户设置
+Action: 动作
+Active Sessions: 活动会话
+Add Authenticator: 添加认证器
+Add File: 添加文件
+Add module: 添加模块
+Add new data: 添加新数据
+Add new subtask: 添加新子任务
+Add prefix: 添加前缀
+Add prefix/suffix: 添加前缀/后缀
+Add suffix: 添加后缀
+Add testcase: 添加测试点
+Add User: 添加用户
+Add: 添加
+Additional Files: 附加文件
+additional_file: 附加文件
+All {0} Contests: 所有 {0} 比赛
+All changes will be lost. Are you sure to clear all answers?: 所有更改将会丢失。您确定要清除所有答案吗？
+All Contests: 所有比赛
+All Homeworks: 所有作业
+All Languages: 所有语言
+All Submissions: 所有递交
+All Training Plans: 所有训练计划
+All Users: 所有用户
+All: 全部
+Allow to maintain this {0}: 允许管理此{0}
+Allow user view others code after contest: 允许用户赛后查看其他人的代码
+Always granted all privileges: 总是拥有所有权限
+An error has occurred.: 发生了一个错误。
+An example of dataset: 测试数据集的一个例子
+Any user is allowed to join this domain with an invitation code: 任意用户都可以通过邀请码加入此域
+Any user is allowed to join this domain: 任意用户都可以加入此域
+API: API
+Are you sure to rename the following file?: 确认对重命名以下文件？
+Are you sure you want to delete this subtask?: 确认删除此子任务？
+Argument {0} is invalid.: 非法的参数 {0} 。
+Arguments: 参数
+Assign User or Group: 分配给用户或小组
+Assign: 分配给
+Assignment: 作业
+At least 4 characters: 至少 4 个字符
+Attend Contest: 参加比赛
+Attend contests: 参加比赛
+Attended: 已参加
+Attendee Manage: 参赛者管理
+Authenticator: 认证器
+Authenticators: 认证器
+author: 作者
+Auto configure: 自动配置
+Auto detect: 自动检测
+Auto hide problems during the contest: 在比赛过程中自动隐藏题目
+Auto Read Tasks: 自动识别任务
+Awards: 奖项
+Balloon Status: 气球状态
+Basic Info: 基础信息
+Basic: 基础
+Batch replacement: 批量替换
+Be Copied: 被复制
+Begin at: 开始于
+Begin Date: 开始日期
+Begin Time: 开始时间
+Belongs to: 属于
+Bio Visibility: 个人简介可见性
+Bio: 个人简介
+Bold: 加粗
+Boom!: 炸了！
+Browser: 浏览器
+Built-in: 内置
+Bulletin: 公告
+By clicking the button, you will become a member of the domain {0}.: 点击按钮，您将成为域 {0} 的成员。
+By Contest: 由比赛
+By Language: 由语言
+By Problem: 由题目
+By signing up a {0} universal account, you can submit code and join discussions in all online judging services provided by us.: 注册一个 {0} 通用账户，您就可以在我们提供的所有在线评测服务上提交代码、参与讨论。
+By Status: 由状态
+By Username / UID: 由用户名或 UID
+Calendar View: 日历视图
+Calendar: 日历
+Can be Extended For: 可延期
+Cancel Score: 取消成绩
+Cancel: 取消
+Categories: 分类
+Category: 分类
+Change Email: 修改电子邮件
+Change Password: 修改密码
+Change Theme: 切换主题
+Check In: 签到
+Checker: 比较器
+CheckerType: 比较器类型
+Chinese: 中文
+Choose Authenticator Type: 选择认证器类型
+Choose the background image in your profile page.: 选择您资料页面的背景图片。
+Claim homework: 认领作业
+Claim Homework: 认领作业
+Claimed: 已认领
+Clear answers: 清除答案
+Clear Marks: 清除标记
+Click here to chat with me: 点击这里与我聊天
+click to add: 点击添加
+Clone: 复制
+CLOSE: 关闭
+Code blocks: 代码区块
+Code language: 代码语言
+Code Length: 代码长度
+Code: 代码
+codeFontFamily: 代码字体
+collapse: 收缩
+Color: 颜色
+Comment: 评论
+Comments: 评论
+CommonMark Syntax: CommonMark 语法
+Compile Error: 编译错误
+Compilers' Version and Parameters: 编译器版本及参数
+Complete: 完成
+Completed: 已完成
+Config: 配置
+Confirm Access: 确认授权
+Confirm deleting the selected roles?: 您确定删除所选角色吗？
+Confirm deleting this comment? Its replies will be deleted as well.: 确认删除这个评论吗？回复会被同时删除。
+Confirm deleting this domain? This action cannot be undone.: '确认删除此域？此操作无法撤销。'
+Confirm deleting this reply?: 确认删除这个回复吗？
+Confirm end contest early? You will not be able to submit after this.: 确认提前结束比赛吗？之后您将无法提交代码。
+Confirm rejudge this problem?: 确定要重测这道题吗？
+Confirm removing the selected users?: 您确定将所选用户移除吗？
+Confirm to delete the file?: 确认删除此文件吗？
+Confirm to delete the selected files?: 确认删除所选文件吗？
+Confirm to delete the selected problems?: 确认要删除所选题目吗？
+Confirm: 确认
+Confirmation mail has been sent to your new email.: 确认邮件已经发送到您的新电子邮箱。
+Congratulations! Your submission is accepted.: 恭喜！您的递交已评测通过。
+Contact Us: 联系我们
+Contact: 联系
+Content copied to clipboard!: 内容已复制到剪贴板！
+content: 内容
+Content: 内容
+Contest Maintainer: 比赛管理员
+Contest resumed.: 比赛已恢复。
+Contest scoreboard is not visible.: 当前比赛成绩表隐藏，暂不可显示。
+Contest Scoreboard: 比赛成绩表
+Contest Settings: 比赛设置
+contest_create: 创建比赛
+contest_detail_problem_submit: 递交比赛题目
+contest_edit: 编辑比赛
+contest_main: 比赛
+contest_scoreboard: 比赛成绩表
+Contest: 比赛
+Continue: 继续
+Contributed Problems: 贡献的题目
+Contributions: 贡献
+Copy Email: 复制电子邮件
+Copy from: 复制自
+Copy Link: 复制链接
+Copy Problem: 复制题目
+Copy Problems: 复制题目
+Copy QQ Number: 复制QQ号
+Copy Selected: 复制选中
+Copy WeChat Account: 复制微信号
+Copy: 复制
+Copyright Complaint: 版权申诉
+Correction: 补题
+CPU Info: CPU信息
+Create a contest: 创建一个比赛
+Create a Discussion: 创建一个讨论
+Create a Post: 创建一个博文
+Create a problem: 创建一个题目
+Create Contest: 创建比赛
+Create contests: 创建比赛
+Create Discussion in {0}: 在 {0} 下创建讨论
+Create Discussion: 创建讨论
+Create discussions: 创建讨论
+Create Domain: 创建域
+Create File: 创建文件
+Create Group: 创建小组
+Create homework: 创建作业
+Create Homework: 创建作业
+Create Link: 创建链接
+Create problem solutions: 创建题解
+Create Problem: 创建题目
+Create problems: 创建题目
+Create Role: 创建角色
+Create Training Plan: 创建训练计划
+Create training plans: 创建训练计划
+Create: 创建
+Created By: 创建人
+Current dataset comes from: 当前数据集来自
+current domain: 当前域
+Current Email: 当前电子邮件
+Current Location: 当前位置
+Current password doesn't match.: 当前密码输入错误。
+Current Password: 当前密码
+Current Status: 当前状态
+currently offline: 目前离线
+Daily update check: 每日自动检查更新
+Dark: 暗色
+Data Generator: 数据生成器
+Data of Problem {0} not found.: 题目 {0} 的数据缺失。
+Data of problem {1} not found.: 题目 {1} 的数据未找到。
+Data of record {0} not found.: 记录 {0} 的数据未找到。
+Dataset Format: 测试数据集格式
+Dataset: 测试数据
+Day: 日
+Deadline: 截止时间
+Default Code Language: 默认代码语言
+Default Code Template: 默认代码模板
+Delete discussion replies of own discussion: 删除自己讨论中的回复
+Delete discussion replies: 删除讨论回复
+Delete discussions: 删除讨论
+Delete Domain: 删除域
+Delete own discussion replies: 删除讨论中自己的回复
+Delete own discussions: 删除自己的讨论
+Delete own problem solution replies: 删除题解中自己的回复
+Delete own problem solutions: 删除自己的题解
+Delete problem solution replies: 删除题解的回复
+Delete problem solutions: 删除题解
+Delete Selected Roles: 删除所选角色
+delete: 删除
+Delete: 删除
+Dependencies: 依赖
+Description: 说明
+Destination Domain: 目标域
+Development: 开发
+Difficulty Algorithm: 难度算法
+Difficulty by admin: 管理员设定的难度
+Difficulty by algorithm: 算法计算的难度
+Difficulty displayed: 显示的难度
+Difficulty: 难度
+Disabled: 关闭
+Disconnected from the server. trying to reconnect...: 到服务器的连接断开。正在重新连接...
+Discussion {1} not found.: 讨论 {1} 不存在。
+Discussion category {1} already exists.: 讨论分类 {1} 已经存在。
+Discussion category {1} not found.: 讨论分类 {1} 不存在。
+Discussion node {1} already exists.: 讨论节点 {1} 已经存在。
+Discussion node {1} not found.: 讨论节点 {1} 不存在。
+Discussion Nodes: 讨论节点
+discussion_create: 创建讨论
+discussion_edit: 编辑讨论
+discussion_main: 讨论
+discussion_node: 讨论
+Discussion: 讨论
+Discussions: 讨论
+Dismiss: 忽略
+Display name {1} you want to set is used by others.: 您想要设置的显示名 {1} 已经被其他人使用了。
+Display Name: 显示名
+display_name: 显示名
+Do not discuss solutions otherwise you will be regarded as cheating and then lose qualifications.: 请勿讨论解法，否则以作弊论处并且将失去参赛资格。
+Document {2} not found.: 文档 {2} 不存在。
+Domain {0} already exists.: 域 {0} 已经存在。
+Domain {0} is bulit-in and cannot be modified.: 域 {0} 为内置，不可修改。
+Domain {0} not found.: 域 {0} 不存在。
+Domain ID cannot be changed once the domain is created.: 在创建后不能更改 ID。
+Domain ID: 域 ID
+Domain Settings: 域设置
+domain_dashboard: 管理域
+domain_discussion: 讨论节点
+domain_edit: 编辑域资料
+domain_join: 加入域
+domain_main: 首页
+domain_permission: 管理权限
+domain_role: 管理角色
+domain_user: 管理用户
+domain: 域
+Domain: 域
+Don't have an account?: 还没有账户？
+Don't show again: 不再显示
+Done: 已结束
+Download All: 下载全部
+Download Dataset: 下载数据集
+Download Selected: 下载选中
+Download: 下载
+Downloading...: 下载中...
+Downvote: 差评
+Duration (hours): 持续时间 (小时)
+Duration: 持续时间
+Edit any contests: 修改任意的比赛
+Edit any homework: 修改任意的作业
+Edit Contest: 编辑比赛
+Edit description of this domain: 修改此域描述
+Edit discussion replies of own discussion: 修改自己讨论中的回复
+Edit discussion replies: 修改讨论的回复
+Edit discussions: 修改讨论
+Edit Domain: 编辑域
+Edit Homework: 编辑作业
+Edit own contests: 修改自己的比赛
+Edit own discussion replies: 修改讨论中自己的回复
+Edit own discussions: 修改自己的讨论
+Edit own homework: 修改自己的作业
+Edit own problem solution replies: 修改题解中自己的回复
+Edit own problem solutions: 修改自己的题解
+Edit own problems: 修改自己的题目
+Edit own training plans: 修改自己的训练计划
+Edit permissions of a role: 修改角色权限
+Edit problem solution replies: 修改题解的回复
+Edit problem solutions: 修改题解
+Edit Problem: 编辑题目
+Edit problems: 修改题目
+Edit Profile: 编辑个人信息
+Edit training plans: 修改训练计划
+Edit: 编辑
+Edited at: 修改于
+Edited: 已修改
+Email Visibility: Email 可见性
+Email: 电子邮件
+Enabled: 开启
+End at: 结束于
+End Contest Early: 提前结束比赛
+End Date: 结束日期
+End Time: 结束时间
+Enroll Training: 参加训练
+Enrolled: 已参加
+Enrollees: 参加人数
+error: 错误
+Errors detected in the config. Confirm save?: 配置中存在错误。确认保存？
+Evaluated difficulty: 估计的难度
+Exit: 退出
+expand: 展开
+Expire: 过期
+Export All Code: 导出所有代码
+Export as {0}: 导出为 {0}
+Extension (days): 最长延期 (日)
+Extension Score Penalty: 延期递交扣分规则
+Extra Files Config: 额外文件设置
+Failed to fetch registration data.: 获取注册数据失败。
+Failed to join the domain. You are already a member.: 加入域失败，您已是该域的成员。
+Failed to parse subtask.: 无法解析子任务信息。
+Failed to parse testcase.: 无法解析测试点信息。
+Feedback: 反馈
+Field {0} or {1} validation failed.: 字段 {0} 或 {1} 验证失败。
+Field {0} validation failed.: 字段 {0} 验证失败。
+File has been deleted.: 文件已被删除。
+File has been renamed.: 文件已被重命名。
+File saved.: 文件已成功保存。
+file too large: 文件过大
+File uploaded successfully.: 上传文件成功
+File: 文件
+Filename: 文件名
+Files: 文件
+Fill to Pretest: 填充到自测
+Filter: 过滤
+First of Contest: 全场一血 
+First of Problem: 题目一血
+fontFamily: 字体
+Footer: 页脚
+Footnote: 脚注
+For better problem version management and validation, we suggest using Polyhedron to prepare problems.: 为了更好的题目版本管理和检查，我们推荐使用 Polyhedron 来准备算法竞赛题目。
+Forgot Password and/or Username: 忘记密码和/或用户名
+Forgot password or username?: 忘记密码或者用户名？
+Formula blocks: 公式区块
+Freeze scoreboard with N minutes remaining: 在赛事剩余N分钟时封榜
+fs_upload: 上传文件
+Gender Visibility: 性别可见性
+Gender: 性别
+Generate testdata is not supported for this problem type.: 此题目类型不支持生成测试数据。
+Generate Testdata: 生成测试数据
+Generate: 生成
+Gravatar URL Prefix: Gravatar地址前缀
+Group / UID: 小组或 UID
+Group Assignment (Optional): 小组分配 (可选)
+Group Name: 名称
+Hard Deadline: 最终截止时间
+Hash: 散列
+Have ALL PERMISSIONS in this domain: 在此域中拥有全部权限
+He: 他
+Help: 帮助
+Hidden: 隐藏
+Hide all tags: 隐藏所有标签
+Hide categorical tags: 隐藏分类标签
+Hide tags: 隐藏标签
+Highlight discussions: 高亮讨论
+Highlight: 高亮
+Hint: 提示
+Hint::icon::difficulty: HNTOU OJ 中题目的难度，根据递交数、通过率以及每个递交的递交时间和评测结果，综合计算得出，可能不准确。
+Hint::icon::switch_account: 作为超级管理员，您可以直接切换到其他人的账户。
+Hint::icon::testdata: <a href="https://hydro.js.org/docs/Hydro/user/testdata" target="_blank">请参照文档说明</a>
+Hint::page::main: 欢迎来到 HNTOU OJ！ 您可在右上角注册或登录。此类提示仅会显示一次。
+Hint::page::problem_detail: 这是题目详情页面。您可点击右侧“进入在线编程模式"开始编写您的代码。
+Hint::page::problem_files: 您可以将文件或压缩包拖拽至对应区域来上传文件。点击文件名在线编辑或按住 Ctrl 后点击文件名下载单个文件。
+Hint::page::problem_main: 这是题目列表页面。您可在页面右侧进行筛选或搜索。
+Hitokoto: 一言
+home_account: 账户设置
+home_domain_account: 当前域的设置
+home_domain_create: 创建域
+home_domain: 我的域
+home_messages: 站内消息
+home_preference: 偏好设置
+home_security: 安全设置
+homepage: 首页
+Homework Introduction: 作业介绍
+Homework Maintainer: 作业管理员
+Homework scoreboard is not visible.: 目前无法查看作业成绩表。
+homework_create: 创建作业
+homework_detail_problem_submit: 递交作业题目
+homework_edit: 编辑作业
+homework_main: 作业
+homework_scoreboard: 作业成绩表
+homework_status: 作业成绩表
+Homework: 作业
+Host: 主持人
+hour(s): 小时
+If enabled, source code will be emailed to you after the submission is accepted.: 如果启用，在您通过题目后，源代码会以 Email 的形式发送给您。
+If left blank, the built-in template of the corresponding language will be used.: 若留空，则将使用对应语言的内置代码模板。
+Ignore trailing space and enter.: 忽略行末空格与文件尾回车。
+Images With Size: 指定大小的图片
+Images: 图片
+Import from: 导入自
+Import Problem: 导入题目
+Import: 导入
+In 1 day: 一天后
+In 1 month: 一个月后
+In 1 week: 一周后
+In 3 days: 三天后
+In 3 hours: 三个小时后
+In following contests: 在下列比赛中
+In following homework: 在以下作业中
+In following training plans: 在下列训练计划中
+In Progress: 进行中
+Information: 信息
+Initialize: 初始化
+Inline codes: 行内代码
+Inline formulas: 行内公式
+Input: 输入
+Insert Code: 插入代码
+Insert Image: 插入图像
+Installed Modules: 已安装的模块
+Instead of copying the test data directly, the test data of the copied problems will be linked to the test data of the source problems (called the source test data). Thus, the copied problems can observe the changes in the source test data. The permissions of the test data of the copied problems follow the source test data, e.g., you still might not download them but the judges can. By uploading some new test data, the link will be broken and the new test data will be used.: 虽然测试数据不会被复制，但是系统会将题目的测试数据链接到原题。因此在原题的数据被改动的时候，复制后的题目的数据也会同时改动。链接后的测试数据的权限以原题为准，比如您可能依旧无法下载数据，但是评测机可以。在题目设置页面中可以通过上传新的测试数据的方式，这个数据链接会被删除，以后将使用您的新测试数据。
+Introduce must not exceed 500 characters and it will be shown in the list view.: 简介不能超过 500 个字符，将显示在列表页面中。
+Introduce: 简介
+Invalid password for user {0}.: 用户 {0} 的密码错误。
+Invalid RegExp: 无效的正则表达式。
+Invalid: 无效
+Invitation Code: 邀请码
+IO: 输入输出
+IOI(Strict): IOI(严格)
+Is rated: 计入排名
+It works!: 它成了！
+Italic: 斜体
+Join Domain to Create a Discussion: 加入域后创建讨论
+Join Domain to Submit: 加入域后递交
+Join Domain: 加入域
+Join: 加入
+Judge Config: 评测设置
+Judge Status: 评测状态
+judge_extra_files: 评测额外文件
+judge_playground: 评测游乐场
+Judged At: 评测时间
+Judged By: 评测机
+Judging Queue: 评测队列
+just now: 刚刚
+Keep current expiration: 保持当前过期设置
+Keep scoreboard hidden even after contest ends: 即使比赛结束后也保持成绩表隐藏
+Langs Config: 语言设置
+langs: 语言
+Language: 语言
+last active at: 最后活动于
+last login at: 最后登录于
+Last Submit At: 最后递交于
+Last Update At: 最后活动时间
+LaTeX Expressions: LaTeX 表达式
+Learn More: 了解更多
+Leave blank to use numeric pid.: 留空来使用数字题号。
+Leave empty for default: 留空以使用默认
+Leave: 离开
+Ledo: 乐多
+Legacy mode: 兼容模式
+Light: 亮色
+Limit user to finish contest within N hours: 限制用户在N小时内完成比赛
+Limitations: 限制
+Linked Accounts: 关联账户
+Links: 链接
+List View: 列表视图
+Live: 正在进行
+Live...: 正在进行…
+Loading editor...: 正在加载编辑器...
+Loading file...: 正在加载文件内容...
+Location: 位置
+Login to Attend Contest: 登录后参加比赛
+Login to Claim Homework: 登录后认领作业
+Login to Create a Discussion: 登录后创建讨论
+Login to Submit: 登录后递交
+Login: 登录
+Logout All Sessions: 注销所有会话
+Logout This Session: 注销该会话
+Logout: 登出
+Lost Password: 忘记密码
+Lucky: 试试手气
+manage_config: 配置管理
+manage_dashboard: 控制面板
+manage_join_applications: 加域申请
+manage_module: 管理模块
+manage_script: 脚本管理
+manage_setting: 系统设置
+manage_user_priv: 用户权限
+manage: 管理
+Manage: 管理
+Manager: 管理
+Mark Green: 标绿
+Mark Red: 标红
+Mark user as joined using admin privilege: 使用管理员权限将用户标记为已加入
+Mark Yellow: 标黄
+Max Passes: 最大轮次
+Memory Cost: 内存占用
+Memory Info: 内存信息
+Memory: 内存
+Message {0} not found.: 消息 {0} 不存在。
+Messages: 消息
+Method: 方法
+Microsoft Yahei: 微软雅黑
+Moderator: 管理员
+Month: 月
+Monthly Popular: 月度最受欢迎
+More: 更多
+Most Upvoted Solutions: 最被赞同的题解
+Move to subtask: 移动到子任务
+Multi Platform Authenticator: 跨平台认证器
+My Domains: 我的域
+My Files: 我的文件
+My Profile: 我的资料
+My Recent Submissions: 我的最近递交记录
+My Role: 我的角色
+My Submissions: 我的递交
+name: 名称
+Name: 名称
+Nav Logo Dark: 左上角小图标（暗）
+Nav Logo Dark@2x: 左上角图标（暗）（大）
+Nav Logo Light: 左上角图标（亮）
+Nav Logo Light@2x: 左上角图标（亮）（大）
+Network error: 网络错误
+Never expire: 从不过期
+New Email: 新电子邮件
+New Filename: 新文件名
+New filename(s): 新文件名
+New Password: 新密码
+New Training Plan: 新训练计划
+New: 创建
+No {0} at current.: 当前没有{0}。
+No changes to make.: 没有任何修改。
+No comments so far...: 目前还没有评论...
+No discussion yet...: 目前没有讨论…
+No group available: 没有可用小组
+No Permission to Attend Contest: 您没有权限参加比赛
+No Permission to Claim Homework: 您没有权限认领作业
+No Permission to Create a Discussion: 您没有权限创建讨论
+No Permission to Submit: 您没有权限递交
+No problem.: 没有题目。
+No solutions so far...: 目前还没有题解...
+No submission language available for this problem.: 本题没有可用的提交语言。
+No Submissions: 没有递交
+No target available: 无可用目标
+No testcase here: 此处没有测试点
+No user is allowed to join this domain: 没有用户可以自助加入此域
+no_translation_warn: ''
+None: 无
+Not Attended: 未参加
+Not available: 不可用
+Not Claimed: 未认领
+Not Enrolled: 未参加
+Not joined yet: 暂未加入
+Not started with a number: 不以数字开头
+Not wrapped with space: 两侧不含空格
+Numeric PID: 数字题号
+objective: 客观题
+Oh, the user doesn't have any contributions!: 啊哦，这个用户还没贡献过题目~
+Oh, the user hasn't created any discussions yet!: 这个用户还没有发布过讨论
+Oh, the user hasn't submitted yet!: 这个用户还没有交过题 _(:зゝ∠)_
+Oh, there are no tasks that match the filter!: 喔，目前没有符合过滤条件的任务。
+Oh, there is no submission!: 喔，还没有评测记录呢！
+Oh, there is no task in the queue!: 喔，队列中目前没有任务。
+Ok: 确定
+Only A-Z, a-z, 0-9 and _ are accepted: 只接受 A-Z, a-z, 0-9 和 _
+Oops, there are no results.: 呀，没有结果。
+Oops!: Oops!
+Open in Problem Set: 在题库中打开
+Open Polyhedron: 打开 Polyhedron
+Open Scratchpad: 进入在线编程模式
+Open Since: 开始时间
+Open Source: 开源
+Open: 开放
+Operating System: 操作系统
+Ops: 运维
+Or, with automatically filled invitation code: 或者，这是可以自动填写邀请码的
+Ordered List: 有序列表
+Original content: 原始内容
+Original filename(s): 原始文件名
+Original Score: 原始分数
+OS Info: 系统信息
+Output: 输出
+Over {0} problems: 超过 {0} 道题目
+Owner: 所有者
+page.problem_detail.sidebar.show_category: 点击显示
+page.training_detail.invalid_when_not_enrolled: 未参加训练计划时您不能查看题目详情。
+pager_first: « 第一页
+pager_last: 末页 »
+pager_next: 下一页 ›
+pager_previous: ‹ 前一页
+Params: 参数
+Partic.: 参赛人数
+Password reset mail has been sent to your email.: 密码重置邮件已发送到您的电子邮箱。
+Password: 密码
+Passwords don't match.: 验证密码不匹配。
+Path {0} not found.: 路径 {0} 不存在。
+Peak Memory: 峰值内存
+Peak Time: 峰值时间
+perm_contest: 比赛
+perm_discussion: 讨论
+perm_general: 一般
+perm_homework: 作业
+perm_problem_solution: 题解
+perm_problem: 题库
+perm_record: 记录
+perm_training: 训练
+Permission Control: 权限控制
+Permission: 权限
+Permissions: 权限
+Pick a problem randomly based on the current filter.: 根据当前过滤条件随机选择一道题
+Pin: 置顶
+PingFang SC: 苹方简体
+Plan: 计划
+Please attend contest to see the problems.: 请参加比赛来查看题目。
+Please claim the assignment to see the problems.: 认领作业后才可以查看作业内容。
+Please follow the instructions on your device to complete the verification.: 请按照您设备上的指示完成验证。
+Please select at least one file to perform this operation.: 请选择至少一个文件来执行此操作。
+Please select at least one problem to perform this operation.: 请选择至少一道题目来执行此操作。
+Please select at least one role to perform this operation.: 请选择至少一个角色来进行操作。
+Please select at least one user to perform this operation.: 请选择至少一个用户来进行操作。
+Please set the balloon color for each problem first.: 请先为每道题设置气球颜色。
+Please wait until contest host unfreeze the scoreboard.: 请等待比赛主办方解除封榜。
+Polyhedron supports managing problem version history, testing solutions, checking time limits, composing contest statements, cooperation and much more.: Polyhedron 支持题目版本管理，代码测试，时限检验，制作比赛题面，多人协作等等功能。
+Preference Settings: 偏好设置
+preferredPrefix_hint: 此选项用于重排题号。例如，若题目包中所给的题号分别是 P1001, P1002, P1003，而此选项填写了 T，则导入后三道题的题号分别为 T1001, T1002 和 T1003。
+Preparing Upload...: 准备上传...
+Pretest Data: 自测数据
+Pretest Your Code: 使用自定义数据测试
+Pretest: 自测
+Pretest?: 自测?
+Print New File: 打印新文件
+Privacy: 隐私
+Privilege: 权限
+Problem {1} not found.: 题目 {1} 不存在。
+Problem Category: 标签
+Problem Data: 题目数据
+Problem ID cannot be a pure number. Leave blank if you want to use numberic id.: 题目ID不能为纯数字。 若要自动分配数字ID请将此处留空。
+Problem ID List: 题目 ID 列表
+Problem List: 题目列表
+Problem Set: 题库
+Problem Settings: 题目设置
+Problem Solution List: 题解列表
+Problem Solution: 题解列表
+Problem Tags Visibility: 题目标签可见性
+Problem Tags: 题目标签
+Problem Type: 题目类型
+problem_config: 评测设置
+problem_create: 创建题目
+problem_edit: 编辑题目
+problem_import: 导入题目
+problem_main: 题库
+problem_solution: 题解
+problem_submit: 递交代码
+problem_type.communication: 通信题
+problem_type.default: 传统题
+problem_type.interactive: 交互题
+problem_type.objective: 客观题
+problem_type.remote_judge: 远端评测题
+problem_type.submit_answer: 提交答案题
+problem-category-delim: '|'
+problem-subcategory-delim: 、
+Problem: 题目
+problem.import.additional_file: '## 附加文件'
+problem.import.hint: '## 提示'
+problem.import.input_format: '## 输入格式'
+problem.import.limit_and_hint: '## 限制'
+problem.import.output_format: '## 输出格式'
+problem.import.problem_description: '## 题目描述'
+problem.stats.sort.date: 提交时间
+problem.stats.sort.length: 代码长度
+problem.stats.sort.memory: 内存占用
+problem.stats.sort.time: 运行时间
+Problems created in polyhedron can be directly imported into any Hydro based online judge system.: Polyhedron 中的题目可以直接导入任何基于 HNTOU OJ 的在线测评系统。
+Problems Sets: 题库
+Problems: 题目
+Processing...: 处理中...
+Profile Background Image: 背景图片
+Progress: 进度
+Properties: 属性
+Public: 公开
+Published at: 发表于
+QQ Group: QQ 群
+QQ Visibility: QQ 可见性
+Quit Scratchpad: 退出在线编程模式
+Quote: 引用
+Rank: 排名
+Ranked Users: 排名用户
+ranking: 排名
+Read all record codes: 读取所有记录的代码
+Read data of own problems: 读取自己题目的数据
+Read data of problem: 读取题目数据
+Ready (☆▽☆): 马上开始 (☆▽☆)
+Ready: 即将开始
+Recent {0} Records: 最近 {0} 条记录
+Recent Activities: 最近活动
+Recent Problems: 最新题目
+Recent Solutions: 最近编写的题解
+Recent Submissions: 最近递交
+Recently Created Discussions: 最近创建的讨论
+Recommended: 推荐
+Record {0} not found.: 记录 {0} 不存在。
+record_detail: 记录详情
+record_main: 评测记录
+Records: 评测记录
+Reference link copied to clipboard!: 引用链接已复制到剪贴板。
+Refresh Records: 刷新评测记录
+Refresh: 刷新
+RegExp supported, quote with "/": 支持正则表达式，使用 "/" 包裹。
+Registered at: 注册于
+Rejudge all submissions: 重测整题
+Rejudge problems: 重测题目
+Rejudge records: 重测记录
+Rejudge: 重测
+Related Discussions: 相关讨论
+Related: 相关
+Remember me: 记住我
+Remove Selected Group: 移除所选小组
+Remove Selected User: 将所选用户移出
+Remove Selected: 移除选中
+Remove this data: 移除这组数据
+Remove: 移除
+Rename Selected: 重命名选中
+Repeat Password: 重复密码
+Replace with: 替换为
+Reply discussions: 回复讨论
+Reply problem solutions: 回复题解
+reply: 回复
+Reply: 回复
+Report: 举报
+Require Invitation Code: 需要邀请码
+required: 必填
+Reset Password or Find Username: 重置密码或找回用户名
+Reset Password: 重置密码
+Reset: 重置
+Restart: 重新启动
+Role Assignment: 角色分配
+Role has been updated to {0} for selected users.: 所选用户角色已更新为 {0}。
+Role has been updated to {0}.: 角色已更新为 {0}。
+Role name can only contains numbers, letters and underscores.: 角色名称只能包含数字、字母和下划线。
+Role: 角色
+Roles: 角色
+RP Algorithm: RP 算法
+rpDetailText_contest: 比赛
+rpDetailText_problem: 题目
+Rule: 规则
+Run Pretest: 运行自测
+Run: 运行
+Sample Input: 输入数据
+Sample Output: 输出数据
+Save All Changes: 保存所有修改
+Saved session: 已保存的会话
+Saving file...: 正在保存文件...
+score canceled: 成绩取消
+Score: 分数
+Scoreboard (Hidden): 成绩表 (隐藏)
+Scoreboard: 成绩表
+Scoring method: 评分方式
+Scripts: 脚本
+Search contests...: 搜索比赛...
+Search homeworks...: 搜索作业...
+Search: 搜索
+Secret (visible to admins): 保密（对管理员可见）
+Secret: 保密
+Section: 章节
+Security: 安全
+Select a node to create discussion.: 选择一个节点来发表讨论。
+Select a role: 选择一个角色
+Select All: 全选
+Select Category: 选择标签
+Select None: 全不选
+Select Problems: 选择题目
+Select User: 选择用户
+Selected categories: 已选标签
+Selected files have been deleted.: 所选文件已被删除。
+Selected files have been renamed.: 所选文件已被重命名。
+Selected problems have been deleted.: 所选题目已被删除。
+Selected problems have been hided.: 所选题目已被隐藏。
+Selected problems have been unhided.: 所选题目已取消隐藏。
+Selected roles have been deleted.: 所选角色已删除。
+Selected users have been removed from the domain.: 所选用户已从此域中移除。
+Send By: 递送者
+Send Code after acceptance: 通过题目后发送源代码
+Send Message: 发送站内信息
+Send Password Reset Email: 发送密码重置邮件
+Send Verification Email: 发送验证邮件
+Send: 发送
+Seperated with ',': 用 ',' 分隔
+Service Status: 服务状态
+Set Color: 设置颜色
+Set Privilege: 设置权限
+Set Role: 设置角色
+Set Roles for Selected User: 设置所选用户的角色
+Set Roles for selected users: 为所选用户设置角色
+Set Score for Contest: 设置赛时分数
+Set time and memory limits: 设置时空限制
+setting_customize: 个性化
+setting_display: 显示偏好
+setting_domain: 域设置
+setting_info_domain: 个人信息
+setting_info: 个人信息
+setting_privacy: 隐私
+setting_usage: 使用偏好
+Settings: 设置
+Share: 分享
+She: 她
+Show all tags: 显示所有标签
+Show less: 显示更少
+Show MOD badge: 展示 MOD 徽章
+Show more: 显示更多
+Show tags: 显示标签
+Show: 显示
+Sign In: 登录
+SIGN IN: 登录
+Sign up mail has been sent to your email.: 注册邮件已经发送到您的电子邮箱。
+Sign Up Now: 现在注册
+Sign Up: 注册
+Size: 大小
+Solutions Liked: 题解被赞
+Solutions: 题解
+Solve: 解决
+Solved: 解决
+Some problems in the training are missing or you do not have permission to view them.: 训练中某些题目缺失或您没有权限查看。
+Sorry, there are no problems in the problem set.: 题库中没有题目
+Sorry, there are no training plans.: 目前没有训练计划。
+Sorry, there are no users in this domain.: 对不起，此域中没有用户。
+Sorry: 对不起
+Sort by: 排序
+sort::default: 默认排序
+sort::recent: 最新题目
+Source type: 来源类型
+Source: 来源
+Standard mode: 标准模式
+Standard Program: 标准程序
+Star Topic: 收藏讨论
+Star: 收藏
+Starred Users: 关注用户
+Start at: 开始于
+Statistics: 统计
+Status is hidden: 状态已隐藏
+Status: 状态
+Submission language limit: 提交语言限制
+Submission Statistics: 递交统计
+Submission: 递交
+Submissions: 递交
+Submit At: 递交时间
+Submit By: 递交者
+Submit problem: 递交题目
+Submit Solution: 递交评测
+Submit Time: 递交时间
+Submit to Judge: 递交以评测
+Submit Your Code: 递交代码进行正式评测
+Submit: 递交
+Submitted: 已递交
+Subtask {0}: 子任务 {0}
+Subtasks: 子任务
+SuperUser: 超级管理员
+SuperUser's Password: 超级管理员的密码
+Support: 支持
+Switch account: 切换账户
+Tags: 标签
+Task Settings: 任务设置
+tasks_list: 任务列表
+Technical Information: 技术信息
+Temporary session: 临时会话
+Terms of Service: 服务条款
+Test data comes from: 测试数据来自
+Testdata Config: 测试数据配置
+testdata: 测试数据
+Testdata: 测试数据
+Text: 文本
+The 'default' role applies to ALL REGISTERED USER.: default 角色作用于<b>所有已注册用户</b>
+The contest is a flexible time contest. You need to complete the contest within a specified time after you attended.: 本场比赛采用灵活时间模式，你需要在参加后的指定时间内完成比赛。
+The contest is ended. New submissions will be treated as correction submissions and will not be counted in the contest.: 比赛已经结束。新提交将被视为补题提交，不计入比赛成绩。
+The group to join when user joining the domain.: 加入域时自动加入的小组。
+The homework's deadline is due but in extension. You can still submit for this problem but your score will be penalized.: 作业已超过截止时间，但仍在延期时间内。您递交题目将无法获得全部分数。
+The invitation code to enter to successfully join the domain. You can only use letters and numbers in the code and it should not be longer than 64 characters.: 加入此域的邀请码。您只能使用字母和数字，并且不能长于 64 个字符。
+The invitation code you provided is invalid.: 您提供的邀请码无效。
+The link will be expired at {0}: 链接将于 {0} 过期
+The role to assign when user joining the domain.: 用户加入此域时分配的角色。
+The scoreboard was frozen with {0} minutes remaining at {1} - submissions in the last {0} minutes of the contest are still shown as pending.: 比赛已于 {1} 在剩余 {0} 分钟时封榜 - 比赛最后 {0} 分钟的提交将显示为待定。
+The uploaded file is too long.: 上传的文件太长。
+The user is already a member of the domain.: 该用户已是域的成员。
+The user is too lazy to leave something here...: 该用户太懒，这里啥也没写 (´・ω・｀)
+Their account will not be deleted and they will be with the guest role until they re-join the domain.: 他们的账号不会被删除，并且之后将以 guest 角色访问，直到他们重新加入域。
+Theme: 主题
+There are no contests...: 没有比赛…
+There are no files currently.: 目前还没有文件。
+There is no homework so far ╰(*°▽°*)╯: 目前还没有作业 ╰(*°▽°*)╯
+This contest is not live.: 比赛没有开始。
+This email was sent by {0} automatically, and please do not reply directly.: 这封邮件由 {0} 自动发送，请勿直接回复。
+This homework is not open and you cannot view problems.: 该作业还未到开放时间，您无法查看作业题目。
+This homework is not open.: 该作业还未开放递交。
+This is the current session: 这是当前的会话
+This message will be presented to those whose submissions are accepted.: 这条消息将会被展示给通过此题的用户。
+This page is only for pasting code from other sources.: 此页面仅用于粘贴代码。
+This page needs JavaScript to work.: 这个页面需要 Javascript。
+This section cannot be challenged at present, so please complete the following sections first: 该章节目前不可挑战，请先完成以下章节
+This type of files are not allowed to be uploaded.: 不允许上传这种文件。
+This user was banned.: 此用户已被封禁。
+Time (Seconds): 耗时 (秒)
+Time Cost: 耗时
+Time Extension: 延期
+Time: 时间
+timeago_locale: zh_CN
+Timezone: 时区
+title: 标题
+Title: 标题
+To get a better editing experience, with code highlighting and test runs, please go back to the problem detail page and use 'Open Scratchpad' button.: 为了获得更好的编辑体验，包括代码高亮和测试运行功能，请返回题目详情页面并点击“进入在线编程模式”按钮。
+To join the domain, users can click the "Join Domain" button on "My Domain" page.: 要加入域，用户可以点击“我的域”页面中的“加入域”按钮。
+Toggle Pretest Panel: 切换自测面板
+Toggle Preview: 切换预览
+Toggle Records Panel: 切换评测记录面板
+Tools: 工具
+Total Score: 总分数
+Total Time (Seconds): 总耗时 (秒)
+Total Time: 总耗时
+Total: 总计
+Training requirement is not satisfied.: 不满足训练条件。
+training_create: 创建训练
+training_edit: 编辑训练
+training_main: 训练
+Training: 训练
+Transports: 支持类型
+Tried: 尝试
+Two Factor Authentication Code: 两步验证码
+Two Factor Authentication: 两步验证
+Type: 类型
+UI Language: 用户界面语言
+Uncompleted: 未完成
+Unique: 唯一
+Unknown field {0}.: 未知字段 {0}。
+Unknown: 未知
+Unlimited: 无限制
+Unordered List: 无序列表
+Unrank: 打星
+Unstar Topic: 取消收藏
+Unstar: 取消收藏
+Unsupported configure this type of problem. Please refer to the documentation.: 暂不支持快捷配置此类题目。请参照文档操作。
+Update Permission: 更新权限
+Update Settings: 更新设置
+Update: 更新
+Upload Failed: 上传失败
+Upload File: 上传文件
+Upload Problem: 上传题目
+Upload: 上传
+Uploaded By: 上传者
+Uploading files...: 正在上传文件...
+Uploading... ({0}%): 正在上传... ({0}%)
+Uploading...: 正在上传...
+Upvote: 好评
+Usage exceeded.: 用量超限。
+Use admin specificed: 由管理员指定
+Use algorithm calculated: 使用算法计算
+Use Authenticator: 使用认证器
+Use average of above: 使用上面的平均值
+Use Password: 使用密码
+Use Subtasks Mode: 使用子任务模式
+Use TFA Code: 使用两步验证码
+User {0} already exists.: 用户 {0} 已存在。
+User {0} not found.: 用户 {0} 不存在。
+User can join this domain by visiting the following URL: 用户可以访问此链接来加入此域
+User ID: 用户 ID
+User Privilege: 用户权限
+User will no longer be allowed to join the domain after expiration.: 过期后，用户将不能加入此域。
+user_detail: 用户
+user_extra_files: 用户额外文件
+user_login: 登录
+user_logout: 登出
+user_lostpass_mail_sent: 密码重置邮件已发送
+user_lostpass_with_code: 重置密码
+user_lostpass: 忘记密码
+user_register_with_code: 注册
+user_register: 注册
+User-defined role: 用户定义的角色
+User: 用户
+Username / UID: 用户名或 UID
+Username: 用户名
+Users will have to manually join the domain first before selected roles can be applied.: 用户需要先手动加入域才能应用此角色分配。
+Users with those roles will be removed from the domain.: 拥有这些角色的用户将从此域中移除。
+Users: 用户
+Using your {0} universal account: 使用您的 {0} 通用账户
+Valid for registered users who are not members of the domain: 对域外注册用户有效
+Valid for visitors: 对未登录的游客有效
+Version: 版本
+Videos: 视频
+View contest scoreboard: 查看比赛成绩表
+View Contest: 查看比赛
+View contests: 查看比赛
+View Details: 查看详情
+View discussions: 查看讨论
+View hidden contest submission status and scoreboard: 查看隐藏的比赛递交状态和成绩表
+View hidden homework submission status and scoreboard: 查看隐藏的作业递交状态和成绩表
+View hidden problems: 查看隐藏的题目
+View homework scoreboard: 查看作业成绩表
+View homework: 查看作业
+View Homework: 查看作业
+View or create discussion: 查看与发表讨论
+View or submit solution: 查看与发表题解
+View Owned Problems: 查看自己的题目
+View Owned Training Plans: 查看自己的训练计划
+View problem solutions: 查看题解
+View Problem: 查看题目
+View problems: 查看题目
+View this domain: 查看此域
+View training plans: 查看训练计划
+View Training: 查看训练计划
+View: 查看
+Visible to registered users: 对注册用户可见
+Visit: 查看
+Vote problem solutions: 为题解投票
+Vote: 投票
+warn::admin:unsupportedbrowser: "身为超级管理员，您仍在使用过于老旧的浏览器。\n这些浏览器可能不支持 Hydro 管理面板的部分功能，\n我们强烈建议您升级到最新的 Chrome 浏览器。"
+We will check code similarity after this contest.: 我们会在赛后检查代码相似度。
+WeChat Visibility: 微信可见性
+WeChat: 微信
+Week: 周
+WenQuanYi Micro Hei: 文泉驿
+What is domain?: 什么是域?
+What is this?: 这是什么？
+What's domain?: 什么是域？
+What's script?: 什么是脚本？
+What's this?: 这是什么？
+Whether to show tags in the problem list.: 是否在题目列表中显示题目的标签。
+wiki_help: 帮助
+Will be used as the domain icon.: 将被用作系统图标。
+With this feature, you can copy problems that you can view from a domain to some other domain. Their title, content, tags and categories will be copied. However, their test data are not copied directly.: 您可以通过这个功能将某域下您能查看的题目复制到其它域中，题目的标题、描述、标签与分类将被复制过来。但是测试数据不会被直接复制。
+Write Your Comment: 发表您的评论
+Write Your Solution: 发表您的题解
+Year: 年
+You are currently in legacy mode. Some additional features will be unavailable. We strongly recommend switching to standard mode on a modern browser.: 您当前处于兼容模式。某些功能在此模式下不可用。我们强烈建议在现代浏览器上切换为标准模式以获得更好的体验。
+You are invited to join {0}: '您被邀请加入 {0}'
+You are not allowed to join the domain. The link is either invalid or expired.: 您无法加入该域，链接无效或已过期。
+You can also upload your avatar to Gravatar and it will be automatically updated here.: 你也可以将头像上传到 Gravata，本站的头像将自动更新。
+You can create your own training plans and share them with others.: 您可以创建您自己的训练计划并且与他人分享。
+You cannot submit for this problem because the contest is ended. You can click "Open in Problem Set" to view this problem in normal mode.: 该比赛已结束，您无法在比赛模式下递交该题目。您可以点击“在题库中打开”以普通模式查看和递交本题。
+You cannot submit for this problem because the homework's deadline is due.: 作业已超过截止时间，您无法递交本题目。
+You cannot visit this domain.: 您不能访问此域。
+You don't have permission to upload file.: 您没有权限上传文件。
+You don't have the required permission ({0}) in this domain.: 您在该域中无相应权限 ({0})。
+You don't have the required privilege.: 您没有相应的特权。
+You don't own any domain and don't have privilege to create domain.: 您不拥有任何域也没有创建域的特权。
+You have not submitted any solutions for this problem: 您在该题下没有递交过任何解答
+You have permission to create problems for this domain.: 您有权限为此域创建题目。
+You have uncompleted domain creation operation. You can click "Continue" to finish the creation.: 您有未完成的创建域操作。您可以点击“继续”来完成创建。
+You haven't attended this contest yet.: 您还没有参加本次比赛。
+You haven't claimed this homework yet.: 您还未认领过该作业。
+You may want to create a new role in 'Manage Role' page.: 您可能希望在右侧管理角色面板中添加一个新角色。
+You need to enter the invitation code to join the domain.: 您需要输入邀请码来加入此域。
+You received a system message, click here to view.: 您收到一条系统通知，点击查看。
+You're not logged in.: 您没有登录。
+You've already attended this contest.: 您已经参加本次比赛。
+You've already claimed this homework.: 您已认领过该作业。
+You've already voted.: 您已经投过票。
+Your account has two factor authentication enabled. Please choose an authenticator to verify.: 您的账户已启用双因素认证。请选择一个验证器来验证。
+Your browser does not support WebAuthn or you are not in secure context.: 您的浏览器不支持WebAuthn或是您不在安全环境中。
+Your Device: 你的设备
+Your permission: 您的权限
+Your role: 您的角色

@@ -6,26 +6,21 @@ const PROBLEM_PAGES = ['problem_detail', 'contest_detail_problem', 'homework_det
 const PASTE_LIMIT = 30;
 
 function setupPasteRestriction() {
-  const checkEditor = setInterval(() => {
+  // Attach to document (capture phase) so we fire BEFORE Monaco's own
+  // capture listener on editor.getDomNode(). Same-element capture listeners
+  // fire in registration order, and Monaco registers its first.
+  document.addEventListener('paste', (ev: ClipboardEvent) => {
     const scratchpad = (ctx as any).scratchpad;
     const editor = scratchpad?.editor;
-    if (!editor) return;
+    if (!editor || !editor.hasTextFocus()) return;
 
-    const editorDom = editor.getDomNode();
-    if (!editorDom) return;
-
-    clearInterval(checkEditor);
-
-    // Intercept paste events at DOM level
-    editorDom.addEventListener('paste', (ev: ClipboardEvent) => {
-      const text = ev.clipboardData?.getData('text/plain') || '';
-      if (text.length > PASTE_LIMIT) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        Notification.error(i18n('Paste limit exceeded'));
-      }
-    }, true);
-  }, 500);
+    const text = ev.clipboardData?.getData('text/plain') || '';
+    if (text.length > PASTE_LIMIT) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      Notification.error(i18n('Paste limit exceeded'));
+    }
+  }, true);
 }
 
 function autoEnterScratchpad() {

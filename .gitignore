@@ -70,3 +70,9 @@ node_modules.*
 
 docs/*
 install/docker/data/*
+.agents/
+.codex/
+.claude/
+
+AGENT.md
+CLAUDE.md
