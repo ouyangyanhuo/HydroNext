@@ -1,18 +1,27 @@
 import { Paper, Stack, Table, Text, Title } from '@mantine/core';
 import { PageHeader } from '@/components/common/page-header';
+import { FileDropzone } from '@/components/common/file-dropzone';
 import { usePageData } from '@/context/page-data';
+import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function ProblemFilesPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const navigate = useNavigate();
   const pdoc = args.pdoc || {};
   const testdata = args.testdata || [];
-  
 
   return (
     <Stack gap="lg">
       <PageHeader title={`${t('Files')} - ${pdoc.pid}. ${pdoc.title}`} />
+      <Paper withBorder p="lg">
+        <Title order={4} mb="sm">{t('Upload Test Data')}</Title>
+        <FileDropzone
+          action={`/p/${pdoc.pid || pdoc.docId}/files/testdata`}
+          onComplete={() => navigate(window.location.href)}
+        />
+      </Paper>
       <Paper withBorder p="lg">
         <Title order={4} mb="sm">{t('Test Data')}</Title>
         {testdata.length === 0 ? (

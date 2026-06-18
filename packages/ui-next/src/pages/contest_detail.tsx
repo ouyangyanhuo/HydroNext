@@ -2,50 +2,11 @@ import { Badge, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
+import { ContestTimer } from '@/components/contest/contest-timer';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
-
-function ContestTimer({ beginAt, endAt }: { beginAt: string, endAt: string }) {
-  const { t } = useI18n();
-  const now = Date.now();
-  const begin = new Date(beginAt).getTime();
-  const end = new Date(endAt).getTime();
-  const isRunning = now >= begin && now < end;
-  const isUpcoming = now < begin;
-  const isFinished = now >= end;
-
-  const formatDuration = (ms: number) => {
-    const hours = Math.floor(ms / 3600000);
-    const minutes = Math.floor((ms % 3600000) / 60000);
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
-  };
-
-  return (
-    <Paper withBorder p="md">
-      <Group gap="md">
-        <Badge size="lg" variant="light" color={isRunning ? 'green' : isUpcoming ? 'blue' : 'gray'}>
-          {isRunning ? t('Running') : isUpcoming ? t('Upcoming') : t('Finished')}
-        </Badge>
-        <Text size="sm">
-          {t('Duration')}: {formatDuration(end - begin)}
-        </Text>
-        {isRunning && (
-          <Text size="sm" c="green">
-            {t('Ends in')}: <TimeDisplay date={endAt} format="relative" size="sm" />
-          </Text>
-        )}
-        {isUpcoming && (
-          <Text size="sm" c="blue">
-            {t('Starts in')}: <TimeDisplay date={beginAt} format="relative" size="sm" />
-          </Text>
-        )}
-      </Group>
-    </Paper>
-  );
-}
 
 function ContestProblemList({ tdoc }: { tdoc: any }) {
   const { t } = useI18n();

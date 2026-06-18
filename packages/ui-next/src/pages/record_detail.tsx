@@ -1,5 +1,6 @@
 import { Badge, Code, Divider, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { Link } from '@/components/link';
+import { CodeReplay } from '@/components/record/code-replay';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
@@ -107,6 +108,13 @@ export default function RecordDetailPage() {
             <Paper withBorder p="lg" mt="md">
               <Text size="sm" fw={500} mb="xs">{t('Source Code')}</Text>
               <Code block>{rdoc.code}</Code>
+            </Paper>
+          )}
+
+          {rdoc.replay && rdoc.replay.length > 0 && (
+            <Paper withBorder p="lg" mt="md">
+              <Text size="sm" fw={500} mb="xs">{t('Code Replay')}</Text>
+              <CodeReplay events={rdoc.replay} initialCode="" language={rdoc.lang} />
             </Paper>
           )}
         </div>

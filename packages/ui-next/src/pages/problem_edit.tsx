@@ -1,5 +1,6 @@
-import { Button, Group, Paper, Stack, Switch, Text, Textarea, TextInput } from '@mantine/core';
+import { Button, Group, Paper, Stack, Switch, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
+import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -48,7 +49,7 @@ export default function ProblemEditPage() {
         <Stack gap="md">
           <TextInput label={t('Problem ID')} value={form.pid} onChange={(e) => setForm({ ...form, pid: e.currentTarget.value })} />
           <TextInput label={t('Title')} value={form.title} onChange={(e) => setForm({ ...form, title: e.currentTarget.value })} required />
-          <Textarea label={t('Content (Markdown)')} value={form.content} onChange={(e) => setForm({ ...form, content: e.currentTarget.value })} minRows={12} autosize />
+          <MarkdownEditor value={form.content} onChange={(v) => setForm({ ...form, content: v })} minRows={12} />
           <TextInput label={t('Tags')} value={form.tag} onChange={(e) => setForm({ ...form, tag: e.currentTarget.value })} placeholder="tag1, tag2" />
           <Switch label={t('Hidden')} checked={form.hidden} onChange={(e) => setForm({ ...form, hidden: e.currentTarget.checked })} />
           <Group justify="flex-end">

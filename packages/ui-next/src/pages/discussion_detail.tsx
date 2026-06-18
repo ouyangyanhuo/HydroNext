@@ -2,6 +2,7 @@ import { Button, Divider, Group, Paper, Stack, Text, Textarea, Title } from '@ma
 import { useState } from 'react';
 import { TimeDisplay } from '@/components/common/time-display';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
+import { ReactionBar } from '@/components/discussion/reaction-bar';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
@@ -61,6 +62,9 @@ export default function DiscussionDetailPage() {
         </Group>
         <Divider my="md" />
         <MarkdownRenderer content={ddoc.content || ''} />
+        {ddoc.reactions && ddoc.reactions.length > 0 && (
+          <ReactionBar reactions={ddoc.reactions} />
+        )}
       </Paper>
 
       <Title order={3}>{t('Replies')} ({replies.length})</Title>

@@ -1,6 +1,7 @@
 import { Anchor, Button, Checkbox, Group, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
 import { Link } from '@/components/link';
+import { OAuthButtons } from '@/components/auth/oauth-buttons';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
@@ -90,6 +91,10 @@ export default function UserLoginPage() {
             {t('Register')}
           </Anchor>
         </Group>
+
+        {(args.loginMethods || []).length > 0 && (
+          <OAuthButtons methods={args.loginMethods} redirect={redirect} />
+        )}
       </Paper>
     </div>
   );
