@@ -70,3 +70,7 @@ export const initialPage: PageData = {
   args: (injectionData.args as any) || {},
   url: (injectionData.url as string) || (window.location.pathname + window.location.search),
 };
+
+// Locale data injected by the backend renderer
+export const localeData: Record<string, string> = injectionData.locale || {};
+export const initialLang: string = injectionData.lang || 'zh';

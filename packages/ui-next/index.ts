@@ -27,6 +27,19 @@ const PENDING_HTML = `<html>
 const INJECT_MARKER = '<!-- __HYDRO_INJECTION__DO_NOT_REMOVE_THIS__ -->';
 const buildInject = (data: string) => `<script id="__HYDRO_INJECTION__" type="application/json">${data}</script>`;
 
+function getLocaleData(lang?: string): Record<string, string> {
+    try {
+        const locales = (global as any).Hydro?.locales;
+        if (!locales) return {};
+        // Try requested language, then zh, then en
+        for (const l of [lang, 'zh', 'en'].filter(Boolean)) {
+            const dict = locales[l!]?.[Symbol.for('iterate')] || {};
+            if (Object.keys(dict).length > 0) return dict;
+        }
+    } catch { /* ignore */ }
+    return {};
+}
+
 function getAddonEntries(): Record<string, string> {
     const entries: Record<string, string> = {};
     for (const [name, addon] of Object.entries(global.addons)) {
@@ -188,6 +201,7 @@ export async function apply(ctx: Context) {
             asFallback: true,
             priority: 100,
             async render(_name, args, context) {
+                const userLang = context.UserContext?.viewLang || context.handler.session?.viewLang;
                 const serialized = JSON.stringify({
                     HYDRO_INJECTED: true,
                     name: context.handler.context._matchedRouteName,
@@ -199,6 +213,8 @@ export async function apply(ctx: Context) {
                     url: context.handler.context.req.url!,
                     route_map: ctx.server.routeMap,
                     endpoint: ctx.setting.get('server.url') || undefined,
+                    locale: getLocaleData(userLang),
+                    lang: userLang || 'zh',
                 }, serializer(false, context.handler));
                 const htmlToRender = html.replace(INJECT_MARKER, buildInject(serialized));
                 return await vite.transformIndexHtml(context.handler.context.req.url!, htmlToRender);
@@ -221,6 +237,7 @@ export async function apply(ctx: Context) {
                 const indexHtml = path.join(__dirname, 'public', 'index.html');
                 if (!fs.existsSync(indexHtml)) return PENDING_HTML;
                 const html = fs.readFileSync(indexHtml, 'utf-8');
+                const userLang = context.UserContext?.viewLang || context.handler.session?.viewLang;
                 const serialized = JSON.stringify({
                     HYDRO_INJECTED: true,
                     name: context.handler.context._matchedRouteName,
@@ -233,6 +250,8 @@ export async function apply(ctx: Context) {
                     route_map: ctx.server.routeMap,
                     endpoint: ctx.setting.get('server.url') || undefined,
                     plugins_url: `/plugins/${hashes['plugins.js'] || '00000000'}/plugins.js`,
+                    locale: getLocaleData(userLang),
+                    lang: userLang || 'zh',
                 }, serializer(false, context.handler));
                 return html.replace(INJECT_MARKER, buildInject(serialized));
             },

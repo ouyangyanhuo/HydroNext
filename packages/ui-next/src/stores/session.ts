@@ -38,11 +38,11 @@ export const useSessionStore = create<SessionStore>((set) => ({
         domain: { name: 'Hydro' },
     },
     theme: 'light',
-    language: 'en',
+    language: 'zh',
     setSession: ({ user, ui }) => {
         // Detect theme from UserContext or UiContext
         const theme = (user as any).theme || (ui as any).theme || 'light';
-        const language = (user as any).viewLang || (ui as any).language || 'en';
+        const language = (user as any).viewLang || (ui as any).language || 'zh';
         set({ user, ui, theme: theme as 'light' | 'dark', language });
     },
     setTheme: (theme) => set({ theme }),
