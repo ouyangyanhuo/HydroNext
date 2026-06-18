@@ -6,6 +6,7 @@ import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useDomain } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { useBuildUrl } from '@/hooks/use-build-url';
+import { LanguageMenu } from './language-menu';
 
 function UserMenu() {
     const user = useCurrentUser();
@@ -111,6 +112,7 @@ export function TopNav() {
                     </Group>
 
                     <Group gap="sm">
+                        <LanguageMenu />
                         <div className="hidden md:block">
                             {isLoggedIn ? <UserMenu /> : <GuestMenu />}
                         </div>
