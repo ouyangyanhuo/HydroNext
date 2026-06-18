@@ -1,7 +1,7 @@
 {% extends "layout/wiki_base.html" %}
 {% block wiki_content %}
 {% set name = handler.domain.ui.name|default(model.system.get('server.name')) %}
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="domain" data-heading>{{ _('Domain') }}</h1>
   </div>
@@ -12,7 +12,7 @@
     <p>每个域的题库、讨论、训练以及比赛是独立且自治的。</p>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="compiler" data-heading>{{ _("Compilers' Version and Parameters") }}</h1>
   </div>
@@ -20,7 +20,7 @@
     <p>HNTOU OJ 使用 HydroJudge 进行评测，编译参数和当前所用编译器版本见状态页。</p>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="limits" data-heading>{{ _('Limitations') }}</h1>
   </div>
@@ -29,7 +29,7 @@
     <p>HNTOU OJ 评测机使用进程虚拟内存与物理内存总和计算内存空间消耗。内存空间默认限定为256MiB，题目中特别指明的，限定为题目中评测点所指定的内存空间。</p>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="io" data-heading>{{ _('IO') }}</h1>
   </div>
@@ -37,7 +37,7 @@
     <p>若无特殊说明，HNTOU OJ 使用标准输入输出（控制台输入输出，屏幕输入输出，STD I/O）。  </p>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="status" data-heading>{{ _('Judge Status') }}</h1>
   </div>
@@ -61,7 +61,7 @@
     <blockquote class="note">有“成绩取消”字样则说明管理员手动标记此记录为取消，可能违反了服务条款，比如代码被发现与其他用户的代码十分相似。</blockquote>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="ce" data-heading>{{ _('Compile Error') }}</h1>
   </div>
@@ -86,7 +86,7 @@
     </blockquote>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="training" data-heading>{{ _('Training') }}</h1>
   </div>
@@ -94,7 +94,7 @@
     <p>我们精心挑选了一些题目组成了训练计划。单击导航栏的“训练”即可进入！</p>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="contest" data-heading>{{ _('Contest') }}</h1>
   </div>
@@ -118,7 +118,7 @@
     <p>时间与空间限制以题目说明为准，默认限制参见<a href="#limits">{{ _('Limitations') }}</a>。</p>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="acratio" data-heading>{{ _('Accepted Ratio') }}</h1>
   </div>
@@ -126,7 +126,7 @@
     <p>通过率的影响极其恶劣，判题系统不提供也不承认通过率。</p>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="rp" data-heading>{{ _('RP Algorithm') }}</h1>
   </div>
@@ -134,7 +134,7 @@
     <p>RP 可由题目，活动，比赛等获得。</p>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="pbmdiff" data-heading>{{ _('Difficulty Algorithm') }}</h1>
   </div>
@@ -149,7 +149,7 @@
     </ul>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="lostpass" data-heading>{{ _('Forgot Password and/or Username') }}</h1>
   </div>
@@ -158,7 +158,7 @@
     <p>如果您确信您的账号被盗或者忘记了账号和/或密码，请及时<a href="{{ url('user_lostpass') }}">{{ _('Reset Password or Find Username') }}</a>。</p>
   </div>
 </div>
-<div class="section" data-heading-extract-to="#menu-item-wiki_help">
+<div class="section contest-settings-help" data-heading-extract-to="#menu-item-wiki_help">
   <div class="section__header">
     <h1 class="section__title" id="markdown" data-heading>{{ _('Markdown') }}</h1>
   </div>

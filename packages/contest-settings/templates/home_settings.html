@@ -1,7 +1,7 @@
 {% extends "layout/home_base.html" %}
 {% block home_content %}
 {% if category == "account" %}
-  <div class="section" id="upload_avatar" data-heading-extract-to="#menu-item-home_account" style="nojs--hide">
+  <div class="section contest-settings-avatar-panel" id="upload_avatar" data-heading-extract-to="#menu-item-home_account" style="nojs--hide">
     <div class="section__header">
       <h1 class="section__title" id="avatar" data-heading>{{ _('Avatar') }}</h1>
     </div>
@@ -12,7 +12,7 @@
     </div>
   </div>
 {% endif %}
-<div class="section" data-heading-extract-to="#menu-item-home_{{ category }}">
+<div class="section contest-settings-settings-panel" data-heading-extract-to="#menu-item-home_{{ category }}">
   {% include "partials/setting.html" %}
 </div>
 {% endblock %}
