@@ -1,8 +1,8 @@
 import { Paper } from '@mantine/core';
 
 interface MarkdownRendererProps {
-    content: string;
-    className?: string;
+  content: string;
+  className?: string;
 }
 
 /**
@@ -11,14 +11,14 @@ interface MarkdownRendererProps {
  * For safety, this should only be used with trusted server-rendered content.
  */
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
-    if (!content) return null;
+  if (!content) return null;
 
-    return (
-        <Paper
-            className={`hydro-markdown ${className || ''}`}
-            p="md"
-            withBorder
-            dangerouslySetInnerHTML={{ __html: content }}
-        />
-    );
+  return (
+    <Paper
+      className={`hydro-markdown ${className || ''}`}
+      p="md"
+      withBorder
+      dangerouslySetInnerHTML={{ __html: content }}
+    />
+  );
 }
