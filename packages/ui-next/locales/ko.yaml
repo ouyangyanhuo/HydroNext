@@ -1,0 +1,275 @@
+__flag: 🇰🇷
+__id: ko
+__interface: yes
+__langname: 한국어
+
+# Navigation
+Home: 홈
+Problems: 문제
+Contests: 대회
+Training: 훈련
+Records: 제출 기록
+Discussion: 토론
+About: 소개
+Help: 도움말
+Ranking: 랭킹
+Status: 상태
+
+# Auth
+Login: 로그인
+Register: 회원가입
+Logout: 로그아웃
+Username: 사용자 이름
+Username or Email: 사용자 이름 또는 이메일
+Password: 비밀번호
+Remember me: 로그인 상태 유지
+Forgot Password?: 비밀번호를 잊으셨나요?
+Send Reset Link: 재설정 링크 보내기
+Reset Password: 비밀번호 재설정
+New Password: 새 비밀번호
+Old Password: 현재 비밀번호
+Confirm Password: 비밀번호 확인
+Change Password: 비밀번호 변경
+Email: 이메일
+Verify: 인증
+Verify Email: 이메일 인증
+Verification Code: 인증 코드
+Back to Login: 로그인으로 돌아가기
+Sudo Mode: Sudo 모드
+Please enter your password to continue.: 계속하려면 비밀번호를 입력하세요.
+Email Sent: 이메일 발송됨
+A password reset link has been sent to your email. Please check your inbox.: 비밀번호 재설정 링크가 이메일로 발송되었습니다. 받은 편지함을 확인하세요.
+Verification Email Sent: 인증 이메일 발송됨
+A verification link has been sent to your email. Please check your inbox to complete registration.: 인증 링크가 이메일로 발송되었습니다. 등록을 완료하려면 받은 편지함을 확인하세요.
+Logging out...: 로그아웃 중...
+Account Deletion Pending: 계정 삭제 대기 중
+Your account deletion request has been received. It will be processed within 30 days.: 계정 삭제 요청이 접수되었습니다. 30일 이내에 처리됩니다.
+Or login with: 또는 다음으로 로그인
+
+# Common
+Save: 저장
+Cancel: 취소
+Confirm: 확인
+Delete: 삭제
+Create: 만들기
+Edit: 편집
+Close: 닫기
+Back: 뒤로
+Submit: 제출
+Search: 검색
+Upload: 업로드
+Download: 다운로드
+Import: 가져오기
+Export: 내보내기
+Loading...: 로딩 중...
+Error: 오류
+Success: 성공
+Warning: 경고
+No data: 데이터 없음
+No results: 결과 없음
+Settings: 설정
+Configuration: 설정
+Dashboard: 대시보드
+Manage: 관리
+Admin: 관리자
+View All: 모두 보기
+View Record: 기록 보기
+All Records: 모든 기록
+Latest Record: 최신 기록
+Replies: 답변
+Reply: 답변
+Post Reply: 답변 작성
+Title: 제목
+Content: 내용
+Tags: 태그
+Hidden: 숨김
+Name: 이름
+Size: 크기
+Date: 날짜
+Time: 시간
+Duration: 기간
+Rule: 규칙
+Start: 시작
+End: 종료
+User: 사용자
+Users: 사용자
+Problem: 문제
+Contest: 대회
+Record: 기록
+Domain: 도메인
+Score: 점수
+Language: 언어
+Submissions: 제출
+Accept Rate: 정답률
+Total Submissions: 총 제출 수
+Joined: 가입일
+Last login: 마지막 로그인
+Bio: 자기소개
+School: 학교
+Grade: 학년
+Gender: 성별
+Avatar URL: 아바타 URL
+Bulletin: 공지
+Host: 호스트
+
+# Problem
+Create Problem: 문제 만들기
+Edit Problem: 문제 편집
+Problem ID: 문제 ID
+Content (Markdown): 내용 (Markdown)
+Test Data: 테스트 데이터
+Upload Test Data: 테스트 데이터 업로드
+Source Code: 소스 코드
+Solutions: 해설
+Write Solution: 해설 작성
+Statistics: 통계
+Config: 설정
+Files: 파일
+No files: 파일 없음
+Hack: Hack
+Submit Hack: Hack 제출
+Import Problems: 문제 가져오기
+Source: 소스
+URL or ID: URL 또는 ID
+Enter Online Programming Mode: 온라인 프로그래밍 모드 시작
+
+# Submit
+Please select a language: 언어를 선택하세요
+Please enter your code: 코드를 입력하세요
+Select language: 언어 선택
+
+# Record
+Judging...: 채점 중...
+Test Cases: 테스트 케이스
+Compiler Output: 컴파일 출력
+Judge Message: 채점 메시지
+Code Replay: 코드 리플레이
+Play: 재생
+Pause: 일시정지
+Reset: 리셋
+
+# Contest
+Create Contest: 대회 만들기
+Edit Contest: 대회 편집
+Running: 진행 중
+Upcoming: 예정
+Finished: 종료
+Scoreboard: 스코어보드
+Participants: 참가자
+Register Contest: 참가 등록
+Registered: 등록됨
+Clarifications: 질의응답
+Ask a Question: 질문하기
+Answered: 답변됨
+Pending: 대기 중
+Balloons: 풍선
+Done: 완료
+Print: 인쇄
+Send to Printer: 프린터로 보내기
+Contest Settings: 대회 설정
+
+# Homework
+Homework: 숙제
+Create Homework: 숙제 만들기
+Edit Homework: 숙제 편집
+Due: 마감
+Open: 열림
+No homework: 숙제 없음
+
+# Training
+Create Training: 훈련 만들기
+Edit Training: 훈련 편집
+Section: 섹션
+No training: 훈련 없음
+
+# Discussion
+Create Discussion: 토론 만들기
+Edit Discussion: 토론 편집
+Node: 노드
+No discussions: 토론 없음
+No replies: 답변 없음
+replies: 개의 답변
+
+# User
+My Profile: 내 프로필
+My Files: 내 파일
+My Domains: 내 도메인
+Create Domain: 도메인 만들기
+Domain Settings: 도메인 설정
+Domain Manage: 도메인 관리
+Domain Users: 도메인 사용자
+Domain ID: 도메인 ID
+Roles: 역할
+Permissions: 권한
+Groups: 그룹
+Join Applications: 가입 신청
+Request to Join: 가입 요청
+Accept: 수락
+Reject: 거절
+No pending applications: 대기 중인 신청 없음
+No domains: 도메인 없음
+
+# Manage
+System Management: 시스템 관리
+System Settings: 시스템 설정
+Scripts: 스크립트
+Run: 실행
+User Import: 사용자 가져오기
+User Privileges: 사용자 권한
+Format: 형식
+Data: 데이터
+Apply: 적용
+Service Status: 서비스 상태
+Uptime: 가동 시간
+Online: 온라인
+No judges connected: 채점기 미연결
+
+# Messages
+Messages: 메시지
+No messages: 메시지 없음
+
+# Misc
+Welcome: 환영합니다
+Welcome to Hydro: HNTOU OJ에 오신 것을 환영합니다
+Explore problems, contests, and improve your skills.: 문제와 대회를 탐색하고 실력을 향상시키세요.
+Login or register to start solving problems.: 로그인 또는 등록 후 문제를 풀기 시작하세요.
+Recent Problems: 최근 문제
+Recent Contests: 최근 대회
+Recent Discussions: 최근 토론
+Powered by: Powered by
+Paste limit exceeded: 붙여넣기 제한 초과
+File too large: 파일이 너무 큽니다
+Drag files here or click to upload: 여기에 파일을 드래그하거나 클릭하여 업로드
+Uploading...: 업로드 중...
+Nothing to preview: 미리보기 없음
+Write: 작성
+Preview: 미리보기
+Version: 버전
+No about page content configured.: 소개 페이지가 설정되지 않았습니다.
+
+# Error pages
+Page not found: 페이지를 찾을 수 없음
+An error occurred: 오류가 발생했습니다
+Back to Home: 홈으로 돌아가기
+
+# Scratchpad
+Scratchpad: 스크래치패드
+Open Scratchpad: 스크래치패드 열기
+
+# Search placeholders
+Search problems...: 문제 검색...
+Search contests...: 대회 검색...
+
+# Empty states
+No records found: 기록 없음
+No contests found: 대회 없음
+No problems found: 문제 없음
+No clarifications: 질문 없음
+No solutions: 해설 없음
+
+# Auth links
+Already have an account? Login: 계정이 있으신가요? 로그인
+Don't have an account? Register: 계정이 없으신가요? 회원가입
+
+# Misc
+Unknown: 알 수 없음

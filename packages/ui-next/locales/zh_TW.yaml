@@ -1,0 +1,275 @@
+__flag: 🇹🇼
+__id: zh_TW
+__interface: yes
+__langname: 繁體中文
+
+# Navigation
+Home: 首頁
+Problems: 題目
+Contests: 比賽
+Training: 訓練
+Records: 評測記錄
+Discussion: 討論
+About: 關於
+Help: 幫助
+Ranking: 排名
+Status: 狀態
+
+# Auth
+Login: 登入
+Register: 註冊
+Logout: 登出
+Username: 使用者名稱
+Username or Email: 使用者名稱或電子郵件
+Password: 密碼
+Remember me: 記住我
+Forgot Password?: 忘記密碼？
+Send Reset Link: 傳送重設連結
+Reset Password: 重設密碼
+New Password: 新密碼
+Old Password: 舊密碼
+Confirm Password: 確認密碼
+Change Password: 修改密碼
+Email: 電子郵件
+Verify: 驗證
+Verify Email: 驗證電子郵件
+Verification Code: 驗證碼
+Back to Login: 返回登入
+Sudo Mode: Sudo 模式
+Please enter your password to continue.: 請輸入密碼以繼續。
+Email Sent: 郵件已傳送
+A password reset link has been sent to your email. Please check your inbox.: 密碼重設連結已傳送到您的電子郵件，請查收。
+Verification Email Sent: 驗證郵件已傳送
+A verification link has been sent to your email. Please check your inbox to complete registration.: 驗證連結已傳送到您的電子郵件，請查收以完成註冊。
+Logging out...: 正在登出...
+Account Deletion Pending: 帳戶刪除待處理
+Your account deletion request has been received. It will be processed within 30 days.: 您的帳戶刪除請求已收到，將在 30 天內處理。
+Or login with: 或登入方式
+
+# Common
+Save: 儲存
+Cancel: 取消
+Confirm: 確認
+Delete: 刪除
+Create: 建立
+Edit: 編輯
+Close: 關閉
+Back: 返回
+Submit: 提交
+Search: 搜尋
+Upload: 上傳
+Download: 下載
+Import: 匯入
+Export: 匯出
+Loading...: 載入中...
+Error: 錯誤
+Success: 成功
+Warning: 警告
+No data: 暫無資料
+No results: 暫無結果
+Settings: 設定
+Configuration: 組態
+Dashboard: 儀表板
+Manage: 管理
+Admin: 管理員
+View All: 查看全部
+View Record: 查看記錄
+All Records: 所有記錄
+Latest Record: 最新記錄
+Replies: 回覆
+Reply: 回覆
+Post Reply: 發表回覆
+Title: 標題
+Content: 內容
+Tags: 標籤
+Hidden: 隱藏
+Name: 名稱
+Size: 大小
+Date: 日期
+Time: 時間
+Duration: 持續時間
+Rule: 規則
+Start: 開始
+End: 結束
+User: 使用者
+Users: 使用者
+Problem: 題目
+Contest: 比賽
+Record: 記錄
+Domain: 網域
+Score: 分數
+Language: 語言
+Submissions: 提交
+Accept Rate: 通過率
+Total Submissions: 總提交數
+Joined: 加入時間
+Last login: 最後登入
+Bio: 簡介
+School: 學校
+Grade: 年級
+Gender: 性別
+Avatar URL: 頭像連結
+Bulletin: 公告
+Host: 主機
+
+# Problem
+Create Problem: 建立題目
+Edit Problem: 編輯題目
+Problem ID: 題目 ID
+Content (Markdown): 內容（Markdown）
+Test Data: 測試資料
+Upload Test Data: 上傳測試資料
+Source Code: 原始碼
+Solutions: 題解
+Write Solution: 寫題解
+Statistics: 統計
+Config: 組態
+Files: 檔案
+No files: 暫無檔案
+Hack: Hack
+Submit Hack: 提交 Hack
+Import Problems: 匯入題目
+Source: 來源
+URL or ID: 連結或 ID
+Enter Online Programming Mode: 進入線上程式設計模式
+
+# Submit
+Please select a language: 請選擇語言
+Please enter your code: 請輸入程式碼
+Select language: 選擇語言
+
+# Record
+Judging...: 評測中...
+Test Cases: 測試案例
+Compiler Output: 編譯輸出
+Judge Message: 評測訊息
+Code Replay: 程式碼回放
+Play: 播放
+Pause: 暫停
+Reset: 重置
+
+# Contest
+Create Contest: 建立比賽
+Edit Contest: 編輯比賽
+Running: 進行中
+Upcoming: 即將開始
+Finished: 已結束
+Scoreboard: 成績表
+Participants: 參賽者
+Register Contest: 報名
+Registered: 已報名
+Clarifications: 澄清
+Ask a Question: 提問
+Answered: 已回答
+Pending: 待處理
+Balloons: 氣球
+Done: 已完成
+Print: 列印
+Send to Printer: 傳送到印表機
+Contest Settings: 比賽設定
+
+# Homework
+Homework: 作業
+Create Homework: 建立作業
+Edit Homework: 編輯作業
+Due: 截止時間
+Open: 開放
+No homework: 暫無作業
+
+# Training
+Create Training: 建立訓練
+Edit Training: 編輯訓練
+Section: 章節
+No training: 暫無訓練
+
+# Discussion
+Create Discussion: 建立討論
+Edit Discussion: 編輯討論
+Node: 節點
+No discussions: 暫無討論
+No replies: 暫無回覆
+replies: 則回覆
+
+# User
+My Profile: 我的資料
+My Files: 我的檔案
+My Domains: 我的網域
+Create Domain: 建立網域
+Domain Settings: 網域設定
+Domain Manage: 網域管理
+Domain Users: 網域使用者
+Domain ID: 網域 ID
+Roles: 角色
+Permissions: 權限
+Groups: 使用者群組
+Join Applications: 加入申請
+Request to Join: 申請加入
+Accept: 接受
+Reject: 拒絕
+No pending applications: 暫無待處理申請
+No domains: 暫無網域
+
+# Manage
+System Management: 系統管理
+System Settings: 系統設定
+Scripts: 腳本
+Run: 執行
+User Import: 使用者匯入
+User Privileges: 使用者權限
+Format: 格式
+Data: 資料
+Apply: 套用
+Service Status: 服務狀態
+Uptime: 運行時間
+Online: 線上
+No judges connected: 無評測機連線
+
+# Messages
+Messages: 訊息
+No messages: 暫無訊息
+
+# Misc
+Welcome: 歡迎
+Welcome to Hydro: 歡迎使用 HNTOU OJ
+Explore problems, contests, and improve your skills.: 探索題目、比賽，提升你的技能。
+Login or register to start solving problems.: 登入或註冊後開始解題。
+Recent Problems: 最近題目
+Recent Contests: 最近比賽
+Recent Discussions: 最近討論
+Powered by: 驅動於
+Paste limit exceeded: 貼上內容超過限制
+File too large: 檔案過大
+Drag files here or click to upload: 拖曳檔案到此處或點擊上傳
+Uploading...: 上傳中...
+Nothing to preview: 暫無預覽內容
+Write: 編寫
+Preview: 預覽
+Version: 版本
+No about page content configured.: 暫未設定關於頁面內容。
+
+# Error pages
+Page not found: 頁面未找到
+An error occurred: 發生錯誤
+Back to Home: 返回首頁
+
+# Scratchpad
+Scratchpad: 便箋本
+Open Scratchpad: 開啟便箋本
+
+# Search placeholders
+Search problems...: 搜尋題目...
+Search contests...: 搜尋比賽...
+
+# Empty states
+No records found: 暫無記錄
+No contests found: 暫無比賽
+No problems found: 暫無題目
+No clarifications: 暫無提問
+No solutions: 暫無題解
+
+# Auth links
+Already have an account? Login: 已有帳號？登入
+Don't have an account? Register: 沒有帳號？註冊
+
+# Misc
+Unknown: 未知

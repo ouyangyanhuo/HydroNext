@@ -227,7 +227,7 @@ No messages: No messages
 
 # Misc
 Welcome: Welcome
-Welcome to Hydro: Welcome to Hydro
+Welcome to Hydro: Welcome to HNTOU OJ
 Explore problems, contests, and improve your skills.: Explore problems, contests, and improve your skills.
 Login or register to start solving problems.: Login or register to start solving problems.
 Recent Problems: Recent Problems
@@ -253,3 +253,21 @@ Back to Home: Back to Home
 Scratchpad: Scratchpad
 Open Scratchpad: Open Scratchpad
 Enter Online Programming Mode: Enter Online Programming Mode
+
+# Search placeholders
+Search problems...: Search problems...
+Search contests...: Search contests...
+
+# Empty states
+No records found: No records found
+No contests found: No contests found
+No problems found: No problems found
+No clarifications: No clarifications
+No solutions: No solutions
+
+# Auth links
+Already have an account? Login: Already have an account? Login
+Don't have an account? Register: Don't have an account? Register
+
+# Misc
+Unknown: Unknown

@@ -93,7 +93,7 @@ export function TopNav() {
         <div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-4">
           <Group gap="lg">
             <Link to="homepage" className="text-lg font-bold text-[var(--hydro-text)] no-underline">
-              {domain.name || 'Hydro'}
+              {domain.name || 'Magneto'}
             </Link>
             <Group gap="xs" className="hidden md:flex">
               {NAV_ITEMS.map((item) => (
@@ -126,7 +126,7 @@ export function TopNav() {
         </div>
       </header>
 
-      <Drawer opened={opened} onClose={close} title={domain.name || 'Hydro'} size="xs">
+      <Drawer opened={opened} onClose={close} title={domain.name || 'Magneto'} size="xs">
         <Stack gap="xs">
           {NAV_ITEMS.map((item) => (
             <Button

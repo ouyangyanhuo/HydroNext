@@ -1,0 +1,275 @@
+__flag: 🇯🇵
+__id: ja
+__interface: yes
+__langname: 日本語
+
+# Navigation
+Home: ホーム
+Problems: 問題
+Contests: コンテスト
+Training: トレーニング
+Records: 提出記録
+Discussion: ディスカッション
+About: 概要
+Help: ヘルプ
+Ranking: ランキング
+Status: ステータス
+
+# Auth
+Login: ログイン
+Register: 新規登録
+Logout: ログアウト
+Username: ユーザー名
+Username or Email: ユーザー名またはメール
+Password: パスワード
+Remember me: ログイン状態を保持
+Forgot Password?: パスワードをお忘れですか？
+Send Reset Link: リセットリンクを送信
+Reset Password: パスワードをリセット
+New Password: 新しいパスワード
+Old Password: 現在のパスワード
+Confirm Password: パスワードを確認
+Change Password: パスワードを変更
+Email: メールアドレス
+Verify: 確認
+Verify Email: メールを確認
+Verification Code: 確認コード
+Back to Login: ログインに戻る
+Sudo Mode: Sudo モード
+Please enter your password to continue.: 続行するにはパスワードを入力してください。
+Email Sent: メール送信済み
+A password reset link has been sent to your email. Please check your inbox.: パスワードリセットリンクがメールで送信されました。受信箱をご確認ください。
+Verification Email Sent: 確認メール送信済み
+A verification link has been sent to your email. Please check your inbox to complete registration.: 確認リンクがメールで送信されました。登録を完了するには受信箱をご確認ください。
+Logging out...: ログアウト中...
+Account Deletion Pending: アカウント削除保留中
+Your account deletion request has been received. It will be processed within 30 days.: アカウント削除リクエストを受け付けました。30日以内に処理されます。
+Or login with: または以下の方法でログイン
+
+# Common
+Save: 保存
+Cancel: キャンセル
+Confirm: 確認
+Delete: 削除
+Create: 作成
+Edit: 編集
+Close: 閉じる
+Back: 戻る
+Submit: 提出
+Search: 検索
+Upload: アップロード
+Download: ダウンロード
+Import: インポート
+Export: エクスポート
+Loading...: 読み込み中...
+Error: エラー
+Success: 成功
+Warning: 警告
+No data: データなし
+No results: 結果なし
+Settings: 設定
+Configuration: 設定
+Dashboard: ダッシュボード
+Manage: 管理
+Admin: 管理者
+View All: すべて表示
+View Record: 記録を表示
+All Records: すべての記録
+Latest Record: 最新の記録
+Replies: 返信
+Reply: 返信
+Post Reply: 返信を投稿
+Title: タイトル
+Content: 内容
+Tags: タグ
+Hidden: 非表示
+Name: 名前
+Size: サイズ
+Date: 日付
+Time: 時間
+Duration: 期間
+Rule: ルール
+Start: 開始
+End: 終了
+User: ユーザー
+Users: ユーザー
+Problem: 問題
+Contest: コンテスト
+Record: 記録
+Domain: ドメイン
+Score: スコア
+Language: 言語
+Submissions: 提出
+Accept Rate: 正解率
+Total Submissions: 総提出数
+Joined: 参加日
+Last login: 最終ログイン
+Bio: 自己紹介
+School: 学校
+Grade: 学年
+Gender: 性別
+Avatar URL: アバターURL
+Bulletin: お知らせ
+Host: ホスト
+
+# Problem
+Create Problem: 問題を作成
+Edit Problem: 問題を編集
+Problem ID: 問題ID
+Content (Markdown): 内容（Markdown）
+Test Data: テストデータ
+Upload Test Data: テストデータをアップロード
+Source Code: ソースコード
+Solutions: 解説
+Write Solution: 解説を書く
+Statistics: 統計
+Config: 設定
+Files: ファイル
+No files: ファイルなし
+Hack: Hack
+Submit Hack: Hackを提出
+Import Problems: 問題をインポート
+Source: ソース
+URL or ID: URLまたはID
+Enter Online Programming Mode: オンラインプログラミングモードに入る
+
+# Submit
+Please select a language: 言語を選択してください
+Please enter your code: コードを入力してください
+Select language: 言語を選択
+
+# Record
+Judging...: 判定中...
+Test Cases: テストケース
+Compiler Output: コンパイル出力
+Judge Message: 判定メッセージ
+Code Replay: コードリプレイ
+Play: 再生
+Pause: 一時停止
+Reset: リセット
+
+# Contest
+Create Contest: コンテストを作成
+Edit Contest: コンテストを編集
+Running: 進行中
+Upcoming: 予定
+Finished: 終了
+Scoreboard: スコアボード
+Participants: 参加者
+Register Contest: 参加登録
+Registered: 登録済み
+Clarifications: 質問
+Ask a Question: 質問する
+Answered: 回答済み
+Pending: 保留中
+Balloons: 風船
+Done: 完了
+Print: 印刷
+Send to Printer: プリンターに送信
+Contest Settings: コンテスト設定
+
+# Homework
+Homework: 宿題
+Create Homework: 宿題を作成
+Edit Homework: 宿題を編集
+Due: 期限
+Open: 開放
+No homework: 宿題なし
+
+# Training
+Create Training: トレーニングを作成
+Edit Training: トレーニングを編集
+Section: セクション
+No training: トレーニングなし
+
+# Discussion
+Create Discussion: ディスカッションを作成
+Edit Discussion: ディスカッションを編集
+Node: ノード
+No discussions: ディスカッションなし
+No replies: 返信なし
+replies: 件の返信
+
+# User
+My Profile: マイプロフィール
+My Files: マイファイル
+My Domains: マイドメイン
+Create Domain: ドメインを作成
+Domain Settings: ドメイン設定
+Domain Manage: ドメイン管理
+Domain Users: ドメインユーザー
+Domain ID: ドメインID
+Roles: 役割
+Permissions: 権限
+Groups: グループ
+Join Applications: 参加申請
+Request to Join: 参加を申請
+Accept: 承認
+Reject: 拒否
+No pending applications: 保留中の申請なし
+No domains: ドメインなし
+
+# Manage
+System Management: システム管理
+System Settings: システム設定
+Scripts: スクリプト
+Run: 実行
+User Import: ユーザーインポート
+User Privileges: ユーザー権限
+Format: フォーマット
+Data: データ
+Apply: 適用
+Service Status: サービス状態
+Uptime: 稼働時間
+Online: オンライン
+No judges connected: 判定機未接続
+
+# Messages
+Messages: メッセージ
+No messages: メッセージなし
+
+# Misc
+Welcome: ようこそ
+Welcome to Hydro: HNTOU OJへようこそ
+Explore problems, contests, and improve your skills.: 問題やコンテストを探して、スキルを向上させましょう。
+Login or register to start solving problems.: ログインまたは登録して問題を解き始めましょう。
+Recent Problems: 最近の問題
+Recent Contests: 最近のコンテスト
+Recent Discussions: 最近のディスカッション
+Powered by: Powered by
+Paste limit exceeded: ペースト制限を超過しました
+File too large: ファイルが大きすぎます
+Drag files here or click to upload: ここにファイルをドラッグまたはクリックしてアップロード
+Uploading...: アップロード中...
+Nothing to preview: プレビューなし
+Write: 書く
+Preview: プレビュー
+Version: バージョン
+No about page content configured.: 概要ページが設定されていません。
+
+# Error pages
+Page not found: ページが見つかりません
+An error occurred: エラーが発生しました
+Back to Home: ホームに戻る
+
+# Scratchpad
+Scratchpad: スクラッチパッド
+Open Scratchpad: スクラッチパッドを開く
+
+# Search placeholders
+Search problems...: 問題を検索...
+Search contests...: コンテストを検索...
+
+# Empty states
+No records found: 記録なし
+No contests found: コンテストなし
+No problems found: 問題なし
+No clarifications: 質問なし
+No solutions: 解説なし
+
+# Auth links
+Already have an account? Login: アカウントをお持ちですか？ログイン
+Don't have an account? Register: アカウントをお持ちでないですか？新規登録
+
+# Misc
+Unknown: 不明

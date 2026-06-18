@@ -1,5 +1,6 @@
 import { Text } from '@mantine/core';
 import { Link } from '@/components/link';
+import { useI18n } from '@/hooks/use-i18n';
 
 interface UserLinkProps {
   user: { _id: number, uname: string };
@@ -7,8 +8,10 @@ interface UserLinkProps {
 }
 
 export function UserLink({ user, size = 'sm' }: UserLinkProps) {
+  const { t } = useI18n();
+
   if (!user || user._id <= 0) {
-    return <Text size={size} c="dimmed">Unknown</Text>;
+    return <Text size={size} c="dimmed">{t('Unknown')}</Text>;
   }
 
   return (

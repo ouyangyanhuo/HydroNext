@@ -3,8 +3,9 @@ import { useSessionStore } from '@/stores/session';
 
 const LANGUAGES = [
   { code: 'zh', name: '简体中文', flag: '🇨🇳' },
-  { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'zh_TW', name: '繁體中文', flag: '🇹🇼' },
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'ja', name: '日本語', flag: '🇯🇵' },
   { code: 'ko', name: '한국어', flag: '🇰🇷' },
 ];
 

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { initialLang } from '@/globals';
 
 export interface UserContext {
   _id: number;
@@ -38,11 +39,11 @@ export const useSessionStore = create<SessionStore>((set) => ({
     domain: { name: 'Hydro' },
   },
   theme: 'light',
-  language: 'zh',
+  language: initialLang,
   setSession: ({ user, ui }) => {
     // Detect theme from UserContext or UiContext
     const theme = (user as any).theme || (ui as any).theme || 'light';
-    const language = (user as any).viewLang || (ui as any).language || 'zh';
+    const language = (user as any).viewLang || initialLang;
     set({ user, ui, theme: theme as 'light' | 'dark', language });
   },
   setTheme: (theme) => set({ theme }),
