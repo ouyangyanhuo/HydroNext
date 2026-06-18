@@ -12,6 +12,9 @@ if (injectionEl) {
   }
 }
 
+// Expose injection data for other modules (e.g. page-data context for route_map)
+(window as any).__hydroInjection = injectionData;
+
 export const isInjected: boolean = !!injectionData.HYDRO_INJECTED;
 export const hydroDomains: string[] = injectionData.hydro_domains ?? [];
 export const pluginsUrl: string | undefined = injectionData.plugins_url;

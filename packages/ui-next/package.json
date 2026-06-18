@@ -25,17 +25,27 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mantine/core": "^9.3.1",
+    "@mantine/hooks": "^9.3.1",
+    "@mantine/notifications": "^9.3.1",
     "esbuild": "0.25.2",
     "is-relative-url": "^4.1.0",
     "path-to-regexp": "^8.4.2",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "react-router": "^7.6.1",
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.7",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
+    "autoprefixer": "^10.4.21",
     "koa2-connect": "^1.0.2",
+    "postcss-preset-mantine": "^1.17.0",
+    "postcss-simple-vars": "^7.0.1",
+    "tailwindcss": "^4.1.7",
     "vite": "^8.0.16"
   }
 }

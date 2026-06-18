@@ -1,0 +1,34 @@
+:root {
+  --hydro-bg: #ffffff;
+  --hydro-surface: #f8f9fa;
+  --hydro-surface-muted: #e9ecef;
+  --hydro-text: #212529;
+  --hydro-text-muted: #868e96;
+  --hydro-border: #dee2e6;
+  --hydro-primary: #228be6;
+  --hydro-success: #40c057;
+  --hydro-warning: #fab005;
+  --hydro-danger: #fa5252;
+  --hydro-status-accepted: #40c057;
+  --hydro-status-wrong: #fa5252;
+  --hydro-status-pending: #fab005;
+  --hydro-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --hydro-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+[data-mantine-color-scheme='dark'] {
+  --hydro-bg: #1a1b1e;
+  --hydro-surface: #25262b;
+  --hydro-surface-muted: #2c2e33;
+  --hydro-text: #c1c2c5;
+  --hydro-text-muted: #909296;
+  --hydro-border: #373a40;
+  --hydro-primary: #4dabf7;
+  --hydro-success: #51cf66;
+  --hydro-warning: #ffd43b;
+  --hydro-danger: #ff6b6b;
+  --hydro-status-accepted: #51cf66;
+  --hydro-status-wrong: #ff6b6b;
+  --hydro-status-pending: #ffd43b;
+}
