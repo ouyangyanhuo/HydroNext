@@ -9,15 +9,23 @@ import { PageDataProvider } from './context/page-data';
 import { RouterProvider } from './context/router';
 import { initialPage, pluginsUrl } from './globals';
 import { installPlugin } from './registry';
+import { pasteGuardPlugin } from './plugins/paste-guard';
+import { useNotificationStore } from './stores/notification';
 
 declare global {
     interface Window {
         __hydroExports: typeof api;
         __hydroPlugins?: api.PluginDefinition[];
+        __hydroNotificationStore: typeof useNotificationStore;
     }
 }
 
 window.__hydroExports = api;
+// Expose notification store for plugins (e.g. paste-guard)
+window.__hydroNotificationStore = useNotificationStore;
+
+// Install built-in plugins
+installPlugin(pasteGuardPlugin);
 
 async function loadPlugins() {
     let plugins: api.PluginDefinition[] = [];
