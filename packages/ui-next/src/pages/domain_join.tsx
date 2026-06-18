@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Paper, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { useNavigate } from '@/context/router';
@@ -19,7 +20,7 @@ export default function DomainJoinPage() {
         body: JSON.stringify({ operation: 'join' }),
       });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else navigate(window.location.pathname);
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

@@ -41,6 +41,11 @@ Email Sent: 郵件已傳送
 A password reset link has been sent to your email. Please check your inbox.: 密碼重設連結已傳送到您的電子郵件，請查收。
 Verification Email Sent: 驗證郵件已傳送
 A verification link has been sent to your email. Please check your inbox to complete registration.: 驗證連結已傳送到您的電子郵件，請查收以完成註冊。
+A verification link will be sent to your email.: 驗證連結將傳送到您的電子郵件。
+Send Verification Email: 傳送驗證郵件
+Passwords do not match: 密碼不匹配
+Registration failed: 註冊失敗
+"Too frequent operations of send_mail (limit: 1 operations in 60 seconds).": 郵件傳送過於頻繁（限制：60秒內1次操作）。
 Logging out...: 正在登出...
 Account Deletion Pending: 帳戶刪除待處理
 Your account deletion request has been received. It will be processed within 30 days.: 您的帳戶刪除請求已收到，將在 30 天內處理。
@@ -273,3 +278,6 @@ Don't have an account? Register: 沒有帳號？註冊
 
 # Misc
 Unknown: 未知
+Login failed: 登入失敗
+Network error: 網路錯誤
+Continue: 繼續

@@ -1,24 +1,23 @@
 import { Avatar, Burger, Button, Drawer, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Link } from '@/components/link';
-import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useDomain } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+import { getAvatarUrl } from '@/utils/avatar';
 import { LanguageMenu } from './language-menu';
 
 function UserMenu() {
   const user = useCurrentUser();
   const { t } = useI18n();
-  const buildUrl = useBuildUrl();
   const domainId = useSessionStore((s) => s.ui.domainId);
 
   return (
     <Menu shadow="md" width={200}>
       <Menu.Target>
         <UnstyledButton className="flex items-center gap-2">
-          <Avatar src={user.avatar} size={28} radius="xl" />
+          <Avatar src={getAvatarUrl(user.avatar, 28)} size={28} radius="xl" />
           <Text size="sm" fw={500}>
             {user.uname}
           </Text>

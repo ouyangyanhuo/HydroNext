@@ -1,4 +1,5 @@
 import './styles/tailwind.css';
+import './styles/markdown.css';
 import './pages';
 
 import { StrictMode } from 'react';

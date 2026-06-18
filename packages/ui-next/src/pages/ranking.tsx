@@ -1,3 +1,4 @@
+import { getAvatarUrl } from '@/utils/avatar';
 import { Avatar, Group, Paper, Stack, Table, Text } from '@mantine/core';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
@@ -26,7 +27,7 @@ export default function RankingPage() {
                 <Table.Td>{(page - 1) * 100 + i + 1}</Table.Td>
                 <Table.Td>
                   <Link to="user_detail" params={{ uid: u._id }} className="no-underline hover:underline">
-                    <Group gap="xs"><Avatar src={u.avatar} size="xs" radius="xl" /><Text size="sm">{u.uname}</Text></Group>
+                    <Group gap="xs"><Avatar src={getAvatarUrl(u.avatar)} size="xs" radius="xl" /><Text size="sm">{u.uname}</Text></Group>
                   </Link>
                 </Table.Td>
                 <Table.Td><Text size="sm">{u.rating || '-'}</Text></Table.Td>

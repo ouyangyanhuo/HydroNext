@@ -1,3 +1,4 @@
+import { getAvatarUrl } from '@/utils/avatar';
 import { Avatar, Button, Group, Paper, Stack, Table, Text } from '@mantine/core';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
@@ -37,7 +38,7 @@ export default function DomainJoinApplicationsPage() {
                 const u = udict[a.uid] || {};
                 return (
                   <Table.Tr key={a.uid}>
-                    <Table.Td><Group gap="xs"><Avatar src={u.avatar} size="xs" radius="xl" /><Text size="sm">{u.uname || a.uid}</Text></Group></Table.Td>
+                    <Table.Td><Group gap="xs"><Avatar src={getAvatarUrl(u.avatar)} size="xs" radius="xl" /><Text size="sm">{u.uname || a.uid}</Text></Group></Table.Td>
                     <Table.Td><TimeDisplay date={a._id} format="relative" /></Table.Td>
                     <Table.Td>
                       <Group gap="xs">

@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, Paper, Select, Stack, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
@@ -20,7 +21,7 @@ export default function ProblemImportPage() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Import failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Import failed')));
       else navigate('/p');
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

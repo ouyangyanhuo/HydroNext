@@ -1,3 +1,4 @@
+import { getAvatarUrl } from '@/utils/avatar';
 import { Avatar, Group, Paper, Stack, Text } from '@mantine/core';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
@@ -21,7 +22,7 @@ export default function HomeMessagesPage() {
           <Stack gap="md">
             {messages.map((m: any) => (
               <Group key={m._id} align="flex-start" gap="sm">
-                <Avatar src={udict[m.from]?.avatar} size="sm" radius="xl" />
+                <Avatar src={getAvatarUrl(udict[m.from]?.avatar)} size="sm" radius="xl" />
                 <div className="flex-1">
                   <Group justify="space-between">
                     <Text size="sm" fw={500}>{udict[m.from]?.uname || m.from}</Text>

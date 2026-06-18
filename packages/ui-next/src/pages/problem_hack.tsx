@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, Paper, Select, Stack, Text, Textarea, Title } from '@mantine/core';
 import { useState } from 'react';
 import { CodeEditor } from '@/components/editor/code-editor';
@@ -28,7 +29,7 @@ export default function ProblemHackPage() {
         body: JSON.stringify({ lang, code, input }),
       });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Hack failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Hack failed')));
       else navigate(window.location.pathname.replace('/hack', ''));
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

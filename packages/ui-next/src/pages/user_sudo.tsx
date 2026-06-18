@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Paper, PasswordInput, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { usePageData } from '@/context/page-data';
@@ -23,7 +24,7 @@ export default function UserSudoPage() {
         body: JSON.stringify({ password }),
       });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else navigate(redirect);
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

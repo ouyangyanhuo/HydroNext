@@ -1,4 +1,3 @@
-import { AppShell as MantineAppShell } from '@mantine/core';
 import { Footer } from '@/components/navigation/footer';
 import { TopNav } from '@/components/navigation/top-nav';
 
@@ -8,22 +7,18 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <MantineAppShell
-      header={{ height: 48 }}
-      footer={{ height: 60 }}
-      padding="md"
-    >
-      <MantineAppShell.Header>
+    <div className="flex flex-col min-h-screen">
+      <header className="sticky top-0 z-50 h-12">
         <TopNav />
-      </MantineAppShell.Header>
-      <MantineAppShell.Main>
+      </header>
+      <main className="flex-1">
         <div className="mx-auto max-w-7xl px-4 py-6">
           {children}
         </div>
-      </MantineAppShell.Main>
-      <MantineAppShell.Footer>
+      </main>
+      <footer className="h-[60px]">
         <Footer />
-      </MantineAppShell.Footer>
-    </MantineAppShell>
+      </footer>
+    </div>
   );
 }

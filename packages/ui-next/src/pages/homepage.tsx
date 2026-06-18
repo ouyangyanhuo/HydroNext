@@ -1,6 +1,7 @@
 import { Badge, Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
+import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
@@ -26,6 +27,16 @@ function WelcomeCard() {
           <Button component={Link} to="user_register" variant="light" size="xs">{t('Register')}</Button>
         </Group>
       )}
+    </Card>
+  );
+}
+
+function BulletinCard({ bulletin }: { bulletin: string }) {
+  if (!bulletin) return null;
+
+  return (
+    <Card withBorder p="lg">
+      <MarkdownRenderer content={bulletin} />
     </Card>
   );
 }
@@ -133,6 +144,7 @@ function RecentDiscussions({ discussions }: { discussions: any[] }) {
 export default function HomePage() {
   const { args } = usePageData();
   const contents = args.contents || [];
+  const domain = args.domain || {};
 
   const sections: Record<string, any> = {};
   for (const section of contents) {
@@ -146,6 +158,7 @@ export default function HomePage() {
   return (
     <Stack gap="lg">
       <WelcomeCard />
+      {domain.bulletin && <BulletinCard bulletin={domain.bulletin} />}
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
         <RecentProblems problems={sections.problems || sections.starredProblems || sections.recentProblems || []} />
         <RecentContests

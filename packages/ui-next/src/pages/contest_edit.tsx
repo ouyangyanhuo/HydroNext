@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, Paper, Select, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
@@ -33,7 +34,7 @@ export default function ContestEditPage() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Save failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Save failed')));
       else navigate(isNew ? '/c' : `/c/${tdoc.docId}`);
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

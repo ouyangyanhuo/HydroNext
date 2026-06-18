@@ -41,6 +41,11 @@ Email Sent: Email Sent
 A password reset link has been sent to your email. Please check your inbox.: A password reset link has been sent to your email. Please check your inbox.
 Verification Email Sent: Verification Email Sent
 A verification link has been sent to your email. Please check your inbox to complete registration.: A verification link has been sent to your email. Please check your inbox to complete registration.
+A verification link will be sent to your email.: A verification link will be sent to your email.
+Send Verification Email: Send Verification Email
+Passwords do not match: Passwords do not match
+Registration failed: Registration failed
+"Too frequent operations of send_mail (limit: 1 operations in 60 seconds).": "Too frequent operations of send_mail (limit: 1 operations in 60 seconds)."
 Logging out...: Logging out...
 Account Deletion Pending: Account Deletion Pending
 Your account deletion request has been received. It will be processed within 30 days.: Your account deletion request has been received. It will be processed within 30 days.
@@ -271,3 +276,6 @@ Don't have an account? Register: Don't have an account? Register
 
 # Misc
 Unknown: Unknown
+Login failed: Login failed
+Network error: Network error
+Continue: Continue

@@ -1,3 +1,4 @@
+import { getAvatarUrl } from '@/utils/avatar';
 import { Avatar, Group, Paper, Stack, Table, Text } from '@mantine/core';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
@@ -23,7 +24,7 @@ export default function ContestUserPage() {
               return (
                 <Table.Tr key={ts.uid}>
                   <Table.Td>{i + 1}</Table.Td>
-                  <Table.Td><Group gap="xs"><Avatar src={u.avatar} size="xs" radius="xl" /><Link to="user_detail" params={{ uid: ts.uid }} className="no-underline hover:underline"><Text size="sm">{u.uname || ts.uid}</Text></Link></Group></Table.Td>
+                  <Table.Td><Group gap="xs"><Avatar src={getAvatarUrl(u.avatar)} size="xs" radius="xl" /><Link to="user_detail" params={{ uid: ts.uid }} className="no-underline hover:underline"><Text size="sm">{u.uname || ts.uid}</Text></Link></Group></Table.Td>
                   <Table.Td><Text size="sm">{ts.score ?? '-'}</Text></Table.Td>
                 </Table.Tr>
               );

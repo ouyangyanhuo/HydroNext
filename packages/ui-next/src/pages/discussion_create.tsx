@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, Paper, Select, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
@@ -19,7 +20,7 @@ export default function DiscussionCreatePage() {
     try {
       const res = await fetch(window.location.href, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else navigate(data.redirect || '/discuss');
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

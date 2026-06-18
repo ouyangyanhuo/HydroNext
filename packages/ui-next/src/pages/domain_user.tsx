@@ -1,3 +1,4 @@
+import { getAvatarUrl } from '@/utils/avatar';
 import { Avatar, Badge, Group, Paper, Stack, Table, Text } from '@mantine/core';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
@@ -28,7 +29,7 @@ export default function DomainUserPage() {
               return (
                 <Table.Tr key={du.uid}>
                   <Table.Td>{(page - 1) * 50 + i + 1}</Table.Td>
-                  <Table.Td><Group gap="xs"><Avatar src={u.avatar} size="xs" radius="xl" /><Link to="user_detail" params={{ uid: du.uid }} className="no-underline hover:underline"><Text size="sm">{u.uname || du.uid}</Text></Link></Group></Table.Td>
+                  <Table.Td><Group gap="xs"><Avatar src={getAvatarUrl(u.avatar)} size="xs" radius="xl" /><Link to="user_detail" params={{ uid: du.uid }} className="no-underline hover:underline"><Text size="sm">{u.uname || du.uid}</Text></Link></Group></Table.Td>
                   <Table.Td><Badge size="xs">{roles[du.role] || du.role}</Badge></Table.Td>
                   <Table.Td><Text size="xs" c="dimmed">{du.joinAt ? new Date(du.joinAt).toLocaleDateString() : '-'}</Text></Table.Td>
                 </Table.Tr>

@@ -41,6 +41,11 @@ Email Sent: 邮件已发送
 A password reset link has been sent to your email. Please check your inbox.: 密码重置链接已发送到您的邮箱，请查收。
 Verification Email Sent: 验证邮件已发送
 A verification link has been sent to your email. Please check your inbox to complete registration.: 验证链接已发送到您的邮箱，请查收以完成注册。
+A verification link will be sent to your email.: 验证链接将发送到您的邮箱。
+Send Verification Email: 发送验证邮件
+Passwords do not match: 密码不匹配
+Registration failed: 注册失败
+"Too frequent operations of send_mail (limit: 1 operations in 60 seconds).": 邮件发送过于频繁（限制：60秒内1次操作）。
 Logging out...: 正在登出...
 Account Deletion Pending: 账户删除待处理
 Your account deletion request has been received. It will be processed within 30 days.: 您的账户删除请求已收到，将在 30 天内处理。
@@ -274,3 +279,6 @@ Don't have an account? Register: 没有账号？注册
 
 # Misc
 Unknown: 未知
+Login failed: 登录失败
+Network error: 网络错误
+Continue: 继续

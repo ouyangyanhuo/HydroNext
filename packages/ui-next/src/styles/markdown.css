@@ -1,0 +1,246 @@
+/* Markdown content styles */
+.hydro-markdown {
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.hydro-markdown h1,
+.hydro-markdown h2,
+.hydro-markdown h3,
+.hydro-markdown h4,
+.hydro-markdown h5,
+.hydro-markdown h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.hydro-markdown h1 {
+  font-size: 2em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--hydro-border);
+}
+
+.hydro-markdown h2 {
+  font-size: 1.5em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--hydro-border);
+}
+
+.hydro-markdown h3 {
+  font-size: 1.25em;
+}
+
+.hydro-markdown h4 {
+  font-size: 1em;
+}
+
+.hydro-markdown h5 {
+  font-size: 0.875em;
+}
+
+.hydro-markdown h6 {
+  font-size: 0.85em;
+  color: var(--hydro-text-secondary);
+}
+
+.hydro-markdown p {
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+.hydro-markdown a {
+  color: var(--hydro-primary);
+  text-decoration: none;
+}
+
+.hydro-markdown a:hover {
+  text-decoration: underline;
+}
+
+.hydro-markdown strong {
+  font-weight: 600;
+}
+
+.hydro-markdown em {
+  font-style: italic;
+}
+
+.hydro-markdown del {
+  text-decoration: line-through;
+}
+
+.hydro-markdown code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  background-color: var(--hydro-surface);
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+.hydro-markdown pre {
+  padding: 1em;
+  margin-top: 0;
+  margin-bottom: 1em;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  background-color: var(--hydro-surface);
+  border-radius: 6px;
+  border: 1px solid var(--hydro-border);
+}
+
+.hydro-markdown pre code {
+  padding: 0;
+  margin: 0;
+  font-size: 100%;
+  background-color: transparent;
+  border-radius: 0;
+}
+
+.hydro-markdown blockquote {
+  margin: 0 0 1em 0;
+  padding: 0.5em 1em;
+  color: var(--hydro-text-secondary);
+  border-left: 4px solid var(--hydro-border);
+  background-color: var(--hydro-surface);
+}
+
+.hydro-markdown blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.hydro-markdown ul,
+.hydro-markdown ol {
+  margin-top: 0;
+  margin-bottom: 1em;
+  padding-left: 2em;
+}
+
+.hydro-markdown li {
+  margin-bottom: 0.25em;
+}
+
+.hydro-markdown li + li {
+  margin-top: 0.25em;
+}
+
+.hydro-markdown img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.hydro-markdown hr {
+  height: 1px;
+  margin: 1.5em 0;
+  padding: 0;
+  background-color: var(--hydro-border);
+  border: 0;
+}
+
+.hydro-markdown table {
+  width: 100%;
+  margin-bottom: 1em;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.hydro-markdown table th,
+.hydro-markdown table td {
+  padding: 0.5em 1em;
+  border: 1px solid var(--hydro-border);
+}
+
+.hydro-markdown table th {
+  font-weight: 600;
+  background-color: var(--hydro-surface);
+}
+
+.hydro-markdown table tr:nth-child(even) {
+  background-color: var(--hydro-surface);
+}
+
+.hydro-markdown .katex-display {
+  margin: 1em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.hydro-markdown .katex {
+  font-size: 1.1em;
+}
+
+/* Syntax highlighting theme */
+.hydro-markdown pre code.hljs {
+  padding: 1em;
+}
+
+.hljs {
+  background: var(--hydro-surface);
+  color: var(--hydro-text);
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #6a737d;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag {
+  color: #d73a49;
+}
+
+.hljs-literal,
+.hljs-number,
+.hljs-tag .hljs-attr,
+.hljs-template-variable,
+.hljs-variable {
+  color: #005cc5;
+}
+
+.hljs-doctag,
+.hljs-string,
+.hljs-regexp,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-meta,
+.hljs-selector-id,
+.hljs-title {
+  color: #22863a;
+}
+
+.hljs-built_in,
+.hljs-class .hljs-title,
+.hljs-type {
+  color: #6f42c1;
+}
+
+.hljs-attr,
+.hljs-params,
+.hljs-template-tag {
+  color: #e36209;
+}
+
+.hljs-section,
+.hljs-name,
+.hljs-selector-class,
+.hljs-selector-pseudo {
+  color: #005cc5;
+}
+
+.hljs-attribute {
+  color: #6f42c1;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}

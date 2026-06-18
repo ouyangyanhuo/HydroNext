@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Paper, Stack, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
@@ -21,7 +22,7 @@ export default function ManageSettingPage() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Save failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Save failed')));
     } catch { setError('Network error'); } finally { setLoading(false); }
   };
 

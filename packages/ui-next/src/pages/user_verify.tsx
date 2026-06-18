@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
 import { useNavigate } from '@/context/router';
@@ -20,7 +21,7 @@ export default function UserVerifyPage() {
         body: JSON.stringify({ code }),
       });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Verification failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Verification failed')));
       else navigate('/');
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

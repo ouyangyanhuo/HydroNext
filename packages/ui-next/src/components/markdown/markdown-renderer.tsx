@@ -1,7 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Paper } from '@mantine/core';
+import MarkdownIt from 'markdown-it';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
+
+// Create markdown-it instance with same config as ui-default
+const md = new MarkdownIt({
+  linkify: true,
+  html: true,
+});
 
 interface MarkdownRendererProps {
   content: any;
@@ -15,7 +22,17 @@ interface MarkdownRendererProps {
  */
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   const language = useSessionStore((s) => s.language);
-  const text = extractLocalizedContent(content, language);
+  const rawText = extractLocalizedContent(content, language);
+
+  // Convert Markdown to HTML
+  const html = useMemo(() => {
+    if (!rawText) return '';
+    // If already HTML (starts with <), return as-is
+    if (rawText.trim().startsWith('<')) return rawText;
+    // Otherwise convert Markdown to HTML
+    return md.render(rawText);
+  }, [rawText]);
+
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,17 +56,16 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
         hljs.highlightElement(el);
       });
     }
-  }, [text]);
+  }, [html]);
 
-  if (!text) return null;
+  if (!html) return null;
 
   return (
     <Paper
       ref={ref}
       className={`hydro-markdown ${className || ''}`}
       p="md"
-      withBorder
-      dangerouslySetInnerHTML={{ __html: text }}
+      dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 }

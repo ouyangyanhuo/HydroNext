@@ -1,11 +1,8 @@
 import { Anchor, Group, Text } from '@mantine/core';
 import { Link } from '@/components/link';
-import { useDomain } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 
 export function Footer() {
-  const domain = useDomain();
-  const year = new Date().getFullYear();
   const { t } = useI18n();
 
   return (
@@ -13,8 +10,8 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-6">
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <Text size="sm" c="dimmed">
-            &copy; {year} {domain.name || 'Magneto'}. {t('Powered by')}{' '}
-            <Anchor size="sm">
+            &copy; 2026 Magneto. {t('Powered by')}{' '}
+            <Anchor href="https://hydro.ac" target="_blank" rel="noopener" size="sm">
               Hydro
             </Anchor>
           </Text>
@@ -25,7 +22,7 @@ export function Footer() {
             <Anchor component={Link} to="wiki_help" size="sm" c="dimmed">
               {t('Help')}
             </Anchor>
-            <Anchor href="https://github.com/hydro-dev/Hydro" target="_blank" rel="noopener" size="sm" c="dimmed">
+            <Anchor href="https://github.com/ouyangyanhuo/HydroNext" target="_blank" rel="noopener" size="sm" c="dimmed">
               GitHub
             </Anchor>
           </Group>

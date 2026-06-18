@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, Paper, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
@@ -16,7 +17,7 @@ export default function DomainCreatePage() {
     try {
       const res = await fetch('/domain/create', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else navigate(`/d/${form.id}`);
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

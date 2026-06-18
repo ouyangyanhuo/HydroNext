@@ -4,10 +4,10 @@ import { useI18n } from '@/hooks/use-i18n';
 
 export default function UserLogoutPage() {
   const { t } = useI18n();
-  
 
   useEffect(() => {
-    fetch('/logout', { method: 'GET', credentials: 'same-origin' })
+    // POST to /logout to actually log out (GET only shows template)
+    fetch('/logout', { method: 'POST', credentials: 'same-origin' })
       .then(() => { window.location.href = '/'; })
       .catch(() => { window.location.href = '/'; });
   }, []);

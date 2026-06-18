@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, Paper, Select, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { CodeEditor } from '@/components/editor/code-editor';
@@ -45,7 +46,7 @@ export default function ProblemSubmitPage() {
 
       const data = await res.json();
       if (data.error) {
-        setError(data.error.message || 'Submission failed');
+        setError(formatErrorMessage(data.error, t('Submission failed')));
       } else if (data.rid) {
         navigate(`/record/${data.rid}`);
       } else {

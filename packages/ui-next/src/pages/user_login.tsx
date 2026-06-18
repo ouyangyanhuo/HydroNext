@@ -24,10 +24,16 @@ export default function UserLoginPage() {
     setError('');
 
     try {
+      const formData = new URLSearchParams();
+      formData.append('uname', uname);
+      formData.append('password', password);
+      formData.append('rememberme', rememberme ? 'on' : '');
+      formData.append('redirect', redirect);
+
       const res = await fetch('/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ uname, password, rememberme, redirect }),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        body: formData.toString(),
       });
 
       if (res.redirected) {
@@ -37,12 +43,18 @@ export default function UserLoginPage() {
 
       const data = await res.json();
       if (data.error) {
-        setError(data.error.message || 'Login failed');
+        let msg = data.error.message || t('Login failed');
+        if (data.error.params) {
+          data.error.params.forEach((p: string, i: number) => {
+            msg = msg.replace(`{${i}}`, p);
+          });
+        }
+        setError(msg);
       } else {
         navigate(redirect);
       }
     } catch (err) {
-      setError('Network error');
+      setError(t('Network error'));
     } finally {
       setLoading(false);
     }

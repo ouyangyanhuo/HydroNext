@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
 import { Link } from '@/components/link';
@@ -22,7 +23,7 @@ export default function UserLostpassPage() {
         body: JSON.stringify({ mail }),
       });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else setSuccess(t('Password reset email sent. Please check your inbox.'));
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, Paper, Stack, Switch, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
@@ -36,7 +37,7 @@ export default function ProblemEditPage() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Save failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Save failed')));
       else navigate(isNew ? '/p' : `/p/${pdoc.pid || pdoc.docId}/edit`);
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

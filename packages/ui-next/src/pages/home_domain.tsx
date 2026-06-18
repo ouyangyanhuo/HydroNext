@@ -1,3 +1,4 @@
+import { getAvatarUrl } from '@/utils/avatar';
 import { Avatar, Button, Group, Paper, SimpleGrid, Stack, Text } from '@mantine/core';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
@@ -22,7 +23,7 @@ export default function HomeDomainPage() {
           {ddocs.map((d: any) => (
             <Paper key={d._id} withBorder p="md">
               <Group gap="sm">
-                <Avatar src={d.avatar} size="sm" radius="xl" />
+                <Avatar src={getAvatarUrl(d.avatar)} size="sm" radius="xl" />
                 <div>
                   <Link to="domain_dashboard" params={{ domainId: d._id }} className="no-underline hover:underline">
                     <Text fw={500} size="sm">{d.name}</Text>

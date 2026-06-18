@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, Paper, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
@@ -19,7 +20,7 @@ export default function DomainEditPage() {
       const body = { ...form, host: form.host.split(',').map((s) => s.trim()).filter(Boolean) };
       const res = await fetch(window.location.href, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Save failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Save failed')));
     } catch { setError('Network error'); } finally { setLoading(false); }
   };
 

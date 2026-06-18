@@ -41,6 +41,11 @@ Email Sent: 이메일 발송됨
 A password reset link has been sent to your email. Please check your inbox.: 비밀번호 재설정 링크가 이메일로 발송되었습니다. 받은 편지함을 확인하세요.
 Verification Email Sent: 인증 이메일 발송됨
 A verification link has been sent to your email. Please check your inbox to complete registration.: 인증 링크가 이메일로 발송되었습니다. 등록을 완료하려면 받은 편지함을 확인하세요.
+A verification link will be sent to your email.: 인증 링크가 이메일로 발송됩니다.
+Send Verification Email: 인증 이메일 발송
+Passwords do not match: 비밀번호가 일치하지 않습니다
+Registration failed: 등록 실패
+"Too frequent operations of send_mail (limit: 1 operations in 60 seconds).": "이메일 발송이 너무 빈번합니다 (제한: 60초에 1회)."
 Logging out...: 로그아웃 중...
 Account Deletion Pending: 계정 삭제 대기 중
 Your account deletion request has been received. It will be processed within 30 days.: 계정 삭제 요청이 접수되었습니다. 30일 이내에 처리됩니다.
@@ -273,3 +278,6 @@ Don't have an account? Register: 계정이 없으신가요? 회원가입
 
 # Misc
 Unknown: 알 수 없음
+Login failed: 로그인 실패
+Network error: 네트워크 오류
+Continue: 계속

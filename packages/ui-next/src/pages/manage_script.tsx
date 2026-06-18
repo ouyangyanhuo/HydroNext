@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, Paper, Select, Stack, Text } from '@mantine/core';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
@@ -18,7 +19,7 @@ export default function ManageScriptPage() {
     try {
       const res = await fetch(window.location.href, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ script: selected }) });
       const data = await res.json();
-      if (data.error) setOutput(`Error: ${data.error.message}`);
+      if (data.error) setOutput(`Error: ${formatErrorMessage(data.error, 'Error')}`);
       else setOutput(data.output || 'Done');
     } catch { setOutput('Network error'); } finally { setLoading(false); }
   };

@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, Paper, PasswordInput, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
@@ -22,7 +23,7 @@ export default function HomeSecurityPage() {
         body: JSON.stringify({ operation: 'changePassword', oldPassword, newPassword }),
       });
       const data = await res.json();
-      if (data.error) setError(data.error.message || 'Failed');
+      if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else { setSuccess(t('Password changed')); setOldPassword(''); setNewPassword(''); setConfirmPassword(''); }
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

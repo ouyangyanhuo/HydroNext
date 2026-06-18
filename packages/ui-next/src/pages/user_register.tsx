@@ -1,46 +1,35 @@
-import { Anchor, Button, Group, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Anchor, Button, Group, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
 import { Link } from '@/components/link';
-import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function UserRegisterPage() {
   const { t } = useI18n();
-  const navigate = useNavigate();
   const [mail, setMail] = useState('');
-  const [uname, setUname] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      setError(t('Passwords do not match'));
-      return;
-    }
+    if (!mail) return;
     setLoading(true);
     setError('');
 
-    try {
-      const res = await fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ mail, uname, password }),
-      });
+    // Use native form submission to follow backend redirect
+    // If SMTP is configured: redirects to mail sent page
+    // If SMTP is not configured: redirects to /register/{code} for username/password
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/register';
+    form.style.display = 'none';
 
-      const data = await res.json();
-      if (data.error) {
-        setError(data.error.message || 'Registration failed');
-      } else {
-        navigate('/');
-      }
-    } catch (err) {
-      setError('Network error');
-    } finally {
-      setLoading(false);
-    }
+    const input = document.createElement('input');
+    input.name = 'mail';
+    input.value = mail;
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+    form.submit();
   };
 
   return (
@@ -60,27 +49,10 @@ export default function UserRegisterPage() {
               value={mail}
               onChange={(e) => setMail(e.currentTarget.value)}
               required
-            />
-            <TextInput
-              label={t('Username')}
-              value={uname}
-              onChange={(e) => setUname(e.currentTarget.value)}
-              required
-            />
-            <PasswordInput
-              label={t('Password')}
-              value={password}
-              onChange={(e) => setPassword(e.currentTarget.value)}
-              required
-            />
-            <PasswordInput
-              label={t('Confirm Password')}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.currentTarget.value)}
-              required
+              autoFocus
             />
             <Button type="submit" fullWidth loading={loading}>
-              {t('Register')}
+              {t('Continue')}
             </Button>
           </Stack>
         </form>
