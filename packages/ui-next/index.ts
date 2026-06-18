@@ -171,6 +171,13 @@ export async function buildPlugins() {
 export async function apply(ctx: Context) {
     if (process.env.HYDRO_CLI) return;
 
+    // Allow disabling ui-next via system setting or env var
+    const disabled = ctx.setting?.get?.('ui-next.disable') || process.env.HYDRO_UI_NEXT_DISABLE;
+    if (disabled) {
+        logger.info('ui-next is disabled via configuration');
+        return;
+    }
+
     if (process.env.DEV) {
         const vite = await createServer({
             root: __dirname,

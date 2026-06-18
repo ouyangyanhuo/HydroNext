@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Badge, Code, Divider, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -5,6 +6,8 @@ import { STATUS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
+import { useRecordSocket } from '@/hooks/use-record-socket';
+import { TimeDisplay } from '@/components/common/time-display';
 
 function CaseResult({ c, index }: { c: any, index: number }) {
   return (
@@ -29,7 +32,10 @@ export default function RecordDetailPage() {
   const { args } = usePageData();
   const { t } = useI18n();
 
-  const rdoc = args.rdoc || {};
+  // Merge server-side data with real-time WebSocket updates
+  const serverRdoc = args.rdoc || {};
+  const wsUpdate = useRecordSocket(serverRdoc._id);
+  const rdoc = wsUpdate ? { ...serverRdoc, ...wsUpdate } : serverRdoc;
   const udoc = args.udoc || {};
   const pdoc = args.pdoc || {};
   const tdoc = args.tdoc;

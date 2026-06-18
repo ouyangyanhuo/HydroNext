@@ -16,9 +16,18 @@ export default defineConfig({
     build: {
         outDir: 'public',
         emptyOutDir: true,
+        chunkSizeWarningLimit: 600,
         rolldownOptions: {
             output: {
                 codeSplitting: true,
+                manualChunks(id: string) {
+                    if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+                        return 'react-vendor';
+                    }
+                    if (id.includes('node_modules/@mantine')) {
+                        return 'mantine-vendor';
+                    }
+                },
             },
         },
     },

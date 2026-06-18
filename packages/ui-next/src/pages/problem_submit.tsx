@@ -1,8 +1,9 @@
-import { Button, Group, Paper, Select, Stack, Text, Textarea, Title } from '@mantine/core';
 import { useState } from 'react';
+import { Button, Group, Paper, Select, Stack, Text, Title } from '@mantine/core';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
+import { CodeEditor } from '@/components/editor/code-editor';
 
 export default function ProblemSubmitPage() {
   const { args } = usePageData();
@@ -10,9 +11,7 @@ export default function ProblemSubmitPage() {
   const navigate = useNavigate();
 
   const pdoc = args.pdoc || {};
-  const pdocConfig = args.pdoc?.config || {};
   const langs = args.langs || {};
-  const prefix = args.prefix || '';
 
   const [lang, setLang] = useState('');
   const [code, setCode] = useState('');
@@ -52,7 +51,7 @@ export default function ProblemSubmitPage() {
       } else {
         navigate(window.location.pathname.replace('/submit', ''));
       }
-    } catch (err) {
+    } catch {
       setError('Network error');
     } finally {
       setLoading(false);
@@ -65,9 +64,7 @@ export default function ProblemSubmitPage() {
         {t('Submit')} - {pdoc.pid}. {pdoc.title}
       </Title>
 
-      {error && (
-        <Text c="red" size="sm">{error}</Text>
-      )}
+      {error && <Text c="red" size="sm">{error}</Text>}
 
       <Paper withBorder p="lg">
         <Stack gap="md">
@@ -80,19 +77,11 @@ export default function ProblemSubmitPage() {
             searchable
           />
 
-          <Textarea
-            label={t('Code')}
+          <CodeEditor
             value={code}
-            onChange={(e) => setCode(e.currentTarget.value)}
-            minRows={15}
-            autosize
-            maxRows={40}
-            styles={{
-              input: {
-                fontFamily: 'var(--hydro-font-mono)',
-                fontSize: '14px',
-              },
-            }}
+            onChange={setCode}
+            language={lang}
+            height={500}
           />
 
           <Group justify="flex-end">
