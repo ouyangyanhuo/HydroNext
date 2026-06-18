@@ -1,0 +1,256 @@
+__flag: 🇬🇧
+__id: en
+__interface: yes
+__langname: English
+
+# Navigation
+Home: Home
+Problems: Problems
+Contests: Contests
+Training: Training
+Records: Records
+Discussion: Discussion
+About: About
+Help: Help
+Ranking: Ranking
+Status: Status
+
+# Auth
+Login: Login
+Register: Register
+Logout: Logout
+Username: Username
+Username or Email: Username or Email
+Password: Password
+Remember me: Remember me
+Forgot Password?: Forgot Password?
+Send Reset Link: Send Reset Link
+Reset Password: Reset Password
+New Password: New Password
+Old Password: Old Password
+Confirm Password: Confirm Password
+Change Password: Change Password
+Email: Email
+Verify: Verify
+Verify Email: Verify Email
+Verification Code: Verification Code
+Back to Login: Back to Login
+Sudo Mode: Sudo Mode
+Please enter your password to continue.: Please enter your password to continue.
+Email Sent: Email Sent
+A password reset link has been sent to your email. Please check your inbox.: A password reset link has been sent to your email. Please check your inbox.
+Verification Email Sent: Verification Email Sent
+A verification link has been sent to your email. Please check your inbox to complete registration.: A verification link has been sent to your email. Please check your inbox to complete registration.
+Logging out...: Logging out...
+Account Deletion Pending: Account Deletion Pending
+Your account deletion request has been received. It will be processed within 30 days.: Your account deletion request has been received. It will be processed within 30 days.
+Or login with: Or login with
+
+# Common
+Save: Save
+Cancel: Cancel
+Confirm: Confirm
+Delete: Delete
+Create: Create
+Edit: Edit
+Close: Close
+Back: Back
+Submit: Submit
+Search: Search
+Upload: Upload
+Download: Download
+Import: Import
+Export: Export
+Loading...: Loading...
+Error: Error
+Success: Success
+Warning: Warning
+No data: No data
+No results: No results
+Settings: Settings
+Configuration: Configuration
+Dashboard: Dashboard
+Manage: Manage
+Admin: Admin
+View All: View All
+View Record: View Record
+All Records: All Records
+Latest Record: Latest Record
+Replies: Replies
+Reply: Reply
+Post Reply: Post Reply
+Title: Title
+Content: Content
+Tags: Tags
+Hidden: Hidden
+Name: Name
+Size: Size
+Date: Date
+Time: Time
+Duration: Duration
+Rule: Rule
+Start: Start
+End: End
+User: User
+Users: Users
+Problem: Problem
+Contest: Contest
+Record: Record
+Domain: Domain
+Score: Score
+Language: Language
+Submissions: Submissions
+Accept Rate: Accept Rate
+Total Submissions: Total Submissions
+Joined: Joined
+Last login: Last login
+Bio: Bio
+School: School
+Grade: Grade
+Gender: Gender
+Avatar URL: Avatar URL
+Bulletin: Bulletin
+Host: Host
+
+# Problem
+Create Problem: Create Problem
+Edit Problem: Edit Problem
+Problem ID: Problem ID
+Content (Markdown): Content (Markdown)
+Test Data: Test Data
+Upload Test Data: Upload Test Data
+Source Code: Source Code
+Solutions: Solutions
+Write Solution: Write Solution
+Statistics: Statistics
+Config: Config
+Files: Files
+No files: No files
+Hack: Hack
+Submit Hack: Submit Hack
+Import Problems: Import Problems
+Source: Source
+URL or ID: URL or ID
+
+# Submit
+Please select a language: Please select a language
+Please enter your code: Please enter your code
+Select language: Select language
+
+# Record
+Judging...: Judging...
+Test Cases: Test Cases
+Compiler Output: Compiler Output
+Judge Message: Judge Message
+Code Replay: Code Replay
+Play: Play
+Pause: Pause
+Reset: Reset
+
+# Contest
+Create Contest: Create Contest
+Edit Contest: Edit Contest
+Running: Running
+Upcoming: Upcoming
+Finished: Finished
+Scoreboard: Scoreboard
+Participants: Participants
+Register: Register
+Registered: Registered
+Clarifications: Clarifications
+Ask a Question: Ask a Question
+Answered: Answered
+Pending: Pending
+Balloons: Balloons
+Done: Done
+Print: Print
+Send to Printer: Send to Printer
+
+# Homework
+Homework: Homework
+Create Homework: Create Homework
+Edit Homework: Edit Homework
+Due: Due
+Open: Open
+No homework: No homework
+
+# Training
+Training: Training
+Create Training: Create Training
+Edit Training: Edit Training
+Section: Section
+No training: No training
+
+# Discussion
+Create Discussion: Create Discussion
+Edit Discussion: Edit Discussion
+Node: Node
+No discussions: No discussions
+No replies: No replies
+replies: replies
+
+# User
+My Profile: My Profile
+My Files: My Files
+My Domains: My Domains
+Create Domain: Create Domain
+Domain Settings: Domain Settings
+Domain Manage: Domain Manage
+Domain Users: Domain Users
+Domain ID: Domain ID
+Roles: Roles
+Permissions: Permissions
+Groups: Groups
+Join Applications: Join Applications
+Request to Join: Request to Join
+Accept: Accept
+Reject: Reject
+No pending applications: No pending applications
+No domains: No domains
+
+# Manage
+System Management: System Management
+System Settings: System Settings
+Scripts: Scripts
+Run: Run
+User Import: User Import
+User Privileges: User Privileges
+Format: Format
+Data: Data
+Apply: Apply
+Service Status: Service Status
+Uptime: Uptime
+Online: Online
+No judges connected: No judges connected
+
+# Messages
+No messages: No messages
+
+# Misc
+Welcome: Welcome
+Welcome to Hydro: Welcome to Hydro
+Explore problems, contests, and improve your skills.: Explore problems, contests, and improve your skills.
+Login or register to start solving problems.: Login or register to start solving problems.
+Recent Problems: Recent Problems
+Recent Contests: Recent Contests
+Recent Discussions: Recent Discussions
+Powered by: Powered by
+Paste limit exceeded: Paste limit exceeded
+File too large: File too large
+Drag files here or click to upload: Drag files here or click to upload
+Uploading...: Uploading...
+Nothing to preview: Nothing to preview
+Write: Write
+Preview: Preview
+Version: Version
+No about page content configured.: No about page content configured.
+
+# Error pages
+Page not found: Page not found
+An error occurred: An error occurred
+Back to Home: Back to Home
+
+# Scratchpad
+Scratchpad: Scratchpad
+Open Scratchpad: Open Scratchpad
+Enter Online Programming Mode: Enter Online Programming Mode

@@ -1,0 +1,261 @@
+__flag: 🇨🇳
+__id: zh
+__interface: yes
+__langname: 简体中文
+
+# Navigation
+Home: 首页
+Problems: 题目
+Contests: 比赛
+Training: 训练
+Records: 评测记录
+Discussion: 讨论
+About: 关于
+Help: 帮助
+Ranking: 排名
+Status: 状态
+
+# Auth
+Login: 登录
+Register: 注册
+Logout: 登出
+Username: 用户名
+Username or Email: 用户名或邮箱
+Password: 密码
+Remember me: 记住我
+Forgot Password?: 忘记密码？
+Send Reset Link: 发送重置链接
+Reset Password: 重置密码
+New Password: 新密码
+Old Password: 旧密码
+Confirm Password: 确认密码
+Change Password: 修改密码
+Email: 电子邮件
+Verify: 验证
+Verify Email: 验证邮箱
+Verification Code: 验证码
+Back to Login: 返回登录
+Sudo Mode: Sudo 模式
+Please enter your password to continue.: 请输入密码以继续。
+Email Sent: 邮件已发送
+A password reset link has been sent to your email. Please check your inbox.: 密码重置链接已发送到您的邮箱，请查收。
+Verification Email Sent: 验证邮件已发送
+A verification link has been sent to your email. Please check your inbox to complete registration.: 验证链接已发送到您的邮箱，请查收以完成注册。
+Logging out...: 正在登出...
+Account Deletion Pending: 账户删除待处理
+Your account deletion request has been received. It will be processed within 30 days.: 您的账户删除请求已收到，将在 30 天内处理。
+Or login with: 或登录方式
+
+# Common
+Save: 保存
+Cancel: 取消
+Confirm: 确认
+Delete: 删除
+Create: 创建
+Edit: 编辑
+Close: 关闭
+Back: 返回
+Submit: 提交
+Search: 搜索
+Upload: 上传
+Download: 下载
+Import: 导入
+Export: 导出
+Loading...: 加载中...
+Error: 错误
+Success: 成功
+Warning: 警告
+No data: 暂无数据
+No results: 暂无结果
+Settings: 设置
+Configuration: 配置
+Dashboard: 仪表盘
+Manage: 管理
+Admin: 管理员
+View All: 查看全部
+View Record: 查看记录
+All Records: 所有记录
+Latest Record: 最新记录
+Replies: 回复
+Reply: 回复
+Post Reply: 发表回复
+Title: 标题
+Content: 内容
+Tags: 标签
+Hidden: 隐藏
+Name: 名称
+Size: 大小
+Date: 日期
+Time: 时间
+Duration: 持续时间
+Rule: 规则
+Start: 开始
+End: 结束
+User: 用户
+Users: 用户
+Problem: 题目
+Contest: 比赛
+Record: 记录
+Domain: 域
+Score: 分数
+Language: 语言
+Submissions: 递交
+Accept Rate: 通过率
+Total Submissions: 总递交数
+Joined: 加入时间
+Last login: 最后登录
+Bio: 简介
+School: 学校
+Grade: 年级
+Gender: 性别
+Avatar URL: 头像链接
+Bulletin: 公告
+Host: 主机
+
+# Problem
+Create Problem: 创建题目
+Edit Problem: 编辑题目
+Problem ID: 题目 ID
+Content (Markdown): 内容（Markdown）
+Test Data: 测试数据
+Upload Test Data: 上传测试数据
+Source Code: 源代码
+Solutions: 题解
+Write Solution: 写题解
+Statistics: 统计
+Config: 配置
+Files: 文件
+No files: 暂无文件
+Hack: Hack
+Submit Hack: 提交 Hack
+Import Problems: 导入题目
+Source: 来源
+URL or ID: 链接或 ID
+Enter Online Programming Mode: 进入在线编程模式
+
+# Submit
+Please select a language: 请选择语言
+Please enter your code: 请输入代码
+Select language: 选择语言
+
+# Record
+Judging...: 评测中...
+Test Cases: 测试点
+Compiler Output: 编译输出
+Judge Message: 评测信息
+Code Replay: 代码回放
+Play: 播放
+Pause: 暂停
+Reset: 重置
+
+# Contest
+Create Contest: 创建比赛
+Edit Contest: 编辑比赛
+Running: 进行中
+Upcoming: 即将开始
+Finished: 已结束
+Scoreboard: 成绩表
+Participants: 参赛者
+Register: 报名
+Registered: 已报名
+Clarifications: 澄清
+Ask a Question: 提问
+Answered: 已回答
+Pending: 待处理
+Balloons: 气球
+Done: 已完成
+Print: 打印
+Send to Printer: 发送到打印机
+Contest Settings: 比赛设置
+
+# Homework
+Homework: 作业
+Create Homework: 创建作业
+Edit Homework: 编辑作业
+Due: 截止时间
+Open: 开放
+No homework: 暂无作业
+
+# Training
+Training: 训练
+Create Training: 创建训练
+Edit Training: 编辑训练
+Section: 章节
+No training: 暂无训练
+
+# Discussion
+Discussion: 讨论
+Create Discussion: 创建讨论
+Edit Discussion: 编辑讨论
+Node: 节点
+No discussions: 暂无讨论
+No replies: 暂无回复
+replies: 条回复
+
+# User
+My Profile: 我的资料
+My Files: 我的文件
+My Domains: 我的域
+Create Domain: 创建域
+Domain Settings: 域设置
+Domain Manage: 域管理
+Domain Users: 域用户
+Domain ID: 域 ID
+Roles: 角色
+Permissions: 权限
+Groups: 用户组
+Join Applications: 加入申请
+Request to Join: 申请加入
+Accept: 接受
+Reject: 拒绝
+No pending applications: 暂无待处理申请
+No domains: 暂无域
+
+# Manage
+System Management: 系统管理
+System Settings: 系统设置
+Scripts: 脚本
+Run: 运行
+User Import: 用户导入
+User Privileges: 用户权限
+Format: 格式
+Data: 数据
+Apply: 应用
+Service Status: 服务状态
+Uptime: 运行时间
+Online: 在线
+No judges connected: 无评测机连接
+
+# Messages
+Messages: 消息
+No messages: 暂无消息
+
+# Misc
+Welcome: 欢迎
+Welcome to Hydro: 欢迎使用 Hydro
+Explore problems, contests, and improve your skills.: 探索题目、比赛，提升你的技能。
+Login or register to start solving problems.: 登录或注册后开始解题。
+Recent Problems: 最近题目
+Recent Contests: 最近比赛
+Recent Discussions: 最近讨论
+Powered by: 驱动于
+Paste limit exceeded: 粘贴内容超过限制
+粘贴内容超过限制: 粘贴内容超过限制
+File too large: 文件过大
+Drag files here or click to upload: 拖拽文件到此处或点击上传
+Uploading...: 上传中...
+Nothing to preview: 暂无预览内容
+Write: 编写
+Preview: 预览
+Version: 版本
+No about page content configured.: 暂未配置关于页面内容。
+
+# Error pages
+Page not found: 页面未找到
+An error occurred: 发生错误
+Back to Home: 返回首页
+
+# Scratchpad
+Scratchpad: 便笺本
+Open Scratchpad: 打开便笺本
+Enter Online Programming Mode: 进入在线编程模式

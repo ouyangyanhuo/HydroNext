@@ -8,11 +8,15 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <MantineAppShell>
+    <MantineAppShell
+      header={{ height: 48 }}
+      footer={{ height: 60 }}
+      padding="md"
+    >
       <MantineAppShell.Header>
         <TopNav />
       </MantineAppShell.Header>
-      <MantineAppShell.Main className="min-h-screen">
+      <MantineAppShell.Main>
         <div className="mx-auto max-w-7xl px-4 py-6">
           {children}
         </div>

@@ -1,5 +1,4 @@
 import { Button, Menu, Text } from '@mantine/core';
-import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 
 const LANGUAGES = [
@@ -11,13 +10,12 @@ const LANGUAGES = [
 
 export function LanguageMenu() {
   const language = useSessionStore((s) => s.language);
-  const { t } = useI18n();
 
   const currentLang = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
   const handleChange = (langCode: string) => {
-    // Navigate to the backend language switch endpoint (standard link, not fetch)
-    // This ensures the session is properly updated and the page reloads with new locale
+    // Navigate to the backend language switch endpoint
+    // The backend will persist the language to session/db and redirect back
     window.location.href = `/language/${langCode}`;
   };
 
@@ -34,7 +32,7 @@ export function LanguageMenu() {
             key={lang.code}
             onClick={() => handleChange(lang.code)}
             leftSection={lang.flag}
-            disabled={lang.code === language}
+            fw={lang.code === language ? 700 : 400}
           >
             <Text size="sm">{lang.name}</Text>
           </Menu.Item>
