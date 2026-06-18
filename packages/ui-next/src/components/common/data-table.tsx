@@ -1,4 +1,4 @@
-import { Table } from '@mantine/core';
+import { ScrollArea, Table } from '@mantine/core';
 import { EmptyState } from './empty-state';
 
 interface Column<T> {
@@ -31,27 +31,37 @@ export function DataTable<T extends Record<string, any>>({
   }
 
   return (
-    <Table striped={striped} highlightOnHover={highlightOnHover}>
-      <Table.Thead>
-        <Table.Tr>
-          {columns.map((col) => (
-            <Table.Th key={col.key} style={{ width: col.width, textAlign: col.align }}>
-              {col.title}
-            </Table.Th>
-          ))}
-        </Table.Tr>
-      </Table.Thead>
-      <Table.Tbody>
-        {data.map((item) => (
-          <Table.Tr key={item[keyField]}>
-            {columns.map((col) => (
-              <Table.Td key={col.key} style={{ textAlign: col.align }}>
-                {col.render ? col.render(item) : item[col.key]}
-              </Table.Td>
+    <div className="hydro-table-wrap">
+      <ScrollArea type="auto">
+        <Table
+          striped={striped}
+          highlightOnHover={highlightOnHover}
+          verticalSpacing="sm"
+          horizontalSpacing="md"
+          className="hydro-data-table"
+        >
+          <Table.Thead>
+            <Table.Tr>
+              {columns.map((col) => (
+                <Table.Th key={col.key} style={{ width: col.width, textAlign: col.align }}>
+                  {col.title}
+                </Table.Th>
+              ))}
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {data.map((item) => (
+              <Table.Tr key={item[keyField]}>
+                {columns.map((col) => (
+                  <Table.Td key={col.key} style={{ textAlign: col.align }}>
+                    {col.render ? col.render(item) : item[col.key]}
+                  </Table.Td>
+                ))}
+              </Table.Tr>
             ))}
-          </Table.Tr>
-        ))}
-      </Table.Tbody>
-    </Table>
+          </Table.Tbody>
+        </Table>
+      </ScrollArea>
+    </div>
   );
 }

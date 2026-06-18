@@ -236,6 +236,8 @@ No messages: 暂无消息
 # Misc
 Welcome: 欢迎
 Welcome to Hydro: 欢迎使用 HNTOU OJ
+Online Judge: 在线评测
+Pinned: 置顶
 Explore problems, contests, and improve your skills.: 探索题目、比赛，提升你的技能。
 Login or register to start solving problems.: 登录或注册后开始解题。
 Recent Problems: 最近题目
@@ -274,8 +276,13 @@ No clarifications: 暂无提问
 No solutions: 暂无题解
 
 # Auth links
+Account: 账户
+Sign in to continue to Hydro.: 登录后继续使用 Hydro。
+Create an account to start solving problems.: 创建账号后开始解题。
+Enter your email to receive a reset link.: 输入邮箱以接收重置链接。
 Already have an account? Login: 已有账号？登录
 Don't have an account? Register: 没有账号？注册
+votes: 票
 
 # Misc
 Unknown: 未知

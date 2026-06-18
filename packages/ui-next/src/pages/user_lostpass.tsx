@@ -1,7 +1,8 @@
 import { formatErrorMessage } from '@/utils/error';
-import { Button, Group, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Button, Group, Stack, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { Link } from '@/components/link';
+import { AuthPanel } from '@/components/auth/auth-panel';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function UserLostpassPage() {
@@ -29,21 +30,18 @@ export default function UserLostpassPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md py-8">
-      <Paper p="xl" withBorder>
-        <Title order={2} mb="md">{t('Forgot Password')}</Title>
-        {error && <Text c="red" size="sm" mb="md">{error}</Text>}
-        {success && <Text c="green" size="sm" mb="md">{success}</Text>}
-        <form onSubmit={handleSubmit}>
-          <Stack gap="md">
-            <TextInput label={t('Email')} type="email" value={mail} onChange={(e) => setMail(e.currentTarget.value)} required autoFocus />
-            <Button type="submit" fullWidth loading={loading}>{t('Send Reset Link')}</Button>
-          </Stack>
-        </form>
-        <Group justify="center" mt="md">
-          <Text component={Link} to="user_login" size="sm">{t('Back to Login')}</Text>
-        </Group>
-      </Paper>
-    </div>
+    <AuthPanel title={t('Forgot Password')} eyebrow={t('Account')} description={t('Enter your email to receive a reset link.')}>
+      {error && <Text c="red" size="sm">{error}</Text>}
+      {success && <Text c="green" size="sm">{success}</Text>}
+      <form onSubmit={handleSubmit}>
+        <Stack gap="md">
+          <TextInput label={t('Email')} type="email" value={mail} onChange={(e) => setMail(e.currentTarget.value)} required autoFocus />
+          <Button type="submit" fullWidth loading={loading}>{t('Send Reset Link')}</Button>
+        </Stack>
+      </form>
+      <Group justify="center">
+        <Text component={Link} to="user_login" size="sm">{t('Back to Login')}</Text>
+      </Group>
+    </AuthPanel>
   );
 }

@@ -1,5 +1,6 @@
 import { Badge, Button, Card, Group, Stack, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
+import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
@@ -16,9 +17,10 @@ function ContestCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
   const isRunning = now >= beginAt && now < endAt;
   const isUpcoming = now < beginAt;
   const isFinished = now >= endAt;
+  const statusColor = isRunning ? 'var(--hydro-success)' : isUpcoming ? 'var(--hydro-primary)' : 'var(--hydro-border-strong)';
 
   return (
-    <Card withBorder p="md">
+    <Card withBorder p="lg" className="hydro-card" style={{ borderLeft: `4px solid ${statusColor}` }}>
       <Group justify="space-between" align="flex-start">
         <div className="flex-1 min-w-0">
           <Group gap="xs" mb="xs">
@@ -30,11 +32,11 @@ function ContestCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
           <Link
             to="contest_detail"
             params={{ tid: tdoc.docId || tdoc._id }}
-            className="no-underline hover:underline"
+            className="hydro-subtle-link"
           >
-            <Text fw={500}>{tdoc.title}</Text>
+            <Text fw={700} size="lg" className="truncate">{tdoc.title}</Text>
           </Link>
-          <Group gap="md" mt="xs">
+          <Group gap="md" mt="sm" wrap="wrap">
             <Text size="xs" c="dimmed">
               {t('Start')}: <TimeDisplay date={tdoc.beginAt} format="absolute" size="xs" />
             </Text>
@@ -76,25 +78,25 @@ export default function ContestMainPage() {
   };
 
   return (
-    <>
+    <Stack gap="lg">
       <PageHeader title={t('Contests')}>
-        <Group gap="xs">
+        <Group gap="xs" wrap="wrap">
           <TextInput
             placeholder={t('Search contests...')}
             value={search}
             onChange={(e) => setSearch(e.currentTarget.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             size="xs"
-            w={200}
+            className="w-[190px] sm:w-[260px]"
           />
           <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
         </Group>
       </PageHeader>
 
       {tdocs.length === 0 ? (
-        <Text c="dimmed" ta="center" py="xl">{t('No contests found')}</Text>
+        <EmptyState message={t('No contests found')} />
       ) : (
-        <Stack gap="sm">
+        <Stack gap="md">
           {tdocs.map((tdoc: any) => (
             <ContestCard
               key={tdoc.docId || tdoc._id}
@@ -106,6 +108,6 @@ export default function ContestMainPage() {
       )}
 
       <Paginator page={page} totalPages={tpcount} />
-    </>
+    </Stack>
   );
 }

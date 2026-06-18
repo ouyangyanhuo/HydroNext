@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Paper } from '@mantine/core';
+import { Box } from '@mantine/core';
 import MarkdownIt from 'markdown-it';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
@@ -61,10 +61,10 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
   if (!html) return null;
 
   return (
-    <Paper
+    <Box
       ref={ref}
       className={`hydro-markdown ${className || ''}`}
-      p="md"
+      p={0}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

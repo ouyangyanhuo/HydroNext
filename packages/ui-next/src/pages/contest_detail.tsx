@@ -1,4 +1,4 @@
-import { Badge, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { Badge, Button, Card, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
@@ -16,32 +16,55 @@ function ContestProblemList({ tdoc }: { tdoc: any }) {
   if (!pdoc || pdoc.length === 0) return null;
 
   return (
-    <Paper withBorder p="lg">
+    <Card withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-sm)]">
       <Title order={4} mb="sm">{t('Problems')}</Title>
-      <Stack gap="xs">
+      <Stack gap={8}>
         {pdoc.map((p: any, i: number) => {
           const pid = p.pid || String.fromCharCode(65 + i);
           const psdoc = psdict[p.docId];
           return (
-            <Group key={p.docId || i} justify="space-between" p="xs" className="rounded bg-[var(--hydro-surface)]">
-              <Group gap="sm">
-                <Badge size="sm" variant="filled">{pid}</Badge>
+            <Group key={p.docId || i} justify="space-between" wrap="nowrap" p="xs" className="rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] hover:bg-[var(--hydro-surface-muted)]">
+              <Group gap="sm" wrap="nowrap" className="min-w-0">
+                <Badge size="md" variant="filled" className="shrink-0">{pid}</Badge>
                 <Link
                   to="contest_detail_problem"
                   params={{ tid: tdoc._id || tdoc.docId, pid: p.docId || pid }}
-                  className="no-underline hover:underline text-[var(--hydro-text)]"
+                  className="hydro-subtle-link min-w-0"
                 >
-                  <Text size="sm">{p.title}</Text>
+                  <Text size="sm" fw={700} className="truncate">{p.title}</Text>
                 </Link>
               </Group>
               {psdoc?.status !== undefined && (
-                <Badge size="xs" variant="light" color={psdoc.status === 1 ? 'green' : 'red'}>
+                <Badge size="xs" variant="light" color={psdoc.status === 1 ? 'green' : 'red'} className="shrink-0">
                   {psdoc.score ?? ''}
                 </Badge>
               )}
             </Group>
           );
         })}
+      </Stack>
+    </Card>
+  );
+}
+
+function ContestInfoCard({ tdoc }: { tdoc: any }) {
+  const { t } = useI18n();
+
+  return (
+    <Paper withBorder p="md" className="hydro-panel">
+      <Stack gap="xs">
+        <Group justify="space-between" wrap="nowrap">
+          <Text size="xs" c="dimmed" fw={700}>{t('Start')}</Text>
+          <TimeDisplay date={tdoc.beginAt} format="absolute" size="xs" />
+        </Group>
+        <Group justify="space-between" wrap="nowrap">
+          <Text size="xs" c="dimmed" fw={700}>{t('End')}</Text>
+          <TimeDisplay date={tdoc.endAt} format="absolute" size="xs" />
+        </Group>
+        <Group justify="space-between" wrap="nowrap">
+          <Text size="xs" c="dimmed" fw={700}>{t('Rule')}</Text>
+          <Badge size="xs" variant="light">{tdoc.rule}</Badge>
+        </Group>
       </Stack>
     </Paper>
   );
@@ -55,7 +78,6 @@ export default function ContestDetailPage() {
 
   const tdoc = args.tdoc || {};
   const tsdoc = args.tsdoc || {};
-  const udict = args.udict || {};
   const files = args.files || [];
 
   const handleAttend = async () => {
@@ -76,53 +98,50 @@ export default function ContestDetailPage() {
 
   return (
     <Stack gap="lg">
-      <Title order={2}>{tdoc.title}</Title>
-
-      <ContestTimer beginAt={tdoc.beginAt} endAt={tdoc.endAt} />
+      <Card withBorder p="xl" className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]">
+        <Group justify="space-between" align="flex-start" gap="lg">
+          <div className="min-w-0 flex-1">
+            <Badge variant="light" color="hydroCopper" mb="sm">
+              {t('Contest')}
+            </Badge>
+            <Title order={1} className="text-3xl leading-tight text-[var(--hydro-text)] md:text-4xl">
+              {tdoc.title}
+            </Title>
+          </div>
+          <div className="shrink-0">
+            <ContestTimer beginAt={tdoc.beginAt} endAt={tdoc.endAt} />
+          </div>
+        </Group>
+      </Card>
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 min-w-0">
           {tdoc.content && (
-            <Paper withBorder p="lg" mb="md">
+            <Card withBorder p="lg" mb="md" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-sm)]">
               <MarkdownRenderer content={tdoc.content} />
-            </Paper>
+            </Card>
           )}
 
           <ContestProblemList tdoc={tdoc} />
 
           {files.length > 0 && (
-            <Paper withBorder p="lg" mt="md">
+            <Card withBorder p="lg" mt="md" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-sm)]">
               <Title order={4} mb="sm">{t('Files')}</Title>
               <Stack gap="xs">
                 {files.map((f: any) => (
-                  <Group key={f.name} justify="space-between">
-                    <Text size="sm">{f.name}</Text>
+                  <Group key={f.name} justify="space-between" className="rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] px-3 py-2">
+                    <Text size="sm" fw={600}>{f.name}</Text>
                     <Text size="xs" c="dimmed">{Math.round((f.size || 0) / 1024)}KB</Text>
                   </Group>
                 ))}
               </Stack>
-            </Paper>
+            </Card>
           )}
         </div>
 
         <div className="w-full lg:w-64 shrink-0">
           <Stack gap="md">
-            <Paper withBorder p="md">
-              <Stack gap="xs">
-                <Group justify="space-between">
-                  <Text size="xs" c="dimmed">{t('Start')}</Text>
-                  <TimeDisplay date={tdoc.beginAt} format="absolute" size="xs" />
-                </Group>
-                <Group justify="space-between">
-                  <Text size="xs" c="dimmed">{t('End')}</Text>
-                  <TimeDisplay date={tdoc.endAt} format="absolute" size="xs" />
-                </Group>
-                <Group justify="space-between">
-                  <Text size="xs" c="dimmed">{t('Rule')}</Text>
-                  <Badge size="xs">{tdoc.rule}</Badge>
-                </Group>
-              </Stack>
-            </Paper>
+            <ContestInfoCard tdoc={tdoc} />
 
             {isLoggedIn && !tsdoc.attend && (
               <Button fullWidth onClick={handleAttend}>

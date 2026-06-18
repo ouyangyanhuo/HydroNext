@@ -1,4 +1,4 @@
-import { Badge, Text } from '@mantine/core';
+import { Badge, Stack, Text } from '@mantine/core';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
@@ -56,9 +56,9 @@ export default function RecordMainPage() {
           <Link
             to="problem_detail"
             params={{ pid: pdoc.pid || pdoc.docId }}
-            className="no-underline hover:underline text-[var(--hydro-text)]"
+            className="hydro-subtle-link"
           >
-            <Text size="sm">{pdoc.pid}. {pdoc.title}</Text>
+            <Text size="sm" fw={600}>{pdoc.pid}. {pdoc.title}</Text>
           </Link>
         ) : (
           <Text size="sm" c="dimmed">{r.pid}</Text>
@@ -113,12 +113,12 @@ export default function RecordMainPage() {
   ];
 
   return (
-    <>
+    <Stack gap="lg">
       <PageHeader title={t('Records')} />
 
       <DataTable columns={columns} data={rdocs} emptyMessage={t('No records found')} />
 
       <Paginator page={page} totalPages={Math.ceil((args.rdocs?.length || 0) / 50) || 1} />
-    </>
+    </Stack>
   );
 }

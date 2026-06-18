@@ -1,4 +1,5 @@
-import { Button, Group, Paper, Stack, Text } from '@mantine/core';
+import { Button, Card, Group, Stack, Text } from '@mantine/core';
+import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
@@ -27,17 +28,17 @@ export default function DiscussionMainPage() {
       </PageHeader>
 
       {ddocs.length === 0 ? (
-        <Text c="dimmed" ta="center" py="xl">{t('No discussions')}</Text>
+        <EmptyState message={t('No discussions')} />
       ) : (
-        <Stack gap="xs">
+        <Stack gap="md">
           {ddocs.map((d: any) => (
-            <Paper key={d.docId} withBorder p="md">
+            <Card key={d.docId} withBorder p="lg" className="hydro-card">
               <Group justify="space-between" align="flex-start">
                 <div className="flex-1 min-w-0">
-                  <Link to="discussion_detail" params={{ did: d.docId }} className="no-underline hover:underline">
-                    <Text fw={500}>{d.title}</Text>
+                  <Link to="discussion_detail" params={{ did: d.docId }} className="hydro-subtle-link">
+                    <Text fw={700} className="truncate">{d.title}</Text>
                   </Link>
-                  <Group gap="md" mt={4}>
+                  <Group gap="md" mt="xs" wrap="wrap">
                     <UserLink user={udict[d.owner] || { _id: d.owner, uname: String(d.owner) }} size="xs" />
                     <TimeDisplay date={d.updateAt || d.createdAt} format="relative" />
                     {d.nReply !== undefined && (
@@ -46,7 +47,7 @@ export default function DiscussionMainPage() {
                   </Group>
                 </div>
               </Group>
-            </Paper>
+            </Card>
           ))}
         </Stack>
       )}

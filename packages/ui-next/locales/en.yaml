@@ -233,6 +233,8 @@ No messages: No messages
 # Misc
 Welcome: Welcome
 Welcome to Hydro: Welcome to HNTOU OJ
+Online Judge: Online Judge
+Pinned: Pinned
 Explore problems, contests, and improve your skills.: Explore problems, contests, and improve your skills.
 Login or register to start solving problems.: Login or register to start solving problems.
 Recent Problems: Recent Problems
@@ -271,8 +273,13 @@ No clarifications: No clarifications
 No solutions: No solutions
 
 # Auth links
+Account: Account
+Sign in to continue to Hydro.: Sign in to continue to Hydro.
+Create an account to start solving problems.: Create an account to start solving problems.
+Enter your email to receive a reset link.: Enter your email to receive a reset link.
 Already have an account? Login: Already have an account? Login
 Don't have an account? Register: Don't have an account? Register
+votes: votes
 
 # Misc
 Unknown: Unknown

@@ -25,7 +25,7 @@ export function Paginator({ page, totalPages, baseUrl }: PaginatorProps) {
   };
 
   return (
-    <Group justify="center" mt="md">
+    <Group justify="center" mt="lg" className="hydro-paginator">
       <Pagination
         value={page}
         total={totalPages}

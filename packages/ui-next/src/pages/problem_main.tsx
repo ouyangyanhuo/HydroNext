@@ -1,4 +1,4 @@
-import { Button, Group, Text, TextInput } from '@mantine/core';
+import { Button, Group, Stack, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
@@ -22,7 +22,6 @@ export default function ProblemMainPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
-  const domainId = useSessionStore((s) => s.ui.domainId);
 
   const pdocs = args.pdocs || [];
   const psdict = args.psdict || {};
@@ -67,9 +66,9 @@ export default function ProblemMainPage() {
           <Link
             to="problem_detail"
             params={{ pid: p.pid || p.docId }}
-            className="no-underline hover:underline text-[var(--hydro-text)]"
+            className="hydro-subtle-link"
           >
-            <Text size="sm">{extractLocalizedContent(p.title, lang)}</Text>
+            <Text size="sm" fw={600}>{extractLocalizedContent(p.title, lang)}</Text>
           </Link>
         );
       },
@@ -95,16 +94,16 @@ export default function ProblemMainPage() {
   ];
 
   return (
-    <>
+    <Stack gap="lg">
       <PageHeader title={t('Problems')}>
-        <Group gap="xs">
+        <Group gap="xs" wrap="wrap">
           <TextInput
             placeholder={t('Search problems...')}
             value={search}
             onChange={(e) => setSearch(e.currentTarget.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             size="xs"
-            w={200}
+            className="w-[190px] sm:w-[260px]"
           />
           <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
         </Group>
@@ -113,6 +112,6 @@ export default function ProblemMainPage() {
       <DataTable columns={columns} data={pdocs} emptyMessage={t('No problems found')} />
 
       <Paginator page={page} totalPages={pcount} />
-    </>
+    </Stack>
   );
 }

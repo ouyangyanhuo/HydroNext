@@ -79,3 +79,4 @@ CLAUDE.md
 install/docker/backend/entrypoint.sh
 install/docker/judge/judge.yaml
 前端开发计划.md
+history/

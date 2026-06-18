@@ -1,2 +1,174 @@
 @import 'tailwindcss';
 @import './tokens.css';
+
+html {
+  color-scheme: light;
+  background: var(--hydro-bg);
+}
+
+[data-mantine-color-scheme='dark'] {
+  color-scheme: dark;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background:
+    linear-gradient(180deg, var(--hydro-bg-soft) 0, var(--hydro-bg) 420px),
+    var(--hydro-bg);
+  color: var(--hydro-text);
+  font-family: var(--hydro-font-family);
+  letter-spacing: 0;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: '';
+  background:
+    linear-gradient(90deg, rgb(17 124 130 / 7%) 1px, transparent 1px),
+    linear-gradient(180deg, rgb(217 108 47 / 5%) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: linear-gradient(180deg, black 0, transparent 520px);
+}
+
+a {
+  color: var(--hydro-primary);
+}
+
+::selection {
+  color: white;
+  background: var(--hydro-primary);
+}
+
+.hydro-app-surface {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, transparent 0, rgb(255 255 255 / 38%) 360px, transparent 760px);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-app-surface {
+  background:
+    linear-gradient(180deg, transparent 0, rgb(255 255 255 / 3%) 360px, transparent 760px);
+}
+
+.hydro-container {
+  width: min(100%, 1280px);
+  margin-inline: auto;
+  padding-inline: clamp(16px, 3vw, 32px);
+}
+
+.hydro-panel {
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background: var(--hydro-surface-raised);
+  box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-card {
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background: var(--hydro-surface-raised);
+  box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-card:hover {
+  border-color: var(--hydro-border-strong);
+  box-shadow: var(--hydro-shadow-md);
+}
+
+.hydro-subtle-link {
+  color: var(--hydro-text);
+  text-decoration: none;
+}
+
+.hydro-subtle-link:hover {
+  color: var(--hydro-primary);
+  text-decoration: none;
+}
+
+.mantine-Card-root {
+  border-color: var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background: var(--hydro-surface-raised);
+  box-shadow: var(--hydro-shadow-sm);
+}
+
+.mantine-Paper-root {
+  border-radius: var(--hydro-radius-lg);
+}
+
+.hydro-table-wrap {
+  overflow: hidden;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background: var(--hydro-surface-raised);
+  box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-data-table {
+  min-width: 720px;
+}
+
+.hydro-data-table thead tr {
+  background: var(--hydro-surface-tint);
+}
+
+.hydro-data-table th {
+  border-bottom-color: var(--hydro-border-strong);
+  color: var(--hydro-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.hydro-data-table td {
+  border-bottom-color: var(--hydro-border);
+}
+
+.hydro-data-table tbody tr {
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.hydro-data-table tbody tr:hover {
+  background: var(--hydro-surface-muted);
+}
+
+.hydro-empty-state {
+  border: 1px dashed var(--hydro-border-strong);
+  border-radius: var(--hydro-radius-lg);
+  background:
+    linear-gradient(180deg, var(--hydro-surface-raised), var(--hydro-bg-soft));
+}
+
+.hydro-paginator {
+  width: fit-content;
+  margin-inline: auto;
+  padding: 8px 12px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background: var(--hydro-surface-raised);
+  box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-auth-shell {
+  width: min(100%, 460px);
+  margin-inline: auto;
+  padding-block: clamp(24px, 6vw, 72px);
+}
+
+.hydro-auth-card {
+  border-color: var(--hydro-border);
+  background:
+    linear-gradient(180deg, var(--hydro-surface-raised), var(--hydro-bg-soft));
+  box-shadow: var(--hydro-shadow-lg);
+}
+
+.hydro-content-card {
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background: var(--hydro-surface-raised);
+  box-shadow: var(--hydro-shadow-sm);
+}

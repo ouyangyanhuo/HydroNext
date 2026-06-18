@@ -4,6 +4,14 @@
   word-wrap: break-word;
 }
 
+.hydro-markdown > :first-child {
+  margin-top: 0;
+}
+
+.hydro-markdown > :last-child {
+  margin-bottom: 0;
+}
+
 .hydro-markdown h1,
 .hydro-markdown h2,
 .hydro-markdown h3,

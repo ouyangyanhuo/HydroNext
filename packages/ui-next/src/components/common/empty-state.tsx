@@ -7,9 +7,10 @@ interface EmptyStateProps {
 
 export function EmptyState({ message = 'No data', children }: EmptyStateProps) {
   return (
-    <Center className="min-h-[200px]">
+    <Center className="hydro-empty-state min-h-[220px]">
       <Stack align="center" gap="md">
-        <Text c="dimmed" size="sm">{message}</Text>
+        <div className="h-10 w-10 rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-tint)]" />
+        <Text c="dimmed" size="sm" fw={600}>{message}</Text>
         {children}
       </Stack>
     </Center>

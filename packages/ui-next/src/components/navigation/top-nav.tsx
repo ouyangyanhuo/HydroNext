@@ -1,6 +1,8 @@
 import { Avatar, Burger, Button, Drawer, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import logoUrl from '@/assets/logo.png';
 import { Link } from '@/components/link';
+import { usePageData } from '@/context/page-data';
 import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useDomain } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
@@ -14,11 +16,11 @@ function UserMenu() {
   const domainId = useSessionStore((s) => s.ui.domainId);
 
   return (
-    <Menu shadow="md" width={200}>
+    <Menu shadow="md" width={220} position="bottom-end">
       <Menu.Target>
-        <UnstyledButton className="flex items-center gap-2">
+        <UnstyledButton className="flex h-9 items-center gap-2 rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] px-2 shadow-[var(--hydro-shadow-sm)] transition hover:border-[var(--hydro-border-strong)]">
           <Avatar src={getAvatarUrl(user.avatar, 28)} size={28} radius="xl" />
-          <Text size="sm" fw={500}>
+          <Text size="sm" fw={650} className="max-w-32 truncate text-[var(--hydro-text)]">
             {user.uname}
           </Text>
         </UnstyledButton>
@@ -61,10 +63,10 @@ function GuestMenu() {
 
   return (
     <Group gap="xs">
-      <Button component={Link} to="user_login" variant="subtle" size="xs">
+      <Button component={Link} to="user_login" variant="subtle">
         {t('Login')}
       </Button>
-      <Button component={Link} to="user_register" size="xs">
+      <Button component={Link} to="user_register">
         {t('Register')}
       </Button>
     </Group>
@@ -84,25 +86,38 @@ export function TopNav() {
   const [opened, { toggle, close }] = useDisclosure(false);
   const isLoggedIn = useIsLoggedIn();
   const domain = useDomain();
+  const { name } = usePageData();
   const { t } = useI18n();
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[var(--hydro-border)] bg-[var(--hydro-bg)]">
-        <div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-4">
-          <Group gap="lg">
-            <Link to="homepage" className="text-lg font-bold text-[var(--hydro-text)] no-underline">
-              {domain.name || 'Magneto'}
+      <div className="border-b border-[var(--hydro-border)] bg-[var(--hydro-nav-bg)] backdrop-blur-xl">
+        <div className="hydro-container flex h-16 items-center justify-between">
+          <Group gap="lg" wrap="nowrap">
+            <Link to="homepage" className="group flex min-w-0 items-center gap-3 no-underline">
+              <img src={logoUrl} alt="" className="h-11 w-11 shrink-0 object-contain" />
+              <span className="min-w-0">
+                <span className="block truncate text-base font-black leading-tight text-[var(--hydro-text)]">
+                  {domain.name || 'Hydro'}
+                </span>
+                <span className="block text-[11px] font-semibold uppercase text-[var(--hydro-text-muted)]">
+                  {t('Online Judge')}
+                </span>
+              </span>
             </Link>
-            <Group gap="xs" className="hidden md:flex">
+            <Group gap={4} className="hidden lg:flex">
               {NAV_ITEMS.map((item) => (
                 <Button
                   key={item.to}
                   component={Link}
                   to={item.to}
-                  variant="subtle"
-                  size="xs"
-                  className="text-[var(--hydro-text)]"
+                  variant={name === item.to ? 'filled' : 'subtle'}
+                  color={name === item.to ? 'hydroTeal' : 'gray'}
+                  className={
+                    name === item.to
+                      ? 'shadow-[var(--hydro-shadow-sm)]'
+                      : 'text-[var(--hydro-text)] hover:bg-[var(--hydro-surface-muted)]'
+                  }
                 >
                   {t(item.label)}
                 </Button>
@@ -110,7 +125,7 @@ export function TopNav() {
             </Group>
           </Group>
 
-          <Group gap="sm">
+          <Group gap="sm" wrap="nowrap">
             <LanguageMenu />
             <div className="hidden md:block">
               {isLoggedIn ? <UserMenu /> : <GuestMenu />}
@@ -118,21 +133,21 @@ export function TopNav() {
             <Burger
               opened={opened}
               onClick={toggle}
-              className="md:hidden"
+              className="lg:hidden"
               size="sm"
             />
           </Group>
         </div>
-      </header>
+      </div>
 
-      <Drawer opened={opened} onClose={close} title={domain.name || 'Magneto'} size="xs">
+      <Drawer opened={opened} onClose={close} title={domain.name || 'Hydro'} size="xs">
         <Stack gap="xs">
           {NAV_ITEMS.map((item) => (
             <Button
               key={item.to}
               component={Link}
               to={item.to}
-              variant="subtle"
+              variant={name === item.to ? 'filled' : 'subtle'}
               fullWidth
               justify="flex-start"
               onClick={close}

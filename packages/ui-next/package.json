@@ -15,6 +15,7 @@
     "api.ts",
     "src/",
     "index.html",
+    "pub/",
     "public/",
     "tsconfig.json",
     "vite.config.ts"
