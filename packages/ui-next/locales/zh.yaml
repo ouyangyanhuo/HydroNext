@@ -156,7 +156,7 @@ Upcoming: 即将开始
 Finished: 已结束
 Scoreboard: 成绩表
 Participants: 参赛者
-Register: 报名
+Register Contest: 报名
 Registered: 已报名
 Clarifications: 澄清
 Ask a Question: 提问
@@ -177,14 +177,12 @@ Open: 开放
 No homework: 暂无作业
 
 # Training
-Training: 训练
 Create Training: 创建训练
 Edit Training: 编辑训练
 Section: 章节
 No training: 暂无训练
 
 # Discussion
-Discussion: 讨论
 Create Discussion: 创建讨论
 Edit Discussion: 编辑讨论
 Node: 节点
@@ -258,4 +256,3 @@ Back to Home: 返回首页
 # Scratchpad
 Scratchpad: 便笺本
 Open Scratchpad: 打开便笺本
-Enter Online Programming Mode: 进入在线编程模式

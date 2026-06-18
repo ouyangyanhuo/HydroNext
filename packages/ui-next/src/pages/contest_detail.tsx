@@ -126,7 +126,7 @@ export default function ContestDetailPage() {
 
             {isLoggedIn && !tsdoc.attend && (
               <Button fullWidth onClick={handleAttend}>
-                {t('Register')}
+                {t('Register Contest')}
               </Button>
             )}
 
