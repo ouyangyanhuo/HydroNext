@@ -15,20 +15,10 @@ export function LanguageMenu() {
 
   const currentLang = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
-  const handleChange = async (langCode: string) => {
-    // Update local state immediately
-    useSessionStore.getState().setLanguage(langCode);
-
-    // Persist to backend
-    try {
-      await fetch(`/language/${langCode}`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-      });
-    } catch { /* ignore */ }
-
-    // Reload to get fresh locale data from backend
-    window.location.reload();
+  const handleChange = (langCode: string) => {
+    // Navigate to the backend language switch endpoint (standard link, not fetch)
+    // This ensures the session is properly updated and the page reloads with new locale
+    window.location.href = `/language/${langCode}`;
   };
 
   return (

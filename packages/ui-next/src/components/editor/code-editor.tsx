@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
 import { Center, Loader } from '@mantine/core';
+import { useEffect, useRef, useState } from 'react';
 
 const LANG_MAP: Record<string, string> = {
   cc: 'cpp', 'cc.cc98': 'cpp', 'cc.cc11': 'cpp', 'cc.cc14': 'cpp', 'cc.cc17': 'cpp', 'cc.cc20': 'cpp',

@@ -7,6 +7,8 @@ import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
+import { useSessionStore } from '@/stores/session';
+import { extractLocalizedContent } from '@/utils/i18n-content';
 
 function ProblemMeta({ pdoc }: { pdoc: any }) {
   const { t } = useI18n();
@@ -110,17 +112,20 @@ function ProblemSidebar({ pdoc, psdoc, rdoc }: { pdoc: any, psdoc?: any, rdoc?: 
 export default function ProblemDetailPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const language = useSessionStore((s) => s.language);
 
   const pdoc = args.pdoc || {};
   const psdoc = args.psdoc;
   const rdoc = args.rdoc;
   const mode = args.mode || 'normal';
 
+  const title = extractLocalizedContent(pdoc.title, language);
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       <div className="flex-1 min-w-0">
         <Paper withBorder p="lg">
-          <Title order={2} mb="sm">{pdoc.pid}. {pdoc.title}</Title>
+          <Title order={2} mb="sm">{pdoc.pid}. {title}</Title>
           <ProblemMeta pdoc={pdoc} />
           <Divider my="md" />
           <MarkdownRenderer content={pdoc.content || ''} />

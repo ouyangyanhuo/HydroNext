@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { Button, Group, Paper, Select, Stack, Text, Title } from '@mantine/core';
+import { useState } from 'react';
+import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
-import { CodeEditor } from '@/components/editor/code-editor';
 
 export default function ProblemSubmitPage() {
   const { args } = usePageData();

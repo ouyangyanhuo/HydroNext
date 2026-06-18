@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Badge, Code, Divider, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -7,7 +6,6 @@ import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useRecordSocket } from '@/hooks/use-record-socket';
-import { TimeDisplay } from '@/components/common/time-display';
 
 function CaseResult({ c, index }: { c: any, index: number }) {
   return (

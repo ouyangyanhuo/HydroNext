@@ -8,7 +8,7 @@ export default function ProblemFilesPage() {
   const { t } = useI18n();
   const pdoc = args.pdoc || {};
   const testdata = args.testdata || [];
-  const additionalFiles = args.additional_files || [];
+  
 
   return (
     <Stack gap="lg">

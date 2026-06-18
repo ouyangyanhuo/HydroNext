@@ -20,6 +20,8 @@ registerPage('problem_files', () => import('./problem_files'));
 registerPage('problem_statistics', () => import('./problem_statistics'));
 registerPage('problem_solution', () => import('./problem_solution'));
 registerPage('problem_config', () => import('./problem_config'));
+registerPage('problem_import', () => import('./problem_import'));
+registerPage('problem_hack', () => import('./problem_hack'));
 registerPage('home_settings', () => import('./home_settings'));
 registerPage('home_security', () => import('./home_security'));
 registerPage('home_messages', () => import('./home_messages'));
@@ -35,6 +37,7 @@ registerPage('contest_clarification', () => import('./contest_clarification'));
 registerPage('contest_user', () => import('./contest_user'));
 registerPage('contest_balloon', () => import('./contest_balloon'));
 registerPage('contest_print', () => import('./contest_print'));
+registerPage('contest_scoreboard_download_html', () => import('./contest_scoreboard_download_html'));
 registerPage('user_sudo', () => import('./user_sudo'));
 
 // === P2 Pages ===
@@ -51,6 +54,8 @@ registerPage('domain_role', () => import('./domain_role'));
 registerPage('domain_permission', () => import('./domain_permission'));
 registerPage('domain_group', () => import('./domain_group'));
 registerPage('domain_create', () => import('./domain_create'));
+registerPage('domain_join', () => import('./domain_join'));
+registerPage('domain_join_applications', () => import('./domain_join_applications'));
 registerPage('manage_dashboard', () => import('./manage_dashboard'));
 registerPage('manage_setting', () => import('./manage_setting'));
 registerPage('manage_config', () => import('./manage_config'));
@@ -60,6 +65,18 @@ registerPage('manage_user_priv', () => import('./manage_user_priv'));
 registerPage('ranking', () => import('./ranking'));
 registerPage('status', () => import('./status'));
 registerPage('about', () => import('./about'));
+registerPage('wiki_help', () => import('./wiki_help'));
+
+// === User Flow Pages ===
+registerPage('user_lostpass', () => import('./user_lostpass'));
+registerPage('user_lostpass_with_code', () => import('./user_lostpass_with_code'));
+registerPage('user_lostpass_mail_sent', () => import('./user_lostpass_mail_sent'));
+registerPage('user_register_with_code', () => import('./user_register_with_code'));
+registerPage('user_register_mail_sent', () => import('./user_register_mail_sent'));
+registerPage('user_logout', () => import('./user_logout'));
+registerPage('user_delete_pending', () => import('./user_delete_pending'));
+registerPage('user_verify', () => import('./user_verify'));
+registerPage('user_changemail_with_code', () => import('./user_changemail_with_code'));
 
 // === Error Pages ===
 registerPage('error', () => import('./error'));

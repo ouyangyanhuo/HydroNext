@@ -7,7 +7,7 @@ export default function ProblemStatisticsPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const pdoc = args.pdoc || {};
-  const stats = args.stats || {};
+  
 
   return (
     <Stack gap="lg">

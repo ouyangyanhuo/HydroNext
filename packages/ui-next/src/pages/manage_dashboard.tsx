@@ -1,11 +1,10 @@
 import { Button, SimpleGrid, Stack } from '@mantine/core';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
-import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function ManageDashboardPage() {
-  const { args } = usePageData();
+  
   const { t } = useI18n();
 
   return (

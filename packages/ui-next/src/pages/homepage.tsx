@@ -65,7 +65,7 @@ function RecentProblems({ problems }: { problems: any[] }) {
   );
 }
 
-function RecentContests({ contests, tsdict }: { contests: any[], tsdict: Record<string, any> }) {
+function RecentContests({ contests }: { contests: any[] }) {
   const { t } = useI18n();
 
   if (!contests || contests.length === 0) return null;
@@ -99,7 +99,7 @@ function RecentContests({ contests, tsdict }: { contests: any[], tsdict: Record<
   );
 }
 
-function RecentDiscussions({ discussions, udict }: { discussions: any[], udict: Record<string, any> }) {
+function RecentDiscussions({ discussions }: { discussions: any[] }) {
   const { t } = useI18n();
 
   if (!discussions || discussions.length === 0) return null;
@@ -150,11 +150,9 @@ export default function HomePage() {
         <RecentProblems problems={sections.problems || sections.starredProblems || sections.recentProblems || []} />
         <RecentContests
           contests={sections.contests || []}
-          tsdict={sections.tsdict || {}}
         />
         <RecentDiscussions
           discussions={sections.discussions || []}
-          udict={args.udict || {}}
         />
       </SimpleGrid>
     </Stack>

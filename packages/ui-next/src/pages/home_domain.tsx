@@ -7,7 +7,7 @@ import { useI18n } from '@/hooks/use-i18n';
 export default function HomeDomainPage() {
   const { args } = usePageData();
   const { t } = useI18n();
-  const dudict = args.dudict || {};
+  
   const ddocs = args.ddocs || [];
 
   return (

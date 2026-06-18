@@ -2,13 +2,12 @@ import { Button, Group, Paper, Stack, Text, Textarea, TextInput } from '@mantine
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
-import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function DomainEditPage() {
   const { args } = usePageData();
   const { t } = useI18n();
-  const navigate = useNavigate();
+  
   const ddoc = args.ddoc || {};
   const [form, setForm] = useState({ name: ddoc.name || '', avatar: ddoc.avatar || '', bulletin: ddoc.bulletin || '', host: Array.isArray(ddoc.host) ? ddoc.host.join(', ') : (ddoc.host || '') });
   const [loading, setLoading] = useState(false);

@@ -11,7 +11,7 @@ export default function HomeworkDetailPage() {
   const { t } = useI18n();
   const tdoc = args.tdoc || {};
   const psdict = args.psdict || {};
-  const pdict = args.pdict || {};
+  
   const tsdoc = args.tsdoc || {};
 
   return (

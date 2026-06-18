@@ -9,6 +9,7 @@ import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+import { extractLocalizedContent } from '@/utils/i18n-content';
 
 function ProblemStatusCell({ psdoc }: { psdoc?: any }) {
   if (!psdoc || psdoc.status === undefined) {
@@ -60,15 +61,18 @@ export default function ProblemMainPage() {
     {
       key: 'title',
       title: t('Title'),
-      render: (p: any) => (
-        <Link
-          to="problem_detail"
-          params={{ pid: p.pid || p.docId }}
-          className="no-underline hover:underline text-[var(--hydro-text)]"
-        >
-          <Text size="sm">{p.title}</Text>
-        </Link>
-      ),
+      render: (p: any) => {
+        const lang = useSessionStore.getState().language;
+        return (
+          <Link
+            to="problem_detail"
+            params={{ pid: p.pid || p.docId }}
+            className="no-underline hover:underline text-[var(--hydro-text)]"
+          >
+            <Text size="sm">{extractLocalizedContent(p.title, lang)}</Text>
+          </Link>
+        );
+      },
     },
     {
       key: 'nSubmit',

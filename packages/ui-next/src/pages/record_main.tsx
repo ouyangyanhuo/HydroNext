@@ -6,14 +6,12 @@ import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
-import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 
 export default function RecordMainPage() {
   const { args } = usePageData();
   const { t } = useI18n();
-  const navigate = useNavigate();
   const domainId = useSessionStore((s) => s.ui.domainId);
 
   const rdocs = args.rdocs || [];

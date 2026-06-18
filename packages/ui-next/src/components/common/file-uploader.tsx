@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Button, Group, Text, Stack, Progress, Paper } from '@mantine/core';
+import { Button, Group, Progress, Stack, Text } from '@mantine/core';
+import { useRef, useState } from 'react';
 import { useI18n } from '@/hooks/use-i18n';
 
 interface FileUploaderProps {
