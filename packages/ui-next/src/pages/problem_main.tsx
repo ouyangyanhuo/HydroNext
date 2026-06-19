@@ -1,5 +1,5 @@
 import { Badge, Button, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
@@ -68,44 +68,41 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
   const buildUrl = useBuildUrl();
   const groups = normalizeCategories(categories);
   const randomUrl = buildUrl('problem_random', {}, query ? { q: query } : {});
+  const [showPopup, setShowPopup] = useState<string | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return (
     <Stack gap="md">
-      <Card withBorder p="lg" className="hydro-content-card">
+      <Card withBorder p="lg" className="hydro-content-card !overflow-visible">
         <Title order={4} mb="sm">{t('Categories')}</Title>
         {groups.length ? (
-          <Stack gap={4} className="relative">
-            {groups.map(([category, children]) => (
-              <div
-                key={category}
-                className="group/category relative rounded-md border border-transparent px-2 py-1.5 transition-colors hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)] focus-within:border-[var(--hydro-border)] focus-within:bg-[var(--hydro-surface)]"
-              >
-                <Link
-                  href={buildUrl('problem_main', {}, { q: `category:${category}` })}
-                  className="hydro-subtle-link block"
+          <div className="relative grid grid-cols-2 gap-1 overflow-visible">
+            {groups.map(([category, children]) => {
+              const hasChildren = children.length > 0;
+              return (
+                <div
+                  key={category}
+                  className="relative"
+                  onMouseEnter={() => { if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; } setShowPopup(category); }}
+                  onMouseLeave={() => { hoverTimer.current = setTimeout(() => setShowPopup(null), 200); }}
                 >
-                  <Group justify="space-between" gap="xs" wrap="nowrap">
-                    <Text size="sm" fw={800}>{category}</Text>
-                    {!!children.length && <Text size="xs" c="dimmed">›</Text>}
-                  </Group>
-                </Link>
-                {!!children.length && (
-                  <>
-                    <Group gap={6} mt={6} className="lg:hidden">
-                      {children.slice(0, 4).map((tag) => (
-                        <Link
-                          key={tag}
-                          href={buildUrl('problem_main', {}, { q: `category:${tag}` })}
-                          className="no-underline"
-                        >
-                          <Badge variant="light" color="gray">
-                            {tag}
-                          </Badge>
-                        </Link>
-                      ))}
-                      {children.length > 4 && <Badge variant="outline" color="gray">+{children.length - 4}</Badge>}
-                    </Group>
-                    <div className="pointer-events-none absolute left-[calc(100%-2px)] top-0 z-30 hidden w-[360px] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3 opacity-0 shadow-[var(--hydro-shadow-lg)] transition-opacity group-hover/category:pointer-events-auto group-hover/category:block group-hover/category:opacity-100 group-focus-within/category:pointer-events-auto group-focus-within/category:block group-focus-within/category:opacity-100 lg:block">
+                  <div className="rounded-md border border-transparent px-2 py-1.5 transition-colors hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]">
+                    <Link
+                      href={buildUrl('problem_main', {}, { q: `category:${category}` })}
+                      className="hydro-subtle-link block"
+                    >
+                      <Group justify="space-between" gap="xs" wrap="nowrap">
+                        <Text size="sm" fw={700} truncate>{category}</Text>
+                        {hasChildren && <Text size="xs" c="dimmed">›</Text>}
+                      </Group>
+                    </Link>
+                  </div>
+                  {hasChildren && (
+                    <div
+                      className={`absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3 shadow-[var(--hydro-shadow-lg)] transition-opacity ${showPopup === category ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+                      onMouseEnter={() => { if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; } }}
+                      onMouseLeave={() => { hoverTimer.current = setTimeout(() => setShowPopup(null), 200); }}
+                    >
                       <Text size="xs" fw={800} c="dimmed" mb="xs">{category}</Text>
                       <Group gap={6}>
                         {children.map((tag) => (
@@ -121,11 +118,11 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
                         ))}
                       </Group>
                     </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </Stack>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <Text c="dimmed" size="sm">{t('No categories')}</Text>
         )}

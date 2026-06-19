@@ -116,6 +116,10 @@ a {
   background: var(--hydro-surface-tint);
 }
 
+.hydro-data-table thead tr:hover {
+  background: var(--hydro-surface-tint);
+}
+
 .hydro-data-table th {
   border-bottom-color: var(--hydro-border-strong);
   color: var(--hydro-text-muted);

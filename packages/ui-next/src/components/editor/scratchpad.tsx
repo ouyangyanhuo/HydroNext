@@ -95,7 +95,6 @@ export function Scratchpad({
                     size="xs"
                     w={190}
                   />
-                  <Badge variant="light" color="gray">{t('Monaco Editor')}</Badge>
                 </Group>
                 <Group gap="xs">
                   <Button size="xs" onClick={handleSubmit} loading={submitting}>

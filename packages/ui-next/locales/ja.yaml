@@ -281,3 +281,77 @@ Unknown: 不明
 Login failed: ログイン失敗
 Network error: ネットワークエラー
 Continue: 続ける
+Account: アカウント
+Sign in to continue to Hydro.: ログインしてHydroを続けます。
+Create an account to start solving problems.: アカウントを作成して問題を解き始めましょう。
+Enter your email to receive a reset link.: リセットリンクを受け取るにはメールアドレスを入力してください。
+votes: 票
+Online Judge: Online Judge
+Pinned: ピン留め
+Problem Type: 問題タイプ
+Uploaded By: アップロード者
+Login to Submit: ログインして提出
+No Permission to Submit: 提出権限がありません
+Rejudge all submissions: すべての提出を再判定
+Judge Config: 判定設定
+Related: 関連
+Lucky: ランダム選題
+Random Problem: ランダム問題
+Pick a problem randomly based on the current filter.: 現在のフィルターに基づいてランダムに問題を選択します。
+sort::default: デフォルト
+sort::recent: 最近追加
+AC: 正解
+Tried: 挑戦済み
+Time Limit: 時間制限
+Memory Limit: メモリ制限
+Accepted: 正解
+Difficulty: 難易度
+problemType::default: 伝統
+problemType::submit_answer: 解答提出
+problemType::interactive: インタラクティブ
+problemType::communication: コミュニケーション
+problemType::objective: 客観問題
+problemType::remote_judge: リモートジャッジ
+files: ファイル
+submissions: 提出
+Filename: ファイル名
+Testdata: テストデータ
+Additional Files: 追加ファイル
+Input, output, and config files used by the judge.: 判定に使用される入力、出力、設定ファイル。
+Public attachments shown with this problem.: この問題に公開されている添付ファイル。
+This is a copy of another problem.: これは別の問題のコピーです。
+Status Distribution: ステータス分布
+Submission Statistics: 提出統計
+Submit By: 提出者
+Submit At: 提出日時
+Direction: 並び順
+Sort: 並び替え
+Code: コード
+Oh, there is no submission!: 提出がありません！
+Redirecting: リダイレクト中
+No problem found: 問題が見つかりません
+Opening the selected problem.: 選択された問題を開いています。
+Try changing the current filter.: 現在のフィルターを変更してみてください。
+Back to Problems: 問題一覧に戻る
+Confirm rejudge this problem?: この問題を再判定しますか？
+Download failed: ダウンロード失敗
+Copy failed: コピー失敗
+Target: 対象ドメイン
+Monaco Editor: Monacoエディタ
+Pretest: プレテスト
+Input: 入力
+Basic: 基本
+Languages: 言語
+Config Editor: 設定エディタ
+YAML: YAML
+click to add: クリックして追加
+Update: 更新
+Operation failed: 操作失敗
+Confirm delete?: 削除しますか？
+Copy Link: リンクをコピー
+Share: 共有
+solutions: 解説
+Write Your Solution: 解説を書く
+No solutions so far...: まだ解説がありません...
+View all {0} solutions: すべての{0}件の解説を表示
+No categories: カテゴリなし

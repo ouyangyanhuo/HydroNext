@@ -302,6 +302,16 @@ sort::default: Default
 sort::recent: Recent
 AC: AC
 Tried: Tried
+Time Limit: Time Limit
+Memory Limit: Memory Limit
+Accepted: Accepted
+Difficulty: Difficulty
+problemType::default: Traditional
+problemType::submit_answer: Submit Answer
+problemType::interactive: Interactive
+problemType::communication: Communication
+problemType::objective: Objective
+problemType::remote_judge: Remote Judge
 files: files
 submissions: submissions
 Filename: Filename

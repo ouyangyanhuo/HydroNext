@@ -281,3 +281,77 @@ Unknown: 未知
 Login failed: 登入失敗
 Network error: 網路錯誤
 Continue: 繼續
+Account: 帳戶
+Sign in to continue to Hydro.: 登入後繼續使用 Hydro。
+Create an account to start solving problems.: 建立帳號後開始解題。
+Enter your email to receive a reset link.: 輸入電子郵件以接收重設連結。
+votes: 票
+Online Judge: Online Judge
+Pinned: 置頂
+Problem Type: 題目類型
+Uploaded By: 上傳者
+Login to Submit: 登入後提交
+No Permission to Submit: 無提交權限
+Rejudge all submissions: 重新評測所有提交
+Judge Config: 評測設定
+Related: 相關
+Lucky: 隨機選題
+Random Problem: 隨機題目
+Pick a problem randomly based on the current filter.: 基於目前篩選條件隨機選擇一道題目。
+sort::default: 預設排序
+sort::recent: 最近新增
+AC: 通過
+Tried: 嘗試
+Time Limit: 時間限制
+Memory Limit: 記憶體限制
+Accepted: 通過
+Difficulty: 難度
+problemType::default: 傳統題
+problemType::submit_answer: 提交答案題
+problemType::interactive: 互動題
+problemType::communication: 通訊題
+problemType::objective: 客觀題
+problemType::remote_judge: 遠端評測
+files: 個檔案
+submissions: 次提交
+Filename: 檔案名稱
+Testdata: 測試資料
+Additional Files: 附加檔案
+Input, output, and config files used by the judge.: 評測使用的輸入、輸出和設定檔。
+Public attachments shown with this problem.: 隨題面公開展示的附件。
+This is a copy of another problem.: 這是另一道題目的副本。
+Status Distribution: 狀態分佈
+Submission Statistics: 提交統計
+Submit By: 提交者
+Submit At: 提交時間
+Direction: 排序方向
+Sort: 排序
+Code: 程式碼
+Oh, there is no submission!: 暫無提交。
+Redirecting: 正在跳轉
+No problem found: 未找到題目
+Opening the selected problem.: 正在開啟隨機選中的題目。
+Try changing the current filter.: 請嘗試調整目前篩選條件。
+Back to Problems: 返回題庫
+Confirm rejudge this problem?: 確認重新評測這道題目？
+Download failed: 下載失敗
+Copy failed: 複製失敗
+Target: 目標網域
+Monaco Editor: Monaco 編輯器
+Pretest: 預評測
+Input: 輸入
+Basic: 基礎
+Languages: 語言
+Config Editor: 設定編輯器
+YAML: YAML
+click to add: 點擊新增
+Update: 更新
+Operation failed: 操作失敗
+Confirm delete?: 確認刪除？
+Copy Link: 複製連結
+Share: 分享
+solutions: 篇題解
+Write Your Solution: 編寫你的題解
+No solutions so far...: 暫無題解...
+View all {0} solutions: 查看全部 {0} 篇題解
+No categories: 暫無分類

@@ -24,6 +24,7 @@ Username or Email: 用户名或邮箱
 Password: 密码
 Remember me: 记住我
 Forgot Password?: 忘记密码？
+Forgot Password: 忘记密码 
 Send Reset Link: 发送重置链接
 Reset Password: 重置密码
 New Password: 新密码
@@ -235,7 +236,7 @@ No messages: 暂无消息
 # Misc
 Welcome: 欢迎
 Welcome to Hydro: 欢迎使用 HNTOU OJ
-Online Judge: 在线评测
+Online Judge: Online Judge
 Pinned: 置顶
 Explore problems, contests, and improve your skills.: 探索题目、比赛，提升你的技能。
 Login or register to start solving problems.: 登录或注册后开始解题。
@@ -305,6 +306,16 @@ sort::default: 默认排序
 sort::recent: 最近添加
 AC: 通过
 Tried: 尝试
+Time Limit: 时间限制
+Memory Limit: 内存限制
+Accepted: 通过
+Difficulty: 难度
+problemType::default: 传统题
+problemType::submit_answer: 提交答案题
+problemType::interactive: 交互题
+problemType::communication: 通信题
+problemType::objective: 客观题
+problemType::remote_judge: 远程评测
 files: 个文件
 submissions: 次提交
 Filename: 文件名

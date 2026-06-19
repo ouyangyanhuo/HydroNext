@@ -5,6 +5,7 @@ import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
+import { UserAvatar } from '@/components/user/user-avatar';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -135,27 +136,33 @@ function formatTime(pdoc: any) {
 function ProblemMeta({ pdoc, owner }: { pdoc: any, owner?: any }) {
   const { t } = useI18n();
   const items = [
-    { label: t('ID'), value: String(pdoc.docId || pdoc.pid || '-') },
+    { label: 'ID', value: String(pdoc.docId || pdoc.pid || '-') },
     { label: t('Time Limit'), value: formatTime(pdoc) },
     { label: t('Memory Limit'), value: formatMemory(pdoc) },
-    { label: t('Problem Type'), value: pdoc.config?.type || 'default' },
+    { label: t('Problem Type'), value: t(`problemType::${pdoc.config?.type || 'default'}`) },
     { label: t('Tried'), value: String(pdoc.nSubmit ?? '-') },
     { label: t('Accepted'), value: String(pdoc.nAccept ?? '-') },
     { label: t('Difficulty'), value: estimateDifficulty(pdoc) },
-    owner && { label: t('Uploaded By'), value: owner.uname || String(owner._id) },
-  ].filter(Boolean) as { label: string, value: string }[];
-
-  if (!items.length) return null;
+  ];
 
   return (
-    <Group gap="sm" wrap="wrap">
+    <div className="flex flex-wrap divide-x divide-[var(--hydro-border)] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)]">
       {items.map((item) => (
-        <div key={item.label} className="rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] px-3 py-2">
+        <div key={item.label} className="flex min-w-0 flex-1 flex-col items-center px-3 py-2">
           <Text size="xs" c="dimmed" fw={700}>{item.label}</Text>
           <Text size="sm" fw={800} className="text-[var(--hydro-text)]">{item.value}</Text>
         </div>
       ))}
-    </Group>
+      {owner && (
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-2 px-3 py-2">
+          <UserAvatar user={owner} size={24} link={false} />
+          <div className="min-w-0">
+            <Text size="xs" c="dimmed" fw={700}>{t('Uploaded By')}</Text>
+            <UserLink user={owner} size="sm" />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
