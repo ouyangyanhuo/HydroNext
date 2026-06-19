@@ -3,6 +3,7 @@ import { registerPage } from '../registry/page';
 // === P0 Pages ===
 registerPage('homepage', () => import('./homepage'));
 registerPage('problem_main', () => import('./problem_main'));
+registerPage('problem_random', () => import('./problem_random'));
 registerPage('problem_detail', () => import('./problem_detail'));
 registerPage('problem_submit', () => import('./problem_submit'));
 registerPage('record_main', () => import('./record_main'));

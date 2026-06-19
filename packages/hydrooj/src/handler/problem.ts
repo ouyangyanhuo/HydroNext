@@ -9,6 +9,7 @@ import { Filter, ObjectId } from 'mongodb';
 import { nanoid } from 'nanoid';
 import sanitize from 'sanitize-filename';
 import Schema from 'schemastery';
+import yaml from 'js-yaml';
 import parser from '@hydrooj/utils/lib/search';
 import { randomstring, sortFiles, streamToBuffer } from '@hydrooj/utils/lib/utils';
 import type { Context } from '../context';
@@ -74,6 +75,17 @@ const defaultSearch = async (domainId: string, q: string, options?: ProblemSearc
         countRelation: 'eq',
     };
 };
+
+function getProblemCategories(ctx: Context) {
+    const raw = ctx.setting.get('problem.categories');
+    if (!raw) return {};
+    if (typeof raw !== 'string') return raw;
+    try {
+        return yaml.load(raw) || {};
+    } catch {
+        return {};
+    }
+}
 
 export interface QueryContext {
     query: Filter<ProblemDoc>;
@@ -191,6 +203,7 @@ export class ProblemMainHandler extends Handler {
                 psdict,
                 qs: q,
                 sort: sortStrategy,
+                categories: getProblemCategories(this.ctx),
             };
         }
     }
@@ -616,6 +629,7 @@ export class ProblemEditHandler extends ProblemManageHandler {
     async get() {
         this.response.body.additional_file = sortFiles(this.pdoc.additional_file || []);
         this.response.body.statementLangs = this.ctx.i18n.langs(false);
+        this.response.body.categories = getProblemCategories(this.ctx);
         this.response.template = 'problem_edit.html';
     }
 
@@ -990,11 +1004,12 @@ export class ProblemStatisticsHandler extends ProblemDetailHandler {
 
 export class ProblemCreateHandler extends Handler {
     async get() {
-        this.response.body.statementLangs = this.ctx.i18n.langs(false);
         this.response.template = 'problem_edit.html';
         this.response.body = {
             page_name: 'problem_create',
             additional_file: [],
+            statementLangs: this.ctx.i18n.langs(false),
+            categories: getProblemCategories(this.ctx),
         };
     }
 

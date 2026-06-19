@@ -259,6 +259,7 @@ Back to Home: Back to Home
 # Scratchpad
 Scratchpad: Scratchpad
 Open Scratchpad: Open Scratchpad
+Quit Scratchpad: Quit Scratchpad
 Enter Online Programming Mode: Enter Online Programming Mode
 
 # Search placeholders
@@ -271,6 +272,7 @@ No contests found: No contests found
 No problems found: No problems found
 No clarifications: No clarifications
 No solutions: No solutions
+No categories: No categories
 
 # Auth links
 Account: Account
@@ -286,3 +288,59 @@ Unknown: Unknown
 Login failed: Login failed
 Network error: Network error
 Continue: Continue
+Problem Type: Problem Type
+Uploaded By: Uploaded By
+Login to Submit: Login to Submit
+No Permission to Submit: No Permission to Submit
+Rejudge all submissions: Rejudge all submissions
+Judge Config: Judge Config
+Related: Related
+Lucky: Lucky
+Random Problem: Random Problem
+Pick a problem randomly based on the current filter.: Pick a problem randomly based on the current filter.
+sort::default: Default
+sort::recent: Recent
+AC: AC
+Tried: Tried
+files: files
+submissions: submissions
+Filename: Filename
+Testdata: Testdata
+Additional Files: Additional Files
+Input, output, and config files used by the judge.: Input, output, and config files used by the judge.
+Public attachments shown with this problem.: Public attachments shown with this problem.
+This is a copy of another problem.: This is a copy of another problem.
+Status Distribution: Status Distribution
+Submission Statistics: Submission Statistics
+Submit By: Submit By
+Submit At: Submit At
+Direction: Direction
+Sort: Sort
+Code: Code
+Oh, there is no submission!: Oh, there is no submission!
+Redirecting: Redirecting
+No problem found: No problem found
+Opening the selected problem.: Opening the selected problem.
+Try changing the current filter.: Try changing the current filter.
+Back to Problems: Back to Problems
+Confirm rejudge this problem?: Confirm rejudge this problem?
+Download failed: Download failed
+Copy failed: Copy failed
+Target: Target
+Monaco Editor: Monaco Editor
+Pretest: Pretest
+Input: Input
+Basic: Basic
+Languages: Languages
+Config Editor: Config Editor
+YAML: YAML
+click to add: click to add
+Update: Update
+Operation failed: Operation failed
+Confirm delete?: Confirm delete?
+Copy Link: Copy Link
+Share: Share
+solutions: solutions
+Write Your Solution: Write Your Solution
+No solutions so far...: No solutions so far...
+View all {0} solutions: View all {0} solutions

@@ -13,6 +13,7 @@ const md = new MarkdownIt({
 interface MarkdownRendererProps {
   content: any;
   className?: string;
+  language?: string;
 }
 
 /**
@@ -20,9 +21,9 @@ interface MarkdownRendererProps {
  * Handles multilingual content objects.
  * Applies KaTeX rendering for math formulas and syntax highlighting for code blocks.
  */
-export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
-  const language = useSessionStore((s) => s.language);
-  const rawText = extractLocalizedContent(content, language);
+export function MarkdownRenderer({ content, className, language }: MarkdownRendererProps) {
+  const sessionLanguage = useSessionStore((s) => s.language);
+  const rawText = extractLocalizedContent(content, language || sessionLanguage);
 
   // Convert Markdown to HTML
   const html = useMemo(() => {

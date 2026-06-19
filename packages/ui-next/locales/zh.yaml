@@ -136,7 +136,6 @@ Submit Hack: 提交 Hack
 Import Problems: 导入题目
 Source: 来源
 URL or ID: 链接或 ID
-Enter Online Programming Mode: 进入在线编程模式
 
 # Submit
 Please select a language: 请选择语言
@@ -263,6 +262,8 @@ Back to Home: 返回首页
 # Scratchpad
 Scratchpad: 便笺本
 Open Scratchpad: 打开便笺本
+Quit Scratchpad: 退出在线编辑模式
+Enter Online Programming Mode: 进入在线编辑模式
 
 # Search placeholders
 Search problems...: 搜索题目...
@@ -274,6 +275,7 @@ No contests found: 暂无比赛
 No problems found: 暂无题目
 No clarifications: 暂无提问
 No solutions: 暂无题解
+No categories: 暂无分类
 
 # Auth links
 Account: 账户
@@ -289,3 +291,59 @@ Unknown: 未知
 Login failed: 登录失败
 Network error: 网络错误
 Continue: 继续
+Problem Type: 题目类型
+Uploaded By: 上传者
+Login to Submit: 登录后提交
+No Permission to Submit: 无提交权限
+Rejudge all submissions: 重测所有提交
+Judge Config: 评测设置
+Related: 相关
+Lucky: 随机选题
+Random Problem: 随机题目
+Pick a problem randomly based on the current filter.: 基于当前筛选条件随机选择一道题目。
+sort::default: 默认排序
+sort::recent: 最近添加
+AC: 通过
+Tried: 尝试
+files: 个文件
+submissions: 次提交
+Filename: 文件名
+Testdata: 测试数据
+Additional Files: 附加文件
+Input, output, and config files used by the judge.: 评测使用的输入、输出和配置文件。
+Public attachments shown with this problem.: 随题面公开展示的附件。
+This is a copy of another problem.: 这是另一道题目的副本。
+Status Distribution: 状态分布
+Submission Statistics: 提交统计
+Submit By: 提交者
+Submit At: 提交时间
+Direction: 排序方向
+Sort: 排序
+Code: 代码
+Oh, there is no submission!: 暂无提交。
+Redirecting: 正在跳转
+No problem found: 未找到题目
+Opening the selected problem.: 正在打开随机选中的题目。
+Try changing the current filter.: 请尝试调整当前筛选条件。
+Back to Problems: 返回题库
+Confirm rejudge this problem?: 确认重测这道题目？
+Download failed: 下载失败
+Copy failed: 复制失败
+Target: 目标域
+Monaco Editor: Monaco 编辑器
+Pretest: 预评测
+Input: 输入
+Basic: 基础
+Languages: 语言
+Config Editor: 配置编辑器
+YAML: YAML
+click to add: 点击添加
+Update: 更新
+Operation failed: 操作失败
+Confirm delete?: 确认删除？
+Copy Link: 复制链接
+Share: 分享
+solutions: 篇题解
+Write Your Solution: 编写你的题解
+No solutions so far...: 暂无题解...
+View all {0} solutions: 查看全部 {0} 篇题解

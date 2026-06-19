@@ -5,6 +5,7 @@ import { useI18n } from '@/hooks/use-i18n';
 interface FileDropzoneProps {
   action: string;
   accept?: string[];
+  fields?: Record<string, string | number | boolean>;
   multiple?: boolean;
   maxSize?: number;
   onComplete?: (result: any) => void;
@@ -14,6 +15,7 @@ interface FileDropzoneProps {
 export function FileDropzone({
   action,
   accept = [],
+  fields = {},
   multiple = true,
   maxSize = 100 * 1024 * 1024,
   onComplete,
@@ -42,6 +44,9 @@ export function FileDropzone({
 
     try {
       const formData = new FormData();
+      for (const [key, value] of Object.entries(fields)) {
+        formData.append(key, String(value));
+      }
       for (const file of fileArray) {
         formData.append('file', file);
       }
@@ -75,7 +80,7 @@ export function FileDropzone({
       setUploading(false);
       setProgress(0);
     }
-  }, [action, maxSize, onComplete, onError, t]);
+  }, [action, fields, maxSize, onComplete, onError, t]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();

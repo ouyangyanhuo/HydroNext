@@ -1,4 +1,4 @@
-import { Button, Group, Stack, Text, TextInput } from '@mantine/core';
+import { Badge, Button, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
@@ -7,6 +7,7 @@ import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
@@ -16,6 +17,131 @@ function ProblemStatusCell({ psdoc }: { psdoc?: any }) {
     return <Text c="dimmed" size="xs">-</Text>;
   }
   return <RecordStatusBadge status={psdoc.status} size="xs" />;
+}
+
+function estimateDifficulty(problem: any) {
+  if (problem.difficulty !== undefined && problem.difficulty !== null) return String(problem.difficulty);
+  const submit = Number(problem.nSubmit || 0);
+  const accept = Number(problem.nAccept || 0);
+  if (!submit) return '-';
+  const rate = accept / submit;
+  if (rate >= 0.65) return '1';
+  if (rate >= 0.45) return '2';
+  if (rate >= 0.3) return '3';
+  if (rate >= 0.15) return '4';
+  return '5';
+}
+
+function ProblemTags({ tags }: { tags?: string[] }) {
+  if (!tags?.length) return null;
+  return (
+    <Group gap={4} mt={6}>
+      {tags.slice(0, 4).map((tag) => (
+        <Badge key={tag} size="xs" variant="light" color="gray">
+          {tag}
+        </Badge>
+      ))}
+      {tags.length > 4 && <Badge size="xs" variant="outline">+{tags.length - 4}</Badge>}
+    </Group>
+  );
+}
+
+function normalizeCategories(categories: any) {
+  if (Array.isArray(categories)) {
+    return categories.map((item) => {
+      if (Array.isArray(item)) return [item[0], Array.isArray(item[1]) ? item[1] : []] as [string, string[]];
+      if (typeof item === 'string') return [item, []] as [string, string[]];
+      return [String(item?.name || ''), item?.children || item?.items || []] as [string, string[]];
+    }).filter(([name]) => name);
+  }
+  if (categories && typeof categories === 'object') {
+    return Object.entries(categories).map(([name, children]) => [
+      name,
+      Array.isArray(children) ? children : [],
+    ] as [string, string[]]);
+  }
+  return [];
+}
+
+function ProblemSidebar({ categories, query }: { categories: any, query: string }) {
+  const { t } = useI18n();
+  const buildUrl = useBuildUrl();
+  const groups = normalizeCategories(categories);
+  const randomUrl = buildUrl('problem_random', {}, query ? { q: query } : {});
+
+  return (
+    <Stack gap="md">
+      <Card withBorder p="lg" className="hydro-content-card">
+        <Title order={4} mb="sm">{t('Categories')}</Title>
+        {groups.length ? (
+          <Stack gap={4} className="relative">
+            {groups.map(([category, children]) => (
+              <div
+                key={category}
+                className="group/category relative rounded-md border border-transparent px-2 py-1.5 transition-colors hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)] focus-within:border-[var(--hydro-border)] focus-within:bg-[var(--hydro-surface)]"
+              >
+                <Link
+                  href={buildUrl('problem_main', {}, { q: `category:${category}` })}
+                  className="hydro-subtle-link block"
+                >
+                  <Group justify="space-between" gap="xs" wrap="nowrap">
+                    <Text size="sm" fw={800}>{category}</Text>
+                    {!!children.length && <Text size="xs" c="dimmed">›</Text>}
+                  </Group>
+                </Link>
+                {!!children.length && (
+                  <>
+                    <Group gap={6} mt={6} className="lg:hidden">
+                      {children.slice(0, 4).map((tag) => (
+                        <Link
+                          key={tag}
+                          href={buildUrl('problem_main', {}, { q: `category:${tag}` })}
+                          className="no-underline"
+                        >
+                          <Badge variant="light" color="gray">
+                            {tag}
+                          </Badge>
+                        </Link>
+                      ))}
+                      {children.length > 4 && <Badge variant="outline" color="gray">+{children.length - 4}</Badge>}
+                    </Group>
+                    <div className="pointer-events-none absolute left-[calc(100%-2px)] top-0 z-30 hidden w-[360px] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3 opacity-0 shadow-[var(--hydro-shadow-lg)] transition-opacity group-hover/category:pointer-events-auto group-hover/category:block group-hover/category:opacity-100 group-focus-within/category:pointer-events-auto group-focus-within/category:block group-focus-within/category:opacity-100 lg:block">
+                      <Text size="xs" fw={800} c="dimmed" mb="xs">{category}</Text>
+                      <Group gap={6}>
+                        {children.map((tag) => (
+                          <Link
+                            key={tag}
+                            href={buildUrl('problem_main', {}, { q: `category:${tag}` })}
+                            className="no-underline"
+                          >
+                            <Badge variant="light" color="gray">
+                              {tag}
+                            </Badge>
+                          </Link>
+                        ))}
+                      </Group>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </Stack>
+        ) : (
+          <Text c="dimmed" size="sm">{t('No categories')}</Text>
+        )}
+      </Card>
+
+      <Card withBorder p="lg" className="hydro-content-card">
+        <Title order={4} mb="xs">{t('Lucky')}</Title>
+        <Text c="dimmed" size="sm" mb="md">
+          {t('Pick a problem randomly based on the current filter.')}
+        </Text>
+        <Button component="a" href={randomUrl} fullWidth variant="light">
+          {t('Random Problem')}
+        </Button>
+      </Card>
+    </Stack>
+  );
 }
 
 export default function ProblemMainPage() {
@@ -28,8 +154,11 @@ export default function ProblemMainPage() {
   const page = args.page || 1;
   const pcount = args.pcount || 1;
   const qs = args.qs || '';
+  const sort = args.sort || 'default';
+  const categories = args.categories || {};
 
   const [search, setSearch] = useState(qs);
+  const [sortValue, setSortValue] = useState(sort);
 
   const handleSearch = () => {
     const url = new URL(window.location.href);
@@ -38,6 +167,8 @@ export default function ProblemMainPage() {
     } else {
       url.searchParams.delete('q');
     }
+    if (sortValue && sortValue !== 'default') url.searchParams.set('sort', sortValue);
+    else url.searchParams.delete('sort');
     url.searchParams.delete('page');
     navigate(url.pathname + url.search);
   };
@@ -54,7 +185,7 @@ export default function ProblemMainPage() {
       title: '#',
       width: 80,
       render: (p: any) => (
-        <Text size="sm" fw={500}>{p.pid || p.docId}</Text>
+        <Text size="sm" fw={700} c="dimmed">{p.pid || p.docId}</Text>
       ),
     },
     {
@@ -68,27 +199,32 @@ export default function ProblemMainPage() {
             params={{ pid: p.pid || p.docId }}
             className="hydro-subtle-link"
           >
-            <Text size="sm" fw={600}>{extractLocalizedContent(p.title, lang)}</Text>
+            <Text size="sm" fw={700}>{extractLocalizedContent(p.title, lang)}</Text>
+            <ProblemTags tags={p.tag} />
           </Link>
         );
       },
     },
     {
-      key: 'nSubmit',
-      title: t('Submissions'),
-      width: 100,
+      key: 'acTried',
+      title: `${t('AC')} / ${t('Tried')}`,
+      width: 120,
       align: 'center' as const,
       render: (p: any) => (
-        <Text size="xs" c="dimmed">{p.nSubmit || 0}</Text>
+        <Text size="xs" fw={700}>
+          {p.nAccept || 0} / <span className="text-[var(--hydro-text-muted)]">{p.nSubmit || 0}</span>
+        </Text>
       ),
     },
     {
-      key: 'nAccept',
-      title: t('Accepted'),
+      key: 'difficulty',
+      title: t('Difficulty'),
       width: 100,
       align: 'center' as const,
       render: (p: any) => (
-        <Text size="xs" c="dimmed">{p.nAccept || 0}</Text>
+        <Badge size="sm" variant="light" color="hydroCopper">
+          {estimateDifficulty(p)}
+        </Badge>
       ),
     },
   ];
@@ -105,13 +241,30 @@ export default function ProblemMainPage() {
             size="xs"
             className="w-[190px] sm:w-[260px]"
           />
+          <Select
+            data={[
+              { value: 'default', label: t('sort::default') },
+              { value: 'recent', label: t('sort::recent') },
+            ]}
+            value={sortValue}
+            onChange={(v) => setSortValue(v || 'default')}
+            size="xs"
+            className="w-[130px]"
+          />
           <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
         </Group>
       </PageHeader>
 
-      <DataTable columns={columns} data={pdocs} emptyMessage={t('No problems found')} />
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="min-w-0 flex-1">
+          <DataTable columns={columns} data={pdocs} emptyMessage={t('No problems found')} />
+          <Paginator page={page} totalPages={pcount} />
+        </div>
 
-      <Paginator page={page} totalPages={pcount} />
+        <div className="w-full shrink-0 lg:w-72">
+          <ProblemSidebar categories={categories} query={search} />
+        </div>
+      </div>
     </Stack>
   );
 }

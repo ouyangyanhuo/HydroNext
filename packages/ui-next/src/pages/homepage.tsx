@@ -59,9 +59,12 @@ function ProblemList({ problems }: { problems: any[] }) {
           {t('View All')}
         </Button>
       </Group>
-      <Stack gap={6}>
+      <div className="flex flex-col gap-1.5">
         {problems.map((p: any) => (
-          <Group key={p.docId || p._id} justify="space-between" wrap="nowrap" className="min-w-0 rounded-md px-2 py-2 hover:bg-[var(--hydro-surface-muted)]">
+          <div key={p.docId || p._id} className="flex flex-row items-center justify-between rounded-md px-2 py-2 hover:bg-[var(--hydro-surface-muted)]">
+            <span className="shrink-0 text-xs text-[var(--mantine-color-dimmed)]">
+              {p.nSubmit > 0 ? `${p.nAccept}/${p.nSubmit}` : ''}
+            </span>
             <Link
               to="problem_detail"
               params={{ pid: p.pid || p.docId }}
@@ -69,14 +72,9 @@ function ProblemList({ problems }: { problems: any[] }) {
             >
               <span className="text-[var(--hydro-primary)]">{p.pid || p.docId}</span> {p.title}
             </Link>
-            {p.nSubmit > 0 && (
-              <Text size="xs" c="dimmed" className="shrink-0">
-                {p.nAccept}/{p.nSubmit}
-              </Text>
-            )}
-          </Group>
+          </div>
         ))}
-      </Stack>
+      </div>
     </Card>
   );
 }
@@ -94,9 +92,13 @@ function RecentContests({ contests }: { contests: any[] }) {
           {t('View All')}
         </Button>
       </Group>
-      <Stack gap={6}>
+      <div className="flex flex-col gap-1.5">
         {contests.map((c: any) => (
-          <Group key={c.docId || c._id} justify="space-between" wrap="nowrap" className="min-w-0 rounded-md px-2 py-2 hover:bg-[var(--hydro-surface-muted)]">
+          <div key={c.docId || c._id} className="flex flex-row items-center justify-between rounded-md px-2 py-2 hover:bg-[var(--hydro-surface-muted)]">
+            <div className="flex items-center gap-2 shrink-0">
+              {c.rule && <Badge size="xs" variant="light">{c.rule}</Badge>}
+              <TimeDisplay date={c.beginAt} format="relative" />
+            </div>
             <Link
               to="contest_detail"
               params={{ tid: c.docId || c._id }}
@@ -104,60 +106,22 @@ function RecentContests({ contests }: { contests: any[] }) {
             >
               {c.title}
             </Link>
-            <Group gap="xs" wrap="nowrap" className="shrink-0">
-              {c.rule && <Badge size="xs" variant="light">{c.rule}</Badge>}
-              <TimeDisplay date={c.beginAt} format="relative" />
-            </Group>
-          </Group>
+          </div>
         ))}
-      </Stack>
+      </div>
     </Card>
   );
 }
 
-function RecentDiscussions({ discussions }: { discussions: any[] }) {
-  const { t } = useI18n();
-
-  if (!discussions || discussions.length === 0) return null;
-
-  return (
-    <Card withBorder p="lg" className="hydro-card">
-      <Group justify="space-between" mb="sm">
-        <Title order={4}>{t('Recent Discussions')}</Title>
-        <Button component={Link} to="discussion_main" variant="subtle" size="xs">
-          {t('View All')}
-        </Button>
-      </Group>
-      <Stack gap={6}>
-        {discussions.map((d: any) => (
-          <Group key={d.docId || d._id} justify="space-between" wrap="nowrap" className="min-w-0 rounded-md px-2 py-2 hover:bg-[var(--hydro-surface-muted)]">
-            <Link
-              to="discussion_detail"
-              params={{ did: d.docId || d._id }}
-              className="hydro-subtle-link min-w-0 truncate text-sm font-semibold"
-            >
-              {d.title}
-            </Link>
-            <div className="shrink-0">
-              <TimeDisplay date={d.updateAt || d.createdAt} format="relative" />
-            </div>
-          </Group>
-        ))}
-      </Stack>
-    </Card>
-  );
-}
-
-function StatStrip({ problems, contests, discussions }: { problems: any[], contests: any[], discussions: any[] }) {
+function StatStrip({ problems, contests }: { problems: any[], contests: any[] }) {
   const { t } = useI18n();
   const items = [
     { label: t('Problems'), value: problems.length, tone: 'var(--hydro-primary)' },
     { label: t('Contests'), value: contests.length, tone: 'var(--hydro-accent)' },
-    { label: t('Discussion'), value: discussions.length, tone: 'var(--hydro-success)' },
   ];
 
   return (
-    <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
+    <SimpleGrid cols={1} spacing="md">
       {items.map((item) => (
         <Card key={item.label} withBorder p="md" className="hydro-card">
           <Text size="xs" fw={700} c="dimmed">
@@ -215,7 +179,6 @@ export default function HomePage() {
   const sections = collectSections(contents);
   const problems = sectionList(sections.problems || sections.starredProblems || sections.recentProblems || sections.recent_problems);
   const contests = sectionList(sections.contests || sections.contest);
-  const discussions = sectionList(sections.discussions || sections.discussion);
 
   return (
     <Stack gap="xl">
@@ -223,16 +186,11 @@ export default function HomePage() {
         <div className="lg:col-span-2">
           <WelcomeCard />
         </div>
-        <Stack gap="lg">
-          <ProblemList problems={problems} />
-          <StatStrip problems={problems} contests={contests} discussions={discussions} />
-        </Stack>
+        <StatStrip problems={problems} contests={contests} />
       </SimpleGrid>
       {domain.bulletin && <BulletinCard bulletin={domain.bulletin} />}
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
-        <RecentContests contests={contests} />
-        <RecentDiscussions discussions={discussions} />
-      </SimpleGrid>
+      <ProblemList problems={problems} />
+      <RecentContests contests={contests} />
     </Stack>
   );
 }
