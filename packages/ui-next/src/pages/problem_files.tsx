@@ -569,7 +569,7 @@ function GenerateTestdata({
   return (
     <Card withBorder p="lg" className="hydro-content-card">
       <Stack gap="md">
-        <Title order={3} size="h4">{t('Generate Testdata')} (Beta)</Title>
+        <Title order={3} size="h4">{t('Generate Testdata')}</Title>
         <Select
           label={t('Data Generator')}
           placeholder={t('Select a testdata file')}

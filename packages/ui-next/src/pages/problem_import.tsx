@@ -1,42 +1,67 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Button, Group, Paper, Select, Stack, Text, TextInput } from '@mantine/core';
-import { useState } from 'react';
+import { Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { IconCopy, IconFileImport } from '@tabler/icons-react';
 import { PageHeader } from '@/components/common/page-header';
-import { useNavigate } from '@/context/router';
+import { Link } from '@/components/link';
 import { useI18n } from '@/hooks/use-i18n';
+import { PRIV, useHasPriv } from '@/hooks/use-permission';
+import { useIsLoggedIn } from '@/hooks/use-current-user';
+
+const IMPORT_SOURCES = [
+  {
+    id: 'hydro',
+    icon: IconCopy,
+    title: 'Hydro',
+    description: 'Import problems from a Hydro system export file (.zip)',
+    href: '/problem/import/hydro',
+  },
+];
 
 export default function ProblemImportPage() {
   const { t } = useI18n();
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ type: 'hydro', url: '', pid: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const isLoggedIn = useIsLoggedIn();
+  const canCreate = useHasPriv(PRIV.PRIV_CREATE_PROBLEM);
 
-  const handleSubmit = async () => {
-    setLoading(true); setError('');
-    try {
-      const res = await fetch('/p/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (data.error) setError(formatErrorMessage(data.error, t('Import failed')));
-      else navigate('/p');
-    } catch { setError('Network error'); } finally { setLoading(false); }
-  };
+  if (!isLoggedIn || !canCreate) {
+    return (
+      <Stack gap="lg">
+        <PageHeader title={t('Import Problems')} />
+        <Card withBorder p="lg" className="hydro-content-card">
+          <Text c="dimmed">{t('You do not have permission to import problems.')}</Text>
+        </Card>
+      </Stack>
+    );
+  }
 
   return (
     <Stack gap="lg">
       <PageHeader title={t('Import Problems')} />
-      {error && <Text c="red" size="sm">{error}</Text>}
-      <Paper withBorder p="lg">
-        <Stack gap="md">
-          <Select label={t('Source')} data={[{ value: 'hydro', label: 'Hydro' }, { value: 'vijos', label: 'Vijos' }, { value: 'hustoj', label: 'HUSTOJ' }, { value: 'qoj', label: 'QOJ' }]} value={form.type} onChange={(v) => setForm({ ...form, type: v || 'hydro' })} />
-          <TextInput label={t('URL or ID')} value={form.url} onChange={(e) => setForm({ ...form, url: e.currentTarget.value })} placeholder="https://hydro.ac/p/1" />
-          <Group justify="flex-end"><Button onClick={handleSubmit} loading={loading}>{t('Import')}</Button></Group>
-        </Stack>
-      </Paper>
+
+      <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+        {IMPORT_SOURCES.map((source) => (
+          <Card
+            key={source.id}
+            withBorder
+            p="lg"
+            className="hydro-content-card cursor-pointer transition-shadow hover:shadow-md"
+            component="a"
+            href={source.href}
+          >
+            <Stack gap="sm">
+              <Group gap="sm">
+                <source.icon size={24} stroke={1.5} />
+                <Title order={4}>{source.title}</Title>
+              </Group>
+              <Text size="sm" c="dimmed">{source.description}</Text>
+            </Stack>
+          </Card>
+        ))}
+      </SimpleGrid>
+
+      <Card withBorder p="md" className="hydro-content-card">
+        <Text size="sm" c="dimmed">
+          {t('More import sources can be added via plugins.')}
+        </Text>
+      </Card>
     </Stack>
   );
 }

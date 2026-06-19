@@ -1,5 +1,6 @@
 import yaml from 'js-yaml';
 import { Badge, Button, Card, Checkbox, Group, MultiSelect, NumberInput, Select, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useMemo, useState } from 'react';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { FileDropzone } from '@/components/common/file-dropzone';
@@ -9,6 +10,7 @@ import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
+import { getLangDisplay, LANG_DISPLAY } from '@/utils/lang-display';
 
 function toText(config: any) {
   if (!config) return '';
@@ -60,13 +62,9 @@ function getLanguageOptions() {
   const langs = (window as any).LANGS || {};
   const entries = Object.entries<any>(langs)
     .filter(([, value]) => !value?.hidden && !value?.disabled)
-    .map(([key, value]) => ({ value: key, label: value?.display || key }));
-  return entries.length ? entries : [
-    { value: 'cc', label: 'C++' },
-    { value: 'c', label: 'C' },
-    { value: 'py', label: 'Python' },
-    { value: 'java', label: 'Java' },
-  ];
+    .map(([key, value]) => ({ value: key, label: value?.display || getLangDisplay(key) }));
+  if (entries.length) return entries;
+  return Object.entries(LANG_DISPLAY).map(([value, label]) => ({ value, label }));
 }
 
 function fileOptions(testdata: any[]) {
@@ -191,7 +189,10 @@ export default function ProblemConfigPage() {
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
       if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Save failed')));
-      else navigate(window.location.href);
+      else {
+        notifications.show({ title: t('Save successfully'), message: '', color: 'green' });
+        navigate(window.location.href);
+      }
     } catch (err: any) {
       setError(err?.message || t('Network error'));
     } finally {

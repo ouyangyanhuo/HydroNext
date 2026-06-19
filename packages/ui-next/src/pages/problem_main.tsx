@@ -9,6 +9,7 @@ import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 
@@ -145,11 +146,12 @@ export default function ProblemMainPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const canCreate = useHasPriv(PRIV.PRIV_CREATE_PROBLEM);
 
   const pdocs = args.pdocs || [];
   const psdict = args.psdict || {};
   const page = args.page || 1;
-  const pcount = args.pcount || 1;
+  const ppcount = args.ppcount || 1;
   const qs = args.qs || '';
   const sort = args.sort || 'default';
   const categories = args.categories || {};
@@ -249,13 +251,15 @@ export default function ProblemMainPage() {
             className="w-[130px]"
           />
           <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
+          {canCreate && <Button size="xs" variant="light" component="a" href="/problem/create">{t('Create Problem')}</Button>}
+          {canCreate && <Button size="xs" variant="light" component="a" href="/problem/import">{t('Import Problems')}</Button>}
         </Group>
       </PageHeader>
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="min-w-0 flex-1">
           <DataTable columns={columns} data={pdocs} emptyMessage={t('No problems found')} />
-          <Paginator page={page} totalPages={pcount} />
+          <Paginator page={page} totalPages={ppcount} />
         </div>
 
         <div className="w-full shrink-0 lg:w-72">

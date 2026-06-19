@@ -48,14 +48,18 @@ Registration failed: 註冊失敗
 "Too frequent operations of send_mail (limit: 1 operations in 60 seconds).": 郵件傳送過於頻繁（限制：60秒內1次操作）。
 Logging out...: 正在登出...
 Account Deletion Pending: 帳戶刪除待處理
+You do not have permission to import problems.: 您沒有權限匯入題目。
 Your account deletion request has been received. It will be processed within 30 days.: 您的帳戶刪除請求已收到，將在 30 天內處理。
 Or login with: 或登入方式
 
 # Common
 Save: 儲存
+Save failed: 儲存失敗
+Save successfully: 儲存成功
 Cancel: 取消
 Confirm: 確認
 Delete: 刪除
+Delete failed: 刪除失敗
 Select All: 全選
 Create: 建立
 Edit: 編輯
@@ -77,6 +81,7 @@ A data generator is a program that generates testdata.: 資料產生器是生成
 A standard program is a program that solves the problem.: 標準程式是解決問題的程式。
 Confirm to delete the file?: 確認刪除該檔案？
 Confirm to delete the selected files?: 確認刪除選取的檔案？
+Confirm to delete this problem?: 確認刪除此題目？
 Download Selected: 下載選取
 Remove Selected: 刪除選取
 Rename Selected: 重新命名選取

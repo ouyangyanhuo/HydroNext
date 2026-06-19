@@ -1,11 +1,28 @@
 import { Center, Loader } from '@mantine/core';
 import { useEffect, useRef, useState } from 'react';
+import { getLangDisplay } from '@/utils/lang-display';
 
 const LANG_MAP: Record<string, string> = {
-  cc: 'cpp', 'cc.cc98': 'cpp', 'cc.cc11': 'cpp', 'cc.cc14': 'cpp', 'cc.cc17': 'cpp', 'cc.cc20': 'cpp',
-  c: 'c', py: 'python', 'py.py3': 'python', 'py.pypy3': 'python', java: 'java',
-  'kt.jvm': 'kotlin', pas: 'pascal', rs: 'rust', go: 'go', hs: 'haskell',
-  rb: 'ruby', cs: 'csharp', php: 'php', js: 'javascript', ts: 'typescript', bash: 'shell',
+  bash: 'shell',
+  c: 'c',
+  cc: 'cpp', 'cc.cc98': 'cpp', 'cc.cc98o2': 'cpp',
+  'cc.cc11': 'cpp', 'cc.cc11o2': 'cpp',
+  'cc.cc14': 'cpp', 'cc.cc14o2': 'cpp',
+  'cc.cc17': 'cpp', 'cc.cc17o2': 'cpp',
+  'cc.cc20': 'cpp', 'cc.cc20o2': 'cpp',
+  cs: 'csharp',
+  go: 'go',
+  hs: 'haskell',
+  java: 'java',
+  js: 'javascript',
+  kt: 'kotlin', 'kt.jvm': 'kotlin',
+  pas: 'pascal',
+  php: 'php',
+  py: 'python', 'py.py2': 'python', 'py.py3': 'python', 'py.pypy3': 'python',
+  r: 'r',
+  rb: 'ruby',
+  rs: 'rust',
+  ts: 'typescript',
 };
 
 function resolveMonacoLang(lang: string): string {

@@ -6,6 +6,12 @@ import MessageModel from '../model/message';
 import problem from '../model/problem';
 import { Handler, param, Types } from '../service/server';
 
+class ProblemImportHandler extends Handler {
+    async get() {
+        this.response.template = 'problem_import.html';
+    }
+}
+
 class ProblemImportHydroHandler extends Handler {
     async get() {
         this.response.template = 'problem_import.html';
@@ -38,6 +44,7 @@ class ProblemImportHydroHandler extends Handler {
 }
 
 export async function apply(ctx: Context) {
+    ctx.Route('problem_import', '/problem/import', ProblemImportHandler, PERM.PERM_CREATE_PROBLEM);
     ctx.Route('problem_import_hydro', '/problem/import/hydro', ProblemImportHydroHandler, PERM.PERM_CREATE_PROBLEM);
     ctx.injectUI('ProblemAdd', 'problem_import_hydro', { icon: 'copy', text: 'Import From Hydro' });
 }

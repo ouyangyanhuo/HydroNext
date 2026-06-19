@@ -1,4 +1,5 @@
 import { formatErrorMessage } from '@/utils/error';
+import { getLangDisplay, LANG_DISPLAY } from '@/utils/lang-display';
 import { Badge, Button, Card, Checkbox, Group, MultiSelect, NumberInput, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
@@ -36,9 +37,11 @@ function formatSize(size?: number) {
 
 function languageOptions() {
   const langs = (window as any).LANGS || {};
-  return Object.entries<any>(langs)
+  const entries = Object.entries<any>(langs)
     .filter(([, value]) => !value?.hidden && !value?.disabled)
-    .map(([key, value]) => ({ value: key, label: value?.display || key }));
+    .map(([key, value]) => ({ value: key, label: value?.display || getLangDisplay(key) }));
+  if (entries.length) return entries;
+  return Object.entries(LANG_DISPLAY).map(([value, label]) => ({ value, label }));
 }
 
 export default function ContestEditPage() {

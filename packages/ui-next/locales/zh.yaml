@@ -10,6 +10,7 @@ Contests: 比赛
 Training: 训练
 Records: 评测记录
 Discussion: 讨论
+About preferredPrefix option: 关于 preferredPrefix 选项
 About: 关于
 Help: 帮助
 Ranking: 排名
@@ -65,6 +66,7 @@ Registration failed: 注册失败
 "Too frequent operations of send_mail (limit: 1 operations in 60 seconds).": 邮件发送过于频繁（限制：60秒内1次操作）。
 Logging out...: 正在登出...
 Account Deletion Pending: 账户删除待处理
+You do not have permission to import problems.: 您没有权限导入题目。
 Your account deletion request has been received. It will be processed within 30 days.: 您的账户删除请求已收到，将在 30 天内处理。
 Or login with: 或登录方式
 
@@ -73,6 +75,8 @@ Save: 保存
 Cancel: 取消
 Confirm: 确认
 Delete: 删除
+Delete failed: 删除失败
+Delete Problem: 删除题目​
 Select All: 全选
 Create: 创建
 Edit: 编辑
@@ -94,6 +98,7 @@ A data generator is a program that generates testdata.: 数据生成器是生成
 A standard program is a program that solves the problem.: 标准程序是解决问题的程序。
 Confirm to delete the file?: 确认删除该文件？
 Confirm to delete the selected files?: 确认删除选中的文件？
+Confirm to delete this problem?: 确认删除此题目？
 Download Selected: 下载选中
 Remove Selected: 删除选中
 Rename Selected: 重命名选中
@@ -152,6 +157,7 @@ Record: 记录
 Domain: 域
 Score: 分数
 Language: 语言
+Leave empty for default: 留空使用默认值
 Submissions: 递交
 Accept Rate: 通过率
 Total Submissions: 总递交数
@@ -169,6 +175,7 @@ Host: 主机
 # Problem
 Create Problem: 创建题目
 Edit Problem: 编辑题目
+Preferred Prefix: 首选前缀
 Problem ID: 题目 ID
 Problem ID must start with a letter and contain only letters and numbers.: 题目 ID 必须以字母开头，且只能包含字母和数字。
 Problem ID must start with a letter. Auto-corrected to {0}: 题目 ID 必须以字母开头，已自动修正为 {0}
@@ -191,6 +198,7 @@ URL or ID: 链接或 ID
 # Submit
 Please select a language: 请选择语言
 Please enter your code: 请输入代码
+Please select a file: 请选择文件
 Select language: 选择语言
 
 # Record
@@ -323,6 +331,7 @@ Run script: 运行脚本
 Params: 参数
 Run failed: 运行失败
 Invalid JSON: JSON 格式无效
+Import From Hydro: 从 Hydro 导入
 Import failed: 导入失败
 Import User: 导入用户
 Special Users: 特殊权限用户
@@ -356,9 +365,12 @@ File too large: 文件过大
 Drag files here or click to upload: 拖拽文件到此处或点击上传
 Uploading...: 上传中...
 Upload failed: 上传失败
+Upload zipfile: 上传压缩文件
 Save failed: 保存失败
+Save successfully: 保存成功
 Generating...: 正在生成...
 Select a testdata file: 选择已有测试数据文件
+Select a zip file: 选择 zip 文件
 Testdata generated successfully.: 测试数据生成成功。
 Nothing to preview: 暂无预览内容
 Write: 编写
@@ -417,6 +429,7 @@ sort::default: 默认排序
 sort::recent: 最近添加
 AC: 通过
 Tried: 尝试
+The preferred problem ID prefix.: 首选的题目 ID 前缀。
 Time Limit: 时间限制
 Memory Limit: 内存限制
 Accepted: 通过
@@ -465,8 +478,10 @@ Checker: 校验器
 Extra Files: 附加文件
 Subtasks: 子任务
 FileIO: 文件输入输出
+Make the problem hidden.: 设置题目为隐藏状态。
 Max Passes: 最大通过次数
 Number of Processes: 进程数量
+More import sources can be added via plugins.: 更多导入源可通过插件添加。
 Multi-file: 多文件
 CheckerType: 校验器类型
 other: 其他
@@ -500,5 +515,7 @@ Show less: 收起
 Show more: 展开更多
 solutions: 篇题解
 Write Your Solution: 编写你的题解
+What is this?: 这是什么？
+preferredPrefix_hint: 首选前缀提示
 No solutions so far...: 暂无题解...
 View all {0} solutions: 查看全部 {0} 篇题解

@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -172,6 +173,7 @@ export default function ProblemEditPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [previewFile, setPreviewFile] = useState<{ name: string; size: number } | null>(null);
+  const [deleteOpened, setDeleteOpened] = useState(false);
   const pid = pdoc.pid || pdoc.docId;
 
   const handleSubmit = async () => {
@@ -210,6 +212,34 @@ export default function ProblemEditPage() {
       else if (data.pid) navigate(`/p/${data.pid}`);
       else navigate(isNew ? '/p' : `/p/${body.pid || pdoc.docId}`);
     } catch { setError('Network error'); } finally { setLoading(false); }
+  };
+
+  const handleDelete = async () => {
+    setDeleteOpened(true);
+  };
+
+  const confirmDelete = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(window.location.href.replace('/edit', ''), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ operation: 'delete' }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, t('Delete failed')), message: '', color: 'red' });
+      } else if (data.redirect) {
+        navigate(data.redirect);
+      } else {
+        navigate('/p');
+      }
+    } catch {
+      notifications.show({ title: t('Network error'), message: '', color: 'red' });
+    } finally {
+      setLoading(false);
+      setDeleteOpened(false);
+    }
   };
 
   const toggleTag = (tag: string) => {
@@ -285,7 +315,12 @@ export default function ProblemEditPage() {
             />
             <TextInput label={t('Tags')} value={form.tag} onChange={(e) => setForm({ ...form, tag: e.currentTarget.value })} placeholder="tag1, tag2" />
             <Switch label={t('Hidden')} checked={form.hidden} onChange={(e) => setForm({ ...form, hidden: e.currentTarget.checked })} />
-            <Group justify="flex-end">
+            <Group justify="flex-end" gap="xs">
+              {!isNew && (
+                <Button variant="outline" color="red" onClick={handleDelete} loading={loading}>
+                  {t('Delete')}
+                </Button>
+              )}
               <Button onClick={handleSubmit} loading={loading}>{isNew ? t('Create') : t('Update')}</Button>
             </Group>
           </Stack>
@@ -383,6 +418,17 @@ export default function ProblemEditPage() {
         fileUrl={fileUrl}
         canEdit
         onSave={handleSaveFile}
+      />
+
+      <ConfirmDialog
+        opened={deleteOpened}
+        onClose={() => setDeleteOpened(false)}
+        onConfirm={confirmDelete}
+        title={t('Delete Problem')}
+        message={t('Confirm to delete this problem?')}
+        confirmLabel={t('Delete')}
+        cancelLabel={t('Cancel')}
+        loading={loading}
       />
     </Stack>
   );

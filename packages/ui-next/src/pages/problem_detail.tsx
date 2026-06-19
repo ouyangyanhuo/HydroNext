@@ -1,7 +1,8 @@
 import { Badge, Button, Card, Group, Paper, Stack, Text, Title } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Scratchpad } from '@/components/editor/scratchpad';
 import { FormDialog } from '@/components/common/form-dialog';
+import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
@@ -16,6 +17,7 @@ import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { formatErrorMessage } from '@/utils/error';
+import { getLangDisplay } from '@/utils/lang-display';
 
 function safeFilename(name: string) {
   return name.replace(/[\\/:*?"<>|]/g, '_');
@@ -393,9 +395,27 @@ export default function ProblemDetailPage() {
     return queryLang || (langs.includes(sessionLanguage) ? sessionLanguage : langs[0] || sessionLanguage);
   });
   const [scratchpadOpen, setScratchpadOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<{ name: string; size: number } | null>(null);
+  const pid = pdoc.pid || pdoc.docId;
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('.file-preview-link');
+      if (!target) return;
+      e.preventDefault();
+      const filename = target.getAttribute('data-file-src');
+      if (filename) {
+        setPreviewFile({ name: filename, size: 0 });
+      }
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
+
+  const fileUrl = previewFile ? `/p/${pid}/file/${encodeURIComponent(previewFile.name)}?type=additional_file` : '';
 
   const title = extractLocalizedContent(pdoc.title, selectedLang || sessionLanguage);
-  const scratchpadLangs = Object.fromEntries((pdoc.config?.langs || []).map((lang: string) => [lang, { display: lang }]));
+  const scratchpadLangs = Object.fromEntries((pdoc.config?.langs || []).map((lang: string) => [lang, { display: getLangDisplay(lang) }]));
   const statement = (
     <Stack gap="md">
       {langs.length > 1 && (
@@ -417,7 +437,7 @@ export default function ProblemDetailPage() {
           ))}
         </Group>
       )}
-      <MarkdownRenderer content={pdoc.content || ''} language={selectedLang} />
+      <MarkdownRenderer content={pdoc.content || ''} language={selectedLang} pid={pid} />
     </Stack>
   );
 
@@ -497,6 +517,13 @@ export default function ProblemDetailPage() {
           onToggleScratchpad={() => setScratchpadOpen((open) => !open)}
         />
       </div>
+
+      <FilePreviewModal
+        opened={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+        file={previewFile}
+        fileUrl={fileUrl}
+      />
     </div>
   );
 }

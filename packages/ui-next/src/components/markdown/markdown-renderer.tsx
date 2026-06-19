@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Box } from '@mantine/core';
 import MarkdownIt from 'markdown-it';
 import markPlugin from 'markdown-it-mark';
@@ -191,6 +191,52 @@ function katexPlugin(md: MarkdownIt) {
   md.renderer.rules.math_block = (tokens, idx) => `${renderKatex(tokens[idx].content, true)}\n`;
 }
 
+const EMBED_REGEX = /@\[([a-zA-Z].+?)\]\((.*?)\)/;
+
+const FILE_ICON_MAP: Record<string, string> = {
+  pdf: '📄', doc: '📝', docx: '📝', ppt: '📊', pptx: '📊', xls: '📈', xlsx: '📈',
+};
+
+function fileMediaPlugin(md: MarkdownIt) {
+  md.inline.ruler.before('emphasis', 'file_media', (state, silent) => {
+    if (state.src.charCodeAt(state.pos) !== 0x40 || state.src.charCodeAt(state.pos + 1) !== 0x5B) return false;
+    const match = EMBED_REGEX.exec(state.src.slice(state.pos));
+    if (!match || match.length < 3) return false;
+    const [, service, src] = match;
+    if (!silent) {
+      const token = state.push('file_media', '', 0);
+      token.attrPush(['src', src]);
+      token.attrPush(['service', service.toLowerCase()]);
+      token.attrPush(['url', match[2]]);
+    }
+    state.pos += match[0].length;
+    return true;
+  });
+
+  md.renderer.rules.file_media = (tokens, idx) => {
+    let src = tokens[idx].attrGet('src') || '';
+    const service = (tokens[idx].attrGet('service') || '').toLowerCase();
+    const ext = src.split('.').pop()?.toLowerCase() || service;
+    const isFile = src.startsWith('file://') || src.startsWith('./') || src.startsWith('../');
+    const displayName = src.replace(/^file:\/\//, '').replace(/^\.\//, '');
+    const icon = FILE_ICON_MAP[ext] || FILE_ICON_MAP[service] || '📎';
+    const encodedName = encodeURIComponent(displayName);
+    if (service === 'pdf' || ext === 'pdf') {
+      if (isFile) {
+        return `<div class="file-inline-viewer my-3 rounded-md border border-[var(--hydro-border)] overflow-hidden" data-file-src="${md.utils.escapeHtml(displayName)}" data-file-ext="pdf"><div class="flex items-center justify-center p-8 text-sm text-[var(--hydro-text-muted)]">${icon} Loading PDF...</div></div>`;
+      }
+      return `<iframe src="${md.utils.escapeHtml(src)}?noDisposition=1" style="width:100%;min-height:70vh;border:none;" allowfullscreen></iframe>`;
+    }
+    if (['docx', 'doc', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext)) {
+      return `<div class="file-inline-viewer my-3 rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] p-4" data-file-src="${md.utils.escapeHtml(displayName)}" data-file-ext="${md.utils.escapeHtml(ext)}"><div class="flex items-center gap-2 text-sm text-[var(--hydro-text-muted)]">${icon} Loading ${md.utils.escapeHtml(displayName)}...</div></div>`;
+    }
+    if (isFile) {
+      return `<a href="javascript:;" class="file-preview-link hydro-subtle-link inline-flex items-center gap-1 rounded border border-[var(--hydro-border)] bg-[var(--hydro-surface)] px-2 py-1 text-sm font-medium hover:bg-[var(--hydro-surface-muted)]" data-file-src="${md.utils.escapeHtml(displayName)}" data-file-ext="${md.utils.escapeHtml(ext)}">${icon} ${md.utils.escapeHtml(displayName)}</a>`;
+    }
+    return `<a href="${md.utils.escapeHtml(src)}" target="_blank" rel="noopener">${icon} ${md.utils.escapeHtml(displayName)}</a>`;
+  };
+}
+
 const md = new MarkdownIt({
   linkify: true,
   html: true,
@@ -198,6 +244,7 @@ const md = new MarkdownIt({
 
 md.use(markPlugin);
 md.use(katexPlugin);
+md.use(fileMediaPlugin);
 
 const LANG_LABELS: Record<string, string> = {
   js: 'JavaScript', javascript: 'JavaScript', ts: 'TypeScript', typescript: 'TypeScript',
@@ -247,9 +294,10 @@ interface MarkdownRendererProps {
   content: any;
   className?: string;
   language?: string;
+  pid?: string | number;
 }
 
-export function MarkdownRenderer({ content, className, language }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className, language, pid }: MarkdownRendererProps) {
   const sessionLanguage = useSessionStore((s) => s.language);
   const rawText = extractLocalizedContent(content, language || sessionLanguage);
 
@@ -259,10 +307,63 @@ export function MarkdownRenderer({ content, className, language }: MarkdownRende
     return md.render(rawText);
   }, [rawText]);
 
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ref.current || !pid) return;
+
+    // Handle PDF inline viewers
+    const pdfContainers = ref.current.querySelectorAll('.file-inline-viewer[data-file-ext="pdf"]');
+    pdfContainers.forEach((container) => {
+      if ((container as any).__fileRendered) return;
+      (container as any).__fileRendered = true;
+      const filename = container.getAttribute('data-file-src');
+      if (!filename) return;
+      const url = `/p/${pid}/file/${encodeURIComponent(filename)}?type=additional_file`;
+      fetch(url, { redirect: 'follow' })
+        .then((res) => {
+          if (!res.ok) throw new Error(`${res.status}`);
+          return res.blob();
+        })
+        .then((blob) => {
+          const blobUrl = URL.createObjectURL(blob);
+          container.innerHTML = `<iframe src="${blobUrl}#toolbar=0&navpanes=0&view=FitH" style="width:100%;height:70vh;border:none;" allowfullscreen></iframe>`;
+        })
+        .catch(() => {
+          container.innerHTML = `<div class="p-4 text-sm text-red-500">Failed to load ${filename}</div>`;
+        });
+    });
+
+    // Handle DOCX inline viewers
+    const docxContainers = ref.current.querySelectorAll('.file-inline-viewer[data-file-ext="docx"]');
+    docxContainers.forEach((container) => {
+      if ((container as any).__fileRendered) return;
+      (container as any).__fileRendered = true;
+      const filename = container.getAttribute('data-file-src');
+      if (!filename) return;
+      const url = `/p/${pid}/file/${encodeURIComponent(filename)}?type=additional_file`;
+      container.innerHTML = '<div class="text-sm text-[var(--hydro-text-muted)]">Loading...</div>';
+      import('docx-preview').then(({ renderAsync }) =>
+        fetch(url, { redirect: 'follow' })
+          .then((r) => {
+            if (!r.ok) throw new Error(`${r.status}`);
+            return r.arrayBuffer();
+          })
+          .then((buf) => {
+            container.innerHTML = '';
+            renderAsync(buf, container as HTMLElement, undefined, { className: 'docx-preview' });
+          })
+      ).catch(() => {
+        container.innerHTML = `<div class="p-4 text-sm text-red-500">Failed to load ${filename}</div>`;
+      });
+    });
+  }, [html, pid]);
+
   if (!html) return null;
 
   return (
     <Box
+      ref={ref}
       className={`hydro-markdown ${className || ''}`}
       p={0}
       dangerouslySetInnerHTML={{ __html: html }}

@@ -10,6 +10,7 @@ Contests: Contests
 Training: Training
 Records: Records
 Discussion: Discussion
+About preferredPrefix option: About preferredPrefix option
 About: About
 Help: Help
 Ranking: Ranking
@@ -48,14 +49,19 @@ Registration failed: Registration failed
 "Too frequent operations of send_mail (limit: 1 operations in 60 seconds).": "Too frequent operations of send_mail (limit: 1 operations in 60 seconds)."
 Logging out...: Logging out...
 Account Deletion Pending: Account Deletion Pending
+You do not have permission to import problems.: You do not have permission to import problems.
 Your account deletion request has been received. It will be processed within 30 days.: Your account deletion request has been received. It will be processed within 30 days.
 Or login with: Or login with
 
 # Common
 Save: Save
+Save failed: Save failed
+Save successfully: Save successfully
 Cancel: Cancel
 Confirm: Confirm
 Delete: Delete
+Delete failed: Delete failed
+Delete Problem: Delete Problem
 Select All: Select All
 Create: Create
 Edit: Edit
@@ -77,6 +83,7 @@ A data generator is a program that generates testdata.: A data generator is a pr
 A standard program is a program that solves the problem.: A standard program is a program that solves the problem.
 Confirm to delete the file?: Confirm to delete the file?
 Confirm to delete the selected files?: Confirm to delete the selected files?
+Confirm to delete this problem?: Confirm to delete this problem?
 Download Selected: Download Selected
 Remove Selected: Remove Selected
 Rename Selected: Rename Selected
@@ -138,6 +145,7 @@ Accept Rate: Accept Rate
 Total Submissions: Total Submissions
 Joined: Joined
 Last login: Last login
+Leave empty for default: Leave empty for default
 Like: Like
 Bio: Bio
 School: School
@@ -150,6 +158,7 @@ Host: Host
 # Problem
 Create Problem: Create Problem
 Edit Problem: Edit Problem
+Preferred Prefix: Preferred Prefix
 Problem ID: Problem ID
 Problem ID must start with a letter and contain only letters and numbers.: Problem ID must start with a letter and contain only letters and numbers.
 Problem ID must start with a letter. Auto-corrected to {0}: Problem ID must start with a letter. Auto-corrected to {0}
@@ -165,6 +174,7 @@ Files: Files
 No files: No files
 Hack: Hack
 Submit Hack: Submit Hack
+Import From Hydro: Import From Hydro
 Import Problems: Import Problems
 Source: Source
 URL or ID: URL or ID
@@ -172,6 +182,7 @@ URL or ID: URL or ID
 # Submit
 Please select a language: Please select a language
 Please enter your code: Please enter your code
+Please select a file: Please select a file
 Select language: Select language
 
 # Record
@@ -335,6 +346,7 @@ sort::default: Default
 sort::recent: Recent
 AC: AC
 Tried: Tried
+The preferred problem ID prefix.: The preferred problem ID prefix.
 Time Limit: Time Limit
 Memory Limit: Memory Limit
 Accepted: Accepted
@@ -387,6 +399,12 @@ Share: Share
 Show less: Show less
 Show more: Show more
 solutions: solutions
+Make the problem hidden.: Make the problem hidden.
+More import sources can be added via plugins.: More import sources can be added via plugins.
+Select a zip file: Select a zip file
+Upload zipfile: Upload zipfile
 Write Your Solution: Write Your Solution
+What is this?: What is this?
+preferredPrefix_hint: The preferred problem ID prefix hint.
 No solutions so far...: No solutions so far...
 View all {0} solutions: View all {0} solutions

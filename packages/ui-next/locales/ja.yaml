@@ -48,14 +48,19 @@ Registration failed: 登録失敗
 "Too frequent operations of send_mail (limit: 1 operations in 60 seconds).": メール送信が頻繁すぎます（制限：60秒に1回）。
 Logging out...: ログアウト中...
 Account Deletion Pending: アカウント削除保留中
+You do not have permission to import problems.: 問題をインポートする権限がありません。
 Your account deletion request has been received. It will be processed within 30 days.: アカウント削除リクエストを受け付けました。30日以内に処理されます。
 Or login with: または以下の方法でログイン
 
 # Common
 Save: 保存
+Save failed: 保存失敗
+Save successfully: 保存成功
 Cancel: キャンセル
 Confirm: 確認
 Delete: 削除
+Delete failed: 削除失敗
+Delete Problem: 問題を削除​
 Select All: すべて選択
 Create: 作成
 Edit: 編集
@@ -77,6 +82,7 @@ A data generator is a program that generates testdata.: データジェネレー
 A standard program is a program that solves the problem.: 標準プログラムは問題を解くプログラムです。
 Confirm to delete the file?: このファイルを削除しますか？
 Confirm to delete the selected files?: 選択したファイルを削除しますか？
+Confirm to delete this problem?: この問題を削除しますか？
 Download Selected: 選択をダウンロード
 Remove Selected: 選択を削除
 Rename Selected: 選択を名前変更
