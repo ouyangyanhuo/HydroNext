@@ -1,5 +1,6 @@
 import { Avatar, Burger, Button, Drawer, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { useEffect, useRef, useState } from 'react';
 import logoUrl from '@/assets/logo.png';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
@@ -79,7 +80,6 @@ const NAV_ITEMS = [
   { to: 'contest_main', label: 'Contests' },
   { to: 'training_main', label: 'Training' },
   { to: 'record_main', label: 'Records' },
-  { to: 'discussion_main', label: 'Discussion' },
 ] as const;
 
 export function TopNav() {
@@ -88,6 +88,19 @@ export function TopNav() {
   const domain = useDomain();
   const { name } = usePageData();
   const { t } = useI18n();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const activeTab = tabRefs.current.get(name);
+    const container = containerRef.current;
+    if (activeTab && container) {
+      const cr = container.getBoundingClientRect();
+      const tr = activeTab.getBoundingClientRect();
+      setIndicator({ left: tr.left - cr.left, width: tr.width });
+    }
+  }, [name]);
 
   return (
     <>
@@ -105,24 +118,29 @@ export function TopNav() {
                 </span>
               </span>
             </Link>
-            <Group gap={4} className="hidden lg:flex">
+            <div ref={containerRef} className="relative hidden lg:flex">
               {NAV_ITEMS.map((item) => (
                 <Button
                   key={item.to}
                   component={Link}
                   to={item.to}
-                  variant={name === item.to ? 'filled' : 'subtle'}
+                  ref={(el) => { if (el) tabRefs.current.set(item.to, el); }}
+                  variant="subtle"
                   color={name === item.to ? 'hydroTeal' : 'gray'}
                   className={
                     name === item.to
-                      ? 'shadow-[var(--hydro-shadow-sm)]'
+                      ? 'text-[var(--hydro-primary)]'
                       : 'text-[var(--hydro-text)] hover:bg-[var(--hydro-surface-muted)]'
                   }
                 >
                   {t(item.label)}
                 </Button>
               ))}
-            </Group>
+              <div
+                className="absolute bottom-0 h-[3px] rounded-full bg-[var(--hydro-primary)] transition-all duration-300 ease-out"
+                style={{ left: indicator.left, width: indicator.width }}
+              />
+            </div>
           </Group>
 
           <Group gap="sm" wrap="nowrap">

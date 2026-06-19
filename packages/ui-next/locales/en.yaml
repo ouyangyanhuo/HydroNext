@@ -56,6 +56,7 @@ Save: Save
 Cancel: Cancel
 Confirm: Confirm
 Delete: Delete
+Select All: Select All
 Create: Create
 Edit: Edit
 Close: Close
@@ -64,6 +65,16 @@ Submit: Submit
 Search: Search
 Upload: Upload
 Download: Download
+Rename: Rename
+Rename to: Rename to
+Generate: Generate
+Generate Testdata: Generate Testdata
+Data Generator: Data Generator
+Standard Program: Standard Program
+Please input the generator.: Please input the generator.
+Please input the standard program.: Please input the standard program.
+A data generator is a program that generates testdata.: A data generator is a program that generates testdata.
+A standard program is a program that solves the problem.: A standard program is a program that solves the problem.
 Import: Import
 Export: Export
 Loading...: Loading...

@@ -199,7 +199,6 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
   const { t } = useI18n();
   const isLoggedIn = useIsLoggedIn();
   const canSubmit = useHasPriv(PRIV.PRIV_SUBMIT_PROBLEM);
-  const canViewDiscussion = useHasPriv(PRIV.PRIV_VIEW_DISCUSSION);
   const canViewSolution = useHasPriv(PRIV.PRIV_VIEW_PROBLEM_SOLUTION);
   const canEdit = useHasPriv(PRIV.PRIV_EDIT_PROBLEM);
   const buildUrl = useBuildUrl();
@@ -292,12 +291,6 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
             </Button>
           )}
 
-          {canViewDiscussion && (
-            <SidebarLinkButton href={`/discuss/problem/${pdoc.docId}`}>
-              {t('Discussions')}
-            </SidebarLinkButton>
-          )}
-
           {canViewSolution && (
             <SidebarLinkButton href={buildUrl('problem_solution', { pid })}>
               {t('Solutions')}
@@ -364,7 +357,6 @@ export default function ProblemDetailPage() {
   const rdoc = args.rdoc;
   const owner = args.udoc || args.owner_udoc;
   const solutionCount = args.solutionCount;
-  const discussionCount = args.discussionCount;
   const relatedContests = args.ctdocs || [];
   const relatedHomework = args.htdocs || [];
   const langs = useMemo(() => contentLanguages(pdoc.content), [pdoc.content]);
@@ -427,7 +419,6 @@ export default function ProblemDetailPage() {
                 </Title>
                 <Group gap="xs" mt="md">
                   {solutionCount !== undefined && <Badge variant="light">{t('Solutions')}: {solutionCount}</Badge>}
-                  {discussionCount !== undefined && <Badge variant="light">{t('Discussions')}: {discussionCount}</Badge>}
                   {pdoc.hidden && <Badge color="red" variant="light">{t('Hidden')}</Badge>}
                 </Group>
                 <ProblemTags tags={pdoc.tag} />

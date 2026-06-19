@@ -56,6 +56,7 @@ Save: 儲存
 Cancel: 取消
 Confirm: 確認
 Delete: 刪除
+Select All: 全選
 Create: 建立
 Edit: 編輯
 Close: 關閉
@@ -64,6 +65,16 @@ Submit: 提交
 Search: 搜尋
 Upload: 上傳
 Download: 下載
+Rename: 重新命名
+Rename to: 重新命名為
+Generate: 生成
+Generate Testdata: 生成測試資料
+Data Generator: 資料產生器
+Standard Program: 標準程式
+Please input the generator.: 請輸入產生器。
+Please input the standard program.: 請輸入標準程式。
+A data generator is a program that generates testdata.: 資料產生器是生成測試資料的程式。
+A standard program is a program that solves the problem.: 標準程式是解決問題的程式。
 Import: 匯入
 Export: 匯出
 Loading...: 載入中...

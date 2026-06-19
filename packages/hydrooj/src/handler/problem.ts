@@ -678,6 +678,8 @@ export class ProblemFilesHandler extends ProblemDetailHandler {
     @param('sidebar', Types.Boolean)
     async get({ }, d = ['testdata', 'additional_file'], sidebar = false) {
         if (this.tdoc) throw new ContestNotEndedError();
+        this.response.body.pdoc = this.pdoc;
+        this.response.body.udoc = this.udoc;
         this.response.body.testdata = sortFiles(this.pdoc.data || []);
         this.response.body.additional_file = sortFiles(this.pdoc.additional_file || []);
         this.response.body.reference = this.pdoc.reference;

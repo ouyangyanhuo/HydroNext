@@ -56,6 +56,7 @@ Save: 저장
 Cancel: 취소
 Confirm: 확인
 Delete: 삭제
+Select All: 전체 선택
 Create: 만들기
 Edit: 편집
 Close: 닫기
@@ -64,6 +65,16 @@ Submit: 제출
 Search: 검색
 Upload: 업로드
 Download: 다운로드
+Rename: 이름 변경
+Rename to: 새 이름
+Generate: 생성
+Generate Testdata: 테스트데이터 생성
+Data Generator: 데이터 생성기
+Standard Program: 표준 프로그램
+Please input the generator.: 생성기를 입력하세요.
+Please input the standard program.: 표준 프로그램을 입력하세요.
+A data generator is a program that generates testdata.: 데이터 생성기는 테스트데이터를 생성하는 프로그램입니다.
+A standard program is a program that solves the problem.: 표준 프로그램은 문제를 푸는 프로그램입니다.
 Import: 가져오기
 Export: 내보내기
 Loading...: 로딩 중...
