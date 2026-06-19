@@ -1,5 +1,5 @@
 import { formatErrorMessage } from '@/utils/error';
-import { Button, Card, Group, Stack, Text, Textarea, Title } from '@mantine/core';
+import { Badge, Button, Card, Group, ScrollArea, Stack, Table, Text, Textarea, Title } from '@mantine/core';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { useI18n } from '@/hooks/use-i18n';
@@ -7,6 +7,7 @@ import { useI18n } from '@/hooks/use-i18n';
 export default function ManageUserImportPage() {
   const { t } = useI18n();
   const [users, setUsers] = useState('');
+  const [previewUsers, setPreviewUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState('');
   const [messages, setMessages] = useState<string[]>([]);
   const [error, setError] = useState('');
@@ -24,7 +25,10 @@ export default function ManageUserImportPage() {
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
       if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Import failed')));
-      else setMessages(data.messages || []);
+      else {
+        setMessages(data.messages || []);
+        setPreviewUsers(data.users || []);
+      }
     } catch (err: any) {
       setError(err?.message || t('Network error'));
     } finally {
@@ -67,6 +71,49 @@ export default function ManageUserImportPage() {
           )}
         </Card>
       </div>
+
+      <Card withBorder p="lg" className="hydro-content-card">
+        <Group justify="space-between" mb="md">
+          <Title order={3} size="h4">{t('Preview')}</Title>
+          <Badge variant="light">{previewUsers.length}</Badge>
+        </Group>
+        {previewUsers.length ? (
+          <ScrollArea>
+            <Table striped highlightOnHover miw={760}>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>{t('Email')}</Table.Th>
+                  <Table.Th>{t('Username')}</Table.Th>
+                  <Table.Th>{t('Display Name')}</Table.Th>
+                  <Table.Th>{t('School')}</Table.Th>
+                  <Table.Th>{t('Student ID')}</Table.Th>
+                  <Table.Th>{t('Extra')}</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {previewUsers.map((user, index) => {
+                  const extra = Object.keys(user)
+                    .filter((key) => !['email', 'username', 'password', 'displayName', 'school', 'studentId'].includes(key))
+                    .map((key) => `${key}: ${String(user[key])}`)
+                    .join(', ');
+                  return (
+                    <Table.Tr key={`${user.email}-${index}`}>
+                      <Table.Td><Text size="sm">{user.email}</Text></Table.Td>
+                      <Table.Td><Text size="sm">{user.username}</Text></Table.Td>
+                      <Table.Td><Text size="sm">{user.displayName || '-'}</Text></Table.Td>
+                      <Table.Td><Text size="sm">{user.school || '-'}</Text></Table.Td>
+                      <Table.Td><Text size="sm">{user.studentId || '-'}</Text></Table.Td>
+                      <Table.Td><Text size="xs" c="dimmed">{extra || '-'}</Text></Table.Td>
+                    </Table.Tr>
+                  );
+                })}
+              </Table.Tbody>
+            </Table>
+          </ScrollArea>
+        ) : (
+          <Text size="sm" c="dimmed">{t('No preview data')}</Text>
+        )}
+      </Card>
     </Stack>
   );
 }

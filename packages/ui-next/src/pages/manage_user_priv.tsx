@@ -1,8 +1,7 @@
 import { formatErrorMessage } from '@/utils/error';
-import { Badge, Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Badge, Button, Card, Checkbox, Group, Modal, ScrollArea, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
-import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
@@ -11,7 +10,7 @@ import { useI18n } from '@/hooks/use-i18n';
 function toBigIntValue(value: any) {
   try {
     if (value == null || value === '') return BigInt(0);
-    return BigInt(String(Math.trunc(Number(value))));
+    return BigInt(String(value));
   } catch {
     return BigInt(0);
   }
@@ -48,29 +47,70 @@ function PrivSummary({ priv, defaultPriv, privMap }: { priv: any, defaultPriv: a
   );
 }
 
+function hasBit(value: any, bit: any) {
+  const current = toBigIntValue(value);
+  const mask = toBigIntValue(bit);
+  if (!mask) return false;
+  return (current & mask) === mask;
+}
+
+function splitColumns<T>(items: T[], count: number) {
+  const size = Math.ceil(items.length / count);
+  return Array.from({ length: count }, (_, index) => items.slice(index * size, (index + 1) * size));
+}
+
 export default function ManageUserPrivPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const udocs = args.udocs || [];
   const defaultPriv = args.defaultPriv ?? 0;
   const privMap = args.Priv || {};
-  const [dialog, setDialog] = useState<{ uid: number, priv: number, system: boolean, title: string } | null>(null);
+  const privEntries = Object.entries(privMap || {}).filter(([, value]) => toBigIntValue(value) > 0n);
+  const [dialog, setDialog] = useState<{ uid: number, priv: any, system: boolean, title: string } | null>(null);
+  const [selectedPrivs, setSelectedPrivs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const submitPriv = async (values: Record<string, any>) => {
+  const openDialog = (next: { uid: number, priv: any, system: boolean, title: string }) => {
+    setDialog(next);
+    setSelectedPrivs(new Set(
+      privEntries
+        .filter(([, value]) => hasBit(next.priv, value))
+        .map(([name]) => name),
+    ));
+  };
+
+  const togglePriv = (name: string, checked: boolean) => {
+    setSelectedPrivs((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(name);
+      else next.delete(name);
+      return next;
+    });
+  };
+
+  const computedPriv = () => {
+    let value = 0n;
+    for (const [name, bit] of privEntries) {
+      if (selectedPrivs.has(name)) value |= toBigIntValue(bit);
+    }
+    return value;
+  };
+
+  const submitPriv = async () => {
     if (!dialog) return;
     setLoading(true);
     setError('');
     setSuccess('');
+    const nextPriv = computedPriv();
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           uid: dialog.uid,
-          priv: Number(values.priv) || 0,
+          priv: Number(nextPriv),
           system: dialog.system,
         }),
       });
@@ -122,7 +162,7 @@ export default function ManageUserPrivPage() {
         <Button
           size="compact-xs"
           variant="subtle"
-          onClick={() => setDialog({ uid: user._id, priv: user.priv, system: false, title: `${t('Set Privilege')} #${user._id}` })}
+          onClick={() => openDialog({ uid: user._id, priv: user.priv, system: false, title: `${t('Set Privilege')} #${user._id}` })}
         >
           {t('Edit')}
         </Button>
@@ -150,7 +190,7 @@ export default function ManageUserPrivPage() {
             mt="md"
             size="xs"
             variant="light"
-            onClick={() => setDialog({ uid: 0, priv: defaultPriv, system: true, title: t('Default Privilege') })}
+            onClick={() => openDialog({ uid: 0, priv: defaultPriv, system: true, title: t('Default Privilege') })}
           >
             {t('Edit')}
           </Button>
@@ -169,23 +209,50 @@ export default function ManageUserPrivPage() {
         </Card>
       </SimpleGrid>
 
-      <FormDialog
+      <Modal
         opened={!!dialog}
         title={dialog?.title || t('Set Privilege')}
-        fields={[{
-          name: 'priv',
-          label: t('Privilege'),
-          type: 'number',
-          required: true,
-          defaultValue: dialog?.priv ?? 0,
-        }]}
         onClose={() => setDialog(null)}
-        onSubmit={submitPriv}
-        confirmLabel={t('Save')}
-        cancelLabel={t('Cancel')}
-        loading={loading}
-        error={error}
-      />
+        size="xl"
+      >
+        <Stack gap="md">
+          <Group justify="space-between">
+            <Stack gap={2}>
+              <Text size="sm" c="dimmed">{t('Value')}</Text>
+              <Text ff="monospace" fw={700}>{computedPriv().toString()}</Text>
+            </Stack>
+            <Group gap="xs">
+              <Button size="xs" variant="light" onClick={() => setSelectedPrivs(new Set(privEntries.map(([name]) => name)))}>
+                {t('Select All')}
+              </Button>
+              <Button size="xs" variant="light" onClick={() => setSelectedPrivs(new Set())}>
+                {t('Clear')}
+              </Button>
+            </Group>
+          </Group>
+          <ScrollArea h={460}>
+            <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
+              {splitColumns(privEntries, 3).map((items, index) => (
+                <Stack key={index} gap="xs">
+                  {items.map(([name]) => (
+                    <Checkbox
+                      key={name}
+                      label={t(name)}
+                      checked={selectedPrivs.has(name)}
+                      onChange={(e) => togglePriv(name, e.currentTarget.checked)}
+                    />
+                  ))}
+                </Stack>
+              ))}
+            </SimpleGrid>
+          </ScrollArea>
+          {error && <Text size="xs" c="red">{error}</Text>}
+          <Group justify="flex-end">
+            <Button variant="default" size="xs" onClick={() => setDialog(null)}>{t('Cancel')}</Button>
+            <Button size="xs" onClick={submitPriv} loading={loading}>{t('Save')}</Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
   );
 }
