@@ -273,6 +273,7 @@ Recent Discussions: 最近討論
 Powered by: 驅動於
 Paste limit exceeded: 貼上內容超過限制
 File too large: 檔案過大
+"File too large: {name}": "檔案過大：{name}"
 Drag files here or click to upload: 拖曳檔案到此處或點擊上傳
 Uploading...: 上傳中...
 Nothing to preview: 暫無預覽內容

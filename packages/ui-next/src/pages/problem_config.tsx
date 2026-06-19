@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import { Badge, Button, Card, Group, NumberInput, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Button, Card, Checkbox, Group, MultiSelect, NumberInput, Select, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { DataTable } from '@/components/common/data-table';
@@ -30,6 +30,57 @@ function formatSize(size?: number) {
   return `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function dumpConfig(config: Record<string, any>) {
+  const clean = Object.fromEntries(Object.entries(config).filter(([, value]) => {
+    if (value === undefined || value === null || value === '') return false;
+    if (Array.isArray(value) && value.length === 0) return false;
+    return true;
+  }));
+  return yaml.dump(clean, { noArrayIndent: true });
+}
+
+function normalizeFileValue(value: any) {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  return value.file || '';
+}
+
+function normalizeLangValue(value: any) {
+  if (!value || typeof value === 'string') return 'auto';
+  return value.lang || 'auto';
+}
+
+function normalizeFileWithLang(file: string, lang: string) {
+  if (!file) return null;
+  return lang && lang !== 'auto' ? { file, lang } : file;
+}
+
+function getLanguageOptions() {
+  const langs = (window as any).LANGS || {};
+  const entries = Object.entries<any>(langs)
+    .filter(([, value]) => !value?.hidden && !value?.disabled)
+    .map(([key, value]) => ({ value: key, label: value?.display || key }));
+  return entries.length ? entries : [
+    { value: 'cc', label: 'C++' },
+    { value: 'c', label: 'C' },
+    { value: 'py', label: 'Python' },
+    { value: 'java', label: 'Java' },
+  ];
+}
+
+function fileOptions(testdata: any[]) {
+  return testdata.map((file) => ({ value: file.name, label: file.name }));
+}
+
+function parseCasePairs(testdata: any[]) {
+  const inputFiles = testdata.filter((file) => /\.(in|input|txt)$/i.test(file.name));
+  return inputFiles.map((file) => {
+    const base = file.name.replace(/\.(in|input|txt)$/i, '');
+    const output = testdata.find((item) => item.name === `${base}.out` || item.name === `${base}.ans` || item.name === `${base}.output`);
+    return { input: file.name, output: output?.name || '' };
+  });
+}
+
 export default function ProblemConfigPage() {
   const { args } = usePageData();
   const { t } = useI18n();
@@ -40,9 +91,84 @@ export default function ProblemConfigPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const parsed = useMemo(() => parseConfig(config), [config]);
+  const files = useMemo(() => fileOptions(testdata), [testdata]);
+  const languages = useMemo(() => getLanguageOptions(), []);
+  const type = parsed.type || 'default';
+  const checkerMode = ['strict', 'default', undefined, ''].includes(parsed.checker_type) ? 'default'
+    : parsed.checker_type === 'testlib' ? 'testlib' : 'other';
 
   const updateConfig = (patch: Record<string, any>) => {
-    setConfig(yaml.dump({ ...parsed, ...patch }));
+    setConfig(dumpConfig({ ...parsed, ...patch }));
+  };
+
+  const updateFileWithLang = (key: string, file: string | null, lang: string) => {
+    updateConfig({ [key]: normalizeFileWithLang(file || '', lang) });
+  };
+
+  const addAutoSubtask = () => {
+    const pairs = parseCasePairs(testdata);
+    if (!pairs.length) return;
+    updateConfig({
+      subtasks: [{
+        id: 1,
+        type: 'sum',
+        score: 100,
+        cases: pairs.map((item) => ({
+          input: item.input,
+          output: item.output,
+          time: parsed.time || '1000ms',
+          memory: parsed.memory || '256MB',
+        })),
+      }],
+    });
+  };
+
+  const addSubtask = () => {
+    const subtasks = Array.isArray(parsed.subtasks) ? parsed.subtasks : [];
+    const maxId = subtasks.reduce((max: number, subtask: any) => Math.max(max, Number(subtask.id) || 0), 0);
+    updateConfig({
+      subtasks: [...subtasks, { id: maxId + 1, type: 'sum', score: 0, cases: [] }],
+    });
+  };
+
+  const updateSubtask = (index: number, patch: Record<string, any>) => {
+    const subtasks = Array.isArray(parsed.subtasks) ? [...parsed.subtasks] : [];
+    subtasks[index] = { ...(subtasks[index] || {}), ...patch };
+    updateConfig({ subtasks });
+  };
+
+  const removeSubtask = (index: number) => {
+    const subtasks = Array.isArray(parsed.subtasks) ? [...parsed.subtasks] : [];
+    subtasks.splice(index, 1);
+    updateConfig({ subtasks });
+  };
+
+  const addCase = (subtaskIndex: number) => {
+    const subtasks = Array.isArray(parsed.subtasks) ? [...parsed.subtasks] : [];
+    const subtask = { ...(subtasks[subtaskIndex] || {}) };
+    subtask.cases = [...(subtask.cases || []), { input: '', output: '', time: parsed.time || '1000ms', memory: parsed.memory || '256MB' }];
+    subtasks[subtaskIndex] = subtask;
+    updateConfig({ subtasks });
+  };
+
+  const updateCase = (subtaskIndex: number, caseIndex: number, patch: Record<string, any>) => {
+    const subtasks = Array.isArray(parsed.subtasks) ? [...parsed.subtasks] : [];
+    const subtask = { ...(subtasks[subtaskIndex] || {}) };
+    const cases = [...(subtask.cases || [])];
+    cases[caseIndex] = { ...(cases[caseIndex] || {}), ...patch };
+    subtask.cases = cases;
+    subtasks[subtaskIndex] = subtask;
+    updateConfig({ subtasks });
+  };
+
+  const removeCase = (subtaskIndex: number, caseIndex: number) => {
+    const subtasks = Array.isArray(parsed.subtasks) ? [...parsed.subtasks] : [];
+    const subtask = { ...(subtasks[subtaskIndex] || {}) };
+    const cases = [...(subtask.cases || [])];
+    cases.splice(caseIndex, 1);
+    subtask.cases = cases;
+    subtasks[subtaskIndex] = subtask;
+    updateConfig({ subtasks });
   };
 
   const handleSave = async () => {
@@ -99,36 +225,266 @@ export default function ProblemConfigPage() {
               <Title order={3} size="h4">{t('Basic')}</Title>
               <Badge variant="light">config.yaml</Badge>
             </Group>
-            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-              <Select
-                label={t('Problem Type')}
-                value={parsed.type || 'default'}
-                data={[
-                  { value: 'default', label: 'default' },
-                  { value: 'objective', label: 'objective' },
-                  { value: 'submit_answer', label: 'submit_answer' },
-                  { value: 'remote_judge', label: 'remote_judge' },
-                ]}
-                onChange={(value) => updateConfig({ type: value || 'default' })}
-              />
-              <TextInput
-                label={t('Languages')}
-                value={(parsed.langs || []).join(', ')}
-                onChange={(e) => updateConfig({ langs: e.currentTarget.value.split(',').map((v) => v.trim()).filter(Boolean) })}
-              />
-              <NumberInput
-                label={t('Time Limit')}
-                value={Number(parsed.time || parsed.timeMax || 1000)}
-                min={1}
-                onChange={(value) => updateConfig({ time: Number(value) || 1000 })}
-              />
-              <NumberInput
-                label={t('Memory Limit')}
-                value={Number(parsed.memory || parsed.memoryMax || 256)}
-                min={1}
-                onChange={(value) => updateConfig({ memory: Number(value) || 256 })}
-              />
-            </SimpleGrid>
+            <Tabs defaultValue="basic" keepMounted={false}>
+              <Tabs.List>
+                <Tabs.Tab value="basic">{t('Basic')}</Tabs.Tab>
+                <Tabs.Tab value="checker">{t('Checker')}</Tabs.Tab>
+                <Tabs.Tab value="files">{t('Extra Files')}</Tabs.Tab>
+                <Tabs.Tab value="subtasks">{t('Subtasks')}</Tabs.Tab>
+              </Tabs.List>
+
+              <Tabs.Panel value="basic" pt="md">
+                <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                  <Select
+                    label={t('Problem Type')}
+                    value={type}
+                    data={[
+                      { value: 'default', label: t('problem_type.default') },
+                      { value: 'interactive', label: t('problem_type.interactive') },
+                      { value: 'communication', label: t('problem_type.communication') },
+                      { value: 'submit_answer', label: t('problem_type.submit_answer') },
+                      { value: 'objective', label: t('problem_type.objective') },
+                    ]}
+                    onChange={(value) => updateConfig({ type: value || 'default' })}
+                  />
+                  <TextInput
+                    label={t('FileIO')}
+                    rightSection={<Text size="xs">.in/.out</Text>}
+                    rightSectionWidth={82}
+                    value={parsed.filename || ''}
+                    disabled={type !== 'default'}
+                    onChange={(e) => updateConfig({ filename: e.currentTarget.value })}
+                  />
+                  <TextInput
+                    label={t('Time Limit')}
+                    value={String(parsed.time || '')}
+                    placeholder="1000ms"
+                    onChange={(e) => updateConfig({ time: e.currentTarget.value })}
+                  />
+                  <TextInput
+                    label={t('Memory Limit')}
+                    value={String(parsed.memory || '')}
+                    placeholder="256MB"
+                    onChange={(e) => updateConfig({ memory: e.currentTarget.value })}
+                  />
+                  <NumberInput
+                    label={t('Max Passes')}
+                    value={Number(parsed.multi_pass || 0)}
+                    min={0}
+                    max={20}
+                    disabled={!['default', 'interactive'].includes(type)}
+                    onChange={(value) => updateConfig({ multi_pass: Number(value) || undefined })}
+                  />
+                  {type === 'communication' && (
+                    <NumberInput
+                      label={t('Number of Processes')}
+                      value={Number(parsed.num_processes || 2)}
+                      min={2}
+                      max={16}
+                      onChange={(value) => updateConfig({ num_processes: Number(value) || 2 })}
+                    />
+                  )}
+                  {type === 'submit_answer' && (
+                    <>
+                      <Switch
+                        label={t('Multi-file')}
+                        checked={parsed.subType === 'multi'}
+                        onChange={(e) => updateConfig({ subType: e.currentTarget.checked ? 'multi' : 'single' })}
+                      />
+                      <TextInput
+                        label={t('Filename')}
+                        value={parsed.filename || '#.txt'}
+                        disabled={parsed.subType !== 'multi'}
+                        onChange={(e) => updateConfig({ filename: e.currentTarget.value })}
+                      />
+                    </>
+                  )}
+                  {!['submit_answer', 'objective'].includes(type) && (
+                    <MultiSelect
+                      label={t('Languages')}
+                      placeholder={t('Unlimited')}
+                      data={languages}
+                      searchable
+                      value={Array.isArray(parsed.langs) ? parsed.langs : []}
+                      onChange={(value) => updateConfig({ langs: value })}
+                      className="sm:col-span-2"
+                    />
+                  )}
+                </SimpleGrid>
+              </Tabs.Panel>
+
+              <Tabs.Panel value="checker" pt="md">
+                <Stack gap="md">
+                  {['default', 'submit_answer'].includes(type) && (
+                    <>
+                      <Select
+                        label={t('CheckerType')}
+                        value={checkerMode}
+                        data={[
+                          { value: 'default', label: t('default') },
+                          { value: 'testlib', label: 'testlib' },
+                          { value: 'other', label: t('other') },
+                        ]}
+                        onChange={(value) => updateConfig({
+                          checker_type: value === 'default' ? (parsed.checker_type === 'strict' ? 'strict' : 'default') : value,
+                        })}
+                      />
+                      {checkerMode === 'default' && (
+                        <Checkbox
+                          label={t('Ignore trailing space and enter.')}
+                          checked={(parsed.checker_type || 'default') !== 'strict'}
+                          onChange={(e) => updateConfig({ checker_type: e.currentTarget.checked ? 'default' : 'strict' })}
+                        />
+                      )}
+                      {checkerMode === 'testlib' && (
+                        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                          <Select
+                            label={t('Checker')}
+                            data={[
+                              { value: 'acmp', label: 'acmp' },
+                              { value: 'testlib', label: 'testlib' },
+                              ...files,
+                            ]}
+                            searchable
+                            value={normalizeFileValue(parsed.checker)}
+                            onChange={(value) => updateFileWithLang('checker', value, normalizeLangValue(parsed.checker))}
+                          />
+                          <Select
+                            label={t('Language')}
+                            data={[{ value: 'auto', label: 'auto' }, ...languages]}
+                            searchable
+                            value={normalizeLangValue(parsed.checker)}
+                            onChange={(value) => updateFileWithLang('checker', normalizeFileValue(parsed.checker), value || 'auto')}
+                          />
+                        </SimpleGrid>
+                      )}
+                      {checkerMode === 'other' && (
+                        <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
+                          <Select
+                            label={t('Interface')}
+                            data={['syzoj', 'hustoj', 'qduoj', 'lemon', 'kattis']}
+                            value={parsed.checker_type || 'syzoj'}
+                            onChange={(value) => updateConfig({ checker_type: value || 'syzoj' })}
+                          />
+                          <Select
+                            label={t('Checker')}
+                            data={files}
+                            searchable
+                            value={normalizeFileValue(parsed.checker)}
+                            onChange={(value) => updateFileWithLang('checker', value, normalizeLangValue(parsed.checker))}
+                          />
+                          <Select
+                            label={t('Language')}
+                            data={[{ value: 'auto', label: 'auto' }, ...languages]}
+                            searchable
+                            value={normalizeLangValue(parsed.checker)}
+                            onChange={(value) => updateFileWithLang('checker', normalizeFileValue(parsed.checker), value || 'auto')}
+                          />
+                        </SimpleGrid>
+                      )}
+                    </>
+                  )}
+                  {type === 'interactive' && (
+                    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                      <Select
+                        label={t('Interactor')}
+                        data={files}
+                        searchable
+                        value={normalizeFileValue(parsed.interactor)}
+                        onChange={(value) => updateFileWithLang('interactor', value, normalizeLangValue(parsed.interactor))}
+                      />
+                      <Select
+                        label={t('Language')}
+                        data={[{ value: 'auto', label: 'auto' }, ...languages]}
+                        searchable
+                        value={normalizeLangValue(parsed.interactor)}
+                        onChange={(value) => updateFileWithLang('interactor', normalizeFileValue(parsed.interactor), value || 'auto')}
+                      />
+                    </SimpleGrid>
+                  )}
+                  {type === 'communication' && (
+                    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                      <Select
+                        label={t('Manager')}
+                        data={files}
+                        searchable
+                        value={normalizeFileValue(parsed.manager)}
+                        onChange={(value) => updateFileWithLang('manager', value, normalizeLangValue(parsed.manager))}
+                      />
+                      <Select
+                        label={t('Language')}
+                        data={[{ value: 'auto', label: 'auto' }, ...languages]}
+                        searchable
+                        value={normalizeLangValue(parsed.manager)}
+                        onChange={(value) => updateFileWithLang('manager', normalizeFileValue(parsed.manager), value || 'auto')}
+                      />
+                    </SimpleGrid>
+                  )}
+                  {type === 'objective' && <Text size="sm" c="dimmed">{t('Unsupported configure this type of problem. Please refer to the documentation.')}</Text>}
+                </Stack>
+              </Tabs.Panel>
+
+              <Tabs.Panel value="files" pt="md">
+                <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                  <MultiSelect
+                    label={t('user_extra_files')}
+                    data={files}
+                    searchable
+                    value={Array.isArray(parsed.user_extra_files) ? parsed.user_extra_files : []}
+                    onChange={(value) => updateConfig({ user_extra_files: value })}
+                  />
+                  <MultiSelect
+                    label={t('judge_extra_files')}
+                    data={files}
+                    searchable
+                    value={Array.isArray(parsed.judge_extra_files) ? parsed.judge_extra_files : []}
+                    onChange={(value) => updateConfig({ judge_extra_files: value })}
+                  />
+                </SimpleGrid>
+              </Tabs.Panel>
+
+              <Tabs.Panel value="subtasks" pt="md">
+                <Stack gap="md">
+                  <Group gap="xs">
+                    <Button size="xs" variant="light" onClick={addAutoSubtask}>{t('Auto configure')}</Button>
+                    <Button size="xs" variant="light" onClick={addSubtask}>{t('Add new subtask')}</Button>
+                  </Group>
+                  {(Array.isArray(parsed.subtasks) ? parsed.subtasks : []).map((subtask: any, subtaskIndex: number) => (
+                    <Card key={subtask.id || subtaskIndex} withBorder p="md" className="bg-[var(--hydro-surface)]">
+                      <Stack gap="sm">
+                        <Group justify="space-between">
+                          <Title order={4} size="h5">{t('Subtask {0}', subtask.id || subtaskIndex + 1)}</Title>
+                          <Button size="compact-xs" variant="subtle" color="red" onClick={() => removeSubtask(subtaskIndex)}>
+                            {t('Delete')}
+                          </Button>
+                        </Group>
+                        <SimpleGrid cols={{ base: 1, sm: 4 }} spacing="sm">
+                          <NumberInput label="ID" value={Number(subtask.id || subtaskIndex + 1)} onChange={(value) => updateSubtask(subtaskIndex, { id: Number(value) || subtaskIndex + 1 })} />
+                          <Select label={t('Type')} data={['sum', 'min', 'max']} value={subtask.type || 'sum'} onChange={(value) => updateSubtask(subtaskIndex, { type: value || 'sum' })} />
+                          <NumberInput label={t('Score')} value={Number(subtask.score || 0)} onChange={(value) => updateSubtask(subtaskIndex, { score: Number(value) || 0 })} />
+                          <TextInput label={t('Depend On')} value={(subtask.if || []).join(', ')} onChange={(e) => updateSubtask(subtaskIndex, { if: e.currentTarget.value.split(',').map((i) => i.trim()).filter(Boolean).map(Number) })} />
+                        </SimpleGrid>
+                        <Stack gap="xs">
+                          {(subtask.cases || []).map((item: any, caseIndex: number) => (
+                            <SimpleGrid key={caseIndex} cols={{ base: 1, sm: 5 }} spacing="xs">
+                              <Select label={t('Input')} data={files} searchable value={item.input || null} onChange={(value) => updateCase(subtaskIndex, caseIndex, { input: value || '' })} />
+                              <Select label={t('Output')} data={files} searchable value={item.output || null} onChange={(value) => updateCase(subtaskIndex, caseIndex, { output: value || '' })} />
+                              <TextInput label={t('Time Limit')} value={String(item.time || '')} onChange={(e) => updateCase(subtaskIndex, caseIndex, { time: e.currentTarget.value })} />
+                              <TextInput label={t('Memory Limit')} value={String(item.memory || '')} onChange={(e) => updateCase(subtaskIndex, caseIndex, { memory: e.currentTarget.value })} />
+                              <Button mt={24} variant="subtle" color="red" onClick={() => removeCase(subtaskIndex, caseIndex)}>{t('Delete')}</Button>
+                            </SimpleGrid>
+                          ))}
+                          <Button size="xs" variant="light" onClick={() => addCase(subtaskIndex)}>{t('Add Testcase')}</Button>
+                        </Stack>
+                      </Stack>
+                    </Card>
+                  ))}
+                  {!(Array.isArray(parsed.subtasks) && parsed.subtasks.length) && (
+                    <Text size="sm" c="dimmed">{t('No subtasks')}</Text>
+                  )}
+                </Stack>
+              </Tabs.Panel>
+            </Tabs>
           </Card>
 
           <Card withBorder p="lg" className="hydro-content-card">

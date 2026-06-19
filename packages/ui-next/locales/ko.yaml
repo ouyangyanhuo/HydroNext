@@ -273,6 +273,7 @@ Recent Discussions: 최근 토론
 Powered by: Powered by
 Paste limit exceeded: 붙여넣기 제한 초과
 File too large: 파일이 너무 큽니다
+"File too large: {name}": "파일이 너무 큽니다: {name}"
 Drag files here or click to upload: 여기에 파일을 드래그하거나 클릭하여 업로드
 Uploading...: 업로드 중...
 Nothing to preview: 미리보기 없음

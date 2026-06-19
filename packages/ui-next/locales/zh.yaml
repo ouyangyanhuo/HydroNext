@@ -14,6 +14,22 @@ About: 关于
 Help: 帮助
 Ranking: 排名
 Status: 状态
+Information: 信息
+Rejudge: 重测
+Cancel Score: 取消分数
+Test Case: 测试点
+Time Cost: 耗时
+Memory Cost: 内存
+Total Time: 总耗时
+Peak Time: 峰值耗时
+Peak Memory: 峰值内存
+Code Length: 代码长度
+Judged At: 评测时间
+Judged By: 评测者
+Hacked: 被 Hack
+History: 历史
+Latest Version: 最新版本
+Submission detail: 提交详情
 
 # Auth
 Login: 登录
@@ -82,6 +98,8 @@ Download Selected: 下载选中
 Remove Selected: 删除选中
 Rename Selected: 重命名选中
 "Enter a new name for the file:": 请输入文件的新名称：
+New Filename: 新文件名
+Create File: 创建文件
 Batch replacement: 批量替换
 Original content: 原始内容
 Replace with: 替换为
@@ -151,6 +169,7 @@ Host: 主机
 Create Problem: 创建题目
 Edit Problem: 编辑题目
 Problem ID: 题目 ID
+Problem ID must start with a letter and contain only letters and numbers.: 题目 ID 必须以字母开头，且只能包含字母和数字。
 Content (Markdown): 内容（Markdown）
 Test Data: 测试数据
 Upload Test Data: 上传测试数据
@@ -201,6 +220,28 @@ Done: 已完成
 Print: 打印
 Send to Printer: 发送到打印机
 Contest Settings: 比赛设置
+Basic Info: 基本信息
+Begin Date: 开始日期
+Duration (hours): 持续时间（小时）
+Description: 描述
+Permission Control: 权限控制
+Contest Maintainer: 比赛维护者
+Require Invitation Code: 需要邀请码
+Assign User or Group: 指定用户或用户组
+Assign: 指定
+Invitation Code: 邀请码
+Group / UID: 用户组 / UID
+Submission language limit: 提交语言限制
+Lock (minutes): 封榜时间（分钟）
+Flexable Duration: 弹性持续时间
+Rated: 计入排名
+Auto hide-and show: 自动隐藏和显示
+Allow View Code: 允许查看代码
+Allow Print: 允许打印
+Keep Scoreboard Hidden: 保持榜单隐藏
+Clone: 克隆
+Summary: 摘要
+Seperated with ',': 使用英文逗号分隔
 
 # Homework
 Homework: 作业
@@ -254,6 +295,39 @@ Format: 格式
 Data: 数据
 Apply: 应用
 Service Status: 服务状态
+Tools: 工具
+Open Panel: 打开面板
+Runtime settings grouped by feature.: 按功能分组的运行时设置。
+Edit raw YAML configuration source.: 编辑原始 YAML 配置源。
+Run registered maintenance scripts.: 运行已注册的维护脚本。
+Preview and import users in batches.: 批量预览并导入用户。
+Inspect and edit user privilege values.: 查看并编辑用户权限值。
+Check service health and runtime status.: 检查服务健康和运行状态。
+Save All Changes: 保存全部更改
+Config Source: 配置源
+Secrets marked as hidden keep their old values when left unchanged.: 标记为隐藏的密钥字段在未修改时会保留原值。
+(Not changed): （不修改）
+setting_display: 显示设置
+setting_usage: 使用统计
+setting_info: 站点信息
+setting_customize: 自定义
+setting_domain: 域设置
+setting_server: 服务设置
+setting_limits: 限制设置
+setting_basic: 基础设置
+setting_session: 会话设置
+setting_storage: 存储设置
+Run script: 运行脚本
+Params: 参数
+Run failed: 运行失败
+Invalid JSON: JSON 格式无效
+Import failed: 导入失败
+Import User: 导入用户
+Special Users: 特殊权限用户
+Default Privilege: 默认权限
+Same as default: 与默认权限相同
+No users: 暂无用户
+Set Privilege: 设置权限
 Uptime: 运行时间
 Online: 在线
 No judges connected: 无评测机连接
@@ -276,8 +350,14 @@ Powered by: 驱动于
 Paste limit exceeded: 粘贴内容超过限制
 粘贴内容超过限制: 粘贴内容超过限制
 File too large: 文件过大
+"File too large: {name}": "文件过大：{name}"
 Drag files here or click to upload: 拖拽文件到此处或点击上传
 Uploading...: 上传中...
+Upload failed: 上传失败
+Save failed: 保存失败
+Generating...: 正在生成...
+Select a testdata file: 选择已有测试数据文件
+Testdata generated successfully.: 测试数据生成成功。
 Nothing to preview: 暂无预览内容
 Write: 编写
 Preview: 预览
@@ -371,12 +451,42 @@ Confirm rejudge this problem?: 确认重测这道题目？
 Download failed: 下载失败
 Copy failed: 复制失败
 Target: 目标域
+Copy Problem: 复制题目
+Search by domain ID or name: 按域 ID 或名称搜索
 Monaco Editor: Monaco 编辑器
 Pretest: 预评测
 Input: 输入
 Basic: 基础
 Languages: 语言
 Config Editor: 配置编辑器
+Checker: 校验器
+Extra Files: 附加文件
+Subtasks: 子任务
+FileIO: 文件输入输出
+Max Passes: 最大通过次数
+Number of Processes: 进程数量
+Multi-file: 多文件
+CheckerType: 校验器类型
+other: 其他
+Ignore trailing space and enter.: 忽略行末空格和换行
+Interface: 接口
+Interactor: 交互器
+Manager: 管理器
+Unsupported configure this type of problem. Please refer to the documentation.: 暂不支持配置此类型题目，请参考文档。
+user_extra_files: 用户附加文件
+judge_extra_files: 评测附加文件
+Auto configure: 自动配置
+Add new subtask: 新增子任务
+Subtask {0}: 子任务 {0}
+Depend On: 依赖
+Add Testcase: 添加测试点
+No subtasks: 暂无子任务
+Unlimited: 不限制
+problem_type.default: 传统题
+problem_type.interactive: 交互题
+problem_type.communication: 通信题
+problem_type.submit_answer: 提交答案题
+problem_type.objective: 客观题
 YAML: YAML
 click to add: 点击添加
 Update: 更新

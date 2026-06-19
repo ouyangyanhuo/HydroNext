@@ -1,6 +1,7 @@
 import { Badge, Button, Card, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import { Scratchpad } from '@/components/editor/scratchpad';
+import { FormDialog } from '@/components/common/form-dialog';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
@@ -14,6 +15,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
+import { formatErrorMessage } from '@/utils/error';
 
 function safeFilename(name: string) {
   return name.replace(/[\\/:*?"<>|]/g, '_');
@@ -206,6 +208,8 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
   const [rejudgeLoading, setRejudgeLoading] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
   const [copyLoading, setCopyLoading] = useState(false);
+  const [copyOpened, setCopyOpened] = useState(false);
+  const [copyError, setCopyError] = useState('');
 
   const rejudge = async () => {
     if (!window.confirm(t('Confirm rejudge this problem?'))) return;
@@ -232,10 +236,10 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
     }
   };
 
-  const handleCopy = async () => {
-    const target = window.prompt(t('Target'));
+  const handleCopy = async (target: string) => {
     if (!target) return;
     setCopyLoading(true);
+    setCopyError('');
     try {
       const res = await fetch(buildUrl('problem_main'), {
         method: 'POST',
@@ -243,11 +247,15 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
         body: JSON.stringify({ operation: 'copy', pids: [pdoc.docId], target, redirect: true }),
       });
       const data = await res.json();
+      if (!res.ok || data.error) {
+        setCopyError(formatErrorMessage(data.error, t('Copy failed')));
+        return;
+      }
       if (data.url) window.location.href = data.url;
       else if (data.redirect) window.location.href = data.redirect;
       else window.location.href = buildUrl('problem_main');
     } catch (err: any) {
-      window.alert(err?.message || t('Copy failed'));
+      setCopyError(err?.message || t('Copy failed'));
     } finally {
       setCopyLoading(false);
     }
@@ -321,7 +329,7 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
             {t('Download')}
           </Button>
           {isLoggedIn && (
-            <Button variant="subtle" fullWidth size="sm" justify="flex-start" onClick={handleCopy} loading={copyLoading}>
+            <Button variant="subtle" fullWidth size="sm" justify="flex-start" onClick={() => setCopyOpened(true)} loading={copyLoading}>
               {t('Copy')}
             </Button>
           )}
@@ -343,6 +351,26 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
           </Link>
         </Paper>
       )}
+      <FormDialog
+        opened={copyOpened}
+        title={t('Copy Problem')}
+        fields={[{
+          name: 'target',
+          label: t('Target'),
+          type: 'domain',
+          required: true,
+          placeholder: t('Search by domain ID or name'),
+        }]}
+        onClose={() => {
+          setCopyOpened(false);
+          setCopyError('');
+        }}
+        onSubmit={(values) => handleCopy(String(values.target || ''))}
+        confirmLabel={t('Copy')}
+        cancelLabel={t('Cancel')}
+        loading={copyLoading}
+        error={copyError}
+      />
     </Stack>
   );
 }

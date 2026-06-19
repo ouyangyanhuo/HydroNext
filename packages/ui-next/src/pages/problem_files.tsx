@@ -9,6 +9,7 @@ import {
   Image,
   Modal,
   ScrollArea,
+  Select,
   Stack,
   Text,
   TextInput,
@@ -17,12 +18,15 @@ import {
 import { useEffect, useState } from 'react';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { FileDropzone } from '@/components/common/file-dropzone';
+import { FormDialog } from '@/components/common/form-dialog';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
+import { STATUS } from '@/components/record/status-map';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
+import { formatErrorMessage } from '@/utils/error';
 
 function formatSize(size?: number) {
   if (!size) return '0 B';
@@ -91,7 +95,13 @@ function FilePreviewModal({ opened, onClose, file, fileUrl, type: _type, pid: _p
 
   useEffect(() => {
     if (!opened || !file) return;
+    setContent('');
+    setEditing(false);
     const textExt = isPreviewableText(ext);
+    if (file.size === 0) {
+      setEditing(true);
+      return;
+    }
     if (textExt && file.size <= 8 * 1024 * 1024) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(true);
@@ -323,6 +333,8 @@ function FileSection({
   const [operating, setOperating] = useState(false);
   const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);
   const [renameTarget, setRenameTarget] = useState<string[] | null>(null);
+  const [renameSingleTarget, setRenameSingleTarget] = useState<string | null>(null);
+  const [createOpened, setCreateOpened] = useState(false);
   const user = useSessionStore((s) => s.user);
   const isOwner = pdoc.owner === user?._id;
   const canDownload = type === 'additional_file' || isOwner || canEdit;
@@ -375,10 +387,14 @@ function FileSection({
   };
 
   const renameSingle = async (name: string) => {
-    // eslint-disable-next-line no-alert
-    const newName = window.prompt(t('Enter a new name for the file'), name);
+    setRenameSingleTarget(name);
+  };
+
+  const submitRenameSingle = async (name: string, value: string) => {
+    const newName = value.trim();
     if (!newName || newName === name) return;
     await postOperation('rename_files', { files: [name], newNames: [newName] });
+    setRenameSingleTarget(null);
   };
 
   const renameSelected = async (targetFiles: string[], newNames: string[]) => {
@@ -415,16 +431,25 @@ function FileSection({
     formData.append('file', blob, filename);
     formData.append('type', type);
     formData.append('operation', 'upload_file');
-    const res = await fetch(`/p/${pid}/files`, { method: 'POST', body: formData });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message || data.error);
+    const res = await fetch(`/p/${pid}/files`, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: formData,
+    });
+    const contentType = res.headers.get('content-type') || '';
+    const data = contentType.includes('json') ? await res.json() : {};
+    if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Save failed')));
     onComplete();
   };
 
   const handleCreateFile = async () => {
-    // eslint-disable-next-line no-alert
-    const filename = window.prompt(t('Filename'));
+    setCreateOpened(true);
+  };
+
+  const submitCreateFile = (value: string) => {
+    const filename = value.trim();
     if (!filename) return;
+    setCreateOpened(false);
     setPreviewFile({ name: filename, size: 0 });
   };
 
@@ -570,16 +595,74 @@ function FileSection({
           onRename={renameSelected}
         />
       )}
+
+      <FormDialog
+        opened={createOpened}
+        title={t('Create File')}
+        fields={[{
+          name: 'filename',
+          label: t('Filename'),
+          required: true,
+          placeholder: type === 'testdata' ? '1.in' : 'checker.cpp',
+        }]}
+        onClose={() => setCreateOpened(false)}
+        onSubmit={(values) => submitCreateFile(String(values.filename || ''))}
+        confirmLabel={t('Create')}
+        cancelLabel={t('Cancel')}
+      />
+
+      <FormDialog
+        opened={!!renameSingleTarget}
+        title={t('Rename')}
+        fields={[{
+          name: 'filename',
+          label: t('New Filename'),
+          required: true,
+          defaultValue: renameSingleTarget || '',
+        }]}
+        onClose={() => setRenameSingleTarget(null)}
+        onSubmit={(values) => {
+          if (!renameSingleTarget) return;
+          return submitRenameSingle(renameSingleTarget, String(values.filename || ''));
+        }}
+        confirmLabel={t('Confirm')}
+        cancelLabel={t('Cancel')}
+        loading={operating}
+      />
     </>
   );
 }
 
-function GenerateTestdata({ pid, pdoc }: { pid: string | number, pdoc: any }) {
+function GenerateTestdata({
+  pid,
+  pdoc,
+  testdata,
+  onComplete,
+}: {
+  pid: string | number;
+  pdoc: any;
+  testdata: any[];
+  onComplete: () => void;
+}) {
   const { t } = useI18n();
   const [gen, setGen] = useState('');
   const [std, setStd] = useState('');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [recordUrl, setRecordUrl] = useState('');
+  const fileOptions = testdata.map((file) => ({ value: file.name, label: `${file.name} (${formatSize(file.size)})` }));
+
+  useEffect(() => {
+    if (!recordUrl) return undefined;
+    const callback = (event: MessageEvent<any>) => {
+      if (event.data?.status === STATUS.STATUS_ACCEPTED) {
+        setRecordUrl('');
+        onComplete();
+      }
+    };
+    window.addEventListener('message', callback, false);
+    return () => window.removeEventListener('message', callback, false);
+  }, [onComplete, recordUrl]);
 
   if (pdoc.config?.type && pdoc.config.type !== 'default') return null;
 
@@ -601,8 +684,8 @@ function GenerateTestdata({ pid, pdoc }: { pid: string | number, pdoc: any }) {
         body: JSON.stringify({ operation: 'generate_testdata', gen, std }),
       });
       const data = await res.json();
-      if (data.error) setError(data.error.message || data.error);
-      else window.open(data.url, '_blank');
+      if (data.error) setError(formatErrorMessage(data.error, t('Operation failed')));
+      else setRecordUrl(data.url || data.redirect || '');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -614,25 +697,46 @@ function GenerateTestdata({ pid, pdoc }: { pid: string | number, pdoc: any }) {
     <Card withBorder p="lg" className="hydro-content-card">
       <Stack gap="md">
         <Title order={3} size="h4">{t('Generate Testdata')} (Beta)</Title>
-        <TextInput
+        <Select
           label={t('Data Generator')}
-          placeholder={t('A data generator is a program that generates testdata.')}
+          placeholder={t('Select a testdata file')}
+          data={fileOptions}
+          searchable
           value={gen}
-          onChange={(e) => setGen(e.currentTarget.value)}
+          onChange={(value) => setGen(value || '')}
           size="xs"
         />
-        <TextInput
+        <Select
           label={t('Standard Program')}
-          placeholder={t('A standard program is a program that solves the problem.')}
+          placeholder={t('Select a testdata file')}
+          data={fileOptions}
+          searchable
           value={std}
-          onChange={(e) => setStd(e.currentTarget.value)}
+          onChange={(value) => setStd(value || '')}
           size="xs"
         />
         {error && <Text size="xs" c="red">{error}</Text>}
-        <Button variant="light" size="xs" onClick={handleGenerate} loading={generating}>
+        <Button variant="light" size="xs" onClick={handleGenerate} loading={generating} disabled={!fileOptions.length}>
           {t('Generate')}
         </Button>
       </Stack>
+      <Modal
+        opened={!!recordUrl}
+        onClose={() => {
+          setRecordUrl('');
+          onComplete();
+        }}
+        title={t('Generating...')}
+        size="calc(100vw - 200px)"
+      >
+        {recordUrl && (
+          <iframe
+            src={recordUrl}
+            title={t('Generate Testdata')}
+            style={{ width: '100%', height: '70vh', border: 'none' }}
+          />
+        )}
+      </Modal>
     </Card>
   );
 }
@@ -729,7 +833,14 @@ export default function ProblemFilesPage() {
                 )
               }
             />
-            {canEdit && <GenerateTestdata pid={pid} pdoc={pdoc} />}
+            {canEdit && (
+              <GenerateTestdata
+                pid={pid}
+                pdoc={pdoc}
+                testdata={testdata}
+                onComplete={refresh}
+              />
+            )}
           </Stack>
         </div>
 

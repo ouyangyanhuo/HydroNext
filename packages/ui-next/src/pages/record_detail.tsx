@@ -1,30 +1,149 @@
-import { Badge, Card, Code, Group, Stack, Text, Title } from '@mantine/core';
+import { Badge, Button, Card, Code, Group, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core';
 import type { ReactNode } from 'react';
+import { Fragment, useState } from 'react';
 import { Link } from '@/components/link';
+import { TimeDisplay } from '@/components/common/time-display';
 import { CodeReplay } from '@/components/record/code-replay';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
+import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useRecordSocket } from '@/hooks/use-record-socket';
+import { formatErrorMessage } from '@/utils/error';
 
-function CaseResult({ c, index }: { c: any, index: number }) {
+function asArray(value: any) {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function formatMemory(memory?: number) {
+  if (memory == null) return '-';
+  if (memory < 1024) return `${Math.round(memory)} KB`;
+  return `${Math.round(memory / 1024)} MB`;
+}
+
+function formatSize(size?: number) {
+  if (!size) return '0 B';
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+  return `${(size / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function formatTime(time?: number) {
+  if (time == null) return '-';
+  return `${Math.round(time)}ms`;
+}
+
+function objectIdDate(id: any) {
+  const text = String(id || '');
+  if (!/^[a-f0-9]{24}$/i.test(text)) return null;
+  return new Date(parseInt(text.slice(0, 8), 16) * 1000);
+}
+
+function shouldShowGreaterEqual(status?: number) {
+  return [
+    STATUS.STATUS_TIME_LIMIT_EXCEEDED,
+    STATUS.STATUS_MEMORY_LIMIT_EXCEEDED,
+    STATUS.STATUS_OUTPUT_LIMIT_EXCEEDED,
+  ].includes(status as STATUS);
+}
+
+function normalizeCases(rdoc: any) {
+  const list = asArray(rdoc.testCases || rdoc.cases || []);
+  return list.map((item: any, index: number) => ({
+    ...item,
+    id: item.id ?? index + 1,
+    subtaskId: item.subtaskId ?? item.subtask ?? 1,
+  }));
+}
+
+function groupCases(cases: any[]) {
+  const groups = new Map<string, any[]>();
+  for (const item of cases) {
+    const key = String(item.subtaskId ?? item.id ?? 1);
+    groups.set(key, [...(groups.get(key) || []), item]);
+  }
+  return Array.from(groups.entries()).map(([id, items]) => ({ id, items }));
+}
+
+function CaseMessage({ message }: { message?: string }) {
+  if (!message) return null;
   return (
-    <Group justify="space-between" p="sm" className="border-b border-[var(--hydro-border)] last:border-b-0">
-      <Group gap="sm">
-        <Text size="xs" fw={700} c="dimmed">#{index + 1}</Text>
-        <RecordStatusBadge status={c.status} size="xs" />
-      </Group>
-      <Group gap="md">
-        {c.time != null && (
-          <Text size="xs" c="dimmed">{c.time}ms</Text>
-        )}
-        {c.memory != null && (
-          <Text size="xs" c="dimmed">{Math.round(c.memory / 1024)}MB</Text>
-        )}
-      </Group>
-    </Group>
+    <Text size="xs" c="dimmed" className="mt-1 line-clamp-2 whitespace-pre-wrap">
+      {message}
+    </Text>
+  );
+}
+
+function CaseTable({ cases, subtasks }: { cases: any[], subtasks: Record<string, any> }) {
+  const { t } = useI18n();
+  const groups = groupCases(cases);
+  const showSubtask = groups.length > 1 || groups.some((group) => group.items.length > 1);
+
+  return (
+    <div className="overflow-x-auto">
+      <Table striped highlightOnHover verticalSpacing="sm">
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th className="w-24">{t('Test Case')}</Table.Th>
+            <Table.Th>{t('Status')}</Table.Th>
+            <Table.Th className="w-28 text-right">{t('Time Cost')}</Table.Th>
+            <Table.Th className="w-32 text-right">{t('Memory Cost')}</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          {groups.map((group) => {
+            const subtask = subtasks?.[group.id];
+            return (
+              <Fragment key={group.id}>
+                {showSubtask && (
+                  <Table.Tr key={`subtask-${group.id}`} className="bg-[var(--hydro-surface-tint)]">
+                    <Table.Td>
+                      <Text size="xs" fw={800}>#{group.id}</Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Group gap="xs">
+                        {subtask?.status != null && <RecordStatusBadge status={subtask.status} size="xs" />}
+                        {subtask?.score != null && <Badge variant="light">{subtask.score}</Badge>}
+                      </Group>
+                    </Table.Td>
+                    <Table.Td />
+                    <Table.Td />
+                  </Table.Tr>
+                )}
+                {group.items.map((item, index) => {
+                  const prefix = shouldShowGreaterEqual(item.status) ? '>= ' : '';
+                  return (
+                    <Table.Tr key={`${group.id}-${item.id}-${index}`}>
+                      <Table.Td>
+                        <Text size="xs" fw={700}>
+                          {showSubtask ? `#${group.id}-${item.id}` : `#${index + 1}`}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Group gap="xs">
+                          <RecordStatusBadge status={item.status} size="xs" />
+                          {item.score != null && <Badge variant="light" color="gray">{item.score}</Badge>}
+                        </Group>
+                        <CaseMessage message={item.message} />
+                      </Table.Td>
+                      <Table.Td className="text-right">
+                        <Text size="xs">{prefix}{formatTime(item.time)}</Text>
+                      </Table.Td>
+                      <Table.Td className="text-right">
+                        <Text size="xs">{prefix}{formatMemory(item.memory)}</Text>
+                      </Table.Td>
+                    </Table.Tr>
+                  );
+                })}
+              </Fragment>
+            );
+          })}
+        </Table.Tbody>
+      </Table>
+    </div>
   );
 }
 
@@ -62,22 +181,56 @@ function OutputBlock({ title, content }: { title: string, content: string }) {
 export default function RecordDetailPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const canJudge = useHasPriv(PRIV.PRIV_JUDGE) || args.canRejudge;
+  const [actionLoading, setActionLoading] = useState('');
+  const [error, setError] = useState('');
 
   // Merge server-side data with real-time WebSocket updates
   const serverRdoc = args.rdoc || {};
   const wsUpdate = useRecordSocket(serverRdoc._id);
   const rdoc = wsUpdate ? { ...serverRdoc, ...wsUpdate } : serverRdoc;
   const udoc = args.udoc || {};
+  const judgeUdoc = args.judge_udoc || args.judgeUdoc;
   const pdoc = args.pdoc || {};
   const tdoc = args.tdoc;
+  const allRevs = args.allRevs || {};
+  const rev = args.rev;
 
-  const cases = rdoc.cases || rdoc.judge?.subtasks || [];
+  const compilerTexts = asArray(rdoc.compilerTexts || rdoc.compilerText).filter(Boolean);
+  const judgeTexts = asArray(rdoc.judgeTexts || rdoc.judgeText).filter(Boolean);
+  const cases = normalizeCases(rdoc);
+  const submitAt = objectIdDate(rdoc._id);
   const isJudging = rdoc.status === STATUS.STATUS_JUDGING || rdoc.status === STATUS.STATUS_COMPILING || rdoc.status === STATUS.STATUS_FETCHED;
   const recordId = String(rdoc._id || '').slice(-6);
   const scoreColor = rdoc.score === 100 ? 'green' : rdoc.score ? 'yellow' : 'gray';
+  const isLimitStatus = shouldShowGreaterEqual(rdoc.status);
+  const peakTime = cases.length ? Math.max(...cases.map((item) => Number(item.time) || 0)) : null;
+  const codeLength = rdoc.code ? formatSize(new Blob([rdoc.code]).size) : '';
+
+  const submitOperation = async (operation: 'rejudge' | 'cancel') => {
+    setActionLoading(operation);
+    setError('');
+    try {
+      const res = await fetch(window.location.href, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ operation }),
+      });
+      const type = res.headers.get('content-type') || '';
+      const data = type.includes('json') ? await res.json() : {};
+      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Operation failed')));
+      else if (data.redirect) window.location.href = data.redirect;
+      else window.location.reload();
+    } catch (err: any) {
+      setError(err?.message || t('Network error'));
+    } finally {
+      setActionLoading('');
+    }
+  };
 
   return (
     <Stack gap="lg">
+      {error && <Text c="red" size="sm">{error}</Text>}
       <Card withBorder p="xl" className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]">
         <Badge variant="light" color="hydroTeal" mb="sm">
           {t('Record')}
@@ -100,11 +253,13 @@ export default function RecordDetailPage() {
             )}
           </Group>
         </Group>
-        <Group gap="sm" mt="lg" wrap="wrap">
-          {rdoc.time != null && <Metric label={t('Time')} value={`${rdoc.time}ms`} />}
-          {rdoc.memory != null && <Metric label={t('Memory')} value={`${Math.round(rdoc.memory / 1024)}MB`} />}
+        <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="sm" mt="lg">
+          {rdoc.score != null && <Metric label={t('Score')} value={rdoc.score} />}
+          {rdoc.time != null && <Metric label={t('Total Time')} value={`${isLimitStatus ? '>= ' : ''}${formatTime(rdoc.time)}`} />}
+          {peakTime != null && <Metric label={t('Peak Time')} value={`${isLimitStatus ? '>= ' : ''}${formatTime(peakTime)}`} />}
+          {rdoc.memory != null && <Metric label={t('Peak Memory')} value={`${isLimitStatus ? '>= ' : ''}${formatMemory(rdoc.memory)}`} />}
           {rdoc.lang && <Metric label={t('Language')} value={rdoc.lang} />}
-        </Group>
+        </SimpleGrid>
         {isJudging && (
           <Text c="blue" size="sm" mt="md" fw={600}>
             {t('Judging...')}
@@ -122,19 +277,17 @@ export default function RecordDetailPage() {
                   <Badge variant="light">{cases.length}</Badge>
                 </Group>
                 <div className="border-t border-[var(--hydro-border)]">
-                  {cases.map((c: any, i: number) => (
-                    <CaseResult key={i} c={c} index={i} />
-                  ))}
+                  <CaseTable cases={cases} subtasks={rdoc.subtasks || {}} />
                 </div>
               </Card>
             )}
 
-            {rdoc.compilerText && (
-              <OutputBlock title={t('Compiler Output')} content={rdoc.compilerText} />
+            {compilerTexts.length > 0 && (
+              <OutputBlock title={t('Compiler Output')} content={compilerTexts.join('\n')} />
             )}
 
-            {rdoc.judgeText && (
-              <OutputBlock title={t('Judge Message')} content={rdoc.judgeText} />
+            {judgeTexts.length > 0 && (
+              <OutputBlock title={t('Judge Message')} content={judgeTexts.join('\n')} />
             )}
 
             {rdoc.code && (
@@ -160,28 +313,93 @@ export default function RecordDetailPage() {
         </div>
 
         <div className="w-full shrink-0 lg:w-72">
-          <Card withBorder p="md" className="hydro-panel">
-            <Stack gap={0}>
-              <InfoRow label={t('User')}>
-                <UserLink user={udoc} size="xs" />
-              </InfoRow>
-              <InfoRow label={t('Problem')}>
-                <Link to="problem_detail" params={{ pid: pdoc.pid || pdoc.docId }} className="block max-w-40 truncate text-xs no-underline hover:underline">
-                  {pdoc.pid || pdoc.docId}. {pdoc.title}
-                </Link>
-              </InfoRow>
-              <InfoRow label={t('Language')}>
-                <Text size="xs">{rdoc.lang || '-'}</Text>
-              </InfoRow>
-              {tdoc && (
-                <InfoRow label={t('Contest')}>
-                  <Link to="contest_detail" params={{ tid: tdoc._id }} className="block max-w-40 truncate text-xs no-underline hover:underline">
-                    {tdoc.title}
-                  </Link>
+          <Stack gap="lg">
+            {canJudge && !rdoc.files?.hack && (
+              <Card withBorder p="md" className="hydro-panel">
+                <Stack gap="xs">
+                  <Button size="xs" variant="light" loading={actionLoading === 'rejudge'} onClick={() => submitOperation('rejudge')}>
+                    {t('Rejudge')}
+                  </Button>
+                  <Button size="xs" variant="subtle" color="red" loading={actionLoading === 'cancel'} onClick={() => submitOperation('cancel')}>
+                    {t('Cancel Score')}
+                  </Button>
+                </Stack>
+              </Card>
+            )}
+
+            <Card withBorder p="md" className="hydro-panel">
+              <Title order={3} size="h5" mb="sm">{t('Information')}</Title>
+              <Stack gap={0}>
+                <InfoRow label={t('Submit By')}>
+                  <UserLink user={udoc} size="xs" />
                 </InfoRow>
-              )}
-            </Stack>
-          </Card>
+                {pdoc && (
+                  <InfoRow label={t('Problem')}>
+                    <Link to="problem_detail" params={{ pid: pdoc.pid || pdoc.docId }} className="block max-w-40 truncate text-xs no-underline hover:underline">
+                      {pdoc.pid || pdoc.docId}. {pdoc.title}
+                    </Link>
+                  </InfoRow>
+                )}
+                {tdoc && (
+                  <InfoRow label={t(tdoc.rule === 'homework' ? 'Homework' : 'Contest')}>
+                    <Link to={tdoc.rule === 'homework' ? 'homework_detail' : 'contest_detail'} params={{ tid: tdoc.docId || tdoc._id }} className="block max-w-40 truncate text-xs no-underline hover:underline">
+                      {tdoc.title}
+                    </Link>
+                  </InfoRow>
+                )}
+                <InfoRow label={t('Language')}>
+                  <Text size="xs">{rdoc.lang || '-'}</Text>
+                </InfoRow>
+                {codeLength && (
+                  <InfoRow label={t('Code Length')}>
+                    <Text size="xs">{codeLength}</Text>
+                  </InfoRow>
+                )}
+                {submitAt && (
+                  <InfoRow label={t('Submit At')}>
+                    <TimeDisplay date={submitAt} format="absolute" />
+                  </InfoRow>
+                )}
+                {rdoc.judgeAt && (
+                  <InfoRow label={t('Judged At')}>
+                    <TimeDisplay date={rdoc.judgeAt} format="absolute" />
+                  </InfoRow>
+                )}
+                {judgeUdoc && (
+                  <InfoRow label={t('Judged By')}>
+                    <UserLink user={judgeUdoc} size="xs" />
+                  </InfoRow>
+                )}
+                {rdoc.hackTarget && (
+                  <InfoRow label={t('Hacked')}>
+                    <Link to="record_detail" params={{ rid: rdoc.hackTarget }} className="text-xs no-underline hover:underline">
+                      {rdoc.hackTarget}
+                    </Link>
+                  </InfoRow>
+                )}
+              </Stack>
+            </Card>
+
+            {Object.keys(allRevs).length > 0 && (
+              <Card withBorder p="md" className="hydro-panel">
+                <Title order={3} size="h5" mb="sm">{t('History')}</Title>
+                <Stack gap={4}>
+                  <Link to="record_detail" params={{ rid: rdoc._id }} className={`rounded-md px-2 py-1 text-xs no-underline ${!rev ? 'bg-[var(--hydro-primary-soft)] text-[var(--hydro-primary)]' : 'hover:bg-[var(--hydro-surface)]'}`}>
+                    {t('Latest Version')}
+                  </Link>
+                  {Object.entries(allRevs).map(([rid, date]) => (
+                    <a
+                      key={rid}
+                      href={`?rev=${rid}`}
+                      className={`rounded-md px-2 py-1 text-xs no-underline ${String(rev) === rid ? 'bg-[var(--hydro-primary-soft)] text-[var(--hydro-primary)]' : 'hover:bg-[var(--hydro-surface)]'}`}
+                    >
+                      <TimeDisplay date={date as any} format="absolute" />
+                    </a>
+                  ))}
+                </Stack>
+              </Card>
+            )}
+          </Stack>
         </div>
       </div>
     </Stack>

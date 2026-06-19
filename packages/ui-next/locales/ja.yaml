@@ -273,6 +273,7 @@ Recent Discussions: 最近のディスカッション
 Powered by: Powered by
 Paste limit exceeded: ペースト制限を超過しました
 File too large: ファイルが大きすぎます
+"File too large: {name}": "ファイルが大きすぎます: {name}"
 Drag files here or click to upload: ここにファイルをドラッグまたはクリックしてアップロード
 Uploading...: アップロード中...
 Nothing to preview: プレビューなし

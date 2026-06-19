@@ -41,13 +41,18 @@ export function MarkdownEditor({
       </Tabs.Panel>
 
       <Tabs.Panel value="preview" pt="xs">
-        {value ? (
-          <MarkdownRenderer content={value} />
-        ) : (
-          <Paper p="md" withBorder>
+        <Paper
+          p="md"
+          withBorder
+          className="overflow-auto"
+          style={{ minHeight: Math.max(minRows * 24, 160), maxHeight: 560 }}
+        >
+          {value ? (
+            <MarkdownRenderer content={value} />
+          ) : (
             <Text c="dimmed" size="sm">{t('Nothing to preview')}</Text>
-          </Paper>
-        )}
+          )}
+        </Paper>
       </Tabs.Panel>
     </Tabs>
   );

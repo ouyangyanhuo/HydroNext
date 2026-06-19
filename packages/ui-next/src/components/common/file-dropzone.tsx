@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { Group, Text, Stack, Progress, Paper } from '@mantine/core';
+import { Text, Stack, Progress, Paper } from '@mantine/core';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 interface FileDropzoneProps {
   action: string;
@@ -43,35 +44,55 @@ export function FileDropzone({
     setProgress(0);
 
     try {
-      const formData = new FormData();
-      for (const [key, value] of Object.entries(fields)) {
-        formData.append(key, String(value));
-      }
-      for (const file of fileArray) {
+      const results: any[] = [];
+      for (const [index, file] of fileArray.entries()) {
+        const formData = new FormData();
+        for (const [key, value] of Object.entries(fields)) {
+          formData.append(key, String(value));
+        }
+        if (!('operation' in fields)) formData.append('operation', 'upload_file');
+        formData.append('filename', file.name);
         formData.append('file', file);
-      }
 
-      const xhr = new XMLHttpRequest();
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
-      };
-
-      const result = await new Promise<any>((resolve, reject) => {
-        xhr.onload = () => {
-          try { resolve(JSON.parse(xhr.responseText)); }
-          catch { resolve({ ok: true }); }
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (e) => {
+          if (!e.lengthComputable) return;
+          const fileProgress = e.loaded / e.total;
+          setProgress(Math.round(((index + fileProgress) / fileArray.length) * 100));
         };
-        xhr.onerror = () => reject(new Error('Upload failed'));
-        xhr.open('POST', action);
-        xhr.send(formData);
-      });
 
-      if (result.error) {
-        setError(result.error.message || 'Upload failed');
-        onError?.(result.error.message);
-      } else {
-        onComplete?.(result);
+        const result = await new Promise<any>((resolve, reject) => {
+          xhr.onload = () => {
+            const contentType = xhr.getResponseHeader('content-type') || '';
+            let payload: any = { ok: xhr.status >= 200 && xhr.status < 400 };
+            if (contentType.includes('json') && xhr.responseText) {
+              try {
+                payload = JSON.parse(xhr.responseText);
+              } catch (err) {
+                reject(err);
+                return;
+              }
+            }
+            if (xhr.status < 200 || xhr.status >= 400) {
+              reject(new Error(payload?.error?.message || xhr.statusText || 'Upload failed'));
+              return;
+            }
+            resolve(payload);
+          };
+          xhr.onerror = () => reject(new Error('Upload failed'));
+          xhr.open('POST', action);
+          xhr.setRequestHeader('Accept', 'application/json');
+          xhr.send(formData);
+        });
+
+        if (result.error) {
+          const msg = formatErrorMessage(result.error, t('Upload failed'));
+          throw new Error(msg);
+        }
+        results.push(result);
+        setProgress(Math.round(((index + 1) / fileArray.length) * 100));
       }
+      onComplete?.({ ok: true, results });
     } catch (err: any) {
       const msg = err.message || 'Upload failed';
       setError(msg);
