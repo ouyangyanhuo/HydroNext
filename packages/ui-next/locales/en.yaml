@@ -138,6 +138,7 @@ Accept Rate: Accept Rate
 Total Submissions: Total Submissions
 Joined: Joined
 Last login: Last login
+Like: Like
 Bio: Bio
 School: School
 Grade: Grade
@@ -150,6 +151,8 @@ Host: Host
 Create Problem: Create Problem
 Edit Problem: Edit Problem
 Problem ID: Problem ID
+Problem ID must start with a letter and contain only letters and numbers.: Problem ID must start with a letter and contain only letters and numbers.
+Problem ID must start with a letter. Auto-corrected to {0}: Problem ID must start with a letter. Auto-corrected to {0}
 Content (Markdown): Content (Markdown)
 Test Data: Test Data
 Upload Test Data: Upload Test Data
@@ -381,6 +384,8 @@ Operation failed: Operation failed
 Confirm delete?: Confirm delete?
 Copy Link: Copy Link
 Share: Share
+Show less: Show less
+Show more: Show more
 solutions: solutions
 Write Your Solution: Write Your Solution
 No solutions so far...: No solutions so far...

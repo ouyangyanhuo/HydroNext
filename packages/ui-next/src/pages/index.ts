@@ -20,6 +20,7 @@ registerPage('problem_edit', () => import('./problem_edit'));
 registerPage('problem_files', () => import('./problem_files'));
 registerPage('problem_statistics', () => import('./problem_statistics'));
 registerPage('problem_solution', () => import('./problem_solution'));
+registerPage('problem_solution_detail', () => import('./problem_solution'));
 registerPage('problem_config', () => import('./problem_config'));
 registerPage('problem_import', () => import('./problem_import'));
 registerPage('problem_hack', () => import('./problem_hack'));

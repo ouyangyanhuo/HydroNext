@@ -138,6 +138,7 @@ Accept Rate: 通過率
 Total Submissions: 總提交數
 Joined: 加入時間
 Last login: 最後登入
+Like: 讚
 Bio: 簡介
 School: 學校
 Grade: 年級
@@ -150,6 +151,8 @@ Host: 主機
 Create Problem: 建立題目
 Edit Problem: 編輯題目
 Problem ID: 題目 ID
+Problem ID must start with a letter and contain only letters and numbers.: 題目 ID 必須以字母開頭，且只能包含字母和數字。
+Problem ID must start with a letter. Auto-corrected to {0}: 題目 ID 必須以字母開頭，已自動修正為 {0}
 Content (Markdown): 內容（Markdown）
 Test Data: 測試資料
 Upload Test Data: 上傳測試資料
@@ -381,6 +384,8 @@ Operation failed: 操作失敗
 Confirm delete?: 確認刪除？
 Copy Link: 複製連結
 Share: 分享
+Show less: 收起
+Show more: 展開更多
 solutions: 篇題解
 Write Your Solution: 編寫你的題解
 No solutions so far...: 暫無題解...

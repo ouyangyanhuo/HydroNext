@@ -29,9 +29,9 @@ function notifyOverLimit(length: number) {
   }
 }
 
-function blockPaste(ev: ClipboardEvent) {
+function blockPaste(ev: Event) {
   if (!isTargetPage()) return;
-  const text = ev.clipboardData?.getData('text/plain') || '';
+  const text = (ev as ClipboardEvent).clipboardData?.getData('text/plain') || '';
   if (text.length > PASTE_LIMIT) {
     ev.preventDefault();
     ev.stopImmediatePropagation();

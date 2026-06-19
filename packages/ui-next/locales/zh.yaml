@@ -157,6 +157,7 @@ Accept Rate: 通过率
 Total Submissions: 总递交数
 Joined: 加入时间
 Last login: 最后登录
+Like: 点赞
 Bio: 简介
 School: 学校
 Grade: 年级
@@ -170,6 +171,7 @@ Create Problem: 创建题目
 Edit Problem: 编辑题目
 Problem ID: 题目 ID
 Problem ID must start with a letter and contain only letters and numbers.: 题目 ID 必须以字母开头，且只能包含字母和数字。
+Problem ID must start with a letter. Auto-corrected to {0}: 题目 ID 必须以字母开头，已自动修正为 {0}
 Content (Markdown): 内容（Markdown）
 Test Data: 测试数据
 Upload Test Data: 上传测试数据
@@ -494,6 +496,8 @@ Operation failed: 操作失败
 Confirm delete?: 确认删除？
 Copy Link: 复制链接
 Share: 分享
+Show less: 收起
+Show more: 展开更多
 solutions: 篇题解
 Write Your Solution: 编写你的题解
 No solutions so far...: 暂无题解...

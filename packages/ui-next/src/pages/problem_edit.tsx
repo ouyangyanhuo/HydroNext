@@ -1,5 +1,6 @@
 import { formatErrorMessage } from '@/utils/error';
 import { Badge, Button, Card, Group, NumberInput, Paper, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useRef, useState } from 'react';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { FileDropzone } from '@/components/common/file-dropzone';
@@ -178,13 +179,23 @@ export default function ProblemEditPage() {
     setError('');
     try {
       const body: any = { ...form };
-      body.pid = normalizeProblemId(body.pid || '');
-      if (!isValidProblemId(body.pid)) {
-        setError(t('Problem ID must start with a letter and contain only letters and numbers.'));
+      const rawPid = (body.pid || '').trim();
+      if (rawPid && /^[0-9]+$/.test(rawPid)) {
+        notifications.show({ title: t('Problem ID must start with a letter. Auto-corrected to {0}', `P${rawPid}`), message: '', color: 'yellow' });
+        body.pid = `P${rawPid}`;
+      } else if (rawPid && !/^[a-zA-Z]/.test(rawPid)) {
+        notifications.show({ title: t('Problem ID must start with a letter and contain only letters and numbers.'), message: '', color: 'red' });
+        setLoading(false);
+        return;
+      } else {
+        body.pid = normalizeProblemId(rawPid);
+      }
+      if (body.pid && !isValidProblemId(body.pid)) {
+        notifications.show({ title: t('Problem ID must start with a letter and contain only letters and numbers.'), message: '', color: 'red' });
         setLoading(false);
         return;
       }
-      body.tag &&= body.tag.split(',').map((s: string) => s.trim()).filter(Boolean);
+      body.tag &&= body.tag.split(',').map((s: string) => s.trim()).filter(Boolean).join(',');
       body.difficulty = Number(body.difficulty) || 0;
       body.content = serializeContent(form.content);
       const url = window.location.href;
@@ -261,7 +272,7 @@ export default function ProblemEditPage() {
                 label={t('Problem ID')}
                 value={form.pid}
                 onChange={(e) => setForm({ ...form, pid: e.currentTarget.value })}
-                onBlur={(e) => setForm({ ...form, pid: normalizeProblemId(e.currentTarget.value) })}
+                onBlur={(e) => setForm({ ...form, pid: e.currentTarget.value.trim() })}
               />
               <TextInput className="sm:col-span-2" label={t('Title')} value={form.title} onChange={(e) => setForm({ ...form, title: e.currentTarget.value })} required />
               <NumberInput label={t('Difficulty')} value={form.difficulty} min={0} max={10} onChange={(value) => setForm({ ...form, difficulty: Number(value) || 0 })} />

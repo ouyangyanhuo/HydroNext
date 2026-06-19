@@ -138,6 +138,7 @@ Accept Rate: 正解率
 Total Submissions: 総提出数
 Joined: 参加日
 Last login: 最終ログイン
+Like: いいね
 Bio: 自己紹介
 School: 学校
 Grade: 学年
@@ -150,6 +151,8 @@ Host: ホスト
 Create Problem: 問題を作成
 Edit Problem: 問題を編集
 Problem ID: 問題ID
+Problem ID must start with a letter and contain only letters and numbers.: 問題IDは英字で始まり、英数字のみを含む必要があります。
+Problem ID must start with a letter. Auto-corrected to {0}: "問題IDは英字で始まる必要があります。自動修正: {0}"
 Content (Markdown): 内容（Markdown）
 Test Data: テストデータ
 Upload Test Data: テストデータをアップロード
@@ -381,6 +384,8 @@ Operation failed: 操作失敗
 Confirm delete?: 削除しますか？
 Copy Link: リンクをコピー
 Share: 共有
+Show less: 閉じる
+Show more: もっと見る
 solutions: 解説
 Write Your Solution: 解説を書く
 No solutions so far...: まだ解説がありません...

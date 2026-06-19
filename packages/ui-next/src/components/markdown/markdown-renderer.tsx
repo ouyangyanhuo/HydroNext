@@ -1,14 +1,247 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { Box } from '@mantine/core';
 import MarkdownIt from 'markdown-it';
+import markPlugin from 'markdown-it-mark';
+import hljs from 'highlight.js/lib/core';
+import 'highlight.js/styles/github.css';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 
-// Create markdown-it instance with same config as ui-default
+import cpp from 'highlight.js/lib/languages/cpp';
+import c from 'highlight.js/lib/languages/c';
+import python from 'highlight.js/lib/languages/python';
+import java from 'highlight.js/lib/languages/java';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import go from 'highlight.js/lib/languages/go';
+import rust from 'highlight.js/lib/languages/rust';
+import ruby from 'highlight.js/lib/languages/ruby';
+import php from 'highlight.js/lib/languages/php';
+import kotlin from 'highlight.js/lib/languages/kotlin';
+import scala from 'highlight.js/lib/languages/scala';
+import swift from 'highlight.js/lib/languages/swift';
+import csharp from 'highlight.js/lib/languages/csharp';
+import bash from 'highlight.js/lib/languages/bash';
+import sql from 'highlight.js/lib/languages/sql';
+import json from 'highlight.js/lib/languages/json';
+import xml from 'highlight.js/lib/languages/xml';
+import yaml from 'highlight.js/lib/languages/yaml';
+import css from 'highlight.js/lib/languages/css';
+import markdown from 'highlight.js/lib/languages/markdown';
+import latex from 'highlight.js/lib/languages/latex';
+import delphi from 'highlight.js/lib/languages/delphi';
+import haskell from 'highlight.js/lib/languages/haskell';
+import lua from 'highlight.js/lib/languages/lua';
+import r from 'highlight.js/lib/languages/r';
+import perl from 'highlight.js/lib/languages/perl';
+import matlab from 'highlight.js/lib/languages/matlab';
+import dockerfile from 'highlight.js/lib/languages/dockerfile';
+import plaintext from 'highlight.js/lib/languages/plaintext';
+
+hljs.registerLanguage('cpp', cpp);
+hljs.registerLanguage('c', c);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('java', java);
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('go', go);
+hljs.registerLanguage('rust', rust);
+hljs.registerLanguage('ruby', ruby);
+hljs.registerLanguage('php', php);
+hljs.registerLanguage('kotlin', kotlin);
+hljs.registerLanguage('scala', scala);
+hljs.registerLanguage('swift', swift);
+hljs.registerLanguage('csharp', csharp);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('shell', bash);
+hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('xml', xml);
+hljs.registerLanguage('html', xml);
+hljs.registerLanguage('yaml', yaml);
+hljs.registerLanguage('css', css);
+hljs.registerLanguage('markdown', markdown);
+hljs.registerLanguage('latex', latex);
+hljs.registerLanguage('delphi', delphi);
+hljs.registerLanguage('pascal', delphi);
+hljs.registerLanguage('haskell', haskell);
+hljs.registerLanguage('lua', lua);
+hljs.registerLanguage('r', r);
+hljs.registerLanguage('perl', perl);
+hljs.registerLanguage('matlab', matlab);
+hljs.registerLanguage('dockerfile', dockerfile);
+hljs.registerLanguage('plaintext', plaintext);
+
+function escapeHtml(unsafe: string) {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function isValidDelim(state: any, pos: number) {
+  const max = state.posMax;
+  const prevChar = pos > 0 ? state.src.charCodeAt(pos - 1) : -1;
+  const nextChar = pos + 1 <= max ? state.src.charCodeAt(pos + 1) : -1;
+  let canOpen = true;
+  let canClose = true;
+  if (prevChar === 0x09 || (nextChar >= 0x30 && nextChar <= 0x39)) canClose = false;
+  if (nextChar === 0x09) canOpen = false;
+  return { canOpen, canClose };
+}
+
+function mathInline(state: any, silent: boolean) {
+  if (state.src[state.pos] !== '$') return false;
+  let res = isValidDelim(state, state.pos);
+  if (!res.canOpen) {
+    if (!silent) state.pending += '$';
+    state.pos += 1;
+    return true;
+  }
+  const start = state.pos + 1;
+  let match = start;
+  while ((match = state.src.indexOf('$', match)) !== -1) {
+    let pos = match - 1;
+    while (state.src[pos] === '\\') pos -= 1;
+    if ((match - pos) % 2) break;
+    match += 1;
+  }
+  if (match === -1) {
+    if (!silent) state.pending += '$';
+    state.pos = start;
+    return true;
+  }
+  if (match - start === 0) {
+    if (!silent) state.pending += '$$';
+    state.pos = start + 1;
+    return true;
+  }
+  res = isValidDelim(state, match);
+  if (!res.canClose) {
+    if (!silent) state.pending += '$';
+    state.pos = start;
+    return true;
+  }
+  if (!silent) {
+    const token = state.push('math_inline', 'math', 0);
+    token.markup = '$';
+    token.content = state.src.slice(start, match);
+  }
+  state.pos = match + 1;
+  return true;
+}
+
+function mathBlock(state: any, start: number, end: number, silent: boolean) {
+  let pos = state.bMarks[start] + state.tShift[start];
+  let max = state.eMarks[start];
+  if (pos + 2 > max) return false;
+  if (state.src.slice(pos, pos + 2) !== '$$') return false;
+  pos += 2;
+  let firstLine = state.src.slice(pos, max);
+  if (silent) return true;
+  let found = false;
+  if (firstLine.trim().slice(-2) === '$$') {
+    firstLine = firstLine.trim().slice(0, -2);
+    found = true;
+  }
+  let next = start;
+  let lastLine = '';
+  while (!found) {
+    next++;
+    if (next >= end) break;
+    pos = state.bMarks[next] + state.tShift[next];
+    max = state.eMarks[next];
+    if (pos < max && state.tShift[next] < state.blkIndent) break;
+    if (state.src.slice(pos, max).trim().slice(-2) === '$$') {
+      const lastPos = state.src.slice(0, max).lastIndexOf('$$');
+      lastLine = state.src.slice(pos, lastPos);
+      found = true;
+    }
+  }
+  state.line = next + 1;
+  const token = state.push('math_block', 'math', 0);
+  token.block = true;
+  token.content = (firstLine && firstLine.trim() ? `${firstLine}\n` : '')
+    + state.getLines(start + 1, next, state.tShift[start], true)
+    + (lastLine && lastLine.trim() ? lastLine : '');
+  token.map = [start, state.line];
+  token.markup = '$$';
+  return true;
+}
+
+function katexPlugin(md: MarkdownIt) {
+  const renderKatex = (latex: string, displayMode = false) => {
+    const katex = (window as any).katex;
+    if (!katex) return escapeHtml(latex);
+    try {
+      latex = latex.replace(/\\def\{\\([a-zA-Z0-9]+)\}/g, '\\def\\$1');
+      return katex.renderToString(latex, { throwOnError: false, strict: 'ignore', displayMode });
+    } catch (error: any) {
+      return `<p class='${displayMode ? 'katex-block ' : ''}katex-error' title='${escapeHtml(error.toString())}'>${escapeHtml(latex)}</p>`;
+    }
+  };
+
+  md.inline.ruler.after('escape', 'math_inline', mathInline);
+  md.block.ruler.after('blockquote', 'math_block', mathBlock, {
+    alt: ['paragraph', 'reference', 'blockquote', 'list'],
+  });
+  md.renderer.rules.math_inline = (tokens, idx) => renderKatex(tokens[idx].content);
+  md.renderer.rules.math_block = (tokens, idx) => `${renderKatex(tokens[idx].content, true)}\n`;
+}
+
 const md = new MarkdownIt({
   linkify: true,
   html: true,
 });
+
+md.use(markPlugin);
+md.use(katexPlugin);
+
+const LANG_LABELS: Record<string, string> = {
+  js: 'JavaScript', javascript: 'JavaScript', ts: 'TypeScript', typescript: 'TypeScript',
+  py: 'Python', python: 'Python', java: 'Java', cpp: 'C++', c: 'C', cc: 'C++',
+  'c++': 'C++', 'c#': 'C#', cs: 'C#', csharp: 'C#', go: 'Go', rust: 'Rust',
+  rb: 'Ruby', ruby: 'Ruby', php: 'PHP', swift: 'Swift', kt: 'Kotlin', kotlin: 'Kotlin',
+  scala: 'Scala', r: 'R', lua: 'Lua', perl: 'Perl', bash: 'Bash', sh: 'Shell',
+  shell: 'Shell', zsh: 'Zsh', powershell: 'PowerShell', ps1: 'PowerShell',
+  sql: 'SQL', mysql: 'MySQL', postgresql: 'PostgreSQL', sqlite: 'SQLite',
+  html: 'HTML', css: 'CSS', scss: 'SCSS', less: 'Less', xml: 'XML',
+  json: 'JSON', yaml: 'YAML', yml: 'YAML', toml: 'TOML', ini: 'INI',
+  md: 'Markdown', markdown: 'Markdown', tex: 'LaTeX', latex: 'LaTeX',
+  dockerfile: 'Dockerfile', makefile: 'Makefile', cmake: 'CMake',
+  pascal: 'Pascal', pas: 'Pascal', haskell: 'Haskell', hs: 'Haskell',
+  erlang: 'Erlang', elixir: 'Elixir', clojure: 'Clojure', lisp: 'Lisp',
+  scheme: 'Scheme', ocaml: 'OCaml', fsharp: 'F#', fs: 'F#',
+  dart: 'Dart', vue: 'Vue', jsx: 'JSX', tsx: 'TSX', svelte: 'Svelte',
+  graphql: 'GraphQL', proto: 'Protobuf', nginx: 'Nginx',
+  plaintext: 'Text', text: 'Text', plain: 'Text',
+};
+
+function getLanguageLabel(info: string): string {
+  if (!info) return '';
+  const lang = info.trim().split(/\s+/)[0].toLowerCase();
+  return LANG_LABELS[lang] || lang.toUpperCase();
+}
+
+md.renderer.rules.fence = (tokens, idx) => {
+  const token = tokens[idx];
+  const info = token.info || '';
+  const lang = info.trim().split(/\s+/)[0] || '';
+  const label = getLanguageLabel(info);
+  let highlighted: string;
+  if (lang && hljs.getLanguage(lang)) {
+    highlighted = hljs.highlight(token.content, { language: lang }).value;
+  } else if (lang) {
+    highlighted = hljs.highlightAuto(token.content).value;
+  } else {
+    highlighted = md.utils.escapeHtml(token.content);
+  }
+  const langAttr = lang ? ` class="language-${md.utils.escapeHtml(lang)}"` : '';
+  const labelHtml = label ? `<span class="code-lang-label">${label}</span>` : '';
+  return `<div class="code-block-wrapper">${labelHtml}<pre><code${langAttr}>${highlighted}</code></pre></div>\n`;
+};
 
 interface MarkdownRendererProps {
   content: any;
@@ -16,54 +249,20 @@ interface MarkdownRendererProps {
   language?: string;
 }
 
-/**
- * Renders Markdown/HTML content from the backend.
- * Handles multilingual content objects.
- * Applies KaTeX rendering for math formulas and syntax highlighting for code blocks.
- */
 export function MarkdownRenderer({ content, className, language }: MarkdownRendererProps) {
   const sessionLanguage = useSessionStore((s) => s.language);
   const rawText = extractLocalizedContent(content, language || sessionLanguage);
 
-  // Convert Markdown to HTML
   const html = useMemo(() => {
     if (!rawText) return '';
-    // If already HTML (starts with <), return as-is
     if (rawText.trim().startsWith('<')) return rawText;
-    // Otherwise convert Markdown to HTML
     return md.render(rawText);
   }, [rawText]);
-
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!ref.current) return;
-    // Apply KaTeX rendering for math formulas
-    const katex = (window as any).katex;
-    if (katex) {
-      ref.current.querySelectorAll('.katex-inline, [data-math-inline]').forEach((el: Element) => {
-        const tex = el.getAttribute('data-math') || el.textContent || '';
-        try { katex.render(tex, el as HTMLElement, { throwOnError: false }); } catch { /* ignore */ }
-      });
-      ref.current.querySelectorAll('.katex-display, [data-math-display]').forEach((el: Element) => {
-        const tex = el.getAttribute('data-math') || el.textContent || '';
-        try { katex.render(tex, el as HTMLElement, { displayMode: true, throwOnError: false }); } catch { /* ignore */ }
-      });
-    }
-    // Apply syntax highlighting
-    const hljs = (window as any).hljs;
-    if (hljs) {
-      ref.current.querySelectorAll('pre code').forEach((el: Element) => {
-        hljs.highlightElement(el);
-      });
-    }
-  }, [html]);
 
   if (!html) return null;
 
   return (
     <Box
-      ref={ref}
       className={`hydro-markdown ${className || ''}`}
       p={0}
       dangerouslySetInnerHTML={{ __html: html }}

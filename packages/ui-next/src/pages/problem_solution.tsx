@@ -1,4 +1,5 @@
-import { Badge, Button, Card, Group, Stack, Text, Title } from '@mantine/core';
+import { ActionIcon, Badge, Button, Card, Collapse, Divider, Group, Stack, Text, Tooltip } from '@mantine/core';
+import { IconArrowUp, IconLink, IconMessage, IconPencil, IconThumbUp, IconTrash, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { useState } from 'react';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
@@ -6,12 +7,15 @@ import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
-import { UserLink } from '@/components/user/user-link';
+import { UserAvatar } from '@/components/user/user-avatar';
+import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
+
+const MAX_HEIGHT = 260;
 
 function docDate(id: any) {
   const text = String(id || '');
@@ -32,6 +36,81 @@ async function postOperation(payload: Record<string, any>, fallback: string) {
   const data = await res.json();
   if (data.error) throw new Error(formatErrorMessage(data.error, fallback));
   return data;
+}
+
+function UserBadges({ user }: { user: any }) {
+  if (!user) return null;
+  const level = user.level || 0;
+  const priv = user.priv || 0;
+  const isSU = !!(priv & (1 << 0));
+  const isMOD = !!(priv & (1 << 25));
+  return (
+    <>
+      {user.badge && (() => {
+        const parts = user.badge.split('#');
+        return (
+          <Badge
+            size="xs"
+            variant="filled"
+            style={{ backgroundColor: `#${parts[1] || '666'}`, color: parts[2] ? `#${parts[2]}` : '#fff' }}
+          >
+            {parts[0]}
+          </Badge>
+        );
+      })()}
+      {level > 0 && (
+        <Badge size="xs" variant="light" color="hydroCopper">
+          LV {level}
+        </Badge>
+      )}
+      {isSU && (
+        <Badge size="xs" variant="filled" color="red">SU</Badge>
+      )}
+      {isMOD && (
+        <Badge size="xs" variant="filled" color="orange">MOD</Badge>
+      )}
+    </>
+  );
+}
+
+function CollapsibleContent({ content, maxHeight = MAX_HEIGHT }: { content: any; maxHeight?: number }) {
+  const { t } = useI18n();
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+  const ref = (el: HTMLDivElement | null) => {
+    if (el) setOverflowing(el.scrollHeight > maxHeight + 20);
+  };
+
+  return (
+    <div className="relative">
+      <div
+        ref={ref}
+        className="overflow-hidden transition-[max-height] duration-300 ease-in-out"
+        style={{ maxHeight: expanded ? 'none' : maxHeight }}
+      >
+        <MarkdownRenderer content={content || ''} />
+      </div>
+      {overflowing && !expanded && (
+        <div className="relative -mt-8 flex justify-center bg-gradient-to-t from-[var(--hydro-surface-raised)] via-[var(--hydro-surface-raised)] to-transparent pb-2 pt-12">
+          <Button
+            variant="subtle"
+            size="compact-xs"
+            leftSection={<IconChevronDown size={14} />}
+            onClick={() => setExpanded(true)}
+          >
+            {t('Show more')}
+          </Button>
+        </div>
+      )}
+      {overflowing && expanded && (
+        <Group justify="center" mt="xs">
+          <Button variant="subtle" size="compact-xs" leftSection={<IconChevronUp size={14} />} onClick={() => setExpanded(false)}>
+            {t('Show less')}
+          </Button>
+        </Group>
+      )}
+    </div>
+  );
 }
 
 function Composer({
@@ -124,53 +203,74 @@ function SolutionCard({
     await navigator.clipboard?.writeText(url);
   };
 
+  const udoc = user || { _id: solution.owner, uname: String(solution.owner) };
+
   return (
     <Card withBorder p="lg" className="hydro-content-card">
-      <div className="grid gap-4 sm:grid-cols-[64px_1fr]">
-        <Stack gap={6} align="center" className="rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] p-2">
-          <Button
-            size="compact-xs"
-            variant={vote === 1 ? 'filled' : 'subtle'}
-            disabled={!isLoggedIn}
-            loading={busy === 'upvote'}
-            onClick={() => run('upvote')}
-          >
-            +
-          </Button>
-          <Text fw={800}>{solution.vote || 0}</Text>
-          <Button
-            size="compact-xs"
-            variant={vote === -1 ? 'filled' : 'subtle'}
-            color="red"
-            disabled={!isLoggedIn}
-            loading={busy === 'downvote'}
-            onClick={() => run('downvote')}
-          >
-            -
-          </Button>
-        </Stack>
+      <div className="flex gap-3">
+        <div className="flex shrink-0 flex-col items-center gap-1 pt-1">
+          <Tooltip label={t('Like')} position="left" withArrow>
+            <ActionIcon
+              variant={vote === 1 ? 'filled' : 'subtle'}
+              size="sm"
+              disabled={!isLoggedIn}
+              loading={busy === 'upvote'}
+              onClick={() => run('upvote')}
+            >
+              <IconArrowUp size={14} />
+            </ActionIcon>
+          </Tooltip>
+          <Text size="sm" fw={800}>{solution.vote || 0}</Text>
+        </div>
 
-        <Stack gap="md" className="min-w-0">
-          <Group justify="space-between" align="flex-start" gap="md">
-            <Group gap="xs">
-              <UserLink user={user || { _id: solution.owner, uname: String(solution.owner) }} />
-              <Text size="xs" c="dimmed">@</Text>
-              <TimeDisplay date={docDate(solution._id || solution.docId)} format="relative" />
+        <Stack gap="sm" className="min-w-0 flex-1">
+          <Group justify="space-between" align="flex-start" wrap="nowrap">
+            <Group gap="xs" wrap="nowrap">
+              <UserAvatar user={udoc} size={28} />
+              <Stack gap={0}>
+                <Group gap={6} wrap="nowrap" align="center">
+                  <Link to="user_detail" params={{ uid: udoc._id }} className="no-underline">
+                    <Text size="sm" fw={600} className="hover:underline">{udoc.uname}</Text>
+                  </Link>
+                  <UserBadges user={udoc} />
+                </Group>
+                <Text size="xs" c="dimmed">
+                  <TimeDisplay date={docDate(solution._id || solution.docId)} format="relative" />
+                </Text>
+              </Stack>
             </Group>
-            <Group gap={4}>
-              <Button size="compact-xs" variant="subtle" onClick={copyLink}>{t('Copy Link')}</Button>
-              {isLoggedIn && <Button size="compact-xs" variant="subtle" onClick={() => setReplying((v) => !v)}>{t('Reply')}</Button>}
-              {isLoggedIn && <Button size="compact-xs" variant="subtle" onClick={() => setEditing((v) => !v)}>{t('Edit')}</Button>}
+            <Group gap={2} wrap="nowrap">
+              <Tooltip label={t('Copy Link')}>
+                <ActionIcon variant="subtle" size="sm" onClick={copyLink}>
+                  <IconLink size={14} />
+                </ActionIcon>
+              </Tooltip>
               {isLoggedIn && (
-                <Button
-                  size="compact-xs"
-                  variant="subtle"
-                  color="red"
-                  loading={busy === 'delete_solution'}
-                  onClick={() => run('delete_solution', {}, t('Confirm delete?'))}
-                >
-                  {t('Delete')}
-                </Button>
+                <Tooltip label={t('Reply')}>
+                  <ActionIcon variant="subtle" size="sm" onClick={() => setReplying((v) => !v)}>
+                    <IconMessage size={14} />
+                  </ActionIcon>
+                </Tooltip>
+              )}
+              {isLoggedIn && (
+                <Tooltip label={t('Edit')}>
+                  <ActionIcon variant="subtle" size="sm" onClick={() => setEditing((v) => !v)}>
+                    <IconPencil size={14} />
+                  </ActionIcon>
+                </Tooltip>
+              )}
+              {isLoggedIn && (
+                <Tooltip label={t('Delete')}>
+                  <ActionIcon
+                    variant="subtle"
+                    size="sm"
+                    color="red"
+                    loading={busy === 'delete_solution'}
+                    onClick={() => run('delete_solution', {}, t('Confirm delete?'))}
+                  >
+                    <IconTrash size={14} />
+                  </ActionIcon>
+                </Tooltip>
               )}
             </Group>
           </Group>
@@ -187,35 +287,44 @@ function SolutionCard({
               onSubmit={(content) => run('edit_solution', { content })}
             />
           ) : (
-            <MarkdownRenderer content={solution.content || ''} />
+            <CollapsibleContent content={solution.content} />
           )}
 
           {!!solution.reply?.length && (
-            <Stack gap="sm" className="border-l-2 border-[var(--hydro-border)] pl-4">
+            <Stack gap="xs" className="ml-6 border-l-2 border-[var(--hydro-border)] pl-3">
               {solution.reply.map((reply: any) => {
                 const rid = docId(reply);
                 const replyUser = udict[reply.owner] || { _id: reply.owner, uname: String(reply.owner) };
                 return (
-                  <div key={rid} className="rounded-md bg-[var(--hydro-surface)] p-3">
-                    <Group justify="space-between" align="flex-start" gap="md" mb="xs">
-                      <Group gap="xs">
-                        <UserLink user={replyUser} size="xs" />
-                        <Text size="xs" c="dimmed">@</Text>
-                        <TimeDisplay date={docDate(reply._id || reply.docId)} format="relative" />
+                  <div key={rid} className="rounded-md bg-[var(--hydro-surface-muted)] p-3">
+                    <Group justify="space-between" align="flex-start" gap="sm" mb="xs">
+                      <Group gap="xs" wrap="nowrap">
+                        <UserAvatar user={replyUser} size={20} />
+                        <Link to="user_detail" params={{ uid: replyUser._id }} className="no-underline">
+                          <Text size="xs" fw={600} className="hover:underline">{replyUser.uname}</Text>
+                        </Link>
+                        <UserBadges user={replyUser} />
+                        <Text size="xs" c="dimmed">
+                          <TimeDisplay date={docDate(reply._id || reply.docId)} format="relative" />
+                        </Text>
                       </Group>
                       {isLoggedIn && (
-                        <Group gap={4}>
-                          <Button size="compact-xs" variant="subtle" onClick={() => setReplying(true)}>{t('Reply')}</Button>
-                          <Button size="compact-xs" variant="subtle" onClick={() => setEditingReply(editingReply === rid ? '' : rid)}>{t('Edit')}</Button>
-                          <Button
-                            size="compact-xs"
+                        <Group gap={2}>
+                          <ActionIcon variant="subtle" size="xs" onClick={() => setReplying(true)}>
+                            <IconMessage size={12} />
+                          </ActionIcon>
+                          <ActionIcon variant="subtle" size="xs" onClick={() => setEditingReply(editingReply === rid ? '' : rid)}>
+                            <IconPencil size={12} />
+                          </ActionIcon>
+                          <ActionIcon
                             variant="subtle"
+                            size="xs"
                             color="red"
                             loading={busy === `delete_reply:${rid}`}
                             onClick={() => run('delete_reply', { psrid: rid }, t('Confirm delete?'))}
                           >
-                            {t('Delete')}
-                          </Button>
+                            <IconTrash size={12} />
+                          </ActionIcon>
                         </Group>
                       )}
                     </Group>
@@ -229,7 +338,7 @@ function SolutionCard({
                         onSubmit={(content) => run('edit_reply', { psrid: rid, content })}
                       />
                     ) : (
-                      <MarkdownRenderer content={reply.content || ''} />
+                      <CollapsibleContent content={reply.content} maxHeight={160} />
                     )}
                   </div>
                 );
