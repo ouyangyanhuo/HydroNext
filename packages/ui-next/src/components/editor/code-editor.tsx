@@ -71,6 +71,7 @@ export function CodeEditor({ value, onChange, language = 'plaintext', readOnly =
       });
       editorRef.current = editor;
       if (onChange) editor.onDidChangeModelContent(() => onChange(editor.getValue()));
+
       setLoading(false);
     });
     return () => { disposed = true; editorRef.current?.dispose(); };
