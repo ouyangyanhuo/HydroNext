@@ -41,6 +41,7 @@ interface SettingsFormProps {
   submitLabel?: string;
   loading?: boolean;
   onSubmit: (payload: Record<string, any>) => void | Promise<void>;
+  excludeKeys?: string[];
 }
 
 function getByPath(source: Record<string, any>, key: string) {
@@ -64,6 +65,7 @@ function groupByFamily(settings: SettingItem[]) {
   const groups = new Map<string, SettingItem[]>();
   for (const setting of settings) {
     if (setting.family === 'setting_storage') continue;
+    if (setting.family === 'setting_customize') continue;
     if ((setting.flag || 0) & FLAG_HIDDEN) continue;
     const family = setting.family || 'setting_basic';
     groups.set(family, [...(groups.get(family) || []), setting]);
@@ -132,7 +134,10 @@ function SettingInput({
         description={description}
         checked={!!value}
         disabled={disabled}
-        onChange={(e) => onChange(e.currentTarget.checked)}
+        onChange={(e) => {
+          const checked = e.currentTarget.checked;
+          onChange(checked);
+        }}
       />
     );
   }
@@ -161,7 +166,10 @@ function SettingInput({
         placeholder={secret ? t('(Not changed)') : undefined}
         minRows={setting.type === 'markdown' || setting.subType === 'yaml' ? 8 : 4}
         autosize
-        onChange={(e) => onChange(e.currentTarget.value)}
+        onChange={(e) => {
+          const val = e.currentTarget.value;
+          onChange(val);
+        }}
         styles={setting.subType === 'yaml' || setting.type === 'json'
           ? { input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '13px' } }
           : undefined}
@@ -178,7 +186,10 @@ function SettingInput({
       value={value == null ? '' : String(value)}
       disabled={disabled}
       placeholder={secret ? t('(Not changed)') : undefined}
-      onChange={(e) => onChange(e.currentTarget.value)}
+      onChange={(e) => {
+        const val = e.currentTarget.value;
+        onChange(val);
+      }}
     />
   );
 }
@@ -191,9 +202,13 @@ export function SettingsForm({
   submitLabel,
   loading = false,
   onSubmit,
+  excludeKeys = [],
 }: SettingsFormProps) {
   const { t } = useI18n();
-  const normalized = useMemo(() => normalizeSettings(settings, current), [settings, current]);
+  const normalized = useMemo(
+    () => normalizeSettings(settings, current).filter((s) => !excludeKeys.includes(s.key)),
+    [settings, current, excludeKeys],
+  );
   const [values, setValues] = useState<Record<string, any>>({});
   const groups = useMemo(() => groupByFamily(normalized), [normalized]);
   const booleanKeys = useMemo(
@@ -221,9 +236,8 @@ export function SettingsForm({
         <Card key={family} withBorder p="lg" className="hydro-content-card">
           <Group justify="space-between" mb="md">
             <Title order={3} size="h4">{t(family)}</Title>
-            <Badge variant="light">{items.length}</Badge>
           </Group>
-          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+          <Stack gap="md">
             {items.map((setting) => (
               <SettingInput
                 key={setting.key}
@@ -232,7 +246,7 @@ export function SettingsForm({
                 onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
               />
             ))}
-          </SimpleGrid>
+          </Stack>
         </Card>
       ))}
       <Group justify="flex-end">

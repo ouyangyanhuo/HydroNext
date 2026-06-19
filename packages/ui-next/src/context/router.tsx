@@ -81,8 +81,29 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
             window.location.href = res.url;
             return false;
           }
-          if (!res.ok) throw new Error(`Navigation failed: ${res.status} ${res.statusText}`);
+          if (!res.ok) {
+            let errorMessage = `Navigation failed: ${res.status} ${res.statusText}`;
+            try {
+              const errorBody = await res.json();
+              if (errorBody.error) {
+                errorMessage = typeof errorBody.error === 'string'
+                  ? errorBody.error
+                  : errorBody.error.message || errorMessage;
+              }
+            } catch {
+              // ignore JSON parse errors
+            }
+            if (res.status === 401 || res.status === 403) {
+              window.location.href = '/';
+              return false;
+            }
+            throw new Error(errorMessage);
+          }
           const body = await res.json();
+          if (body.url && typeof body.url === 'string') {
+            window.location.href = body.url;
+            return false;
+          }
           const pageName = res.headers.get('x-hydro-page') || '';
           console.log('[Hydro] data from', reqUrl, 'received:', body, 'pageName:', pageName);
 

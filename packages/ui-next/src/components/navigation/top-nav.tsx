@@ -19,9 +19,9 @@ function UserMenu() {
   return (
     <Menu shadow="md" width={220} position="bottom-end">
       <Menu.Target>
-        <UnstyledButton className="flex h-9 items-center gap-2 rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] px-2 shadow-[var(--hydro-shadow-sm)] transition hover:border-[var(--hydro-border-strong)]">
-          <Avatar src={getAvatarUrl(user.avatar, 28)} size={28} radius="xl" />
-          <Text size="sm" fw={650} className="max-w-32 truncate text-[var(--hydro-text)]">
+        <UnstyledButton className="flex items-center gap-2 rounded-md px-2 py-1 transition hover:bg-[var(--hydro-surface-muted)]">
+          <Avatar src={getAvatarUrl(user.avatar, 32)} size={32} radius="xl" />
+          <Text size="sm" fw={600} className="hidden text-[var(--hydro-text)] sm:block">
             {user.uname}
           </Text>
         </UnstyledButton>
@@ -42,14 +42,10 @@ function UserMenu() {
         <Menu.Item component={Link} to="home_files">
           {t('My Files')}
         </Menu.Item>
-        {user.priv & (1 << 0) ? (
-          <>
-            <Menu.Divider />
-            <Menu.Item component={Link} to="domain_dashboard" params={{ domainId }}>
-              {t('Domain Manage')}
-            </Menu.Item>
-          </>
-        ) : null}
+        <Menu.Divider />
+        <Menu.Item component={Link} to="home_domain">
+          {t('My Domains')}
+        </Menu.Item>
         <Menu.Divider />
         <Menu.Item component={Link} to="user_logout" color="red">
           {t('Logout')}
@@ -181,6 +177,9 @@ export function TopNav() {
                 </Button>
                 <Button component={Link} to="home_settings" variant="subtle" fullWidth justify="flex-start" onClick={close}>
                   {t('Settings')}
+                </Button>
+                <Button component={Link} to="home_domain" variant="subtle" fullWidth justify="flex-start" onClick={close}>
+                  {t('My Domains')}
                 </Button>
                 <Button component={Link} to="user_logout" variant="subtle" color="red" fullWidth justify="flex-start" onClick={close}>
                   {t('Logout')}

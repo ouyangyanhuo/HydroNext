@@ -425,8 +425,19 @@ class UserDetailHandler extends Handler {
         const tdocs = await ContestModel.getMulti(domainId, { docId: { $in: tsdocs.map((i) => i.docId) } })
             .project({ docId: 1, title: 1, rule: 1 }).sort({ _id: -1 }).toArray();
         this.response.template = 'user_detail.html';
+        const serializedUdoc = udoc.serialize(this);
+        if (isSelfProfile || this.user.hasPerm(PERM.PERM_VIEW_USER_PRIVATE_INFO)) {
+            serializedUdoc.qq = udoc.qq;
+            serializedUdoc.gender = udoc.gender;
+            serializedUdoc.school = udoc.school;
+            serializedUdoc.studentId = udoc.studentId;
+            serializedUdoc.phone = udoc.phone;
+        }
+        if (isSelfProfile || udoc._publicFields?.includes('bio') || this.user.hasPerm(PERM.PERM_VIEW_USER_PRIVATE_INFO)) {
+            serializedUdoc.bio = udoc.bio;
+        }
         this.response.body = {
-            isSelfProfile, udoc, sdoc, pdocs, tags, tdocs,
+            isSelfProfile, udoc: serializedUdoc, sdoc, pdocs, tags, tdocs,
         };
         if (this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION)) {
             const psdocs = await SolutionModel.getByUser(domainId, uid).limit(10).toArray();

@@ -245,12 +245,25 @@ Domain ID: ドメインID
 Roles: 役割
 Permissions: 権限
 Groups: グループ
+Create Group: グループを作成
 Join Applications: 参加申請
 Request to Join: 参加を申請
 Accept: 承認
 Reject: 拒否
 No pending applications: 保留中の申請なし
 No domains: ドメインなし
+Group Assignment (Optional): グループ割り当て（オプション）
+The group to join when user joining the domain.: ユーザーがドメインに参加する際に加入するグループ。
+Preference: 設定
+You can also upload your avatar to Gravatar and it will be automatically updated here.: Gravatarにアバターをアップロードすると、ここでも自動的に更新されます。
+Linked Accounts: 連携アカウント
+Email Account: メールアカウント
+Manage all active login sessions.: すべてのアクティブなログインセッションを管理。
+Email for Gravatar: Gravatar用メールアドレス
+QQ Number: QQ番号
+GitHub Username: GitHubユーザー名
+Choose avatar file: アバターファイルを選択
+Gravatar uses your email to fetch avatar from: Gravatarはメールアドレスを使用してアバターを取得します
 
 # Manage
 System Management: システム管理
@@ -270,6 +283,22 @@ No judges connected: 判定機未接続
 # Messages
 Messages: メッセージ
 No messages: メッセージなし
+New Message: 新規メッセージ
+Select a conversation: 会話してユーザーを選択してください
+
+# User Profile
+No bio: 自己紹介なし
+Accepted Problems: 正解した問題
+No accepted problems: 正解した問題なし
+Problem Tags: 問題タグ
+Solved: 解決済み
+RP: RP
+Last active: 最終アクティブ
+Edit Profile: プロフィール編集
+Send Message: メッセージ送信
+Male: 男性
+Female: 女性
+Other: その他
 
 # Misc
 Welcome: ようこそ
@@ -410,9 +439,12 @@ Save Role Changes: ロール変更を保存
 Group Name: グループ名
 Remove Selected Group: 選択したグループを削除
 Search users by username or UID: ユーザー名または UID でユーザーを検索
+Search users: ユーザーを検索
 Type to search users: ユーザー名または UID を入力して検索
+Type username or UID: ユーザー名または UID を入力
 User search failed: ユーザー検索に失敗しました
 No users found: ユーザーが見つかりません
+Change: 変更
 Selected Users: 選択したユーザー
 No users selected: ユーザーが選択されていません
 Select: 選択

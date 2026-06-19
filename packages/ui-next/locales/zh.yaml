@@ -287,12 +287,25 @@ Domain ID: 域 ID
 Roles: 角色
 Permissions: 权限
 Groups: 用户组
+Create Group: 创建用户组
 Join Applications: 加入申请
 Request to Join: 申请加入
 Accept: 接受
 Reject: 拒绝
 No pending applications: 暂无待处理申请
 No domains: 暂无域
+Group Assignment (Optional): 用户组分配（可选）
+The group to join when user joining the domain.: 用户加入域时自动加入的用户组。
+Preference: 偏好设置
+You can also upload your avatar to Gravatar and it will be automatically updated here.: 您也可以将头像上传到 Gravatar，系统会自动更新。
+Linked Accounts: 关联账户
+Email Account: 邮箱账户
+Manage all active login sessions.: 管理所有活跃的登录会话。
+Email for Gravatar: Gravatar 邮箱
+QQ Number: QQ 号码
+GitHub Username: GitHub 用户名
+Choose avatar file: 选择头像文件
+Gravatar uses your email to fetch avatar from: Gravatar 使用您的邮箱从以下地址获取头像
 
 # Manage
 System Management: 系统管理
@@ -346,6 +359,22 @@ No judges connected: 无评测机连接
 # Messages
 Messages: 消息
 No messages: 暂无消息
+New Message: 新消息
+Select a conversation: 选择一个会话开始聊天
+
+# User Profile
+No bio: 暂无个人简介
+Accepted Problems: 已通过题目
+No accepted problems: 暂无已通过题目
+Problem Tags: 题目标签
+Solved: 已解决
+RP: RP
+Last active: 最后活跃
+Edit Profile: 编辑资料
+Send Message: 发送消息
+Male: 男
+Female: 女
+Other: 其他
 
 # Misc
 Welcome: 欢迎
@@ -413,9 +442,12 @@ Save Role Changes: 保存角色修改
 Group Name: 用户组名称
 Remove Selected Group: 移除选中用户组
 Search users by username or UID: 通过用户名或 UID 搜索用户
+Search users: 搜索用户
 Type to search users: 输入用户名或 UID 搜索用户
+Type username or UID: 输入用户名或 UID
 User search failed: 用户搜索失败
 No users found: 未找到用户
+Change: 修改
 Selected Users: 已选用户
 No users selected: 尚未选择用户
 Select: 选择

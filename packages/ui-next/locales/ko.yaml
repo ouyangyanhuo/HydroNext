@@ -245,12 +245,25 @@ Domain ID: 도메인 ID
 Roles: 역할
 Permissions: 권한
 Groups: 그룹
+Create Group: 그룹 만들기
 Join Applications: 가입 신청
 Request to Join: 가입 요청
 Accept: 수락
 Reject: 거절
 No pending applications: 대기 중인 신청 없음
 No domains: 도메인 없음
+Group Assignment (Optional): 그룹 할당 (선택사항)
+The group to join when user joining the domain.: 사용자가 도메인에 가입할 때 참여할 그룹입니다.
+Preference: 환경설정
+You can also upload your avatar to Gravatar and it will be automatically updated here.: Gravatar에 아바타를 업로드하면 여기에서도 자동으로 업데이트됩니다.
+Linked Accounts: 연결된 계정
+Email Account: 이메일 계정
+Manage all active login sessions.: 모든 활성 로그인 세션을 관리합니다.
+Email for Gravatar: Gravatar 이메일
+QQ Number: QQ 번호
+GitHub Username: GitHub 사용자 이름
+Choose avatar file: 아바타 파일 선택
+Gravatar uses your email to fetch avatar from: Gravatar는 이메일을 사용하여 아바타를 가져옵니다
 
 # Manage
 System Management: 시스템 관리
@@ -270,6 +283,22 @@ No judges connected: 채점기 미연결
 # Messages
 Messages: 메시지
 No messages: 메시지 없음
+New Message: 새 메시지
+Select a conversation: 대화할 사용자를 선택하세요
+
+# User Profile
+No bio: 자기소개 없음
+Accepted Problems: 푼 문제
+No accepted problems: 푼 문제 없음
+Problem Tags: 문제 태그
+Solved: 해결됨
+RP: RP
+Last active: 마지막 활동
+Edit Profile: 프로필 수정
+Send Message: 메시지 보내기
+Male: 남성
+Female: 여성
+Other: 기타
 
 # Misc
 Welcome: 환영합니다
@@ -410,9 +439,12 @@ Save Role Changes: 역할 변경 저장
 Group Name: 그룹 이름
 Remove Selected Group: 선택한 그룹 제거
 Search users by username or UID: 사용자 이름 또는 UID로 사용자 검색
+Search users: 사용자 검색
 Type to search users: 사용자 이름 또는 UID를 입력하여 검색
+Type username or UID: 사용자 이름 또는 UID 입력
 User search failed: 사용자 검색 실패
 No users found: 사용자를 찾을 수 없음
+Change: 변경
 Selected Users: 선택한 사용자
 No users selected: 선택한 사용자가 없습니다
 Select: 선택

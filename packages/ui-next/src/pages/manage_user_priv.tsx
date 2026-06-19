@@ -10,7 +10,9 @@ import { useI18n } from '@/hooks/use-i18n';
 function toBigIntValue(value: any) {
   try {
     if (value == null || value === '') return BigInt(0);
-    return BigInt(String(value));
+    const s = String(value);
+    if (s.startsWith('BigInt::')) return BigInt(s.slice(8));
+    return BigInt(s);
   } catch {
     return BigInt(0);
   }

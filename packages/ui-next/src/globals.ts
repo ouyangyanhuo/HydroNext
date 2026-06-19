@@ -6,7 +6,6 @@ let injectionData: Record<string, any> = {};
 if (injectionEl) {
   try {
     injectionData = JSON.parse(injectionEl.textContent!);
-    console.log('[Hydro] initial data:', injectionData);
   } catch (e) {
     console.error('[Hydro] Failed to parse injection data:', e);
   }

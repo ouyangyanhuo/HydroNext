@@ -176,3 +176,10 @@ a {
   background: var(--hydro-surface-raised);
   box-shadow: var(--hydro-shadow-sm);
 }
+
+.user-info {
+  padding-top: 20px;
+  padding-right: 24px;
+  padding-left: 24px;
+  padding-bottom: calc(var(--spacing) * 8);
+}

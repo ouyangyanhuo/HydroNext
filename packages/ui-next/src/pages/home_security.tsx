@@ -99,7 +99,7 @@ export default function HomeSecurityPage() {
         <Alert color="yellow" variant="light">{t("You haven't set an email.")}</Alert>
       )}
 
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+      <Stack gap="lg">
         <Card withBorder p="lg" className="hydro-content-card">
           <Title order={4} mb="sm">{t('Change Password')}</Title>
           <Stack gap="md">
@@ -119,7 +119,6 @@ export default function HomeSecurityPage() {
         <Card withBorder p="lg" className="hydro-content-card">
           <Group justify="space-between" mb="sm">
             <Title order={4}>{t('Linked Accounts')}</Title>
-            <Badge variant="light">{relations.length + 1}</Badge>
           </Group>
           <Stack gap="sm">
             <Group justify="space-between" align="center">
@@ -175,12 +174,11 @@ export default function HomeSecurityPage() {
             ))}
           </Stack>
         </Card>
-      </SimpleGrid>
+      </Stack>
 
       <Card withBorder p="lg" className="hydro-content-card">
         <Group justify="space-between" mb="md">
           <Title order={4}>{t('Authenticators')}</Title>
-          <Badge variant="light">{authenticators.length}</Badge>
         </Group>
         <Stack gap="sm">
           {user?.tfa && (
@@ -231,7 +229,6 @@ export default function HomeSecurityPage() {
       <Card withBorder p="lg" className="hydro-content-card">
         <Group justify="space-between" mb="md">
           <Title order={4}>{t('Active Sessions')}</Title>
-          <Badge variant="light">{sessions.length}</Badge>
         </Group>
         <Stack gap="md">
           {sessions.map((session: any) => (

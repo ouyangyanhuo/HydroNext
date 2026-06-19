@@ -244,12 +244,25 @@ Domain ID: 網域 ID
 Roles: 角色
 Permissions: 權限
 Groups: 使用者群組
+Create Group: 建立使用者群組
 Join Applications: 加入申請
 Request to Join: 申請加入
 Accept: 接受
 Reject: 拒絕
 No pending applications: 暫無待處理申請
 No domains: 暫無網域
+Group Assignment (Optional): 使用者組分配（可選）
+The group to join when user joining the domain.: 使用者加入網域時自動加入的使用者組。
+Preference: 偏好設定
+You can also upload your avatar to Gravatar and it will be automatically updated here.: 您也可以將頭像上傳到 Gravatar，系統會自動更新。
+Linked Accounts: 關聯帳戶
+Email Account: 電子郵件帳戶
+Manage all active login sessions.: 管理所有活躍的登入工作階段。
+Email for Gravatar: Gravatar 電子郵件
+QQ Number: QQ 號碼
+GitHub Username: GitHub 使用者名稱
+Choose avatar file: 選擇頭像檔案
+Gravatar uses your email to fetch avatar from: Gravatar 使用您的電子郵件從以下地址獲取頭像
 
 # Manage
 System Management: 系統管理
@@ -269,6 +282,22 @@ No judges connected: 無評測機連線
 # Messages
 Messages: 訊息
 No messages: 暫無訊息
+New Message: 新訊息
+Select a conversation: 選擇一個會話開始聊天
+
+# User Profile
+No bio: 暫無個人簡介
+Accepted Problems: 已通過題目
+No accepted problems: 暫無已通過題目
+Problem Tags: 題目標籤
+Solved: 已解決
+RP: RP
+Last active: 最後活躍
+Edit Profile: 編輯資料
+Send Message: 發送訊息
+Male: 男
+Female: 女
+Other: 其他
 
 # Misc
 Welcome: 歡迎
@@ -409,9 +438,12 @@ Save Role Changes: 儲存角色修改
 Group Name: 使用者組名稱
 Remove Selected Group: 移除選取的使用者組
 Search users by username or UID: 透過使用者名稱或 UID 搜尋使用者
+Search users: 搜尋使用者
 Type to search users: 輸入使用者名稱或 UID 搜尋使用者
+Type username or UID: 輸入使用者名稱或 UID
 User search failed: 使用者搜尋失敗
 No users found: 未找到使用者
+Change: 更換
 Selected Users: 已選使用者
 No users selected: 尚未選擇使用者
 Select: 選擇

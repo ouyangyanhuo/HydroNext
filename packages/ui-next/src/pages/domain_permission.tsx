@@ -31,6 +31,9 @@ function toBigIntValue(value: any): bigint {
   if (typeof value === 'string') {
     const text = value.trim();
     if (!text) return 0n;
+    if (text.startsWith('BigInt::')) {
+      try { return BigInt(text.slice(8)); } catch { return 0n; }
+    }
     try {
       return BigInt(text);
     } catch {

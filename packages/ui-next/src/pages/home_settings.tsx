@@ -1,12 +1,27 @@
 import { formatErrorMessage } from '@/utils/error';
-import { Button, Card, Group, Stack, Text } from '@mantine/core';
-import { useState } from 'react';
+import { Avatar, Badge, Button, Card, FileInput, Group, Radio, Stack, Text, TextInput } from '@mantine/core';
+import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { SettingsForm } from '@/components/common/settings-form';
-import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+
+const GRAVATAR_MIRROR = '//cn.gravatar.com/avatar/';
+
+function getAvatarPreviewUrl(type: string, value: string): string {
+  if (!value) return `${GRAVATAR_MIRROR}?d=mm&s=128`;
+  if (type === 'gravatar') {
+    return `${GRAVATAR_MIRROR}${value}?d=mm&s=128`;
+  }
+  if (type === 'qq') {
+    return `https://q1.qlogo.cn/g?b=qq&nk=${value}&s=160`;
+  }
+  if (type === 'github') {
+    return `https://github.com/${value}.png?size=128`;
+  }
+  return value;
+}
 
 export default function HomeSettingsPage() {
   const { args } = usePageData();
@@ -18,11 +33,62 @@ export default function HomeSettingsPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const [avatarType, setAvatarType] = useState('gravatar');
+  const [avatarValue, setAvatarValue] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    const avatar = current.avatar || '';
+    const index = avatar.indexOf(':');
+    if (index > 0) {
+      const provider = avatar.substring(0, index);
+      const value = avatar.substring(index + 1);
+      if (provider === 'gravatar' || provider === 'qq' || provider === 'github') {
+        setAvatarType(provider);
+        setAvatarValue(value);
+      } else if (provider === 'url') {
+        setAvatarType('url');
+        setAvatarValue(value);
+      } else {
+        setAvatarType('gravatar');
+        setAvatarValue('');
+      }
+    } else {
+      setAvatarType('gravatar');
+      setAvatarValue('');
+    }
+  }, [current.avatar]);
+
   const handleSubmit = async (payload: Record<string, any>) => {
     setLoading(true);
     setError('');
     setSuccess('');
     try {
+      if (category === 'account') {
+        if (avatarType === 'upload' && avatarFile) {
+          const formData = new FormData();
+          formData.append('file', avatarFile);
+          const uploadRes = await fetch('/home/avatar', {
+            method: 'POST',
+            body: formData,
+          });
+          if (!uploadRes.ok) {
+            const data = await uploadRes.json().catch(() => ({}));
+            throw new Error(data.error?.message || 'Upload failed');
+          }
+        } else if (avatarType !== 'upload') {
+          const avatarRes = await fetch('/home/avatar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ avatar: `${avatarType}:${avatarValue}` }),
+          });
+          if (!avatarRes.ok) {
+            const data = await avatarRes.json().catch(() => ({}));
+            throw new Error(data.error?.message || 'Update failed');
+          }
+        }
+        delete payload.avatar;
+      }
       const res = await fetch(window.location.href, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -32,7 +98,10 @@ export default function HomeSettingsPage() {
       const data = type.includes('json') ? await res.json() : {};
       if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Save failed')));
       else if (data.redirect) window.location.href = data.redirect;
-      else setSuccess(t('Settings saved'));
+      else {
+        setSuccess(t('Settings saved'));
+        if (category === 'account') window.location.reload();
+      }
     } catch (err: any) {
       setError(err?.message || t('Network error'));
     } finally {
@@ -67,13 +136,77 @@ export default function HomeSettingsPage() {
       {success && <Text c="green" size="sm">{success}</Text>}
       {category === 'account' && (
         <Card withBorder p="lg" className="hydro-content-card">
-          <Group gap="md">
-            <UserAvatar user={current} size={72} />
-            <Stack gap={4}>
+          <Stack gap="md">
+            <Group justify="space-between">
               <Text fw={700}>{t('Avatar')}</Text>
-              <Text c="dimmed" size="sm">{t('You can also upload your avatar to Gravatar and it will be automatically updated here.')}</Text>
-            </Stack>
-          </Group>
+              <Badge variant="light">{avatarType}</Badge>
+            </Group>
+            <Group gap="lg" align="flex-start">
+              <Avatar
+                src={avatarType === 'upload' && avatarFile ? URL.createObjectURL(avatarFile) : getAvatarPreviewUrl(avatarType, avatarValue)}
+                size={96}
+                radius="xl"
+              />
+              <Stack gap="sm" className="flex-1">
+                <Radio.Group
+                  value={avatarType}
+                  onChange={(value) => {
+                    setAvatarType(value);
+                    if (value === 'upload') {
+                      setAvatarValue('');
+                    } else if (value === 'gravatar') {
+                      setAvatarValue(current.mail || '');
+                    } else {
+                      setAvatarValue('');
+                    }
+                  }}
+                >
+                  <Group gap="md">
+                    <Radio value="gravatar" label="Gravatar" />
+                    <Radio value="qq" label="QQ" />
+                    <Radio value="github" label="GitHub" />
+                    <Radio value="upload" label={t('Upload')} />
+                  </Group>
+                </Radio.Group>
+                {avatarType === 'gravatar' && (
+                  <TextInput
+                    placeholder={t('Email for Gravatar')}
+                    value={avatarValue}
+                    onChange={(e) => setAvatarValue(e.currentTarget.value)}
+                    size="sm"
+                  />
+                )}
+                {avatarType === 'qq' && (
+                  <TextInput
+                    placeholder={t('QQ Number')}
+                    value={avatarValue}
+                    onChange={(e) => setAvatarValue(e.currentTarget.value)}
+                    size="sm"
+                  />
+                )}
+                {avatarType === 'github' && (
+                  <TextInput
+                    placeholder={t('GitHub Username')}
+                    value={avatarValue}
+                    onChange={(e) => setAvatarValue(e.currentTarget.value)}
+                    size="sm"
+                  />
+                )}
+                {avatarType === 'upload' && (
+                  <FileInput
+                    placeholder={t('Choose avatar file')}
+                    accept="image/*"
+                    value={avatarFile}
+                    onChange={setAvatarFile}
+                    size="sm"
+                  />
+                )}
+                <Text size="xs" c="dimmed">
+                  {t('Gravatar uses your email to fetch avatar from')} cn.gravatar.com
+                </Text>
+              </Stack>
+            </Group>
+          </Stack>
         </Card>
       )}
       <SettingsForm
@@ -83,6 +216,7 @@ export default function HomeSettingsPage() {
         extraPayload={{ category }}
         loading={loading}
         onSubmit={handleSubmit}
+        excludeKeys={category === 'account' ? ['avatar'] : []}
       />
     </Stack>
   );
