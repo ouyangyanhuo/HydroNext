@@ -75,6 +75,24 @@ Please input the generator.: 생성기를 입력하세요.
 Please input the standard program.: 표준 프로그램을 입력하세요.
 A data generator is a program that generates testdata.: 데이터 생성기는 테스트데이터를 생성하는 프로그램입니다.
 A standard program is a program that solves the problem.: 표준 프로그램은 문제를 푸는 프로그램입니다.
+Confirm to delete the file?: 이 파일을 삭제하시겠습니까?
+Confirm to delete the selected files?: 선택한 파일을 삭제하시겠습니까?
+Download Selected: 선택 다운로드
+Remove Selected: 선택 삭제
+Rename Selected: 선택 이름 변경
+"Enter a new name for the file:": "파일의 새 이름을 입력하세요:"
+Batch replacement: 일괄 대체
+Original content: 원본 내용
+Replace with: 대체할 내용
+Add prefix: 접두사 추가
+Add suffix: 접미사 추가
+Add prefix/suffix: 접두사/접미사 추가
+RegExp supported, quote with "/": 정규식 지원, "/"로 감싸기
+Original filename(s): 원본 파일명
+New filename(s): 새 파일명
+Are you sure to rename the following file?: 다음 파일의 이름을 변경하시겠습니까?
+Cannot preview this file type.: 이 파일 형식은 미리볼 수 없습니다.
+Next: 다음
 Import: 가져오기
 Export: 내보내기
 Loading...: 로딩 중...
@@ -331,6 +349,7 @@ Additional Files: 추가 파일
 Input, output, and config files used by the judge.: 채점에 사용되는 입력, 출력 및 설정 파일입니다.
 Public attachments shown with this problem.: 이 문제와 함께 공개되는 첨부 파일입니다.
 This is a copy of another problem.: 이것은 다른 문제의 복사본입니다.
+"This problem has no testdata.": "이 문제에는 테스트데이터가 없습니다."
 Status Distribution: 상태 분포
 Submission Statistics: 제출 통계
 Submit By: 제출자

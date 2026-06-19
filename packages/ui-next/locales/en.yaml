@@ -75,6 +75,24 @@ Please input the generator.: Please input the generator.
 Please input the standard program.: Please input the standard program.
 A data generator is a program that generates testdata.: A data generator is a program that generates testdata.
 A standard program is a program that solves the problem.: A standard program is a program that solves the problem.
+Confirm to delete the file?: Confirm to delete the file?
+Confirm to delete the selected files?: Confirm to delete the selected files?
+Download Selected: Download Selected
+Remove Selected: Remove Selected
+Rename Selected: Rename Selected
+Enter a new name for the file: Enter a new name for the file
+Batch replacement: Batch replacement
+Original content: Original content
+Replace with: Replace with
+Add prefix: Add prefix
+Add suffix: Add suffix
+Add prefix/suffix: Add prefix/suffix
+RegExp supported, quote with "/": RegExp supported, quote with "/"
+Original filename(s): Original filename(s)
+New filename(s): New filename(s)
+Are you sure to rename the following file?: Are you sure to rename the following file?
+Cannot preview this file type.: Cannot preview this file type.
+Next: Next
 Import: Import
 Export: Export
 Loading...: Loading...
@@ -331,6 +349,7 @@ Additional Files: Additional Files
 Input, output, and config files used by the judge.: Input, output, and config files used by the judge.
 Public attachments shown with this problem.: Public attachments shown with this problem.
 This is a copy of another problem.: This is a copy of another problem.
+This problem has no testdata.: This problem has no testdata.
 Status Distribution: Status Distribution
 Submission Statistics: Submission Statistics
 Submit By: Submit By

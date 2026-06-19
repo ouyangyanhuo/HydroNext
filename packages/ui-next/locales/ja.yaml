@@ -75,6 +75,24 @@ Please input the generator.: ジェネレータを入力してください。
 Please input the standard program.: 標準プログラムを入力してください。
 A data generator is a program that generates testdata.: データジェネレータはテストデータを生成するプログラムです。
 A standard program is a program that solves the problem.: 標準プログラムは問題を解くプログラムです。
+Confirm to delete the file?: このファイルを削除しますか？
+Confirm to delete the selected files?: 選択したファイルを削除しますか？
+Download Selected: 選択をダウンロード
+Remove Selected: 選択を削除
+Rename Selected: 選択を名前変更
+"Enter a new name for the file:": ファイルの新しい名前を入力：
+Batch replacement: バッチ置換
+Original content: 元の内容
+Replace with: 置換先
+Add prefix: プレフィックス追加
+Add suffix: サフィックス追加
+Add prefix/suffix: プレフィックス/サフィックス追加
+RegExp supported, quote with "/": 正規表現対応、"/" で囲む
+Original filename(s): 元のファイル名
+New filename(s): 新しいファイル名
+Are you sure to rename the following file?: 以下のファイルを名前変更しますか？
+Cannot preview this file type.: このファイルタイプはプレビューできません。
+Next: 次へ
 Import: インポート
 Export: エクスポート
 Loading...: 読み込み中...
@@ -331,6 +349,7 @@ Additional Files: 追加ファイル
 Input, output, and config files used by the judge.: 判定に使用される入力、出力、設定ファイル。
 Public attachments shown with this problem.: この問題に公開されている添付ファイル。
 This is a copy of another problem.: これは別の問題のコピーです。
+This problem has no testdata.: この問題にはテストデータがありません。
 Status Distribution: ステータス分布
 Submission Statistics: 提出統計
 Submit By: 提出者

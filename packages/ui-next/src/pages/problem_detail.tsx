@@ -429,6 +429,13 @@ export default function ProblemDetailPage() {
             </div>
           </Paper>
 
+          {(!pdoc.data || pdoc.data.length === 0) && (
+            <Paper withBorder p="md" className="border-[var(--hydro-warning)]" style={{ background: 'rgba(233, 161, 0, 0.08)' }}>
+              <Text size="sm" fw={700} c="orange">WARNING:</Text>
+              <Text size="sm">{t('This problem has no testdata.')}</Text>
+            </Paper>
+          )}
+
           <Paper withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]">
             {statement}
           </Paper>

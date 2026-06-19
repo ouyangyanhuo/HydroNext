@@ -75,6 +75,24 @@ Please input the generator.: 請輸入產生器。
 Please input the standard program.: 請輸入標準程式。
 A data generator is a program that generates testdata.: 資料產生器是生成測試資料的程式。
 A standard program is a program that solves the problem.: 標準程式是解決問題的程式。
+Confirm to delete the file?: 確認刪除該檔案？
+Confirm to delete the selected files?: 確認刪除選取的檔案？
+Download Selected: 下載選取
+Remove Selected: 刪除選取
+Rename Selected: 重新命名選取
+"Enter a new name for the file:": 請輸入檔案的新名稱：
+Batch replacement: 批次替換
+Original content: 原始內容
+Replace with: 替換為
+Add prefix: 新增前綴
+Add suffix: 新增後綴
+Add prefix/suffix: 新增前綴/後綴
+RegExp supported, quote with "/": 支援正規表達式，用 "/" 包裹
+Original filename(s): 原始檔案名
+New filename(s): 新檔案名
+Are you sure to rename the following file?: 確認重新命名以下檔案？
+Cannot preview this file type.: 無法預覽此檔案類型。
+Next: 下一步
 Import: 匯入
 Export: 匯出
 Loading...: 載入中...
@@ -331,6 +349,7 @@ Additional Files: 附加檔案
 Input, output, and config files used by the judge.: 評測使用的輸入、輸出和設定檔。
 Public attachments shown with this problem.: 隨題面公開展示的附件。
 This is a copy of another problem.: 這是另一道題目的副本。
+This problem has no testdata.: 當前沒有測試資料。
 Status Distribution: 狀態分佈
 Submission Statistics: 提交統計
 Submit By: 提交者
