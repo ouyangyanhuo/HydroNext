@@ -6,9 +6,7 @@ import {
   Checkbox,
   Divider,
   Group,
-  Image,
   Modal,
-  ScrollArea,
   Select,
   Stack,
   Text,
@@ -16,8 +14,8 @@ import {
   Title,
 } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { CodeEditor } from '@/components/editor/code-editor';
 import { FileDropzone } from '@/components/common/file-dropzone';
+import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
@@ -42,129 +40,6 @@ function formatSize(size?: number) {
 
 function totalSize(files: any[]) {
   return files.reduce((sum, file) => sum + (file.size || 0), 0);
-}
-
-function getFileExt(name: string) {
-  return name.split('.').pop()?.toLowerCase() || '';
-}
-
-function isImage(ext: string) {
-  return ['png', 'jpeg', 'jpg', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
-}
-
-function isVideo(ext: string) {
-  return ['mp4', 'webm', 'ogg'].includes(ext);
-}
-
-function isPreviewableText(ext: string) {
-  return ['txt', 'in', 'out', 'ans', 'md', 'yaml', 'yml', 'json', 'xml', 'csv',
-    'cpp', 'c', 'cc', 'h', 'hpp', 'py', 'java', 'js', 'ts', 'go', 'rs', 'pas',
-    'rb', 'php', 'sh', 'bat', 'sql', 'css', 'html', 'htm'].includes(ext);
-}
-
-function resolveEditorLang(ext: string): string {
-  const map: Record<string, string> = {
-    yaml: 'yaml', yml: 'yaml', json: 'json', xml: 'xml',
-    cpp: 'cpp', cc: 'cpp', c: 'c', h: 'cpp', hpp: 'cpp',
-    py: 'python', java: 'java', js: 'javascript', ts: 'typescript',
-    go: 'go', rs: 'rust', pas: 'pascal', rb: 'ruby', php: 'php',
-    sh: 'shell', bat: 'shell', sql: 'sql', css: 'css', html: 'html', htm: 'html',
-    in: 'plaintext', out: 'plaintext', ans: 'plaintext', txt: 'plaintext', md: 'markdown',
-  };
-  return map[ext] || 'plaintext';
-}
-
-interface FilePreviewModalProps {
-  opened: boolean;
-  onClose: () => void;
-  file: { name: string, size: number } | null;
-  fileUrl: string;
-  type: string;
-  pid: string | number;
-  canEdit: boolean;
-  onSave: (filename: string, content: string) => Promise<void>;
-}
-
-function FilePreviewModal({ opened, onClose, file, fileUrl, type: _type, pid: _pid, canEdit, onSave }: FilePreviewModalProps) {
-  const { t } = useI18n();
-  const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const ext = file ? getFileExt(file.name) : '';
-
-  useEffect(() => {
-    if (!opened || !file) return;
-    setContent('');
-    setEditing(false);
-    const textExt = isPreviewableText(ext);
-    if (file.size === 0) {
-      setEditing(true);
-      return;
-    }
-    if (textExt && file.size <= 8 * 1024 * 1024) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoading(true);
-      fetch(fileUrl)
-        .then((r) => r.text())
-        .then((text) => { setContent(text); setEditing(true); })
-        .catch(() => setContent(''))
-        .finally(() => setLoading(false));
-    }
-  }, [opened, file, fileUrl, ext]);
-
-  const handleSave = async () => {
-    if (!file) return;
-    setSaving(true);
-    try {
-      await onSave(file.name, content);
-      onClose();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!file) return null;
-
-  return (
-    <Modal opened={opened} onClose={onClose} title={file.name} size="xl" scrollAreaComponent={ScrollArea.Autosize}>
-      <Stack gap="md">
-        {isImage(ext) && (
-          <Image src={fileUrl} alt={file.name} maw="100%" fit="contain" />
-        )}
-        {isVideo(ext) && (
-          <video controls style={{ width: '100%' }}>
-            <source src={fileUrl} />
-          </video>
-        )}
-        {ext === 'pdf' && (
-          <iframe src={`${fileUrl}?noDisposition=1`} style={{ width: '100%', height: '70vh', border: 'none' }} />
-        )}
-        {loading && <Text size="sm" c="dimmed">{t('Loading...')}</Text>}
-        {editing && (
-          <CodeEditor
-            value={content}
-            onChange={setContent}
-            language={resolveEditorLang(ext)}
-            height={500}
-          />
-        )}
-        {!isImage(ext) && !isVideo(ext) && ext !== 'pdf' && !loading && !editing && (
-          <Text size="sm" c="dimmed">{t('Cannot preview this file type.')}</Text>
-        )}
-        <Group justify="flex-end" gap="xs">
-          <Button variant="default" size="xs" onClick={() => window.open(fileUrl)}>
-            {t('Download')}
-          </Button>
-          {canEdit && editing && (
-            <Button size="xs" onClick={handleSave} loading={saving}>
-              {t('Save')}
-            </Button>
-          )}
-        </Group>
-      </Stack>
-    </Modal>
-  );
 }
 
 interface RenameDialogProps {
@@ -581,8 +456,6 @@ function FileSection({
         onClose={() => setPreviewFile(null)}
         file={previewFile}
         fileUrl={fileUrl}
-        type={type}
-        pid={pid}
         canEdit={canEdit}
         onSave={handleSaveFile}
       />

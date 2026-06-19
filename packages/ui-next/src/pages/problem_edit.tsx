@@ -2,7 +2,8 @@ import { formatErrorMessage } from '@/utils/error';
 import { Badge, Button, Card, Group, NumberInput, Paper, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { useRef, useState } from 'react';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
-import { DataTable } from '@/components/common/data-table';
+import { FileDropzone } from '@/components/common/file-dropzone';
+import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -169,6 +170,8 @@ export default function ProblemEditPage() {
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [previewFile, setPreviewFile] = useState<{ name: string; size: number } | null>(null);
+  const pid = pdoc.pid || pdoc.docId;
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -205,10 +208,44 @@ export default function ProblemEditPage() {
   };
   const selectedTags = selectedTagSet(form.tag);
 
-  const fileColumns = [
-    { key: 'name', title: t('Filename'), render: (file: any) => <Text size="sm" fw={600}>{file.name}</Text> },
-    { key: 'size', title: t('Size'), width: 90, align: 'right' as const, render: (file: any) => <Text size="xs" c="dimmed">{formatSize(file.size)}</Text> },
-  ];
+  const handleSaveFile = async (filename: string, content: string) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const formData = new FormData();
+    formData.append('filename', filename);
+    formData.append('file', blob, filename);
+    formData.append('type', 'additional_file');
+    formData.append('operation', 'upload_file');
+    const res = await fetch(`/p/${pid}/files`, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: formData,
+    });
+    const contentType = res.headers.get('content-type') || '';
+    const data = contentType.includes('json') ? await res.json() : {};
+    if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Save failed')));
+    navigate(window.location.href);
+  };
+
+  const fileUrl = previewFile ? `/p/${pid}/file/${encodeURIComponent(previewFile.name)}?type=additional_file` : '';
+
+  const FileList = ({ files: fileList }: { files: any[] }) => (
+    fileList.length ? (
+      <Stack gap={0}>
+        {fileList.map((file: any) => (
+          <Group key={file.name} justify="space-between" py="xs" px="sm" className="rounded-md hover:bg-[var(--hydro-surface)]">
+            <a
+              href={fileUrl}
+              onClick={(e) => { e.preventDefault(); setPreviewFile(file); }}
+              className="hydro-subtle-link min-w-0 truncate text-sm font-semibold"
+            >
+              {file.name}
+            </a>
+            <Text size="xs" c="dimmed" className="shrink-0">{formatSize(file.size)}</Text>
+          </Group>
+        ))}
+      </Stack>
+    ) : <Text c="dimmed" size="sm">{t('No files')}</Text>
+  );
 
   return (
     <Stack gap="lg">
@@ -313,16 +350,29 @@ export default function ProblemEditPage() {
 
           {!isNew && (
             <Card withBorder p="lg" className="hydro-content-card">
-              <Title order={3} size="h4" mb="md">{t('Additional Files')}</Title>
-              <DataTable
-                columns={fileColumns}
-                data={additionalFiles.map((file: any) => ({ ...file, _id: file.name }))}
-                emptyMessage={t('No files')}
+              <Group justify="space-between" mb="md">
+                <Title order={3} size="h4">{t('Additional Files')}</Title>
+                <Badge variant="light">{additionalFiles.length} {t('files')}</Badge>
+              </Group>
+              <FileList files={additionalFiles} />
+              <FileDropzone
+                action={`/p/${pid}/files`}
+                fields={{ type: 'additional_file' }}
+                onComplete={() => navigate(window.location.href)}
               />
             </Card>
           )}
         </Stack>
       </div>
+
+      <FilePreviewModal
+        opened={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+        file={previewFile}
+        fileUrl={fileUrl}
+        canEdit
+        onSave={handleSaveFile}
+      />
     </Stack>
   );
 }

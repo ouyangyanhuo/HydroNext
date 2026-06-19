@@ -2,7 +2,8 @@ import yaml from 'js-yaml';
 import { Badge, Button, Card, Checkbox, Group, MultiSelect, NumberInput, Select, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import { CodeEditor } from '@/components/editor/code-editor';
-import { DataTable } from '@/components/common/data-table';
+import { FileDropzone } from '@/components/common/file-dropzone';
+import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -90,6 +91,8 @@ export default function ProblemConfigPage() {
   const [config, setConfig] = useState(toText(args.config || pdoc.config || {}));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [previewFile, setPreviewFile] = useState<{ name: string; size: number } | null>(null);
+  const pid = pdoc.pid || pdoc.docId;
   const parsed = useMemo(() => parseConfig(config), [config]);
   const files = useMemo(() => fileOptions(testdata), [testdata]);
   const languages = useMemo(() => getLanguageOptions(), []);
@@ -196,20 +199,25 @@ export default function ProblemConfigPage() {
     }
   };
 
-  const columns = [
-    {
-      key: 'name',
-      title: t('Filename'),
-      render: (file: any) => <Text size="sm" fw={600}>{file.name}</Text>,
-    },
-    {
-      key: 'size',
-      title: t('Size'),
-      width: 100,
-      align: 'right' as const,
-      render: (file: any) => <Text size="xs" c="dimmed">{formatSize(file.size)}</Text>,
-    },
-  ];
+  const handleSaveFile = async (filename: string, content: string) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const formData = new FormData();
+    formData.append('filename', filename);
+    formData.append('file', blob, filename);
+    formData.append('type', 'testdata');
+    formData.append('operation', 'upload_file');
+    const res = await fetch(`/p/${pid}/files`, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: formData,
+    });
+    const contentType = res.headers.get('content-type') || '';
+    const data = contentType.includes('json') ? await res.json() : {};
+    if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Save failed')));
+    navigate(window.location.href);
+  };
+
+  const fileUrl = previewFile ? `/p/${pid}/file/${encodeURIComponent(previewFile.name)}?type=testdata` : '';
 
   return (
     <Stack gap="lg">
@@ -498,14 +506,42 @@ export default function ProblemConfigPage() {
 
         <Stack gap="lg" className="w-full shrink-0 lg:w-80">
           <Card withBorder p="lg" className="hydro-content-card">
-            <Title order={3} size="h4" mb="md">{testdata.length} {t('Testdata')}</Title>
-            <DataTable
-              columns={columns}
-              data={testdata.map((file: any) => ({ ...file, _id: file.name }))}
-              emptyMessage={t('No files')}
+            <Group justify="space-between" mb="md">
+              <Title order={3} size="h4">{t('Testdata')}</Title>
+              <Badge variant="light">{testdata.length} {t('files')}</Badge>
+            </Group>
+            {testdata.length ? (
+              <Stack gap={0}>
+                {testdata.map((file: any) => (
+                  <Group key={file.name} justify="space-between" py="xs" px="sm" className="rounded-md hover:bg-[var(--hydro-surface)]">
+                    <a
+                      href={fileUrl}
+                      onClick={(e) => { e.preventDefault(); setPreviewFile(file); }}
+                      className="hydro-subtle-link min-w-0 truncate text-sm font-semibold"
+                    >
+                      {file.name}
+                    </a>
+                    <Text size="xs" c="dimmed" className="shrink-0">{formatSize(file.size)}</Text>
+                  </Group>
+                ))}
+              </Stack>
+            ) : <Text c="dimmed" size="sm">{t('No files')}</Text>}
+            <FileDropzone
+              action={`/p/${pid}/files`}
+              fields={{ type: 'testdata' }}
+              onComplete={() => navigate(window.location.href)}
             />
           </Card>
         </Stack>
+
+        <FilePreviewModal
+          opened={!!previewFile}
+          onClose={() => setPreviewFile(null)}
+          file={previewFile}
+          fileUrl={fileUrl}
+          canEdit
+          onSave={handleSaveFile}
+        />
       </div>
     </Stack>
   );
