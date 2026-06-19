@@ -1,5 +1,5 @@
 import { formatErrorMessage } from '@/utils/error';
-import { Badge, Button, Card, Group, NumberInput, Paper, Popover, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Button, Card, Group, NumberInput, Paper, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { useRef, useState } from 'react';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { DataTable } from '@/components/common/data-table';
@@ -244,7 +244,7 @@ export default function ProblemEditPage() {
         </Paper>
 
         <Stack gap="lg" className="w-full shrink-0 lg:w-80">
-          <Card withBorder p="lg" className="hydro-content-card">
+          <Card withBorder p="lg" className="hydro-content-card !overflow-visible">
             <Title order={3} size="h4" mb="xs">{t('Categories')}</Title>
             <Text size="xs" c="dimmed" mb="md">{t('click to add')}</Text>
             {categories.length ? (
@@ -253,42 +253,31 @@ export default function ProblemEditPage() {
                   const hasChildren = children.length > 0;
                   const selected = selectedTags.has(category) || children.some((tag) => selectedTags.has(tag));
                   return (
-                    <Popover
+                    <div
                       key={category}
-                      opened={showCategory === category && hasChildren}
-                      position="left-start"
-                      offset={8}
-                      shadow="lg"
-                      withinPortal
-                      zIndex={1000}
+                      className="relative"
+                      onMouseEnter={() => {
+                        if (hoverTimer.current) {
+                          clearTimeout(hoverTimer.current);
+                          hoverTimer.current = null;
+                        }
+                        setShowCategory(category);
+                      }}
+                      onMouseLeave={() => { hoverTimer.current = setTimeout(() => setShowCategory(null), 200); }}
                     >
-                      <Popover.Target>
-                        <div
-                          className="relative"
-                          onMouseEnter={() => {
-                            if (hoverTimer.current) {
-                              clearTimeout(hoverTimer.current);
-                              hoverTimer.current = null;
-                            }
-                            setShowCategory(category);
-                          }}
-                          onMouseLeave={() => { hoverTimer.current = setTimeout(() => setShowCategory(null), 200); }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => toggleTag(category)}
-                            className={`w-full rounded-md border px-2 py-1.5 text-left text-sm font-bold transition-colors ${selected ? 'border-[var(--hydro-primary)] bg-[var(--hydro-primary-soft)] text-[var(--hydro-primary)]' : 'border-transparent hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]'}`}
-                          >
-                            <Group justify="space-between" gap="xs" wrap="nowrap">
-                              <Text size="sm" fw={700} truncate>{category}</Text>
-                              {hasChildren && <Text size="xs" c="dimmed">›</Text>}
-                            </Group>
-                          </button>
-                        </div>
-                      </Popover.Target>
+                      <button
+                        type="button"
+                        onClick={() => toggleTag(category)}
+                        className={`w-full rounded-md border px-2 py-1.5 text-left text-sm font-bold transition-colors ${selected ? 'border-[var(--hydro-primary)] bg-[var(--hydro-primary-soft)] text-[var(--hydro-primary)]' : 'border-transparent hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]'}`}
+                      >
+                        <Group justify="space-between" gap="xs" wrap="nowrap">
+                          <Text size="sm" fw={700} truncate>{category}</Text>
+                          {hasChildren && <Text size="xs" c="dimmed">›</Text>}
+                        </Group>
+                      </button>
                       {hasChildren && (
-                        <Popover.Dropdown
-                          className="w-[320px] border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]"
+                        <div
+                          className={`absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3 shadow-[var(--hydro-shadow-lg)] transition-opacity ${showCategory === category ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
                           onMouseEnter={() => {
                             if (hoverTimer.current) {
                               clearTimeout(hoverTimer.current);
@@ -298,7 +287,7 @@ export default function ProblemEditPage() {
                           onMouseLeave={() => { hoverTimer.current = setTimeout(() => setShowCategory(null), 200); }}
                         >
                           <Text size="xs" fw={800} c="dimmed" mb="xs">{category}</Text>
-                          <Group gap={6}>
+                          <div className="flex flex-wrap gap-1.5 max-h-[60vh] overflow-y-auto">
                             {children.map((tag) => (
                               <Badge
                                 key={tag}
@@ -310,10 +299,10 @@ export default function ProblemEditPage() {
                                 {tag}
                               </Badge>
                             ))}
-                          </Group>
-                        </Popover.Dropdown>
+                          </div>
+                        </div>
                       )}
-                    </Popover>
+                    </div>
                   );
                 })}
               </div>

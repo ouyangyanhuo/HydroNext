@@ -30,7 +30,7 @@ function UserMenu() {
         <Menu.Item component={Link} to="user_detail" params={{ uid: user._id }}>
           {t('My Profile')}
         </Menu.Item>
-        <Menu.Item component={Link} to="home_settings">
+        <Menu.Item component={Link} to="home_settings" params={{ category: 'preference' }}>
           {t('Settings')}
         </Menu.Item>
         <Menu.Item component={Link} to="home_security">

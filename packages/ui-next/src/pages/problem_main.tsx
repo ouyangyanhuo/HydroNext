@@ -104,7 +104,7 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
                       onMouseLeave={() => { hoverTimer.current = setTimeout(() => setShowPopup(null), 200); }}
                     >
                       <Text size="xs" fw={800} c="dimmed" mb="xs">{category}</Text>
-                      <Group gap={6}>
+                      <div className="flex flex-wrap gap-1.5 max-h-[60vh] overflow-y-auto">
                         {children.map((tag) => (
                           <Link
                             key={tag}
@@ -116,7 +116,7 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
                             </Badge>
                           </Link>
                         ))}
-                      </Group>
+                      </div>
                     </div>
                   )}
                 </div>

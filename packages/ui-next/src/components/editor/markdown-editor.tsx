@@ -20,6 +20,7 @@ export function MarkdownEditor({
 }: MarkdownEditorProps) {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<string | null>('write');
+  const panelHeight = Math.max(minRows * 24, 160);
 
   return (
     <Tabs value={activeTab} onChange={setActiveTab}>
@@ -34,9 +35,9 @@ export function MarkdownEditor({
           onChange={(e) => onChange?.(e.currentTarget.value)}
           readOnly={readOnly}
           minRows={minRows}
-          autosize
+          maxRows={minRows + 8}
           placeholder={placeholder || t('Write your content in Markdown...')}
-          styles={{ input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '14px' } }}
+          styles={{ input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '14px', minHeight: panelHeight, maxHeight: panelHeight, overflowY: 'auto' } }}
         />
       </Tabs.Panel>
 
@@ -45,7 +46,7 @@ export function MarkdownEditor({
           p="md"
           withBorder
           className="overflow-auto"
-          style={{ minHeight: Math.max(minRows * 24, 160), maxHeight: 560 }}
+          style={{ minHeight: panelHeight, maxHeight: panelHeight }}
         >
           {value ? (
             <MarkdownRenderer content={value} />
