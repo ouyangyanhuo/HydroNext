@@ -396,3 +396,24 @@ Write Your Solution: 編寫你的題解
 No solutions so far...: 暫無題解...
 View all {0} solutions: 查看全部 {0} 篇題解
 No categories: 暫無分類
+Permissions data is incomplete: 權限資料不完整
+React to discussion: 對討論做出反應
+Read all record codes: 查看所有評測程式碼
+"View other's records": 查看他人的評測記錄
+Submit problem: 提交題目
+Read data of problem: 讀取題目資料
+Join Settings: 加入設定
+User Management: 使用者管理
+Role Management: 角色管理
+Save Role Changes: 儲存角色修改
+Group Name: 使用者組名稱
+Remove Selected Group: 移除選取的使用者組
+Search users by username or UID: 透過使用者名稱或 UID 搜尋使用者
+Type to search users: 輸入使用者名稱或 UID 搜尋使用者
+User search failed: 使用者搜尋失敗
+No users found: 未找到使用者
+Selected Users: 已選使用者
+No users selected: 尚未選擇使用者
+Select: 選擇
+Selected: 已選擇
+Remove: 移除

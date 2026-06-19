@@ -1,7 +1,7 @@
 import { formatErrorMessage } from '@/utils/error';
-import { Badge, Button, Checkbox, Group, Paper, ScrollArea, Select, Stack, Table, Text } from '@mantine/core';
-import { useMemo, useState } from 'react';
-import { FormDialog } from '@/components/common/form-dialog';
+import { getAvatarUrl } from '@/utils/avatar';
+import { Avatar, Badge, Button, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Select, Stack, Table, Text, TextInput } from '@mantine/core';
+import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { Link } from '@/components/link';
@@ -11,9 +11,15 @@ import { useSessionStore } from '@/stores/session';
 
 function normalizeRoles(input: any) {
   if (Array.isArray(input)) return input;
+  if (input instanceof Map) {
+    return Array.from(input.entries()).map(([id, role]: [string, any]) => ({
+      _id: id,
+      ...(typeof role === 'object' && role ? role : { perm: role }),
+    }));
+  }
   return Object.entries(input || {}).map(([id, role]: [string, any]) => ({
     _id: id,
-    ...(typeof role === 'object' ? role : { perm: role }),
+    ...(typeof role === 'object' && role ? role : { perm: role }),
   }));
 }
 
@@ -21,7 +27,8 @@ function flattenUsers(args: any, roles: any[]) {
   if (args.rudocs) {
     const result: any[] = [];
     for (const role of roles) {
-      for (const udoc of args.rudocs[role._id] || []) {
+      const roleUsers = args.rudocs instanceof Map ? args.rudocs.get(role._id) : args.rudocs[role._id];
+      for (const udoc of roleUsers || []) {
         result.push({ ...udoc, role: udoc.role || role._id });
       }
     }
@@ -36,15 +43,206 @@ function flattenUsers(args: any, roles: any[]) {
   }));
 }
 
+interface UserSearchItem {
+  _id: number;
+  uname: string;
+  displayName?: string;
+  avatar?: string;
+  avatarUrl?: string;
+}
+
+function formatUserLabel(user: UserSearchItem) {
+  return user.displayName ? `${user.uname} (${user.displayName})` : user.uname;
+}
+
+function AddUserDialog({
+  opened,
+  onClose,
+  roleOptions,
+  defaultRole,
+  domainId,
+  loading,
+  onSubmit,
+  error,
+}: {
+  opened: boolean;
+  onClose: () => void;
+  roleOptions: { value: string, label: string }[];
+  defaultRole: string;
+  domainId: string;
+  loading: boolean;
+  onSubmit: (uids: number[], role: string) => void | Promise<void>;
+  error?: string;
+}) {
+  const { t } = useI18n();
+  const [query, setQuery] = useState('');
+  const [role, setRole] = useState(defaultRole);
+  const [results, setResults] = useState<UserSearchItem[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<UserSearchItem[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
+
+  useEffect(() => {
+    if (!opened) return;
+    setQuery('');
+    setResults([]);
+    setSelectedUsers([]);
+    setSearchError('');
+    setRole(defaultRole);
+  }, [opened, defaultRole]);
+
+  useEffect(() => {
+    if (!opened) return undefined;
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setResults([]);
+      setSearchError('');
+      setSearching(false);
+      return undefined;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setSearching(true);
+      setSearchError('');
+      try {
+        const res = await fetch(`/d/${encodeURIComponent(domainId)}/api/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            args: { search: trimmed, limit: 10 },
+            projection: ['_id', 'uname', 'displayName', 'avatar', 'avatarUrl'],
+          }),
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          setSearchError(formatErrorMessage(data.error, t('User search failed')));
+          setResults([]);
+        } else {
+          const users = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+          setResults(users.filter((user: any) => Number.isSafeInteger(Number(user._id))));
+        }
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          setSearchError(err?.message || t('User search failed'));
+          setResults([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) setSearching(false);
+      }
+    }, 220);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [domainId, opened, query, t]);
+
+  const selectedIds = new Set(selectedUsers.map((user) => user._id));
+  const addUser = (user: UserSearchItem) => {
+    if (selectedIds.has(user._id)) return;
+    setSelectedUsers((prev) => [...prev, user]);
+  };
+  const removeUser = (uid: number) => setSelectedUsers((prev) => prev.filter((user) => user._id !== uid));
+
+  return (
+    <Modal opened={opened} onClose={onClose} title={t('Add User')} size="lg">
+      <Stack gap="md">
+        {error && <Text c="red" size="sm">{error}</Text>}
+        <TextInput
+          label={t('Search users by username or UID')}
+          placeholder={t('Type to search users')}
+          value={query}
+          onChange={(e) => setQuery(e.currentTarget.value)}
+          rightSection={searching ? <Loader size={16} /> : null}
+          autoFocus
+        />
+        {searchError && <Text c="red" size="sm">{searchError}</Text>}
+        <Paper withBorder p={0}>
+          <ScrollArea.Autosize mah={220}>
+            <Stack gap={0}>
+              {!query.trim() && <Text c="dimmed" size="sm" p="md">{t('Type to search users')}</Text>}
+              {query.trim() && !searching && !results.length && !searchError && (
+                <Text c="dimmed" size="sm" p="md">{t('No users found')}</Text>
+              )}
+              {results.map((user) => {
+                const added = selectedIds.has(user._id);
+                return (
+                  <Group
+                    key={user._id}
+                    justify="space-between"
+                    wrap="nowrap"
+                    p="sm"
+                    className="border-b border-[var(--hydro-border)] last:border-b-0"
+                  >
+                    <Group gap="sm" wrap="nowrap" miw={0}>
+                      <Avatar src={user.avatarUrl || getAvatarUrl(user.avatar || '', 32)} size="sm" radius="xl">
+                        {user.uname?.[0]?.toUpperCase()}
+                      </Avatar>
+                      <div className="min-w-0">
+                        <Text size="sm" fw={500} truncate>{formatUserLabel(user)}</Text>
+                        <Text size="xs" c="dimmed">UID = {user._id}</Text>
+                      </div>
+                    </Group>
+                    <Button size="compact-xs" variant={added ? 'default' : 'light'} disabled={added} onClick={() => addUser(user)}>
+                      {added ? t('Selected') : t('Select')}
+                    </Button>
+                  </Group>
+                );
+              })}
+            </Stack>
+          </ScrollArea.Autosize>
+        </Paper>
+        <Stack gap="xs">
+          <Text size="sm" fw={600}>{t('Selected Users')}</Text>
+          {selectedUsers.length ? (
+            <Group gap="xs">
+              {selectedUsers.map((user) => (
+                <Badge key={user._id} variant="light" size="lg" rightSection={(
+                  <button
+                    type="button"
+                    className="ml-1 text-xs"
+                    onClick={() => removeUser(user._id)}
+                    aria-label={t('Remove')}
+                  >
+                    x
+                  </button>
+                )}>
+                  {formatUserLabel(user)} #{user._id}
+                </Badge>
+              ))}
+            </Group>
+          ) : (
+            <Text c="dimmed" size="sm">{t('No users selected')}</Text>
+          )}
+        </Stack>
+        <Select
+          label={t('Role')}
+          data={roleOptions}
+          value={role}
+          onChange={(value) => setRole(value || defaultRole)}
+          required
+        />
+        <Group justify="flex-end">
+          <Button variant="default" onClick={onClose}>{t('Cancel')}</Button>
+          <Button loading={loading} disabled={!selectedUsers.length} onClick={() => onSubmit(selectedUsers.map((user) => user._id), role)}>
+            {t('Add User')}
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
+  );
+}
+
 export default function DomainUserPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const currentUser = useSessionStore((s) => s.user);
+  const domainId = useSessionStore((s) => s.ui.domainId);
   const roles = useMemo(() => normalizeRoles(args.roles), [args.roles]);
   const users = useMemo(() => flattenUsers(args, roles), [args, roles]);
-  const roleOptions = roles
+  const roleOptions = useMemo(() => roles
     .filter((role: any) => role._id !== 'guest')
-    .map((role: any) => ({ value: role._id, label: role._id }));
+    .map((role: any) => ({ value: role._id, label: role._id })), [roles]);
   const [selected, setSelected] = useState<number[]>([]);
   const [roleDraft, setRoleDraft] = useState<Record<number, string>>(() => Object.fromEntries(users.map((user: any) => [user._id, user.role || 'default'])));
   const [bulkRole, setBulkRole] = useState(roleOptions[0]?.value || 'default');
@@ -52,6 +250,19 @@ export default function DomainUserPage() {
   const [loading, setLoading] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    setRoleDraft((prev) => Object.fromEntries(users.map((user: any) => [
+      user._id,
+      prev[user._id] || user.role || 'default',
+    ])));
+  }, [users]);
+
+  useEffect(() => {
+    if (!roleOptions.some((option) => option.value === bulkRole)) {
+      setBulkRole(roleOptions[0]?.value || 'default');
+    }
+  }, [bulkRole, roleOptions]);
 
   const selectableUsers = users.filter((user: any) => user._id !== currentUser?._id);
   const allSelected = selectableUsers.length > 0 && selectableUsers.every((user: any) => selected.includes(user._id));
@@ -100,16 +311,12 @@ export default function DomainUserPage() {
     else setSuccess(t('No changes'));
   };
 
-  const addUsers = async (values: Record<string, any>) => {
-    const uids = String(values.uids || '')
-      .split(/[\s,]+/)
-      .map((item) => Number(item))
-      .filter((item) => Number.isSafeInteger(item) && item > 0);
+  const addUsers = async (uids: number[], role: string) => {
     if (!uids.length) {
       setError(t('User ID is required'));
       return;
     }
-    await post({ operation: 'set_users', uids, role: values.role || 'default', join: true }, t('Added'));
+    await post({ operation: 'set_users', uids, role: role || 'default', join: true }, t('Added'));
   };
 
   return (
@@ -211,17 +418,13 @@ export default function DomainUserPage() {
           </Group>
         </Group>
       </Paper>
-      <FormDialog
+      <AddUserDialog
         opened={dialogOpen}
-        title={t('Add User')}
-        fields={[
-          { name: 'uids', label: t('User ID'), type: 'textarea', required: true, placeholder: '2, 3, 4' },
-          { name: 'role', label: t('Role'), type: 'select', data: roleOptions, defaultValue: roleOptions[0]?.value || 'default', required: true },
-        ]}
         onClose={() => setDialogOpen(false)}
+        roleOptions={roleOptions}
+        defaultRole={roleOptions[0]?.value || 'default'}
+        domainId={args.domain?._id || domainId || 'system'}
         onSubmit={addUsers}
-        confirmLabel={t('Add User')}
-        cancelLabel={t('Cancel')}
         loading={loading === 'set_users'}
         error={error}
       />

@@ -397,3 +397,24 @@ Write Your Solution: 解説を書く
 No solutions so far...: まだ解説がありません...
 View all {0} solutions: すべての{0}件の解説を表示
 No categories: カテゴリなし
+Permissions data is incomplete: 権限データが不完全です
+React to discussion: ディスカッションに反応
+Read all record codes: すべての提出コードを閲覧
+"View other's records": 他人の提出記録を閲覧
+Submit problem: 問題を提出
+Read data of problem: 問題データを閲覧
+Join Settings: 参加設定
+User Management: ユーザー管理
+Role Management: ロール管理
+Save Role Changes: ロール変更を保存
+Group Name: グループ名
+Remove Selected Group: 選択したグループを削除
+Search users by username or UID: ユーザー名または UID でユーザーを検索
+Type to search users: ユーザー名または UID を入力して検索
+User search failed: ユーザー検索に失敗しました
+No users found: ユーザーが見つかりません
+Selected Users: 選択したユーザー
+No users selected: ユーザーが選択されていません
+Select: 選択
+Selected: 選択済み
+Remove: 削除

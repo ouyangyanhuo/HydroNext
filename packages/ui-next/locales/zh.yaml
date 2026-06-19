@@ -400,6 +400,27 @@ No problems found: 暂无题目
 No clarifications: 暂无提问
 No solutions: 暂无题解
 No categories: 暂无分类
+Permissions data is incomplete: 权限数据不完整
+React to discussion: 对讨论做出反应
+Read all record codes: 查看所有评测代码
+"View other's records": 查看他人的评测记录
+Submit problem: 提交题目
+Read data of problem: 读取题目数据
+Join Settings: 加入设置
+User Management: 用户管理
+Role Management: 角色管理
+Save Role Changes: 保存角色修改
+Group Name: 用户组名称
+Remove Selected Group: 移除选中用户组
+Search users by username or UID: 通过用户名或 UID 搜索用户
+Type to search users: 输入用户名或 UID 搜索用户
+User search failed: 用户搜索失败
+No users found: 未找到用户
+Selected Users: 已选用户
+No users selected: 尚未选择用户
+Select: 选择
+Selected: 已选择
+Remove: 移除
 
 # Auth links
 Account: 账户
