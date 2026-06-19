@@ -1,4 +1,5 @@
-import { Badge, Code, Divider, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { Badge, Card, Code, Group, Stack, Text, Title } from '@mantine/core';
+import type { ReactNode } from 'react';
 import { Link } from '@/components/link';
 import { CodeReplay } from '@/components/record/code-replay';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -10,9 +11,9 @@ import { useRecordSocket } from '@/hooks/use-record-socket';
 
 function CaseResult({ c, index }: { c: any, index: number }) {
   return (
-    <Group justify="space-between" p="xs" className="border-b border-[var(--hydro-border)] last:border-b-0">
+    <Group justify="space-between" p="sm" className="border-b border-[var(--hydro-border)] last:border-b-0">
       <Group gap="sm">
-        <Text size="xs" fw={500}>#{index + 1}</Text>
+        <Text size="xs" fw={700} c="dimmed">#{index + 1}</Text>
         <RecordStatusBadge status={c.status} size="xs" />
       </Group>
       <Group gap="md">
@@ -24,6 +25,37 @@ function CaseResult({ c, index }: { c: any, index: number }) {
         )}
       </Group>
     </Group>
+  );
+}
+
+function Metric({ label, value }: { label: string, value: string | number }) {
+  return (
+    <div className="min-w-24 rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-tint)] px-3 py-2">
+      <Text size="xs" c="dimmed" fw={700} tt="uppercase">{label}</Text>
+      <Text size="sm" fw={700} className="truncate text-[var(--hydro-text)]">{value}</Text>
+    </div>
+  );
+}
+
+function InfoRow({ label, children }: { label: string, children: ReactNode }) {
+  return (
+    <Group justify="space-between" align="flex-start" gap="md" className="border-b border-[var(--hydro-border)] py-2 last:border-b-0">
+      <Text size="xs" c="dimmed" fw={700} tt="uppercase">{label}</Text>
+      <div className="min-w-0 text-right">{children}</div>
+    </Group>
+  );
+}
+
+function OutputBlock({ title, content }: { title: string, content: string }) {
+  return (
+    <Card withBorder p="lg" className="hydro-content-card">
+      <Stack gap="sm">
+        <Text size="sm" fw={700}>{title}</Text>
+        <div className="overflow-x-auto rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-bg-soft)]">
+          <Code block className="min-w-max bg-transparent p-3">{content}</Code>
+        </div>
+      </Stack>
+    </Card>
   );
 }
 
@@ -41,113 +73,115 @@ export default function RecordDetailPage() {
 
   const cases = rdoc.cases || rdoc.judge?.subtasks || [];
   const isJudging = rdoc.status === STATUS.STATUS_JUDGING || rdoc.status === STATUS.STATUS_COMPILING || rdoc.status === STATUS.STATUS_FETCHED;
+  const recordId = String(rdoc._id || '').slice(-6);
+  const scoreColor = rdoc.score === 100 ? 'green' : rdoc.score ? 'yellow' : 'gray';
 
   return (
     <Stack gap="lg">
-      <Title order={2}>
-        {t('Record')} #{String(rdoc._id).slice(-6)}
-      </Title>
-
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="flex-1 min-w-0">
-          <Paper withBorder p="lg">
-            <Group justify="space-between" mb="md">
-              <Group gap="sm">
-                <RecordStatusBadge status={rdoc.status} />
-                {rdoc.score != null && (
-                  <Badge variant="light" color={rdoc.score === 100 ? 'green' : 'yellow'}>
-                    {rdoc.score}
-                  </Badge>
-                )}
-              </Group>
-              <Group gap="md">
-                {rdoc.time != null && (
-                  <Text size="sm" c="dimmed">{rdoc.time}ms</Text>
-                )}
-                {rdoc.memory != null && (
-                  <Text size="sm" c="dimmed">{Math.round(rdoc.memory / 1024)}MB</Text>
-                )}
-              </Group>
-            </Group>
-
-            {isJudging && (
-              <Text c="blue" size="sm" mb="md">
-                {t('Judging...')}
-              </Text>
+      <Card withBorder p="xl" className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]">
+        <Badge variant="light" color="hydroTeal" mb="sm">
+          {t('Record')}
+        </Badge>
+        <Group justify="space-between" align="flex-start" gap="lg" wrap="wrap">
+          <div className="min-w-0">
+            <Title order={1} className="text-3xl leading-tight text-[var(--hydro-text)] md:text-4xl">
+              #{recordId || '-'}
+            </Title>
+            <Text size="sm" c="dimmed" mt="xs" className="truncate">
+              {pdoc.pid || pdoc.docId ? `${pdoc.pid || pdoc.docId}. ${pdoc.title || ''}` : t('Submission detail')}
+            </Text>
+          </div>
+          <Group gap="sm">
+            <RecordStatusBadge status={rdoc.status} size="lg" />
+            {rdoc.score != null && (
+              <Badge variant="light" color={scoreColor} size="lg">
+                {rdoc.score}
+              </Badge>
             )}
+          </Group>
+        </Group>
+        <Group gap="sm" mt="lg" wrap="wrap">
+          {rdoc.time != null && <Metric label={t('Time')} value={`${rdoc.time}ms`} />}
+          {rdoc.memory != null && <Metric label={t('Memory')} value={`${Math.round(rdoc.memory / 1024)}MB`} />}
+          {rdoc.lang && <Metric label={t('Language')} value={rdoc.lang} />}
+        </Group>
+        {isJudging && (
+          <Text c="blue" size="sm" mt="md" fw={600}>
+            {t('Judging...')}
+          </Text>
+        )}
+      </Card>
 
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="min-w-0 flex-1">
+          <Stack gap="md">
             {cases.length > 0 && (
-              <>
-                <Text size="sm" fw={500} mb="xs">{t('Test Cases')}</Text>
-                <Paper withBorder>
+              <Card withBorder p={0} className="hydro-content-card overflow-hidden">
+                <Group justify="space-between" p="lg">
+                  <Text size="sm" fw={700}>{t('Test Cases')}</Text>
+                  <Badge variant="light">{cases.length}</Badge>
+                </Group>
+                <div className="border-t border-[var(--hydro-border)]">
                   {cases.map((c: any, i: number) => (
                     <CaseResult key={i} c={c} index={i} />
                   ))}
-                </Paper>
-              </>
+                </div>
+              </Card>
             )}
 
             {rdoc.compilerText && (
-              <>
-                <Divider my="md" />
-                <Text size="sm" fw={500} mb="xs">{t('Compiler Output')}</Text>
-                <Code block>{rdoc.compilerText}</Code>
-              </>
+              <OutputBlock title={t('Compiler Output')} content={rdoc.compilerText} />
             )}
 
             {rdoc.judgeText && (
-              <>
-                <Divider my="md" />
-                <Text size="sm" fw={500} mb="xs">{t('Judge Message')}</Text>
-                <Code block>{rdoc.judgeText}</Code>
-              </>
+              <OutputBlock title={t('Judge Message')} content={rdoc.judgeText} />
             )}
-          </Paper>
 
-          {rdoc.code && (
-            <Paper withBorder p="lg" mt="md">
-              <Text size="sm" fw={500} mb="xs">{t('Source Code')}</Text>
-              <Code block>{rdoc.code}</Code>
-            </Paper>
-          )}
+            {rdoc.code && (
+              <Card withBorder p="lg" className="hydro-content-card">
+                <Stack gap="sm">
+                  <Text size="sm" fw={700}>{t('Source Code')}</Text>
+                  <div className="overflow-x-auto rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-bg-soft)]">
+                    <Code block className="min-w-max bg-transparent p-3">{rdoc.code}</Code>
+                  </div>
+                </Stack>
+              </Card>
+            )}
 
-          {rdoc.replay && rdoc.replay.length > 0 && (
-            <Paper withBorder p="lg" mt="md">
-              <Text size="sm" fw={500} mb="xs">{t('Code Replay')}</Text>
-              <CodeReplay events={rdoc.replay} initialCode="" language={rdoc.lang} />
-            </Paper>
-          )}
+            {rdoc.replay && rdoc.replay.length > 0 && (
+              <Card withBorder p="lg" className="hydro-content-card">
+                <Stack gap="sm">
+                  <Text size="sm" fw={700}>{t('Code Replay')}</Text>
+                  <CodeReplay events={rdoc.replay} initialCode="" language={rdoc.lang} />
+                </Stack>
+              </Card>
+            )}
+          </Stack>
         </div>
 
-        <div className="w-full lg:w-64 shrink-0">
-          <Stack gap="md">
-            <Paper withBorder p="md">
-              <Stack gap="xs">
-                <Group justify="space-between">
-                  <Text size="xs" c="dimmed">{t('User')}</Text>
-                  <UserLink user={udoc} size="xs" />
-                </Group>
-                <Group justify="space-between">
-                  <Text size="xs" c="dimmed">{t('Problem')}</Text>
-                  <Link to="problem_detail" params={{ pid: pdoc.pid || pdoc.docId }} className="text-xs no-underline hover:underline">
-                    {pdoc.pid}. {pdoc.title}
+        <div className="w-full shrink-0 lg:w-72">
+          <Card withBorder p="md" className="hydro-panel">
+            <Stack gap={0}>
+              <InfoRow label={t('User')}>
+                <UserLink user={udoc} size="xs" />
+              </InfoRow>
+              <InfoRow label={t('Problem')}>
+                <Link to="problem_detail" params={{ pid: pdoc.pid || pdoc.docId }} className="block max-w-40 truncate text-xs no-underline hover:underline">
+                  {pdoc.pid || pdoc.docId}. {pdoc.title}
+                </Link>
+              </InfoRow>
+              <InfoRow label={t('Language')}>
+                <Text size="xs">{rdoc.lang || '-'}</Text>
+              </InfoRow>
+              {tdoc && (
+                <InfoRow label={t('Contest')}>
+                  <Link to="contest_detail" params={{ tid: tdoc._id }} className="block max-w-40 truncate text-xs no-underline hover:underline">
+                    {tdoc.title}
                   </Link>
-                </Group>
-                <Group justify="space-between">
-                  <Text size="xs" c="dimmed">{t('Language')}</Text>
-                  <Text size="xs">{rdoc.lang || '-'}</Text>
-                </Group>
-                {tdoc && (
-                  <Group justify="space-between">
-                    <Text size="xs" c="dimmed">{t('Contest')}</Text>
-                    <Link to="contest_detail" params={{ tid: tdoc._id }} className="text-xs no-underline hover:underline">
-                      {tdoc.title}
-                    </Link>
-                  </Group>
-                )}
-              </Stack>
-            </Paper>
-          </Stack>
+                </InfoRow>
+              )}
+            </Stack>
+          </Card>
         </div>
       </div>
     </Stack>

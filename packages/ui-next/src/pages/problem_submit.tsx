@@ -1,5 +1,5 @@
 import { formatErrorMessage } from '@/utils/error';
-import { Button, Group, Paper, Select, Stack, Text, Title } from '@mantine/core';
+import { Badge, Button, Card, Group, Select, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';
@@ -61,14 +61,20 @@ export default function ProblemSubmitPage() {
 
   return (
     <Stack gap="lg">
-      <Title order={2}>
-        {t('Submit')} - {pdoc.pid}. {pdoc.title}
-      </Title>
+      <Card withBorder p="xl" className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]">
+        <Badge variant="light" color="hydroTeal" mb="sm">
+          {t('Submit')}
+        </Badge>
+        <Title order={1} className="text-3xl leading-tight text-[var(--hydro-text)] md:text-4xl">
+          <span className="text-[var(--hydro-primary)]">{pdoc.pid || pdoc.docId}</span>
+          {' '}
+          {pdoc.title}
+        </Title>
+      </Card>
 
-      {error && <Text c="red" size="sm">{error}</Text>}
-
-      <Paper withBorder p="lg">
+      <Card withBorder p="lg" className="hydro-content-card">
         <Stack gap="md">
+          {error && <Text c="red" size="sm">{error}</Text>}
           <Select
             label={t('Language')}
             data={langOptions}
@@ -91,7 +97,7 @@ export default function ProblemSubmitPage() {
             </Button>
           </Group>
         </Stack>
-      </Paper>
+      </Card>
     </Stack>
   );
 }

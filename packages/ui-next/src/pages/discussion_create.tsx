@@ -1,5 +1,5 @@
 import { formatErrorMessage } from '@/utils/error';
-import { Button, Group, Paper, Select, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Button, Card, Group, Select, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
@@ -28,15 +28,15 @@ export default function DiscussionCreatePage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Create Discussion')} />
-      {error && <Text c="red" size="sm">{error}</Text>}
-      <Paper withBorder p="lg">
+      <Card withBorder p="lg" className="hydro-content-card">
         <Stack gap="md">
+          {error && <Text c="red" size="sm">{error}</Text>}
           <TextInput label={t('Title')} value={form.title} onChange={(e) => setForm({ ...form, title: e.currentTarget.value })} required />
           <Select label={t('Node')} data={nodes.map((n: any) => ({ value: n._id || n.name, label: n.name }))} value={form.node} onChange={(v) => setForm({ ...form, node: v || '' })} searchable clearable />
           <Textarea label={t('Content (Markdown)')} value={form.content} onChange={(e) => setForm({ ...form, content: e.currentTarget.value })} minRows={10} autosize required />
           <Group justify="flex-end"><Button onClick={handleSubmit} loading={loading}>{t('Create')}</Button></Group>
         </Stack>
-      </Paper>
+      </Card>
     </Stack>
   );
 }

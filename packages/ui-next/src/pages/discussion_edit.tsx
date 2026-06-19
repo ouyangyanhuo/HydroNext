@@ -1,5 +1,5 @@
 import { formatErrorMessage } from '@/utils/error';
-import { Button, Group, Paper, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Button, Card, Group, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
@@ -28,14 +28,14 @@ export default function DiscussionEditPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Edit Discussion')} />
-      {error && <Text c="red" size="sm">{error}</Text>}
-      <Paper withBorder p="lg">
+      <Card withBorder p="lg" className="hydro-content-card">
         <Stack gap="md">
+          {error && <Text c="red" size="sm">{error}</Text>}
           <TextInput label={t('Title')} value={form.title} onChange={(e) => setForm({ ...form, title: e.currentTarget.value })} required />
           <Textarea label={t('Content (Markdown)')} value={form.content} onChange={(e) => setForm({ ...form, content: e.currentTarget.value })} minRows={10} autosize required />
           <Group justify="flex-end"><Button onClick={handleSubmit} loading={loading}>{t('Save')}</Button></Group>
         </Stack>
-      </Paper>
+      </Card>
     </Stack>
   );
 }
