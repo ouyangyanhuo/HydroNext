@@ -196,8 +196,15 @@ export async function apply(ctx: Context) {
             },
             renderTitle(str: string) {
                 const name = this.ctx.get('setting')?.get('server.name') || system.get('server.name');
-                if (this.UiContext.extraTitleContent) return `${this.UiContext.extraTitleContent} - ${this.translate(str)} - ${name}`;
-                return `${this.translate(str)} - ${name}`;
+                const domainName = this.domain?._id !== 'system' ? this.domain?.name : '';
+                const pageName = this.translate(str);
+                if (this.UiContext.extraTitleContent) {
+                    return domainName
+                        ? `${this.UiContext.extraTitleContent} - ${pageName} - ${name} - ${domainName}`
+                        : `${this.UiContext.extraTitleContent} - ${pageName} - ${name}`;
+                }
+                if (pageName === name || str === 'homepage') return name;
+                return domainName ? `${pageName} - ${name} - ${domainName}` : `${pageName} - ${name}`;
             },
         });
         server.httpHandlerMixin({

@@ -210,6 +210,7 @@ export function SettingsForm({
     [settings, current, excludeKeys],
   );
   const [values, setValues] = useState<Record<string, any>>({});
+  const [initialized, setInitialized] = useState(false);
   const groups = useMemo(() => groupByFamily(normalized), [normalized]);
   const booleanKeys = useMemo(
     () => normalized.filter((setting) => setting.type === 'boolean').map((setting) => setting.key),
@@ -217,14 +218,17 @@ export function SettingsForm({
   );
 
   useEffect(() => {
-    setValues(Object.fromEntries(normalized.map((setting) => {
-      const currentValue = getByPath(current, setting.key);
-      return [
-        setting.key,
-        ((setting.flag || 0) & FLAG_SECRET) ? '' : (currentValue ?? setting.value ?? ''),
-      ];
-    })));
-  }, [normalized, current]);
+    if (!initialized && normalized.length > 0) {
+      setValues(Object.fromEntries(normalized.map((setting) => {
+        const currentValue = getByPath(current, setting.key);
+        return [
+          setting.key,
+          ((setting.flag || 0) & FLAG_SECRET) ? '' : (currentValue ?? setting.value ?? ''),
+        ];
+      })));
+      setInitialized(true);
+    }
+  }, [normalized, current, initialized]);
 
   const handleSubmit = async () => {
     await onSubmit(buildSettingsPayload(values, booleanKeys, payloadMode, extraPayload));

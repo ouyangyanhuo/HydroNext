@@ -56,6 +56,21 @@ export function PageDataProvider({ initial, children }: PageDataProviderProps) {
     setPage(data.name, data.url);
   }, [data.name, data.url, setPage]);
 
+  // Update document title
+  useEffect(() => {
+    const serverName = data.args?.UiContext?.serverName || 'Hydro';
+    const domainName = data.args?.UiContext?.domainId !== 'system' ? data.args?.UiContext?.domain?.name : '';
+    const pageName = data.name;
+
+    if (pageName === 'homepage' || !pageName) {
+      document.title = serverName;
+    } else {
+      document.title = domainName
+        ? `${serverName} - ${pageName} - ${domainName}`
+        : `${serverName} - ${pageName}`;
+    }
+  }, [data.name, data.args?.UiContext]);
+
   return <PageDataContext.Provider value={value}>{children}</PageDataContext.Provider>;
 }
 

@@ -1,5 +1,6 @@
 import { formatErrorMessage } from '@/utils/error';
 import { Avatar, Badge, Button, Card, FileInput, Group, Radio, Stack, Text, TextInput } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { SettingsForm } from '@/components/common/settings-form';
@@ -30,8 +31,6 @@ export default function HomeSettingsPage() {
   const category = args.category || 'preference';
   const current = args.current || user || {};
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const [avatarType, setAvatarType] = useState('gravatar');
   const [avatarValue, setAvatarValue] = useState('');
@@ -61,8 +60,6 @@ export default function HomeSettingsPage() {
 
   const handleSubmit = async (payload: Record<string, any>) => {
     setLoading(true);
-    setError('');
-    setSuccess('');
     try {
       if (category === 'account') {
         if (avatarType === 'upload' && avatarFile) {
@@ -96,14 +93,16 @@ export default function HomeSettingsPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Save failed')));
-      else if (data.redirect) window.location.href = data.redirect;
-      else {
-        setSuccess(t('Settings saved'));
+      if (!res.ok || data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, t('Save failed')), message: '', color: 'red' });
+      } else if (data.redirect) {
+        window.location.href = data.redirect;
+      } else {
+        notifications.show({ title: t('Settings saved'), message: '', color: 'green' });
         if (category === 'account') window.location.reload();
       }
     } catch (err: any) {
-      setError(err?.message || t('Network error'));
+      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
     } finally {
       setLoading(false);
     }
@@ -132,8 +131,6 @@ export default function HomeSettingsPage() {
           ))}
         </Group>
       </PageHeader>
-      {error && <Text c="red" size="sm">{error}</Text>}
-      {success && <Text c="green" size="sm">{success}</Text>}
       {category === 'account' && (
         <Card withBorder p="lg" className="hydro-content-card">
           <Stack gap="md">

@@ -20,6 +20,9 @@ export const PRIV = {
   PRIV_VIEW_JUDGE_STATISTICS: BigInt(1) << BigInt(32),
   PRIV_MANAGE: BigInt(1) << BigInt(48),
   PRIV_JUDGE: BigInt(1) << BigInt(50),
+  PRIV_CREATE_DOMAIN: 1 << 10,
+  PRIV_DELETE_DOMAIN: 1 << 19,
+  PRIV_MANAGE_ALL_DOMAIN: 1 << 12,
 } as const;
 
 export function useHasPriv(priv: number | bigint): boolean {

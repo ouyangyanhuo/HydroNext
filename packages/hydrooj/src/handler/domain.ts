@@ -90,7 +90,9 @@ class DomainDashboardHandler extends ManageHandler {
     @requireSudo
     async postDelete({ domainId }) {
         if (domainId === 'system') throw new CannotDeleteSystemDomainError();
-        if (this.domain.owner !== this.user._id) throw new OnlyOwnerCanDeleteDomainError();
+        if (this.domain.owner !== this.user._id && !this.user.hasPriv(PRIV.PRIV_DELETE_DOMAIN)) {
+            throw new OnlyOwnerCanDeleteDomainError();
+        }
         await Promise.all([
             domain.del(domainId),
             oplog.log(this, 'domain.delete', {}),

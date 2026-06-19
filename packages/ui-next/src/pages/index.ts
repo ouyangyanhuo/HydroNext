@@ -54,6 +54,7 @@ registerPage('domain_role', () => import('./domain_role'));
 registerPage('domain_permission', () => import('./domain_permission'));
 registerPage('domain_group', () => import('./domain_group'));
 registerPage('domain_create', () => import('./domain_create'));
+registerPage('home_domain_create', () => import('./domain_create'));
 registerPage('domain_join', () => import('./domain_join'));
 registerPage('domain_join_applications', () => import('./domain_join_applications'));
 registerPage('manage_dashboard', () => import('./manage_dashboard'));

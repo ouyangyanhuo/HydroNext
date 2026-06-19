@@ -1,5 +1,6 @@
 import { formatErrorMessage } from '@/utils/error';
-import { Stack, Text } from '@mantine/core';
+import { Stack } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { SettingsForm } from '@/components/common/settings-form';
@@ -11,13 +12,9 @@ export default function DomainEditPage() {
   const { t } = useI18n();
   const current = args.current || args.domain || args.ddoc || {};
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (payload: Record<string, any>) => {
     setLoading(true);
-    setError('');
-    setSuccess('');
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
@@ -26,11 +23,15 @@ export default function DomainEditPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (data.error) setError(formatErrorMessage(data.error, t('Save failed')));
-      else if (data.redirect) window.location.href = data.redirect;
-      else setSuccess(t('Saved'));
+      if (data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, t('Save failed')), message: '', color: 'red' });
+      } else if (data.redirect) {
+        window.location.href = data.redirect;
+      } else {
+        notifications.show({ title: t('Saved'), message: '', color: 'green' });
+      }
     } catch (err: any) {
-      setError(err?.message || t('Network error'));
+      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
     } finally {
       setLoading(false);
     }
@@ -39,8 +40,6 @@ export default function DomainEditPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Domain Settings')} />
-      {error && <Text c="red" size="sm">{error}</Text>}
-      {success && <Text c="green" size="sm">{success}</Text>}
       <SettingsForm
         settings={args.settings || {}}
         current={current}

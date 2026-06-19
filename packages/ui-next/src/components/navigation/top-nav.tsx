@@ -82,6 +82,7 @@ export function TopNav() {
   const [opened, { toggle, close }] = useDisclosure(false);
   const isLoggedIn = useIsLoggedIn();
   const domain = useDomain();
+  const serverName = useSessionStore((s) => s.ui.serverName);
   const { name } = usePageData();
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -107,7 +108,7 @@ export function TopNav() {
               <img src={logoUrl} alt="" className="h-11 w-11 shrink-0 object-contain" />
               <span className="min-w-0">
                 <span className="block truncate text-base font-black leading-tight text-[var(--hydro-text)]">
-                  {domain.name || 'Hydro'}
+                  {serverName || 'Hydro'}
                 </span>
                 <span className="block text-[11px] font-semibold uppercase text-[var(--hydro-text-muted)]">
                   {t('Online Judge')}
@@ -154,7 +155,7 @@ export function TopNav() {
         </div>
       </div>
 
-      <Drawer opened={opened} onClose={close} title={domain.name || 'Hydro'} size="xs">
+      <Drawer opened={opened} onClose={close} title={serverName || 'Hydro'} size="xs">
         <Stack gap="xs">
           {NAV_ITEMS.map((item) => (
             <Button

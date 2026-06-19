@@ -16,6 +16,7 @@ export interface UiContext {
   ws_prefix: string;
   domainId: string;
   domain: { name: string, avatar?: string, [key: string]: any };
+  serverName: string;
   [key: string]: any;
 }
 
@@ -37,6 +38,7 @@ export const useSessionStore = create<SessionStore>((set) => ({
     ws_prefix: '/',
     domainId: 'system',
     domain: { name: 'Hydro' },
+    serverName: 'Hydro',
   },
   theme: 'light',
   language: initialLang,

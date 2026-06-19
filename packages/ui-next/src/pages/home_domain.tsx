@@ -1,52 +1,94 @@
 import { getAvatarUrl } from '@/utils/avatar';
 import { formatErrorMessage } from '@/utils/error';
 import { Avatar, Button, Card, Group, ScrollArea, Stack, Table, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useMemo, useState } from 'react';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
+import { usePermission, PRIV } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 
 export default function HomeDomainPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const user = useSessionStore((s) => s.user);
+  const { hasPriv } = usePermission();
   const [loadingId, setLoadingId] = useState('');
-  const [error, setError] = useState('');
-  
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [leaveTarget, setLeaveTarget] = useState<string | null>(null);
+
   const ddocs = args.ddocs || [];
   const roles = args.role || {};
   const canManage = args.canManage || {};
   const pinned = useMemo(() => new Set<string>(user.pinnedDomains || []), [user.pinnedDomains]);
 
-  const run = async (payload: Record<string, any>, confirmText?: string) => {
-    if (confirmText && !window.confirm(confirmText)) return;
+  const canCreateDomain = hasPriv(PRIV.PRIV_CREATE_DOMAIN);
+  const canDeleteDomain = hasPriv(PRIV.PRIV_DELETE_DOMAIN) || hasPriv(PRIV.PRIV_MANAGE_ALL_DOMAIN);
+
+  const run = async (payload: Record<string, any>) => {
     setLoadingId(payload.id || payload.operation);
-    setError('');
     try {
-      const res = await fetch(window.location.href, {
+      const res = await fetch('/home/domain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
-      else if (data.redirect) window.location.href = data.redirect;
-      else window.location.reload();
+      if (data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, t('Failed')), message: '', color: 'red' });
+      } else if (data.redirect) {
+        window.location.href = data.redirect;
+      } else {
+        window.location.reload();
+      }
     } catch {
-      setError('Network error');
+      notifications.show({ title: t('Network error'), message: '', color: 'red' });
     } finally {
       setLoadingId('');
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setLoadingId(deleteTarget);
+    setDeleteTarget(null);
+    try {
+      const res = await fetch(`/d/${deleteTarget}/domain/dashboard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ operation: 'delete' }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, t('Failed')), message: '', color: 'red' });
+      } else if (data.redirect) {
+        window.location.href = data.redirect;
+      } else {
+        window.location.reload();
+      }
+    } catch {
+      notifications.show({ title: t('Network error'), message: '', color: 'red' });
+    } finally {
+      setLoadingId('');
+    }
+  };
+
+  const handleLeave = async () => {
+    if (!leaveTarget) return;
+    await run({ operation: 'leave', id: leaveTarget });
+    setLeaveTarget(null);
+  };
+
   return (
     <Stack gap="lg">
       <PageHeader title={t('My Domains')}>
-        <Button component={Link} to="domain_create" size="xs">{t('Create Domain')}</Button>
+        {canCreateDomain && (
+          <Button component="a" href="/home/domain/create" size="xs">{t('Create Domain')}</Button>
+        )}
       </PageHeader>
-      {error && <Text c="red" size="sm">{error}</Text>}
       {ddocs.length === 0 ? (
         <Text c="dimmed" ta="center" py="xl">{t('No domains')}</Text>
       ) : (
@@ -64,6 +106,7 @@ export default function HomeDomainPage() {
                 {ddocs.map((d: any) => {
                   const isPinned = pinned.has(d._id);
                   const canLeave = d._id !== 'system' && d.owner !== user._id;
+                  const canDelete = canDeleteDomain && d._id !== 'system';
                   const busy = loadingId === d._id;
                   return (
                     <Table.Tr key={d._id}>
@@ -97,13 +140,24 @@ export default function HomeDomainPage() {
                           >
                             {isPinned ? t('Unpin') : t('Pin')}
                           </Button>
+                          {canDelete && (
+                            <Button
+                              size="compact-xs"
+                              color="red"
+                              variant="subtle"
+                              loading={busy}
+                              onClick={() => setDeleteTarget(d._id)}
+                            >
+                              {t('Delete')}
+                            </Button>
+                          )}
                           {canLeave && (
                             <Button
                               size="compact-xs"
                               color="red"
                               variant="subtle"
                               loading={busy}
-                              onClick={() => run({ operation: 'leave', id: d._id }, t('Confirm to leave this domain?'))}
+                              onClick={() => setLeaveTarget(d._id)}
                             >
                               {t('Leave')}
                             </Button>
@@ -118,6 +172,28 @@ export default function HomeDomainPage() {
           </ScrollArea>
         </Card>
       )}
+
+      <ConfirmDialog
+        opened={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title={t('Delete Domain')}
+        message={t('Confirm to delete this domain?')}
+        confirmLabel={t('Delete')}
+        cancelLabel={t('Cancel')}
+        loading={loadingId === deleteTarget}
+      />
+
+      <ConfirmDialog
+        opened={!!leaveTarget}
+        onClose={() => setLeaveTarget(null)}
+        onConfirm={handleLeave}
+        title={t('Leave Domain')}
+        message={t('Confirm to leave this domain?')}
+        confirmLabel={t('Leave')}
+        cancelLabel={t('Cancel')}
+        loading={loadingId === leaveTarget}
+      />
     </Stack>
   );
 }

@@ -35,6 +35,7 @@ export default async (ctx: KoaContext, next: Next) => {
     }
     UiContext.domainId = domainId;
     UiContext.domain = domainInfo;
+    UiContext.serverName = system.get('server.name') || 'Hydro';
     ctx.HydroContext.UiContext = UiContext;
     ctx.HydroContext.domain = domainInfo;
     ctx.HydroContext.args = args;

@@ -178,6 +178,7 @@ export const PRIV = {
     PRIV_CREATE_FILE: 1 << 16,
     PRIV_UNLIMITED_QUOTA: 1 << 17,
     PRIV_DELETE_FILE: 1 << 18,
+    PRIV_DELETE_DOMAIN: 1 << 19,
 
     PRIV_ALL: -1,
     PRIV_DEFAULT: 0,

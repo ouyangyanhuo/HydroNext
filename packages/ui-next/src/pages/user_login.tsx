@@ -1,4 +1,5 @@
-import { Anchor, Button, Checkbox, Group, PasswordInput, Stack, Text, TextInput } from '@mantine/core';
+import { Anchor, Button, Checkbox, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { Link } from '@/components/link';
 import { AuthPanel } from '@/components/auth/auth-panel';
@@ -15,14 +16,12 @@ export default function UserLoginPage() {
   const [password, setPassword] = useState('');
   const [rememberme, setRememberme] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const redirect = args.redirect || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     try {
       const formData = new URLSearchParams();
@@ -50,12 +49,12 @@ export default function UserLoginPage() {
             msg = msg.replace(`{${i}}`, p);
           });
         }
-        setError(msg);
+        notifications.show({ title: msg, message: '', color: 'red' });
       } else {
         navigate(redirect);
       }
     } catch (err) {
-      setError(t('Network error'));
+      notifications.show({ title: t('Network error'), message: '', color: 'red' });
     } finally {
       setLoading(false);
     }
@@ -63,10 +62,6 @@ export default function UserLoginPage() {
 
   return (
     <AuthPanel title={t('Login')} eyebrow={t('Account')} description={t('Sign in to continue to Hydro.')}>
-      {error && (
-        <Text c="red" size="sm">{error}</Text>
-      )}
-
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
           <TextInput
