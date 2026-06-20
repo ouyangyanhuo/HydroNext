@@ -23,10 +23,10 @@ export function Footer() {
             </Text>
           </div>
           <Group gap="lg">
-            <Anchor component={Link} to="about" size="sm" className="text-[var(--hydro-text-muted)] hover:text-[var(--hydro-primary)]">
+            <Anchor component={Link} href="/wiki/about" size="sm" className="text-[var(--hydro-text-muted)] hover:text-[var(--hydro-primary)]">
               {t('About')}
             </Anchor>
-            <Anchor component={Link} to="wiki_help" size="sm" className="text-[var(--hydro-text-muted)] hover:text-[var(--hydro-primary)]">
+            <Anchor component={Link} href="/wiki/help" size="sm" className="text-[var(--hydro-text-muted)] hover:text-[var(--hydro-primary)]">
               {t('Help')}
             </Anchor>
             <Anchor href="https://github.com/ouyangyanhuo/HydroNext" target="_blank" rel="noopener" size="sm" className="text-[var(--hydro-text-muted)] hover:text-[var(--hydro-primary)]">

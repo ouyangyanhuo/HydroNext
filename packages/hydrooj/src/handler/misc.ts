@@ -140,6 +140,24 @@ export class SwitchAccountHandler extends Handler {
     }
 }
 
+class WikiHelpHandler extends Handler {
+    noCheckPermView = true;
+
+    async get() {
+        this.response.template = 'wiki_help.html';
+        this.response.body = { page_name: 'wiki_help' };
+    }
+}
+
+class WikiAboutHandler extends Handler {
+    noCheckPermView = true;
+
+    async get() {
+        this.response.template = 'about.html';
+        this.response.body = { page_name: 'wiki_about' };
+    }
+}
+
 class HeapSnapshotHandler extends Handler {
     @param('worker', Types.Int)
     async post({ }, worker: number) {
@@ -161,6 +179,8 @@ export async function apply(ctx: Context) {
     ctx.Route('fs_download', '/file/:uid/:filename', FSDownloadHandler);
     ctx.Route('storage', '/storage', StorageHandler);
     ctx.Route('switch_account', '/account/:uid', SwitchAccountHandler, PRIV.PRIV_EDIT_SYSTEM);
+    ctx.Route('wiki_help', '/wiki/help', WikiHelpHandler);
+    ctx.Route('wiki_about', '/wiki/about', WikiAboutHandler);
     if (process.argv.includes('--enable-heap-snapshot')) {
         ctx.Route('heap_snapshot', '/heap-snapshot', HeapSnapshotHandler, PRIV.PRIV_EDIT_SYSTEM);
     }
