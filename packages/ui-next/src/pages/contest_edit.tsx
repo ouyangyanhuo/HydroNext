@@ -1,16 +1,17 @@
-import { formatErrorMessage } from '@/utils/error';
-import { getLangDisplay, LANG_DISPLAY } from '@/utils/lang-display';
 import { Avatar, Badge, Button, Card, Checkbox, Group, MultiSelect, NumberInput, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
-import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { PageHeader } from '@/components/common/page-header';
+import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useDomainId } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
+import { getLangDisplay, LANG_DISPLAY } from '@/utils/lang-display';
 
 interface SearchOption {
   value: string;
@@ -336,7 +337,11 @@ export default function ContestEditPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={isNew ? t('Create Contest') : t('Edit Contest')} />
+      <PageHeader title={isNew ? t('Create Contest') : t('Edit Contest')}>
+        <Button component="a" href="/contest" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          {t('Back')}
+        </Button>
+      </PageHeader>
       {error && <Text c="red" size="sm">{error}</Text>}
 
       <div className="flex flex-col gap-6 lg:flex-row">

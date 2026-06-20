@@ -1,16 +1,17 @@
-import { formatErrorMessage } from '@/utils/error';
 import { Badge, Button, Card, Group, NumberInput, Paper, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
-import { MarkdownEditor } from '@/components/editor/markdown-editor';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
-import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
+import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+import { formatErrorMessage } from '@/utils/error';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 
 function normalizeCategories(categories: any) {
@@ -172,7 +173,7 @@ export default function ProblemEditPage() {
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [previewFile, setPreviewFile] = useState<{ name: string; size: number } | null>(null);
+  const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);
   const [deleteOpened, setDeleteOpened] = useState(false);
   const pid = pdoc.pid || pdoc.docId;
 
@@ -290,7 +291,11 @@ export default function ProblemEditPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={isNew ? t('Create Problem') : t('Edit Problem')} />
+      <PageHeader title={isNew ? t('Create Problem') : t('Edit Problem')}>
+        <Button component="a" href="/p" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          {t('Back')}
+        </Button>
+      </PageHeader>
       {error && <Text c="red" size="sm">{error}</Text>}
 
       <div className="flex flex-col gap-6 lg:flex-row">

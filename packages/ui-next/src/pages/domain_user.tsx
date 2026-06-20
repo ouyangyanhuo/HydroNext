@@ -1,5 +1,6 @@
 import { Avatar, Badge, Button, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Select, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
@@ -321,6 +322,9 @@ export default function DomainUserPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Domain Users')}>
+        <Button component="a" href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          {t('Back')}
+        </Button>
         <Button size="xs" onClick={() => setDialogOpen(true)}>{t('Add User')}</Button>
       </PageHeader>
       <Paper withBorder className="hydro-content-card">

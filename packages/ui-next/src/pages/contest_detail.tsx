@@ -1,18 +1,19 @@
-import { Badge, Button, Card, Divider, Group, Paper, Select, Stack, Table, Text, Textarea, Title } from '@mantine/core';
+import { Badge, Button, Card, Divider, Group, Paper, Select, Stack, Table, Text, Textarea, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useState } from 'react';
+import { IconArrowLeft } from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
 import { TimeDisplay } from '@/components/common/time-display';
+import { ContestTimer } from '@/components/contest/contest-timer';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
-import { ContestTimer } from '@/components/contest/contest-timer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
+import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
-import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useBuildUrl } from '@/hooks/use-build-url';
+import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { PERM, useHasPerm } from '@/hooks/use-permission';
-import { UserLink } from '@/components/user/user-link';
 import { formatErrorMessage } from '@/utils/error';
 
 function alphabetic(index: number) {
@@ -34,16 +35,16 @@ function formatMemory(memory?: number) {
 function getObjectIdDate(id: any) {
   const text = String(id || '');
   if (!/^[a-f0-9]{24}$/i.test(text)) return null;
-  return new Date(parseInt(text.slice(0, 8), 16) * 1000);
+  return new Date(Number.parseInt(text.slice(0, 8), 16) * 1000);
 }
 
 function isContestClosed(tdoc: any, tsdoc?: any) {
   const now = Date.now();
   const endAt = new Date(tdoc.endAt).getTime();
   if (Number.isFinite(endAt) && endAt <= now) return true;
-  const tsEndAt = tsdoc?.endAt ? new Date(tsdoc.endAt).getTime() : NaN;
+  const tsEndAt = tsdoc?.endAt ? new Date(tsdoc.endAt).getTime() : Number.NaN;
   if (Number.isFinite(tsEndAt) && tsEndAt <= now) return true;
-  const startAt = tsdoc?.startAt ? new Date(tsdoc.startAt).getTime() : NaN;
+  const startAt = tsdoc?.startAt ? new Date(tsdoc.startAt).getTime() : Number.NaN;
   if (tdoc.duration && Number.isFinite(startAt)) {
     return startAt + Number(tdoc.duration) * 60 * 60 * 1000 <= now;
   }
@@ -156,7 +157,7 @@ function ContestProblemList({ tdoc, tsdoc, pdict, psdict, rdict, correction, sho
   );
 }
 
-function SubmissionList({ rdocs, pdict, udict, canViewRecord }: { rdocs: any[]; pdict: Record<string, any>; udict: Record<string, any>; canViewRecord: boolean }) {
+function SubmissionList({ rdocs, pdict, udict, canViewRecord }: { rdocs: any[], pdict: Record<string, any>, udict: Record<string, any>, canViewRecord: boolean }) {
   const { t } = useI18n();
   if (!canViewRecord) {
     return (
@@ -208,7 +209,7 @@ function SubmissionList({ rdocs, pdict, udict, canViewRecord }: { rdocs: any[]; 
   );
 }
 
-function ClarificationList({ tdoc, pdict, tcdocs, udict, tsdoc }: { tdoc: any; pdict: Record<string, any>; tcdocs: any[]; udict: Record<string, any>; tsdoc: any }) {
+function ClarificationList({ tdoc, pdict, tcdocs, udict, tsdoc }: { tdoc: any, pdict: Record<string, any>, tcdocs: any[], udict: Record<string, any>, tsdoc: any }) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [subject, setSubject] = useState('0');
@@ -357,6 +358,7 @@ export default function ContestDetailPage() {
   const udict = args.udict || {};
   const canEdit = useHasPerm(PERM.PERM_EDIT_CONTEST) || args.canEdit;
   const tid = tdoc._id || tdoc.docId;
+  const contestNotStarted = useMemo(() => tdoc.beginAt && new Date(tdoc.beginAt).getTime() > Date.now(), [tdoc.beginAt]);
 
   const handleAttend = async () => {
     try {
@@ -380,9 +382,14 @@ export default function ContestDetailPage() {
         <Card withBorder p="xl" className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]">
           <Group justify="space-between" align="flex-start" gap="lg">
             <div className="min-w-0 flex-1">
-              <Badge variant="light" color="hydroCopper" mb="sm">
-                {t('Problems')}
-              </Badge>
+              <Group gap="xs" mb="sm">
+                <Button component={Link} to="contest_detail" params={{ tid }} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                  {t('Back')}
+                </Button>
+                <Badge variant="light" color="hydroCopper">
+                  {t('Problems')}
+                </Badge>
+              </Group>
               <Title order={1} className="text-3xl leading-tight text-[var(--hydro-text)] md:text-4xl">
                 {tdoc.title}
               </Title>
@@ -452,9 +459,14 @@ export default function ContestDetailPage() {
       <Card withBorder p="xl" className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]">
         <Group justify="space-between" align="flex-start" gap="lg">
           <div className="min-w-0 flex-1">
-            <Badge variant="light" color="hydroCopper" mb="sm">
-              {t('Contest')}
-            </Badge>
+            <Group gap="xs" mb="sm">
+              <Button component="a" href="/contest" variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                {t('Back')}
+              </Button>
+              <Badge variant="light" color="hydroCopper">
+                {t('Contest')}
+              </Badge>
+            </Group>
             <Title order={1} className="text-3xl leading-tight text-[var(--hydro-text)] md:text-4xl">
               {tdoc.title}
             </Title>
@@ -501,9 +513,11 @@ export default function ContestDetailPage() {
             )}
 
             {isLoggedIn && tsdoc.attend && (
-              <Button component={Link} to="contest_problemlist" params={{ tid }} variant="light" fullWidth>
-                {t('Problem List')}
-              </Button>
+              <Tooltip label={contestNotStarted ? t('Contest has not started yet') : undefined} disabled={!contestNotStarted}>
+                <Button component={Link} to="contest_problemlist" params={{ tid }} variant="light" fullWidth disabled={!!contestNotStarted}>
+                  {t('Problem List')}
+                </Button>
+              </Tooltip>
             )}
 
             {isLoggedIn && tsdoc.attend && (

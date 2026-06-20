@@ -1,5 +1,6 @@
 import { Avatar, Badge, Button, Card, Group, Progress, Stack, Table, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
@@ -8,17 +9,19 @@ import { UserLink } from '@/components/user/user-link';
 import { usePageData, useUserContext } from '@/context/page-data';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
-import { formatErrorMessage } from '@/utils/error';
 import { getAvatarUrl } from '@/utils/avatar';
+import { formatErrorMessage } from '@/utils/error';
 
 function getNodes(tdoc: any) {
   if (Array.isArray(tdoc.dag)) return tdoc.dag;
-  if (Array.isArray(tdoc.sections)) return tdoc.sections.map((section: any, index: number) => ({
-    ...section,
-    _id: section._id ?? index + 1,
-    title: section.title,
-    content: section.content || section.description,
-  }));
+  if (Array.isArray(tdoc.sections)) {
+    return tdoc.sections.map((section: any, index: number) => ({
+      ...section,
+      _id: section._id ?? index + 1,
+      title: section.title,
+      content: section.content || section.description,
+    }));
+  }
   return [];
 }
 
@@ -52,13 +55,13 @@ function TrainingProblemTable({
   compare,
   invalid,
 }: {
-  node: any,
-  pdict: Record<string, any>,
-  psdict: Record<string, any>,
-  selfPsdict: Record<string, any>,
-  enrolled: boolean,
-  compare: boolean,
-  invalid: boolean,
+  node: any;
+  pdict: Record<string, any>;
+  psdict: Record<string, any>;
+  selfPsdict: Record<string, any>;
+  enrolled: boolean;
+  compare: boolean;
+  invalid: boolean;
 }) {
   const { t } = useI18n();
   const pids = node.pids || [];
@@ -175,7 +178,12 @@ export default function TrainingDetailPage() {
           <Card withBorder p="xl" className="hydro-content-card">
             <Group justify="space-between" align="flex-start" gap="md">
               <div className="min-w-0">
-                <Badge variant="light" mb="sm">{t('Training')}</Badge>
+                <Group gap="xs" mb="sm">
+                  <Button component="a" href="/training" variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                    {t('Back')}
+                  </Button>
+                  <Badge variant="light">{t('Training')}</Badge>
+                </Group>
                 <Title order={1} className="text-3xl text-[var(--hydro-text)]">{tdoc.title}</Title>
                 {tdoc.content && <Text size="sm" c="dimmed" mt="xs">{tdoc.content}</Text>}
               </div>

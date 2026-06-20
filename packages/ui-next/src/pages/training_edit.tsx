@@ -1,14 +1,15 @@
-import { formatErrorMessage } from '@/utils/error';
 import { Button, Group, MultiSelect, NumberInput, Paper, SimpleGrid, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useMemo, useRef, useState } from 'react';
-import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { PageHeader } from '@/components/common/page-header';
+import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useDomainId } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 const DEFAULT_DAG = JSON.stringify([
   {
@@ -167,7 +168,11 @@ export default function TrainingEditPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={isNew ? t('Create Training') : t('Edit Training')} />
+      <PageHeader title={isNew ? t('Create Training') : t('Edit Training')}>
+        <Button component="a" href="/training" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          {t('Back')}
+        </Button>
+      </PageHeader>
       {error && <Text c="red" size="sm">{error}</Text>}
       <Paper withBorder p="lg">
         <Stack gap="md">

@@ -1,9 +1,12 @@
 import { formatErrorMessage } from '@/utils/error';
 import { Badge, Button, Checkbox, Group, Paper, Stack, Table, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
+import { useSessionStore } from '@/stores/session';
 import { useI18n } from '@/hooks/use-i18n';
 
 const BUILTIN_ROLES = new Set(['root', 'default', 'guest']);
@@ -11,6 +14,7 @@ const BUILTIN_ROLES = new Set(['root', 'default', 'guest']);
 export default function DomainRolePage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const domainId = useSessionStore((s) => s.ui.domainId);
   const roles = Array.isArray(args.roles) ? args.roles : Object.entries(args.roles || {}).map(([id, role]: [string, any]) => ({
     _id: id,
     ...(typeof role === 'object' ? role : { perm: role }),
@@ -53,6 +57,9 @@ export default function DomainRolePage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Roles')}>
+        <Button component="a" href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          {t('Back')}
+        </Button>
         <Button size="xs" onClick={() => setDialogOpen(true)}>{t('Create Role')}</Button>
       </PageHeader>
       {error && <Text c="red" size="sm">{error}</Text>}

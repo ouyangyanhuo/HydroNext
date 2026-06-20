@@ -1,11 +1,10 @@
 import { Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
-import { IconCopy, IconFileImport } from '@tabler/icons-react';
+import { IconArrowLeft, IconCopy } from '@tabler/icons-react';
 import { PageHeader } from '@/components/common/page-header';
-import { Link } from '@/components/link';
 import { usePageData, useUserContext } from '@/context/page-data';
+import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
-import { useIsLoggedIn } from '@/hooks/use-current-user';
 
 const IMPORT_SOURCES = [
   {
@@ -30,7 +29,11 @@ export default function ProblemImportPage() {
   if (!isLoggedIn || !canCreate) {
     return (
       <Stack gap="lg">
-        <PageHeader title={t('Import Problems')} />
+        <PageHeader title={t('Import Problems')}>
+          <Button component="a" href="/p" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+            {t('Back')}
+          </Button>
+        </PageHeader>
         <Card withBorder p="lg" className="hydro-content-card">
           <Text c="dimmed">{t('You do not have permission to import problems.')}</Text>
         </Card>
@@ -40,7 +43,11 @@ export default function ProblemImportPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('Import Problems')} />
+      <PageHeader title={t('Import Problems')}>
+        <Button component="a" href="/p" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          {t('Back')}
+        </Button>
+      </PageHeader>
 
       <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
         {IMPORT_SOURCES.map((source) => (

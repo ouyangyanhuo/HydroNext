@@ -1,8 +1,10 @@
 import { Badge, Button, Checkbox, Group, Paper, ScrollArea, Stack, Table, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
+import { useSessionStore } from '@/stores/session';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 
@@ -75,6 +77,7 @@ function hasPerm(rolePerm: any, permKey: any) {
 export default function DomainPermissionPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const domainId = useSessionStore((s) => s.ui.domainId);
   const roles = useMemo(() => normalizeRoles(args.roles), [args.roles]);
   const families = useMemo(() => normalizeFamilies(args.PERMS_BY_FAMILY), [args.PERMS_BY_FAMILY]);
   const [selected, setSelected] = useState<Record<string, Set<number>>>({});
@@ -135,6 +138,9 @@ export default function DomainPermissionPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Permissions')}>
+        <Button component="a" href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          {t('Back')}
+        </Button>
         <Button onClick={handleSave} loading={loading} size="xs">{t('Update Permission')}</Button>
       </PageHeader>
       <Paper withBorder className="hydro-content-card">

@@ -1,9 +1,10 @@
 import { Badge, Button, Card, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Scratchpad } from '@/components/editor/scratchpad';
-import { FormDialog } from '@/components/common/form-dialog';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
+import { FormDialog } from '@/components/common/form-dialog';
 import { TimeDisplay } from '@/components/common/time-display';
+import { Scratchpad } from '@/components/editor/scratchpad';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -15,8 +16,8 @@ import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
-import { extractLocalizedContent } from '@/utils/i18n-content';
 import { formatErrorMessage } from '@/utils/error';
+import { extractLocalizedContent } from '@/utils/i18n-content';
 import { getLangDisplay } from '@/utils/lang-display';
 
 function safeFilename(name: string) {
@@ -198,17 +199,17 @@ function ProblemSidebar({
   contestClosed, canSubmitProblem, canEditProblem, canConfigureProblem,
   canRejudgeProblem, canViewProblemSolution,
 }: {
-  pdoc: any,
-  psdoc?: any,
-  rdoc?: any,
-  onToggleScratchpad: () => void,
-  scratchpadOpen: boolean,
-  contestClosed?: boolean,
-  canSubmitProblem?: boolean,
-  canEditProblem?: boolean,
-  canConfigureProblem?: boolean,
-  canRejudgeProblem?: boolean,
-  canViewProblemSolution?: boolean,
+  pdoc: any;
+  psdoc?: any;
+  rdoc?: any;
+  onToggleScratchpad: () => void;
+  scratchpadOpen: boolean;
+  contestClosed?: boolean;
+  canSubmitProblem?: boolean;
+  canEditProblem?: boolean;
+  canConfigureProblem?: boolean;
+  canRejudgeProblem?: boolean;
+  canViewProblemSolution?: boolean;
 }) {
   const { t } = useI18n();
   const isLoggedIn = useIsLoggedIn();
@@ -422,7 +423,7 @@ export default function ProblemDetailPage() {
     return queryLang || (langs.includes(sessionLanguage) ? sessionLanguage : langs[0] || sessionLanguage);
   });
   const [scratchpadOpen, setScratchpadOpen] = useState(false);
-  const [previewFile, setPreviewFile] = useState<{ name: string; size: number } | null>(null);
+  const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);
   const pid = pdoc.pid || pdoc.docId;
 
   useEffect(() => {
@@ -451,9 +452,9 @@ export default function ProblemDetailPage() {
     const now = Date.now();
     const endAt = new Date(args.tdoc.endAt).getTime();
     if (Number.isFinite(endAt) && endAt <= now) return true;
-    const tsEndAt = args.tsdoc?.endAt ? new Date(args.tsdoc.endAt).getTime() : NaN;
+    const tsEndAt = args.tsdoc?.endAt ? new Date(args.tsdoc.endAt).getTime() : Number.NaN;
     if (Number.isFinite(tsEndAt) && tsEndAt <= now) return true;
-    const startAt = args.tsdoc?.startAt ? new Date(args.tsdoc.startAt).getTime() : NaN;
+    const startAt = args.tsdoc?.startAt ? new Date(args.tsdoc.startAt).getTime() : Number.NaN;
     if (args.tdoc.duration && Number.isFinite(startAt)) {
       return startAt + Number(args.tdoc.duration) * 60 * 60 * 1000 <= now;
     }
@@ -522,6 +523,11 @@ export default function ProblemDetailPage() {
           <Paper withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]">
             <Group justify="space-between" align="flex-start" gap="md" wrap="wrap" className="border-b border-[var(--hydro-border)] pb-4">
               <div className="min-w-0 flex-1">
+                <Group gap="xs" mb="xs">
+                  <Button component="a" href="/p" variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                    {t('Back')}
+                  </Button>
+                </Group>
                 <Title order={1} className="text-2xl leading-tight text-[var(--hydro-text)]">
                   <span className="text-[var(--hydro-primary)]">{pdoc.pid || pdoc.docId}</span>
                   {' '}

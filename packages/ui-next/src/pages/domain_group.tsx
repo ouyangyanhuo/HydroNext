@@ -1,9 +1,11 @@
 import { Button, Checkbox, Group, Paper, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
+import { useSessionStore } from '@/stores/session';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 
@@ -17,6 +19,7 @@ function parseUids(input: string) {
 export default function DomainGroupPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const domainId = useSessionStore((s) => s.ui.domainId);
   const groups = args.groups || [];
   const [selected, setSelected] = useState<string[]>([]);
   const [uidsDraft, setUidsDraft] = useState<Record<string, string>>(() => Object.fromEntries(
@@ -75,6 +78,9 @@ export default function DomainGroupPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Groups')}>
+        <Button component="a" href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          {t('Back')}
+        </Button>
         <Button size="xs" onClick={() => setDialogOpen(true)}>{t('Create Group')}</Button>
       </PageHeader>
       <Paper withBorder className="hydro-content-card">

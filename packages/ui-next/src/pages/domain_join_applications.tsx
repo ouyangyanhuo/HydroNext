@@ -1,9 +1,11 @@
 import { Alert, Button, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { usePageData } from '@/context/page-data';
+import { useSessionStore } from '@/stores/session';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 
@@ -25,7 +27,8 @@ function optionData(range: any) {
 export default function DomainJoinApplicationsPage() {
   const { args } = usePageData();
   const { t } = useI18n();
-  const domainId = args.domain?._id || args.domainId || window.location.pathname.split('/')[2] || 'system';
+  const storeDomainId = useSessionStore((s) => s.ui.domainId);
+  const domainId = args.domain?._id || args.domainId || storeDomainId || window.location.pathname.split('/')[2] || 'system';
   const joinSettings = args.joinSettings || null;
   const roleOptions = optionData(args.rolesWithText || []);
   const expireOptions = optionData(args.expirations || {});
@@ -74,6 +77,9 @@ export default function DomainJoinApplicationsPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Join Applications')}>
+        <Button component="a" href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          {t('Back')}
+        </Button>
         <Button onClick={handleSave} loading={loading} size="xs">{t('Update Settings')}</Button>
       </PageHeader>
 
