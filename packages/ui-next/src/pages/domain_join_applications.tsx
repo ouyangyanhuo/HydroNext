@@ -1,10 +1,11 @@
-import { formatErrorMessage } from '@/utils/error';
 import { Alert, Button, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 const JOIN_METHOD_RANGE = [
   { value: '0', label: 'No user is allowed to join this domain' },
@@ -36,16 +37,12 @@ export default function DomainJoinApplicationsPage() {
     invitationCode: joinSettings?.code || '',
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const joinUrl = `${args.url_prefix || '/'}d/${domainId}/domain/join`;
   const codeUrl = form.invitationCode ? `${joinUrl}?code=${encodeURIComponent(form.invitationCode)}` : '';
 
   const handleSave = async () => {
     setLoading(true);
-    setError('');
-    setSuccess('');
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
@@ -60,11 +57,15 @@ export default function DomainJoinApplicationsPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Save failed')));
-      else if (data.redirect) window.location.href = data.redirect;
-      else setSuccess(t('Saved'));
+      if (!res.ok || data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, t('Save failed')), message: '', color: 'red' });
+      } else if (data.redirect) {
+        window.location.href = data.redirect;
+      } else {
+        notifications.show({ title: t('Saved'), message: '', color: 'green' });
+      }
     } catch (err: any) {
-      setError(err?.message || t('Network error'));
+      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
     } finally {
       setLoading(false);
     }
@@ -75,8 +76,6 @@ export default function DomainJoinApplicationsPage() {
       <PageHeader title={t('Join Applications')}>
         <Button onClick={handleSave} loading={loading} size="xs">{t('Update Settings')}</Button>
       </PageHeader>
-      {error && <Text c="red" size="sm">{error}</Text>}
-      {success && <Text c="green" size="sm">{success}</Text>}
 
       {joinSettings && (
         <Card withBorder p="lg" className="hydro-content-card">

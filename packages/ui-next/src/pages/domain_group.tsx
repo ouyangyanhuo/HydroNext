@@ -1,10 +1,11 @@
-import { formatErrorMessage } from '@/utils/error';
 import { Button, Checkbox, Group, Paper, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 function parseUids(input: string) {
   return input
@@ -23,13 +24,9 @@ export default function DomainGroupPage() {
   ));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const post = async (payload: Record<string, any>, successMessage: string, reload = true) => {
     setLoading(String(payload.operation || 'operation'));
-    setError('');
-    setSuccess('');
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
@@ -38,14 +35,16 @@ export default function DomainGroupPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Operation failed')));
-      else if (data.redirect) window.location.href = data.redirect;
-      else {
-        setSuccess(successMessage);
+      if (!res.ok || data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, t('Operation failed')), message: '', color: 'red' });
+      } else if (data.redirect) {
+        window.location.href = data.redirect;
+      } else {
+        notifications.show({ title: successMessage, message: '', color: 'green' });
         if (reload) window.location.reload();
       }
     } catch (err: any) {
-      setError(err?.message || t('Network error'));
+      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
     } finally {
       setLoading('');
     }
@@ -60,7 +59,6 @@ export default function DomainGroupPage() {
       const next = parseUids(uidsDraft[group.name] || '');
       const current = (group.uids || []).join(',');
       if (next.join(',') !== current) {
-        // eslint-disable-next-line no-await-in-loop
         await post({ operation: 'update', name: group.name, uids: next }, t('Saved'), false);
       }
     }
@@ -69,7 +67,6 @@ export default function DomainGroupPage() {
 
   const deleteSelected = async () => {
     for (const name of selected) {
-      // eslint-disable-next-line no-await-in-loop
       await post({ operation: 'del', name }, t('Deleted'), false);
     }
     window.location.reload();
@@ -80,50 +77,48 @@ export default function DomainGroupPage() {
       <PageHeader title={t('Groups')}>
         <Button size="xs" onClick={() => setDialogOpen(true)}>{t('Create Group')}</Button>
       </PageHeader>
-      {error && <Text c="red" size="sm">{error}</Text>}
-      {success && <Text c="green" size="sm">{success}</Text>}
       <Paper withBorder className="hydro-content-card">
         <ScrollArea>
           <Table striped highlightOnHover miw={680}>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th w={44}>
-                <Checkbox
-                  aria-label={t('Select All')}
-                  checked={groups.length > 0 && groups.every((group: any) => selected.includes(group.name))}
-                  onChange={(e) => setSelected(e.currentTarget.checked ? groups.map((group: any) => group.name) : [])}
-                />
-              </Table.Th>
-              <Table.Th>{t('Group Name')}</Table.Th>
-              <Table.Th>{t('Users')}</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {groups.map((g: any) => (
-              <Table.Tr key={g.name}>
-                <Table.Td>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th w={44}>
                   <Checkbox
-                    aria-label={g.name}
-                    checked={selected.includes(g.name)}
-                    onChange={(e) => toggle(g.name, e.currentTarget.checked)}
+                    aria-label={t('Select All')}
+                    checked={groups.length > 0 && groups.every((group: any) => selected.includes(group.name))}
+                    onChange={(e) => setSelected(e.currentTarget.checked ? groups.map((group: any) => group.name) : [])}
                   />
-                </Table.Td>
-                <Table.Td>
-                  <Text size="sm" fw={600}>{g.name}</Text>
-                  <Text size="xs" c="dimmed">{g.uids?.length || 0} {t('members')}</Text>
-                </Table.Td>
-                <Table.Td>
-                  <TextInput
-                    size="xs"
-                    value={uidsDraft[g.name] ?? (g.uids || []).join(',')}
-                    onChange={(e) => setUidsDraft((prev) => ({ ...prev, [g.name]: e.currentTarget.value }))}
-                    placeholder="2,3,4"
-                  />
-                </Table.Td>
+                </Table.Th>
+                <Table.Th>{t('Group Name')}</Table.Th>
+                <Table.Th>{t('Users')}</Table.Th>
               </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
+            </Table.Thead>
+            <Table.Tbody>
+              {groups.map((g: any) => (
+                <Table.Tr key={g.name}>
+                  <Table.Td>
+                    <Checkbox
+                      aria-label={g.name}
+                      checked={selected.includes(g.name)}
+                      onChange={(e) => toggle(g.name, e.currentTarget.checked)}
+                    />
+                  </Table.Td>
+                  <Table.Td>
+                    <Text size="sm" fw={600}>{g.name}</Text>
+                    <Text size="xs" c="dimmed">{g.uids?.length || 0} {t('members')}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <TextInput
+                      size="xs"
+                      value={uidsDraft[g.name] ?? (g.uids || []).join(',')}
+                      onChange={(e) => setUidsDraft((prev) => ({ ...prev, [g.name]: e.currentTarget.value }))}
+                      placeholder="2,3,4"
+                    />
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
         </ScrollArea>
         <Group justify="flex-end" p="md">
           <Button variant="light" color="red" disabled={!selected.length} loading={loading === 'del'} onClick={deleteSelected}>
@@ -150,7 +145,6 @@ export default function DomainGroupPage() {
         confirmLabel={t('Create')}
         cancelLabel={t('Cancel')}
         loading={loading === 'update'}
-        error={error}
       />
     </Stack>
   );

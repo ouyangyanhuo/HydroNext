@@ -213,7 +213,9 @@ export function SettingsForm({
   const [initialized, setInitialized] = useState(false);
   const groups = useMemo(() => groupByFamily(normalized), [normalized]);
   const booleanKeys = useMemo(
-    () => normalized.filter((setting) => setting.type === 'boolean').map((setting) => setting.key),
+    () => normalized
+      .filter((setting) => setting.type === 'boolean' && !((setting.flag || 0) & FLAG_HIDDEN))
+      .map((setting) => setting.key),
     [normalized],
   );
 

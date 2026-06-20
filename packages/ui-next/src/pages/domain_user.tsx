@@ -1,13 +1,14 @@
-import { formatErrorMessage } from '@/utils/error';
-import { getAvatarUrl } from '@/utils/avatar';
 import { Avatar, Badge, Button, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Select, Stack, Table, Text, TextInput } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
-import { UserAvatar } from '@/components/user/user-avatar';
 import { Link } from '@/components/link';
+import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+import { getAvatarUrl } from '@/utils/avatar';
+import { formatErrorMessage } from '@/utils/error';
 
 function normalizeRoles(input: any) {
   if (Array.isArray(input)) return input;
@@ -63,7 +64,6 @@ function AddUserDialog({
   domainId,
   loading,
   onSubmit,
-  error,
 }: {
   opened: boolean;
   onClose: () => void;
@@ -72,7 +72,6 @@ function AddUserDialog({
   domainId: string;
   loading: boolean;
   onSubmit: (uids: number[], role: string) => void | Promise<void>;
-  error?: string;
 }) {
   const { t } = useI18n();
   const [query, setQuery] = useState('');
@@ -147,7 +146,6 @@ function AddUserDialog({
   return (
     <Modal opened={opened} onClose={onClose} title={t('Add User')} size="lg">
       <Stack gap="md">
-        {error && <Text c="red" size="sm">{error}</Text>}
         <TextInput
           label={t('Search users by username or UID')}
           placeholder={t('Type to search users')}
@@ -197,16 +195,20 @@ function AddUserDialog({
           {selectedUsers.length ? (
             <Group gap="xs">
               {selectedUsers.map((user) => (
-                <Badge key={user._id} variant="light" size="lg" rightSection={(
-                  <button
-                    type="button"
-                    className="ml-1 text-xs"
-                    onClick={() => removeUser(user._id)}
-                    aria-label={t('Remove')}
-                  >
-                    x
-                  </button>
-                )}>
+                <Badge
+                  key={user._id}
+                  variant="light"
+                  size="lg"
+                  rightSection={(
+                    <button
+                      type="button"
+                      className="ml-1 text-xs"
+                      onClick={() => removeUser(user._id)}
+                      aria-label={t('Remove')}
+                    >
+                      x
+                    </button>
+                  )}>
                   {formatUserLabel(user)} #{user._id}
                 </Badge>
               ))}
@@ -248,8 +250,6 @@ export default function DomainUserPage() {
   const [bulkRole, setBulkRole] = useState(roleOptions[0]?.value || 'default');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     setRoleDraft((prev) => Object.fromEntries(users.map((user: any) => [
@@ -269,8 +269,6 @@ export default function DomainUserPage() {
 
   const post = async (payload: Record<string, any>, successMessage: string, reload = true) => {
     setLoading(String(payload.operation || 'operation'));
-    setError('');
-    setSuccess('');
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
@@ -279,14 +277,16 @@ export default function DomainUserPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Operation failed')));
-      else if (data.redirect) window.location.href = data.redirect;
-      else {
-        setSuccess(successMessage);
+      if (!res.ok || data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, t('Operation failed')), message: '', color: 'red' });
+      } else if (data.redirect) {
+        window.location.href = data.redirect;
+      } else {
+        notifications.show({ title: successMessage, message: '', color: 'green' });
         if (reload) window.location.reload();
       }
     } catch (err: any) {
-      setError(err?.message || t('Network error'));
+      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
     } finally {
       setLoading('');
     }
@@ -302,18 +302,17 @@ export default function DomainUserPage() {
     for (const role of roleOptions.map((option) => option.value)) {
       const uids = changed.filter((user: any) => roleDraft[user._id] === role).map((user: any) => user._id);
       if (uids.length) {
-        // eslint-disable-next-line no-await-in-loop
         await post({ operation: 'set_users', uids, role, join: false }, t('Saved'), false);
         saved = true;
       }
     }
     if (saved) window.location.reload();
-    else setSuccess(t('No changes'));
+    else notifications.show({ title: t('No changes'), message: '', color: 'blue' });
   };
 
   const addUsers = async (uids: number[], role: string) => {
     if (!uids.length) {
-      setError(t('User ID is required'));
+      notifications.show({ title: t('User ID is required'), message: '', color: 'red' });
       return;
     }
     await post({ operation: 'set_users', uids, role: role || 'default', join: true }, t('Added'));
@@ -324,68 +323,66 @@ export default function DomainUserPage() {
       <PageHeader title={t('Domain Users')}>
         <Button size="xs" onClick={() => setDialogOpen(true)}>{t('Add User')}</Button>
       </PageHeader>
-      {error && <Text c="red" size="sm">{error}</Text>}
-      {success && <Text c="green" size="sm">{success}</Text>}
       <Paper withBorder className="hydro-content-card">
         <ScrollArea>
           <Table striped highlightOnHover miw={760}>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th w={44}>
-                <Checkbox
-                  aria-label={t('Select All')}
-                  checked={allSelected}
-                  onChange={(e) => setSelected(e.currentTarget.checked ? selectableUsers.map((user: any) => user._id) : [])}
-                />
-              </Table.Th>
-              <Table.Th>{t('User ID')}</Table.Th>
-              <Table.Th>{t('Username')}</Table.Th>
-              <Table.Th>{t('Role')}</Table.Th>
-              <Table.Th>{t('Status')}</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {users.map((user: any) => {
-              const disabled = user._id === currentUser?._id;
-              return (
-                <Table.Tr key={user._id}>
-                  <Table.Td>
-                    <Checkbox
-                      aria-label={String(user._id)}
-                      disabled={disabled}
-                      checked={selected.includes(user._id)}
-                      onChange={(e) => toggle(user._id, e.currentTarget.checked)}
-                    />
-                  </Table.Td>
-                  <Table.Td><Text size="sm">{user._id}</Text></Table.Td>
-                  <Table.Td>
-                    <Group gap="xs">
-                      <UserAvatar user={user} size="xs" />
-                      <Link to="user_detail" params={{ uid: user._id }} className="no-underline hover:underline">
-                        <Text size="sm">{user.uname || user._id}</Text>
-                      </Link>
-                    </Group>
-                  </Table.Td>
-                  <Table.Td>
-                    <Select
-                      size="xs"
-                      w={160}
-                      data={roleOptions}
-                      value={roleDraft[user._id] || user.role || 'default'}
-                      disabled={disabled}
-                      onChange={(value) => setRoleDraft((prev) => ({ ...prev, [user._id]: value || 'default' }))}
-                    />
-                  </Table.Td>
-                  <Table.Td>
-                    {user.join === false
-                      ? <Badge color="orange" variant="light">{t('Not joined yet')}</Badge>
-                      : <Badge color="green" variant="light">{t('Joined')}</Badge>}
-                  </Table.Td>
-                </Table.Tr>
-              );
-            })}
-          </Table.Tbody>
-        </Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th w={44}>
+                  <Checkbox
+                    aria-label={t('Select All')}
+                    checked={allSelected}
+                    onChange={(e) => setSelected(e.currentTarget.checked ? selectableUsers.map((user: any) => user._id) : [])}
+                  />
+                </Table.Th>
+                <Table.Th>{t('User ID')}</Table.Th>
+                <Table.Th>{t('Username')}</Table.Th>
+                <Table.Th>{t('Role')}</Table.Th>
+                <Table.Th>{t('Status')}</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {users.map((user: any) => {
+                const disabled = user._id === currentUser?._id;
+                return (
+                  <Table.Tr key={user._id}>
+                    <Table.Td>
+                      <Checkbox
+                        aria-label={String(user._id)}
+                        disabled={disabled}
+                        checked={selected.includes(user._id)}
+                        onChange={(e) => toggle(user._id, e.currentTarget.checked)}
+                      />
+                    </Table.Td>
+                    <Table.Td><Text size="sm">{user._id}</Text></Table.Td>
+                    <Table.Td>
+                      <Group gap="xs">
+                        <UserAvatar user={user} size="xs" />
+                        <Link to="user_detail" params={{ uid: user._id }} className="no-underline hover:underline">
+                          <Text size="sm">{user.uname || user._id}</Text>
+                        </Link>
+                      </Group>
+                    </Table.Td>
+                    <Table.Td>
+                      <Select
+                        size="xs"
+                        w={160}
+                        data={roleOptions}
+                        value={roleDraft[user._id] || user.role || 'default'}
+                        disabled={disabled}
+                        onChange={(value) => setRoleDraft((prev) => ({ ...prev, [user._id]: value || 'default' }))}
+                      />
+                    </Table.Td>
+                    <Table.Td>
+                      {user.join === false
+                        ? <Badge color="orange" variant="light">{t('Not joined yet')}</Badge>
+                        : <Badge color="green" variant="light">{t('Joined')}</Badge>}
+                    </Table.Td>
+                  </Table.Tr>
+                );
+              })}
+            </Table.Tbody>
+          </Table>
         </ScrollArea>
         <Group justify="space-between" p="md" wrap="wrap">
           <Group gap="xs">
@@ -426,7 +423,6 @@ export default function DomainUserPage() {
         domainId={args.domain?._id || domainId || 'system'}
         onSubmit={addUsers}
         loading={loading === 'set_users'}
-        error={error}
       />
     </Stack>
   );

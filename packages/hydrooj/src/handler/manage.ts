@@ -26,7 +26,7 @@ function set(key: string, value: any) {
         if (s.flag & setting.FLAG_DISABLED) return undefined;
         if ((s.flag & setting.FLAG_SECRET) && !value) return undefined;
         if (s.type === 'boolean') {
-            if (value === 'on') return true;
+            if (value === 'on' || value === true || value === 'true') return true;
             return false;
         }
         if (s.type === 'number') {
