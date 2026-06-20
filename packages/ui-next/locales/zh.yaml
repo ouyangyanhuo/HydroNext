@@ -121,6 +121,11 @@ Next: 下一步
 Import: 导入
 Export: 导出
 Loading...: 加载中...
+'Page {0} of {1}': '第 {0} 页，共 {1} 页'
+just now: 刚刚
+'{0}m ago': '{0}分钟前'
+'{0}h ago': '{0}小时前'
+'{0}d ago': '{0}天前'
 Error: 错误
 Success: 成功
 Warning: 警告
@@ -194,10 +199,15 @@ End: 结束
 User: 用户
 Users: 用户
 Problem: 题目
+Problem List: 题目列表
+My Submissions: 我的提交
+Enrolled Users: 已报名用户
+Select problems to generate a basic training plan. You can still edit the JSON plan below.: 选择题目以生成基础训练计划。你仍然可以在下方编辑 JSON 计划。
 Contest: 比赛
 Record: 记录
 Domain: 域
 Score: 分数
+Ignored: 已忽略
 Language: 语言
 Leave empty for default: 留空使用默认值
 Submissions: 递交
@@ -264,10 +274,19 @@ Running: 进行中
 Upcoming: 即将开始
 Finished: 已结束
 Scoreboard: 成绩表
+Attendee Manage: 参赛者管理
+Actions: 操作
+UnRank: 取消排名
+Rank: 排名
+Balloon Status: 气球状态
+Set Color: 设置颜色
+Color: 颜色
+Please set the balloon color for each problem first.: 请先为每道题目设置气球颜色。
 Participants: 参赛者
 Register Contest: 报名
 Registered: 已报名
-Clarifications: 澄清
+Clarifications: 赛时答疑
+Overview: 总览
 Ask a Question: 提问
 Answered: 已回答
 Pending: 待处理

@@ -526,12 +526,6 @@ export default function ContestDetailPage() {
               </Button>
             )}
 
-            {tdoc.allowPrint && (tsdoc.attend || canEdit) && (
-              <Button component={Link} to="contest_print" params={{ tid }} variant="subtle" fullWidth>
-                {t('Print')}
-              </Button>
-            )}
-
             {canEdit && (
               <>
                 <Button component={Link} to="contest_edit" params={{ tid }} variant="subtle" fullWidth>

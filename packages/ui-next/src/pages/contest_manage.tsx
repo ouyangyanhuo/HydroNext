@@ -3,6 +3,7 @@ import {
   Paper, SimpleGrid, Stack, Table, Text, Title,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { PageHeader } from '@/components/common/page-header';
@@ -24,13 +25,11 @@ function ContestManageSidebar({ tdoc }: { tdoc: any }) {
   const { t } = useI18n();
   const tid = tdoc.docId || tdoc._id;
   const items = [
-    { label: 'Contest Detail', to: 'contest_detail' },
     { label: 'Edit Contest', to: 'contest_edit' },
     { label: 'Clarifications', to: 'contest_clarification' },
     { label: 'Participants', to: 'contest_user' },
     { label: 'Balloons', to: 'contest_balloon' },
     { label: 'Scoreboard', to: 'contest_scoreboard' },
-    { label: 'Print', to: 'contest_print' },
   ];
 
   return (
@@ -216,8 +215,10 @@ export default function ContestManagePage() {
     <Stack gap="lg">
       <PageHeader title={`${t('Manage')} - ${tdoc.title}`}>
         <Group gap="xs">
+          <Button component="a" href={`/contest/${tid}`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+            {t('Back')}
+          </Button>
           <Button component={Link} to="contest_edit" params={{ tid }} size="xs" variant="light">{t('Edit')}</Button>
-          <Button component={Link} to="contest_detail" params={{ tid }} size="xs" variant="subtle">{t('Contest Detail')}</Button>
         </Group>
       </PageHeader>
 
@@ -228,7 +229,6 @@ export default function ContestManagePage() {
               <Stack gap="md">
                 <Group justify="space-between">
                   <Title order={2} size="h4">{t('Problems')}</Title>
-                  <Badge variant="light">{pids.length}</Badge>
                 </Group>
                 <Paper withBorder className="overflow-hidden">
                   <Table striped highlightOnHover>

@@ -1,4 +1,5 @@
 import { Badge } from '@mantine/core';
+import { useI18n } from '@/hooks/use-i18n';
 import { STATUS } from './status-map';
 
 const STATUS_CONFIG: Record<number, { label: string, color: string }> = {
@@ -24,11 +25,12 @@ interface RecordStatusBadgeProps {
 }
 
 export function RecordStatusBadge({ status, size = 'sm' }: RecordStatusBadgeProps) {
+  const { t } = useI18n();
   const config = STATUS_CONFIG[status] || { label: `Unknown(${status})`, color: 'gray' };
 
   return (
     <Badge color={config.color} size={size} variant="light">
-      {config.label}
+      {t(config.label)}
     </Badge>
   );
 }

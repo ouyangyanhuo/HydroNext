@@ -8,6 +8,8 @@ Home: Home
 Problems: Problems
 Contests: Contests
 Training: Training
+Invalid: Invalid
+All Training Plans: All Training Plans
 Records: Records
 Discussion: Discussion
 About preferredPrefix option: About preferredPrefix option
@@ -104,6 +106,11 @@ Next: Next
 Import: Import
 Export: Export
 Loading...: Loading...
+'Page {0} of {1}': 'Page {0} of {1}'
+just now: just now
+'{0}m ago': '{0}m ago'
+'{0}h ago': '{0}h ago'
+'{0}d ago': '{0}d ago'
 Error: Error
 Success: Success
 Warning: Warning
@@ -137,10 +144,15 @@ End: End
 User: User
 Users: Users
 Problem: Problem
+Problem List: Problem List
+My Submissions: My Submissions
+Enrolled Users: Enrolled Users
+Select problems to generate a basic training plan. You can still edit the JSON plan below.: Select problems to generate a basic training plan. You can still edit the JSON plan below.
 Contest: Contest
 Record: Record
 Domain: Domain
 Score: Score
+Ignored: Ignored
 Language: Language
 Submissions: Submissions
 Accept Rate: Accept Rate
@@ -206,10 +218,19 @@ Running: Running
 Upcoming: Upcoming
 Finished: Finished
 Scoreboard: Scoreboard
+Attendee Manage: Attendee Manage
+Actions: Actions
+UnRank: UnRank
+Rank: Rank
+Balloon Status: Balloon Status
+Set Color: Set Color
+Color: Color
+Please set the balloon color for each problem first.: Please set the balloon color for each problem first.
 Participants: Participants
 Register Contest: Register
 Registered: Registered
 Clarifications: Clarifications
+Overview: Overview
 Ask a Question: Ask a Question
 Answered: Answered
 Pending: Pending

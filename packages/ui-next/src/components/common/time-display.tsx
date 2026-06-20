@@ -1,4 +1,5 @@
 import { Text, Tooltip } from '@mantine/core';
+import { useI18n } from '@/hooks/use-i18n';
 
 interface TimeDisplayProps {
   date: string | Date | number;
@@ -6,7 +7,7 @@ interface TimeDisplayProps {
   size?: 'xs' | 'sm' | 'md';
 }
 
-function formatRelative(date: Date): string {
+function formatRelative(date: Date, t: (key: string) => string): string {
   const now = Date.now();
   const diff = now - date.getTime();
   const seconds = Math.floor(diff / 1000);
@@ -14,10 +15,10 @@ function formatRelative(date: Date): string {
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
 
-  if (seconds < 60) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 30) return `${days}d ago`;
+  if (seconds < 60) return t('just now');
+  if (minutes < 60) return t('{0}m ago').replace('{0}', String(minutes));
+  if (hours < 24) return t('{0}h ago').replace('{0}', String(hours));
+  if (days < 30) return t('{0}d ago').replace('{0}', String(days));
   return date.toLocaleDateString();
 }
 
@@ -26,11 +27,12 @@ function formatAbsolute(date: Date): string {
 }
 
 export function TimeDisplay({ date, format = 'both', size = 'xs' }: TimeDisplayProps) {
+  const { t } = useI18n();
   const d = new Date(date);
-  if (isNaN(d.getTime())) return <Text component="span" size={size} c="dimmed">-</Text>;
+  if (Number.isNaN(d.getTime())) return <Text component="span" size={size} c="dimmed">-</Text>;
 
   const absolute = formatAbsolute(d);
-  const relative = formatRelative(d);
+  const relative = formatRelative(d, t);
 
   if (format === 'absolute') {
     return <Text component="span" size={size} c="dimmed">{absolute}</Text>;

@@ -1,5 +1,6 @@
 import { Group, Pagination, Text } from '@mantine/core';
 import { useNavigate } from '@/context/router';
+import { useI18n } from '@/hooks/use-i18n';
 
 interface PaginatorProps {
   page: number;
@@ -9,6 +10,7 @@ interface PaginatorProps {
 
 export function Paginator({ page, totalPages, baseUrl }: PaginatorProps) {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   if (totalPages <= 1) return null;
 
@@ -33,7 +35,7 @@ export function Paginator({ page, totalPages, baseUrl }: PaginatorProps) {
         size="sm"
       />
       <Text size="xs" c="dimmed">
-        Page {page} of {totalPages}
+        {t('Page {0} of {1}').replace('{0}', String(page)).replace('{1}', String(totalPages))}
       </Text>
     </Group>
   );
