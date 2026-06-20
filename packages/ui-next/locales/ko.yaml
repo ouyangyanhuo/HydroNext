@@ -470,3 +470,49 @@ Difficulty Algorithm: 난이도 알고리즘
 Dataset Format: 테스트데이터 형식
 Forgot Password and/or Username: 비밀번호 또는 사용자 이름을 잊은 경우
 Markdown: Markdown
+
+# Additional translations
+Invalid: 무효
+All Training Plans: 모든 훈련 계획
+About preferredPrefix option: preferredPrefix 옵션에 대해
+Contest has not started yet: 대회가 아직 시작되지 않았습니다
+Enter a new name for the file: 파일의 새 이름을 입력하세요
+'Page {0} of {1}': '{0} / {1} 페이지'
+just now: 방금
+'{0}m ago': '{0}분 전'
+'{0}h ago': '{0}시간 전'
+'{0}d ago': '{0}일 전'
+Access Denied: 접근이 거부되었습니다
+Problem List: 문제 목록
+My Submissions: 내 제출
+All Submissions: 모든 제출
+Enrolled Users: 등록된 사용자
+Select problems to generate a basic training plan. You can still edit the JSON plan below.: 문제를 선택하여 기본 훈련 계획을 생성합니다. 아래 JSON 계획을 계속 편집할 수 있습니다.
+Ignored: 무시됨
+Not joined yet: 미참가
+No changes: 변경 없음
+Leave empty for default: 기본값은 비워두세요
+Preferred Prefix: 선호 접두사
+Import From Hydro: Hydro에서 가져오기
+Please select a file: 파일을 선택하세요
+Attendee Manage: 참가자 관리
+Actions: 작업
+UnRank: 순위 제외
+Rank: 순위
+Balloon Status: 풍선 상태
+Set Color: 색상 설정
+Color: 색상
+Please set the balloon color for each problem first.: 먼저 각 문제의 풍선 색상을 설정하세요.
+Overview: 개요
+Quit Scratchpad: 스크래치패드 종료
+The preferred problem ID prefix.: 선호하는 문제 ID 접두사.
+Self Test: 셀프 테스트
+Run Result: 실행 결과
+No result: 결과 없음
+Default: 기본값
+Make the problem hidden.: 문제를 숨깁니다.
+More import sources can be added via plugins.: 플러그인으로 더 많은 가져오기 소스를 추가할 수 있습니다.
+Select a zip file: zip 파일 선택
+Upload zipfile: zip 파일 업로드
+What is this?: 이것이 무엇인가요?
+preferredPrefix_hint: 선호하는 문제 ID 접두사 힌트.

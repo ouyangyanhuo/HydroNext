@@ -470,3 +470,49 @@ Difficulty Algorithm: 難易度アルゴリズム
 Dataset Format: テストデータ形式
 Forgot Password and/or Username: パスワードまたはユーザー名を忘れた場合
 Markdown: Markdown
+
+# Additional translations
+Invalid: 無効
+All Training Plans: すべてのトレーニングプラン
+About preferredPrefix option: preferredPrefix オプションについて
+Contest has not started yet: コンテストはまだ始まっていません
+Enter a new name for the file: ファイルの新しい名前を入力してください
+'Page {0} of {1}': '{0} / {1} ページ'
+just now: たった今
+'{0}m ago': '{0}分前'
+'{0}h ago': '{0}時間前'
+'{0}d ago': '{0}日前'
+Access Denied: アクセスが拒否されました
+Problem List: 問題一覧
+My Submissions: 自分の提出
+All Submissions: すべての提出
+Enrolled Users: 登録ユーザー
+Select problems to generate a basic training plan. You can still edit the JSON plan below.: 問題を選択して基本的なトレーニングプランを生成します。下のJSONプランを引き続き編集できます。
+Ignored: 無視
+Not joined yet: 未参加
+No changes: 変更なし
+Leave empty for default: デフォルトの場合は空欄
+Preferred Prefix: 希望プレフィックス
+Import From Hydro: Hydro からインポート
+Please select a file: ファイルを選択してください
+Attendee Manage: 参加者管理
+Actions: 操作
+UnRank: ランク除外
+Rank: ランク
+Balloon Status: バルーン状態
+Set Color: 色を設定
+Color: 色
+Please set the balloon color for each problem first.: まず各問題のバルーン色を設定してください。
+Overview: 概要
+Quit Scratchpad: スクラッチパッドを終了
+The preferred problem ID prefix.: 希望の問題IDプレフィックス。
+Self Test: セルフテスト
+Run Result: 実行結果
+No result: 結果なし
+Default: デフォルト
+Make the problem hidden.: 問題を非表示にする。
+More import sources can be added via plugins.: プラグインで追加のインポートソースを追加できます。
+Select a zip file: zipファイルを選択
+Upload zipfile: zipファイルをアップロード
+What is this?: これは何ですか？
+preferredPrefix_hint: 希望の問題IDプレフィックスのヒント。
