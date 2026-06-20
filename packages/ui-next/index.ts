@@ -54,6 +54,17 @@ function getAddonEntries(): Record<string, string> {
     return entries;
 }
 
+function getRouteMap(ctx: Context): Record<string, string> {
+    const cached = ctx.server.routeMap;
+    if (cached && Object.keys(cached).length) return cached;
+
+    const map: Record<string, string> = Object.create(null);
+    for (const layer of ctx.server.router?.stack || []) {
+        if (layer.name && typeof layer.path === 'string') map[layer.name] = layer.path;
+    }
+    return map;
+}
+
 function hydroPlugins(): Plugin {
     const virtualModuleId = 'virtual:hydro-plugins';
     const resolvedVirtualModuleId = `\0${virtualModuleId}`;
@@ -218,7 +229,7 @@ export async function apply(ctx: Context) {
                         ...args,
                     },
                     url: context.handler.context.req.url!,
-                    route_map: ctx.server.routeMap,
+                    route_map: getRouteMap(ctx),
                     endpoint: ctx.setting.get('server.url') || undefined,
                     locale: getLocaleData(userLang),
                     lang: userLang || 'zh',
@@ -254,7 +265,7 @@ export async function apply(ctx: Context) {
                         ...args,
                     },
                     url: context.handler.context.req.url!,
-                    route_map: ctx.server.routeMap,
+                    route_map: getRouteMap(ctx),
                     endpoint: ctx.setting.get('server.url') || undefined,
                     plugins_url: `/plugins/${hashes['plugins.js'] || '00000000'}/plugins.js`,
                     locale: getLocaleData(userLang),

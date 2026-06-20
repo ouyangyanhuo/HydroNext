@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
+import { match } from 'path-to-regexp';
 import { endpointOrigins, endpoints, isInjected, routeMapStore } from '../globals';
 import { useSetPageData } from './page-data';
 
@@ -32,6 +33,26 @@ export interface RouterState {
 
 interface RouterNavigateContextValue {
   navigate: (url: string) => Promise<void>;
+}
+
+function getRoutePath(url: string): string {
+  const pathname = new URL(url, endpoints[0]).pathname;
+  if (!pathname.startsWith('/d/')) return pathname;
+  return `/${pathname.split('/').slice(3).join('/')}`;
+}
+
+function resolvePageName(url: string, headerName: string, routeMap: Record<string, string>): string {
+  if (headerName) return headerName;
+
+  const pathname = getRoutePath(url);
+  for (const [name, pattern] of Object.entries(routeMap)) {
+    try {
+      if (match(pattern)(pathname)) return name;
+    } catch {
+      // Ignore invalid patterns from third-party routes.
+    }
+  }
+  return '';
 }
 
 const RouterStateContext = createContext<RouterState | null>(null);
@@ -104,8 +125,12 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
             window.location.href = body.url;
             return false;
           }
-          const pageName = res.headers.get('x-hydro-page') || '';
-          console.log('[Hydro] data from', reqUrl, 'received:', body, 'pageName:', pageName);
+          const headerPageName = res.headers.get('x-hydro-page') || '';
+          const nextRouteMap = init && body.routeMap && typeof body.routeMap === 'object'
+            ? { ...routeMapStore.getSnapshot(), ...body.routeMap }
+            : routeMapStore.getSnapshot();
+          const pageName = resolvePageName(reqUrl, headerPageName, nextRouteMap);
+          // console.log('[Hydro] data from', reqUrl, 'received:', body, 'pageName:', pageName);
 
           if (gen !== genRef.current) return false;
 

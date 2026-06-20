@@ -39,7 +39,7 @@ export function useWebSocket({
       const ws = new WebSocket(fullUrl);
 
       ws.onopen = () => {
-        console.log('[Hydro WS] Connected:', url);
+        // console.log('[Hydro WS] Connected:', url);
         for (const message of pendingMessages.current.splice(0)) {
           ws.send(JSON.stringify(message));
         }
@@ -56,7 +56,7 @@ export function useWebSocket({
       };
 
       ws.onclose = () => {
-        console.log('[Hydro WS] Disconnected:', url);
+        // console.log('[Hydro WS] Disconnected:', url);
         onClose?.();
         if (shouldReconnect.current) {
           reconnectTimer.current = setTimeout(connect, reconnectInterval);
@@ -64,14 +64,14 @@ export function useWebSocket({
       };
 
       ws.onerror = (err) => {
-        console.warn('[Hydro WS] Error:', url);
+        // console.warn('[Hydro WS] Error:', url);
         onError?.(err);
         ws.close();
       };
 
       wsRef.current = ws;
     } catch (err) {
-      console.warn('[Hydro WS] Failed to connect:', err);
+      // console.warn('[Hydro WS] Failed to connect:', err);
       if (shouldReconnect.current) {
         reconnectTimer.current = setTimeout(connect, reconnectInterval);
       }
