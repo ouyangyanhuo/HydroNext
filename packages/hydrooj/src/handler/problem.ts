@@ -481,16 +481,10 @@ export class ProblemSubmitHandler extends ProblemDetailHandler {
     }
 
     async get() {
-        this.response.template = 'problem_submit.html';
-        const langRange = (typeof this.pdoc.config === 'object' && this.pdoc.config.langs)
-            ? Object.fromEntries(this.pdoc.config.langs.map((i) => [i, setting.langs[i]?.display || i]))
-            : setting.SETTINGS_BY_KEY.codeLang.range;
-        this.response.body.langRange = langRange;
-        this.response.body.page_name = this.tdoc
-            ? this.tdoc.rule === 'homework'
-                ? 'homework_detail_problem_submit'
-                : 'contest_detail_problem_submit'
-            : 'problem_submit';
+        const pid = this.pdoc.pid || this.pdoc.docId;
+        const prefix = this.context.originalPath?.match(/^\/d\/[^/]+/)?.[0] || '';
+        const tid = this.args.tid;
+        this.response.redirect = tid ? `${prefix}/p/${pid}?tid=${tid}` : `${prefix}/p/${pid}`;
     }
 
     @param('lang', Types.Name)

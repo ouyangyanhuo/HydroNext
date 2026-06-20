@@ -6,6 +6,7 @@ interface WebSocketOptions {
   onMessage?: (data: any) => void;
   onOpen?: () => void;
   onClose?: () => void;
+  onError?: (event: Event) => void;
   autoReconnect?: boolean;
   reconnectInterval?: number;
   enabled?: boolean;
@@ -16,6 +17,7 @@ export function useWebSocket({
   onMessage,
   onOpen,
   onClose,
+  onError,
   autoReconnect = true,
   reconnectInterval = 3000,
   enabled = true,
@@ -23,6 +25,7 @@ export function useWebSocket({
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const pendingMessages = useRef<any[]>([]);
+  const shouldReconnect = useRef(autoReconnect);
   const ui = useSessionStore((s) => s.ui);
 
   const connect = useCallback(() => {
@@ -55,24 +58,25 @@ export function useWebSocket({
       ws.onclose = () => {
         console.log('[Hydro WS] Disconnected:', url);
         onClose?.();
-        if (autoReconnect) {
+        if (shouldReconnect.current) {
           reconnectTimer.current = setTimeout(connect, reconnectInterval);
         }
       };
 
       ws.onerror = (err) => {
-        console.error('[Hydro WS] Error:', url, err);
+        console.warn('[Hydro WS] Error:', url);
+        onError?.(err);
         ws.close();
       };
 
       wsRef.current = ws;
     } catch (err) {
-      console.error('[Hydro WS] Failed to connect:', err);
-      if (autoReconnect) {
+      console.warn('[Hydro WS] Failed to connect:', err);
+      if (shouldReconnect.current) {
         reconnectTimer.current = setTimeout(connect, reconnectInterval);
       }
     }
-  }, [enabled, url, ui.ws_prefix, onMessage, onOpen, onClose, autoReconnect, reconnectInterval]);
+  }, [enabled, url, ui.ws_prefix, onMessage, onOpen, onClose, onError, autoReconnect, reconnectInterval]);
 
   const send = useCallback((data: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -84,12 +88,14 @@ export function useWebSocket({
 
   useEffect(() => {
     if (!enabled) return undefined;
+    shouldReconnect.current = autoReconnect;
     connect();
     return () => {
+      shouldReconnect.current = false;
       clearTimeout(reconnectTimer.current);
       wsRef.current?.close();
     };
-  }, [connect, enabled]);
+  }, [connect, enabled, autoReconnect]);
 
   return { send, ws: wsRef };
 }

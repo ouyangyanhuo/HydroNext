@@ -33,7 +33,7 @@ export function useRecordSocket(rid: string | undefined) {
   useWebSocket({
     url: socketUrl,
     onMessage: handleMessage,
-    autoReconnect: true,
+    autoReconnect: false,
     reconnectInterval: 5000,
     enabled: !!rid,
   });

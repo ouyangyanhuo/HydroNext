@@ -280,18 +280,12 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
       <Paper withBorder p="md" className="hydro-panel">
         <Stack gap="xs">
           {canSubmit ? (
-            <SidebarLinkButton href={buildUrl('problem_submit', { pid })} variant="filled">
-              {t('Submit')}
-            </SidebarLinkButton>
+            <Button onClick={onToggleScratchpad} variant="filled" fullWidth size="sm" justify="flex-start">
+              {scratchpadOpen ? t('Quit Scratchpad') : t('Enter Online Programming Mode')}
+            </Button>
           ) : (
             <Button disabled fullWidth size="sm" justify="flex-start">
               {isLoggedIn ? t('No Permission to Submit') : t('Login to Submit')}
-            </Button>
-          )}
-
-          {canSubmit && (
-            <Button onClick={onToggleScratchpad} variant="light" fullWidth size="sm" justify="flex-start">
-              {scratchpadOpen ? t('Quit Scratchpad') : t('Enter Online Programming Mode')}
             </Button>
           )}
 

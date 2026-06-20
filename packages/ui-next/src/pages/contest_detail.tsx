@@ -112,7 +112,7 @@ function ContestProblemList({ tdoc, pdict, psdict, rdict, correction, showScore,
                         )}
                       </div>
                       {pdoc.config?.type !== 'objective' && (
-                        <Button component={Link} href={buildUrl('problem_submit', { pid }, { tid: String(tdoc.docId || tdoc._id) })} size="compact-xs" variant="light">
+                        <Button component={Link} to={tdoc.rule === 'homework' ? 'homework_detail_problem' : 'contest_detail_problem'} params={{ pid, tid: String(tdoc.docId || tdoc._id) }} size="compact-xs" variant="light">
                           {t('Submit')}
                         </Button>
                       )}
