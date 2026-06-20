@@ -158,6 +158,7 @@ class TrainingDetailHandler extends Handler {
             ? await user.listGroup(domainId) : [];
         this.response.body = {
             tdoc, tsdoc, pids, pdict, psdict, ndict, nsdict, udoc, udict, selfPsdict, groups, missing,
+            canEdit: this.user.own(tdoc) || this.user.hasPerm(PERM.PERM_EDIT_TRAINING),
         };
         this.response.body.tdoc.description = this.response.body.tdoc.description
             .replace(/\(file:\/\//g, `(./${tdoc.docId}/file/`)

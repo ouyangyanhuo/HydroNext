@@ -7,6 +7,7 @@ import { usePageData } from '@/context/page-data';
 import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useDomain } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
+import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
 import { LanguageMenu } from './language-menu';
@@ -15,6 +16,7 @@ function UserMenu() {
   const user = useCurrentUser();
   const { t } = useI18n();
   const domainId = useSessionStore((s) => s.ui.domainId);
+  const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
 
   return (
     <Menu shadow="md" width={220} position="bottom-end">
@@ -46,6 +48,11 @@ function UserMenu() {
         <Menu.Item component={Link} to="home_domain">
           {t('My Domains')}
         </Menu.Item>
+        {isSu && (
+          <Menu.Item component={Link} to="manage_dashboard">
+            {t('Manage')}
+          </Menu.Item>
+        )}
         <Menu.Divider />
         <Menu.Item component={Link} to="user_logout" color="red">
           {t('Logout')}
@@ -88,6 +95,7 @@ export function TopNav() {
   const containerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+  const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
 
   useEffect(() => {
     const activeTab = tabRefs.current.get(name);
@@ -182,6 +190,11 @@ export function TopNav() {
                 <Button component={Link} to="home_domain" variant="subtle" fullWidth justify="flex-start" onClick={close}>
                   {t('My Domains')}
                 </Button>
+                {isSu && (
+                  <Button component={Link} to="manage_dashboard" variant="subtle" fullWidth justify="flex-start" onClick={close}>
+                    {t('Manage')}
+                  </Button>
+                )}
                 <Button component={Link} to="user_logout" variant="subtle" color="red" fullWidth justify="flex-start" onClick={close}>
                   {t('Logout')}
                 </Button>

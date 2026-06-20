@@ -46,7 +46,7 @@ A verification link will be sent to your email.: A verification link will be sen
 Send Verification Email: Send Verification Email
 Passwords do not match: Passwords do not match
 Registration failed: Registration failed
-"Too frequent operations of send_mail (limit: 1 operations in 60 seconds).": "Too frequent operations of send_mail (limit: 1 operations in 60 seconds)."
+'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': 'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).'
 Logging out...: Logging out...
 Account Deletion Pending: Account Deletion Pending
 You do not have permission to import problems.: You do not have permission to import problems.
@@ -112,6 +112,7 @@ Settings: Settings
 Configuration: Configuration
 Dashboard: Dashboard
 Manage: Manage
+Access Denied: Access Denied
 Admin: Admin
 View All: View All
 View Record: View Record
@@ -315,7 +316,7 @@ Recent Discussions: Recent Discussions
 Powered by: Powered by
 Paste limit exceeded: Paste limit exceeded
 File too large: File too large
-"File too large: {name}": "File too large: {name}"
+'File too large: {name}': 'File too large: {name}'
 Drag files here or click to upload: Drag files here or click to upload
 Uploading...: Uploading...
 Nothing to preview: Nothing to preview
@@ -395,8 +396,8 @@ Related: Related
 Lucky: Lucky
 Random Problem: Random Problem
 Pick a problem randomly based on the current filter.: Pick a problem randomly based on the current filter.
-sort::default: Default
-sort::recent: Recent
+'sort::default': Default
+'sort::recent': Recent
 AC: AC
 Tried: Tried
 The preferred problem ID prefix.: The preferred problem ID prefix.
@@ -404,12 +405,12 @@ Time Limit: Time Limit
 Memory Limit: Memory Limit
 Accepted: Accepted
 Difficulty: Difficulty
-problemType::default: Traditional
-problemType::submit_answer: Submit Answer
-problemType::interactive: Interactive
-problemType::communication: Communication
-problemType::objective: Objective
-problemType::remote_judge: Remote Judge
+'problemType::default': Traditional
+'problemType::submit_answer': Submit Answer
+'problemType::interactive': Interactive
+'problemType::communication': Communication
+'problemType::objective': Objective
+'problemType::remote_judge': Remote Judge
 files: files
 submissions: submissions
 Filename: Filename
@@ -437,7 +438,11 @@ Download failed: Download failed
 Copy failed: Copy failed
 Target: Target
 Monaco Editor: Monaco Editor
-Pretest: Pretest
+Pretest: Self Test
+Self Test: Self Test
+Run Result: Run Result
+No result: No result
+Default: Default
 Input: Input
 Basic: Basic
 Languages: Languages

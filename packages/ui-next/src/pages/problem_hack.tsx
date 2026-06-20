@@ -30,6 +30,8 @@ export default function ProblemHackPage() {
       });
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Hack failed')));
+      else if (data.redirect) navigate(data.redirect);
+      else if (data.rid) navigate(`/record/${data.rid}`);
       else navigate(window.location.pathname.replace('/hack', ''));
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

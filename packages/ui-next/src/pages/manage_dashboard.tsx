@@ -2,6 +2,7 @@ import { Badge, Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@man
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
 import { useI18n } from '@/hooks/use-i18n';
+import { PRIV, useHasPriv } from '@/hooks/use-permission';
 
 const entries = [
   { to: 'manage_setting', title: 'System Settings', desc: 'Runtime settings grouped by feature.', group: 'Configuration' },
@@ -14,6 +15,16 @@ const entries = [
 
 export default function ManageDashboardPage() {
   const { t } = useI18n();
+  const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
+
+  if (!isSu) {
+    return (
+      <Stack gap="lg">
+        <PageHeader title={t('System Management')} />
+        <Text c="dimmed">{t('Access Denied')}</Text>
+      </Stack>
+    );
+  }
 
   return (
     <Stack gap="lg">

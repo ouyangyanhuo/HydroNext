@@ -1,13 +1,25 @@
 import { formatErrorMessage } from '@/utils/error';
 import { getLangDisplay, LANG_DISPLAY } from '@/utils/lang-display';
-import { Badge, Button, Card, Checkbox, Group, MultiSelect, NumberInput, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import { Avatar, Badge, Button, Card, Checkbox, Group, MultiSelect, NumberInput, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
+import { useDomainId } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
+
+interface SearchOption {
+  value: string;
+  label: string;
+  description?: string;
+  avatarUrl?: string;
+}
+
+const EMPTY_MARKDOWN = '<!-- empty -->';
 
 function pad(value: number) {
   return String(value).padStart(2, '0');
@@ -44,10 +56,92 @@ function languageOptions() {
   return Object.entries(LANG_DISPLAY).map(([value, label]) => ({ value, label }));
 }
 
+function splitValues(value: string | string[] | number[]) {
+  if (Array.isArray(value)) return value.map((item) => String(item)).filter(Boolean);
+  return String(value || '').split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function mergeOptions(...groups: SearchOption[][]) {
+  const seen = new Set<string>();
+  const result: SearchOption[] = [];
+  for (const group of groups) {
+    for (const item of group) {
+      if (seen.has(item.value)) continue;
+      seen.add(item.value);
+      result.push(item);
+    }
+  }
+  return result;
+}
+
+async function callApi(domainId: string, op: string, args: Record<string, any>, projection: string[]) {
+  const res = await fetch(`/d/${encodeURIComponent(domainId)}/api/${encodeURIComponent(op)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ args, projection }),
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) throw data.error || new Error('API request failed');
+  return data;
+}
+
+function AsyncTagSelect({
+  label,
+  placeholder,
+  className,
+  value,
+  data,
+  loading,
+  withAvatar,
+  onSearch,
+  onChange,
+}: {
+  label: string;
+  placeholder: string;
+  className?: string;
+  value: string[];
+  data: SearchOption[];
+  loading: boolean;
+  withAvatar?: boolean;
+  onSearch: (query: string) => void;
+  onChange: (value: string[]) => void;
+}) {
+  return (
+    <MultiSelect
+      className={className}
+      label={label}
+      placeholder={placeholder}
+      data={data}
+      value={value}
+      searchable
+      clearable
+      hidePickedOptions
+      nothingFoundMessage="No results"
+      rightSection={loading ? <Text size="xs" c="dimmed">...</Text> : null}
+      onSearchChange={onSearch}
+      onChange={onChange}
+      renderOption={({ option }) => {
+        const item = option as SearchOption;
+        return (
+          <Group gap="sm" wrap="nowrap">
+            {withAvatar && <Avatar src={item.avatarUrl} size={30} radius="xl" />}
+            <div className="min-w-0">
+              <Text size="sm" fw={600} truncate>{item.label}</Text>
+              {item.description && <Text size="xs" c="dimmed" truncate>{item.description}</Text>}
+            </div>
+          </Group>
+        );
+      }}
+    />
+  );
+}
+
 export default function ContestEditPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
+  const domainId = useDomainId();
   const tdoc = args.tdoc || {};
   const isNew = !tdoc.docId;
   const begin = splitDateTime(args.beginAt || tdoc.beginAt);
@@ -77,6 +171,12 @@ export default function ContestEditPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [problemOptions, setProblemOptions] = useState<SearchOption[]>(() => splitValues(args.pids || (tdoc.pids || []).join(',')).map((id) => ({ value: id, label: `ID ${id}` })));
+  const [userOptions, setUserOptions] = useState<SearchOption[]>(() => splitValues((tdoc.maintainer || []).join(',')).map((id) => ({ value: id, label: `UID ${id}` })));
+  const [problemSearching, setProblemSearching] = useState(false);
+  const [userSearching, setUserSearching] = useState(false);
+  const problemSearchSeq = useRef(0);
+  const userSearchSeq = useRef(0);
 
   const endAt = useMemo(() => addHours(form.beginAtDate, form.beginAtTime, Number(form.duration)), [form.beginAtDate, form.beginAtTime, form.duration]);
   const showLock = ['acm', 'ioi'].includes(form.rule);
@@ -84,6 +184,108 @@ export default function ContestEditPage() {
   const showHiddenScoreboard = ['oi', 'strictioi'].includes(form.rule);
   const files = args.files || tdoc.files || [];
   const langs = languageOptions();
+  const selectedProblems = splitValues(form.pids);
+  const selectedMaintainers = splitValues(form.maintainer);
+
+  const problemData = useMemo(
+    () => mergeOptions(selectedProblems.map((id) => ({ value: id, label: problemOptions.find((item) => item.value === id)?.label || `ID ${id}` })), problemOptions),
+    [problemOptions, selectedProblems],
+  );
+  const userData = useMemo(
+    () => mergeOptions(selectedMaintainers.map((id) => ({ value: id, label: userOptions.find((item) => item.value === id)?.label || `UID ${id}` })), userOptions),
+    [selectedMaintainers, userOptions],
+  );
+
+  useEffect(() => {
+    let disposed = false;
+    const ids = splitValues(form.pids).map((id) => Number(id)).filter((id) => Number.isSafeInteger(id));
+    if (!domainId || !ids.length) return undefined;
+    callApi(domainId, 'problems', { ids }, ['docId', 'pid', 'title'])
+      .then((pdocs: any[]) => {
+        if (disposed) return;
+        setProblemOptions((current) => mergeOptions(
+          pdocs.map((pdoc) => ({
+            value: String(pdoc.docId),
+            label: `${pdoc.pid ? `${pdoc.pid} ` : ''}${pdoc.title || `ID ${pdoc.docId}`}`,
+            description: `ID = ${pdoc.docId}`,
+          })),
+          current,
+        ));
+      })
+      .catch(() => undefined);
+    return () => { disposed = true; };
+  }, [domainId]);
+
+  useEffect(() => {
+    let disposed = false;
+    const auto = splitValues(form.maintainer);
+    if (!domainId || !auto.length) return undefined;
+    callApi(domainId, 'users', { auto }, ['_id', 'uname', 'displayName', 'avatarUrl'])
+      .then((udocs: any[]) => {
+        if (disposed) return;
+        setUserOptions((current) => mergeOptions(
+          udocs.map((udoc) => ({
+            value: String(udoc._id),
+            label: `${udoc.uname}${udoc.displayName ? ` (${udoc.displayName})` : ''}`,
+            description: `UID = ${udoc._id}`,
+            avatarUrl: udoc.avatarUrl,
+          })),
+          current,
+        ));
+      })
+      .catch(() => undefined);
+    return () => { disposed = true; };
+  }, [domainId]);
+
+  const searchProblems = async (query: string) => {
+    if (!domainId) return;
+    const seq = ++problemSearchSeq.current;
+    setProblemSearching(true);
+    try {
+      const res = await fetch(buildUrl('problem_main', { domainId }, { q: query, quick: 'true', sort: query ? 'default' : 'recent' }), { headers: { Accept: 'application/json' } });
+      const data = await res.json();
+      if (seq !== problemSearchSeq.current) return;
+      const pdocs = Array.isArray(data.pdocs) ? data.pdocs : [];
+      setProblemOptions((current) => mergeOptions(
+        pdocs.map((pdoc: any) => ({
+          value: String(pdoc.docId),
+          label: `${pdoc.pid ? `${pdoc.pid} ` : ''}${pdoc.title || `ID ${pdoc.docId}`}`,
+          description: `ID = ${pdoc.docId}`,
+        })),
+        current,
+      ));
+    } catch {
+      notifications.show({ title: t('Problem search failed'), message: '', color: 'red' });
+    } finally {
+      if (seq === problemSearchSeq.current) setProblemSearching(false);
+    }
+  };
+
+  const searchUsers = async (query: string) => {
+    const seq = ++userSearchSeq.current;
+    if (!domainId || !query.trim()) {
+      setUserSearching(false);
+      return;
+    }
+    setUserSearching(true);
+    try {
+      const udocs = await callApi(domainId, 'users', { search: query, limit: 10 }, ['_id', 'uname', 'displayName', 'avatarUrl']);
+      if (seq !== userSearchSeq.current) return;
+      setUserOptions((current) => mergeOptions(
+        udocs.map((udoc: any) => ({
+          value: String(udoc._id),
+          label: `${udoc.uname}${udoc.displayName ? ` (${udoc.displayName})` : ''}`,
+          description: `UID = ${udoc._id}`,
+          avatarUrl: udoc.avatarUrl,
+        })),
+        current,
+      ));
+    } catch {
+      notifications.show({ title: t('User search failed'), message: '', color: 'red' });
+    } finally {
+      if (seq === userSearchSeq.current) setUserSearching(false);
+    }
+  };
 
   const handleSubmit = async (clone = false) => {
     setLoading(true);
@@ -92,6 +294,7 @@ export default function ContestEditPage() {
       const body: any = {
         ...form,
         operation: 'update',
+        content: form.content.trim() || EMPTY_MARKDOWN,
         duration: Number(form.duration),
         code: form.permission === 'invite' ? form.code : '',
         assign: form.permission === 'assign' ? form.assign : '',
@@ -100,19 +303,27 @@ export default function ContestEditPage() {
         keepScoreboardHidden: showHiddenScoreboard ? form.keepScoreboardHidden : false,
       };
       delete body.permission;
-      const res = await fetch(clone ? '/contest/create' : window.location.href, {
+      const res = await fetch(clone ? buildUrl('contest_create') : window.location.href, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(body),
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Save failed')));
-      else if (data.redirect) navigate(data.redirect);
-      else if (data.tid) navigate(`/contest/${data.tid}`);
-      else navigate(isNew ? '/contest' : `/contest/${tdoc.docId}`);
+      if (!res.ok || data.error) {
+        const msg = formatErrorMessage(data.error, t('Save failed'));
+        setError(msg);
+        notifications.show({ title: msg, message: '', color: 'red' });
+      } else {
+        notifications.show({ title: isNew ? t('Created successfully') : t('Saved'), message: '', color: 'green' });
+        if (data.redirect) navigate(data.redirect);
+        else if (data.tid) navigate(`/contest/${data.tid}`);
+        else navigate(isNew ? buildUrl('contest_main') : buildUrl('contest_detail', { tid: tdoc.docId }));
+      }
     } catch (err: any) {
-      setError(err?.message || t('Network error'));
+      const msg = err?.message || t('Network error');
+      setError(msg);
+      notifications.show({ title: msg, message: '', color: 'red' });
     } finally {
       setLoading(false);
     }
@@ -153,12 +364,15 @@ export default function ContestEditPage() {
               <TextInput label={t('Begin Time')} type="time" value={form.beginAtTime} onChange={(e) => setForm({ ...form, beginAtTime: e.currentTarget.value })} />
               <NumberInput label={t('Duration (hours)')} value={form.duration} min={0.25} step={0.5} onChange={(value) => setForm({ ...form, duration: Number(value) || 0 })} />
               <TextInput label={t('End Time')} value={endAt} readOnly />
-              <TextInput
+              <AsyncTagSelect
                 className="sm:col-span-4"
                 label={t('Problems')}
-                value={form.pids}
-                onChange={(e) => setForm({ ...form, pids: e.currentTarget.value })}
                 placeholder={t("Seperated with ','")}
+                value={selectedProblems}
+                data={problemData}
+                loading={problemSearching}
+                onSearch={searchProblems}
+                onChange={(value) => setForm({ ...form, pids: value.join(',') })}
               />
             </SimpleGrid>
           </Card>
@@ -176,11 +390,15 @@ export default function ContestEditPage() {
           <Card withBorder p="lg" className="hydro-content-card">
             <Title order={3} size="h4" mb="md">{t('Permission Control')}</Title>
             <Stack gap="md">
-              <TextInput
+              <AsyncTagSelect
                 label={t('Contest Maintainer')}
-                value={form.maintainer}
-                onChange={(e) => setForm({ ...form, maintainer: e.currentTarget.value })}
-                placeholder="UID, UID"
+                placeholder={t('Username / UID')}
+                value={selectedMaintainers}
+                data={userData}
+                loading={userSearching}
+                withAvatar
+                onSearch={searchUsers}
+                onChange={(value) => setForm({ ...form, maintainer: value.join(',') })}
               />
               <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
                 <Select

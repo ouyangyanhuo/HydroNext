@@ -38,6 +38,7 @@
     "is-relative-url": "^4.1.0",
     "js-yaml": "^4.2.0",
     "markdown-it-mark": "^4.0.0",
+    "monaco-themes": "0.4.7",
     "path-to-regexp": "^8.4.2",
     "pdfjs-dist": "^6.0.227",
     "react": "^19.2.7",

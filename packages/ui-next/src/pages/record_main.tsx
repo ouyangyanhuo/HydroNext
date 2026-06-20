@@ -1,4 +1,5 @@
-import { Badge, Stack, Text } from '@mantine/core';
+import { Badge, Button, Stack, Text } from '@mantine/core';
+import { IconPlayerPlay } from '@tabler/icons-react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
@@ -6,13 +7,19 @@ import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
+import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 
 export default function RecordMainPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
+  const user = useCurrentUser();
   const domainId = useSessionStore((s) => s.ui.domainId);
+  const canViewCodeReplay = useHasPriv(PRIV.PRIV_READ_RECORD_CODE);
 
   const rdocs = args.rdocs || [];
   const pdict = args.pdict || {};
@@ -108,6 +115,25 @@ export default function RecordMainPage() {
         ) : (
           <Text size="xs" c="dimmed">-</Text>
         )
+      ),
+    },
+    {
+      key: 'actions',
+      title: t('Actions'),
+      width: 120,
+      align: 'right' as const,
+      render: (r: any) => (
+        canViewCodeReplay || r.uid === user._id ? (
+          <Button
+            component={Link}
+            href={`${buildUrl('record_detail', { rid: r._id })}/replay`}
+            size="compact-xs"
+            variant="light"
+            leftSection={<IconPlayerPlay size={14} />}
+          >
+            {t('Code Replay')}
+          </Button>
+        ) : null
       ),
     },
   ];

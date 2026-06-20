@@ -47,8 +47,12 @@ export default function ProblemSubmitPage() {
       const data = await res.json();
       if (data.error) {
         setError(formatErrorMessage(data.error, t('Submission failed')));
+      } else if (data.redirect) {
+        navigate(data.redirect);
       } else if (data.rid) {
         navigate(`/record/${data.rid}`);
+      } else if (data.tid) {
+        navigate(`/contest/${data.tid}/problems`);
       } else {
         navigate(window.location.pathname.replace('/submit', ''));
       }

@@ -9,7 +9,7 @@ import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { UserLink } from '@/components/user/user-link';
-import { usePageData } from '@/context/page-data';
+import { usePageData, useUiContext, useUserContext } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
@@ -379,8 +379,11 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
 
 export default function ProblemDetailPage() {
   const { args } = usePageData();
+  const ui = useUiContext();
+  const user = useUserContext();
   const { t } = useI18n();
   const sessionLanguage = useSessionStore((s) => s.language);
+  const buildUrl = useBuildUrl();
 
   const pdoc = args.pdoc || {};
   const psdoc = args.psdoc;
@@ -416,6 +419,15 @@ export default function ProblemDetailPage() {
 
   const title = extractLocalizedContent(pdoc.title, selectedLang || sessionLanguage);
   const scratchpadLangs = Object.fromEntries((pdoc.config?.langs || []).map((lang: string) => [lang, { display: getLangDisplay(lang) }]));
+  const submitPid = pdoc.docId || pdoc.pid;
+  const tid = args.tdoc?.docId || args.tdoc?._id || new URLSearchParams(window.location.search).get('tid') || undefined;
+  const submitUrl = buildUrl('problem_submit', { pid: submitPid }, tid ? { tid: String(tid) } : {});
+  const codeLang = ui.codeLang || user.codeLang;
+  const codeTemplate = ui.codeTemplate ?? user.codeTemplate;
+  const templateCode = typeof codeTemplate === 'string'
+    ? codeTemplate
+    : codeTemplate?.[codeLang] || '';
+  const defaultCode = rdoc?.code || templateCode;
   const statement = (
     <Stack gap="md">
       {langs.length > 1 && (
@@ -446,8 +458,12 @@ export default function ProblemDetailPage() {
       <Scratchpad
         pid={pdoc.pid || pdoc.docId}
         langs={scratchpadLangs}
+        defaultLang={rdoc?.lang || codeLang}
+        defaultCode={defaultCode}
         statement={statement}
         title={`${pdoc.pid || pdoc.docId}. ${title}`}
+        submitUrl={submitUrl}
+        codeReplaySessionUrl={ui.codeReplaySessionUrl}
         onClose={() => setScratchpadOpen(false)}
       />
     );

@@ -8,6 +8,7 @@ interface WebSocketOptions {
   onClose?: () => void;
   autoReconnect?: boolean;
   reconnectInterval?: number;
+  enabled?: boolean;
 }
 
 export function useWebSocket({
@@ -17,12 +18,15 @@ export function useWebSocket({
   onClose,
   autoReconnect = true,
   reconnectInterval = 3000,
+  enabled = true,
 }: WebSocketOptions) {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const pendingMessages = useRef<any[]>([]);
   const ui = useSessionStore((s) => s.ui);
 
   const connect = useCallback(() => {
+    if (!enabled) return;
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     const wsPrefix = ui.ws_prefix || '/';
@@ -33,6 +37,9 @@ export function useWebSocket({
 
       ws.onopen = () => {
         console.log('[Hydro WS] Connected:', url);
+        for (const message of pendingMessages.current.splice(0)) {
+          ws.send(JSON.stringify(message));
+        }
         onOpen?.();
       };
 
@@ -65,21 +72,24 @@ export function useWebSocket({
         reconnectTimer.current = setTimeout(connect, reconnectInterval);
       }
     }
-  }, [url, ui.ws_prefix, onMessage, onOpen, onClose, autoReconnect, reconnectInterval]);
+  }, [enabled, url, ui.ws_prefix, onMessage, onOpen, onClose, autoReconnect, reconnectInterval]);
 
   const send = useCallback((data: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(data));
+      return;
     }
+    pendingMessages.current.push(data);
   }, []);
 
   useEffect(() => {
+    if (!enabled) return undefined;
     connect();
     return () => {
       clearTimeout(reconnectTimer.current);
       wsRef.current?.close();
     };
-  }, [connect]);
+  }, [connect, enabled]);
 
   return { send, ws: wsRef };
 }

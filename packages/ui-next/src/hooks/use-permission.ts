@@ -3,10 +3,12 @@ import { useSessionStore } from '@/stores/session';
 // Hydro permission constants (matching backend PRIV values)
 export const PRIV = {
   PRIV_NONE: 0,
+  PRIV_EDIT_SYSTEM: 1 << 0,
   PRIV_USER_PROFILE: 1 << 0,
   PRIV_USER_SETTINGS: 1 << 1,
   PRIV_VIEW_PROBLEM: 1 << 4,
   PRIV_SUBMIT_PROBLEM: 1 << 5,
+  PRIV_READ_RECORD_CODE: 1 << 7,
   PRIV_VIEW_PROBLEM_SOLUTION: 1 << 7,
   PRIV_CREATE_PROBLEM: 1 << 11,
   PRIV_EDIT_PROBLEM: 1 << 12,

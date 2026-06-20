@@ -1,13 +1,14 @@
 import { Badge, Button, Card, Code, Group, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core';
 import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
-import { Link } from '@/components/link';
 import { TimeDisplay } from '@/components/common/time-display';
+import { Link } from '@/components/link';
 import { CodeReplay } from '@/components/record/code-replay';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
-import { usePageData } from '@/context/page-data';
+import { usePageData, useUiContext } from '@/context/page-data';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useRecordSocket } from '@/hooks/use-record-socket';
@@ -39,7 +40,7 @@ function formatTime(time?: number) {
 function objectIdDate(id: any) {
   const text = String(id || '');
   if (!/^[a-f0-9]{24}$/i.test(text)) return null;
-  return new Date(parseInt(text.slice(0, 8), 16) * 1000);
+  return new Date(Number.parseInt(text.slice(0, 8), 16) * 1000);
 }
 
 function shouldShowGreaterEqual(status?: number) {
@@ -48,6 +49,13 @@ function shouldShowGreaterEqual(status?: number) {
     STATUS.STATUS_MEMORY_LIMIT_EXCEEDED,
     STATUS.STATUS_OUTPUT_LIMIT_EXCEEDED,
   ].includes(status as STATUS);
+}
+
+function buildReplayUrl(rid: string, injectedUrl?: string) {
+  if (injectedUrl) return injectedUrl;
+  if (!rid) return '';
+  const match = window.location.pathname.match(/^(\/d\/[^/]+)?\/record\//);
+  return `${match?.[1] || ''}/record/${rid}/replay`;
 }
 
 function normalizeCases(rdoc: any) {
@@ -180,8 +188,11 @@ function OutputBlock({ title, content }: { title: string, content: string }) {
 
 export default function RecordDetailPage() {
   const { args } = usePageData();
+  const ui = useUiContext();
   const { t } = useI18n();
+  const user = useCurrentUser();
   const canJudge = useHasPriv(PRIV.PRIV_JUDGE) || args.canRejudge;
+  const canViewCodeReplay = useHasPriv(PRIV.PRIV_READ_RECORD_CODE) || (args.rdoc?.uid === user._id);
   const [actionLoading, setActionLoading] = useState('');
   const [error, setError] = useState('');
 
@@ -206,6 +217,7 @@ export default function RecordDetailPage() {
   const isLimitStatus = shouldShowGreaterEqual(rdoc.status);
   const peakTime = cases.length ? Math.max(...cases.map((item) => Number(item.time) || 0)) : null;
   const codeLength = rdoc.code ? formatSize(new Blob([rdoc.code]).size) : '';
+  const codeReplayUrl = buildReplayUrl(String(rdoc._id || ''), ui.codeReplayUrl);
 
   const submitOperation = async (operation: 'rejudge' | 'cancel') => {
     setActionLoading(operation);
@@ -245,6 +257,11 @@ export default function RecordDetailPage() {
             </Text>
           </div>
           <Group gap="sm">
+            {codeReplayUrl && canViewCodeReplay && (
+              <Button component="a" href={codeReplayUrl} size="xs" variant="light">
+                {t('Code Replay')}
+              </Button>
+            )}
             <RecordStatusBadge status={rdoc.status} size="lg" />
             {rdoc.score != null && (
               <Badge variant="light" color={scoreColor} size="lg">
@@ -293,7 +310,14 @@ export default function RecordDetailPage() {
             {rdoc.code && (
               <Card withBorder p="lg" className="hydro-content-card">
                 <Stack gap="sm">
-                  <Text size="sm" fw={700}>{t('Source Code')}</Text>
+                  <Group justify="space-between">
+                    <Text size="sm" fw={700}>{t('Source Code')}</Text>
+                    {codeReplayUrl && canViewCodeReplay && (
+                      <Button component="a" href={codeReplayUrl} size="xs" variant="light">
+                        {t('Code Replay')}
+                      </Button>
+                    )}
+                  </Group>
                   <div className="overflow-x-auto rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-bg-soft)]">
                     <Code block className="min-w-max bg-transparent p-3">{rdoc.code}</Code>
                   </div>

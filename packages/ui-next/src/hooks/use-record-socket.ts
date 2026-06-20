@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useWebSocket } from './use-websocket';
 
 interface RecordUpdate {
@@ -18,31 +18,25 @@ interface RecordUpdate {
  */
 export function useRecordSocket(rid: string | undefined) {
   const [record, setRecord] = useState<RecordUpdate | null>(null);
+  const socketUrl = rid
+    ? `record-detail-conn?rid=${encodeURIComponent(rid)}&noTemplate=true`
+    : 'record-detail-conn';
 
   const handleMessage = useCallback((data: any) => {
-    if (data.rid === rid || !rid) {
-      setRecord((prev) => ({ ...prev, ...data }));
-    }
+    const payload = data?.rdoc || data;
+    if (!payload) return;
+    const payloadRid = payload._id || payload.rid;
+    if (rid && payloadRid && String(payloadRid) !== String(rid)) return;
+    setRecord((prev) => ({ ...prev, ...payload }));
   }, [rid]);
 
-  const { send } = useWebSocket({
-    url: 'record-detail-conn',
+  useWebSocket({
+    url: socketUrl,
     onMessage: handleMessage,
     autoReconnect: true,
     reconnectInterval: 5000,
+    enabled: !!rid,
   });
-
-  // Subscribe to a specific record
-  useEffect(() => {
-    if (rid) {
-      send({ operation: 'subscribe', rid });
-    }
-    return () => {
-      if (rid) {
-        send({ operation: 'unsubscribe', rid });
-      }
-    };
-  }, [rid, send]);
 
   return record;
 }
