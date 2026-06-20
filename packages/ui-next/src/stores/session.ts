@@ -6,6 +6,7 @@ export interface UserContext {
   uname: string;
   mail?: string;
   priv: number;
+  perm?: number | string;
   avatar: string;
   [key: string]: any;
 }

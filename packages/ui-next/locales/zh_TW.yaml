@@ -449,3 +449,23 @@ No users selected: 尚未選擇使用者
 Select: 選擇
 Selected: 已選擇
 Remove: 移除
+You can create your own training plans and share them with others.: 你可以建立自己的訓練計畫並分享給其他使用者。
+Create Training Plan: 建立訓練計畫
+New Training Plan: 新增訓練計畫
+Go to Solve: 去作答
+Contest Closed: 比賽已關閉
+The contest has ended. You can view the problems, but contest submissions are closed.: 比賽已經結束。你可以查看題目，但不能再提交比賽紀錄。
+The contest has ended. You can view the problem, but contest submissions are closed.: 比賽已經結束。你可以查看題面，但不能再提交比賽紀錄。
+Confirm to delete this clarification?: 確認刪除這則答疑？
+Deleted: 已刪除
+Compilers' Version and Parameters: 編譯器版本及參數
+Limitations: 限制
+IO: 輸入輸出
+Judge Status: 評測狀態
+Compile Error: 編譯錯誤
+Accepted Ratio: 通過率
+RP Algorithm: RP 演算法
+Difficulty Algorithm: 難度演算法
+Dataset Format: 測試資料格式
+Forgot Password and/or Username: 忘記密碼和/或使用者名稱
+Markdown: Markdown

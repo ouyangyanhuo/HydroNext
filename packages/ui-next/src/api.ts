@@ -9,7 +9,7 @@ export { type RouterState, useNavigate, useRouterState } from './context/router'
 export { useBuildUrl } from './hooks/use-build-url';
 export { useI18n } from './hooks/use-i18n';
 export { useCurrentUser, useIsLoggedIn } from './hooks/use-current-user';
-export { usePermission, useHasPriv, PRIV } from './hooks/use-permission';
+export { usePermission, useHasPriv, useHasPerm, PRIV, PERM } from './hooks/use-permission';
 export { useDomain, useDomainId } from './hooks/use-domain';
 
 // Stores

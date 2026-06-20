@@ -2,8 +2,9 @@ import { Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/co
 import { IconCopy, IconFileImport } from '@tabler/icons-react';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
+import { usePageData, useUserContext } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
+import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 
 const IMPORT_SOURCES = [
@@ -17,9 +18,14 @@ const IMPORT_SOURCES = [
 ];
 
 export default function ProblemImportPage() {
+  const { args } = usePageData();
+  const user = useUserContext();
   const { t } = useI18n();
   const isLoggedIn = useIsLoggedIn();
-  const canCreate = useHasPriv(PRIV.PRIV_CREATE_PROBLEM);
+  const storeCanCreate = useHasPerm(PERM.PERM_CREATE_PROBLEM);
+  const canCreate = Boolean(args.canCreateProblem ?? (
+    hasPermValue(user.perm, PERM.PERM_CREATE_PROBLEM) || storeCanCreate
+  ));
 
   if (!isLoggedIn || !canCreate) {
     return (

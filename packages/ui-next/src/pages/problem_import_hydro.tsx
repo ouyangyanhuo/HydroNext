@@ -3,17 +3,23 @@ import { IconArrowLeft, IconFileZip } from '@tabler/icons-react';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
+import { usePageData, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
+import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { formatErrorMessage } from '@/utils/error';
 
 export default function ProblemImportHydroPage() {
+  const { args } = usePageData();
+  const user = useUserContext();
   const { t } = useI18n();
   const navigate = useNavigate();
   const isLoggedIn = useIsLoggedIn();
-  const canCreate = useHasPriv(PRIV.PRIV_CREATE_PROBLEM);
+  const storeCanCreate = useHasPerm(PERM.PERM_CREATE_PROBLEM);
+  const canCreate = Boolean(args.canCreateProblem ?? (
+    hasPermValue(user.perm, PERM.PERM_CREATE_PROBLEM) || storeCanCreate
+  ));
   const [file, setFile] = useState<File | null>(null);
   const [preferredPrefix, setPreferredPrefix] = useState('');
   const [hidden, setHidden] = useState(false);

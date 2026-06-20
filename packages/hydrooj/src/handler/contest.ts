@@ -71,6 +71,7 @@ export class ContestListHandler extends Handler {
         this.response.template = 'contest_main.html';
         this.response.body = {
             page, tpcount, qs, rule, tdocs, tsdict, groups: groupsFilter, group, q,
+            canCreateContest: this.user.hasPerm(PERM.PERM_CREATE_CONTEST),
         };
     }
 }
@@ -676,6 +677,16 @@ class ContestClarificationHandler extends ContestManagementBaseHandler {
                 }), flag | message.FLAG_I18N),
             ]);
         }
+        this.back();
+    }
+
+    @param('did', Types.ObjectId)
+    async postDeleteClarification(domainId: string, did: ObjectId) {
+        const tcdoc = await contest.getClarification(domainId, did);
+        if (!tcdoc || tcdoc.parentId.toString() !== this.tdoc.docId.toString()) {
+            throw new BadRequestError('did');
+        }
+        await contest.delClarification(domainId, did);
         this.back();
     }
 }

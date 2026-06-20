@@ -41,6 +41,7 @@ export default function ContestClarificationPage() {
   const [subject, setSubject] = useState('0');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState('');
 
   const replyTarget = tcdocs.find((doc: any) => String(doc._id) === did);
 
@@ -82,6 +83,27 @@ export default function ContestClarificationPage() {
     }
   };
 
+  const deleteClarification = async (doc: any) => {
+    if (!window.confirm(t('Confirm to delete this clarification?'))) return;
+    setDeleteLoading(String(doc._id));
+    try {
+      const res = await fetch(window.location.href, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ operation: 'delete_clarification', did: doc._id }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Failed')));
+      notifications.show({ title: t('Deleted'), message: '', color: 'green' });
+      if (did === String(doc._id)) chooseBroadcast();
+      navigate(window.location.pathname + window.location.search);
+    } catch (err: any) {
+      notifications.show({ title: err.message || t('Failed'), message: '', color: 'red' });
+    } finally {
+      setDeleteLoading('');
+    }
+  };
+
   return (
     <Stack gap="lg">
       <PageHeader title={`${t('Contest Clarifications')} - ${tdoc.title}`}>
@@ -109,13 +131,24 @@ export default function ContestClarificationPage() {
                           </Text>
                           <TimeDisplay date={doc._id} format="relative" size="xs" />
                         </div>
-                        {doc.owner ? (
-                          <Button size="compact-xs" variant="light" onClick={() => chooseReply(doc)}>
-                            {t('Reply')}
+                        <Group gap="xs">
+                          {doc.owner ? (
+                            <Button size="compact-xs" variant="light" onClick={() => chooseReply(doc)}>
+                              {t('Reply')}
+                            </Button>
+                          ) : (
+                            <Badge size="xs" variant="light">{t('Broadcast')}</Badge>
+                          )}
+                          <Button
+                            size="compact-xs"
+                            color="red"
+                            variant="subtle"
+                            loading={deleteLoading === String(doc._id)}
+                            onClick={() => deleteClarification(doc)}
+                          >
+                            {t('Delete')}
                           </Button>
-                        ) : (
-                          <Badge size="xs" variant="light">{t('Broadcast')}</Badge>
-                        )}
+                        </Group>
                       </Group>
                       <MarkdownRenderer content={doc.content || ''} />
                       {(doc.reply || []).map((reply: any) => (

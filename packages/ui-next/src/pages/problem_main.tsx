@@ -5,11 +5,11 @@ import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
-import { usePageData } from '@/context/page-data';
+import { usePageData, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
+import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 
@@ -144,9 +144,13 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
 
 export default function ProblemMainPage() {
   const { args } = usePageData();
+  const user = useUserContext();
   const { t } = useI18n();
   const navigate = useNavigate();
-  const canCreate = useHasPriv(PRIV.PRIV_CREATE_PROBLEM);
+  const storeCanCreate = useHasPerm(PERM.PERM_CREATE_PROBLEM);
+  const canCreate = Boolean(args.canCreateProblem ?? (
+    hasPermValue(user.perm, PERM.PERM_CREATE_PROBLEM) || storeCanCreate
+  ));
 
   const pdocs = args.pdocs || [];
   const psdict = args.psdict || {};

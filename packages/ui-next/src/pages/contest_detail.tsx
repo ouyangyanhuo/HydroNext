@@ -11,7 +11,7 @@ import { useNavigate } from '@/context/router';
 import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
+import { PERM, useHasPerm } from '@/hooks/use-permission';
 import { UserLink } from '@/components/user/user-link';
 import { formatErrorMessage } from '@/utils/error';
 
@@ -37,8 +37,22 @@ function getObjectIdDate(id: any) {
   return new Date(parseInt(text.slice(0, 8), 16) * 1000);
 }
 
-function ContestProblemList({ tdoc, pdict, psdict, rdict, correction, showScore, canViewRecord }: {
+function isContestClosed(tdoc: any, tsdoc?: any) {
+  const now = Date.now();
+  const endAt = new Date(tdoc.endAt).getTime();
+  if (Number.isFinite(endAt) && endAt <= now) return true;
+  const tsEndAt = tsdoc?.endAt ? new Date(tsdoc.endAt).getTime() : NaN;
+  if (Number.isFinite(tsEndAt) && tsEndAt <= now) return true;
+  const startAt = tsdoc?.startAt ? new Date(tsdoc.startAt).getTime() : NaN;
+  if (tdoc.duration && Number.isFinite(startAt)) {
+    return startAt + Number(tdoc.duration) * 60 * 60 * 1000 <= now;
+  }
+  return false;
+}
+
+function ContestProblemList({ tdoc, tsdoc, pdict, psdict, rdict, correction, showScore, canViewRecord }: {
   tdoc: any;
+  tsdoc?: any;
   pdict: Record<string, any>;
   psdict: Record<string, any>;
   rdict: Record<string, any>;
@@ -50,12 +64,21 @@ function ContestProblemList({ tdoc, pdict, psdict, rdict, correction, showScore,
   const buildUrl = useBuildUrl();
   const pids = tdoc.pids || [];
   const hasCorrection = correction && Object.keys(correction).length > 0;
+  const closed = isContestClosed(tdoc, tsdoc);
 
   if (!pids.length) return null;
 
   return (
     <Card withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-sm)]">
-      <Title order={4} mb="sm">{t('Problems')}</Title>
+      <Group justify="space-between" mb="sm">
+        <Title order={4}>{t('Problems')}</Title>
+        {closed && <Badge color="gray" variant="light">{t('Contest Closed')}</Badge>}
+      </Group>
+      {closed && (
+        <Paper withBorder p="sm" mb="sm" className="border-[var(--hydro-border)] bg-[var(--hydro-surface)]">
+          <Text size="sm" c="dimmed">{t('The contest has ended. You can view the problems, but contest submissions are closed.')}</Text>
+        </Paper>
+      )}
       <div className="overflow-x-auto">
         <Table striped highlightOnHover>
           <Table.Thead>
@@ -111,9 +134,14 @@ function ContestProblemList({ tdoc, pdict, psdict, rdict, correction, showScore,
                           </Group>
                         )}
                       </div>
-                      {pdoc.config?.type !== 'objective' && (
-                        <Button component={Link} to={tdoc.rule === 'homework' ? 'homework_detail_problem' : 'contest_detail_problem'} params={{ pid, tid: String(tdoc.docId || tdoc._id) }} size="compact-xs" variant="light">
-                          {t('Submit')}
+                      {pdoc.config?.type !== 'objective' && !closed && (
+                        <Button
+                          component={Link}
+                          href={buildUrl('problem_detail', { pid }, { tid: String(tdoc.docId || tdoc._id) })}
+                          size="compact-xs"
+                          variant="light"
+                        >
+                          {t('Go to Solve')}
                         </Button>
                       )}
                     </Group>
@@ -327,7 +355,7 @@ export default function ContestDetailPage() {
   const files = args.files || [];
   const pdict = args.pdict || {};
   const udict = args.udict || {};
-  const canEdit = useHasPriv(PRIV.PRIV_EDIT_CONTEST) || args.canEdit;
+  const canEdit = useHasPerm(PERM.PERM_EDIT_CONTEST) || args.canEdit;
   const tid = tdoc._id || tdoc.docId;
 
   const handleAttend = async () => {
@@ -370,6 +398,7 @@ export default function ContestDetailPage() {
             <Stack gap="lg">
               <ContestProblemList
                 tdoc={tdoc}
+                tsdoc={tsdoc}
                 pdict={pdict}
                 psdict={args.psdict || {}}
                 rdict={args.rdict || {}}

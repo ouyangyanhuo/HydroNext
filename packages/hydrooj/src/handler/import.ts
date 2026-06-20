@@ -9,12 +9,18 @@ import { Handler, param, Types } from '../service/server';
 class ProblemImportHandler extends Handler {
     async get() {
         this.response.template = 'problem_import.html';
+        this.response.body = {
+            canCreateProblem: this.user.hasPerm(PERM.PERM_CREATE_PROBLEM),
+        };
     }
 }
 
 class ProblemImportHydroHandler extends Handler {
     async get() {
         this.response.template = 'problem_import.html';
+        this.response.body = {
+            canCreateProblem: this.user.hasPerm(PERM.PERM_CREATE_PROBLEM),
+        };
     }
 
     @param('keepUser', Types.Boolean)

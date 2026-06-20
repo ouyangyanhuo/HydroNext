@@ -450,3 +450,23 @@ No users selected: ユーザーが選択されていません
 Select: 選択
 Selected: 選択済み
 Remove: 削除
+You can create your own training plans and share them with others.: 自分のトレーニングプランを作成して他のユーザーと共有できます。
+Create Training Plan: トレーニングプランを作成
+New Training Plan: 新しいトレーニングプラン
+Go to Solve: 解答へ進む
+Contest Closed: コンテスト終了
+The contest has ended. You can view the problems, but contest submissions are closed.: コンテストは終了しました。問題は閲覧できますが、コンテスト提出は締め切られています。
+The contest has ended. You can view the problem, but contest submissions are closed.: コンテストは終了しました。問題文は閲覧できますが、コンテスト提出は締め切られています。
+Confirm to delete this clarification?: この質問を削除しますか？
+Deleted: 削除しました
+Compilers' Version and Parameters: コンパイラのバージョンとパラメータ
+Limitations: 制限
+IO: 入出力
+Judge Status: ジャッジ状態
+Compile Error: コンパイルエラー
+Accepted Ratio: 正解率
+RP Algorithm: RP アルゴリズム
+Difficulty Algorithm: 難易度アルゴリズム
+Dataset Format: テストデータ形式
+Forgot Password and/or Username: パスワードまたはユーザー名を忘れた場合
+Markdown: Markdown

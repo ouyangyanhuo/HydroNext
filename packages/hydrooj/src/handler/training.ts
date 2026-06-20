@@ -92,6 +92,7 @@ class TrainingMainHandler extends Handler {
         this.response.template = 'training_main.html';
         this.response.body = {
             tdocs, page, tpcount, tsdict, tdict, q,
+            canCreateTraining: this.user.hasPerm(PERM.PERM_CREATE_TRAINING),
         };
     }
 }

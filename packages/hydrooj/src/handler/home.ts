@@ -169,11 +169,18 @@ export class HomeHandler extends Handler {
             });
         }
         const udict = await user.getList(domainId, Array.from(this.uids));
+        const problemCount = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM)
+            ? await ProblemModel.count(
+                domainId,
+                this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN) ? {} : { hidden: false },
+            )
+            : 0;
         this.response.template = 'main.html';
         this.response.body = {
             contents,
             udict,
             domain: this.domain,
+            problemCount,
         };
     }
 }

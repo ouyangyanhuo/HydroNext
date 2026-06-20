@@ -4,10 +4,11 @@ import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
-import { usePageData } from '@/context/page-data';
+import { usePageData, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
+import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
 
 function getTrainingPids(tdoc: any) {
   if (Array.isArray(tdoc.pids)) return tdoc.pids;
@@ -75,9 +76,14 @@ function TrainingCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
 
 export default function TrainingMainPage() {
   const { args } = usePageData();
+  const user = useUserContext();
   const { t } = useI18n();
   const navigate = useNavigate();
   const isLoggedIn = useIsLoggedIn();
+  const storeCanCreateTraining = useHasPerm(PERM.PERM_CREATE_TRAINING);
+  const canCreateTraining = Boolean(args.canCreateTraining ?? (
+    hasPermValue(user.perm, PERM.PERM_CREATE_TRAINING) || storeCanCreateTraining
+  ));
   const tdocs = args.tdocs || [];
   const tsdict = args.tsdict || {};
   const tdict = args.tdict || {};
@@ -102,6 +108,11 @@ export default function TrainingMainPage() {
         <Stack gap="lg">
           <PageHeader title={t('All Training Plans')}>
             <Group gap="xs" wrap="wrap">
+              {canCreateTraining && (
+                <Button component={Link} href="/training/create" size="xs" variant="light">
+                  {t('New Training Plan')}
+                </Button>
+              )}
               <TextInput
                 placeholder={t('Search training...')}
                 value={search}
@@ -133,12 +144,15 @@ export default function TrainingMainPage() {
 
       <div className="w-full shrink-0 lg:w-72">
         <Stack gap="md">
-          {args.canCreateTraining && (
+          {canCreateTraining && (
             <Card withBorder p="md" className="hydro-panel">
               <Title order={3} size="h5" mb="sm">{t('Create Training Plan')}</Title>
-              <Button component={Link} to="training_create" fullWidth size="xs">
+              <Button component={Link} href="/training/create" fullWidth size="xs">
                 {t('New Training Plan')}
               </Button>
+              <Text size="xs" c="dimmed" mt="sm">
+                {t('You can create your own training plans and share them with others.')}
+              </Text>
             </Card>
           )}
 

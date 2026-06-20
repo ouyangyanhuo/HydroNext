@@ -204,6 +204,7 @@ export class ProblemMainHandler extends Handler {
                 qs: q,
                 sort: sortStrategy,
                 categories: getProblemCategories(this.ctx),
+                canCreateProblem: this.user.hasPerm(PERM.PERM_CREATE_PROBLEM),
             };
         }
     }
@@ -364,6 +365,20 @@ export class ProblemDetailHandler extends ContestDetailBaseHandler {
             solution.count(domainId, { parentId: this.pdoc.docId }),
             discussion.count(domainId, { parentId: this.pdoc.docId }),
         ]);
+        const mode = !tid ? 'normal'
+            : !this.tsdoc?.attend ? 'view'
+                : !contest.isDone(this.tdoc) ? 'contest'
+                    : problem.canViewBy(this.pdoc, this.user) ? 'correction' : 'none';
+        const canSubmitProblem = !tid
+            ? this.user.hasPerm(PERM.PERM_SUBMIT_PROBLEM)
+            : mode === 'contest' && contest.isOngoing(this.tdoc, this.tsdoc);
+        const accepted = this.psdoc?.status === STATUS.STATUS_ACCEPTED;
+        const canEditProblem = this.user.own(this.pdoc, PERM.PERM_EDIT_PROBLEM_SELF)
+            || this.user.hasPerm(PERM.PERM_EDIT_PROBLEM);
+        const canViewProblemSolution = !tid && (
+            this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION)
+            || (accepted && this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION_ACCEPT))
+        );
         this.response.body = {
             pdoc: this.pdoc,
             udoc: this.udoc,
@@ -373,10 +388,12 @@ export class ProblemDetailHandler extends ContestDetailBaseHandler {
             discussionCount: dcnt,
             tdoc: this.tdoc,
             owner_udoc: (tid && this.tdoc.owner !== this.pdoc.owner) ? await user.getById(domainId, this.tdoc.owner) : null,
-            mode: !tid ? 'normal'
-                : !this.tsdoc?.attend ? 'view'
-                    : !contest.isDone(this.tdoc) ? 'contest'
-                        : problem.canViewBy(this.pdoc, this.user) ? 'correction' : 'none',
+            mode,
+            canSubmitProblem,
+            canEditProblem,
+            canConfigureProblem: canEditProblem && !this.pdoc.reference,
+            canRejudgeProblem: this.user.hasPerm(PERM.PERM_REJUDGE_PROBLEM),
+            canViewProblemSolution,
         };
         if (this.tdoc && this.tsdoc) {
             const fields = ['attend', 'startAt', 'endAt'];

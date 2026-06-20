@@ -1060,6 +1060,10 @@ export function getClarification(domainId: string, did: ObjectId) {
     return document.get(domainId, document.TYPE_CONTEST_CLARIFICATION, did);
 }
 
+export function delClarification(domainId: string, did: ObjectId) {
+    return document.deleteOne(domainId, document.TYPE_CONTEST_CLARIFICATION, did);
+}
+
 export function getMultiClarification(domainId: string, tid: ObjectId, owner?: number) {
     return document.getMulti(
         domainId, document.TYPE_CONTEST_CLARIFICATION,
@@ -1173,6 +1177,7 @@ global.Hydro.model.contest = {
     addClarification,
     addClarificationReply,
     getClarification,
+    delClarification,
     getMultiClarification,
     isNew,
     isUpcoming,

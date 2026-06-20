@@ -5,10 +5,10 @@ import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
-import { usePageData } from '@/context/page-data';
+import { usePageData, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
+import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
 
 const ALL_FILTER = '__all__';
 
@@ -104,9 +104,13 @@ function ImportantContest({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
 
 export default function ContestMainPage() {
   const { args } = usePageData();
+  const user = useUserContext();
   const { t } = useI18n();
   const navigate = useNavigate();
-  const canCreateContest = useHasPriv(PRIV.PRIV_CREATE_CONTEST) || args.canCreateContest;
+  const storeCanCreateContest = useHasPerm(PERM.PERM_CREATE_CONTEST);
+  const canCreateContest = Boolean(args.canCreateContest ?? (
+    hasPermValue(user.perm, PERM.PERM_CREATE_CONTEST) || storeCanCreateContest
+  ));
 
   const tdocs = args.tdocs || [];
   const tsdict = args.tsdict || {};

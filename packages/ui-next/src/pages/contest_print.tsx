@@ -7,7 +7,7 @@ import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
+import { PERM, useHasPerm } from '@/hooks/use-permission';
 import { formatErrorMessage } from '@/utils/error';
 
 function printPlainTask(task: any, udoc: any) {
@@ -36,7 +36,7 @@ export default function ContestPrintPage() {
   const { t } = useI18n();
   const tdoc = args.tdoc || {};
   const tid = tdoc.docId || tdoc._id;
-  const canEdit = useHasPriv(PRIV.PRIV_EDIT_CONTEST) || args.canEdit;
+  const canEdit = useHasPerm(PERM.PERM_EDIT_CONTEST) || args.canEdit;
   const [title, setTitle] = useState('print.txt');
   const [content, setContent] = useState('');
   const [tasks, setTasks] = useState<any[]>([]);

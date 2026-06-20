@@ -13,7 +13,7 @@ import { usePageData, useUiContext, useUserContext } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
+import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { formatErrorMessage } from '@/utils/error';
@@ -193,18 +193,37 @@ function SidebarLinkButton({ href, children, variant = 'subtle' }: { href: strin
   );
 }
 
-function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen }: {
+function ProblemSidebar({
+  pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen,
+  contestClosed, canSubmitProblem, canEditProblem, canConfigureProblem,
+  canRejudgeProblem, canViewProblemSolution,
+}: {
   pdoc: any,
   psdoc?: any,
   rdoc?: any,
   onToggleScratchpad: () => void,
   scratchpadOpen: boolean,
+  contestClosed?: boolean,
+  canSubmitProblem?: boolean,
+  canEditProblem?: boolean,
+  canConfigureProblem?: boolean,
+  canRejudgeProblem?: boolean,
+  canViewProblemSolution?: boolean,
 }) {
   const { t } = useI18n();
   const isLoggedIn = useIsLoggedIn();
-  const canSubmit = useHasPriv(PRIV.PRIV_SUBMIT_PROBLEM);
-  const canViewSolution = useHasPriv(PRIV.PRIV_VIEW_PROBLEM_SOLUTION);
-  const canEdit = useHasPriv(PRIV.PRIV_EDIT_PROBLEM);
+  const fallbackCanSubmit = useHasPerm(PERM.PERM_SUBMIT_PROBLEM);
+  const canSubmit = canSubmitProblem ?? fallbackCanSubmit;
+  const hasViewSolutionPerm = useHasPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION);
+  const hasViewAcceptedSolutionPerm = useHasPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION_ACCEPT);
+  const fallbackCanViewSolution = hasViewSolutionPerm
+    || (psdoc?.status === 1 && hasViewAcceptedSolutionPerm);
+  const fallbackCanEdit = useHasPerm(PERM.PERM_EDIT_PROBLEM);
+  const fallbackCanRejudge = useHasPerm(PERM.PERM_REJUDGE_PROBLEM);
+  const canViewSolution = canViewProblemSolution ?? fallbackCanViewSolution;
+  const canEdit = canEditProblem ?? fallbackCanEdit;
+  const canConfigure = canConfigureProblem ?? (canEdit && !pdoc.reference);
+  const canRejudge = canRejudgeProblem ?? fallbackCanRejudge;
   const buildUrl = useBuildUrl();
   const pid = pdoc.pid || pdoc.docId;
   const [rejudgeLoading, setRejudgeLoading] = useState(false);
@@ -265,6 +284,13 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
 
   return (
     <Stack gap="md">
+      {contestClosed && (
+        <Paper withBorder p="md" className="hydro-panel">
+          <Text size="sm" fw={700}>{t('Contest Closed')}</Text>
+          <Text size="xs" c="dimmed" mt={4}>{t('The contest has ended. You can view the problem, but contest submissions are closed.')}</Text>
+        </Paper>
+      )}
+
       {psdoc && psdoc.status !== undefined && (
         <Paper withBorder p="md" className="hydro-panel">
           <Text size="xs" c="dimmed" mb="xs">{t('Your Status')}</Text>
@@ -279,7 +305,11 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
 
       <Paper withBorder p="md" className="hydro-panel">
         <Stack gap="xs">
-          {canSubmit ? (
+          {contestClosed ? (
+            <Button disabled fullWidth size="sm" justify="flex-start">
+              {t('Contest Closed')}
+            </Button>
+          ) : canSubmit ? (
             <Button onClick={onToggleScratchpad} variant="filled" fullWidth size="sm" justify="flex-start">
               {scratchpadOpen ? t('Quit Scratchpad') : t('Enter Online Programming Mode')}
             </Button>
@@ -289,7 +319,7 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
             </Button>
           )}
 
-          {canEdit && (
+          {canRejudge && (
             <Button onClick={rejudge} variant="subtle" fullWidth size="sm" justify="flex-start" loading={rejudgeLoading}>
               {t('Rejudge all submissions')}
             </Button>
@@ -313,7 +343,7 @@ function ProblemSidebar({ pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen 
               <SidebarLinkButton href={buildUrl('problem_edit', { pid })}>
                 {t('Edit')}
               </SidebarLinkButton>
-              {!pdoc.reference && (
+              {canConfigure && (
                 <SidebarLinkButton href={buildUrl('problem_config', { pid })}>
                   {t('Judge Config')}
                 </SidebarLinkButton>
@@ -415,6 +445,28 @@ export default function ProblemDetailPage() {
   const scratchpadLangs = Object.fromEntries((pdoc.config?.langs || []).map((lang: string) => [lang, { display: getLangDisplay(lang) }]));
   const submitPid = pdoc.docId || pdoc.pid;
   const tid = args.tdoc?.docId || args.tdoc?._id || new URLSearchParams(window.location.search).get('tid') || undefined;
+  const fallbackCanSubmit = hasPermValue(user.perm, PERM.PERM_SUBMIT_PROBLEM);
+  const accepted = psdoc?.status === 1;
+  const contestClosed = Boolean(args.tdoc) && (() => {
+    const now = Date.now();
+    const endAt = new Date(args.tdoc.endAt).getTime();
+    if (Number.isFinite(endAt) && endAt <= now) return true;
+    const tsEndAt = args.tsdoc?.endAt ? new Date(args.tsdoc.endAt).getTime() : NaN;
+    if (Number.isFinite(tsEndAt) && tsEndAt <= now) return true;
+    const startAt = args.tsdoc?.startAt ? new Date(args.tsdoc.startAt).getTime() : NaN;
+    if (args.tdoc.duration && Number.isFinite(startAt)) {
+      return startAt + Number(args.tdoc.duration) * 60 * 60 * 1000 <= now;
+    }
+    return false;
+  })();
+  const canSubmitProblem = Boolean(args.canSubmitProblem ?? (tid ? args.mode === 'contest' : fallbackCanSubmit));
+  const canEditProblem = Boolean(args.canEditProblem ?? hasPermValue(user.perm, PERM.PERM_EDIT_PROBLEM));
+  const canConfigureProblem = Boolean(args.canConfigureProblem ?? (canEditProblem && !pdoc.reference));
+  const canRejudgeProblem = Boolean(args.canRejudgeProblem ?? hasPermValue(user.perm, PERM.PERM_REJUDGE_PROBLEM));
+  const canViewProblemSolution = Boolean(args.canViewProblemSolution ?? (!tid && (
+    hasPermValue(user.perm, PERM.PERM_VIEW_PROBLEM_SOLUTION)
+    || (accepted && hasPermValue(user.perm, PERM.PERM_VIEW_PROBLEM_SOLUTION_ACCEPT))
+  )));
   const submitUrl = buildUrl('problem_submit', { pid: submitPid }, tid ? { tid: String(tid) } : {});
   const codeLang = ui.codeLang || user.codeLang;
   const codeTemplate = ui.codeTemplate ?? user.codeTemplate;
@@ -524,6 +576,12 @@ export default function ProblemDetailPage() {
           psdoc={psdoc}
           rdoc={rdoc}
           scratchpadOpen={scratchpadOpen}
+          contestClosed={contestClosed}
+          canSubmitProblem={canSubmitProblem}
+          canEditProblem={canEditProblem}
+          canConfigureProblem={canConfigureProblem}
+          canRejudgeProblem={canRejudgeProblem}
+          canViewProblemSolution={canViewProblemSolution}
           onToggleScratchpad={() => setScratchpadOpen((open) => !open)}
         />
       </div>

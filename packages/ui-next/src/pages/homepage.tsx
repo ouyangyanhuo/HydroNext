@@ -5,6 +5,7 @@ import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+import { extractLocalizedContent } from '@/utils/i18n-content';
 
 function WelcomeCard() {
   const user = useSessionStore((s) => s.user);
@@ -48,6 +49,7 @@ function BulletinCard({ bulletin }: { bulletin: string }) {
 
 function ProblemList({ problems }: { problems: any[] }) {
   const { t } = useI18n();
+  const language = useSessionStore((s) => s.language);
 
   if (!problems || problems.length === 0) return null;
 
@@ -67,10 +69,10 @@ function ProblemList({ problems }: { problems: any[] }) {
             </span>
             <Link
               to="problem_detail"
-              params={{ pid: p.pid || p.docId }}
+              params={{ pid: p.pid || p.docId, ...(p.domainId ? { domainId: p.domainId } : {}) }}
               className="hydro-subtle-link min-w-0 truncate text-sm font-semibold"
             >
-              <span className="text-[var(--hydro-primary)]">{p.pid || p.docId}</span> {p.title}
+              <span className="text-[var(--hydro-primary)]">{p.pid || p.docId}</span> {extractLocalizedContent(p.title, language)}
             </Link>
           </div>
         ))}
@@ -101,7 +103,7 @@ function RecentContests({ contests }: { contests: any[] }) {
             </div>
             <Link
               to="contest_detail"
-              params={{ tid: c.docId || c._id }}
+              params={{ tid: c.docId || c._id, ...(c.domainId ? { domainId: c.domainId } : {}) }}
               className="hydro-subtle-link min-w-0 truncate text-sm font-semibold"
             >
               {c.title}
@@ -113,11 +115,19 @@ function RecentContests({ contests }: { contests: any[] }) {
   );
 }
 
-function StatStrip({ problems, contests }: { problems: any[], contests: any[] }) {
+function numericValue(...values: any[]) {
+  for (const value of values) {
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+  }
+  return 0;
+}
+
+function StatStrip({ problemCount, contestCount }: { problemCount: number, contestCount: number }) {
   const { t } = useI18n();
   const items = [
-    { label: t('Problems'), value: problems.length, tone: 'var(--hydro-primary)' },
-    { label: t('Contests'), value: contests.length, tone: 'var(--hydro-accent)' },
+    { label: t('Problems'), value: problemCount, tone: 'var(--hydro-primary)' },
+    { label: t('Contests'), value: contestCount, tone: 'var(--hydro-accent)' },
   ];
 
   return (
@@ -179,6 +189,8 @@ export default function HomePage() {
   const sections = collectSections(contents);
   const problems = sectionList(sections.problems || sections.starredProblems || sections.recentProblems || sections.recent_problems);
   const contests = sectionList(sections.contests || sections.contest);
+  const problemCount = numericValue(args.problemCount, domain.problemCount, domain.nProblem, problems.length);
+  const contestCount = numericValue(args.contestCount, domain.contestCount, contests.length);
 
   return (
     <Stack gap="xl">
@@ -186,7 +198,7 @@ export default function HomePage() {
         <div className="lg:col-span-2">
           <WelcomeCard />
         </div>
-        <StatStrip problems={problems} contests={contests} />
+        <StatStrip problemCount={problemCount} contestCount={contestCount} />
       </SimpleGrid>
       {domain.bulletin && <BulletinCard bulletin={domain.bulletin} />}
       <ProblemList problems={problems} />

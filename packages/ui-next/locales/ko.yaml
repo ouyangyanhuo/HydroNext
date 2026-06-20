@@ -450,3 +450,23 @@ No users selected: 선택한 사용자가 없습니다
 Select: 선택
 Selected: 선택됨
 Remove: 제거
+You can create your own training plans and share them with others.: 직접 훈련 계획을 만들고 다른 사용자와 공유할 수 있습니다.
+Create Training Plan: 훈련 계획 만들기
+New Training Plan: 새 훈련 계획
+Go to Solve: 풀이하러 가기
+Contest Closed: 대회 종료
+The contest has ended. You can view the problems, but contest submissions are closed.: 대회가 종료되었습니다. 문제는 볼 수 있지만 대회 제출은 마감되었습니다.
+The contest has ended. You can view the problem, but contest submissions are closed.: 대회가 종료되었습니다. 문제 설명은 볼 수 있지만 대회 제출은 마감되었습니다.
+Confirm to delete this clarification?: 이 질문을 삭제하시겠습니까?
+Deleted: 삭제됨
+Compilers' Version and Parameters: 컴파일러 버전 및 매개변수
+Limitations: 제한
+IO: 입출력
+Judge Status: 채점 상태
+Compile Error: 컴파일 오류
+Accepted Ratio: 정답률
+RP Algorithm: RP 알고리즘
+Difficulty Algorithm: 난이도 알고리즘
+Dataset Format: 테스트데이터 형식
+Forgot Password and/or Username: 비밀번호 또는 사용자 이름을 잊은 경우
+Markdown: Markdown
