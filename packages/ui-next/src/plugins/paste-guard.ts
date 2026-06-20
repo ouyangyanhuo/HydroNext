@@ -15,7 +15,7 @@ const PASTE_LIMIT = 30;
 
 function isTargetPage(): boolean {
   const path = window.location.pathname;
-  return /^\/p\/[^/]+$/.test(path);
+  return /^(\/d\/[^/]+)?\/p\/[^/]+$/.test(path);
 }
 
 function notifyOverLimit(length: number) {
