@@ -52,7 +52,7 @@ async function downloadProblemZip(pdoc: any, title: string) {
 
   async function addRemoteFiles(type: 'testdata' | 'additional_file', list: any[], dirname: string) {
     if (!list?.length) return;
-    const res = await fetch(`/p/${pdoc.pid || pdoc.docId}/files`, {
+    const res = await fetch(`${window.location.pathname.split('/p/')[0]}/p/${pdoc.pid || pdoc.docId}/files`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ operation: 'get_links', files: list.map((file) => file.name), type }),
@@ -450,7 +450,8 @@ export default function ProblemDetailPage() {
     return () => document.removeEventListener('click', handleClick);
   }, []);
 
-  const fileUrl = previewFile ? `/p/${pid}/file/${encodeURIComponent(previewFile.name)}?type=additional_file` : '';
+  const domainPrefix = window.location.pathname.match(/^(\/d\/[^/]+)/)?.[0] || '';
+  const fileUrl = previewFile ? `${domainPrefix}/p/${pid}/file/${encodeURIComponent(previewFile.name)}?type=additional_file` : '';
 
   const title = extractLocalizedContent(pdoc.title, selectedLang || sessionLanguage);
   const scratchpadLangs = Object.fromEntries((pdoc.config?.langs || []).map((lang: string) => [lang, { display: getLangDisplay(lang) }]));

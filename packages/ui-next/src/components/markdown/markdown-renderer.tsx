@@ -314,12 +314,13 @@ export function MarkdownRenderer({ content, className, language, pid }: Markdown
 
     // Handle PDF inline viewers
     const pdfContainers = ref.current.querySelectorAll('.file-inline-viewer[data-file-ext="pdf"]');
+    const domainPrefix = window.location.pathname.match(/^(\/d\/[^/]+)/)?.[0] || '';
     pdfContainers.forEach((container) => {
       if ((container as any).__fileRendered) return;
       (container as any).__fileRendered = true;
       const filename = container.getAttribute('data-file-src');
       if (!filename) return;
-      const url = `/p/${pid}/file/${encodeURIComponent(filename)}?type=additional_file`;
+      const url = `${domainPrefix}/p/${pid}/file/${encodeURIComponent(filename)}?type=additional_file`;
       fetch(url, { redirect: 'follow' })
         .then((res) => {
           if (!res.ok) throw new Error(`${res.status}`);
@@ -341,7 +342,7 @@ export function MarkdownRenderer({ content, className, language, pid }: Markdown
       (container as any).__fileRendered = true;
       const filename = container.getAttribute('data-file-src');
       if (!filename) return;
-      const url = `/p/${pid}/file/${encodeURIComponent(filename)}?type=additional_file`;
+      const url = `${domainPrefix}/p/${pid}/file/${encodeURIComponent(filename)}?type=additional_file`;
       container.innerHTML = '<div class="text-sm text-[var(--hydro-text-muted)]">Loading...</div>';
       import('docx-preview').then(({ renderAsync }) =>
         fetch(url, { redirect: 'follow' })

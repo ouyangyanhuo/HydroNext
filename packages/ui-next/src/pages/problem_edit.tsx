@@ -259,7 +259,8 @@ export default function ProblemEditPage() {
     formData.append('file', blob, filename);
     formData.append('type', 'additional_file');
     formData.append('operation', 'upload_file');
-    const res = await fetch(`/p/${pid}/files`, {
+    const domainPrefix = window.location.pathname.match(/^(\/d\/[^/]+)/)?.[0] || '';
+    const res = await fetch(`${domainPrefix}/p/${pid}/files`, {
       method: 'POST',
       headers: { Accept: 'application/json' },
       body: formData,

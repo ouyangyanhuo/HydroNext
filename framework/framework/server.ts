@@ -434,10 +434,11 @@ ${c.response.status} ${endTime - startTime}ms ${c.response.length}`);
                 }
             });
         }
-        if (this.config.upload) {
+        {
             const uploadDir = join(tmpdir(), 'hydro', 'upload', process.env.NODE_APP_INSTANCE || '0');
             fs.ensureDirSync(uploadDir);
             logger.debug('Using upload dir: %s', uploadDir);
+            const uploadSizeMB = this.config.upload ? parseMemoryMB(this.config.upload) : 256;
             this.server.use(Body({
                 multipart: true,
                 jsonLimit: '8mb',
@@ -446,7 +447,8 @@ ${c.response.status} ${endTime - startTime}ms ${c.response.length}`);
                     uploadDir,
                     allowEmptyFiles: true,
                     minFileSize: 0,
-                    maxFileSize: parseMemoryMB(this.config.upload) * 1024 * 1024,
+                    maxFileSize: uploadSizeMB * 1024 * 1024,
+                    maxTotalFileSize: uploadSizeMB * 1024 * 1024,
                     keepExtensions: true,
                 },
             }));
@@ -471,12 +473,6 @@ ${c.response.status} ${endTime - startTime}ms ${c.response.length}`);
             process.on('exit', () => {
                 fs.emptyDirSync(uploadDir);
             });
-        } else {
-            this.server.use(Body({
-                multipart: true,
-                jsonLimit: '8mb',
-                formLimit: '8mb',
-            }));
         }
         this.router.use((c, next) => executeMiddlewareStack(c, [
             ...this.handlerLayers,

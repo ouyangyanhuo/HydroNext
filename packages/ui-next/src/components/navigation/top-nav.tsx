@@ -13,7 +13,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
-import { LanguageMenu } from './language-menu';
+import { DomainSwitcher } from './domain-switcher';
 
 type RootViewTransition = {
   ready: Promise<void>;
@@ -290,7 +290,7 @@ export function TopNav() {
 
           <Group gap="sm" wrap="nowrap">
             <ThemeToggle />
-            <LanguageMenu />
+            <DomainSwitcher />
             <div className="hidden md:block">
               {isLoggedIn ? <UserMenu /> : <GuestMenu />}
             </div>

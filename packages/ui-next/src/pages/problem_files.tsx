@@ -19,13 +19,13 @@ import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';
 import { Link } from '@/components/link';
+import { STATUS } from '@/components/record/status-map';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
-import { STATUS } from '@/components/record/status-map';
 import { useSessionStore } from '@/stores/session';
-import { extractLocalizedContent } from '@/utils/i18n-content';
 import { formatErrorMessage } from '@/utils/error';
+import { extractLocalizedContent } from '@/utils/i18n-content';
 
 function formatSize(size?: number) {
   if (!size) return '0 B';
@@ -214,6 +214,8 @@ function FileSection({
   const user = useSessionStore((s) => s.user);
   const isOwner = pdoc.owner === user?._id;
   const canDownload = type === 'additional_file' || isOwner || canEdit;
+  const domainPrefix = window.location.pathname.match(/^(\/d\/[^/]+)/)?.[0] || '';
+  const filesBaseUrl = `${domainPrefix}/p/${pid}/files`;
 
   const toggleSelect = (name: string) => {
     setSelected((prev) => {
@@ -232,7 +234,7 @@ function FileSection({
   const postOperation = async (operation: string, body: Record<string, any> = {}) => {
     setOperating(true);
     try {
-      const res = await fetch(`/p/${pid}/files`, {
+      const res = await fetch(filesBaseUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ operation, type, ...body }),
@@ -281,7 +283,7 @@ function FileSection({
     if (!selected.size) return;
     setOperating(true);
     try {
-      const res = await fetch(`/p/${pid}/files`, {
+      const res = await fetch(filesBaseUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ operation: 'get_links', files: Array.from(selected), type }),
@@ -307,7 +309,7 @@ function FileSection({
     formData.append('file', blob, filename);
     formData.append('type', type);
     formData.append('operation', 'upload_file');
-    const res = await fetch(`/p/${pid}/files`, {
+    const res = await fetch(filesBaseUrl, {
       method: 'POST',
       headers: { Accept: 'application/json' },
       body: formData,
@@ -329,7 +331,7 @@ function FileSection({
     setPreviewFile({ name: filename, size: 0 });
   };
 
-  const fileUrl = previewFile ? `/p/${pid}/file/${encodeURIComponent(previewFile.name)}?type=${type}` : '';
+  const fileUrl = previewFile ? `${domainPrefix}/p/${pid}/file/${encodeURIComponent(previewFile.name)}?type=${type}` : '';
 
   return (
     <>
@@ -420,7 +422,7 @@ function FileSection({
                 </Button>
               </Group>
               <FileDropzone
-                action={`/p/${pid}/files`}
+                action={filesBaseUrl}
                 fields={{ type }}
                 onComplete={onComplete}
               />
@@ -525,6 +527,8 @@ function GenerateTestdata({
   const [error, setError] = useState('');
   const [recordUrl, setRecordUrl] = useState('');
   const fileOptions = testdata.map((file) => ({ value: file.name, label: `${file.name} (${formatSize(file.size)})` }));
+  const domainPrefix = window.location.pathname.match(/^(\/d\/[^/]+)/)?.[0] || '';
+  const filesBaseUrl = `${domainPrefix}/p/${pid}/files`;
 
   useEffect(() => {
     if (!recordUrl) return undefined;
@@ -552,7 +556,7 @@ function GenerateTestdata({
     setError('');
     setGenerating(true);
     try {
-      const res = await fetch(`/p/${pid}/files`, {
+      const res = await fetch(filesBaseUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ operation: 'generate_testdata', gen, std }),

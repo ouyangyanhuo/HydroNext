@@ -1,11 +1,11 @@
-import yaml from 'js-yaml';
 import { Badge, Button, Card, Checkbox, Group, MultiSelect, NumberInput, Select, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import yaml from 'js-yaml';
 import { useMemo, useState } from 'react';
-import { CodeEditor } from '@/components/editor/code-editor';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { PageHeader } from '@/components/common/page-header';
+import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
@@ -89,7 +89,7 @@ export default function ProblemConfigPage() {
   const [config, setConfig] = useState(toText(args.config || pdoc.config || {}));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [previewFile, setPreviewFile] = useState<{ name: string; size: number } | null>(null);
+  const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);
   const pid = pdoc.pid || pdoc.docId;
   const parsed = useMemo(() => parseConfig(config), [config]);
   const files = useMemo(() => fileOptions(testdata), [testdata]);
@@ -181,7 +181,7 @@ export default function ProblemConfigPage() {
       form.append('filename', 'config.yaml');
       form.append('type', 'testdata');
       form.append('file', new Blob([config], { type: 'text/yaml' }), 'config.yaml');
-      const res = await fetch(`/p/${pdoc.pid || pdoc.docId}/files`, {
+      const res = await fetch(window.location.href.replace('/config', '/files'), {
         method: 'POST',
         headers: { Accept: 'application/json' },
         body: form,
@@ -207,7 +207,8 @@ export default function ProblemConfigPage() {
     formData.append('file', blob, filename);
     formData.append('type', 'testdata');
     formData.append('operation', 'upload_file');
-    const res = await fetch(`/p/${pid}/files`, {
+    const domainPrefix = window.location.pathname.match(/^(\/d\/[^/]+)/)?.[0] || '';
+    const res = await fetch(`${domainPrefix}/p/${pid}/files`, {
       method: 'POST',
       headers: { Accept: 'application/json' },
       body: formData,
@@ -488,7 +489,7 @@ export default function ProblemConfigPage() {
                       </Stack>
                     </Card>
                   ))}
-                  {!(Array.isArray(parsed.subtasks) && parsed.subtasks.length) && (
+                  {(!Array.isArray(parsed.subtasks) || !parsed.subtasks.length) && (
                     <Text size="sm" c="dimmed">{t('No subtasks')}</Text>
                   )}
                 </Stack>

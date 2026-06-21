@@ -62,6 +62,7 @@ A verification link has been sent to your email. Please check your inbox to comp
 A verification link will be sent to your email.: 验证链接将发送至您的邮箱。
 Send Verification Email: 发送验证邮件
 Passwords do not match: 两次输入的密码不一致
+Invalid email format: 邮箱格式不正确
 Registration failed: 注册失败
 'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': 邮件发送过于频繁（限制：60秒内1次）。
 Logging out...: 正在退出...
@@ -347,6 +348,7 @@ replies: 条回复
 My Profile: 个人主页
 My Files: 我的文件
 My Domains: 我的域
+Switch Domain: 切换域
 Create Domain: 创建域
 Delete Domain: 删除域
 Domain Settings: 域设置

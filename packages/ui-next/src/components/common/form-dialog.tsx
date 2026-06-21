@@ -175,7 +175,7 @@ export function FormDialog({
     <Modal opened={opened} onClose={onClose} title={title} size="md">
       <Stack gap="md">
         {fields.map((field) => {
-          const common = {
+          const { key: fieldKey, ...common } = {
             key: field.name,
             label: field.label,
             placeholder: field.placeholder,
@@ -185,6 +185,7 @@ export function FormDialog({
           if (field.type === 'textarea') {
             return (
               <Textarea
+                key={fieldKey}
                 {...common}
                 minRows={4}
                 autosize
@@ -196,6 +197,7 @@ export function FormDialog({
           if (field.type === 'number') {
             return (
               <NumberInput
+                key={fieldKey}
                 {...common}
                 value={typeof values[field.name] === 'number' ? values[field.name] as number : undefined}
                 onChange={(value) => setValue(field.name, value)}
@@ -233,6 +235,7 @@ export function FormDialog({
           if (field.type === 'password') {
             return (
               <PasswordInput
+                key={fieldKey}
                 {...common}
                 value={String(values[field.name] ?? '')}
                 onChange={(e) => setValue(field.name, e.currentTarget.value)}
@@ -241,6 +244,7 @@ export function FormDialog({
           }
           return (
             <TextInput
+              key={fieldKey}
               {...common}
               value={String(values[field.name] ?? '')}
               onChange={(e) => setValue(field.name, e.currentTarget.value)}

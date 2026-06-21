@@ -47,6 +47,7 @@ A verification link has been sent to your email. Please check your inbox to comp
 A verification link will be sent to your email.: A verification link will be sent to your email.
 Send Verification Email: Send Verification Email
 Passwords do not match: Passwords do not match
+Invalid email format: Invalid email format
 Registration failed: Registration failed
 'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': 'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).'
 Logging out...: Logging out...
@@ -266,6 +267,7 @@ replies: replies
 My Profile: My Profile
 My Files: My Files
 My Domains: My Domains
+Switch Domain: Switch Domain
 Create Domain: Create Domain
 Delete Domain: Delete Domain
 Domain Settings: Domain Settings

@@ -5,7 +5,7 @@ import { useI18n } from '@/hooks/use-i18n';
 
 const DEFAULT_ABOUT = `
 # about 关于 HNTOU OJ
-[HNTOU OJ](https://hydro.js.org) 致力于为用户提供安全、完善、开放的在线评测及题目交流等服务。
+[HNTOU OJ](#) 致力于为用户提供安全、完善、开放的在线评测及题目交流等服务。
 
 # privacy 隐私政策
 #### 1. 收集的信息

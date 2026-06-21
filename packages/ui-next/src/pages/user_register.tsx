@@ -1,36 +1,67 @@
 import { Anchor, Button, Group, Stack, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
-import { Link } from '@/components/link';
 import { AuthPanel } from '@/components/auth/auth-panel';
+import { Link } from '@/components/link';
 import { useI18n } from '@/hooks/use-i18n';
+
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export default function UserRegisterPage() {
   const { t } = useI18n();
   const [mail, setMail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateEmail = (value: string) => {
+    if (!value) {
+      setEmailError('');
+      return;
+    }
+    if (!EMAIL_REGEX.test(value)) {
+      setEmailError(t('Invalid email format'));
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mail) return;
+
+    if (!EMAIL_REGEX.test(mail)) {
+      setEmailError(t('Invalid email format'));
+      return;
+    }
+
     setLoading(true);
     setError('');
 
-    // Use native form submission to follow backend redirect
-    // If SMTP is configured: redirects to mail sent page
-    // If SMTP is not configured: redirects to /register/{code} for username/password
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/register';
-    form.style.display = 'none';
-
-    const input = document.createElement('input');
-    input.name = 'mail';
-    input.value = mail;
-    form.appendChild(input);
-
-    document.body.appendChild(form);
-    form.submit();
+    try {
+      const formData = new FormData();
+      formData.append('mail', mail);
+      const res = await fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('json')) {
+        const data = await res.json();
+        if (data.error) {
+          setError(data.error.message || data.error || t('Registration failed'));
+        } else if (data.redirect) {
+          window.location.href = data.redirect;
+        }
+      } else if (res.redirected) {
+        window.location.href = res.url;
+      } else if (res.ok) {
+        window.location.reload();
+      }
+    } catch {
+      setError(t('Network error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,11 +76,15 @@ export default function UserRegisterPage() {
             label={t('Email')}
             type="email"
             value={mail}
-            onChange={(e) => setMail(e.currentTarget.value)}
+            onChange={(e) => {
+              setMail(e.currentTarget.value);
+              validateEmail(e.currentTarget.value);
+            }}
+            error={emailError}
             required
             autoFocus
           />
-          <Button type="submit" fullWidth loading={loading}>
+          <Button type="submit" fullWidth loading={loading} disabled={!!emailError}>
             {t('Continue')}
           </Button>
         </Stack>

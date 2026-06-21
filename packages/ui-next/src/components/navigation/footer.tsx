@@ -1,11 +1,10 @@
 import { Anchor, Group, Text } from '@mantine/core';
 import { Link } from '@/components/link';
-import { useDomain } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
+import { LanguageMenu } from './language-menu';
 
 export function Footer() {
   const { t } = useI18n();
-  const domain = useDomain();
 
   return (
     <footer className="border-t border-[var(--hydro-border)] bg-[var(--hydro-nav-bg)]">
@@ -17,12 +16,13 @@ export function Footer() {
             </Text>
             <Text size="xs" c="dimmed">
               &copy; 2026. {t('Powered by')}{' '}
-              <Anchor href="https://hydro.ac" target="_blank" rel="noopener" size="xs">
+              <Anchor href="#" rel="noopener" size="xs">
                 Hydro
               </Anchor>
             </Text>
           </div>
           <Group gap="lg">
+            <LanguageMenu />
             <Anchor component={Link} href="/wiki/about" size="sm" className="text-[var(--hydro-text-muted)] hover:text-[var(--hydro-primary)]">
               {t('About')}
             </Anchor>

@@ -1,25 +1,27 @@
-import { Allotment } from 'allotment';
 import 'allotment/dist/style.css';
-import { useState, useCallback, useMemo, type ReactNode, useRef, useEffect } from 'react';
+
 import {
   ActionIcon, Badge, Button, Divider, Drawer, Group, NumberInput,
   Paper, Select, Stack, Tabs, Text, Textarea, Title, Tooltip,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconPlayerPlay, IconSend, IconSettings, IconX } from '@tabler/icons-react';
+import { Allotment } from 'allotment';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RecordStatusBadge } from '@/components/record/record-status-badge';
+import { STATUS_TEXTS } from '@/components/record/status-map';
+import { useUiContext, useUserContext } from '@/context/page-data';
+import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
+import { useI18n } from '@/hooks/use-i18n';
+import { useRecordSocket } from '@/hooks/use-record-socket';
 import {
   CodeEditor,
   EDITOR_THEME_OPTIONS,
+  type EditorConfig,
   loadStoredEditorConfig,
   saveStoredEditorConfig,
-  type EditorConfig,
 } from './code-editor';
-import { RecordStatusBadge } from '@/components/record/record-status-badge';
-import { STATUS_TEXTS } from '@/components/record/status-map';
-import { useI18n } from '@/hooks/use-i18n';
-import { useRecordSocket } from '@/hooks/use-record-socket';
-import { useNavigate } from '@/context/router';
-import { useUiContext, useUserContext } from '@/context/page-data';
 
 interface ScratchpadProps {
   pid: string | number;
@@ -96,6 +98,7 @@ export function Scratchpad({
 }: ScratchpadProps) {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const ui = useUiContext();
   const user = useUserContext();
   const langOptions = useMemo(() => Object.entries(langs).map(([id, info]: [string, any]) => ({
@@ -115,7 +118,7 @@ export function Scratchpad({
   });
   const [code, setCode] = useState(() => {
     const cached = localStorage.getItem(cacheKey);
-    return cached == null ? defaultCode : cached;
+    return cached ?? defaultCode;
   });
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -306,12 +309,10 @@ export function Scratchpad({
         else if (pretest) {
           setPretestResult(data);
           if (data.rid) setPretestRid(String(data.rid));
-        }
-        else if (data.rid) navigate(`/record/${data.rid}`);
+        } else if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }));
         else setSubmitResult(data);
       }
-    } catch { setError('Network error'); }
-    finally {
+    } catch { setError('Network error'); } finally {
       if (pretest) setPretesting(false);
       else setSubmitting(false);
     }

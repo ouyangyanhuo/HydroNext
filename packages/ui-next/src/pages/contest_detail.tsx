@@ -359,8 +359,13 @@ export default function ContestDetailPage() {
   const canEdit = useHasPerm(PERM.PERM_EDIT_CONTEST) || args.canEdit;
   const tid = tdoc._id || tdoc.docId;
   const contestNotStarted = useMemo(() => tdoc.beginAt && new Date(tdoc.beginAt).getTime() > Date.now(), [tdoc.beginAt]);
+  const contestEnded = useMemo(() => tdoc.endAt && new Date(tdoc.endAt).getTime() <= Date.now(), [tdoc.endAt]);
 
   const handleAttend = async () => {
+    if (contestEnded) {
+      notifications.show({ title: t('Contest Closed'), message: '', color: 'red' });
+      return;
+    }
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
@@ -368,7 +373,9 @@ export default function ContestDetailPage() {
         body: JSON.stringify({ operation: 'attend' }),
       });
       const data = await res.json();
-      if (!data.error) {
+      if (data.error) {
+        notifications.show({ title: data.error.message || t('Operation failed'), message: '', color: 'red' });
+      } else {
         navigate(window.location.href);
       }
     } catch (err) {
@@ -506,9 +513,14 @@ export default function ContestDetailPage() {
           <Stack gap="md">
             <ContestInfoCard tdoc={tdoc} tsdoc={tsdoc} owner={owner} />
 
-            {isLoggedIn && !tsdoc.attend && (
+            {isLoggedIn && !tsdoc.attend && !contestEnded && (
               <Button fullWidth onClick={handleAttend}>
                 {t('Register Contest')}
+              </Button>
+            )}
+            {isLoggedIn && !tsdoc.attend && contestEnded && (
+              <Button fullWidth disabled>
+                {t('Contest Closed')}
               </Button>
             )}
 
