@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
+import { STATUS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -41,6 +42,12 @@ function statLabel(type: string, t: (key: string) => string) {
     date: t('Submit At'),
   };
   return labels[type] || type;
+}
+
+function statRecordStatus(record: any) {
+  if (record.status != null) return Number(record.status);
+  if (record.rdoc?.status != null) return Number(record.rdoc.status);
+  return STATUS.STATUS_ACCEPTED;
 }
 
 function StatusBreakdown({ stats }: { stats: Record<string, number> }) {
@@ -105,7 +112,7 @@ export default function ProblemStatisticsPage() {
       width: 130,
       render: (r: any) => (
         <Link to="record_detail" params={{ rid: r._id }} className="no-underline">
-          <RecordStatusBadge status={r.status} size="xs" />
+          <RecordStatusBadge status={statRecordStatus(r)} size="xs" />
         </Link>
       ),
     },
@@ -195,8 +202,8 @@ export default function ProblemStatisticsPage() {
                 w={120}
                 value={direction}
                 data={[
-                  { value: '1', label: 'ASC' },
-                  { value: '-1', label: 'DESC' },
+                  { value: '1', label: t('Ascending') },
+                  { value: '-1', label: t('Descending') },
                 ]}
                 onChange={(value) => updateQuery('direction', value)}
               />

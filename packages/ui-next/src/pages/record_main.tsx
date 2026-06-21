@@ -126,7 +126,7 @@ export default function RecordMainPage() {
         canViewCodeReplay || r.uid === user._id ? (
           <Button
             component={Link}
-            href={`${buildUrl('record_detail', { rid: r._id })}/replay`}
+            href={buildUrl('code_replay', { rid: r._id })}
             size="compact-xs"
             variant="light"
             leftSection={<IconPlayerPlay size={14} />}

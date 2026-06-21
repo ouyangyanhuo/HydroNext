@@ -14,7 +14,7 @@ import { usePageData, useUiContext, useUserContext } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
-import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
+import { hasPermValue, hasPrivValue, PERM, PRIV, useHasPerm } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 import { extractLocalizedContent } from '@/utils/i18n-content';
@@ -197,7 +197,8 @@ function SidebarLinkButton({ href, children, variant = 'subtle' }: { href: strin
 function ProblemSidebar({
   pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen,
   contestClosed, canSubmitProblem, canEditProblem, canConfigureProblem,
-  canRejudgeProblem, canViewProblemSolution,
+  canRejudgeProblem, canViewProblemSolution, canViewProblemFiles,
+  canDownloadProblem,
 }: {
   pdoc: any;
   psdoc?: any;
@@ -210,6 +211,8 @@ function ProblemSidebar({
   canConfigureProblem?: boolean;
   canRejudgeProblem?: boolean;
   canViewProblemSolution?: boolean;
+  canViewProblemFiles?: boolean;
+  canDownloadProblem?: boolean;
 }) {
   const { t } = useI18n();
   const isLoggedIn = useIsLoggedIn();
@@ -221,10 +224,13 @@ function ProblemSidebar({
     || (psdoc?.status === 1 && hasViewAcceptedSolutionPerm);
   const fallbackCanEdit = useHasPerm(PERM.PERM_EDIT_PROBLEM);
   const fallbackCanRejudge = useHasPerm(PERM.PERM_REJUDGE_PROBLEM);
+  const fallbackCanReadProblemData = useHasPerm(PERM.PERM_READ_PROBLEM_DATA);
   const canViewSolution = canViewProblemSolution ?? fallbackCanViewSolution;
   const canEdit = canEditProblem ?? fallbackCanEdit;
   const canConfigure = canConfigureProblem ?? (canEdit && !pdoc.reference);
   const canRejudge = canRejudgeProblem ?? fallbackCanRejudge;
+  const canViewFiles = canViewProblemFiles ?? (canEdit || fallbackCanReadProblemData);
+  const canDownload = canDownloadProblem ?? canViewFiles;
   const buildUrl = useBuildUrl();
   const pid = pdoc.pid || pdoc.docId;
   const [rejudgeLoading, setRejudgeLoading] = useState(false);
@@ -332,9 +338,11 @@ function ProblemSidebar({
             </SidebarLinkButton>
           )}
 
-          <SidebarLinkButton href={buildUrl('problem_files', { pid })}>
-            {t('Files')}
-          </SidebarLinkButton>
+          {canViewFiles && (
+            <SidebarLinkButton href={buildUrl('problem_files', { pid })}>
+              {t('Files')}
+            </SidebarLinkButton>
+          )}
           <SidebarLinkButton href={buildUrl('problem_statistics', { pid })}>
             {t('Statistics')}
           </SidebarLinkButton>
@@ -352,9 +360,11 @@ function ProblemSidebar({
             </>
           )}
 
-          <Button variant="subtle" fullWidth size="sm" justify="flex-start" onClick={handleDownload} loading={downloadLoading}>
-            {t('Download')}
-          </Button>
+          {canDownload && (
+            <Button variant="subtle" fullWidth size="sm" justify="flex-start" onClick={handleDownload} loading={downloadLoading}>
+              {t('Download')}
+            </Button>
+          )}
           {isLoggedIn && (
             <Button variant="subtle" fullWidth size="sm" justify="flex-start" onClick={() => setCopyOpened(true)} loading={copyLoading}>
               {t('Copy')}
@@ -448,6 +458,7 @@ export default function ProblemDetailPage() {
   const tid = args.tdoc?.docId || args.tdoc?._id || new URLSearchParams(window.location.search).get('tid') || undefined;
   const fallbackCanSubmit = hasPermValue(user.perm, PERM.PERM_SUBMIT_PROBLEM);
   const accepted = psdoc?.status === 1;
+  const isAuthenticated = Boolean(user._id && user._id !== 0);
   const contestClosed = Boolean(args.tdoc) && (() => {
     const now = Date.now();
     const endAt = new Date(args.tdoc.endAt).getTime();
@@ -464,10 +475,21 @@ export default function ProblemDetailPage() {
   const canEditProblem = Boolean(args.canEditProblem ?? hasPermValue(user.perm, PERM.PERM_EDIT_PROBLEM));
   const canConfigureProblem = Boolean(args.canConfigureProblem ?? (canEditProblem && !pdoc.reference));
   const canRejudgeProblem = Boolean(args.canRejudgeProblem ?? hasPermValue(user.perm, PERM.PERM_REJUDGE_PROBLEM));
-  const canViewProblemSolution = Boolean(args.canViewProblemSolution ?? (!tid && (
+  const canViewProblemSolution = isAuthenticated && Boolean(args.canViewProblemSolution ?? (!tid && (
     hasPermValue(user.perm, PERM.PERM_VIEW_PROBLEM_SOLUTION)
     || (accepted && hasPermValue(user.perm, PERM.PERM_VIEW_PROBLEM_SOLUTION_ACCEPT))
   )));
+  const ownsProblem = Boolean(isAuthenticated && (
+    String(pdoc.owner ?? '') === String(user._id)
+    || String(owner?._id ?? '') === String(user._id)
+  ));
+  const canReadProblemData = isAuthenticated && Boolean(args.canReadProblemData ?? (
+    ownsProblem
+    || hasPrivValue(user.priv, PRIV.PRIV_READ_PROBLEM_DATA)
+    || hasPermValue(user.perm, PERM.PERM_READ_PROBLEM_DATA)
+  ));
+  const canViewProblemFiles = isAuthenticated && Boolean(args.canViewProblemFiles ?? (canEditProblem || canReadProblemData));
+  const canDownloadProblem = isAuthenticated && Boolean(args.canDownloadProblem ?? canReadProblemData);
   const submitUrl = buildUrl('problem_submit', { pid: submitPid }, tid ? { tid: String(tid) } : {});
   const codeLang = ui.codeLang || user.codeLang;
   const codeTemplate = ui.codeTemplate ?? user.codeTemplate;
@@ -545,7 +567,7 @@ export default function ProblemDetailPage() {
             </div>
           </Paper>
 
-          {(!pdoc.data || pdoc.data.length === 0) && (
+          {canViewProblemFiles && (!pdoc.data || pdoc.data.length === 0) && (
             <Paper withBorder p="md" className="border-[var(--hydro-warning)]" style={{ background: 'rgba(233, 161, 0, 0.08)' }}>
               <Text size="sm" fw={700} c="orange">WARNING:</Text>
               <Text size="sm">{t('This problem has no testdata.')}</Text>
@@ -588,6 +610,8 @@ export default function ProblemDetailPage() {
           canConfigureProblem={canConfigureProblem}
           canRejudgeProblem={canRejudgeProblem}
           canViewProblemSolution={canViewProblemSolution}
+          canViewProblemFiles={canViewProblemFiles}
+          canDownloadProblem={canDownloadProblem}
           onToggleScratchpad={() => setScratchpadOpen((open) => !open)}
         />
       </div>

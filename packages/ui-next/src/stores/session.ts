@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { initialLang } from '@/globals';
 
+export type ThemeMode = 'light' | 'dark';
+
 export interface UserContext {
   _id: number;
   uname: string;
@@ -24,11 +26,35 @@ export interface UiContext {
 interface SessionStore {
   user: UserContext;
   ui: UiContext;
-  theme: 'light' | 'dark';
+  theme: ThemeMode;
   language: string;
   setSession(payload: { user: UserContext, ui: UiContext }): void;
-  setTheme(theme: 'light' | 'dark'): void;
+  setTheme(theme: ThemeMode): void;
   setLanguage(lang: string): void;
+}
+
+const THEME_STORAGE_KEY = 'hydro-ui-theme';
+
+function normalizeTheme(value: unknown): ThemeMode | null {
+  return value === 'dark' || value === 'light' ? value : null;
+}
+
+function readStoredTheme(): ThemeMode | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return normalizeTheme(window.localStorage.getItem(THEME_STORAGE_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredTheme(theme: ThemeMode) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Ignore storage failures in restricted browser contexts.
+  }
 }
 
 export const useSessionStore = create<SessionStore>((set) => ({
@@ -41,14 +67,19 @@ export const useSessionStore = create<SessionStore>((set) => ({
     domain: { name: 'Hydro' },
     serverName: 'Hydro',
   },
-  theme: 'light',
+  theme: readStoredTheme() || 'light',
   language: initialLang,
   setSession: ({ user, ui }) => {
-    // Detect theme from UserContext or UiContext
-    const theme = (user as any).theme || (ui as any).theme || 'light';
+    const theme = readStoredTheme()
+      || normalizeTheme((user as any).theme)
+      || normalizeTheme((ui as any).theme)
+      || 'light';
     const language = (user as any).viewLang || initialLang;
-    set({ user, ui, theme: theme as 'light' | 'dark', language });
+    set({ user, ui, theme, language });
   },
-  setTheme: (theme) => set({ theme }),
+  setTheme: (theme) => {
+    writeStoredTheme(theme);
+    set({ theme });
+  },
   setLanguage: (language) => set({ language }),
 }));

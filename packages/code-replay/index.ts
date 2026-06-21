@@ -217,7 +217,11 @@ global.Hydro.model.codeReplay = CodeReplayModel;
 function domainAwareUrl(handler: Handler, name: string, args: Record<string, any> = {}) {
     const url = handler.url(name, args);
     const prefix = `/d/${handler.args.domainId}/`;
-    if (handler.context.originalPath?.startsWith(prefix) && url.startsWith('/')) return `/d/${handler.args.domainId}${url}`;
+    if (
+        handler.context.originalPath?.startsWith(prefix)
+        && url.startsWith('/')
+        && !url.startsWith(prefix)
+    ) return `/d/${handler.args.domainId}${url}`;
     return url;
 }
 

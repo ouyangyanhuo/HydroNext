@@ -21,11 +21,15 @@ function isTargetPage(): boolean {
 function notifyOverLimit(length: number) {
   const notifStore = (window as any).__hydroNotificationStore;
   if (notifStore) {
-    notifStore.getState().add({
-      title: '粘贴内容超过限制',
-      message: `粘贴内容不能超过 ${PASTE_LIMIT} 个字符（当前 ${length} 个字符）`,
-      color: 'red',
-    });
+    try {
+      notifStore.getState().add({
+        title: '粘贴内容超过限制',
+        message: `粘贴内容不能超过 ${PASTE_LIMIT} 个字符（当前 ${length} 个字符）`,
+        color: 'red',
+      });
+    } catch (e) {
+      console.warn('[Hydro] Failed to show paste warning:', e);
+    }
   }
 }
 
@@ -55,9 +59,10 @@ export const pasteGuardPlugin: PluginDefinition = {
       return origAddEventListener.call(this, type, listener, options);
     };
 
-    const origReadText = navigator.clipboard.readText?.bind(navigator.clipboard);
+    const clipboard = navigator.clipboard;
+    const origReadText = clipboard?.readText?.bind(clipboard);
     if (origReadText) {
-      navigator.clipboard.readText = async () => {
+      clipboard.readText = async () => {
         const text = await origReadText();
         if (isTargetPage() && text.length > PASTE_LIMIT) {
           notifyOverLimit(text.length);
@@ -71,7 +76,7 @@ export const pasteGuardPlugin: PluginDefinition = {
 
     return () => {
       HTMLTextAreaElement.prototype.addEventListener = origAddEventListener;
-      if (origReadText) navigator.clipboard.readText = origReadText;
+      if (origReadText && clipboard) clipboard.readText = origReadText;
       document.removeEventListener('paste', blockPaste, true);
     };
   },

@@ -1,6 +1,9 @@
-import { Avatar, Burger, Button, Drawer, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
+import { ActionIcon, Avatar, Burger, Button, Drawer, Group, Menu, Stack, Text, Tooltip, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { IconMoon, IconSun } from '@tabler/icons-react';
+import type { MouseEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import logoUrl from '@/assets/logo.png';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
@@ -11,6 +14,15 @@ import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
 import { LanguageMenu } from './language-menu';
+
+type RootViewTransition = {
+  ready: Promise<void>;
+  finished: Promise<void>;
+};
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => RootViewTransition;
+};
 
 function UserMenu() {
   const user = useCurrentUser();
@@ -74,6 +86,134 @@ function GuestMenu() {
         {t('Register')}
       </Button>
     </Group>
+  );
+}
+
+function ThemeToggle() {
+  const { t } = useI18n();
+  const theme = useSessionStore((s) => s.theme);
+  const setTheme = useSessionStore((s) => s.setTheme);
+  const timersRef = useRef<number[]>([]);
+  const frameRef = useRef<number | null>(null);
+  const [animating, setAnimating] = useState(false);
+  const [transition, setTransition] = useState<{
+    x: number;
+    y: number;
+    radius: number;
+    targetTheme: 'light' | 'dark';
+    expanded: boolean;
+  } | null>(null);
+  const isDark = theme === 'dark';
+  const label = isDark ? t('Switch to light mode') : t('Switch to dark mode');
+
+  useEffect(() => () => {
+    timersRef.current.forEach((timer) => window.clearTimeout(timer));
+    if (frameRef.current != null) window.cancelAnimationFrame(frameRef.current);
+  }, []);
+
+  const runFallbackTransition = (x: number, y: number, radius: number, targetTheme: 'light' | 'dark') => {
+    setTransition({ x, y, radius, targetTheme, expanded: false });
+    frameRef.current = window.requestAnimationFrame(() => {
+      setTransition((current) => (current ? { ...current, expanded: true } : current));
+    });
+    timersRef.current.push(window.setTimeout(() => setTheme(targetTheme), 900));
+    timersRef.current.push(window.setTimeout(() => {
+      setTransition(null);
+      setAnimating(false);
+      timersRef.current = [];
+    }, 980));
+  };
+
+  const toggleTheme = async (event: MouseEvent<HTMLButtonElement>) => {
+    const targetTheme = isDark ? 'light' : 'dark';
+    if (animating) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setTheme(targetTheme);
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const radius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y),
+    ) + 48;
+
+    setAnimating(true);
+    const transitionDocument = document as ViewTransitionDocument;
+    if (!transitionDocument.startViewTransition) {
+      runFallbackTransition(x, y, radius, targetTheme);
+      return;
+    }
+
+    try {
+      const viewTransition = transitionDocument.startViewTransition(() => {
+        flushSync(() => setTheme(targetTheme));
+      });
+      await viewTransition.ready;
+      const animation = document.documentElement.animate(
+        {
+          clipPath: [
+            `circle(0px at ${x}px ${y}px)`,
+            `circle(${radius}px at ${x}px ${y}px)`,
+          ],
+        },
+        {
+          duration: 900,
+          easing: 'cubic-bezier(.22, 1, .36, 1)',
+          pseudoElement: '::view-transition-new(root)',
+        } as KeyframeAnimationOptions,
+      );
+      await animation.finished;
+      await viewTransition.finished.catch(() => undefined);
+    } catch {
+      setTheme(targetTheme);
+    } finally {
+      setAnimating(false);
+    }
+  };
+
+  return (
+    <>
+      <Tooltip label={label} withArrow>
+        <ActionIcon
+          aria-label={label}
+          color={isDark ? 'yellow' : 'hydroTeal'}
+          disabled={animating}
+          onClick={toggleTheme}
+          radius="md"
+          size="lg"
+          variant="subtle"
+          className="relative overflow-hidden transition-colors duration-200 hover:bg-[var(--hydro-surface-muted)]"
+        >
+          <IconSun
+            size={18}
+            stroke={2.2}
+            className={`absolute transition-all duration-300 ease-out ${
+              isDark ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'
+            }`}
+          />
+          <IconMoon
+            size={18}
+            stroke={2.2}
+            className={`absolute transition-all duration-300 ease-out ${
+              isDark ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'
+            }`}
+          />
+        </ActionIcon>
+      </Tooltip>
+      {transition && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed left-0 top-0 z-[9999] h-0.5 w-0.5 rounded-full transition-transform duration-[900ms] ease-out"
+          style={{
+            background: transition.targetTheme === 'dark' ? '#0b1114' : '#eef3f6',
+            transform: `translate(${transition.x}px, ${transition.y}px) translate(-50%, -50%) scale(${transition.expanded ? transition.radius : 0})`,
+          }}
+        />
+      )}
+    </>
   );
 }
 
@@ -149,6 +289,7 @@ export function TopNav() {
           </Group>
 
           <Group gap="sm" wrap="nowrap">
+            <ThemeToggle />
             <LanguageMenu />
             <div className="hidden md:block">
               {isLoggedIn ? <UserMenu /> : <GuestMenu />}

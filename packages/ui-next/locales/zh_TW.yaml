@@ -141,6 +141,8 @@ Default: 預設
 Auto: 自動
 Light: 亮色
 Dark: 暗色
+Switch to light mode: 日間模式
+Switch to dark mode: 夜間模式
 High Contrast: 高對比度
 Run Pretest: 執行範例測試
 Run Self Test: 執行自我測試
@@ -584,6 +586,8 @@ Submission Statistics: 提交統計
 Submit By: 提交者
 Submit At: 提交時間
 Direction: 排序方向
+Ascending: 升序
+Descending: 降序
 Sort: 排序
 Code: 程式碼
 Oh, there is no submission!: 暫無提交記錄。

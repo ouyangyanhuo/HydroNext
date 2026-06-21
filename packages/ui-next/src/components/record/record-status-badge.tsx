@@ -13,20 +13,27 @@ const STATUS_CONFIG: Record<number, { label: string, color: string }> = {
   [STATUS.STATUS_COMPILE_ERROR]: { label: 'Compile Error', color: 'red' },
   [STATUS.STATUS_SYSTEM_ERROR]: { label: 'System Error', color: 'red' },
   [STATUS.STATUS_CANCELED]: { label: 'Canceled', color: 'gray' },
+  [STATUS.STATUS_ETC]: { label: 'Unknown Error', color: 'red' },
+  [STATUS.STATUS_HACKED]: { label: 'Hacked', color: 'red' },
   [STATUS.STATUS_JUDGING]: { label: 'Judging', color: 'blue' },
   [STATUS.STATUS_COMPILING]: { label: 'Compiling', color: 'blue' },
   [STATUS.STATUS_FETCHED]: { label: 'Fetched', color: 'blue' },
   [STATUS.STATUS_IGNORED]: { label: 'Ignored', color: 'gray' },
+  [STATUS.STATUS_FORMAT_ERROR]: { label: 'Format Error', color: 'red' },
+  [STATUS.STATUS_HACK_SUCCESSFUL]: { label: 'Hack Successful', color: 'green' },
+  [STATUS.STATUS_HACK_UNSUCCESSFUL]: { label: 'Hack Unsuccessful', color: 'gray' },
 };
 
 interface RecordStatusBadgeProps {
-  status: number;
+  status?: number;
   size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
 export function RecordStatusBadge({ status, size = 'sm' }: RecordStatusBadgeProps) {
   const { t } = useI18n();
-  const config = STATUS_CONFIG[status] || { label: `Unknown(${status})`, color: 'gray' };
+  const config = status == null
+    ? { label: 'Unknown', color: 'gray' }
+    : STATUS_CONFIG[status] || { label: `Unknown(${status})`, color: 'gray' };
 
   return (
     <Badge color={config.color} size={size} variant="light">

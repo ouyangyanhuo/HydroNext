@@ -14,13 +14,17 @@ interface NotificationStore {
   remove(id: string): void;
 }
 
+function createNotificationId() {
+  return globalThis.crypto?.randomUUID?.() || `notification-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export const useNotificationStore = create<NotificationStore>((set) => ({
   notifications: [],
   add: (notification) =>
     set((state) => ({
       notifications: [
         ...state.notifications,
-        { ...notification, id: crypto.randomUUID() },
+        { ...notification, id: createNotificationId() },
       ],
     })),
   remove: (id) =>

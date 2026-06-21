@@ -128,6 +128,11 @@ export function hasPermValue(value: unknown, perm: bigint): boolean {
   return (toBigInt(value) & perm) === perm;
 }
 
+export function hasPrivValue(value: unknown, priv: number): boolean {
+  const numericValue = typeof value === 'number' ? value : Number(value || 0);
+  return (numericValue & priv) === priv;
+}
+
 export function useHasPerm(perm: bigint): boolean {
   const userPerm = useSessionStore((s) => s.user.perm);
   return hasPermValue(userPerm, perm);

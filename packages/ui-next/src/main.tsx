@@ -26,7 +26,11 @@ window.__hydroExports = api;
 window.__hydroNotificationStore = useNotificationStore;
 
 // Install built-in plugins
-installPlugin(pasteGuardPlugin);
+try {
+  installPlugin(pasteGuardPlugin);
+} catch (e) {
+  console.error(`[Hydro] Failed to install plugin ${pasteGuardPlugin.name}:`, e);
+}
 
 async function loadPlugins() {
   let plugins: api.PluginDefinition[] = [];

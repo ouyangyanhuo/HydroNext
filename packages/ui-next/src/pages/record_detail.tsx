@@ -9,6 +9,7 @@ import { STATUS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData, useUiContext } from '@/context/page-data';
 import { useCurrentUser } from '@/hooks/use-current-user';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useRecordSocket } from '@/hooks/use-record-socket';
@@ -51,11 +52,16 @@ function shouldShowGreaterEqual(status?: number) {
   ].includes(status as STATUS);
 }
 
-function buildReplayUrl(rid: string, injectedUrl?: string) {
-  if (injectedUrl) return injectedUrl;
+function normalizeReplayUrl(url?: string) {
+  if (!url) return '';
+  return url.replace(/^(\/d\/([^/]+))\/d\/\2(?=\/)/, '$1');
+}
+
+function buildReplayUrl(buildUrl: ReturnType<typeof useBuildUrl>, rid: string, injectedUrl?: string) {
+  const normalizedInjectedUrl = normalizeReplayUrl(injectedUrl);
+  if (normalizedInjectedUrl) return normalizedInjectedUrl;
   if (!rid) return '';
-  const match = window.location.pathname.match(/^(\/d\/[^/]+)?\/record\//);
-  return `${match?.[1] || ''}/record/${rid}/replay`;
+  return buildUrl('code_replay', { rid });
 }
 
 function normalizeCases(rdoc: any) {
@@ -189,6 +195,7 @@ function OutputBlock({ title, content }: { title: string, content: string }) {
 export default function RecordDetailPage() {
   const { args } = usePageData();
   const ui = useUiContext();
+  const buildUrl = useBuildUrl();
   const { t } = useI18n();
   const user = useCurrentUser();
   const canJudge = useHasPriv(PRIV.PRIV_JUDGE) || args.canRejudge;
@@ -217,7 +224,7 @@ export default function RecordDetailPage() {
   const isLimitStatus = shouldShowGreaterEqual(rdoc.status);
   const peakTime = cases.length ? Math.max(...cases.map((item) => Number(item.time) || 0)) : null;
   const codeLength = rdoc.code ? formatSize(new Blob([rdoc.code]).size) : '';
-  const codeReplayUrl = buildReplayUrl(String(rdoc._id || ''), ui.codeReplayUrl);
+  const codeReplayUrl = buildReplayUrl(buildUrl, String(rdoc._id || ''), ui.codeReplayUrl);
 
   const submitOperation = async (operation: 'rejudge' | 'cancel') => {
     setActionLoading(operation);

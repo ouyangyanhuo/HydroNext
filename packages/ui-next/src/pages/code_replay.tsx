@@ -5,19 +5,26 @@ import { Link } from '@/components/link';
 import { usePageData, useUiContext } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 
+function normalizeReplayDataUrl(url?: string) {
+  const normalized = (url || `${window.location.pathname}/data`)
+    .replace(/^(\/d\/([^/]+))\/d\/\2(?=\/)/, '$1');
+  return normalized;
+}
+
 export default function CodeReplayPage() {
   const { args } = usePageData();
   const ui = useUiContext();
   const { t } = useI18n();
   const [data, setData] = useState<any>(args);
-  const [loading, setLoading] = useState(!!ui.codeReplayDataUrl);
+  const dataUrl = normalizeReplayDataUrl(ui.codeReplayDataUrl);
+  const [loading, setLoading] = useState(!!dataUrl);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!ui.codeReplayDataUrl) return;
+    if (!dataUrl) return;
     let disposed = false;
     setLoading(true);
-    fetch(ui.codeReplayDataUrl, { headers: { Accept: 'application/json' } })
+    fetch(dataUrl, { headers: { Accept: 'application/json' } })
       .then(async (res) => {
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         return await res.json();
@@ -32,7 +39,7 @@ export default function CodeReplayPage() {
         if (!disposed) setLoading(false);
       });
     return () => { disposed = true; };
-  }, [t, ui.codeReplayDataUrl]);
+  }, [t, dataUrl]);
 
   const replay = data.replay || {};
   const rdoc = data.rdoc || args.rdoc || {};

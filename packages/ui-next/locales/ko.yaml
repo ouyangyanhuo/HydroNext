@@ -394,7 +394,11 @@ Submission Statistics: 제출 통계
 Submit By: 제출자
 Submit At: 제출 시간
 Direction: 정렬 방향
+Ascending: 오름차순
+Descending: 내림차순
 Sort: 정렬
+Switch to light mode: 라이트 모드로 전환
+Switch to dark mode: 다크 모드로 전환
 Code: 코드
 Oh, there is no submission!: 제출이 없습니다!
 Redirecting: 리다이렉트 중
