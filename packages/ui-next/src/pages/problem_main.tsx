@@ -255,8 +255,8 @@ export default function ProblemMainPage() {
             className="w-[130px]"
           />
           <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
-          {canCreate && <Button size="xs" variant="light" component="a" href="/problem/create">{t('Create Problem')}</Button>}
-          {canCreate && <Button size="xs" variant="light" component="a" href="/problem/import">{t('Import Problems')}</Button>}
+          {canCreate && <Button size="xs" variant="light" component={Link} to="problem_create">{t('Create Problem')}</Button>}
+          {canCreate && <Button size="xs" variant="light" component={Link} to="problem_import">{t('Import Problems')}</Button>}
         </Group>
       </PageHeader>
 

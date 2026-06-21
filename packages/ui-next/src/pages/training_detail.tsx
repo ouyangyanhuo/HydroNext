@@ -7,6 +7,7 @@ import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData, useUserContext } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { getAvatarUrl } from '@/utils/avatar';
@@ -122,6 +123,7 @@ export default function TrainingDetailPage() {
   const { args } = usePageData();
   const user = useUserContext();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const isLoggedIn = useIsLoggedIn();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -179,7 +181,7 @@ export default function TrainingDetailPage() {
             <Group justify="space-between" align="flex-start" gap="md">
               <div className="min-w-0">
                 <Group gap="xs" mb="sm">
-                  <Button component="a" href="/training" variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                  <Button component="a" href={buildUrl('training_main')} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
                     {t('Back')}
                   </Button>
                   <Badge variant="light">{t('Training')}</Badge>

@@ -2,6 +2,7 @@ import { Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/co
 import { IconArrowLeft, IconCopy } from '@tabler/icons-react';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData, useUserContext } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
@@ -20,6 +21,7 @@ export default function ProblemImportPage() {
   const { args } = usePageData();
   const user = useUserContext();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const isLoggedIn = useIsLoggedIn();
   const storeCanCreate = useHasPerm(PERM.PERM_CREATE_PROBLEM);
   const canCreate = Boolean(args.canCreateProblem ?? (
@@ -30,7 +32,7 @@ export default function ProblemImportPage() {
     return (
       <Stack gap="lg">
         <PageHeader title={t('Import Problems')}>
-          <Button component="a" href="/p" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          <Button component="a" href={buildUrl('problem_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
             {t('Back')}
           </Button>
         </PageHeader>
@@ -44,7 +46,7 @@ export default function ProblemImportPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Import Problems')}>
-        <Button component="a" href="/p" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button component="a" href={buildUrl('problem_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
       </PageHeader>
@@ -57,7 +59,7 @@ export default function ProblemImportPage() {
             p="lg"
             className="hydro-content-card cursor-pointer transition-shadow hover:shadow-md"
             component="a"
-            href={source.href}
+            href={source.id === 'hydro' ? buildUrl('problem_import_hydro') : source.href}
           >
             <Stack gap="sm">
               <Group gap="sm">

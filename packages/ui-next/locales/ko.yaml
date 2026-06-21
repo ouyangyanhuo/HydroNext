@@ -238,6 +238,7 @@ My Profile: 내 프로필
 My Files: 내 파일
 My Domains: 내 도메인
 Create Domain: 도메인 만들기
+Delete Domain: 도메인 삭제
 Domain Settings: 도메인 설정
 Domain Manage: 도메인 관리
 Domain Users: 도메인 사용자
@@ -252,18 +253,22 @@ Accept: 수락
 Reject: 거절
 No pending applications: 대기 중인 신청 없음
 No domains: 도메인 없음
+This operation cannot be undone.: 이 작업은 되돌릴 수 없습니다.
+Confirm to delete this domain?: 이 도메인을 삭제하시겠습니까?
 Group Assignment (Optional): 그룹 할당 (선택사항)
 The group to join when user joining the domain.: 사용자가 도메인에 가입할 때 참여할 그룹입니다.
 Preference: 환경설정
-You can also upload your avatar to Gravatar and it will be automatically updated here.: Gravatar에 아바타를 업로드하면 여기에서도 자동으로 업데이트됩니다.
+You can also upload your avatar to Gravatar and it will be automatically updated here.: Cravatar에 아바타를 업로드하면 여기에서도 자동으로 업데이트됩니다.
 Linked Accounts: 연결된 계정
 Email Account: 이메일 계정
 Manage all active login sessions.: 모든 활성 로그인 세션을 관리합니다.
 Email for Gravatar: Gravatar 이메일
+Email for Cravatar: Cravatar 이메일
 QQ Number: QQ 번호
 GitHub Username: GitHub 사용자 이름
 Choose avatar file: 아바타 파일 선택
 Gravatar uses your email to fetch avatar from: Gravatar는 이메일을 사용하여 아바타를 가져옵니다
+Cravatar uses your email to fetch avatar from: Cravatar는 이메일을 사용하여 아바타를 가져옵니다
 
 # Manage
 System Management: 시스템 관리

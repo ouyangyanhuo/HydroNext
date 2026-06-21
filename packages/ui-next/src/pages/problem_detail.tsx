@@ -546,7 +546,7 @@ export default function ProblemDetailPage() {
             <Group justify="space-between" align="flex-start" gap="md" wrap="wrap" className="border-b border-[var(--hydro-border)] pb-4">
               <div className="min-w-0 flex-1">
                 <Group gap="xs" mb="xs">
-                  <Button component="a" href="/p" variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                  <Button component="a" href={buildUrl('problem_main')} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
                     {t('Back')}
                   </Button>
                 </Group>

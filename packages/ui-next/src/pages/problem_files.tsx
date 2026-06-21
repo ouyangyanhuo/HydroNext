@@ -13,6 +13,7 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
@@ -637,7 +638,7 @@ export default function ProblemFilesPage() {
           params={{ pid }}
           variant="subtle"
           size="compact-sm"
-          leftSection={<Text size="sm">←</Text>}
+          leftSection={<IconArrowLeft size={14} />}
           className="text-[var(--hydro-text-muted)] hover:text-[var(--hydro-text)]"
         >
           {pid}. {title}

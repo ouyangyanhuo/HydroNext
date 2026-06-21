@@ -109,7 +109,7 @@ export default function TrainingMainPage() {
           <PageHeader title={t('All Training Plans')}>
             <Group gap="xs" wrap="wrap">
               {canCreateTraining && (
-                <Button component={Link} href="/training/create" size="xs" variant="light">
+                <Button component={Link} to="training_create" size="xs" variant="light">
                   {t('New Training Plan')}
                 </Button>
               )}
@@ -147,7 +147,7 @@ export default function TrainingMainPage() {
           {canCreateTraining && (
             <Card withBorder p="md" className="hydro-panel">
               <Title order={3} size="h5" mb="sm">{t('Create Training Plan')}</Title>
-              <Button component={Link} href="/training/create" fullWidth size="xs">
+              <Button component={Link} to="training_create" fullWidth size="xs">
                 {t('New Training Plan')}
               </Button>
               <Text size="xs" c="dimmed" mt="sm">

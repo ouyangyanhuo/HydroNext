@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
@@ -150,6 +151,7 @@ export default function ProblemEditPage() {
   const { args } = usePageData();
   const { t, language } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const pdoc = args.pdoc || {};
   const isNew = !pdoc.docId;
   const categories = normalizeCategories(args.categories || {});
@@ -233,7 +235,7 @@ export default function ProblemEditPage() {
       } else if (data.redirect) {
         navigate(data.redirect);
       } else {
-        navigate('/p');
+        navigate(buildUrl('problem_main'));
       }
     } catch {
       notifications.show({ title: t('Network error'), message: '', color: 'red' });
@@ -292,7 +294,7 @@ export default function ProblemEditPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={isNew ? t('Create Problem') : t('Edit Problem')}>
-        <Button component="a" href="/p" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button component="a" href={isNew ? buildUrl('problem_main') : buildUrl('problem_detail', { pid })} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
       </PageHeader>

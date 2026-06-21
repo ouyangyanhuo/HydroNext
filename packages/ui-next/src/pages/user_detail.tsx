@@ -15,6 +15,14 @@ function getBackgroundUrl(uid: number): string {
   return `/backgrounds/${index}.jpg`;
 }
 
+function formatGender(gender: any, t: (key: string) => string) {
+  const value = Number(gender);
+  if (value === 0) return t('Male');
+  if (value === 1) return t('Female');
+  if (value === 2) return t('Other');
+  return '';
+}
+
 export default function UserDetailPage() {
   const { args } = usePageData();
   const { t } = useI18n();
@@ -81,9 +89,9 @@ export default function UserDetailPage() {
                       {t('Last active')}: <br /><TimeDisplay date={sdoc.updateAt} format="relative" size="xs" />
                     </Text>
                   )}
-                  {udoc.gender !== undefined && udoc.gender !== 0 && (
+                  {formatGender(udoc.gender, t) && (
                     <Text size="xs" c="dimmed" component="span">
-                      {t('Gender')}: <br />{udoc.gender === 1 ? t('Male') : udoc.gender === 2 ? t('Female') : t('Other')}
+                      {t('Gender')}: <br />{formatGender(udoc.gender, t)}
                     </Text>
                   )}
                   {udoc.school && (

@@ -267,6 +267,7 @@ My Profile: My Profile
 My Files: My Files
 My Domains: My Domains
 Create Domain: Create Domain
+Delete Domain: Delete Domain
 Domain Settings: Domain Settings
 Domain Manage: Domain Manage
 Domain Users: Domain Users
@@ -281,18 +282,22 @@ Accept: Accept
 Reject: Reject
 No pending applications: No pending applications
 No domains: No domains
+This operation cannot be undone.: This operation cannot be undone.
+Confirm to delete this domain?: Confirm to delete this domain?
 Group Assignment (Optional): Group Assignment (Optional)
 The group to join when user joining the domain.: The group to join when user joining the domain.
 Preference: Preference
-You can also upload your avatar to Gravatar and it will be automatically updated here.: You can also upload your avatar to Gravatar and it will be automatically updated here.
+You can also upload your avatar to Gravatar and it will be automatically updated here.: You can also upload your avatar to Cravatar and it will be automatically updated here.
 Linked Accounts: Linked Accounts
 Email Account: Email Account
 Manage all active login sessions.: Manage all active login sessions.
 Email for Gravatar: Email for Gravatar
+Email for Cravatar: Email for Cravatar
 QQ Number: QQ Number
 GitHub Username: GitHub Username
 Choose avatar file: Choose avatar file
 Gravatar uses your email to fetch avatar from: Gravatar uses your email to fetch avatar from
+Cravatar uses your email to fetch avatar from: Cravatar uses your email to fetch avatar from
 
 # Manage
 System Management: System Management

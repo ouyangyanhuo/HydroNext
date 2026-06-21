@@ -1,5 +1,5 @@
 import { ActionIcon, Badge, Button, Card, Collapse, Divider, Group, Stack, Text, Tooltip } from '@mantine/core';
-import { IconArrowUp, IconLink, IconMessage, IconPencil, IconThumbUp, IconTrash, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
+import { IconArrowLeft, IconArrowUp, IconLink, IconMessage, IconPencil, IconThumbUp, IconTrash, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { useState } from 'react';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
@@ -12,6 +12,7 @@ import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 
@@ -366,6 +367,7 @@ export default function ProblemSolutionPage() {
   const { t } = useI18n();
   const isLoggedIn = useIsLoggedIn();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const pdoc = args.pdoc || {};
   const psdocs = args.psdocs || [];
   const udict = args.udict || {};
@@ -394,7 +396,12 @@ export default function ProblemSolutionPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={`${t('Solutions')} - ${pdoc.pid}. ${pdoc.title}`}>
-        <Badge variant="light">{pscount} {t('solutions')}</Badge>
+        <Group gap="xs">
+          <Button component="a" href={buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId })} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+            {t('Back')}
+          </Button>
+          <Badge variant="light">{pscount} {t('solutions')}</Badge>
+        </Group>
       </PageHeader>
 
       {isLoggedIn && !sid && (

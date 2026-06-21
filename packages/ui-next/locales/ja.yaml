@@ -238,6 +238,7 @@ My Profile: マイプロフィール
 My Files: マイファイル
 My Domains: マイドメイン
 Create Domain: ドメインを作成
+Delete Domain: ドメインを削除
 Domain Settings: ドメイン設定
 Domain Manage: ドメイン管理
 Domain Users: ドメインユーザー
@@ -252,18 +253,22 @@ Accept: 承認
 Reject: 拒否
 No pending applications: 保留中の申請なし
 No domains: ドメインなし
+This operation cannot be undone.: この操作は元に戻せません。
+Confirm to delete this domain?: このドメインを削除しますか？
 Group Assignment (Optional): グループ割り当て（オプション）
 The group to join when user joining the domain.: ユーザーがドメインに参加する際に加入するグループ。
 Preference: 設定
-You can also upload your avatar to Gravatar and it will be automatically updated here.: Gravatarにアバターをアップロードすると、ここでも自動的に更新されます。
+You can also upload your avatar to Gravatar and it will be automatically updated here.: Cravatarにアバターをアップロードすると、ここでも自動的に更新されます。
 Linked Accounts: 連携アカウント
 Email Account: メールアカウント
 Manage all active login sessions.: すべてのアクティブなログインセッションを管理。
 Email for Gravatar: Gravatar用メールアドレス
+Email for Cravatar: Cravatar用メールアドレス
 QQ Number: QQ番号
 GitHub Username: GitHubユーザー名
 Choose avatar file: アバターファイルを選択
 Gravatar uses your email to fetch avatar from: Gravatarはメールアドレスを使用してアバターを取得します
+Cravatar uses your email to fetch avatar from: Cravatarはメールアドレスを使用してアバターを取得します
 
 # Manage
 System Management: システム管理

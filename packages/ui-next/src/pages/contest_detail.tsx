@@ -460,7 +460,7 @@ export default function ContestDetailPage() {
         <Group justify="space-between" align="flex-start" gap="lg">
           <div className="min-w-0 flex-1">
             <Group gap="xs" mb="sm">
-              <Button component="a" href="/contest" variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+              <Button component="a" href={buildUrl('contest_main')} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
                 {t('Back')}
               </Button>
               <Badge variant="light" color="hydroCopper">

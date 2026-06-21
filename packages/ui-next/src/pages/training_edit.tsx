@@ -169,7 +169,7 @@ export default function TrainingEditPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={isNew ? t('Create Training') : t('Edit Training')}>
-        <Button component="a" href="/training" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button component="a" href={buildUrl('training_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
       </PageHeader>

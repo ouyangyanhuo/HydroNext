@@ -14,6 +14,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useRecordSocket } from '@/hooks/use-record-socket';
 import { formatErrorMessage } from '@/utils/error';
+import { extractLocalizedContent } from '@/utils/i18n-content';
 
 function asArray(value: any) {
   if (!value) return [];
@@ -52,6 +53,26 @@ function shouldShowGreaterEqual(status?: number) {
   ].includes(status as STATUS);
 }
 
+function formatStructuredText(value: any): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'object' && typeof value.message === 'string') {
+    let text = value.message;
+    if (Array.isArray(value.params)) {
+      value.params.forEach((param: any, index: number) => {
+        text = text.replace(new RegExp(`\\{${index}\\}`, 'g'), formatStructuredText(param));
+      });
+    }
+    return text;
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
 function normalizeReplayUrl(url?: string) {
   if (!url) return '';
   return url.replace(/^(\/d\/([^/]+))\/d\/\2(?=\/)/, '$1');
@@ -82,11 +103,12 @@ function groupCases(cases: any[]) {
   return Array.from(groups.entries()).map(([id, items]) => ({ id, items }));
 }
 
-function CaseMessage({ message }: { message?: string }) {
-  if (!message) return null;
+function CaseMessage({ message }: { message?: any }) {
+  const text = formatStructuredText(message);
+  if (!text) return null;
   return (
     <Text size="xs" c="dimmed" className="mt-1 line-clamp-2 whitespace-pre-wrap">
-      {message}
+      {text}
     </Text>
   );
 }
@@ -196,7 +218,7 @@ export default function RecordDetailPage() {
   const { args } = usePageData();
   const ui = useUiContext();
   const buildUrl = useBuildUrl();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const user = useCurrentUser();
   const canJudge = useHasPriv(PRIV.PRIV_JUDGE) || args.canRejudge;
   const canViewCodeReplay = useHasPriv(PRIV.PRIV_READ_RECORD_CODE) || (args.rdoc?.uid === user._id);
@@ -214,8 +236,8 @@ export default function RecordDetailPage() {
   const allRevs = args.allRevs || {};
   const rev = args.rev;
 
-  const compilerTexts = asArray(rdoc.compilerTexts || rdoc.compilerText).filter(Boolean);
-  const judgeTexts = asArray(rdoc.judgeTexts || rdoc.judgeText).filter(Boolean);
+  const compilerTexts = asArray(rdoc.compilerTexts || rdoc.compilerText).map(formatStructuredText).filter(Boolean);
+  const judgeTexts = asArray(rdoc.judgeTexts || rdoc.judgeText).map(formatStructuredText).filter(Boolean);
   const cases = normalizeCases(rdoc);
   const submitAt = objectIdDate(rdoc._id);
   const isJudging = rdoc.status === STATUS.STATUS_JUDGING || rdoc.status === STATUS.STATUS_COMPILING || rdoc.status === STATUS.STATUS_FETCHED;
@@ -225,6 +247,8 @@ export default function RecordDetailPage() {
   const peakTime = cases.length ? Math.max(...cases.map((item) => Number(item.time) || 0)) : null;
   const codeLength = rdoc.code ? formatSize(new Blob([rdoc.code]).size) : '';
   const codeReplayUrl = buildReplayUrl(buildUrl, String(rdoc._id || ''), ui.codeReplayUrl);
+  const problemTitle = extractLocalizedContent(pdoc.title, language);
+  const contestTitle = extractLocalizedContent(tdoc?.title, language);
 
   const submitOperation = async (operation: 'rejudge' | 'cancel') => {
     setActionLoading(operation);
@@ -260,7 +284,7 @@ export default function RecordDetailPage() {
               #{recordId || '-'}
             </Title>
             <Text size="sm" c="dimmed" mt="xs" className="truncate">
-              {pdoc.pid || pdoc.docId ? `${pdoc.pid || pdoc.docId}. ${pdoc.title || ''}` : t('Submission detail')}
+              {pdoc.pid || pdoc.docId ? `${pdoc.pid || pdoc.docId}. ${problemTitle || ''}` : t('Submission detail')}
             </Text>
           </div>
           <Group gap="sm">
@@ -367,14 +391,14 @@ export default function RecordDetailPage() {
                 {pdoc && (
                   <InfoRow label={t('Problem')}>
                     <Link to="problem_detail" params={{ pid: pdoc.pid || pdoc.docId }} className="block max-w-40 truncate text-xs no-underline hover:underline">
-                      {pdoc.pid || pdoc.docId}. {pdoc.title}
+                      {pdoc.pid || pdoc.docId}. {problemTitle}
                     </Link>
                   </InfoRow>
                 )}
                 {tdoc && (
                   <InfoRow label={t(tdoc.rule === 'homework' ? 'Homework' : 'Contest')}>
                     <Link to={tdoc.rule === 'homework' ? 'homework_detail' : 'contest_detail'} params={{ tid: tdoc.docId || tdoc._id }} className="block max-w-40 truncate text-xs no-underline hover:underline">
-                      {tdoc.title}
+                      {contestTitle}
                     </Link>
                   </InfoRow>
                 )}

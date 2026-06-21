@@ -144,6 +144,7 @@ export default function ContestManagePage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const tdoc = args.tdoc || {};
   const pdict = args.pdict || {};
   const tid = String(tdoc.docId || tdoc._id || '');
@@ -215,7 +216,7 @@ export default function ContestManagePage() {
     <Stack gap="lg">
       <PageHeader title={`${t('Manage')} - ${tdoc.title}`}>
         <Group gap="xs">
-          <Button component="a" href={`/contest/${tid}`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          <Button component="a" href={buildUrl('contest_detail', { tid })} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
             {t('Back')}
           </Button>
           <Button component={Link} to="contest_edit" params={{ tid }} size="xs" variant="light">{t('Edit')}</Button>

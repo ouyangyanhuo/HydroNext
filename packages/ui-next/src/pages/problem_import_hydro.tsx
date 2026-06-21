@@ -2,9 +2,9 @@ import { Badge, Button, Card, Checkbox, FileInput, Group, Stack, Text, TextInput
 import { IconArrowLeft, IconFileZip } from '@tabler/icons-react';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
-import { Link } from '@/components/link';
 import { usePageData, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
@@ -15,6 +15,7 @@ export default function ProblemImportHydroPage() {
   const user = useUserContext();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const isLoggedIn = useIsLoggedIn();
   const storeCanCreate = useHasPerm(PERM.PERM_CREATE_PROBLEM);
   const canCreate = Boolean(args.canCreateProblem ?? (
@@ -61,10 +62,10 @@ export default function ProblemImportHydroPage() {
         } else if (data.redirect) {
           navigate(data.redirect);
         } else {
-          navigate('/p');
+          navigate(buildUrl('problem_main'));
         }
       } else {
-        navigate('/p');
+        navigate(buildUrl('problem_main'));
       }
     } catch {
       setError(t('Network error'));
@@ -78,7 +79,7 @@ export default function ProblemImportHydroPage() {
       <PageHeader title={t('Import From Hydro')}>
         <Button
           component="a"
-          href="/problem/import"
+          href={buildUrl('problem_import')}
           variant="subtle"
           size="xs"
           leftSection={<IconArrowLeft size={14} />}

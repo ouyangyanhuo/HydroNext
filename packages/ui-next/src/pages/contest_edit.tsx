@@ -338,7 +338,7 @@ export default function ContestEditPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={isNew ? t('Create Contest') : t('Edit Contest')}>
-        <Button component="a" href="/contest" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button component="a" href={buildUrl('contest_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
       </PageHeader>

@@ -1,4 +1,5 @@
-import { Badge, Card, Group, Progress, Select, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Badge, Button, Card, Group, Progress, Select, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
@@ -8,6 +9,7 @@ import { STATUS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 function formatMemory(memory?: number) {
@@ -83,6 +85,7 @@ export default function ProblemStatisticsPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const pdoc = args.pdoc || {};
   const rsdocs = args.rsdocs || [];
   const udict = args.udict || {};
@@ -162,7 +165,11 @@ export default function ProblemStatisticsPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={`${t('Statistics')} - ${pdoc.pid}. ${pdoc.title}`} />
+      <PageHeader title={`${t('Statistics')} - ${pdoc.pid}. ${pdoc.title}`}>
+        <Button component="a" href={buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId })} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          {t('Back')}
+        </Button>
+      </PageHeader>
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
         <Card withBorder p="md" ta="center" className="hydro-content-card">
           <Text size="xl" fw={700}>{submitted}</Text>

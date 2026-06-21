@@ -348,6 +348,7 @@ My Profile: 个人主页
 My Files: 我的文件
 My Domains: 我的域
 Create Domain: 创建域
+Delete Domain: 删除域
 Domain Settings: 域设置
 Domain Manage: 域管理
 Domain Users: 域用户
@@ -362,18 +363,22 @@ Accept: 接受
 Reject: 拒绝
 No pending applications: 暂无待处理申请
 No domains: 暂无域
+This operation cannot be undone.: 此操作无法撤销。
+Confirm to delete this domain?: 确认删除此域？
 Group Assignment (Optional): 用户组分配（可选）
 The group to join when user joining the domain.: 用户加入域时自动加入的用户组。
 Preference: 偏好设置
-You can also upload your avatar to Gravatar and it will be automatically updated here.: 您也可以将头像上传至 Gravatar，系统会自动同步。
+You can also upload your avatar to Gravatar and it will be automatically updated here.: 您也可以将头像上传至 Cravatar，系统会自动同步。
 Linked Accounts: 关联账户
 Email Account: 邮箱账户
 Manage all active login sessions.: 管理所有活跃的登录会话。
 Email for Gravatar: Gravatar 邮箱
+Email for Cravatar: Cravatar 邮箱
 QQ Number: QQ 号码
 GitHub Username: GitHub 用户名
 Choose avatar file: 选择头像文件
 Gravatar uses your email to fetch avatar from: Gravatar 根据您的邮箱从以下地址获取头像
+Cravatar uses your email to fetch avatar from: Cravatar 根据您的邮箱从以下地址获取头像
 
 # Manage
 System Management: 系统管理

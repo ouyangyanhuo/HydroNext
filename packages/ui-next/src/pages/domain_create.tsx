@@ -17,7 +17,7 @@ export default function DomainCreatePage() {
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else if (data.redirect) window.location.href = data.redirect;
-      else window.location.href = `/d/${data.domainId || form.id}`;
+      else window.location.href = `/d/${data.domainId || form.id}/`;
     } catch { setError('Network error'); } finally { setLoading(false); }
   };
 

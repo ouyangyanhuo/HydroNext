@@ -7,13 +7,14 @@ import { SettingsForm } from '@/components/common/settings-form';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+import { getAvatarUrl } from '@/utils/avatar';
 
-const GRAVATAR_MIRROR = '//cn.gravatar.com/avatar/';
+const GRAVATAR_MIRROR = '//cravatar.cn/avatar/';
 
 function getAvatarPreviewUrl(type: string, value: string): string {
   if (!value) return `${GRAVATAR_MIRROR}?d=mm&s=128`;
   if (type === 'gravatar') {
-    return `${GRAVATAR_MIRROR}${value}?d=mm&s=128`;
+    return getAvatarUrl(`gravatar:${value}`, 128);
   }
   if (type === 'qq') {
     return `https://q1.qlogo.cn/g?b=qq&nk=${value}&s=160`;
@@ -159,7 +160,7 @@ export default function HomeSettingsPage() {
                   }}
                 >
                   <Group gap="md">
-                    <Radio value="gravatar" label="Gravatar" />
+                    <Radio value="gravatar" label="Cravatar" />
                     <Radio value="qq" label="QQ" />
                     <Radio value="github" label="GitHub" />
                     <Radio value="upload" label={t('Upload')} />
@@ -167,7 +168,7 @@ export default function HomeSettingsPage() {
                 </Radio.Group>
                 {avatarType === 'gravatar' && (
                   <TextInput
-                    placeholder={t('Email for Gravatar')}
+                    placeholder={t('Email for Cravatar')}
                     value={avatarValue}
                     onChange={(e) => setAvatarValue(e.currentTarget.value)}
                     size="sm"
@@ -199,7 +200,7 @@ export default function HomeSettingsPage() {
                   />
                 )}
                 <Text size="xs" c="dimmed">
-                  {t('Gravatar uses your email to fetch avatar from')} cn.gravatar.com
+                  {t('Cravatar uses your email to fetch avatar from')} cravatar.cn
                 </Text>
               </Stack>
             </Group>

@@ -47,6 +47,21 @@ export const routeMapStore: RouteMapStore = import.meta.hot?.data?.routeMapStore
   ?? createRouteMapStore(injectionData.route_map || {});
 if (import.meta.hot) import.meta.hot.data.routeMapStore = routeMapStore;
 
+function getRoutePath(url: string): string {
+  const pathname = new URL(url, window.location.href).pathname;
+  if (!pathname.startsWith('/d/')) return pathname;
+  const domainRelativePath = pathname.split('/').slice(3).join('/');
+  return domainRelativePath ? `/${domainRelativePath}` : '/';
+}
+
+function inferRouteName(url: string, routeMap: Record<string, string>): string {
+  const routePath = getRoutePath(url);
+  for (const [name, pattern] of Object.entries(routeMap)) {
+    if (pattern === routePath) return name;
+  }
+  return routePath === '/' && routeMap.homepage === '/' ? 'homepage' : '';
+}
+
 export const endpoints: string[] = (() => {
   if (hydroDomains.length) {
     return hydroDomains
@@ -65,7 +80,7 @@ export const endpoints: string[] = (() => {
 export const endpointOrigins = new Set(endpoints.map((ep) => new URL(ep).origin));
 
 export const initialPage: PageData = {
-  name: (injectionData.name as string) || '',
+  name: (injectionData.name as string) || inferRouteName(window.location.href, injectionData.route_map || {}),
   args: (injectionData.args as any) || {},
   url: (injectionData.url as string) || (window.location.pathname + window.location.search),
 };
