@@ -18,7 +18,7 @@ function WelcomeCard() {
         {t('Online Judge')}
       </Badge>
       <Title order={1} className="max-w-2xl text-4xl leading-[1.05] text-[var(--hydro-text)] md:text-5xl">
-        {isLoggedIn ? `${t('Welcome')}, ${user.uname}` : t('Welcome to Hydro')}
+        {isLoggedIn ? `${t('Welcome')}, ${user.uname}` : t('Welcome to HNTOU OJ')}
       </Title>
       <Text c="dimmed" size="md" mt="md" className="max-w-xl">
         {isLoggedIn

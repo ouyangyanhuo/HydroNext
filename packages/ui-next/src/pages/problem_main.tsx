@@ -1,5 +1,7 @@
-import { Badge, Button, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Button, Card, Checkbox, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useRef, useState } from 'react';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
@@ -11,6 +13,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
+import { formatErrorMessage } from '@/utils/error';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 
 function ProblemStatusCell({ psdoc }: { psdoc?: any }) {
@@ -148,8 +151,12 @@ export default function ProblemMainPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const storeCanCreate = useHasPerm(PERM.PERM_CREATE_PROBLEM);
+  const storeCanEdit = useHasPerm(PERM.PERM_EDIT_PROBLEM);
   const canCreate = Boolean(args.canCreateProblem ?? (
     hasPermValue(user.perm, PERM.PERM_CREATE_PROBLEM) || storeCanCreate
+  ));
+  const canEdit = Boolean(args.canEditProblem ?? (
+    hasPermValue(user.perm, PERM.PERM_EDIT_PROBLEM) || storeCanEdit
   ));
 
   const pdocs = args.pdocs || [];
@@ -162,6 +169,45 @@ export default function ProblemMainPage() {
 
   const [search, setSearch] = useState(qs);
   const [sortValue, setSortValue] = useState(sort);
+  const [selected, setSelected] = useState<number[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const allSelected = pdocs.length > 0 && pdocs.every((p: any) => selected.includes(p.docId));
+
+  const toggleSelect = (docId: number, checked: boolean) => {
+    setSelected((prev) => checked ? [...prev, docId] : prev.filter((id) => id !== docId));
+  };
+
+  const toggleSelectAll = (checked: boolean) => {
+    setSelected(checked ? pdocs.map((p: any) => p.docId) : []);
+  };
+
+  const handleDelete = async () => {
+    if (!selected.length) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(window.location.href, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ operation: 'delete', pids: selected }),
+      });
+      const type = res.headers.get('content-type') || '';
+      const data = type.includes('json') ? await res.json() : {};
+      if (!res.ok || data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, t('Delete failed')), message: '', color: 'red' });
+      } else {
+        notifications.show({ title: t('Deleted'), message: '', color: 'green' });
+        setSelected([]);
+        window.location.reload();
+      }
+    } catch (err: any) {
+      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+    }
+  };
 
   const handleSearch = () => {
     const url = new URL(window.location.href);
@@ -177,6 +223,18 @@ export default function ProblemMainPage() {
   };
 
   const columns = [
+    ...(canEdit ? [{
+      key: 'select',
+      title: '',
+      width: 40,
+      render: (p: any) => (
+        <Checkbox
+          aria-label={String(p.docId)}
+          checked={selected.includes(p.docId)}
+          onChange={(e) => toggleSelect(p.docId, e.currentTarget.checked)}
+        />
+      ),
+    }] : []),
     {
       key: 'status',
       title: '',
@@ -236,6 +294,11 @@ export default function ProblemMainPage() {
     <Stack gap="lg">
       <PageHeader title={t('Problems')}>
         <Group gap="xs" wrap="wrap">
+          {canEdit && selected.length > 0 && (
+            <Button size="xs" color="red" variant="light" onClick={() => setDeleteDialogOpen(true)}>
+              {t('Delete')} ({selected.length})
+            </Button>
+          )}
           <TextInput
             placeholder={t('Search problems...')}
             value={search}
@@ -262,6 +325,16 @@ export default function ProblemMainPage() {
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="min-w-0 flex-1">
+          {canEdit && pdocs.length > 0 && (
+            <Group gap="xs" mb="xs">
+              <Checkbox
+                aria-label={t('Select All')}
+                checked={allSelected}
+                onChange={(e) => toggleSelectAll(e.currentTarget.checked)}
+              />
+              <Text size="xs" c="dimmed">{t('Select All')}</Text>
+            </Group>
+          )}
           <DataTable columns={columns} data={pdocs} emptyMessage={t('No problems found')} />
           <Paginator page={page} totalPages={ppcount} />
         </div>
@@ -270,6 +343,17 @@ export default function ProblemMainPage() {
           <ProblemSidebar categories={categories} query={search} />
         </div>
       </div>
+
+      <ConfirmDialog
+        opened={deleteDialogOpen}
+        title={t('Confirm delete?')}
+        message={t('Confirm to delete this problem?').replace('this', `${selected.length}`)}
+        confirmLabel={t('Delete')}
+        cancelLabel={t('Cancel')}
+        loading={deleting}
+        onConfirm={handleDelete}
+        onClose={() => setDeleteDialogOpen(false)}
+      />
     </Stack>
   );
 }

@@ -50,7 +50,7 @@ export default function ProblemImportHydroPage() {
       formData.append('file', file);
       if (preferredPrefix) formData.append('preferredPrefix', preferredPrefix);
       if (hidden) formData.append('hidden', 'on');
-      const res = await fetch('/problem/import/hydro', {
+      const res = await fetch(window.location.href, {
         method: 'POST',
         body: formData,
       });

@@ -7,9 +7,6 @@ const DEFAULT_ABOUT = `
 # about 关于 HNTOU OJ
 [HNTOU OJ](https://hydro.js.org) 致力于为用户提供安全、完善、开放的在线评测及题目交流等服务。
 
-# contact 联系我们
-[联系我们](https://hydro.js.org/#%E8%81%94%E7%B3%BB%E6%88%91%E4%BB%AC)
-
 # privacy 隐私政策
 #### 1. 收集的信息
 我们收集信息是为了向所有用户提供更好的服务。我们有两种信息收集方式：

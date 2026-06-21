@@ -205,6 +205,7 @@ export class ProblemMainHandler extends Handler {
                 sort: sortStrategy,
                 categories: getProblemCategories(this.ctx),
                 canCreateProblem: this.user.hasPerm(PERM.PERM_CREATE_PROBLEM),
+                canEditProblem: this.user.hasPerm(PERM.PERM_EDIT_PROBLEM),
             };
         }
     }
