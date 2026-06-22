@@ -442,7 +442,31 @@ Read all record codes: すべての提出コードを閲覧
 Submit problem: 問題を提出
 Read data of problem: 問題データを閲覧
 Join Settings: 参加設定
+System Data: システムデータ
+View domains and additional files.: ドメインと追加ファイルを表示します。
+All Domains: すべてのドメイン
+All Additional Files: すべての追加ファイル
+No additional files: 追加ファイルはありません
+Delete Additional File: 追加ファイルを削除
+Delete domain confirmation: この操作により、ドメインと関連データが削除されます。
+Delete additional file confirmation: 選択した追加ファイルを削除します。
+Owner: 所有者
+File: ファイル
+Last Modified: 最終更新
 User Management: ユーザー管理
+All Users: すべてのユーザー
+View users and reset passwords: ユーザーを表示してパスワードをリセットします。
+View users and reset passwords.: ユーザーを表示してパスワードをリセットします。
+Search users by username, UID or email: ユーザー名、UID、またはメールでユーザーを検索
+Clear Search: 検索をクリア
+Last Login: 最終ログイン
+Login IP: ログイン IP
+Total: 合計
+Reset password for: 次のユーザーのパスワードをリセット
+Password reset: パスワードをリセットしました
+Password reset failed: パスワードのリセットに失敗しました
+Delete User: ユーザーを削除
+Delete user confirmation: この操作により、ユーザーが無効化され、関連ユーザーデータが削除されます。
 Role Management: ロール管理
 Save Role Changes: ロール変更を保存
 Group Name: グループ名

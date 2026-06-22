@@ -1,17 +1,23 @@
 import { exec } from 'child_process';
 import { inspect } from 'util';
 import * as yaml from 'js-yaml';
-import { omit } from 'lodash';
+import { escapeRegExp, omit } from 'lodash';
 import Schema from 'schemastery';
 import {
-    CannotEditSuperAdminError, NotLaunchedByPM2Error, UserNotFoundError, ValidationError,
+    CannotDeleteSystemDomainError, CannotEditSuperAdminError, NotLaunchedByPM2Error, UserNotFoundError, ValidationError,
 } from '../error';
 import { Logger } from '../logger';
 import { PRIV, STATUS } from '../model/builtin';
 import domain from '../model/domain';
+import * as document from '../model/document';
+import message from '../model/message';
+import * as oplog from '../model/oplog';
+import problem from '../model/problem';
 import record from '../model/record';
 import * as setting from '../model/setting';
+import storage from '../model/storage';
 import system from '../model/system';
+import token from '../model/token';
 import user from '../model/user';
 import {
     ConnectionHandler, Handler, param, requireSudo, Types,
@@ -349,6 +355,147 @@ class SystemUserPrivHandler extends SystemHandler {
     }
 }
 
+class SystemUserManageHandler extends SystemHandler {
+    @requireSudo
+    @param('page', Types.PositiveInt, true)
+    @param('q', Types.Content, true)
+    async get(domainId: string, page = 1, q = '') {
+        const limit = this.ctx.setting.get('pagination.ranking') || 100;
+        const query: any = { _id: { $gte: -1000 } };
+        const keyword = q.trim();
+        if (keyword) {
+            const conditions: any[] = [
+                { unameLower: new RegExp(escapeRegExp(keyword.toLowerCase()), 'i') },
+                { mailLower: new RegExp(escapeRegExp(keyword.toLowerCase()), 'i') },
+            ];
+            const uid = Number(keyword);
+            if (Number.isSafeInteger(uid)) conditions.unshift({ _id: uid });
+            query.$or = conditions;
+        }
+        const [udocs, upcount, ucount] = await this.paginate(
+            user.getMulti(query, [
+                '_id', 'uname', 'mail', 'priv', 'regat', 'loginat', 'loginip', 'avatar',
+                'school', 'studentId', 'displayName',
+            ] as any).sort({ _id: 1 }),
+            page,
+            limit,
+        );
+        this.response.body = {
+            udocs, page, upcount, ucount, q,
+        };
+        this.response.template = 'manage_user.html';
+    }
+
+    @requireSudo
+    @param('uid', Types.PositiveInt)
+    @param('password', Types.Password)
+    async postResetPassword(domainId: string, uid: number, password: string) {
+        const udoc = await user.getById(domainId, uid);
+        if (!udoc) throw new UserNotFoundError(uid);
+        if (udoc.priv === -1 || uid === 1) throw new CannotEditSuperAdminError();
+        await Promise.all([
+            user.setPassword(uid, password),
+            oplog.log(this, 'user.resetPassword', { uid }),
+        ]);
+        this.back();
+    }
+
+    @requireSudo
+    @param('uid', Types.PositiveInt)
+    async postDeleteUser(domainId: string, uid: number) {
+        if (uid === 1 || uid === this.user._id) throw new CannotEditSuperAdminError();
+        const udoc = await user.getById(domainId, uid);
+        if (!udoc) throw new UserNotFoundError(uid);
+        if (udoc.priv === -1) throw new CannotEditSuperAdminError();
+        await Promise.all([
+            storage.del((udoc._files || []).map((file) => `user/${uid}/${file.name}`), this.user._id),
+            document.coll.deleteMany({ owner: uid }),
+            document.collStatus.deleteMany({ uid }),
+            record.coll.deleteMany({ uid }),
+            domain.collUser.deleteMany({ uid }),
+            message.coll.deleteMany({ $or: [{ from: uid }, { to: uid }] }),
+            token.delByUid(uid),
+            user.setById(uid, { priv: PRIV.PRIV_NONE, _files: [], banReason: 'Deleted by system administrator' }, { del: '' }),
+            oplog.log(this, 'user.delete', { uid }),
+        ]);
+        this.back();
+    }
+}
+
+class SystemDataManageHandler extends SystemHandler {
+    @requireSudo
+    @param('domainsPage', Types.PositiveInt, true)
+    @param('filesPage', Types.PositiveInt, true)
+    async get(domainId: string, domainsPage = 1, filesPage = 1) {
+        const limit = this.ctx.setting.get('pagination.ranking') || 100;
+        const [ddocs, dpcount, dcount] = await this.paginate(
+            domain.getMulti({}).sort({ _id: 1 }),
+            domainsPage,
+            limit,
+        );
+        const domainOwners = await user.getList('system', Array.from(new Set(ddocs.map((ddoc) => ddoc.owner).filter((uid) => uid))));
+        const filePipeline: any[] = [
+            { $match: { docType: document.TYPE_PROBLEM, additional_file: { $exists: true, $ne: [] } } },
+            { $unwind: '$additional_file' },
+        ];
+        const [fileCountResult, fdocs] = await Promise.all([
+            document.coll.aggregate([...filePipeline, { $count: 'count' }]).toArray(),
+            document.coll.aggregate([
+                ...filePipeline,
+                { $sort: { domainId: 1, docId: 1, 'additional_file.name': 1 } },
+                { $skip: (filesPage - 1) * limit },
+                { $limit: limit },
+                {
+                    $project: {
+                        _id: 0,
+                        domainId: 1,
+                        docId: 1,
+                        title: 1,
+                        owner: 1,
+                        file: '$additional_file',
+                    },
+                },
+            ]).toArray(),
+        ]);
+        const fcount = fileCountResult[0]?.count || 0;
+        this.response.body = {
+            ddocs,
+            domainOwners,
+            domainsPage,
+            domainsPageCount: dpcount,
+            domainsCount: dcount,
+            fdocs,
+            filesPage,
+            filesPageCount: Math.floor((fcount + limit - 1) / limit),
+            filesCount: fcount,
+        };
+        this.response.template = 'manage_system_data.html';
+    }
+
+    @requireSudo
+    @param('targetDomainId', Types.DomainId)
+    async postDeleteDomain(domainId: string, targetDomainId: string) {
+        if (targetDomainId === 'system') throw new CannotDeleteSystemDomainError();
+        const ddoc = await domain.get(targetDomainId);
+        if (!ddoc) throw new ValidationError('targetDomainId');
+        await Promise.all([
+            domain.del(targetDomainId),
+            oplog.log(this, 'domain.delete', { domainId: targetDomainId }),
+        ]);
+        this.back();
+    }
+
+    @requireSudo
+    @param('fileDomainId', Types.DomainId)
+    @param('docId', Types.PositiveInt)
+    @param('filename', Types.Filename)
+    async postDeleteAdditionalFile(domainId: string, fileDomainId: string, docId: number, filename: string) {
+        await problem.delAdditionalFile(fileDomainId, docId, filename, this.user._id);
+        await oplog.log(this, 'problem.additionalFile.delete', { domainId: fileDomainId, docId, filename });
+        this.back();
+    }
+}
+
 export const inject = ['setting', 'check'];
 export async function apply(ctx) {
     ctx.Route('manage', '/manage', SystemMainHandler);
@@ -356,6 +503,8 @@ export async function apply(ctx) {
     ctx.Route('manage_script', '/manage/script', SystemScriptHandler);
     ctx.Route('manage_setting', '/manage/setting', SystemSettingHandler);
     ctx.Route('manage_config', '/manage/config', SystemConfigHandler);
+    ctx.Route('manage_user', '/manage/users', SystemUserManageHandler);
+    ctx.Route('manage_system_data', '/manage/system-data', SystemDataManageHandler);
     ctx.Route('manage_user_import', '/manage/userimport', SystemUserImportHandler);
     ctx.Route('manage_user_priv', '/manage/userpriv', SystemUserPrivHandler);
     ctx.Connection('manage_check', '/manage/check-conn', SystemCheckConnHandler);

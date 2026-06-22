@@ -386,7 +386,31 @@ Read all record codes: Read all record codes
 Submit problem: Submit problem
 Read data of problem: Read data of problem
 Join Settings: Join Settings
+System Data: System Data
+View domains and additional files.: View domains and additional files.
+All Domains: All Domains
+All Additional Files: All Additional Files
+No additional files: No additional files
+Delete Additional File: Delete Additional File
+Delete domain confirmation: This will delete the domain and its related data.
+Delete additional file confirmation: This will delete the selected additional file.
+Owner: Owner
+File: File
+Last Modified: Last Modified
 User Management: User Management
+All Users: All Users
+View users and reset passwords: View users and reset passwords.
+View users and reset passwords.: View users and reset passwords.
+Search users by username, UID or email: Search users by username, UID or email
+Clear Search: Clear Search
+Last Login: Last Login
+Login IP: Login IP
+Total: Total
+Reset password for: Reset password for
+Password reset: Password reset
+Password reset failed: Password reset failed
+Delete User: Delete User
+Delete user confirmation: This will disable the user and clear related user data.
 Role Management: Role Management
 Save Role Changes: Save Role Changes
 Group Name: Group Name

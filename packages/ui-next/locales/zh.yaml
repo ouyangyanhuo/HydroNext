@@ -511,7 +511,31 @@ Read all record codes: 查看所有评测代码
 Submit problem: 提交代码
 Read data of problem: 读取题目数据
 Join Settings: 加入设置
+System Data: 系统数据
+View domains and additional files.: 查看域和附加文件。
+All Domains: 全部域
+All Additional Files: 全部附加文件
+No additional files: 暂无附加文件
+Delete Additional File: 删除附加文件
+Delete domain confirmation: 此操作将删除该域及其相关数据。
+Delete additional file confirmation: 此操作将删除选中的附加文件。
+Owner: 所属者
+File: 文件
+Last Modified: 最后修改
 User Management: 用户管理
+All Users: 全部用户
+View users and reset passwords: 查看用户并重置密码。
+View users and reset passwords.: 查看用户并重置密码。
+Search users by username, UID or email: 通过用户名、UID 或邮箱搜索用户
+Clear Search: 清除搜索
+Last Login: 最近登录
+Login IP: 登录 IP
+Total: 总数
+Reset password for: 为用户重置密码
+Password reset: 密码已重置
+Password reset failed: 密码重置失败
+Delete User: 删除用户
+Delete user confirmation: 此操作将禁用该用户并清理相关用户数据。
 Role Management: 角色管理
 Save Role Changes: 保存角色修改
 Group Name: 用户组名称

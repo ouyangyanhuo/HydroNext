@@ -478,6 +478,8 @@ manage_dashboard: 控制面板
 manage_join_applications: 加域申请
 manage_module: 管理模块
 manage_setting: 系统设置
+manage_system_data: 系统数据
+manage_user: 用户管理
 manage_user_import: 导入用户
 manage: 管理
 Manage: 管理

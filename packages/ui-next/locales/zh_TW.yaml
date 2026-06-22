@@ -509,7 +509,31 @@ Read all record codes: 檢視所有評測程式碼
 Submit problem: 提交程式碼
 Read data of problem: 讀取題目資料
 Join Settings: 加入設定
+System Data: 系統資料
+View domains and additional files.: 檢視網域和附加檔案。
+All Domains: 全部網域
+All Additional Files: 全部附加檔案
+No additional files: 暫無附加檔案
+Delete Additional File: 刪除附加檔案
+Delete domain confirmation: 此操作將刪除該網域及其相關資料。
+Delete additional file confirmation: 此操作將刪除選取的附加檔案。
+Owner: 所屬者
+File: 檔案
+Last Modified: 最後修改
 User Management: 使用者管理
+All Users: 全部使用者
+View users and reset passwords: 檢視使用者並重設密碼。
+View users and reset passwords.: 檢視使用者並重設密碼。
+Search users by username, UID or email: 透過使用者名稱、UID 或電子郵件搜尋使用者
+Clear Search: 清除搜尋
+Last Login: 最近登入
+Login IP: 登入 IP
+Total: 總數
+Reset password for: 為使用者重設密碼
+Password reset: 密碼已重設
+Password reset failed: 密碼重設失敗
+Delete User: 刪除使用者
+Delete user confirmation: 此操作將停用該使用者並清理相關使用者資料。
 Role Management: 角色管理
 Save Role Changes: 儲存角色修改
 Group Name: 使用者組名稱

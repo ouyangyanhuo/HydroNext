@@ -62,6 +62,8 @@ inject('Nav', 'manage_dashboard', { prefix: 'manage' }, PRIV.PRIV_EDIT_SYSTEM);
 inject('ProblemAdd', 'problem_create', { icon: 'add', text: 'Create Problem' });
 inject('ControlPanel', 'manage_dashboard');
 inject('ControlPanel', 'manage_script');
+inject('ControlPanel', 'manage_system_data');
+inject('ControlPanel', 'manage_user');
 inject('ControlPanel', 'manage_user_import');
 inject('ControlPanel', 'manage_user_priv');
 inject('ControlPanel', 'manage_setting');

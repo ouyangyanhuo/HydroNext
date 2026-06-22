@@ -476,6 +476,8 @@ manage_dashboard: 概況
 manage_join_applications: 加域申請
 manage_module: 管理模組
 manage_setting: 系統設定
+manage_system_data: 系統資料
+manage_user: 使用者管理
 manage_user_import: 匯入使用者
 manage: 管理
 Manage: 管理

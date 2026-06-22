@@ -442,7 +442,31 @@ Read all record codes: 모든 제출 코드 보기
 Submit problem: 문제 제출
 Read data of problem: 문제 데이터 읽기
 Join Settings: 가입 설정
+System Data: 시스템 데이터
+View domains and additional files.: 도메인과 추가 파일을 봅니다.
+All Domains: 모든 도메인
+All Additional Files: 모든 추가 파일
+No additional files: 추가 파일 없음
+Delete Additional File: 추가 파일 삭제
+Delete domain confirmation: 이 작업은 도메인과 관련 데이터를 삭제합니다.
+Delete additional file confirmation: 선택한 추가 파일을 삭제합니다.
+Owner: 소유자
+File: 파일
+Last Modified: 마지막 수정
 User Management: 사용자 관리
+All Users: 모든 사용자
+View users and reset passwords: 사용자를 보고 비밀번호를 재설정합니다.
+View users and reset passwords.: 사용자를 보고 비밀번호를 재설정합니다.
+Search users by username, UID or email: 사용자 이름, UID 또는 이메일로 사용자 검색
+Clear Search: 검색 지우기
+Last Login: 최근 로그인
+Login IP: 로그인 IP
+Total: 합계
+Reset password for: 다음 사용자의 비밀번호 재설정
+Password reset: 비밀번호가 재설정되었습니다
+Password reset failed: 비밀번호 재설정 실패
+Delete User: 사용자 삭제
+Delete user confirmation: 이 작업은 사용자를 비활성화하고 관련 사용자 데이터를 정리합니다.
 Role Management: 역할 관리
 Save Role Changes: 역할 변경 저장
 Group Name: 그룹 이름
