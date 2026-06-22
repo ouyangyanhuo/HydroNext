@@ -409,8 +409,11 @@ Total: Total
 Reset password for: Reset password for
 Password reset: Password reset
 Password reset failed: Password reset failed
-Delete User: Delete User
-Delete user confirmation: This will disable the user and clear related user data.
+Banned: Banned
+Ban User: Ban User
+Ban failed: Ban failed
+User banned: User banned
+Ban user confirmation: This will ban the user and clear related user data.
 Role Management: Role Management
 Save Role Changes: Save Role Changes
 Group Name: Group Name

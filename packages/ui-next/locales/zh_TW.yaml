@@ -532,8 +532,11 @@ Total: 總數
 Reset password for: 為使用者重設密碼
 Password reset: 密碼已重設
 Password reset failed: 密碼重設失敗
-Delete User: 刪除使用者
-Delete user confirmation: 此操作將停用該使用者並清理相關使用者資料。
+Banned: 已封禁
+Ban User: 封禁使用者
+Ban failed: 封禁失敗
+User banned: 使用者已封禁
+Ban user confirmation: 此操作將封禁該使用者並清理相關使用者資料。
 Role Management: 角色管理
 Save Role Changes: 儲存角色修改
 Group Name: 使用者組名稱

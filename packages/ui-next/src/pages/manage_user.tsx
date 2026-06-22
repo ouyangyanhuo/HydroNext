@@ -1,5 +1,6 @@
 import { formatErrorMessage } from '@/utils/error';
 import { Badge, Button, Card, Group, Modal, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
@@ -40,10 +41,10 @@ export default function ManageUserPage() {
   const [verifyPassword, setVerifyPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const pageUrl = useMemo(() => buildUrl('manage_user', {}, initialQuery ? { q: initialQuery } : {}), [buildUrl, initialQuery]);
+  const isProtectedUser = (user: ManagedUser) => user._id <= 0 || user._id === 1 || user.priv === -1;
+  const isBannedUser = (user: ManagedUser) => user.priv === 0;
 
   useEffect(() => {
     setQuery(initialQuery);
@@ -58,25 +59,19 @@ export default function ManageUserPage() {
     setDialogUser(user);
     setPassword('');
     setVerifyPassword('');
-    setError('');
-    setSuccess('');
   };
 
   const openDeleteDialog = (user: ManagedUser) => {
     setDeleteUser(user);
-    setError('');
-    setSuccess('');
   };
 
   const submitReset = async () => {
     if (!dialogUser) return;
     if (password !== verifyPassword) {
-      setError(t('Passwords do not match'));
+      notifications.show({ title: t('Passwords do not match'), message: '', color: 'red' });
       return;
     }
     setLoading(true);
-    setError('');
-    setSuccess('');
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
@@ -85,13 +80,13 @@ export default function ManageUserPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Password reset failed')));
+      if (!res.ok || data.error) notifications.show({ title: formatErrorMessage(data.error, t('Password reset failed')), message: '', color: 'red' });
       else {
-        setSuccess(t('Password reset'));
+        notifications.show({ title: t('Password reset'), message: '', color: 'green' });
         setDialogUser(null);
       }
     } catch (err: any) {
-      setError(err?.message || t('Network error'));
+      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
     } finally {
       setLoading(false);
     }
@@ -100,8 +95,6 @@ export default function ManageUserPage() {
   const submitDelete = async () => {
     if (!deleteUser) return;
     setDeleting(true);
-    setError('');
-    setSuccess('');
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
@@ -110,14 +103,14 @@ export default function ManageUserPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Delete failed')));
+      if (!res.ok || data.error) notifications.show({ title: formatErrorMessage(data.error, t('Ban failed')), message: '', color: 'red' });
       else {
-        setSuccess(t('Deleted'));
+        notifications.show({ title: t('User banned'), message: '', color: 'green' });
         setDeleteUser(null);
         window.location.reload();
       }
     } catch (err: any) {
-      setError(err?.message || t('Network error'));
+      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
     } finally {
       setDeleting(false);
     }
@@ -145,7 +138,11 @@ export default function ManageUserPage() {
       title: t('Privilege'),
       width: 120,
       align: 'right' as const,
-      render: (user: ManagedUser) => <Text size="xs" ff="monospace">{user.priv ?? '-'}</Text>,
+      render: (user: ManagedUser) => (
+        isBannedUser(user)
+          ? <Badge color="red" variant="light">{t('Banned')}</Badge>
+          : <Text size="xs" ff="monospace">{user.priv ?? '-'}</Text>
+      ),
     },
     {
       key: 'loginat',
@@ -171,7 +168,7 @@ export default function ManageUserPage() {
             variant="subtle"
             leftSection={<IconRefresh size={14} />}
             onClick={() => openResetDialog(user)}
-            disabled={user._id <= 0 || user._id === 1 || user.priv === -1}
+            disabled={isProtectedUser(user)}
           >
             {t('Reset Password')}
           </Button>
@@ -181,9 +178,9 @@ export default function ManageUserPage() {
             color="red"
             leftSection={<IconTrash size={14} />}
             onClick={() => openDeleteDialog(user)}
-            disabled={user._id <= 0 || user._id === 1 || user.priv === -1}
+            disabled={isProtectedUser(user) || isBannedUser(user)}
           >
-            {t('Delete')}
+            {t('Ban User')}
           </Button>
         </Group>
       ),
@@ -195,8 +192,6 @@ export default function ManageUserPage() {
       <PageHeader title={t('User Management')}>
         <Badge variant="light">{t('Total')}: {totalUsers}</Badge>
       </PageHeader>
-
-      {success && <Text c="green" size="sm">{success}</Text>}
 
       <Card withBorder p="lg" className="hydro-content-card">
         <Group justify="space-between" align="flex-end" mb="md" wrap="wrap">
@@ -256,7 +251,6 @@ export default function ManageUserPage() {
             onChange={(e) => setVerifyPassword(e.currentTarget.value)}
             required
           />
-          {error && <Text c="red" size="sm">{error}</Text>}
           <Group justify="flex-end">
             <Button variant="default" size="xs" onClick={() => setDialogUser(null)}>{t('Cancel')}</Button>
             <Button size="xs" onClick={submitReset} loading={loading}>{t('Submit')}</Button>
@@ -266,19 +260,18 @@ export default function ManageUserPage() {
 
       <Modal
         opened={!!deleteUser}
-        title={deleteUser ? `${t('Delete User')} #${deleteUser._id}` : t('Delete User')}
+        title={deleteUser ? `${t('Ban User')} #${deleteUser._id}` : t('Ban User')}
         onClose={() => setDeleteUser(null)}
       >
         <Stack gap="md">
           {deleteUser && (
             <Text size="sm">
-              {t('Delete user confirmation')} <Text component="span" fw={700}>{deleteUser.uname}</Text>
+              {t('Ban user confirmation')} <Text component="span" fw={700}>{deleteUser.uname}</Text>
             </Text>
           )}
-          {error && <Text c="red" size="sm">{error}</Text>}
           <Group justify="flex-end">
             <Button variant="default" size="xs" onClick={() => setDeleteUser(null)}>{t('Cancel')}</Button>
-            <Button color="red" size="xs" onClick={submitDelete} loading={deleting}>{t('Delete')}</Button>
+            <Button color="red" size="xs" onClick={submitDelete} loading={deleting}>{t('Ban User')}</Button>
           </Group>
         </Stack>
       </Modal>

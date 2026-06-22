@@ -465,8 +465,11 @@ Total: 합계
 Reset password for: 다음 사용자의 비밀번호 재설정
 Password reset: 비밀번호가 재설정되었습니다
 Password reset failed: 비밀번호 재설정 실패
-Delete User: 사용자 삭제
-Delete user confirmation: 이 작업은 사용자를 비활성화하고 관련 사용자 데이터를 정리합니다.
+Banned: 차단됨
+Ban User: 사용자 차단
+Ban failed: 차단 실패
+User banned: 사용자가 차단되었습니다
+Ban user confirmation: 이 작업은 사용자를 차단하고 관련 사용자 데이터를 정리합니다.
 Role Management: 역할 관리
 Save Role Changes: 역할 변경 저장
 Group Name: 그룹 이름

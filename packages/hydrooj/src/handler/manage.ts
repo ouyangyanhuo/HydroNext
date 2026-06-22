@@ -407,6 +407,7 @@ class SystemUserManageHandler extends SystemHandler {
         const udoc = await user.getById(domainId, uid);
         if (!udoc) throw new UserNotFoundError(uid);
         if (udoc.priv === -1) throw new CannotEditSuperAdminError();
+        if (udoc.priv === PRIV.PRIV_NONE) throw new ValidationError('uid');
         await Promise.all([
             storage.del((udoc._files || []).map((file) => `user/${uid}/${file.name}`), this.user._id),
             document.coll.deleteMany({ owner: uid }),
@@ -415,8 +416,8 @@ class SystemUserManageHandler extends SystemHandler {
             domain.collUser.deleteMany({ uid }),
             message.coll.deleteMany({ $or: [{ from: uid }, { to: uid }] }),
             token.delByUid(uid),
-            user.setById(uid, { priv: PRIV.PRIV_NONE, _files: [], banReason: 'Deleted by system administrator' }, { del: '' }),
-            oplog.log(this, 'user.delete', { uid }),
+            user.setById(uid, { priv: PRIV.PRIV_NONE, _files: [], banReason: 'Banned by system administrator' }, { del: '' }),
+            oplog.log(this, 'user.ban', { uid }),
         ]);
         this.back();
     }

@@ -16,7 +16,7 @@ function SendMessageDialog({
 }: {
   opened: boolean;
   onClose: () => void;
-  onSubmit: (uid: number) => void | Promise<void>;
+  onSubmit: (user: any) => void | Promise<void>;
   loading: boolean;
 }) {
   const { t } = useI18n();
@@ -94,7 +94,7 @@ function SendMessageDialog({
                     key={u._id}
                     p="sm"
                     className="w-full hover:bg-[var(--hydro-surface-muted)] border-b border-[var(--hydro-border)] last:border-b-0"
-                    onClick={() => onSubmit(u._id)}
+                    onClick={() => onSubmit(u)}
                   >
                     <Group gap="sm">
                       <Avatar src={getAvatarUrl(u.avatar || '')} size="sm" radius="xl" />
@@ -117,12 +117,35 @@ function SendMessageDialog({
   );
 }
 
-function normalizeConversations(input: any, udict: Record<string, any>) {
+function getMessageTime(message: any) {
+  const raw = message?.createAt || message?._id;
+  const id = typeof raw === 'string' ? raw : raw?.$oid || raw?.toString?.();
+  if (typeof id === 'string' && /^[0-9a-f]{24}$/i.test(id)) {
+    return parseInt(id.slice(0, 8), 16) * 1000;
+  }
+  const time = new Date(raw).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function sortConversations(items: any[]) {
+  return [...items].sort((a, b) => {
+    const aLast = a.messages?.[a.messages.length - 1];
+    const bLast = b.messages?.[b.messages.length - 1];
+    return getMessageTime(bLast) - getMessageTime(aLast);
+  });
+}
+
+function normalizeConversations(input: any, udict: Record<string, any>, currentUserId?: number) {
   if (!input) return [];
+  const finish = (items: any[]) => sortConversations(items.map((conv) => ({
+    ...conv,
+    messages: [...(conv.messages || [])].sort((a, b) => getMessageTime(a) - getMessageTime(b)),
+  })));
   if (Array.isArray(input)) {
     const map = new Map<number, any>();
     for (const message of input) {
-      const targetId = message.from;
+      const rawTarget = message.from === currentUserId ? message.to : message.from;
+      const targetId = Number(Array.isArray(rawTarget) ? rawTarget[0] : rawTarget);
       if (!map.has(targetId)) {
         map.set(targetId, {
           _id: targetId,
@@ -132,9 +155,9 @@ function normalizeConversations(input: any, udict: Record<string, any>) {
       }
       map.get(targetId).messages.push(message);
     }
-    return Array.from(map.values());
+    return finish(Array.from(map.values()));
   }
-  return Object.values(input);
+  return finish(Object.values(input));
 }
 
 function messageText(message: any) {
@@ -154,29 +177,48 @@ function messageText(message: any) {
   return message.content;
 }
 
+function normalizeMessageId(id: any) {
+  if (typeof id === 'string') return id;
+  if (id?.$oid) return id.$oid;
+  if (id?.toString) return id.toString();
+  return String(Date.now());
+}
+
 export default function HomeMessagesPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const user = useSessionStore((s) => s.user);
   const udict = args.udict || {};
-  const conversations = useMemo(() => normalizeConversations(args.messages, udict), [args.messages, udict]);
+  const initialConversations = useMemo(() => normalizeConversations(args.messages, udict, user?._id), [args.messages, udict, user?._id]);
+  const [conversations, setConversations] = useState<any[]>(initialConversations);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [draft, setDraft] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState('');
   const [error, setError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const selected = useMemo(
-    () => conversations.find((c: any) => Number(c._id) === selectedId) || null,
-    [conversations, selectedId],
-  );
+  useEffect(() => {
+    setConversations(initialConversations);
+  }, [initialConversations]);
+
+  const selected = useMemo(() => {
+    const existing = conversations.find((c: any) => Number(c._id) === selectedId);
+    if (existing) return existing;
+    if (!selectedId) return null;
+    return {
+      _id: selectedId,
+      udoc: selectedUser || udict[selectedId] || { _id: selectedId },
+      messages: [],
+    };
+  }, [conversations, selectedId, selectedUser, udict]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selected?.messages?.length]);
 
-  const post = async (payload: Record<string, any>, successMessage: string) => {
+  const post = async (payload: Record<string, any>) => {
     setLoading(String(payload.operation || 'operation'));
     setError('');
     try {
@@ -187,11 +229,14 @@ export default function HomeMessagesPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Operation failed')));
-      else if (data.redirect) window.location.href = data.redirect;
-      else window.location.reload();
+      if (!res.ok || data.error) {
+        setError(formatErrorMessage(data.error, t('Operation failed')));
+        return null;
+      }
+      return data;
     } catch (err: any) {
       setError(err?.message || t('Network error'));
+      return null;
     } finally {
       setLoading('');
     }
@@ -199,11 +244,50 @@ export default function HomeMessagesPage() {
 
   const send = async () => {
     if (!selectedId || !draft.trim()) return;
-    await post({ operation: 'send', uid: selectedId, content: draft }, t('Sent'));
+    const content = draft.trim();
+    setDraft('');
+    const data = await post({ operation: 'send', uid: selectedId, content });
+    if (data === null) {
+      setDraft(content);
+      return;
+    }
+    const targetUser = data.udoc || selected?.udoc || selectedUser || { _id: selectedId };
+    const nextMessage = data.mdoc || {
+      _id: `local-${Date.now()}`,
+      from: user?._id,
+      to: selectedId,
+      content,
+      createAt: new Date().toISOString(),
+    };
+    setSelectedUser(targetUser);
+    setConversations((prev) => {
+      const next = [...prev];
+      const index = next.findIndex((conv) => Number(conv._id) === selectedId);
+      const conv = index >= 0
+        ? { ...next[index] }
+        : { _id: selectedId, udoc: targetUser, messages: [] };
+      conv.udoc = { ...(conv.udoc || {}), ...targetUser };
+      conv.messages = [...(conv.messages || []), nextMessage].sort((a, b) => getMessageTime(a) - getMessageTime(b));
+      if (index >= 0) next.splice(index, 1);
+      next.unshift(conv);
+      return next;
+    });
   };
 
-  const openConversation = (targetId: number) => {
+  const deleteMessage = async (messageId: any) => {
+    const normalizedId = normalizeMessageId(messageId);
+    const data = await post({ operation: 'delete_message', messageId });
+    if (data === null) return;
+    setConversations((prev) => sortConversations(prev.map((conv) => (
+      Number(conv._id) === selectedId
+        ? { ...conv, messages: (conv.messages || []).filter((message: any) => normalizeMessageId(message._id) !== normalizedId) }
+        : conv
+    ))));
+  };
+
+  const openConversation = (targetId: number, targetUser: any = null) => {
     setSelectedId(targetId);
+    setSelectedUser(targetUser);
     setDraft('');
     setError('');
   };
@@ -212,8 +296,8 @@ export default function HomeMessagesPage() {
   const targetId = selectedId || 0;
 
   return (
-    <Group gap={0} align="stretch" className="h-[calc(100vh-8rem)]">
-      <Paper withBorder w={280} className="shrink-0 flex flex-col overflow-hidden">
+    <div className="flex h-[calc(100vh-8rem)] min-h-[520px] overflow-hidden rounded-md border border-[var(--hydro-border)]">
+      <Paper w={300} className="shrink-0 flex flex-col overflow-hidden rounded-none border-0 border-r border-[var(--hydro-border)]">
         <Group justify="space-between" p="sm" className="border-b border-[var(--hydro-border)]">
           <Text fw={700} size="sm">{t('Messages')}</Text>
           <ActionIcon size="sm" variant="subtle" onClick={() => setDialogOpen(true)}>
@@ -235,7 +319,7 @@ export default function HomeMessagesPage() {
                     key={otherId}
                     p="sm"
                     className={`border-b border-[var(--hydro-border)] hover:bg-[var(--hydro-surface-muted)] ${isActive ? 'bg-[var(--hydro-surface-muted)]' : ''}`}
-                    onClick={() => openConversation(otherId)}
+                    onClick={() => openConversation(otherId, other)}
                   >
                     <Group gap="sm" wrap="nowrap">
                       <Avatar src={getAvatarUrl(other.avatar || '')} size="sm" radius="xl" />
@@ -263,7 +347,7 @@ export default function HomeMessagesPage() {
         </ScrollArea>
       </Paper>
 
-      <div className="flex-1 flex flex-col ml-0 border border-[var(--hydro-border)] rounded-r-md overflow-hidden">
+      <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
         {selected ? (
           <>
             <Group gap="sm" p="sm" className="border-b border-[var(--hydro-border)] shrink-0">
@@ -274,8 +358,8 @@ export default function HomeMessagesPage() {
               </div>
             </Group>
 
-            <ScrollArea className="flex-1" p="md">
-              <Stack gap="sm">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+              <Stack gap="sm" justify="flex-end" className="min-h-full">
                 {(selected.messages || []).map((message: any) => {
                   const fromMe = message.from === user?._id;
                   return (
@@ -299,7 +383,7 @@ export default function HomeMessagesPage() {
                               size="xs"
                               c="red"
                               className="cursor-pointer hover:underline"
-                              onClick={() => post({ operation: 'delete_message', messageId: message._id }, t('Deleted'))}
+                              onClick={() => deleteMessage(message._id)}
                             >
                               {t('Delete')}
                             </Text>
@@ -314,7 +398,7 @@ export default function HomeMessagesPage() {
                 })}
                 <div ref={messagesEndRef} />
               </Stack>
-            </ScrollArea>
+            </div>
 
             <Group gap="xs" p="sm" className="border-t border-[var(--hydro-border)] shrink-0">
               <Textarea
@@ -356,12 +440,12 @@ export default function HomeMessagesPage() {
       <SendMessageDialog
         opened={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        onSubmit={(uid) => {
+        onSubmit={(targetUser) => {
           setDialogOpen(false);
-          openConversation(uid);
+          openConversation(Number(targetUser._id), targetUser);
         }}
         loading={loading === 'send'}
       />
-    </Group>
+    </div>
   );
 }

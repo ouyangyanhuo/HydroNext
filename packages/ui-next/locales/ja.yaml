@@ -465,8 +465,11 @@ Total: 合計
 Reset password for: 次のユーザーのパスワードをリセット
 Password reset: パスワードをリセットしました
 Password reset failed: パスワードのリセットに失敗しました
-Delete User: ユーザーを削除
-Delete user confirmation: この操作により、ユーザーが無効化され、関連ユーザーデータが削除されます。
+Banned: 凍結済み
+Ban User: ユーザーを凍結
+Ban failed: 凍結に失敗しました
+User banned: ユーザーを凍結しました
+Ban user confirmation: この操作により、ユーザーを凍結し、関連ユーザーデータを削除します。
 Role Management: ロール管理
 Save Role Changes: ロール変更を保存
 Group Name: グループ名
