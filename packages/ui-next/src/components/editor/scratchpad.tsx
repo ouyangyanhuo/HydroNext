@@ -481,18 +481,20 @@ export function Scratchpad({
                           <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-2">
                             <Paper p="sm" className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-t border-[var(--hydro-border)]">
                               <Text size="xs" c="dimmed" fw={700} mb={6}>{t('Input')}</Text>
-                              <Textarea
-                                value={input}
-                                onChange={(e) => setInput(e.currentTarget.value)}
-                                placeholder={t('Input')}
-                                minRows={4}
-                                styles={{ input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '13px', flex: 1, overflow: 'auto' } }}
-                                className="flex min-h-0 flex-1"
-                              />
+                              <div className="min-h-0 flex-1">
+                                <Textarea
+                                  value={input}
+                                  onChange={(e) => setInput(e.currentTarget.value)}
+                                  placeholder={t('Input')}
+                                  styles={{ input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '13px', height: '100%', resize: 'none', overflow: 'auto' }, wrapper: { height: '100%' }, root: { height: '100%' } }}
+                                />
+                              </div>
                             </Paper>
-                            <Paper p="sm" className="h-full min-h-0 overflow-auto rounded-none border-t border-l border-[var(--hydro-border)]">
+                            <Paper p="sm" className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-t border-l border-[var(--hydro-border)]">
                               <Text size="xs" c="dimmed" fw={700} mb={6}>{t('Output')}</Text>
-                              {renderPretestOutput(pretestResult)}
+                              <div className="min-h-0 flex-1 overflow-auto font-mono text-xs">
+                                {renderPretestOutput(pretestResult)}
+                              </div>
                             </Paper>
                           </div>
                         </Tabs.Panel>
