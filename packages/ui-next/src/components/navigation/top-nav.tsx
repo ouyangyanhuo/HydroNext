@@ -1,6 +1,6 @@
-import { ActionIcon, Avatar, Burger, Button, Drawer, Group, Menu, Stack, Text, Tooltip, UnstyledButton } from '@mantine/core';
+import { ActionIcon, Avatar, Burger, Button, ColorInput, Drawer, Group, Menu, Popover, Stack, Text, Tooltip, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconMoon, IconSun } from '@tabler/icons-react';
+import { IconCheck, IconMoon, IconPalette, IconRestore, IconSun } from '@tabler/icons-react';
 import type { MouseEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
@@ -12,13 +12,14 @@ import { useDomain } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
+import { ACCENT_PRESETS, DEFAULT_ACCENT, PRESET_KEYS } from '@/styles/accent-colors';
 import { getAvatarUrl } from '@/utils/avatar';
 import { DomainSwitcher } from './domain-switcher';
 
-type RootViewTransition = {
+interface RootViewTransition {
   ready: Promise<void>;
   finished: Promise<void>;
-};
+}
 
 type ViewTransitionDocument = Document & {
   startViewTransition?: (callback: () => void) => RootViewTransition;
@@ -217,6 +218,88 @@ function ThemeToggle() {
   );
 }
 
+function AccentColorPicker() {
+  const { t } = useI18n();
+  const accentColor = useSessionStore((s) => s.accentColor);
+  const setAccentColor = useSessionStore((s) => s.setAccentColor);
+  const [opened, { toggle, close }] = useDisclosure(false);
+  const isPreset = PRESET_KEYS.includes(accentColor);
+
+  return (
+    <Popover opened={opened} onChange={close} position="bottom-end" withArrow shadow="md" closeOnClickOutside={false}>
+      <Popover.Target>
+        <Tooltip label={t('Theme color')} withArrow>
+          <ActionIcon
+            aria-label={t('Theme color')}
+            onClick={toggle}
+            radius="md"
+            size="lg"
+            variant="subtle"
+            className="hover:bg-[var(--hydro-surface-muted)]"
+          >
+            <IconPalette size={18} stroke={2.2} />
+          </ActionIcon>
+        </Tooltip>
+      </Popover.Target>
+      <Popover.Dropdown>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <Text size="xs" fw={600} className="text-[var(--hydro-text-muted)]">
+              {t('Preset themes')}
+            </Text>
+            {accentColor !== DEFAULT_ACCENT && (
+              <Tooltip label={t('Reset')} withArrow>
+                <ActionIcon
+                  size="sm"
+                  radius="sm"
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => setAccentColor(DEFAULT_ACCENT)}
+                >
+                  <IconRestore size={14} stroke={2} />
+                </ActionIcon>
+              </Tooltip>
+            )}
+          </div>
+          <Group gap="sm">
+            {PRESET_KEYS.map((key) => {
+              const scheme = ACCENT_PRESETS[key];
+              const isActive = accentColor === key;
+              return (
+                <Tooltip key={key} label={t(scheme.name)} withArrow>
+                  <UnstyledButton
+                    onClick={() => setAccentColor(key)}
+                    className="relative flex h-8 w-8 items-center justify-center rounded-full transition-transform hover:scale-110"
+                    style={{ background: scheme.light.primary }}
+                  >
+                    {isActive && (
+                      <IconCheck size={14} color="white" stroke={3} />
+                    )}
+                  </UnstyledButton>
+                </Tooltip>
+              );
+            })}
+          </Group>
+          <div className="border-t border-[var(--hydro-border)] pt-3">
+            <Text size="xs" fw={600} className="mb-2 text-[var(--hydro-text-muted)]">
+              {t('Custom color')}
+            </Text>
+            <ColorInput
+              value={isPreset ? ACCENT_PRESETS[accentColor].light.primary : accentColor}
+              onChange={(value) => setAccentColor(value)}
+              format="hex"
+              size="xs"
+              swatches={[]}
+              withPicker
+              withEyeDropper={false}
+            />
+          </div>
+        </div>
+      </Popover.Dropdown>
+    </Popover>
+  );
+}
+
 const NAV_ITEMS = [
   { to: 'homepage', label: 'Home' },
   { to: 'problem_main', label: 'Problems' },
@@ -289,6 +372,7 @@ export function TopNav() {
           </Group>
 
           <Group gap="sm" wrap="nowrap">
+            <AccentColorPicker />
             <ThemeToggle />
             <DomainSwitcher />
             <div className="hidden md:block">

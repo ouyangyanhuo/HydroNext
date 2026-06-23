@@ -3,15 +3,49 @@ import '@mantine/notifications/styles.css';
 
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
+import { useEffect, useMemo } from 'react';
 import { HydroNotifications } from '@/components/feedback/hydro-notifications';
 import { useSessionStore } from '@/stores/session';
-import { theme } from '@/styles/mantine-theme';
+import { ACCENT_PRESETS, accentToCssVars, getAccentScheme } from '@/styles/accent-colors';
+import { createDynamicTheme } from '@/styles/mantine-theme';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const colorScheme = useSessionStore((s) => s.theme);
+  const accentColor = useSessionStore((s) => s.accentColor);
+  const isDark = colorScheme === 'dark';
+
+  const isPreset = accentColor in ACCENT_PRESETS;
+  const palette = isPreset
+    ? getAccentScheme(accentColor)[isDark ? 'dark' : 'light']
+    : null;
+  const { theme: dynamicTheme, cssResolver } = useMemo(() => createDynamicTheme(accentColor), [accentColor]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (palette) {
+      const vars = accentToCssVars(palette);
+      for (const [key, value] of Object.entries(vars)) {
+        root.style.setProperty(key, value);
+      }
+    } else {
+      root.style.setProperty('--hydro-primary', accentColor);
+      root.style.setProperty('--hydro-primary-strong', accentColor);
+      root.style.setProperty('--hydro-primary-soft', `${accentColor}18`);
+      root.style.setProperty('--hydro-accent', accentColor);
+      root.style.setProperty('--hydro-accent-soft', `${accentColor}18`);
+    }
+    return () => {
+      const keys = ['--hydro-primary', '--hydro-primary-strong', '--hydro-primary-soft', '--hydro-accent', '--hydro-accent-soft'];
+      for (const key of keys) root.style.removeProperty(key);
+    };
+  }, [accentColor, palette, isDark]);
 
   return (
-    <MantineProvider theme={theme} forceColorScheme={colorScheme}>
+    <MantineProvider
+      theme={dynamicTheme}
+      cssVariablesResolver={cssResolver}
+      forceColorScheme={colorScheme}
+    >
       <Notifications position="top-right" />
       <HydroNotifications />
       {children}

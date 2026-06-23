@@ -552,3 +552,12 @@ Select a zip file: zipファイルを選択
 Upload zipfile: zipファイルをアップロード
 What is this?: これは何ですか？
 preferredPrefix_hint: 希望の問題IDプレフィックスのヒント。
+
+# Theme
+Theme color: テーマカラー
+Preset themes: プリセットテーマ
+Custom color: カスタムカラー
+Teal: ティール
+Blue: ブルー
+Violet: バイオレット
+Rose: ローズ

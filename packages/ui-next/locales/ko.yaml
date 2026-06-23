@@ -552,3 +552,12 @@ Select a zip file: zip 파일 선택
 Upload zipfile: zip 파일 업로드
 What is this?: 이것이 무엇인가요?
 preferredPrefix_hint: 선호하는 문제 ID 접두사 힌트.
+
+# Theme
+Theme color: 테마 색상
+Preset themes: 프리셋 테마
+Custom color: 사용자 지정 색상
+Teal: 틸
+Blue: 블루
+Violet: 바이올렛
+Rose: 로즈

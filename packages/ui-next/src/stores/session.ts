@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { initialLang } from '@/globals';
+import { type AccentColorValue, DEFAULT_ACCENT } from '@/styles/accent-colors';
 
 export type ThemeMode = 'light' | 'dark';
 
@@ -27,13 +28,16 @@ interface SessionStore {
   user: UserContext;
   ui: UiContext;
   theme: ThemeMode;
+  accentColor: AccentColorValue;
   language: string;
   setSession(payload: { user: UserContext, ui: UiContext }): void;
   setTheme(theme: ThemeMode): void;
+  setAccentColor(color: AccentColorValue): void;
   setLanguage(lang: string): void;
 }
 
 const THEME_STORAGE_KEY = 'hydro-ui-theme';
+const ACCENT_STORAGE_KEY = 'hydro-ui-accent-color';
 
 function normalizeTheme(value: unknown): ThemeMode | null {
   return value === 'dark' || value === 'light' ? value : null;
@@ -57,6 +61,26 @@ function writeStoredTheme(theme: ThemeMode) {
   }
 }
 
+function readStoredAccent(): AccentColorValue {
+  if (typeof window === 'undefined') return DEFAULT_ACCENT;
+  try {
+    const value = window.localStorage.getItem(ACCENT_STORAGE_KEY);
+    if (value) return value as AccentColorValue;
+  } catch {
+    // Ignore storage failures in restricted browser contexts.
+  }
+  return DEFAULT_ACCENT;
+}
+
+function writeStoredAccent(color: AccentColorValue) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(ACCENT_STORAGE_KEY, color);
+  } catch {
+    // Ignore storage failures in restricted browser contexts.
+  }
+}
+
 export const useSessionStore = create<SessionStore>((set) => ({
   user: { _id: 0, uname: 'Unknown User', priv: 0, avatar: '' },
   ui: {
@@ -68,6 +92,7 @@ export const useSessionStore = create<SessionStore>((set) => ({
     serverName: 'Hydro',
   },
   theme: readStoredTheme() || 'light',
+  accentColor: readStoredAccent(),
   language: initialLang,
   setSession: ({ user, ui }) => {
     const theme = readStoredTheme()
@@ -80,6 +105,10 @@ export const useSessionStore = create<SessionStore>((set) => ({
   setTheme: (theme) => {
     writeStoredTheme(theme);
     set({ theme });
+  },
+  setAccentColor: (accentColor) => {
+    writeStoredAccent(accentColor);
+    set({ accentColor });
   },
   setLanguage: (language) => set({ language }),
 }));

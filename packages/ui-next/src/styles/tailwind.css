@@ -28,8 +28,8 @@ body::before {
   pointer-events: none;
   content: '';
   background:
-    linear-gradient(90deg, rgb(17 124 130 / 7%) 1px, transparent 1px),
-    linear-gradient(180deg, rgb(217 108 47 / 5%) 1px, transparent 1px);
+    linear-gradient(90deg, color-mix(in srgb, var(--hydro-primary) 7%) 1px, transparent 1px),
+    linear-gradient(180deg, color-mix(in srgb, var(--hydro-accent) 5%) 1px, transparent 1px);
   background-size: 46px 46px;
   mask-image: linear-gradient(180deg, black 0, transparent 520px);
 }
