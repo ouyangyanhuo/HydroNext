@@ -31,6 +31,7 @@
   --hydro-nav-bg: rgb(255 255 255 / 88%);
   --hydro-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --hydro-font-serif: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, 'Source Serif 4', Georgia, serif;
   --hydro-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   --hydro-duration-fast: 120ms;
   --hydro-duration-normal: 200ms;

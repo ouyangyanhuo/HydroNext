@@ -3,6 +3,7 @@ import { initialLang } from '@/globals';
 import { type AccentColorValue, DEFAULT_ACCENT } from '@/styles/accent-colors';
 
 export type ThemeMode = 'light' | 'dark';
+export type FontFamily = 'sans' | 'serif';
 
 export interface UserContext {
   _id: number;
@@ -29,15 +30,18 @@ interface SessionStore {
   ui: UiContext;
   theme: ThemeMode;
   accentColor: AccentColorValue;
+  fontFamily: FontFamily;
   language: string;
   setSession(payload: { user: UserContext, ui: UiContext }): void;
   setTheme(theme: ThemeMode): void;
   setAccentColor(color: AccentColorValue): void;
+  setFontFamily(font: FontFamily): void;
   setLanguage(lang: string): void;
 }
 
 const THEME_STORAGE_KEY = 'hydro-ui-theme';
 const ACCENT_STORAGE_KEY = 'hydro-ui-accent-color';
+const FONT_STORAGE_KEY = 'hydro-ui-font-family';
 
 function normalizeTheme(value: unknown): ThemeMode | null {
   return value === 'dark' || value === 'light' ? value : null;
@@ -81,6 +85,26 @@ function writeStoredAccent(color: AccentColorValue) {
   }
 }
 
+function readStoredFont(): FontFamily {
+  if (typeof window === 'undefined') return 'sans';
+  try {
+    const value = window.localStorage.getItem(FONT_STORAGE_KEY);
+    if (value === 'serif' || value === 'sans') return value;
+  } catch {
+    // Ignore storage failures in restricted browser contexts.
+  }
+  return 'sans';
+}
+
+function writeStoredFont(font: FontFamily) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(FONT_STORAGE_KEY, font);
+  } catch {
+    // Ignore storage failures in restricted browser contexts.
+  }
+}
+
 export const useSessionStore = create<SessionStore>((set) => ({
   user: { _id: 0, uname: 'Unknown User', priv: 0, avatar: '' },
   ui: {
@@ -93,6 +117,7 @@ export const useSessionStore = create<SessionStore>((set) => ({
   },
   theme: readStoredTheme() || 'light',
   accentColor: readStoredAccent(),
+  fontFamily: readStoredFont(),
   language: initialLang,
   setSession: ({ user, ui }) => {
     const theme = readStoredTheme()
@@ -109,6 +134,10 @@ export const useSessionStore = create<SessionStore>((set) => ({
   setAccentColor: (accentColor) => {
     writeStoredAccent(accentColor);
     set({ accentColor });
+  },
+  setFontFamily: (fontFamily) => {
+    writeStoredFont(fontFamily);
+    set({ fontFamily });
   },
   setLanguage: (language) => set({ language }),
 }));

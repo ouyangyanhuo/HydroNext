@@ -1,6 +1,7 @@
 import { Anchor, Group, Text } from '@mantine/core';
 import { Link } from '@/components/link';
 import { useI18n } from '@/hooks/use-i18n';
+import { FontMenu } from './font-menu';
 import { LanguageMenu } from './language-menu';
 
 export function Footer() {
@@ -22,6 +23,7 @@ export function Footer() {
             </Text>
           </div>
           <Group gap="lg">
+            <FontMenu />
             <LanguageMenu />
             <Anchor component={Link} href="/wiki/about" size="sm" className="text-[var(--hydro-text-muted)] transition-colors duration-150 hover:text-[var(--hydro-primary)]">
               {t('About')}

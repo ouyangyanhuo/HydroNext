@@ -12,6 +12,7 @@ import { createDynamicTheme } from '@/styles/mantine-theme';
 export function Providers({ children }: { children: React.ReactNode }) {
   const colorScheme = useSessionStore((s) => s.theme);
   const accentColor = useSessionStore((s) => s.accentColor);
+  const fontFamily = useSessionStore((s) => s.fontFamily);
   const isDark = colorScheme === 'dark';
 
   const isPreset = accentColor in ACCENT_PRESETS;
@@ -39,6 +40,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
       for (const key of keys) root.style.removeProperty(key);
     };
   }, [accentColor, palette, isDark]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--hydro-font-family', fontFamily === 'serif'
+      ? 'var(--hydro-font-serif)'
+      : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'");
+  }, [fontFamily]);
 
   return (
     <MantineProvider
