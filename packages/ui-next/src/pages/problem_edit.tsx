@@ -368,7 +368,7 @@ export default function ProblemEditPage() {
                       </button>
                       {hasChildren && (
                         <div
-                          className={`absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3 shadow-[var(--hydro-shadow-lg)] transition-opacity ${showCategory === category ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+                          className={`absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3 shadow-[var(--hydro-shadow-lg)] transition-all duration-200 origin-right ${showCategory === category ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'}`}
                           onMouseEnter={() => {
                             if (hoverTimer.current) {
                               clearTimeout(hoverTimer.current);

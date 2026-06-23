@@ -135,7 +135,7 @@ export function FileDropzone({
           borderColor: dragging ? 'var(--hydro-primary)' : 'var(--hydro-border)',
           backgroundColor: dragging ? 'var(--hydro-surface)' : 'transparent',
           cursor: 'pointer',
-          transition: 'all 0.2s',
+          transition: `all var(--hydro-duration-normal) var(--hydro-ease-out)`,
         }}
         onDrop={handleDrop}
         onDragOver={handleDragOver}

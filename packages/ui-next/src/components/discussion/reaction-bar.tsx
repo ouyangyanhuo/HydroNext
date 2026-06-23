@@ -33,6 +33,7 @@ export function ReactionBar({ reactions, onReact }: ReactionBarProps) {
             size="lg"
             variant={r.self ? 'filled' : 'light'}
             style={{ cursor: isLoggedIn ? 'pointer' : 'default' }}
+            className="transition-colors duration-150"
             onClick={() => isLoggedIn && onReact?.(r.id)}
           >
             {EMOJI_MAP[r.id] || r.id} {r.count}

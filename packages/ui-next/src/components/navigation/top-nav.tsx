@@ -269,7 +269,7 @@ function AccentColorPicker() {
                 <Tooltip key={key} label={t(scheme.name)} withArrow>
                   <UnstyledButton
                     onClick={() => setAccentColor(key)}
-                    className="relative flex h-8 w-8 items-center justify-center rounded-full transition-transform hover:scale-110"
+                    className="relative flex h-8 w-8 items-center justify-center rounded-full transition-transform duration-150 hover:scale-110"
                     style={{ background: scheme.light.primary }}
                   >
                     {isActive && (
@@ -357,8 +357,8 @@ export function TopNav() {
                   color={name === item.to ? 'hydroTeal' : 'gray'}
                   className={
                     name === item.to
-                      ? 'text-[var(--hydro-primary)]'
-                      : 'text-[var(--hydro-text)] hover:bg-[var(--hydro-surface-muted)]'
+                      ? 'text-[var(--hydro-primary)] transition-colors duration-150'
+                      : 'text-[var(--hydro-text)] transition-colors duration-150 hover:bg-[var(--hydro-surface-muted)]'
                   }
                 >
                   {t(item.label)}

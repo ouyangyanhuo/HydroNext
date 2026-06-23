@@ -63,7 +63,7 @@ function ProblemList({ problems }: { problems: any[] }) {
       </Group>
       <div className="flex flex-col gap-1.5">
         {problems.map((p: any) => (
-          <div key={p.docId || p._id} className="flex flex-row items-center justify-between rounded-md px-2 py-2 hover:bg-[var(--hydro-surface-muted)]">
+          <div key={p.docId || p._id} className="flex flex-row items-center justify-between rounded-md px-2 py-2 transition-colors duration-150 hover:bg-[var(--hydro-surface-muted)]">
             <span className="shrink-0 text-xs text-[var(--mantine-color-dimmed)]">
               {p.nSubmit > 0 ? `${p.nAccept}/${p.nSubmit}` : ''}
             </span>
@@ -96,7 +96,7 @@ function RecentContests({ contests }: { contests: any[] }) {
       </Group>
       <div className="flex flex-col gap-1.5">
         {contests.map((c: any) => (
-          <div key={c.docId || c._id} className="flex flex-row items-center justify-between rounded-md px-2 py-2 hover:bg-[var(--hydro-surface-muted)]">
+          <div key={c.docId || c._id} className="flex flex-row items-center justify-between rounded-md px-2 py-2 transition-colors duration-150 hover:bg-[var(--hydro-surface-muted)]">
             <div className="flex items-center gap-2 shrink-0">
               {c.rule && <Badge size="xs" variant="light">{c.rule}</Badge>}
               <TimeDisplay date={c.beginAt} format="relative" />

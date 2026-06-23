@@ -57,7 +57,7 @@ export default function ProblemImportPage() {
             key={source.id}
             withBorder
             p="lg"
-            className="hydro-content-card cursor-pointer transition-shadow hover:shadow-md"
+            className="hydro-content-card cursor-pointer transition-all duration-200 hover:shadow-md"
             component="a"
             href={source.id === 'hydro' ? buildUrl('problem_import_hydro') : source.href}
           >

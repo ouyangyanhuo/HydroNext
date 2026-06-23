@@ -479,15 +479,15 @@ export function Scratchpad({
                         </Tabs.Panel>
                         <Tabs.Panel value="pretest" className="min-h-0 flex-1">
                           <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-2">
-                            <Paper p="sm" className="h-full min-h-0 overflow-auto rounded-none border-t border-[var(--hydro-border)]">
+                            <Paper p="sm" className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-t border-[var(--hydro-border)]">
                               <Text size="xs" c="dimmed" fw={700} mb={6}>{t('Input')}</Text>
                               <Textarea
                                 value={input}
                                 onChange={(e) => setInput(e.currentTarget.value)}
                                 placeholder={t('Input')}
                                 minRows={4}
-                                autosize
-                                styles={{ input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '13px' } }}
+                                styles={{ input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '13px', flex: 1, overflow: 'auto' } }}
+                                className="flex min-h-0 flex-1"
                               />
                             </Paper>
                             <Paper p="sm" className="h-full min-h-0 overflow-auto rounded-none border-t border-l border-[var(--hydro-border)]">

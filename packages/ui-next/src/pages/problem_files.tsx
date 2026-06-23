@@ -370,7 +370,7 @@ function FileSection({
                 </thead>
                 <tbody>
                   {files.map((file) => (
-                    <tr key={file.name} style={{ transition: 'background 140ms' }} className="hover:bg-[var(--hydro-surface-muted)]">
+                    <tr key={file.name} style={{ transition: 'background var(--hydro-duration-fast) var(--hydro-ease-out)' }} className="hover:bg-[var(--hydro-surface-muted)]">
                       {canEdit && (
                         <td style={{ padding: '6px 8px', borderBottom: '1px solid var(--hydro-border)' }}>
                           <Checkbox checked={selected.has(file.name)} onChange={() => toggleSelect(file.name)} size="xs" />

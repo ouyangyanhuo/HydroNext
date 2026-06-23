@@ -90,7 +90,7 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
                   onMouseEnter={() => { if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; } setShowPopup(category); }}
                   onMouseLeave={() => { hoverTimer.current = setTimeout(() => setShowPopup(null), 200); }}
                 >
-                  <div className="rounded-md border border-transparent px-2 py-1.5 transition-colors hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]">
+                  <div className="rounded-md border border-transparent px-2 py-1.5 transition-all duration-150 hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]">
                     <Link
                       href={buildUrl('problem_main', {}, { q: `category:${category}` })}
                       className="hydro-subtle-link block"
@@ -103,7 +103,7 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
                   </div>
                   {hasChildren && (
                     <div
-                      className={`absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3 shadow-[var(--hydro-shadow-lg)] transition-opacity ${showPopup === category ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+                      className={`absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3 shadow-[var(--hydro-shadow-lg)] transition-all duration-200 origin-right ${showPopup === category ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'}`}
                       onMouseEnter={() => { if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; } }}
                       onMouseLeave={() => { hoverTimer.current = setTimeout(() => setShowPopup(null), 200); }}
                     >

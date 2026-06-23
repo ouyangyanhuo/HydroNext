@@ -110,7 +110,7 @@ function DomainSelectField({
                 <UnstyledButton
                   key={domain._id}
                   p="sm"
-                  className="hover:bg-[var(--hydro-surface-muted)] border-b border-[var(--hydro-border)] last:border-b-0"
+                  className="hover:bg-[var(--hydro-surface-muted)] border-b border-[var(--hydro-border)] last:border-b-0 transition-colors duration-150"
                   onClick={() => selectDomain(domain)}
                 >
                   <Group gap="sm">
