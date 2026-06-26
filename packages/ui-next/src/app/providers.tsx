@@ -20,7 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     ? getAccentScheme(accentColor)[isDark ? 'dark' : 'light']
     : null;
   const { theme: dynamicTheme, cssResolver } = useMemo(
-    () => createDynamicTheme(isPaper ? '#8b6f47' : accentColor),
+    () => createDynamicTheme(isPaper ? '#7a6240' : accentColor),
     [accentColor, isPaper],
   );
 

@@ -224,7 +224,7 @@ function ThemeToggle() {
           aria-hidden="true"
           className="pointer-events-none fixed left-0 top-0 z-[9999] h-0.5 w-0.5 rounded-full transition-transform duration-[900ms] ease-out"
           style={{
-            background: transition.targetTheme === 'dark' ? '#0b1114' : transition.targetTheme === 'paper' ? '#f8f4ef' : '#eef3f6',
+            background: transition.targetTheme === 'dark' ? '#0b1114' : transition.targetTheme === 'paper' ? '#efe8de' : '#eef3f6',
             transform: `translate(${transition.x}px, ${transition.y}px) translate(-50%, -50%) scale(${transition.expanded ? transition.radius : 0})`,
           }}
         />
