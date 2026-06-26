@@ -14,30 +14,37 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const accentColor = useSessionStore((s) => s.accentColor);
   const fontFamily = useSessionStore((s) => s.fontFamily);
   const isDark = colorScheme === 'dark';
-  const dataTheme = colorScheme === 'paper' ? 'paper' : undefined;
-
+  const isPaper = colorScheme === 'paper';
   const isPreset = accentColor in ACCENT_PRESETS;
   const palette = isPreset
     ? getAccentScheme(accentColor)[isDark ? 'dark' : 'light']
     : null;
-  const { theme: dynamicTheme, cssResolver } = useMemo(() => createDynamicTheme(accentColor), [accentColor]);
+  const { theme: dynamicTheme, cssResolver } = useMemo(
+    () => createDynamicTheme(isPaper ? '#8b6f47' : accentColor),
+    [accentColor, isPaper],
+  );
 
   useEffect(() => {
     const root = document.documentElement;
-    if (palette) {
-      const vars = accentToCssVars(palette);
-      for (const [key, value] of Object.entries(vars)) {
-        root.style.setProperty(key, value);
+    if (!isPaper) {
+      if (palette) {
+        const vars = accentToCssVars(palette);
+        for (const [key, value] of Object.entries(vars)) {
+          root.style.setProperty(key, value);
+        }
+      } else {
+        root.style.setProperty('--hydro-primary', accentColor);
+        root.style.setProperty('--hydro-primary-strong', accentColor);
+        root.style.setProperty('--hydro-primary-soft', `${accentColor}18`);
+        root.style.setProperty('--hydro-accent', accentColor);
+        root.style.setProperty('--hydro-accent-soft', `${accentColor}18`);
       }
     } else {
-      root.style.setProperty('--hydro-primary', accentColor);
-      root.style.setProperty('--hydro-primary-strong', accentColor);
-      root.style.setProperty('--hydro-primary-soft', `${accentColor}18`);
-      root.style.setProperty('--hydro-accent', accentColor);
-      root.style.setProperty('--hydro-accent-soft', `${accentColor}18`);
+      const keys = ['--hydro-primary', '--hydro-primary-strong', '--hydro-primary-soft', '--hydro-accent', '--hydro-accent-soft'];
+      for (const key of keys) root.style.removeProperty(key);
     }
-    if (dataTheme) {
-      root.setAttribute('data-hydro-theme', dataTheme);
+    if (isPaper) {
+      root.setAttribute('data-hydro-theme', 'paper');
     } else {
       root.removeAttribute('data-hydro-theme');
     }
@@ -46,7 +53,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       for (const key of keys) root.style.removeProperty(key);
       root.removeAttribute('data-hydro-theme');
     };
-  }, [accentColor, palette, isDark, dataTheme]);
+  }, [accentColor, palette, isDark, isPaper]);
 
   useEffect(() => {
     const root = document.documentElement;

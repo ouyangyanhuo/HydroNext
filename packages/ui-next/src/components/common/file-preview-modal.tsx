@@ -145,7 +145,7 @@ function DocxViewer({ url }: { url: string }) {
     <div style={{ position: 'relative', minHeight: 200 }}>
       <LoadingOverlay visible={loading} />
       {error && <Text size="sm" c="red">{error}</Text>}
-      <div ref={containerRef} className="overflow-auto rounded-md border border-[var(--hydro-border)] bg-white p-4" style={{ maxHeight: '70vh' }} />
+      <div ref={containerRef} className="overflow-auto rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] p-4" style={{ maxHeight: '70vh' }} />
     </div>
   );
 }
