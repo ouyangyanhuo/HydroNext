@@ -86,8 +86,8 @@ function CollapsibleContent({ content, maxHeight = MAX_HEIGHT }: { content: any;
     <div className="relative">
       <div
         ref={ref}
-        className="overflow-hidden transition-[max-height] duration-300 ease-in-out"
-        style={{ maxHeight: expanded ? 'none' : maxHeight }}
+        className="overflow-hidden transition-[max-height] duration-300"
+        style={{ maxHeight: expanded ? 'none' : maxHeight, transitionTimingFunction: 'var(--hydro-ease-in-out)' }}
       >
         <MarkdownRenderer content={content || ''} />
       </div>

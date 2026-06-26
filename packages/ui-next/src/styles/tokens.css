@@ -71,6 +71,36 @@
   --hydro-nav-bg: rgb(14 22 25 / 88%);
 }
 
+[data-hydro-theme='paper'] {
+  color-scheme: light;
+  --hydro-bg: #f8f4ef;
+  --hydro-bg-soft: #faf7f3;
+  --hydro-surface: #fffdf9;
+  --hydro-surface-raised: #fffdf9;
+  --hydro-surface-muted: #f0ebe4;
+  --hydro-surface-tint: #f5efe7;
+  --hydro-text: #2c2418;
+  --hydro-text-muted: #8a7e6d;
+  --hydro-text-secondary: var(--hydro-text-muted);
+  --hydro-border: #e4ddd4;
+  --hydro-border-strong: #d0c7b8;
+  --hydro-primary: #8b6f47;
+  --hydro-primary-strong: #6d5635;
+  --hydro-primary-soft: #f5efe7;
+  --hydro-accent: #b8860b;
+  --hydro-accent-soft: #faf3e0;
+  --hydro-success: #5a8a3c;
+  --hydro-warning: #c49000;
+  --hydro-danger: #b54545;
+  --hydro-status-accepted: #5a8a3c;
+  --hydro-status-wrong: #c44040;
+  --hydro-status-pending: #c49000;
+  --hydro-shadow-sm: 0 1px 2px rgb(60 50 30 / 6%);
+  --hydro-shadow-md: 0 12px 30px rgb(60 50 30 / 8%);
+  --hydro-shadow-lg: 0 22px 55px rgb(60 50 30 / 12%);
+  --hydro-nav-bg: rgb(255 253 249 / 88%);
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;

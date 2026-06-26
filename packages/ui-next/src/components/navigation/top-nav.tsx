@@ -1,6 +1,6 @@
 import { ActionIcon, Avatar, Burger, Button, ColorInput, Drawer, Group, Menu, Popover, Stack, Text, Tooltip, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconCheck, IconMoon, IconPalette, IconRestore, IconSun } from '@tabler/icons-react';
+import { IconCheck, IconLetterP, IconMoon, IconPalette, IconRestore, IconSun } from '@tabler/icons-react';
 import type { MouseEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
@@ -11,7 +11,7 @@ import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useDomain } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
-import { useSessionStore } from '@/stores/session';
+import { type ThemeMode, useSessionStore } from '@/stores/session';
 import { ACCENT_PRESETS, DEFAULT_ACCENT, PRESET_KEYS } from '@/styles/accent-colors';
 import { getAvatarUrl } from '@/utils/avatar';
 import { DomainSwitcher } from './domain-switcher';
@@ -101,18 +101,23 @@ function ThemeToggle() {
     x: number;
     y: number;
     radius: number;
-    targetTheme: 'light' | 'dark';
+    targetTheme: ThemeMode;
     expanded: boolean;
   } | null>(null);
-  const isDark = theme === 'dark';
-  const label = isDark ? t('Switch to light mode') : t('Switch to dark mode');
+  const nextTheme: Record<ThemeMode, ThemeMode> = { light: 'paper', paper: 'dark', dark: 'light' };
+  const themeLabel: Record<ThemeMode, string> = {
+    light: t('Switch to paper mode'),
+    paper: t('Switch to dark mode'),
+    dark: t('Switch to light mode'),
+  };
+  const label = themeLabel[theme];
 
   useEffect(() => () => {
     timersRef.current.forEach((timer) => window.clearTimeout(timer));
     if (frameRef.current != null) window.cancelAnimationFrame(frameRef.current);
   }, []);
 
-  const runFallbackTransition = (x: number, y: number, radius: number, targetTheme: 'light' | 'dark') => {
+  const runFallbackTransition = (x: number, y: number, radius: number, targetTheme: ThemeMode) => {
     setTransition({ x, y, radius, targetTheme, expanded: false });
     frameRef.current = window.requestAnimationFrame(() => {
       setTransition((current) => (current ? { ...current, expanded: true } : current));
@@ -126,7 +131,7 @@ function ThemeToggle() {
   };
 
   const toggleTheme = async (event: MouseEvent<HTMLButtonElement>) => {
-    const targetTheme = isDark ? 'light' : 'dark';
+    const targetTheme = nextTheme[theme];
     if (animating) return;
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       setTheme(targetTheme);
@@ -180,7 +185,7 @@ function ThemeToggle() {
       <Tooltip label={label} withArrow>
         <ActionIcon
           aria-label={label}
-          color={isDark ? 'yellow' : 'hydroTeal'}
+          color={theme === 'dark' ? 'yellow' : theme === 'paper' ? 'hydroCopper' : 'hydroTeal'}
           disabled={animating}
           onClick={toggleTheme}
           radius="md"
@@ -191,16 +196,26 @@ function ThemeToggle() {
           <IconSun
             size={18}
             stroke={2.2}
-            className={`absolute transition-all duration-300 ease-out ${
-              isDark ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'
+            className={`absolute transition-all duration-300 ${
+              theme === 'light' ? 'rotate-0 scale-100 opacity-100' : 'rotate-90 scale-0 opacity-0'
             }`}
+            style={{ transitionTimingFunction: 'var(--hydro-ease-spring)' }}
+          />
+          <IconLetterP
+            size={18}
+            stroke={2.2}
+            className={`absolute transition-all duration-300 ${
+              theme === 'paper' ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'
+            }`}
+            style={{ transitionTimingFunction: 'var(--hydro-ease-spring)' }}
           />
           <IconMoon
             size={18}
             stroke={2.2}
-            className={`absolute transition-all duration-300 ease-out ${
-              isDark ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'
+            className={`absolute transition-all duration-300 ${
+              theme === 'dark' ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'
             }`}
+            style={{ transitionTimingFunction: 'var(--hydro-ease-spring)' }}
           />
         </ActionIcon>
       </Tooltip>
@@ -209,7 +224,7 @@ function ThemeToggle() {
           aria-hidden="true"
           className="pointer-events-none fixed left-0 top-0 z-[9999] h-0.5 w-0.5 rounded-full transition-transform duration-[900ms] ease-out"
           style={{
-            background: transition.targetTheme === 'dark' ? '#0b1114' : '#eef3f6',
+            background: transition.targetTheme === 'dark' ? '#0b1114' : transition.targetTheme === 'paper' ? '#f8f4ef' : '#eef3f6',
             transform: `translate(${transition.x}px, ${transition.y}px) translate(-50%, -50%) scale(${transition.expanded ? transition.radius : 0})`,
           }}
         />

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { initialLang } from '@/globals';
 import { type AccentColorValue, DEFAULT_ACCENT } from '@/styles/accent-colors';
 
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = 'light' | 'paper' | 'dark';
 export type FontFamily = 'sans' | 'serif';
 
 export interface UserContext {
@@ -44,7 +44,7 @@ const ACCENT_STORAGE_KEY = 'hydro-ui-accent-color';
 const FONT_STORAGE_KEY = 'hydro-ui-font-family';
 
 function normalizeTheme(value: unknown): ThemeMode | null {
-  return value === 'dark' || value === 'light' ? value : null;
+  return value === 'dark' || value === 'light' || value === 'paper' ? value : null;
 }
 
 function readStoredTheme(): ThemeMode | null {

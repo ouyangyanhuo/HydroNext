@@ -15,7 +15,7 @@ export function Skeleton({ width, height = 16, radius = 'var(--hydro-radius-md)'
         borderRadius: radius,
         background: `linear-gradient(90deg, var(--hydro-surface-muted) 25%, var(--hydro-surface-tint) 50%, var(--hydro-surface-muted) 75%)`,
         backgroundSize: '200% 100%',
-        animation: 'hydro-shimmer 1.5s ease-in-out infinite',
+        animation: 'hydro-shimmer 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite',
       }}
     />
   );
