@@ -28,7 +28,17 @@
   --hydro-shadow-sm: 0 1px 2px rgb(18 32 38 / 8%);
   --hydro-shadow-md: 0 12px 30px rgb(18 32 38 / 10%);
   --hydro-shadow-lg: 0 22px 55px rgb(18 32 38 / 14%);
-  --hydro-nav-bg: rgb(255 255 255 / 88%);
+  --hydro-nav-bg: rgb(255 255 255 / 76%);
+  --hydro-glass-surface: rgb(255 255 255 / 66%);
+  --hydro-glass-surface-strong: rgb(255 255 255 / 78%);
+  --hydro-glass-surface-muted: rgb(242 247 249 / 58%);
+  --hydro-glass-border: rgb(255 255 255 / 62%);
+  --hydro-glass-highlight: rgb(255 255 255 / 44%);
+  --hydro-glass-blur: 14px;
+  --hydro-glass-blur-subtle: 8px;
+  --hydro-ambient-primary: color-mix(in srgb, var(--hydro-primary) 15%, transparent);
+  --hydro-ambient-secondary: color-mix(in srgb, var(--hydro-accent) 10%, transparent);
+  --hydro-ripple-color: color-mix(in srgb, var(--hydro-primary) 30%, transparent);
   --hydro-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
   --hydro-font-serif: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, 'Source Serif 4', Georgia, serif;
@@ -68,7 +78,15 @@
   --hydro-shadow-sm: 0 1px 2px rgb(0 0 0 / 24%);
   --hydro-shadow-md: 0 14px 34px rgb(0 0 0 / 28%);
   --hydro-shadow-lg: 0 22px 60px rgb(0 0 0 / 34%);
-  --hydro-nav-bg: rgb(14 22 25 / 88%);
+  --hydro-nav-bg: rgb(14 22 25 / 76%);
+  --hydro-glass-surface: rgb(21 31 34 / 66%);
+  --hydro-glass-surface-strong: rgb(27 39 43 / 78%);
+  --hydro-glass-surface-muted: rgb(28 42 46 / 58%);
+  --hydro-glass-border: rgb(133 173 181 / 18%);
+  --hydro-glass-highlight: rgb(211 242 246 / 9%);
+  --hydro-ambient-primary: color-mix(in srgb, var(--hydro-primary) 18%, transparent);
+  --hydro-ambient-secondary: color-mix(in srgb, var(--hydro-accent) 10%, transparent);
+  --hydro-ripple-color: color-mix(in srgb, var(--hydro-primary) 34%, transparent);
 }
 
 [data-hydro-theme='paper'] {
@@ -98,7 +116,15 @@
   --hydro-shadow-sm: 0 1px 2px rgb(60 50 30 / 6%);
   --hydro-shadow-md: 0 12px 30px rgb(60 50 30 / 8%);
   --hydro-shadow-lg: 0 22px 55px rgb(60 50 30 / 12%);
-  --hydro-nav-bg: rgb(239 232 222 / 88%);
+  --hydro-nav-bg: rgb(239 232 222 / 78%);
+  --hydro-glass-surface: rgb(244 238 229 / 64%);
+  --hydro-glass-surface-strong: rgb(246 240 232 / 76%);
+  --hydro-glass-surface-muted: rgb(235 227 215 / 56%);
+  --hydro-glass-border: rgb(255 252 245 / 48%);
+  --hydro-glass-highlight: rgb(255 253 248 / 34%);
+  --hydro-ambient-primary: color-mix(in srgb, var(--hydro-primary) 13%, transparent);
+  --hydro-ambient-secondary: color-mix(in srgb, var(--hydro-accent) 9%, transparent);
+  --hydro-ripple-color: color-mix(in srgb, var(--hydro-primary) 28%, transparent);
 }
 
 ::view-transition-old(root),

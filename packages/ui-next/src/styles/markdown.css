@@ -83,9 +83,12 @@
   padding: 0.2em 0.4em;
   margin: 0;
   font-size: 85%;
-  background-color: var(--hydro-surface-muted);
+  background-color: var(--hydro-glass-surface-muted);
   border: 1px solid var(--hydro-border);
   border-radius: 4px;
+  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
+  -webkit-backdrop-filter: blur(6px) saturate(108%);
+  backdrop-filter: blur(6px) saturate(108%);
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
@@ -96,9 +99,13 @@
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
-  background-color: var(--hydro-surface);
+  background-color: var(--hydro-glass-surface-strong);
+  background-image: linear-gradient(135deg, var(--hydro-glass-highlight), transparent 48%);
   border-radius: 6px;
   border: 1px solid var(--hydro-border);
+  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
+  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
 }
 
 .hydro-markdown pre code {
@@ -114,7 +121,11 @@
   padding: 0.5em 1em;
   color: var(--hydro-text-secondary);
   border-left: 4px solid var(--hydro-border);
-  background-color: var(--hydro-surface);
+  background-color: var(--hydro-glass-surface-muted);
+  background-image: linear-gradient(135deg, var(--hydro-glass-highlight), transparent 52%);
+  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
+  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
 }
 
 .hydro-markdown blockquote > :last-child {
@@ -155,6 +166,10 @@
   margin-bottom: 1em;
   border-collapse: collapse;
   border-spacing: 0;
+  background-color: var(--hydro-glass-surface);
+  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(108%);
+  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(108%);
 }
 
 .hydro-markdown table th,
@@ -165,11 +180,11 @@
 
 .hydro-markdown table th {
   font-weight: 600;
-  background-color: var(--hydro-surface);
+  background-color: var(--hydro-glass-surface-muted);
 }
 
 .hydro-markdown table tr:nth-child(even) {
-  background-color: var(--hydro-surface);
+  background-color: color-mix(in srgb, var(--hydro-glass-surface-muted) 72%, transparent);
 }
 
 .hydro-markdown .katex-display {
@@ -196,7 +211,7 @@
   font-size: 11px;
   font-weight: 600;
   color: var(--hydro-text-muted);
-  background: var(--hydro-surface);
+  background: var(--hydro-glass-surface-strong);
   border-left: 1px solid var(--hydro-border);
   border-bottom: 1px solid var(--hydro-border);
   border-radius: 0 6px 0 4px;
@@ -205,5 +220,7 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  -webkit-backdrop-filter: blur(6px) saturate(108%);
+  backdrop-filter: blur(6px) saturate(108%);
   z-index: 1;
 }

@@ -10,11 +10,17 @@ export function AppShell({ children }: AppShellProps) {
   const { name } = usePageData();
 
   return (
-    <div className="hydro-app-surface flex min-h-screen flex-col">
+    <div className="hydro-app-surface relative isolate flex min-h-screen flex-col">
+      <div className="hydro-ambient" aria-hidden="true">
+        <div className="hydro-ambient__origin">
+          <span className="hydro-ambient__wash" />
+          <span className="hydro-ambient__ripple" />
+        </div>
+      </div>
       <header className="sticky top-0 z-50">
         <TopNav />
       </header>
-      <main className="flex-1">
+      <main className="relative z-10 flex-1">
         <div
           key={name}
           className="hydro-container py-8 md:py-10"
@@ -23,7 +29,7 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </div>
       </main>
-      <footer>
+      <footer className="relative z-10">
         <Footer />
       </footer>
     </div>

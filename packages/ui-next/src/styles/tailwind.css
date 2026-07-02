@@ -11,6 +11,51 @@
   100% { background-position: 200% 0; }
 }
 
+@keyframes hydro-ambient-bloom {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.38);
+  }
+  45% { opacity: 0.72; }
+  100% {
+    opacity: 0.52;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes hydro-ambient-ripple {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  28% { opacity: 0.3; }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes hydro-workspace-out {
+  to {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(-8px) scale(0.985);
+  }
+}
+
+@keyframes hydro-workspace-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
 html {
   color-scheme: light;
   background: var(--hydro-bg);
@@ -24,6 +69,8 @@ body {
   min-width: 320px;
   margin: 0;
   background:
+    radial-gradient(circle at 12% 16%, color-mix(in srgb, var(--hydro-primary) 7%, transparent) 0, transparent 32rem),
+    radial-gradient(circle at 92% 74%, color-mix(in srgb, var(--hydro-accent) 5%, transparent) 0, transparent 28rem),
     linear-gradient(180deg, var(--hydro-bg-soft) 0, var(--hydro-bg) 420px),
     var(--hydro-bg);
   color: var(--hydro-text);
@@ -66,6 +113,78 @@ a {
   min-height: 100vh;
   background:
     linear-gradient(180deg, transparent 0, rgb(255 255 255 / 38%) 360px, transparent 760px);
+}
+
+.hydro-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+
+.hydro-ambient__origin {
+  position: absolute;
+  top: clamp(110px, 16vh, 180px);
+  left: clamp(220px, 72vw, calc(100vw - 90px));
+  width: 1px;
+  height: 1px;
+}
+
+.hydro-ambient__wash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(340px, 56vw, 680px);
+  aspect-ratio: 1.25;
+  border-radius: 50%;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 42% 44%, var(--hydro-ambient-primary), transparent 54%),
+    radial-gradient(circle at 64% 58%, var(--hydro-ambient-secondary), transparent 62%);
+  filter: blur(10px);
+  transform: translate(-50%, -50%) scale(0.38);
+  animation: hydro-ambient-bloom 3.8s var(--hydro-ease-out) 120ms forwards;
+}
+
+.hydro-ambient__ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(190px, 34vw, 460px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: 0;
+  background:
+    radial-gradient(
+      circle,
+      transparent 44%,
+      var(--hydro-ripple-color) 60%,
+      transparent 78%
+    );
+  filter: blur(16px);
+  transform: translate(-50%, -50%) scale(0.3);
+  animation: hydro-ambient-ripple 4.8s var(--hydro-ease-out) 240ms forwards;
+}
+
+.problem-workspace-transition .problem-workspace {
+  view-transition-name: problem-workspace;
+}
+
+::view-transition-group(problem-workspace) {
+  animation-duration: 480ms;
+  animation-timing-function: var(--hydro-ease-out);
+}
+
+::view-transition-old(problem-workspace) {
+  animation: hydro-workspace-out 300ms var(--hydro-ease-out) both;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(problem-workspace) {
+  animation: hydro-workspace-in 480ms var(--hydro-ease-out) both;
+  mix-blend-mode: normal;
 }
 
 [data-mantine-color-scheme='dark'] .hydro-app-surface {
@@ -144,11 +263,11 @@ a {
 }
 
 .hydro-data-table thead tr {
-  background: var(--hydro-surface-tint);
+  background: color-mix(in srgb, var(--hydro-surface-tint) 72%, transparent);
 }
 
 .hydro-data-table thead tr:hover {
-  background: var(--hydro-surface-tint);
+  background: color-mix(in srgb, var(--hydro-surface-tint) 82%, transparent);
 }
 
 .hydro-data-table th {
@@ -217,4 +336,142 @@ a {
   padding-right: 24px;
   padding-left: 24px;
   padding-bottom: calc(var(--spacing) * 8);
+}
+
+/* Restrained translucent material shared by application and Mantine surfaces. */
+.hydro-panel,
+.hydro-card,
+.hydro-content-card,
+.hydro-table-wrap,
+.hydro-paginator,
+.hydro-empty-state,
+.hydro-auth-card,
+.mantine-Card-root,
+.mantine-Paper-root,
+.mantine-Modal-content,
+.mantine-Drawer-content,
+.mantine-Popover-dropdown,
+.mantine-Menu-dropdown,
+.mantine-Combobox-dropdown,
+.mantine-Notification-root {
+  border-color: color-mix(in srgb, var(--hydro-border) 72%, var(--hydro-glass-border));
+  background-color: var(--hydro-glass-surface);
+  background-image:
+    linear-gradient(135deg, var(--hydro-glass-highlight), transparent 42%);
+  box-shadow:
+    var(--hydro-shadow-sm),
+    inset 0 1px 0 var(--hydro-glass-highlight);
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur)) saturate(122%);
+  backdrop-filter: blur(var(--hydro-glass-blur)) saturate(122%);
+}
+
+.mantine-Card-root .mantine-Paper-root,
+.mantine-Paper-root .mantine-Paper-root {
+  background-color: var(--hydro-glass-surface-muted);
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(112%);
+  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(112%);
+}
+
+.mantine-Input-input,
+.mantine-PillsInput-input,
+.mantine-SegmentedControl-root {
+  border-color: color-mix(in srgb, var(--hydro-border) 80%, var(--hydro-glass-border));
+  background-color: var(--hydro-glass-surface-strong);
+  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(112%);
+  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(112%);
+}
+
+.mantine-Button-root[data-variant='default'],
+.mantine-ActionIcon-root[data-variant='default'] {
+  border-color: color-mix(in srgb, var(--hydro-border) 78%, var(--hydro-glass-border));
+  background-color: var(--hydro-glass-surface-muted);
+  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
+  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
+}
+
+.mantine-Alert-root {
+  border-color: color-mix(in srgb, var(--hydro-border) 68%, var(--hydro-glass-border));
+  background-color:
+    color-mix(in srgb, var(--alert-bg, var(--hydro-glass-surface-strong)) 72%, transparent);
+  background-image:
+    linear-gradient(135deg, var(--hydro-glass-highlight), transparent 46%);
+  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(112%);
+  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(112%);
+}
+
+.mantine-Accordion-item,
+.mantine-Blockquote-root,
+.mantine-Code-root,
+.mantine-Kbd-root {
+  border-color: color-mix(in srgb, var(--hydro-border) 76%, var(--hydro-glass-border));
+  background-color: var(--hydro-glass-surface-muted);
+  background-image:
+    linear-gradient(135deg, var(--hydro-glass-highlight), transparent 48%);
+  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
+  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
+}
+
+.mantine-Tooltip-tooltip {
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 68%, var(--hydro-glass-border));
+  background-color: var(--hydro-glass-surface-strong);
+  background-image:
+    linear-gradient(135deg, var(--hydro-glass-highlight), transparent 52%);
+  color: var(--hydro-text);
+  box-shadow: var(--hydro-shadow-md);
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur)) saturate(118%);
+  backdrop-filter: blur(var(--hydro-glass-blur)) saturate(118%);
+}
+
+.mantine-Badge-root {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--hydro-glass-highlight) 74%, transparent);
+  -webkit-backdrop-filter: blur(6px) saturate(108%);
+  backdrop-filter: blur(6px) saturate(108%);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --hydro-glass-blur: 10px;
+    --hydro-glass-blur-subtle: 6px;
+  }
+
+  .hydro-ambient__origin {
+    top: 130px;
+    left: calc(100vw - 64px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-ambient__wash {
+    opacity: 0.42;
+    transform: translate(-50%, -50%) scale(1);
+    animation: none;
+  }
+
+  .hydro-ambient__ripple {
+    display: none;
+  }
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .hydro-panel,
+  .hydro-card,
+  .hydro-content-card,
+  .hydro-table-wrap,
+  .hydro-paginator,
+  .hydro-empty-state,
+  .hydro-auth-card,
+  .mantine-Card-root,
+  .mantine-Paper-root,
+  .mantine-Modal-content,
+  .mantine-Drawer-content,
+  .mantine-Popover-dropdown,
+  .mantine-Menu-dropdown,
+  .mantine-Combobox-dropdown,
+  .mantine-Notification-root {
+    background-color: var(--hydro-surface-raised);
+  }
 }

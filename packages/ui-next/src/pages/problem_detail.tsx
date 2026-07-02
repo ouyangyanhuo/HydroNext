@@ -1,6 +1,7 @@
 import { Badge, Button, Card, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';
 import { TimeDisplay } from '@/components/common/time-display';
@@ -19,6 +20,14 @@ import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { getLangDisplay } from '@/utils/lang-display';
+
+interface ProblemViewTransition {
+  finished: Promise<void>;
+}
+
+type ProblemTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => ProblemViewTransition;
+};
 
 function safeFilename(name: string) {
   return name.replace(/[\\/:*?"<>|]/g, '_');
@@ -433,6 +442,7 @@ export default function ProblemDetailPage() {
     return queryLang || (langs.includes(sessionLanguage) ? sessionLanguage : langs[0] || sessionLanguage);
   });
   const [scratchpadOpen, setScratchpadOpen] = useState(false);
+  const workspaceRef = useRef<HTMLDivElement>(null);
   const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);
   const pid = pdoc.pid || pdoc.docId;
 
@@ -498,6 +508,42 @@ export default function ProblemDetailPage() {
     ? codeTemplate
     : codeTemplate?.[codeLang] || '';
   const defaultCode = rdoc?.code || templateCode;
+  const switchScratchpad = (open: boolean) => {
+    if (open === scratchpadOpen) return;
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) {
+      setScratchpadOpen(open);
+      return;
+    }
+
+    const update = () => flushSync(() => setScratchpadOpen(open));
+    const transitionDocument = document as ProblemTransitionDocument;
+    if (transitionDocument.startViewTransition) {
+      const root = document.documentElement;
+      root.classList.add('problem-workspace-transition');
+      try {
+        const transition = transitionDocument.startViewTransition(update);
+        void transition.finished
+          .catch(() => undefined)
+          .finally(() => root.classList.remove('problem-workspace-transition'));
+        return;
+      } catch {
+        root.classList.remove('problem-workspace-transition');
+        // Fall through to the local animation.
+      }
+    }
+
+    update();
+    window.requestAnimationFrame(() => {
+      workspaceRef.current?.animate(
+        [
+          { opacity: 0, transform: 'translateY(12px) scale(0.985)', filter: 'blur(7px)' },
+          { opacity: 1, transform: 'translateY(0) scale(1)', filter: 'blur(0)' },
+        ],
+        { duration: 420, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'both' },
+      );
+    });
+  };
   const statement = (
     <Stack gap="md">
       {langs.length > 1 && (
@@ -525,22 +571,24 @@ export default function ProblemDetailPage() {
 
   if (scratchpadOpen) {
     return (
-      <Scratchpad
-        pid={pdoc.pid || pdoc.docId}
-        langs={scratchpadLangs}
-        defaultLang={rdoc?.lang || codeLang}
-        defaultCode={defaultCode}
-        statement={statement}
-        title={`${pdoc.pid || pdoc.docId}. ${title}`}
-        submitUrl={submitUrl}
-        codeReplaySessionUrl={ui.codeReplaySessionUrl}
-        onClose={() => setScratchpadOpen(false)}
-      />
+      <div ref={workspaceRef} className="problem-workspace">
+        <Scratchpad
+          pid={pdoc.pid || pdoc.docId}
+          langs={scratchpadLangs}
+          defaultLang={rdoc?.lang || codeLang}
+          defaultCode={defaultCode}
+          statement={statement}
+          title={`${pdoc.pid || pdoc.docId}. ${title}`}
+          submitUrl={submitUrl}
+          codeReplaySessionUrl={ui.codeReplaySessionUrl}
+          onClose={() => switchScratchpad(false)}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
+    <div ref={workspaceRef} className="problem-workspace flex flex-col lg:flex-row gap-6">
       <div className="flex-1 min-w-0">
         <Stack gap="lg">
           <Paper withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]">
@@ -613,7 +661,7 @@ export default function ProblemDetailPage() {
           canViewProblemSolution={canViewProblemSolution}
           canViewProblemFiles={canViewProblemFiles}
           canDownloadProblem={canDownloadProblem}
-          onToggleScratchpad={() => setScratchpadOpen((open) => !open)}
+          onToggleScratchpad={() => switchScratchpad(true)}
         />
       </div>
 
