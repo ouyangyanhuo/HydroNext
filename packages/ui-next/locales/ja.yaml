@@ -405,6 +405,12 @@ Sort: 並び替え
 Switch to dark mode: ダークモードに切り替え
 Switch to light mode: ライトモードに切り替え
 Switch to paper mode: ペーパーモードに切り替え
+Theme mode: テーマモード
+Automatic: 自動
+Automatic theme enabled: 自動テーマが有効です
+Light mode: ライトモード
+Paper mode: ペーパーモード
+Dark mode: ダークモード
 Code: コード
 Oh, there is no submission!: 提出がありません！
 Redirecting: リダイレクト中
@@ -553,6 +559,17 @@ Select a zip file: zipファイルを選択
 Upload zipfile: zipファイルをアップロード
 What is this?: これは何ですか？
 preferredPrefix_hint: 希望の問題IDプレフィックスのヒント。
+
+# Page titles
+Submit Solution: 解答を提出
+Submission detail: 提出詳細
+Security: セキュリティ
+Manage Contest: コンテスト管理
+Edit Training Plan: トレーニングプランを編集
+Domain Dashboard: ドメインダッシュボード
+Join Domain: ドメインに参加
+Forgot Password: パスワードを忘れた
+Change Email: メールアドレスを変更
 
 # Theme
 Theme color: テーマカラー

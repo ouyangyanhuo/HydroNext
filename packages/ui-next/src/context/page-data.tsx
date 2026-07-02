@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { useI18n } from '@/hooks/use-i18n';
+import { getPageMetadata } from '@/registry/page-metadata';
 import { useRouteStore } from '@/stores/route';
 import { type UiContext, type UserContext, useSessionStore } from '@/stores/session';
 
@@ -29,6 +31,7 @@ interface PageDataProviderProps {
 export function PageDataProvider({ initial, children }: PageDataProviderProps) {
   const [data, setData] = useState<PageData>(initial);
   const value = useMemo(() => ({ data, setData }), [data]);
+  const { t } = useI18n();
 
   // Sync page data to Zustand stores
   const setSession = useSessionStore((s) => s.setSession);
@@ -60,16 +63,14 @@ export function PageDataProvider({ initial, children }: PageDataProviderProps) {
   useEffect(() => {
     const serverName = data.args?.UiContext?.serverName || 'Hydro';
     const domainName = data.args?.UiContext?.domainId !== 'system' ? data.args?.UiContext?.domain?.name : '';
-    const pageName = data.name;
+    const pageTitle = t(getPageMetadata(data.name).title);
 
-    if (pageName === 'homepage' || !pageName) {
+    if (data.name === 'homepage' || !data.name) {
       document.title = serverName;
     } else {
-      document.title = domainName
-        ? `${serverName} - ${pageName} - ${domainName}`
-        : `${serverName} - ${pageName}`;
+      document.title = [pageTitle, domainName, serverName].filter(Boolean).join(' - ');
     }
-  }, [data.name, data.args?.UiContext]);
+  }, [data.name, data.args?.UiContext, t]);
 
   return <PageDataContext.Provider value={value}>{children}</PageDataContext.Provider>;
 }

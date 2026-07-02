@@ -405,6 +405,12 @@ Sort: 정렬
 Switch to dark mode: 다크 모드로 전환
 Switch to light mode: 라이트 모드로 전환
 Switch to paper mode: 페이퍼 모드로 전환
+Theme mode: 테마 모드
+Automatic: 자동
+Automatic theme enabled: 자동 테마 사용 중
+Light mode: 라이트 모드
+Paper mode: 페이퍼 모드
+Dark mode: 다크 모드
 Code: 코드
 Oh, there is no submission!: 제출이 없습니다!
 Redirecting: 리다이렉트 중
@@ -553,6 +559,17 @@ Select a zip file: zip 파일 선택
 Upload zipfile: zip 파일 업로드
 What is this?: 이것이 무엇인가요?
 preferredPrefix_hint: 선호하는 문제 ID 접두사 힌트.
+
+# Page titles
+Submit Solution: 답안 제출
+Submission detail: 제출 상세
+Security: 보안
+Manage Contest: 대회 관리
+Edit Training Plan: 훈련 계획 편집
+Domain Dashboard: 도메인 대시보드
+Join Domain: 도메인 가입
+Forgot Password: 비밀번호 찾기
+Change Email: 이메일 변경
 
 # Theme
 Theme color: 테마 색상

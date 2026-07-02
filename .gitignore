@@ -74,7 +74,7 @@ install/docker/data/*
 .codex/
 .claude/
 
-AGENT.md
+AGENTS.md
 CLAUDE.md
 install/docker/backend/entrypoint.sh
 install/docker/judge/judge.yaml

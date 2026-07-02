@@ -1,6 +1,8 @@
 import { ActionIcon, Avatar, Burger, Button, ColorInput, Drawer, Group, Menu, Popover, Stack, Text, Tooltip, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconCheck, IconLetterP, IconMoon, IconPalette, IconRestore, IconSun } from '@tabler/icons-react';
+import {
+  IconCheck, IconChevronDown, IconClock, IconLetterP, IconMoon, IconPalette, IconRestore, IconSun,
+} from '@tabler/icons-react';
 import type { MouseEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
@@ -8,9 +10,9 @@ import logoUrl from '@/assets/logo.png';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
-import { useDomain } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
+import { getPageMetadata } from '@/registry/page-metadata';
 import { type ThemeMode, useSessionStore } from '@/stores/session';
 import { ACCENT_PRESETS, DEFAULT_ACCENT, PRESET_KEYS } from '@/styles/accent-colors';
 import { getAvatarUrl } from '@/utils/avatar';
@@ -28,7 +30,6 @@ type ViewTransitionDocument = Document & {
 function UserMenu() {
   const user = useCurrentUser();
   const { t } = useI18n();
-  const domainId = useSessionStore((s) => s.ui.domainId);
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
 
   return (
@@ -93,7 +94,9 @@ function GuestMenu() {
 function ThemeToggle() {
   const { t } = useI18n();
   const theme = useSessionStore((s) => s.theme);
+  const autoTheme = useSessionStore((s) => s.autoTheme);
   const setTheme = useSessionStore((s) => s.setTheme);
+  const setAutoTheme = useSessionStore((s) => s.setAutoTheme);
   const timersRef = useRef<number[]>([]);
   const frameRef = useRef<number | null>(null);
   const [animating, setAnimating] = useState(false);
@@ -110,7 +113,12 @@ function ThemeToggle() {
     paper: t('Switch to dark mode'),
     dark: t('Switch to light mode'),
   };
-  const label = themeLabel[theme];
+  const label = autoTheme ? t('Automatic theme enabled') : themeLabel[theme];
+  const modeLabel: Record<ThemeMode, string> = {
+    light: t('Light mode'),
+    paper: t('Paper mode'),
+    dark: t('Dark mode'),
+  };
 
   useEffect(() => () => {
     timersRef.current.forEach((timer) => window.clearTimeout(timer));
@@ -181,7 +189,7 @@ function ThemeToggle() {
   };
 
   return (
-    <>
+    <Group gap={2} wrap="nowrap">
       <Tooltip label={label} withArrow>
         <ActionIcon
           aria-label={label}
@@ -229,7 +237,45 @@ function ThemeToggle() {
           }}
         />
       )}
-    </>
+      <Menu shadow="md" width={190} position="bottom-end">
+        <Menu.Target>
+          <ActionIcon
+            aria-label={t('Theme mode')}
+            radius="md"
+            size="sm"
+            variant="subtle"
+            className="hover:bg-[var(--hydro-surface-muted)]"
+          >
+            <IconChevronDown size={14} stroke={2.2} />
+          </ActionIcon>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Label>{t('Theme mode')}</Menu.Label>
+          <Menu.Item
+            leftSection={<IconClock size={16} />}
+            rightSection={autoTheme ? <IconCheck size={14} /> : null}
+            onClick={() => setAutoTheme(true)}
+          >
+            {t('Automatic')}
+          </Menu.Item>
+          <Menu.Divider />
+          {(['light', 'paper', 'dark'] as ThemeMode[]).map((mode) => (
+            <Menu.Item
+              key={mode}
+              leftSection={mode === 'light'
+                ? <IconSun size={16} />
+                : mode === 'paper'
+                  ? <IconLetterP size={16} />
+                  : <IconMoon size={16} />}
+              rightSection={!autoTheme && theme === mode ? <IconCheck size={14} /> : null}
+              onClick={() => setTheme(mode)}
+            >
+              {modeLabel[mode]}
+            </Menu.Item>
+          ))}
+        </Menu.Dropdown>
+      </Menu>
+    </Group>
   );
 }
 
@@ -326,9 +372,9 @@ const NAV_ITEMS = [
 export function TopNav() {
   const [opened, { toggle, close }] = useDisclosure(false);
   const isLoggedIn = useIsLoggedIn();
-  const domain = useDomain();
   const serverName = useSessionStore((s) => s.ui.serverName);
   const { name } = usePageData();
+  const activeNav = getPageMetadata(name).nav;
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -336,14 +382,16 @@ export function TopNav() {
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
 
   useEffect(() => {
-    const activeTab = tabRefs.current.get(name);
+    const activeTab = activeNav ? tabRefs.current.get(activeNav) : undefined;
     const container = containerRef.current;
     if (activeTab && container) {
       const cr = container.getBoundingClientRect();
       const tr = activeTab.getBoundingClientRect();
       setIndicator({ left: tr.left - cr.left, width: tr.width });
+    } else {
+      setIndicator((current) => ({ left: current.left, width: 0 }));
     }
-  }, [name]);
+  }, [activeNav]);
 
   return (
     <>
@@ -369,9 +417,9 @@ export function TopNav() {
                   to={item.to}
                   ref={(el) => { if (el) tabRefs.current.set(item.to, el); }}
                   variant="subtle"
-                  color={name === item.to ? 'hydroTeal' : 'gray'}
+                  color={activeNav === item.to ? 'hydroTeal' : 'gray'}
                   className={
-                    name === item.to
+                    activeNav === item.to
                       ? 'text-[var(--hydro-primary)] transition-colors duration-150'
                       : 'text-[var(--hydro-text)] transition-colors duration-150 hover:bg-[var(--hydro-surface-muted)]'
                   }
@@ -410,7 +458,7 @@ export function TopNav() {
               key={item.to}
               component={Link}
               to={item.to}
-              variant={name === item.to ? 'filled' : 'subtle'}
+              variant={activeNav === item.to ? 'filled' : 'subtle'}
               fullWidth
               justify="flex-start"
               onClick={close}
@@ -421,7 +469,15 @@ export function TopNav() {
           <div className="border-t border-[var(--hydro-border)] pt-2 mt-2">
             {isLoggedIn ? (
               <>
-                <Button component={Link} to="user_detail" params={{ uid: useSessionStore.getState().user._id }} variant="subtle" fullWidth justify="flex-start" onClick={close}>
+                <Button
+                  component={Link}
+                  to="user_detail"
+                  params={{ uid: useSessionStore.getState().user._id }}
+                  variant="subtle"
+                  fullWidth
+                  justify="flex-start"
+                  onClick={close}
+                >
                   {t('My Profile')}
                 </Button>
                 <Button component={Link} to="home_settings" variant="subtle" fullWidth justify="flex-start" onClick={close}>

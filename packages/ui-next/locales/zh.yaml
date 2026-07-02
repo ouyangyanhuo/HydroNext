@@ -145,6 +145,12 @@ Dark: 暗色
 Switch to dark mode: 切换到夜间模式
 Switch to light mode: 切换到日间模式
 Switch to paper mode: 切换到纸面模式
+Theme mode: 主题模式
+Automatic: 自动
+Automatic theme enabled: 已开启自动主题
+Light mode: 日间模式
+Paper mode: 纸面模式
+Dark mode: 夜间模式
 High Contrast: 高对比度
 Run Pretest: 运行样例
 Run Self Test: 运行自测
@@ -706,6 +712,14 @@ Difficulty Algorithm: 难度算法
 Dataset Format: 测试数据格式
 Forgot Password and/or Username: 忘记密码或用户名
 Markdown: Markdown
+
+# 页面标题
+Security: 安全设置
+Manage Contest: 比赛管理
+Edit Training Plan: 编辑训练计划
+Domain Dashboard: 域仪表盘
+Join Domain: 加入域
+Change Email: 修改邮箱
 
 # Theme
 Theme color: 主题色

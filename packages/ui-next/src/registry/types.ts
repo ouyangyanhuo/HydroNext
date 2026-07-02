@@ -18,3 +18,10 @@ export interface InterceptorEntry<P = any> {
   priority: number;
   interceptor: Interceptor<P>;
 }
+
+export interface PageMetadata {
+  /** Translation key used for the browser title. */
+  title: string;
+  /** Primary navigation route that owns this page. */
+  nav?: string;
+}

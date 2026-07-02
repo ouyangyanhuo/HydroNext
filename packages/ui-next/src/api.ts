@@ -7,22 +7,27 @@ export { type RouterState, useNavigate, useRouterState } from './context/router'
 
 // Hooks
 export { useBuildUrl } from './hooks/use-build-url';
-export { useI18n } from './hooks/use-i18n';
 export { useCurrentUser, useIsLoggedIn } from './hooks/use-current-user';
-export { usePermission, useHasPriv, useHasPerm, PRIV, PERM } from './hooks/use-permission';
 export { useDomain, useDomainId } from './hooks/use-domain';
-
-// Stores
-export { useSessionStore, useAppStore, useRouteStore, useNotificationStore } from './stores';
-export type { UserContext, UiContext, Notification } from './stores';
+export { useI18n } from './hooks/use-i18n';
+export {
+  PERM, PRIV, useHasPerm, useHasPriv, usePermission,
+} from './hooks/use-permission';
 
 // Registry
 export type {
-    Interceptor, InterceptorEntry, InterceptorOptions,
-    PluginAPI, PluginDefinition,
-    SlotName,
+  Interceptor, InterceptorEntry, InterceptorOptions,
+  PageMetadata, PluginAPI, PluginDefinition, SlotName,
 } from './registry';
-export { defineSlot, intercept, before, after, patch, replace, wrap } from './registry';
+export {
+  after, before, defineSlot, intercept, patch, replace, wrap,
+} from './registry';
+
+// Stores
+export {
+  useAppStore, useNotificationStore, useRouteStore, useSessionStore,
+} from './stores';
+export type { Notification, UiContext, UserContext } from './stores';
 
 // Shared dependencies
 export { default as React } from 'react';

@@ -9,8 +9,15 @@ import { useSessionStore } from '@/stores/session';
 import { ACCENT_PRESETS, accentToCssVars, getAccentScheme } from '@/styles/accent-colors';
 import { createDynamicTheme } from '@/styles/mantine-theme';
 
+const SANS_FONT_STACK = [
+  '-apple-system', 'BlinkMacSystemFont', "'Segoe UI'", 'Roboto', "'Helvetica Neue'",
+  'Arial', "'Noto Sans'", 'sans-serif', "'Apple Color Emoji'", "'Segoe UI Emoji'",
+].join(', ');
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const colorScheme = useSessionStore((s) => s.theme);
+  const autoTheme = useSessionStore((s) => s.autoTheme);
+  const syncAutoTheme = useSessionStore((s) => s.syncAutoTheme);
   const accentColor = useSessionStore((s) => s.accentColor);
   const fontFamily = useSessionStore((s) => s.fontFamily);
   const isDark = colorScheme === 'dark';
@@ -23,6 +30,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
     () => createDynamicTheme(isPaper ? '#7a6240' : accentColor),
     [accentColor, isPaper],
   );
+
+  useEffect(() => {
+    if (!autoTheme) return undefined;
+
+    syncAutoTheme();
+    const timer = window.setInterval(syncAutoTheme, 60_000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') syncAutoTheme();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', syncAutoTheme);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', syncAutoTheme);
+    };
+  }, [autoTheme, syncAutoTheme]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -59,7 +83,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const root = document.documentElement;
     root.style.setProperty('--hydro-font-family', fontFamily === 'serif'
       ? 'var(--hydro-font-serif)'
-      : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'");
+      : SANS_FONT_STACK);
   }, [fontFamily]);
 
   return (

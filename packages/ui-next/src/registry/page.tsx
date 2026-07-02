@@ -1,6 +1,7 @@
 import React, { lazy } from 'react';
 import Layout from '../components/layout';
 import { store } from './store';
+import type { PageMetadata } from './types';
 
 interface PageModule<P = any> {
   default: React.ComponentType<P>;
@@ -9,7 +10,12 @@ interface PageModule<P = any> {
 
 type PageLoader<P = any> = () => Promise<PageModule<P>>;
 
-export function registerPage<P = any>(name: string, loader: PageLoader<P>) {
+export function registerPage<P = any>(
+  name: string,
+  loader: PageLoader<P>,
+  metadata?: PageMetadata,
+) {
+  if (metadata) store.setPageMetadata(name, metadata);
   store.setDefault(`page:${name}`, lazy(() =>
     loader().then((mod) => {
       const PageComp = mod.default;

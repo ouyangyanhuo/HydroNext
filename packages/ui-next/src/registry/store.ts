@@ -1,16 +1,20 @@
-import type { InterceptorEntry, InterceptorOptions, SlotName } from './types';
+import type {
+  InterceptorEntry, InterceptorOptions, PageMetadata, SlotName,
+} from './types';
 
 type Listener = () => void;
 
 interface RegistryState {
   interceptors: Record<string, InterceptorEntry[]>;
   defaults: Record<string, React.FC<any>>;
+  pages: Record<string, PageMetadata>;
 }
 
 function createRegistryStore() {
   const state: RegistryState = {
     interceptors: {},
     defaults: {},
+    pages: {},
   };
 
   const slotListeners: Record<string, Set<Listener>> = {};
@@ -81,6 +85,14 @@ function createRegistryStore() {
     return state.defaults[name];
   }
 
+  function setPageMetadata(name: string, metadata: PageMetadata) {
+    state.pages[name] = metadata;
+  }
+
+  function getPageMetadata(name: string): PageMetadata | undefined {
+    return state.pages[name];
+  }
+
   return {
     subscribe,
     getVersion,
@@ -88,6 +100,8 @@ function createRegistryStore() {
     getInterceptors,
     setDefault,
     getDefault,
+    setPageMetadata,
+    getPageMetadata,
   };
 }
 
