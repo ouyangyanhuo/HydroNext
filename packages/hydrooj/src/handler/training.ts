@@ -111,7 +111,7 @@ class TrainingDetailHandler extends Handler {
                 .project({ uid: 1 }).limit(500).toArray()).map((x) => +x.uid);
             shouldCompare = uid !== this.user._id;
         } else uid = this.user._id;
-        const canViewHidden = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN) || this.user._id;
+        const canViewHidden = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN);
         const [udoc, udict, pdict] = await Promise.all([
             user.getById(domainId, tdoc.owner),
             user.getListForRender(domainId, enrollUsers, this.user.hasPerm(PERM.PERM_VIEW_USER_PRIVATE_INFO)),

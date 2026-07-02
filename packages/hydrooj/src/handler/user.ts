@@ -404,7 +404,7 @@ class UserDetailHandler extends Handler {
         if (!udoc) throw new UserNotFoundError(uid);
         const pdocs: ProblemDoc[] = [];
         const acInfo: Record<string, number> = {};
-        const canViewHidden = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN) || this.user._id;
+        const canViewHidden = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN);
         if (this.user.hasPerm(PERM.PERM_VIEW_PROBLEM)) {
             const psdocs = await problem.getMultiStatus(domainId, { uid, status: STATUS.STATUS_ACCEPTED }).toArray();
             pdocs.push(...Object.values(

@@ -105,12 +105,14 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
           }
           if (!res.ok) {
             let errorMessage = `Navigation failed: ${res.status} ${res.statusText}`;
+            let errorBody: { error?: { message?: string, params?: any[], code?: number } | string } | null = null;
             try {
-              const errorBody = await res.json();
-              if (errorBody.error) {
-                errorMessage = typeof errorBody.error === 'string'
-                  ? errorBody.error
-                  : errorBody.error.message || errorMessage;
+              errorBody = await res.json();
+              const responseError = errorBody?.error;
+              if (responseError) {
+                errorMessage = typeof responseError === 'string'
+                  ? responseError
+                  : responseError.message || errorMessage;
               }
             } catch {
               // ignore JSON parse errors
@@ -118,8 +120,24 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
             if (!isCurrent()) return false;
 
             if (res.status === 401 || res.status === 403) {
-              window.location.href = '/';
-              return false;
+              const nextUrl = new URL(url, window.location.href);
+              if (push && nextUrl.href !== window.location.href) {
+                const historyUrl = nextUrl.pathname + nextUrl.search + nextUrl.hash;
+                history.pushState({ url: nextUrl.pathname + nextUrl.search }, '', historyUrl);
+              }
+              setData((prev) => ({
+                ...prev,
+                args: {
+                  ...prev.args,
+                  code: res.status,
+                  error: errorBody?.error,
+                  message: errorMessage,
+                },
+                name: 'error',
+                url: nextUrl.pathname + nextUrl.search,
+              }));
+              dispatch({ type: 'FETCH_SUCCESS' });
+              return true;
             }
             throw new Error(errorMessage);
           }

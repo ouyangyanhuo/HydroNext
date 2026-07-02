@@ -95,7 +95,7 @@ export class RecordListHandler extends ContestDetailBaseHandler {
         let rdocs = invalid
             ? [] as RecordDoc[]
             : await cursor.skip((page - 1) * limit).limit(limit).toArray();
-        const canViewHiddenProblem = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN) || this.user._id;
+        const canViewHiddenProblem = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN);
         const [udict, pdict] = full ? [{}, {}]
             : await Promise.all([
                 user.getList(domainId, rdocs.map((rdoc) => rdoc.uid)),

@@ -382,7 +382,7 @@ export class ProblemModel {
     }
 
     static async getList(
-        domainId: string, pids: number[], canViewHidden: number | boolean = false,
+        domainId: string, pids: number[], canViewHidden = false,
         doThrow = true, projection = ProblemModel.PROJECTION_PUBLIC, indexByDocIdOnly = false,
     ): Promise<ProblemDict> {
         if (!pids?.length) return {};
@@ -393,7 +393,7 @@ export class ProblemModel {
         let pdocs = await document.getMulti(domainId, document.TYPE_PROBLEM, q)
             .project<ProblemDoc>(projectionExpr).toArray();
         if (canViewHidden !== true) {
-            pdocs = pdocs.filter((i) => i.owner === canViewHidden || i.maintainer?.includes(canViewHidden as any) || !i.hidden);
+            pdocs = pdocs.filter((i) => !i.hidden);
         }
         await Promise.all(pdocs.map(async (pdoc) => {
             if (projection.includes('config')) {
@@ -458,9 +458,7 @@ export class ProblemModel {
 
     static canViewBy(pdoc: ProblemDoc, udoc: User) {
         if (!udoc.hasPerm(PERM.PERM_VIEW_PROBLEM)) return false;
-        if (udoc.own(pdoc)) return true;
-        if (udoc.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN)) return true;
-        if (pdoc.hidden) return false;
+        if (pdoc.hidden && !udoc.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN)) return false;
         return true;
     }
 

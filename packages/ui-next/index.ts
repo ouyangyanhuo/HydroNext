@@ -218,11 +218,13 @@ export async function apply(ctx: Context) {
             output: 'html',
             asFallback: true,
             priority: 100,
-            async render(_name, args, context) {
+            async render(name, args, context) {
                 const userLang = context.UserContext?.viewLang || context.handler.session?.viewLang;
                 const serialized = JSON.stringify({
                     HYDRO_INJECTED: true,
-                    name: context.handler.context._matchedRouteName,
+                    name: name === 'error.html' ? 'error'
+                        : name === 'bsod.html' ? 'bsod'
+                            : context.handler.context._matchedRouteName,
                     args: {
                         UserContext: context.UserContext,
                         UiContext: context.handler.UiContext,
@@ -251,14 +253,16 @@ export async function apply(ctx: Context) {
             output: 'html',
             asFallback: true,
             priority: 100,
-            async render(_name, args, context) {
+            async render(name, args, context) {
                 const indexHtml = path.join(__dirname, 'public', 'index.html');
                 if (!fs.existsSync(indexHtml)) return PENDING_HTML;
                 const html = fs.readFileSync(indexHtml, 'utf-8');
                 const userLang = context.UserContext?.viewLang || context.handler.session?.viewLang;
                 const serialized = JSON.stringify({
                     HYDRO_INJECTED: true,
-                    name: context.handler.context._matchedRouteName,
+                    name: name === 'error.html' ? 'error'
+                        : name === 'bsod.html' ? 'bsod'
+                            : context.handler.context._matchedRouteName,
                     args: {
                         UserContext: context.UserContext,
                         UiContext: context.handler.UiContext,

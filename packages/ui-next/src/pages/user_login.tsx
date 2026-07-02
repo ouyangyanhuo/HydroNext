@@ -1,9 +1,10 @@
-import { Anchor, Button, Checkbox, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
+import { Alert, Anchor, Button, Checkbox, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconLock } from '@tabler/icons-react';
 import { useState } from 'react';
-import { Link } from '@/components/link';
 import { AuthPanel } from '@/components/auth/auth-panel';
 import { OAuthButtons } from '@/components/auth/oauth-buttons';
+import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
@@ -64,6 +65,16 @@ export default function UserLoginPage() {
     <AuthPanel title={t('Login')} eyebrow={t('Account')} description={t('Sign in to continue to Hydro.')}>
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
+          {redirect !== '/' && (
+            <Alert
+              color="orange"
+              icon={<IconLock size={18} />}
+              title={t('Permission')}
+              variant="light"
+            >
+              {`${t("You're not logged in.")} ${t("You don't have the required privilege.")}`}
+            </Alert>
+          )}
           <TextInput
             label={t('Username or Email')}
             value={uname}

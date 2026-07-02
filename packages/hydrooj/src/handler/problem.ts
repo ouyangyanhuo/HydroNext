@@ -2,6 +2,7 @@ import { createReadStream } from 'fs';
 import { PassThrough, Readable, Writable } from 'stream';
 import { Entry, ZipReader } from '@zip.js/zip.js';
 import { readFile } from 'fs-extra';
+import yaml from 'js-yaml';
 import {
     escapeRegExp, flattenDeep, intersection, pick,
 } from 'lodash';
@@ -9,7 +10,6 @@ import { Filter, ObjectId } from 'mongodb';
 import { nanoid } from 'nanoid';
 import sanitize from 'sanitize-filename';
 import Schema from 'schemastery';
-import yaml from 'js-yaml';
 import parser from '@hydrooj/utils/lib/search';
 import { randomstring, sortFiles, streamToBuffer } from '@hydrooj/utils/lib/utils';
 import type { Context } from '../context';
@@ -45,11 +45,7 @@ export const parseCategory = (value: string) => value.replace(/，/g, ',').split
 function buildQuery(udoc: User) {
     const q: Filter<ProblemDoc> = {};
     if (!udoc.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN)) {
-        q.$or = [
-            { hidden: false },
-            { owner: udoc._id },
-            { maintainer: udoc._id },
-        ];
+        q.hidden = false;
     }
     return q;
 }
@@ -224,7 +220,7 @@ export class ProblemMainHandler extends Handler {
         if (!pids.length) throw new ValidationError('pids');
         // Check if user can access all those problems
         const pdict = await problem.getList(
-            domainId, pids, this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN) || this.user._id,
+            domainId, pids, this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN),
             true, ['domainId', 'docId', 'reference'], true,
         );
         const ids = [];
@@ -1076,7 +1072,7 @@ export const ProblemApi = {
             domainId: Schema.string().required(),
         }),
         async (ctx, args) => {
-            const pdocs = await problem.getList(args.domainId, args.ids, ctx.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN) || ctx.user._id,
+            const pdocs = await problem.getList(args.domainId, args.ids, ctx.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN),
                 undefined, undefined, true);
             return args.ids.map((id) => pdocs[+id]).filter((i) => i);
         },
