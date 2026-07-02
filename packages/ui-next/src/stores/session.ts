@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { initialLang } from '@/globals';
+import { initialLang, initialPage } from '@/globals';
 import { type AccentColorValue, DEFAULT_ACCENT } from '@/styles/accent-colors';
 
 export type ThemeMode = 'light' | 'paper' | 'dark';
@@ -46,6 +46,21 @@ const THEME_STORAGE_KEY = 'hydro-ui-theme';
 const AUTO_THEME_STORAGE_KEY = 'hydro-ui-auto-theme';
 const ACCENT_STORAGE_KEY = 'hydro-ui-accent-color';
 const FONT_STORAGE_KEY = 'hydro-ui-font-family';
+
+const initialUser: UserContext = initialPage.args?.UserContext as UserContext ?? {
+  _id: 0,
+  uname: 'Unknown User',
+  priv: 0,
+  avatar: '',
+};
+const initialUi: UiContext = initialPage.args?.UiContext as UiContext ?? {
+  cdn_prefix: '/',
+  url_prefix: '/',
+  ws_prefix: '/',
+  domainId: 'system',
+  domain: { name: 'Hydro' },
+  serverName: 'Hydro',
+};
 
 function normalizeTheme(value: unknown): ThemeMode | null {
   return value === 'dark' || value === 'light' || value === 'paper' ? value : null;
@@ -134,20 +149,20 @@ function writeStoredFont(font: FontFamily) {
 }
 
 export const useSessionStore = create<SessionStore>((set, get) => ({
-  user: { _id: 0, uname: 'Unknown User', priv: 0, avatar: '' },
-  ui: {
-    cdn_prefix: '/',
-    url_prefix: '/',
-    ws_prefix: '/',
-    domainId: 'system',
-    domain: { name: 'Hydro' },
-    serverName: 'Hydro',
-  },
-  theme: readStoredAutoTheme() ? getTimeBasedTheme() : (readStoredTheme() || 'light'),
+  user: initialUser,
+  ui: initialUi,
+  theme: readStoredAutoTheme()
+    ? getTimeBasedTheme()
+    : (
+      readStoredTheme()
+      || normalizeTheme(initialUser.theme)
+      || normalizeTheme(initialUi.theme)
+      || 'light'
+    ),
   autoTheme: readStoredAutoTheme(),
   accentColor: readStoredAccent(),
   fontFamily: readStoredFont(),
-  language: initialLang,
+  language: initialUser.viewLang || initialLang,
   setSession: ({ user, ui }) => {
     const autoTheme = readStoredAutoTheme();
     const theme = autoTheme

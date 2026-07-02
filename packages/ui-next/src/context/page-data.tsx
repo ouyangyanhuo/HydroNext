@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '@/hooks/use-i18n';
 import { getPageMetadata } from '@/registry/page-metadata';
 import { useRouteStore } from '@/stores/route';
@@ -18,6 +18,7 @@ export interface PageData {
 
 interface PageDataContextValue {
   data: PageData;
+  revision: number;
   setData: React.Dispatch<React.SetStateAction<PageData>>;
 }
 
@@ -29,23 +30,29 @@ interface PageDataProviderProps {
 }
 
 export function PageDataProvider({ initial, children }: PageDataProviderProps) {
-  const [data, setData] = useState<PageData>(initial);
-  const value = useMemo(() => ({ data, setData }), [data]);
-  const { t } = useI18n();
+  const [{ data, revision }, setState] = useState({ data: initial, revision: 0 });
+  const dataRef = useRef(initial);
+  const setData = useCallback<React.Dispatch<React.SetStateAction<PageData>>>((next) => {
+    const nextData = typeof next === 'function' ? next(dataRef.current) : next;
+    dataRef.current = nextData;
 
-  // Sync page data to Zustand stores
-  const setSession = useSessionStore((s) => s.setSession);
-  const setRouteMap = useRouteStore((s) => s.setRouteMap);
-  const setPage = useRouteStore((s) => s.setPage);
-
-  useEffect(() => {
-    if (data.args?.UserContext && data.args?.UiContext) {
-      setSession({
-        user: data.args.UserContext as unknown as UserContext,
-        ui: data.args.UiContext as unknown as UiContext,
+    if (nextData.args?.UserContext && nextData.args?.UiContext) {
+      useSessionStore.getState().setSession({
+        user: nextData.args.UserContext as unknown as UserContext,
+        ui: nextData.args.UiContext as unknown as UiContext,
       });
     }
-  }, [data.args?.UserContext, data.args?.UiContext, setSession]);
+    useRouteStore.getState().setPage(nextData.name, nextData.url);
+
+    setState((prev) => ({
+      data: nextData,
+      revision: prev.revision + 1,
+    }));
+  }, []);
+  const value = useMemo(() => ({ data, revision, setData }), [data, revision, setData]);
+  const { t } = useI18n();
+
+  const setRouteMap = useRouteStore((s) => s.setRouteMap);
 
   useEffect(() => {
     // Extract route_map from the injection data (it's at the top level, not in args)
@@ -54,10 +61,6 @@ export function PageDataProvider({ initial, children }: PageDataProviderProps) {
       setRouteMap(injection.route_map);
     }
   }, [setRouteMap]);
-
-  useEffect(() => {
-    setPage(data.name, data.url);
-  }, [data.name, data.url, setPage]);
 
   // Update document title
   useEffect(() => {
@@ -87,6 +90,10 @@ export function usePageData(): PageData {
 
 export function useSetPageData(): React.Dispatch<React.SetStateAction<PageData>> {
   return usePageDataContext().setData;
+}
+
+export function usePageDataRevision(): number {
+  return usePageDataContext().revision;
 }
 
 export function useUiContext(): PageData['args']['UiContext'] {

@@ -1,8 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 import { match } from 'path-to-regexp';
-import { endpointOrigins, endpoints, isInjected, routeMapStore } from '../globals';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
+import { endpoints, isInjected, routeMapStore } from '../globals';
 import { useSetPageData } from './page-data';
 
 interface InternalState {
@@ -13,15 +13,13 @@ interface InternalState {
 type RouterAction =
   | { type: 'FETCH_START' }
   | { type: 'FETCH_SUCCESS' }
-  | { type: 'FETCH_ERROR', error: Error }
-  | { type: 'FETCH_ABORT' };
+  | { type: 'FETCH_ERROR', error: Error };
 
 function routerReducer(state: InternalState, action: RouterAction): InternalState {
   switch (action.type) {
     case 'FETCH_START': return { status: 'loading', error: null };
     case 'FETCH_SUCCESS': return { status: 'idle', error: null };
     case 'FETCH_ERROR': return { status: 'error', error: action.error };
-    case 'FETCH_ABORT': return state;
     default: return state;
   }
 }
@@ -64,20 +62,21 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
   const genRef = useRef(0);
   const setData = useSetPageData();
 
-  const isSameOrigin = useCallback((url: string) => {
+  const canNavigateInDocument = useCallback((url: string) => {
     try {
-      return endpointOrigins.has(new URL(url, endpoints[0]).origin);
+      return new URL(url, window.location.href).origin === window.location.origin;
     } catch {
       return false;
     }
   }, []);
 
   const fetchPage = useCallback(
-    async (url: string, init = false) => {
+    async (url: string, init = false, push = false) => {
       abortRef.current?.abort();
       const gen = ++genRef.current;
       const controller = new AbortController();
       abortRef.current = controller;
+      const isCurrent = () => gen === genRef.current && !controller.signal.aborted;
 
       dispatch({ type: 'FETCH_START' });
 
@@ -98,6 +97,8 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
               ].join(','),
             },
           });
+          if (!isCurrent()) return false;
+
           if (res.redirected) {
             window.location.href = res.url;
             return false;
@@ -114,6 +115,8 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
             } catch {
               // ignore JSON parse errors
             }
+            if (!isCurrent()) return false;
+
             if (res.status === 401 || res.status === 403) {
               window.location.href = '/';
               return false;
@@ -121,6 +124,8 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
             throw new Error(errorMessage);
           }
           const body = await res.json();
+          if (!isCurrent()) return false;
+
           if (body.url && typeof body.url === 'string') {
             window.location.href = body.url;
             return false;
@@ -132,37 +137,35 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
           const pageName = resolvePageName(reqUrl, headerPageName, nextRouteMap);
           // console.log('[Hydro] data from', reqUrl, 'received:', body, 'pageName:', pageName);
 
-          if (gen !== genRef.current) return false;
-
           if (init && body.routeMap && typeof body.routeMap === 'object') {
             routeMapStore.set(body.routeMap);
+          }
+          const nextUrl = new URL(url, window.location.href);
+          if (push && nextUrl.href !== window.location.href) {
+            const historyUrl = nextUrl.pathname + nextUrl.search + nextUrl.hash;
+            history.pushState({ url: nextUrl.pathname + nextUrl.search }, '', historyUrl);
           }
           setData((prev) => ({
             ...prev,
             args: body,
             name: pageName,
-            url,
+            url: nextUrl.pathname + nextUrl.search,
           }));
           dispatch({ type: 'FETCH_SUCCESS' });
           return true;
         } catch (e) {
-          if (e instanceof DOMException && e.name === 'AbortError') {
-            dispatch({ type: 'FETCH_ABORT' });
-            console.log('[Hydro] navigation to', url, 'aborted');
-            return false;
-          }
+          if (!isCurrent()) return false;
+
           lastError = e instanceof Error ? e : new Error(String(e));
           console.warn('[Hydro] endpoint', ep, 'failed:', lastError.message);
           if (controller.signal.aborted) {
-            // User-initiated abort propagated through AbortSignal.any
-            dispatch({ type: 'FETCH_ABORT' });
             return false;
           }
         }
       }
 
       console.error('[Hydro] all endpoints failed:', lastError);
-      if (gen !== genRef.current) return false;
+      if (!isCurrent()) return false;
       dispatch({ type: 'FETCH_ERROR', error: lastError! });
       window.location.href = url;
       return false;
@@ -171,15 +174,29 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
   );
 
   useEffect(() => {
-    const handler = (e: PopStateEvent) => {
-      const url: string =
-        (e.state as { url?: string } | null)?.url
-        ?? window.location.pathname + window.location.search;
-      fetchPage(url);
+    const getCurrentUrl = () => window.location.pathname + window.location.search;
+    const handlePopState = () => {
+      // The address bar is authoritative. Other features may replace a history
+      // entry without preserving our custom state.
+      void fetchPage(getCurrentUrl());
     };
-    window.addEventListener('popstate', handler);
-    return () => window.removeEventListener('popstate', handler);
+    const handlePageShow = (event: PageTransitionEvent) => {
+      // A document restored from the back-forward cache may hold page data for
+      // a different in-document history entry.
+      if (event.persisted) void fetchPage(getCurrentUrl());
+    };
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('pageshow', handlePageShow);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
   }, [fetchPage]);
+
+  useEffect(() => () => {
+    ++genRef.current;
+    abortRef.current?.abort();
+  }, []);
 
   // If no server-side injection, fetch initial page data from the API
   useEffect(() => {
@@ -195,13 +212,12 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
   );
 
   const navigate = useCallback(async (url: string) => {
-    if (!isSameOrigin(url)) {
+    if (!canNavigateInDocument(url)) {
       window.location.href = url;
       return;
     }
-    const ok = await fetchPage(url);
-    if (ok) history.pushState({ url }, '', url);
-  }, [fetchPage, isSameOrigin]);
+    await fetchPage(url, false, true);
+  }, [canNavigateInDocument, fetchPage]);
 
   const navigateValue = useMemo<RouterNavigateContextValue>(() => ({ navigate }), [navigate]);
 

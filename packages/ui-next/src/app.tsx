@@ -2,7 +2,7 @@ import { Suspense, useMemo, useSyncExternalStore } from 'react';
 import { Providers } from './app/providers';
 import { PageLoading } from './components/feedback/page-loading';
 import { AppShell } from './components/shell/app-shell';
-import { usePageData } from './context/page-data';
+import { usePageData, usePageDataRevision } from './context/page-data';
 import { defineSlot, SlotName } from './registry';
 import { SlotErrorBoundary } from './registry/error-boundary';
 import { store } from './registry/store';
@@ -46,10 +46,12 @@ const PageRenderer = defineSlot('app:page-renderer', () => {
 });
 
 const App = defineSlot('app:root', () => {
+  const revision = usePageDataRevision();
+
   return (
     <Providers>
       <AppShell>
-        <PageRenderer />
+        <PageRenderer key={revision} />
       </AppShell>
     </Providers>
   );

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { initialPage, routeMapStore } from '@/globals';
 
 interface RouteStore {
   routeMap: Record<string, string>;
@@ -9,9 +10,9 @@ interface RouteStore {
 }
 
 export const useRouteStore = create<RouteStore>((set) => ({
-  routeMap: {},
-  pageName: '',
-  url: '/',
+  routeMap: routeMapStore.getSnapshot(),
+  pageName: initialPage.name,
+  url: initialPage.url,
   setRouteMap: (routeMap) => set({ routeMap }),
   setPage: (pageName, url) => set({ pageName, url }),
 }));
