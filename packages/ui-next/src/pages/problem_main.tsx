@@ -8,7 +8,7 @@ import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { usePageData, useUserContext } from '@/context/page-data';
-import { useNavigate } from '@/context/router';
+import { useNavigate, useRouterState } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
@@ -75,6 +75,21 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
   const [showPopup, setShowPopup] = useState<string | null>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const cancelPopupClose = () => {
+    if (!hoverTimer.current) return;
+    clearTimeout(hoverTimer.current);
+    hoverTimer.current = null;
+  };
+
+  const openPopup = (category: string) => {
+    cancelPopupClose();
+    setShowPopup(category);
+  };
+
+  const schedulePopupClose = () => {
+    hoverTimer.current = setTimeout(() => setShowPopup(null), 200);
+  };
+
   return (
     <Stack gap="md">
       <Card withBorder p="lg" className="hydro-content-card !overflow-visible">
@@ -87,10 +102,15 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
                 <div
                   key={category}
                   className="relative"
-                  onMouseEnter={() => { if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; } setShowPopup(category); }}
-                  onMouseLeave={() => { hoverTimer.current = setTimeout(() => setShowPopup(null), 200); }}
+                  onMouseEnter={() => openPopup(category)}
+                  onMouseLeave={schedulePopupClose}
                 >
-                  <div className="rounded-md border border-transparent px-2 py-1.5 transition-all duration-150 hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]">
+                  <div
+                    className={[
+                      'rounded-md border border-transparent px-2 py-1.5 transition-all duration-150',
+                      'hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]',
+                    ].join(' ')}
+                  >
                     <Link
                       href={buildUrl('problem_main', {}, { q: `category:${category}` })}
                       className="hydro-subtle-link block"
@@ -103,9 +123,16 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
                   </div>
                   {hasChildren && (
                     <div
-                      className={`absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3 shadow-[var(--hydro-shadow-lg)] transition-all duration-200 origin-right ${showPopup === category ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'}`}
-                      onMouseEnter={() => { if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; } }}
-                      onMouseLeave={() => { hoverTimer.current = setTimeout(() => setShowPopup(null), 200); }}
+                      className={[
+                        'absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] origin-right rounded-md',
+                        'border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3',
+                        'shadow-[var(--hydro-shadow-lg)] transition-all duration-200',
+                        showPopup === category
+                          ? 'pointer-events-auto scale-100 opacity-100'
+                          : 'pointer-events-none scale-95 opacity-0',
+                      ].join(' ')}
+                      onMouseEnter={cancelPopupClose}
+                      onMouseLeave={schedulePopupClose}
                     >
                       <Text size="xs" fw={800} c="dimmed" mb="xs">{category}</Text>
                       <div className="flex flex-wrap gap-1.5 max-h-[60vh] overflow-y-auto">
@@ -150,6 +177,7 @@ export default function ProblemMainPage() {
   const user = useUserContext();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const { loading: routeLoading } = useRouterState();
   const storeCanCreate = useHasPerm(PERM.PERM_CREATE_PROBLEM);
   const storeCanEdit = useHasPerm(PERM.PERM_EDIT_PROBLEM);
   const canCreate = Boolean(args.canCreateProblem ?? (
@@ -166,6 +194,7 @@ export default function ProblemMainPage() {
   const qs = args.qs || '';
   const sort = args.sort || 'default';
   const categories = args.categories || {};
+  const listKey = `${page}:${qs}:${sort}:${pdocs[0]?.docId || 'empty'}`;
 
   const [search, setSearch] = useState(qs);
   const [sortValue, setSortValue] = useState(sort);
@@ -293,7 +322,7 @@ export default function ProblemMainPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Problems')}>
-        <Group gap="xs" wrap="wrap">
+        <Group gap="xs" wrap="wrap" className="hydro-problem-toolbar">
           {canEdit && selected.length > 0 && (
             <Button size="xs" color="red" variant="light" onClick={() => setDeleteDialogOpen(true)}>
               {t('Delete')} ({selected.length})
@@ -325,18 +354,24 @@ export default function ProblemMainPage() {
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="min-w-0 flex-1">
-          {canEdit && pdocs.length > 0 && (
-            <Group gap="xs" mb="xs">
-              <Checkbox
-                aria-label={t('Select All')}
-                checked={allSelected}
-                onChange={(e) => toggleSelectAll(e.currentTarget.checked)}
-              />
-              <Text size="xs" c="dimmed">{t('Select All')}</Text>
-            </Group>
-          )}
-          <DataTable columns={columns} data={pdocs} emptyMessage={t('No problems found')} />
-          <Paginator page={page} totalPages={ppcount} />
+          <div
+            key={listKey}
+            className={`hydro-problem-list ${routeLoading ? 'hydro-problem-list--loading' : ''}`}
+            aria-busy={routeLoading}
+          >
+            {canEdit && pdocs.length > 0 && (
+              <Group gap="xs" mb="xs" className="hydro-problem-select-all">
+                <Checkbox
+                  aria-label={t('Select All')}
+                  checked={allSelected}
+                  onChange={(e) => toggleSelectAll(e.currentTarget.checked)}
+                />
+                <Text size="xs" c="dimmed">{t('Select All')}</Text>
+              </Group>
+            )}
+            <DataTable columns={columns} data={pdocs} emptyMessage={t('No problems found')} />
+            <Paginator page={page} totalPages={ppcount} />
+          </div>
         </div>
 
         <div className="w-full shrink-0 lg:w-72">

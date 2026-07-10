@@ -1,4 +1,7 @@
-import { Badge, Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Badge, Button, Group, Stack, Text, Title } from '@mantine/core';
+import {
+  IconArrowUpRight, IconChevronRight, IconCode, IconLogin2, IconTrophy, IconUserPlus,
+} from '@tabler/icons-react';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
@@ -7,43 +10,112 @@ import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 
-function WelcomeCard() {
+function SectionLink({ to, label }: { to: string, label: string }) {
+  return (
+    <Button
+      component={Link}
+      to={to}
+      variant="subtle"
+      size="compact-sm"
+      rightSection={<IconArrowUpRight size={15} stroke={1.9} />}
+      className="hydro-section-link"
+    >
+      {label}
+    </Button>
+  );
+}
+
+function WelcomeHero({ problemCount, contestCount }: { problemCount: number, contestCount: number }) {
   const user = useSessionStore((s) => s.user);
   const { t } = useI18n();
   const isLoggedIn = user._id > 0;
 
+  const stats = [
+    { icon: IconCode, label: t('Problems'), value: problemCount, tone: 'primary' },
+    { icon: IconTrophy, label: t('Contests'), value: contestCount, tone: 'accent' },
+  ];
+
   return (
-    <Card withBorder p="xl" className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]">
-      <Badge variant="light" color="hydroTeal" mb="md">
-        {t('Online Judge')}
-      </Badge>
-      <Title order={1} className="max-w-2xl text-4xl leading-[1.05] text-[var(--hydro-text)] md:text-5xl">
-        {isLoggedIn ? `${t('Welcome')}, ${user.uname}` : t('Welcome to HNTOU OJ')}
-      </Title>
-      <Text c="dimmed" size="md" mt="md" className="max-w-xl">
-        {isLoggedIn
-          ? t('Explore problems, contests, and improve your skills.')
-          : t('Login or register to start solving problems.')}
-      </Text>
-      {!isLoggedIn && (
-        <Group mt="xl" gap="sm">
-          <Button component={Link} to="user_login">{t('Login')}</Button>
-          <Button component={Link} to="user_register" variant="light">{t('Register')}</Button>
-        </Group>
-      )}
-    </Card>
+    <section className="hydro-home-hero hydro-reveal" aria-labelledby="hydro-home-title">
+      <div className="hydro-home-hero__copy">
+        <Title id="hydro-home-title" order={1} className="hydro-home-title">
+          {isLoggedIn ? `${t('Welcome')}, ${user.uname}` : t('Welcome to HNTOU OJ')}
+        </Title>
+        <Text className="hydro-home-lead">
+          {isLoggedIn
+            ? t('Explore problems, contests, and improve your skills.')
+            : t('Login or register to start solving problems.')}
+        </Text>
+        {!isLoggedIn && (
+          <Group mt="lg" gap="sm">
+            <Button
+              component={Link}
+              to="user_login"
+              size="md"
+              leftSection={<IconLogin2 size={18} stroke={2} />}
+              className="hydro-primary-action"
+            >
+              {t('Login')}
+            </Button>
+            <Button
+              component={Link}
+              to="user_register"
+              size="md"
+              variant="default"
+              leftSection={<IconUserPlus size={18} stroke={2} />}
+              className="hydro-secondary-action"
+            >
+              {t('Register')}
+            </Button>
+          </Group>
+        )}
+      </div>
+      <div className="hydro-stat-panel" aria-label={t('Statistics')}>
+        {stats.map(({ icon: Icon, label, value, tone }) => (
+          <div key={label} className={`hydro-stat hydro-stat--${tone}`}>
+            <span className="hydro-stat__icon" aria-hidden="true">
+              <Icon size={22} stroke={1.8} />
+            </span>
+            <span className="hydro-stat__value">{value.toLocaleString()}</span>
+            <span className="hydro-stat__label">{label}</span>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
-function BulletinCard({ bulletin }: { bulletin: string }) {
+function Bulletin({ bulletin }: { bulletin: string }) {
   const { t } = useI18n();
 
   if (!bulletin) return null;
 
   return (
-    <Card withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-sm)]">
-      <MarkdownRenderer content={bulletin} />
-    </Card>
+    <section className="hydro-bulletin hydro-reveal hydro-reveal--2">
+      <span className="hydro-bulletin__label">{t('Bulletin')}</span>
+      <div className="hydro-bulletin__content">
+        <MarkdownRenderer content={bulletin} />
+      </div>
+    </section>
+  );
+}
+
+function DataPanelEmptyState({
+  icon: Icon,
+  message,
+  tone = 'primary',
+}: {
+  icon: typeof IconCode;
+  message: string;
+  tone?: 'primary' | 'accent';
+}) {
+  return (
+    <div className={`hydro-data-panel__empty hydro-data-panel__empty--${tone}`} role="status">
+      <span className="hydro-data-panel__empty-icon" aria-hidden="true">
+        <Icon size={24} stroke={1.7} />
+      </span>
+      <Text className="hydro-data-panel__empty-message">{message}</Text>
+    </div>
   );
 }
 
@@ -51,67 +123,74 @@ function ProblemList({ problems }: { problems: any[] }) {
   const { t } = useI18n();
   const language = useSessionStore((s) => s.language);
 
-  if (!problems || problems.length === 0) return null;
-
   return (
-    <Card withBorder p="lg" className="hydro-card">
-      <Group justify="space-between" mb="sm">
-        <Title order={4}>{t('Recent Problems')}</Title>
-        <Button component={Link} to="problem_main" variant="subtle" size="xs">
-          {t('View All')}
-        </Button>
-      </Group>
-      <div className="flex flex-col gap-1.5">
-        {problems.map((p: any) => (
-          <div key={p.docId || p._id} className="flex flex-row items-center justify-between rounded-md px-2 py-2 transition-colors duration-150 hover:bg-[var(--hydro-surface-muted)]">
-            <span className="shrink-0 text-xs text-[var(--mantine-color-dimmed)]">
-              {p.nSubmit > 0 ? `${p.nAccept}/${p.nSubmit}` : ''}
-            </span>
-            <Link
-              to="problem_detail"
-              params={{ pid: p.pid || p.docId, ...(p.domainId ? { domainId: p.domainId } : {}) }}
-              className="hydro-subtle-link min-w-0 truncate text-sm font-semibold"
-            >
-              <span className="text-[var(--hydro-primary)]">{p.pid || p.docId}</span> {extractLocalizedContent(p.title, language)}
-            </Link>
-          </div>
-        ))}
+    <section className="hydro-data-panel hydro-data-panel--problems hydro-reveal hydro-reveal--3" aria-labelledby="problem-list-title">
+      <div className="hydro-data-panel__header">
+        <Title id="problem-list-title" order={3}>{t('Problem List')}</Title>
+        <SectionLink to="problem_main" label={t('View All')} />
       </div>
-    </Card>
+      {problems.length > 0 ? (
+        <div className="hydro-data-list">
+          {problems.map((problem: any) => {
+            const id = problem.pid || problem.docId;
+            const acceptance = Number(problem.nSubmit) > 0
+              ? `${Math.round((Number(problem.nAccept) || 0) / Number(problem.nSubmit) * 100)}%`
+              : '—';
+            return (
+              <Link
+                key={problem.docId || problem._id}
+                to="problem_detail"
+                params={{ pid: id, ...(problem.domainId ? { domainId: problem.domainId } : {}) }}
+                className="hydro-data-row hydro-problem-row"
+              >
+                <span className="hydro-data-row__id">{id}</span>
+                <span className="hydro-data-row__title">
+                  {extractLocalizedContent(problem.title, language)}
+                </span>
+                <span className="hydro-data-row__meta">{acceptance}</span>
+                <IconChevronRight className="hydro-data-row__arrow" size={17} stroke={1.8} aria-hidden="true" />
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <DataPanelEmptyState icon={IconCode} message={t('No problems found')} />
+      )}
+    </section>
   );
 }
 
 function RecentContests({ contests }: { contests: any[] }) {
   const { t } = useI18n();
 
-  if (!contests || contests.length === 0) return null;
-
   return (
-    <Card withBorder p="lg" className="hydro-card">
-      <Group justify="space-between" mb="sm">
-        <Title order={4}>{t('Recent Contests')}</Title>
-        <Button component={Link} to="contest_main" variant="subtle" size="xs">
-          {t('View All')}
-        </Button>
-      </Group>
-      <div className="flex flex-col gap-1.5">
-        {contests.map((c: any) => (
-          <div key={c.docId || c._id} className="flex flex-row items-center justify-between rounded-md px-2 py-2 transition-colors duration-150 hover:bg-[var(--hydro-surface-muted)]">
-            <div className="flex items-center gap-2 shrink-0">
-              {c.rule && <Badge size="xs" variant="light">{c.rule}</Badge>}
-              <TimeDisplay date={c.beginAt} format="relative" />
-            </div>
-            <Link
-              to="contest_detail"
-              params={{ tid: c.docId || c._id, ...(c.domainId ? { domainId: c.domainId } : {}) }}
-              className="hydro-subtle-link min-w-0 truncate text-sm font-semibold"
-            >
-              {c.title}
-            </Link>
-          </div>
-        ))}
+    <section className="hydro-data-panel hydro-reveal hydro-reveal--4" aria-labelledby="recent-contests-title">
+      <div className="hydro-data-panel__header">
+        <Title id="recent-contests-title" order={3}>{t('Recent Contests')}</Title>
+        <SectionLink to="contest_main" label={t('View All')} />
       </div>
-    </Card>
+      {contests.length > 0 ? (
+        <div className="hydro-data-list">
+          {contests.map((contest: any) => (
+            <Link
+              key={contest.docId || contest._id}
+              to="contest_detail"
+              params={{ tid: contest.docId || contest._id, ...(contest.domainId ? { domainId: contest.domainId } : {}) }}
+              className="hydro-data-row hydro-contest-row"
+            >
+              <span className="hydro-data-row__title">{contest.title}</span>
+              {contest.rule ? <Badge size="xs" variant="light">{contest.rule}</Badge> : null}
+              <span className="hydro-data-row__meta">
+                <TimeDisplay date={contest.beginAt} format="relative" />
+              </span>
+              <IconChevronRight className="hydro-data-row__arrow" size={17} stroke={1.8} aria-hidden="true" />
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <DataPanelEmptyState icon={IconTrophy} message={t('No contests found')} tone="accent" />
+      )}
+    </section>
   );
 }
 
@@ -121,29 +200,6 @@ function numericValue(...values: any[]) {
     if (Number.isFinite(number)) return number;
   }
   return 0;
-}
-
-function StatStrip({ problemCount, contestCount }: { problemCount: number, contestCount: number }) {
-  const { t } = useI18n();
-  const items = [
-    { label: t('Problems'), value: problemCount, tone: 'var(--hydro-primary)' },
-    { label: t('Contests'), value: contestCount, tone: 'var(--hydro-accent)' },
-  ];
-
-  return (
-    <SimpleGrid cols={1} spacing="md">
-      {items.map((item) => (
-        <Card key={item.label} withBorder p="md" className="hydro-card">
-          <Text size="xs" fw={700} c="dimmed">
-            {item.label}
-          </Text>
-          <Text size="xl" fw={800} mt={4} style={{ color: item.tone }}>
-            {item.value}
-          </Text>
-        </Card>
-      ))}
-    </SimpleGrid>
-  );
 }
 
 function sectionKey(key: string) {
@@ -187,22 +243,21 @@ export default function HomePage() {
   const contents = args.contents || [];
   const domain = args.domain || {};
   const sections = collectSections(contents);
-  const problems = sectionList(sections.problems || sections.starredProblems || sections.recentProblems || sections.recent_problems);
+  const problems = sectionList(
+    sections.recentProblems || sections.recent_problems || sections.problems,
+  ).slice(0, 5);
   const contests = sectionList(sections.contests || sections.contest);
   const problemCount = numericValue(args.problemCount, domain.problemCount, domain.nProblem, problems.length);
   const contestCount = numericValue(args.contestCount, domain.contestCount, contests.length);
 
   return (
-    <Stack gap="xl">
-      <SimpleGrid cols={{ base: 1, lg: 3 }} spacing="lg">
-        <div className="lg:col-span-2">
-          <WelcomeCard />
-        </div>
-        <StatStrip problemCount={problemCount} contestCount={contestCount} />
-      </SimpleGrid>
-      {domain.bulletin && <BulletinCard bulletin={domain.bulletin} />}
-      <ProblemList problems={problems} />
-      <RecentContests contests={contests} />
+    <Stack gap="lg" className="hydro-home">
+      <WelcomeHero problemCount={problemCount} contestCount={contestCount} />
+      {domain.bulletin ? <Bulletin bulletin={domain.bulletin} /> : null}
+      <div className="hydro-home-grid">
+        <ProblemList problems={problems} />
+        <RecentContests contests={contests} />
+      </div>
     </Stack>
   );
 }

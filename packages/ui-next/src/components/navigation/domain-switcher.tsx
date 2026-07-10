@@ -1,14 +1,16 @@
 import { Avatar, Button, Group, Loader, Menu, ScrollArea, Text } from '@mantine/core';
-import { IconBuilding, IconChevronDown } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
-import { getAvatarUrl } from '@/utils/avatar';
+import { IconChevronDown } from '@tabler/icons-react';
+import { useCallback, useState } from 'react';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 
 interface DomainItem {
   _id: string;
   name: string;
-  avatar?: string;
+}
+
+function getDomainInitial(name?: string, fallback = 'D') {
+  return (name?.trim() || fallback).charAt(0).toLocaleUpperCase();
 }
 
 export function DomainSwitcher() {
@@ -37,9 +39,10 @@ export function DomainSwitcher() {
     }
   }, [domains.length]);
 
-  useEffect(() => {
-    if (opened) fetchDomains();
-  }, [opened, fetchDomains]);
+  const handleOpenedChange = (nextOpened: boolean) => {
+    setOpened(nextOpened);
+    if (nextOpened) void fetchDomains();
+  };
 
   const switchDomain = (targetDomainId: string) => {
     const currentPath = window.location.pathname;
@@ -49,7 +52,7 @@ export function DomainSwitcher() {
       const parts = currentPath.split('/');
       // /d/domainId/rest... -> replace domainId
       if (targetDomainId === 'system') {
-        newPath = '/' + parts.slice(3).join('/');
+        newPath = `/${parts.slice(3).join('/')}`;
       } else {
         parts[2] = targetDomainId;
         newPath = parts.join('/');
@@ -66,13 +69,14 @@ export function DomainSwitcher() {
   };
 
   const displayName = domainId === 'system' ? (domain?.name || 'System') : (domain?.name || domainId);
+  const displayInitial = getDomainInitial(displayName, domainId);
 
   return (
     <Menu
       shadow="md"
       width={240}
       opened={opened}
-      onChange={setOpened}
+      onChange={handleOpenedChange}
       position="bottom-end"
     >
       <Menu.Target>
@@ -80,7 +84,11 @@ export function DomainSwitcher() {
           variant="subtle"
           size="xs"
           px="xs"
-          leftSection={<IconBuilding size={16} />}
+          leftSection={(
+            <Avatar color="hydroTeal" size={22} radius="xl" variant="light">
+              {displayInitial}
+            </Avatar>
+          )}
           rightSection={<IconChevronDown size={12} />}
         >
           <Text size="xs" truncate maw={100}>{displayName}</Text>
@@ -100,8 +108,10 @@ export function DomainSwitcher() {
               bg={domainId === 'system' ? 'var(--hydro-surface-muted)' : undefined}
             >
               <Group gap="sm">
-                <Avatar size="sm" radius="xl">S</Avatar>
-                <Text size="sm">System</Text>
+                <Avatar color="hydroTeal" size="sm" radius="xl" variant="light">
+                  {getDomainInitial('System')}
+                </Avatar>
+                <Text size="sm">{domainId === 'system' ? displayName : 'System'}</Text>
               </Group>
             </Menu.Item>
             {domains.filter((d) => d._id !== 'system').map((d) => (
@@ -112,8 +122,8 @@ export function DomainSwitcher() {
                 bg={domainId === d._id ? 'var(--hydro-surface-muted)' : undefined}
               >
                 <Group gap="sm">
-                  <Avatar src={getAvatarUrl(d.avatar || '', 24)} size="sm" radius="xl">
-                    {d.name?.[0]?.toUpperCase()}
+                  <Avatar color="hydroTeal" size="sm" radius="xl" variant="light">
+                    {getDomainInitial(d.name, d._id)}
                   </Avatar>
                   <div className="min-w-0">
                     <Text size="sm" truncate>{d.name}</Text>
