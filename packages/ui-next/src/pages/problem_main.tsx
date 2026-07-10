@@ -1,6 +1,6 @@
-import { Badge, Button, Card, Checkbox, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Button, Card, Checkbox, Group, HoverCard, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
@@ -41,7 +41,7 @@ function ProblemTags({ tags }: { tags?: string[] }) {
   return (
     <Group gap={4} mt={6}>
       {tags.slice(0, 4).map((tag) => (
-        <Badge key={tag} size="xs" variant="light" color="gray">
+        <Badge key={tag} size="xs" variant="light">
           {tag}
         </Badge>
       ))}
@@ -72,23 +72,6 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
   const buildUrl = useBuildUrl();
   const groups = normalizeCategories(categories);
   const randomUrl = buildUrl('problem_random', {}, query ? { q: query } : {});
-  const [showPopup, setShowPopup] = useState<string | null>(null);
-  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const cancelPopupClose = () => {
-    if (!hoverTimer.current) return;
-    clearTimeout(hoverTimer.current);
-    hoverTimer.current = null;
-  };
-
-  const openPopup = (category: string) => {
-    cancelPopupClose();
-    setShowPopup(category);
-  };
-
-  const schedulePopupClose = () => {
-    hoverTimer.current = setTimeout(() => setShowPopup(null), 200);
-  };
 
   return (
     <Stack gap="md">
@@ -98,59 +81,59 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
           <div className="relative grid grid-cols-2 gap-1 overflow-visible">
             {groups.map(([category, children]) => {
               const hasChildren = children.length > 0;
-              return (
+              const categoryItem = (
                 <div
-                  key={category}
-                  className="relative"
-                  onMouseEnter={() => openPopup(category)}
-                  onMouseLeave={schedulePopupClose}
+                  className={[
+                    'rounded-md border border-transparent px-2 py-1.5 transition-all duration-150',
+                    'hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]',
+                  ].join(' ')}
                 >
-                  <div
-                    className={[
-                      'rounded-md border border-transparent px-2 py-1.5 transition-all duration-150',
-                      'hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]',
-                    ].join(' ')}
+                  <Link
+                    href={buildUrl('problem_main', {}, { q: `category:${category}` })}
+                    className="hydro-subtle-link block"
                   >
-                    <Link
-                      href={buildUrl('problem_main', {}, { q: `category:${category}` })}
-                      className="hydro-subtle-link block"
-                    >
-                      <Group justify="space-between" gap="xs" wrap="nowrap">
-                        <Text size="sm" fw={700} truncate>{category}</Text>
-                        {hasChildren && <Text size="xs" c="dimmed">›</Text>}
-                      </Group>
-                    </Link>
-                  </div>
-                  {hasChildren && (
-                    <div
-                      className={[
-                        'absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] origin-right rounded-md',
-                        'border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3',
-                        'shadow-[var(--hydro-shadow-lg)] transition-all duration-200',
-                        showPopup === category
-                          ? 'pointer-events-auto scale-100 opacity-100'
-                          : 'pointer-events-none scale-95 opacity-0',
-                      ].join(' ')}
-                      onMouseEnter={cancelPopupClose}
-                      onMouseLeave={schedulePopupClose}
-                    >
-                      <Text size="xs" fw={800} c="dimmed" mb="xs">{category}</Text>
-                      <div className="flex flex-wrap gap-1.5 max-h-[60vh] overflow-y-auto">
-                        {children.map((tag) => (
-                          <Link
-                            key={tag}
-                            href={buildUrl('problem_main', {}, { q: `category:${tag}` })}
-                            className="no-underline"
-                          >
-                            <Badge variant="light" color="gray">
-                              {tag}
-                            </Badge>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    <Group justify="space-between" gap="xs" wrap="nowrap">
+                      <Text size="sm" fw={700} truncate>{category}</Text>
+                      {hasChildren && <Text size="xs" c="dimmed">›</Text>}
+                    </Group>
+                  </Link>
                 </div>
+              );
+
+              if (!hasChildren) return <div key={category}>{categoryItem}</div>;
+
+              return (
+                <HoverCard
+                  key={category}
+                  width={320}
+                  position="left-start"
+                  offset={8}
+                  openDelay={120}
+                  closeDelay={180}
+                  shadow="lg"
+                  radius="md"
+                  withinPortal
+                  zIndex={1200}
+                  middlewares={{ flip: true, shift: true }}
+                >
+                  <HoverCard.Target>
+                    <div>{categoryItem}</div>
+                  </HoverCard.Target>
+                  <HoverCard.Dropdown className="hydro-category-flyout" p="md">
+                    <Text size="xs" fw={800} c="dimmed" mb="xs">{category}</Text>
+                    <div className="flex max-h-[60vh] flex-wrap gap-1.5 overflow-y-auto">
+                      {children.map((tag) => (
+                        <Link
+                          key={tag}
+                          href={buildUrl('problem_main', {}, { q: `category:${tag}` })}
+                          className="no-underline"
+                        >
+                          <Badge variant="light">{tag}</Badge>
+                        </Link>
+                      ))}
+                    </div>
+                  </HoverCard.Dropdown>
+                </HoverCard>
               );
             })}
           </div>
@@ -312,7 +295,7 @@ export default function ProblemMainPage() {
       width: 100,
       align: 'center' as const,
       render: (p: any) => (
-        <Badge size="sm" variant="light" color="hydroCopper">
+        <Badge size="sm" variant="light">
           {estimateDifficulty(p)}
         </Badge>
       ),

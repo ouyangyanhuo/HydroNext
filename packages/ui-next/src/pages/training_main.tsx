@@ -1,4 +1,7 @@
-import { Badge, Button, Card, Group, Progress, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Button, Group, Progress, Stack, Text, TextInput, Title } from '@mantine/core';
+import {
+  IconArrowUpRight, IconBook2, IconChecklist, IconPlus, IconSearch, IconUsers,
+} from '@tabler/icons-react';
 import { useState } from 'react';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
@@ -34,43 +37,77 @@ function TrainingCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
   const pids = getTrainingPids(tdoc);
   const sections = getSections(tdoc);
   const progress = trainingProgress(tsdoc, pids.length);
+  const state = tsdoc?.done ? 'completed' : tsdoc?.enroll ? 'progress' : 'outside';
 
   return (
-    <Card withBorder p="lg" className="hydro-card">
-      <Group align="flex-start" gap="lg" wrap="nowrap">
-        <div className="hidden w-20 shrink-0 rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-tint)] py-3 text-center sm:block">
-          <Text fw={900} size="xl">{tdoc.attend || 0}</Text>
-          <Text size="xs" c="dimmed" fw={700}>{t('Enrolled')}</Text>
-        </div>
-        <div className="min-w-0 flex-1">
-          <Group gap="xs" mb={6}>
-            {tsdoc?.enroll ? (
-              <Badge size="xs" color={tsdoc.done ? 'green' : 'blue'} variant="light">
-                {tsdoc.done ? t('Completed') : t('In Progress')}
-              </Badge>
-            ) : (
-              <Badge size="xs" color="gray" variant="light">{t('Not Enrolled')}</Badge>
-            )}
-            <Badge size="xs" variant="outline">{t('{0} sections').replace('{0}', String(sections.length))}</Badge>
-            <Badge size="xs" variant="outline">{t('{0} problems').replace('{0}', String(pids.length))}</Badge>
-          </Group>
-          <Link to="training_detail" params={{ tid: tdoc.docId || tdoc._id }} className="hydro-subtle-link">
-            <Text fw={800} size="lg" className="truncate">{tdoc.title}</Text>
-          </Link>
-          {(tdoc.content || tdoc.description) && (
-            <Text size="sm" c="dimmed" mt={6} className="line-clamp-2">
-              {tdoc.content || tdoc.description}
-            </Text>
+    <Link
+      to="training_detail"
+      params={{ tid: tdoc.docId || tdoc._id }}
+      className={`hydro-training-item hydro-training-item--${state}`}
+    >
+      <div className="hydro-training-item__participants">
+        <IconUsers size={18} stroke={1.7} aria-hidden="true" />
+        <Text fw={850} size="lg">{tdoc.attend || 0}</Text>
+        <Text size="xs" c="dimmed" fw={650}>{t('Enrolled')}</Text>
+      </div>
+
+      <div className="hydro-training-item__content">
+        <Group gap="xs" mb={7} wrap="wrap">
+          {tsdoc?.enroll ? (
+            <Badge size="xs" color={tsdoc.done ? 'green' : 'blue'} variant="light">
+              {tsdoc.done ? t('Completed') : t('In Progress')}
+            </Badge>
+          ) : (
+            <Badge size="xs" color="gray" variant="light">{t('Not Enrolled')}</Badge>
           )}
+        </Group>
+        <Text component="h2" className="hydro-training-item__title">{tdoc.title}</Text>
+        {(tdoc.content || tdoc.description) && (
+          <Text size="sm" c="dimmed" mt={6} className="hydro-training-item__description">
+            {tdoc.content || tdoc.description}
+          </Text>
+        )}
+
+        <div className="hydro-training-item__footer">
+          <div className="hydro-training-item__meta">
+            <span>
+              <IconBook2 size={15} stroke={1.8} aria-hidden="true" />
+              {t('{0} sections').replace('{0}', String(sections.length))}
+            </span>
+            <span>
+              <IconChecklist size={15} stroke={1.8} aria-hidden="true" />
+              {t('{0} problems').replace('{0}', String(pids.length))}
+            </span>
+          </div>
           {tsdoc?.enroll && (
-            <Group gap="sm" mt="sm" wrap="nowrap">
-              <Progress value={progress} className="min-w-0 flex-1" />
-              <Text size="xs" c="dimmed" className="shrink-0">{t('Completed')} {progress}%</Text>
-            </Group>
+            <div className="hydro-training-item__progress">
+              <Progress value={progress} size="sm" />
+              <Text size="xs" c="dimmed" fw={700}>{progress}%</Text>
+            </div>
           )}
         </div>
+      </div>
+
+      <IconArrowUpRight className="hydro-training-item__arrow" size={20} stroke={1.8} aria-hidden="true" />
+    </Link>
+  );
+}
+
+function EnrolledTraining({ tsdoc, tdoc }: { tsdoc: any, tdoc: any }) {
+  const progress = trainingProgress(tsdoc, getTrainingPids(tdoc).length);
+
+  return (
+    <Link
+      to="training_detail"
+      params={{ tid: tsdoc.docId || tsdoc._id }}
+      className={`hydro-training-enrolled-item${tsdoc.done ? ' hydro-training-enrolled-item--completed' : ''}`}
+    >
+      <Group justify="space-between" gap="sm" wrap="nowrap">
+        <Text size="sm" fw={700} truncate>{tdoc.title || tsdoc.docId}</Text>
+        <Text size="xs" c="dimmed" fw={750}>{progress}%</Text>
       </Group>
-    </Card>
+      <Progress value={progress} size="sm" mt={8} color={tsdoc.done ? 'green' : undefined} />
+    </Link>
   );
 }
 
@@ -103,32 +140,38 @@ export default function TrainingMainPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row">
-      <div className="min-w-0 flex-1">
-        <Stack gap="lg">
-          <PageHeader title={t('All Training Plans')}>
-            <Group gap="xs" wrap="wrap">
-              {canCreateTraining && (
-                <Button component={Link} to="training_create" size="xs" variant="light">
-                  {t('New Training Plan')}
-                </Button>
-              )}
-              <TextInput
-                placeholder={t('Search training...')}
-                value={search}
-                onChange={(e) => setSearch(e.currentTarget.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                size="xs"
-                className="w-[190px] sm:w-[260px]"
-              />
-              <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
-            </Group>
-          </PageHeader>
+    <main className="hydro-training-page">
+      <PageHeader title={t('All Training Plans')}>
+        <div className="hydro-training-header-actions">
+          <TextInput
+            placeholder={t('Search training...')}
+            value={search}
+            onChange={(e) => setSearch(e.currentTarget.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            leftSection={<IconSearch size={15} stroke={1.8} />}
+            size="xs"
+            className="hydro-training-header-actions__search"
+          />
+          <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
+          {canCreateTraining && (
+            <Button
+              component={Link}
+              to="training_create"
+              size="xs"
+              leftSection={<IconPlus size={15} stroke={1.9} />}
+            >
+              {t('New Training Plan')}
+            </Button>
+          )}
+        </div>
+      </PageHeader>
 
+      <div className={`hydro-training-layout${isLoggedIn ? '' : ' hydro-training-layout--single'}`}>
+        <section className="min-w-0">
           {tdocs.length === 0 ? (
             <EmptyState message={t('Sorry, there are no training plans.')} />
           ) : (
-            <Stack gap="md">
+            <div className="hydro-training-list">
               {tdocs.map((tdoc: any) => (
                 <TrainingCard
                   key={tdoc.docId || tdoc._id}
@@ -136,55 +179,40 @@ export default function TrainingMainPage() {
                   tsdoc={tsdict[tdoc.docId || tdoc._id]}
                 />
               ))}
-            </Stack>
+            </div>
           )}
-          <Paginator page={page} totalPages={tpcount} />
-        </Stack>
-      </div>
+          <div className="hydro-training-paginator">
+            <Paginator page={page} totalPages={tpcount} />
+          </div>
+        </section>
 
-      <div className="w-full shrink-0 lg:w-72">
-        <Stack gap="md">
-          {canCreateTraining && (
-            <Card withBorder p="md" className="hydro-panel">
-              <Title order={3} size="h5" mb="sm">{t('Create Training Plan')}</Title>
-              <Button component={Link} to="training_create" fullWidth size="xs">
-                {t('New Training Plan')}
-              </Button>
-              <Text size="xs" c="dimmed" mt="sm">
-                {t('You can create your own training plans and share them with others.')}
-              </Text>
-            </Card>
-          )}
-
-          {isLoggedIn && (
-            <Card withBorder p="md" className="hydro-panel">
-              <Title order={3} size="h5" mb="sm">{t('Enrolled')}</Title>
+        {isLoggedIn && (
+          <aside className="hydro-training-sidebar">
+            <section className="hydro-training-enrolled-panel">
+              <Group justify="space-between" align="center" mb="md">
+                <Title order={3} size="h5">{t('Enrolled')}</Title>
+                {enrolled.length > 0 && <Badge size="xs" variant="light">{enrolled.length}</Badge>}
+              </Group>
               {enrolled.length ? (
-                <Stack gap="sm">
-                  {enrolled.map((tsdoc: any) => {
-                    const tdoc = tdict[tsdoc.docId] || tdict[tsdoc._id] || {};
-                    const total = getTrainingPids(tdoc).length;
-                    const progress = trainingProgress(tsdoc, total);
-                    return (
-                      <div key={tsdoc.docId || tsdoc._id}>
-                        <Link to="training_detail" params={{ tid: tsdoc.docId || tsdoc._id }} className="block truncate text-sm font-semibold no-underline hover:underline">
-                          {tdoc.title || tsdoc.docId}
-                        </Link>
-                        <Group gap="xs" mt={4} wrap="nowrap">
-                          <Progress value={progress} className="min-w-0 flex-1" />
-                          <Text size="xs" c="dimmed">{progress}%</Text>
-                        </Group>
-                      </div>
-                    );
-                  })}
+                <Stack gap={6}>
+                  {enrolled.map((tsdoc: any) => (
+                    <EnrolledTraining
+                      key={tsdoc.docId || tsdoc._id}
+                      tsdoc={tsdoc}
+                      tdoc={tdict[tsdoc.docId] || tdict[tsdoc._id] || {}}
+                    />
+                  ))}
                 </Stack>
               ) : (
-                <Text size="sm" c="dimmed">{t('No training')}</Text>
+                <div className="hydro-training-enrolled-empty">
+                  <IconBook2 size={22} stroke={1.6} aria-hidden="true" />
+                  <Text size="sm" c="dimmed">{t('No training')}</Text>
+                </div>
               )}
-            </Card>
-          )}
-        </Stack>
+            </section>
+          </aside>
+        )}
       </div>
-    </div>
+    </main>
   );
 }

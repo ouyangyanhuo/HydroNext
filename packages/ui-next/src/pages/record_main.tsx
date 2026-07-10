@@ -1,22 +1,28 @@
-import { Badge, Button, Stack, Text } from '@mantine/core';
-import { IconPlayerPlay } from '@tabler/icons-react';
+import { Badge, Button, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { IconFilter, IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
+import { useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
+import { STATUS_TEXTS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
+import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 
+const ALL_FILTER = '__all__';
+
 export default function RecordMainPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
+  const navigate = useNavigate();
   const user = useCurrentUser();
   const domainId = useSessionStore((s) => s.ui.domainId);
   const canViewCodeReplay = useHasPriv(PRIV.PRIV_READ_RECORD_CODE);
@@ -25,6 +31,57 @@ export default function RecordMainPage() {
   const pdict = args.pdict || {};
   const udict = args.udict || {};
   const page = args.page || 1;
+  const totalPages = args.tpcount || 1;
+
+  const [uidOrName, setUidOrName] = useState(String(args.filterUidOrName || ''));
+  const [pid, setPid] = useState(String(args.filterPid || ''));
+  const [tid, setTid] = useState(String(args.filterTid || ''));
+  const [lang, setLang] = useState(args.filterLang || ALL_FILTER);
+  const [status, setStatus] = useState(
+    typeof args.filterStatus === 'number' ? String(args.filterStatus) : ALL_FILTER,
+  );
+
+  const configuredLangs = args.langs || (window as any).LANGS || {};
+  const languageMap = new Map<string, string>();
+  Object.entries(configuredLangs).forEach(([id, info]: [string, any]) => {
+    if (!info?.hidden) languageMap.set(id, info?.display || info?.name || id);
+  });
+  rdocs.forEach((record: any) => {
+    if (record.lang && !languageMap.has(record.lang)) languageMap.set(record.lang, record.lang);
+  });
+  if (args.filterLang && !languageMap.has(args.filterLang)) languageMap.set(args.filterLang, args.filterLang);
+  const languageOptions = [
+    { value: ALL_FILTER, label: t('All Languages') },
+    ...Array.from(languageMap, ([value, label]) => ({ value, label })),
+  ];
+  const statusOptions = [
+    { value: ALL_FILTER, label: t('All Submissions') },
+    ...Object.entries(STATUS_TEXTS).map(([value, label]) => ({ value, label: t(label) })),
+  ];
+
+  const handleFilter = () => {
+    const url = new URL(window.location.href);
+    const textFilters = { uidOrName, pid, tid };
+    Object.entries(textFilters).forEach(([key, value]) => {
+      if (value.trim()) url.searchParams.set(key, value.trim());
+      else url.searchParams.delete(key);
+    });
+    if (lang !== ALL_FILTER) url.searchParams.set('lang', lang);
+    else url.searchParams.delete('lang');
+    if (status !== ALL_FILTER) url.searchParams.set('status', status);
+    else url.searchParams.delete('status');
+    url.searchParams.delete('page');
+    navigate(url.pathname + url.search);
+  };
+
+  const handleReset = () => {
+    setUidOrName('');
+    setPid('');
+    setTid('');
+    setLang(ALL_FILTER);
+    setStatus(ALL_FILTER);
+    navigate(buildUrl('record_main'));
+  };
 
   const columns = [
     {
@@ -32,10 +89,8 @@ export default function RecordMainPage() {
       title: '#',
       width: 80,
       render: (r: any) => (
-        <Link to="record_detail" params={{ rid: r._id }} className="no-underline">
-          <Text size="xs" c="dimmed" ff="monospace">
-            {String(r._id).slice(-6)}
-          </Text>
+        <Link to="record_detail" params={{ rid: r._id }} className="hydro-record-id">
+          {String(r._id).slice(-6)}
         </Link>
       ),
     },
@@ -65,7 +120,7 @@ export default function RecordMainPage() {
             params={{ pid: pdoc.pid || pdoc.docId }}
             className="hydro-subtle-link"
           >
-            <Text size="sm" fw={600}>{pdoc.pid}. {pdoc.title}</Text>
+            <Text size="sm" fw={650}>{pdoc.pid}. {pdoc.title}</Text>
           </Link>
         ) : (
           <Text size="sm" c="dimmed">{r.pid}</Text>
@@ -76,9 +131,7 @@ export default function RecordMainPage() {
       key: 'lang',
       title: t('Language'),
       width: 100,
-      render: (r: any) => (
-        <Text size="xs" c="dimmed">{r.lang || '-'}</Text>
-      ),
+      render: (r: any) => <Text size="xs" c="dimmed" fw={600}>{r.lang || '-'}</Text>,
     },
     {
       key: 'time',
@@ -86,7 +139,7 @@ export default function RecordMainPage() {
       width: 80,
       align: 'center' as const,
       render: (r: any) => (
-        <Text size="xs" c="dimmed">
+        <Text size="xs" c="dimmed" ff="monospace">
           {r.time != null ? `${r.time}ms` : '-'}
         </Text>
       ),
@@ -97,7 +150,7 @@ export default function RecordMainPage() {
       width: 80,
       align: 'center' as const,
       render: (r: any) => (
-        <Text size="xs" c="dimmed">
+        <Text size="xs" c="dimmed" ff="monospace">
           {r.memory != null ? `${Math.round(r.memory / 1024)}MB` : '-'}
         </Text>
       ),
@@ -139,12 +192,66 @@ export default function RecordMainPage() {
   ];
 
   return (
-    <Stack gap="lg">
-      <PageHeader title={t('Records')} />
+    <main className="hydro-record-page">
+      <Stack gap="lg">
+        <PageHeader title={t('Records')} />
 
-      <DataTable columns={columns} data={rdocs} emptyMessage={t('No records found')} />
+        <form
+          className="hydro-record-filter"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleFilter();
+          }}
+        >
+          <div className="hydro-record-filter__header">
+            <Group gap="xs">
+              <IconFilter size={18} stroke={1.8} aria-hidden="true" />
+              <Title order={2} size="h5">{t('Filter')}</Title>
+            </Group>
+            <Group gap="xs">
+              <Button type="button" size="xs" variant="subtle" onClick={handleReset} leftSection={<IconRefresh size={14} />}>
+                {t('Reset')}
+              </Button>
+              <Button type="submit" size="xs" leftSection={<IconFilter size={14} />}>
+                {t('Filter')}
+              </Button>
+            </Group>
+          </div>
 
-      <Paginator page={page} totalPages={Math.ceil((args.rdocs?.length || 0) / 50) || 1} />
-    </Stack>
+          <div className="hydro-record-filter__fields">
+            <TextInput
+              label={t('By Username / UID')}
+              value={uidOrName}
+              onChange={(event) => setUidOrName(event.currentTarget.value)}
+              autoComplete="off"
+            />
+            <TextInput label={t('By Problem')} value={pid} onChange={(event) => setPid(event.currentTarget.value)} />
+            <TextInput label={t('By Contest')} value={tid} onChange={(event) => setTid(event.currentTarget.value)} />
+            <Select
+              label={t('By Language')}
+              data={languageOptions}
+              value={lang}
+              onChange={(value) => setLang(value || ALL_FILTER)}
+              searchable
+              classNames={{ dropdown: 'hydro-record-select-dropdown' }}
+            />
+            <Select
+              label={t('By Status')}
+              data={statusOptions}
+              value={status}
+              onChange={(value) => setStatus(value || ALL_FILTER)}
+              searchable
+              classNames={{ dropdown: 'hydro-record-select-dropdown' }}
+            />
+          </div>
+        </form>
+
+        <div className="hydro-record-list">
+          <DataTable columns={columns} data={rdocs} emptyMessage={t('No records found')} />
+        </div>
+
+        <Paginator page={page} totalPages={totalPages} />
+      </Stack>
+    </main>
   );
 }
