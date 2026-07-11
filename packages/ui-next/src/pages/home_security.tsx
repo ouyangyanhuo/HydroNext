@@ -1,5 +1,8 @@
-import { Alert, Badge, Button, Card, Divider, Group, PasswordInput, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
-import { IconDevices, IconKey, IconLink, IconLock } from '@tabler/icons-react';
+import {
+  Alert, Badge, Button, Card, Divider, Group, Modal, PasswordInput, Radio, SimpleGrid, Stack, Text, TextInput, Title,
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { IconDeviceMobile, IconDevices, IconKey, IconLink, IconLock, IconPlus, IconUsb } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
@@ -9,11 +12,12 @@ import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 
-function SecurityTitle({ icon, children }: { icon: ReactNode, children: ReactNode }) {
+function SecurityTitle({ icon, children, action }: { icon: ReactNode, children: ReactNode, action?: ReactNode }) {
   return (
     <div className="hydro-security-card__title">
       <span className="hydro-security-card__icon">{icon}</span>
       <Title order={3} size="h4">{children}</Title>
+      {action ? <div className="ml-auto">{action}</div> : null}
     </div>
   );
 }
@@ -28,10 +32,18 @@ function credentialIdToBase64(input: any) {
   return btoa(String.fromCharCode(...values.map((value: any) => Number(value))));
 }
 
+function generateTfaSecret(length = 20) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('');
+}
+
 export default function HomeSecurityPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const user = useSessionStore((s) => s.user);
+  const serverName = useSessionStore((s) => s.ui.serverName);
   const sessions = args.sessions || [];
   const authenticators = args.authenticators || [];
   const relations = args.relations || [];
@@ -44,12 +56,18 @@ export default function HomeSecurityPage() {
   const [mail, setMail] = useState('');
   const [showChangeMail, setShowChangeMail] = useState(false);
   const [loading, setLoading] = useState('');
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [authenticatorOpened, setAuthenticatorOpened] = useState(false);
+  const [authenticatorType, setAuthenticatorType] = useState<'tfa' | 'platform' | 'cross-platform'>('tfa');
+  const [authenticatorName, setAuthenticatorName] = useState('');
+  const [platformAvailable, setPlatformAvailable] = useState(false);
+  const [webauthnAvailable, setWebauthnAvailable] = useState(false);
+  const [tfaSecret, setTfaSecret] = useState('');
+  const [tfaCode, setTfaCode] = useState('');
+  const [tfaQr, setTfaQr] = useState('');
 
   const postOperation = async (payload: Record<string, any>, successMessage?: string) => {
     setLoading(String(payload.operation || 'operation'));
-    setError('');
     setSuccess('');
     try {
       const res = await fetch('/home/security', {
@@ -60,7 +78,7 @@ export default function HomeSecurityPage() {
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
       if (!res.ok || data.error) {
-        setError(formatErrorMessage(data.error, t('Failed')));
+        notifications.show({ title: formatErrorMessage(data.error, t('Failed')), message: '', color: 'red' });
         return;
       }
       if (data.redirect) {
@@ -76,7 +94,7 @@ export default function HomeSecurityPage() {
         window.location.reload();
       }
     } catch (err: any) {
-      setError(err?.message || t('Network error'));
+      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
     } finally {
       setLoading('');
     }
@@ -84,7 +102,7 @@ export default function HomeSecurityPage() {
 
   const handleChangePassword = async () => {
     if (password !== verifyPassword) {
-      setError(t('Passwords do not match'));
+      notifications.show({ title: t('Passwords do not match'), message: '', color: 'red' });
       return;
     }
     await postOperation({ operation: 'change_password', current, password, verifyPassword }, t('Password changed'));
@@ -100,13 +118,85 @@ export default function HomeSecurityPage() {
     setShowChangeMail(false);
   };
 
+  const openAuthenticatorDialog = async () => {
+    const webauthn = window.isSecureContext ? await import('@simplewebauthn/browser') : null;
+    const supportsWebauthn = Boolean(webauthn?.browserSupportsWebAuthn());
+    let supportsPlatform = false;
+    if (supportsWebauthn) {
+      try {
+        supportsPlatform = await webauthn!.platformAuthenticatorIsAvailable();
+      } catch {
+        supportsPlatform = false;
+      }
+    }
+    const secret = generateTfaSecret();
+    const issuer = serverName || 'Hydro';
+    const account = encodeURIComponent(user?.uname || '');
+    const uri = `otpauth://totp/${encodeURIComponent(issuer)}:${account}`
+      + `?secret=${secret}&issuer=${encodeURIComponent(issuer)}`;
+    setTfaSecret(secret);
+    const { default: QRCode } = await import('qrcode');
+    setTfaQr(await QRCode.toDataURL(uri, { width: 200, margin: 1 }));
+    setTfaCode('');
+    setAuthenticatorName('');
+    setWebauthnAvailable(supportsWebauthn);
+    setPlatformAvailable(supportsPlatform);
+    setAuthenticatorType(supportsPlatform ? 'platform' : supportsWebauthn ? 'cross-platform' : 'tfa');
+    setAuthenticatorOpened(true);
+  };
+
+  const fetchSecurityOperation = async (payload: Record<string, any>) => {
+    const res = await fetch('/home/security', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const type = res.headers.get('content-type') || '';
+    const data = type.includes('json') ? await res.json() : {};
+    if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Failed')));
+    return data;
+  };
+
+  const registerAuthenticator = async () => {
+    if (authenticatorType === 'tfa') {
+      if (!/^\d{6}$/.test(tfaCode)) {
+        notifications.show({ title: t('6-Digit Code'), message: '', color: 'red' });
+        return;
+      }
+      await postOperation({ operation: 'enable_tfa', code: tfaCode, secret: tfaSecret }, t('Saved'));
+      return;
+    }
+    if (!authenticatorName.trim()) {
+      notifications.show({ title: t('Name'), message: '', color: 'red' });
+      return;
+    }
+    setLoading('register_authn');
+    try {
+      const registration = await fetchSecurityOperation({ operation: 'register', type: authenticatorType });
+      if (!registration.authOptions) throw new Error(t('Failed to fetch registration data.'));
+      const { startRegistration } = await import('@simplewebauthn/browser');
+      const result = await startRegistration({ optionsJSON: registration.authOptions });
+      await fetchSecurityOperation({
+        operation: 'enable_authn',
+        name: authenticatorName.trim(),
+        result,
+      });
+      setAuthenticatorOpened(false);
+      setSuccess(t('Saved'));
+      window.location.reload();
+    } catch (err: any) {
+      notifications.show({ title: err?.message || t('Failed'), message: '', color: 'red' });
+    } finally {
+      setLoading('');
+    }
+  };
+
   return (
     <main className="hydro-security-page">
       <div className="hydro-settings-header">
         <PageHeader title={t('Security')} />
       </div>
       <Stack gap="lg">
-        {error && <Alert color="red" variant="light">{error}</Alert>}
         {success && <Alert color="green" variant="light">{success}</Alert>}
 
         {user?.mail?.endsWith('.local') && (
@@ -189,7 +279,16 @@ export default function HomeSecurityPage() {
         </SimpleGrid>
 
         <Card withBorder p="lg" className="hydro-content-card hydro-security-card">
-          <SecurityTitle icon={<IconKey size={18} />}>{t('Authenticators')}</SecurityTitle>
+          <SecurityTitle
+            icon={<IconKey size={18} />}
+            action={(
+              <Button size="xs" variant="light" leftSection={<IconPlus size={14} />} onClick={openAuthenticatorDialog}>
+                {t('Add Authenticator')}
+              </Button>
+            )}
+          >
+            {t('Authenticators')}
+          </SecurityTitle>
           <Stack gap="sm">
             {user?.tfa && (
               <Group justify="space-between" align="center" className="hydro-security-row">
@@ -232,7 +331,7 @@ export default function HomeSecurityPage() {
                 </Group>
               );
             })}
-            {!authenticators.length && !user?.tfa && <Text c="dimmed" size="sm">{t('No authenticators')}</Text>}
+            {!authenticators.length && !user?.tfa && <Text c="dimmed" size="sm">{t('No data')}</Text>}
           </Stack>
         </Card>
 
@@ -281,6 +380,98 @@ export default function HomeSecurityPage() {
           </Stack>
         </Card>
       </Stack>
+
+      <Modal
+        opened={authenticatorOpened}
+        onClose={() => setAuthenticatorOpened(false)}
+        title={t('Choose Authenticator Type')}
+        size="md"
+        classNames={{ content: 'hydro-security-auth-modal' }}
+      >
+        <Stack gap="md">
+          <Radio.Group
+            value={authenticatorType}
+            onChange={(value) => setAuthenticatorType(value as typeof authenticatorType)}
+          >
+            <Stack gap="xs">
+              <Radio.Card value="tfa" disabled={Boolean(user?.tfa)} className="hydro-security-auth-choice" radius="md">
+                <Group wrap="nowrap" p="sm">
+                  <IconDeviceMobile size={20} />
+                  <div>
+                    <Text size="sm" fw={700}>{t('Two Factor Authentication')}</Text>
+                    <Text size="xs" c="dimmed">TOTP</Text>
+                  </div>
+                </Group>
+              </Radio.Card>
+              <Radio.Card
+                value="platform"
+                disabled={!platformAvailable}
+                className="hydro-security-auth-choice"
+                radius="md"
+              >
+                <Group wrap="nowrap" p="sm">
+                  <IconKey size={20} />
+                  <div>
+                    <Text size="sm" fw={700}>{t('Your Device')}</Text>
+                    <Text size="xs" c="dimmed">Touch ID / Windows Hello / Passkey</Text>
+                  </div>
+                </Group>
+              </Radio.Card>
+              <Radio.Card
+                value="cross-platform"
+                disabled={!webauthnAvailable}
+                className="hydro-security-auth-choice"
+                radius="md"
+              >
+                <Group wrap="nowrap" p="sm">
+                  <IconUsb size={20} />
+                  <div>
+                    <Text size="sm" fw={700}>{t('Multi Platform Authenticator')}</Text>
+                    <Text size="xs" c="dimmed">USB / NFC / Bluetooth</Text>
+                  </div>
+                </Group>
+              </Radio.Card>
+            </Stack>
+          </Radio.Group>
+
+          {authenticatorType === 'tfa' ? (
+            <Stack gap="sm" align="center">
+              {tfaQr ? <img src={tfaQr} alt="TOTP QR Code" width={200} height={200} className="hydro-security-tfa-qr" /> : null}
+              <Text size="xs" c="dimmed" ta="center">{tfaSecret}</Text>
+              <TextInput
+                label={t('6-Digit Code')}
+                value={tfaCode}
+                onChange={(event) => setTfaCode(event.currentTarget.value.replace(/\D/g, '').slice(0, 6))}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className="w-full"
+              />
+            </Stack>
+          ) : (
+            <TextInput
+              label={t('Name')}
+              value={authenticatorName}
+              onChange={(event) => setAuthenticatorName(event.currentTarget.value)}
+              placeholder={t('Authenticator')}
+              autoComplete="off"
+            />
+          )}
+
+          {!webauthnAvailable && authenticatorType !== 'tfa' ? (
+            <Alert color="yellow">{t('Your browser does not support WebAuthn or you are not in secure context.')}</Alert>
+          ) : null}
+          <Group justify="flex-end">
+            <Button variant="subtle" onClick={() => setAuthenticatorOpened(false)}>{t('Cancel')}</Button>
+            <Button
+              loading={loading === 'register_authn' || loading === 'enable_tfa'}
+              disabled={authenticatorType === 'tfa' && Boolean(user?.tfa)}
+              onClick={registerAuthenticator}
+            >
+              {t('Add Authenticator')}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </main>
   );
 }

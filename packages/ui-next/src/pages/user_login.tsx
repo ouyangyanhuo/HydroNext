@@ -1,8 +1,9 @@
 import { Alert, Anchor, Button, Checkbox, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconLock } from '@tabler/icons-react';
+import { IconKey, IconLock } from '@tabler/icons-react';
 import { useState } from 'react';
 import { AuthPanel } from '@/components/auth/auth-panel';
+import { getAuthenticatorMethods, verifyWithWebAuthn } from '@/components/auth/authenticator';
 import { OAuthButtons } from '@/components/auth/oauth-buttons';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
@@ -17,19 +18,22 @@ export default function UserLoginPage() {
   const [password, setPassword] = useState('');
   const [rememberme, setRememberme] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [authnLoading, setAuthnLoading] = useState(false);
+  const [methods, setMethods] = useState<{ tfa: boolean, authn: boolean } | null>(null);
+  const [tfa, setTfa] = useState('');
 
   const redirect = args.redirect || '/';
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitLogin = async (tfaCode = '', authnChallenge = '') => {
     setLoading(true);
-
     try {
       const formData = new URLSearchParams();
       formData.append('uname', uname);
       formData.append('password', password);
       formData.append('rememberme', rememberme ? 'on' : '');
       formData.append('redirect', redirect);
+      formData.append('tfa', tfaCode);
+      formData.append('authnChallenge', authnChallenge);
 
       const res = await fetch('/login', {
         method: 'POST',
@@ -42,7 +46,8 @@ export default function UserLoginPage() {
         return;
       }
 
-      const data = await res.json();
+      const type = res.headers.get('content-type') || '';
+      const data = type.includes('json') ? await res.json() : {};
       if (data.error) {
         let msg = data.error.message || t('Login failed');
         if (data.error.params) {
@@ -59,6 +64,40 @@ export default function UserLoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleWebAuthn = async () => {
+    setAuthnLoading(true);
+    try {
+      const challenge = await verifyWithWebAuthn(t, uname);
+      await submitLogin('', challenge);
+    } catch (err: any) {
+      notifications.show({ title: err?.message || t('Verification failed'), message: '', color: 'red' });
+    } finally {
+      setAuthnLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!methods) {
+      setLoading(true);
+      try {
+        const nextMethods = await getAuthenticatorMethods(uname, t);
+        if (!nextMethods.authn && !nextMethods.tfa) {
+          await submitLogin();
+          return;
+        }
+        setMethods(nextMethods);
+        if (nextMethods.authn && !nextMethods.tfa) await handleWebAuthn();
+      } catch (err: any) {
+        notifications.show({ title: err?.message || t('Verification failed'), message: '', color: 'red' });
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+    if (methods.tfa) await submitLogin(tfa);
   };
 
   return (
@@ -78,7 +117,11 @@ export default function UserLoginPage() {
           <TextInput
             label={t('Username or Email')}
             value={uname}
-            onChange={(e) => setUname(e.currentTarget.value)}
+            onChange={(e) => {
+              setUname(e.currentTarget.value);
+              setMethods(null);
+              setTfa('');
+            }}
             required
             autoFocus
           />
@@ -88,12 +131,35 @@ export default function UserLoginPage() {
             onChange={(e) => setPassword(e.currentTarget.value)}
             required
           />
+          {methods?.tfa && (
+            <TextInput
+              label={t('6-Digit Code')}
+              value={tfa}
+              onChange={(event) => setTfa(event.currentTarget.value.replace(/\D/g, '').slice(0, 6))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              autoFocus
+            />
+          )}
+          {methods?.authn && (
+            <Button
+              type="button"
+              fullWidth
+              variant="light"
+              leftSection={<IconKey size={16} />}
+              loading={authnLoading}
+              onClick={handleWebAuthn}
+            >
+              {t('Use Authenticator')}
+            </Button>
+          )}
           <Checkbox
             label={t('Remember me')}
             checked={rememberme}
             onChange={(e) => setRememberme(e.currentTarget.checked)}
           />
-          <Button type="submit" fullWidth loading={loading}>
+          <Button type="submit" fullWidth loading={loading} disabled={Boolean(methods?.tfa && tfa.length !== 6)}>
             {t('Login')}
           </Button>
         </Stack>

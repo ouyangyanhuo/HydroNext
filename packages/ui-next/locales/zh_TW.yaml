@@ -69,6 +69,22 @@ Account Deletion Pending: 帳號註銷待處理
 You do not have permission to import problems.: 您沒有匯入題目的權限。
 Your account deletion request has been received. It will be processed within 30 days.: 您的帳號註銷申請已收到，將在30天內處理。
 Or login with: 其他登入方式
+6-Digit Code: 6位程式碼
+Active Sessions: 活動會話
+Add Authenticator: 新增認證器
+Authenticator: 認證器
+Authenticators: 認證器
+Choose Authenticator Type: 選擇認證器型別
+Failed to fetch registration data.: 獲取註冊資料失敗。
+Logout All Sessions: 登出所有會話
+Logout This Session: 登出該會話
+Multi Platform Authenticator: 跨平臺認證器
+Two Factor Authentication: 兩步驗證
+Use Authenticator: 使用認證器
+Use Password: 使用密碼
+Use TFA Code: 使用兩步驗證碼
+Your Device: 你的裝置
+Your browser does not support WebAuthn or you are not in secure context.: 您的瀏覽器不支援WebAuthn或是您不在安全環境中。
 
 # Common
 Save: 儲存

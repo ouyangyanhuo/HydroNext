@@ -70,6 +70,22 @@ Account Deletion Pending: 账号注销待处理
 You do not have permission to import problems.: 您没有导入题目的权限。
 Your account deletion request has been received. It will be processed within 30 days.: 您的账号注销申请已收到，将在30天内处理。
 Or login with: 其他登录方式
+6-Digit Code: 6位代码
+Active Sessions: 活动会话
+Add Authenticator: 添加认证器
+Authenticator: 认证器
+Authenticators: 认证器
+Choose Authenticator Type: 选择认证器类型
+Failed to fetch registration data.: 获取注册数据失败。
+Logout All Sessions: 注销所有会话
+Logout This Session: 注销该会话
+Multi Platform Authenticator: 跨平台认证器
+Two Factor Authentication: 两步验证
+Use Authenticator: 使用认证器
+Use Password: 使用密码
+Use TFA Code: 使用两步验证码
+Your Device: 你的设备
+Your browser does not support WebAuthn or you are not in secure context.: 您的浏览器不支持WebAuthn或是您不在安全环境中。
 
 # Common
 Save: 保存

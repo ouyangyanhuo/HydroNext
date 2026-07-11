@@ -245,7 +245,6 @@ export function SettingsForm({
           {variant === 'personal' ? (
             <div className="hydro-settings-section__header">
               <Title order={3} size="h4">{t(family)}</Title>
-              <Badge variant="light" size="sm">{items.length}</Badge>
             </div>
           ) : (
             <Group justify="space-between" mb="md">

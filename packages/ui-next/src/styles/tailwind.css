@@ -2536,6 +2536,33 @@ a {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
 }
 
+.hydro-security-auth-choice {
+  border: 1px solid var(--hydro-border);
+  color: var(--hydro-text-muted);
+  background: color-mix(in srgb, var(--hydro-surface-muted) 48%, transparent);
+  cursor: pointer;
+  transition: border-color var(--hydro-duration-fast) ease,
+              background-color var(--hydro-duration-fast) ease;
+}
+
+.hydro-security-auth-choice:hover:not([data-disabled]),
+.hydro-security-auth-choice[data-checked] {
+  border-color: var(--hydro-primary);
+  color: var(--hydro-primary-strong);
+  background: var(--hydro-primary-soft);
+}
+
+.hydro-security-auth-choice[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.hydro-security-tfa-qr {
+  border: 8px solid white;
+  border-radius: var(--hydro-radius-md);
+  box-shadow: var(--hydro-shadow-sm);
+}
+
 .hydro-user-profile__hero {
   overflow: hidden;
 }

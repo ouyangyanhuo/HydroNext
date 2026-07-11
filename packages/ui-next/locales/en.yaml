@@ -55,6 +55,22 @@ Account Deletion Pending: Account Deletion Pending
 You do not have permission to import problems.: You do not have permission to import problems.
 Your account deletion request has been received. It will be processed within 30 days.: Your account deletion request has been received. It will be processed within 30 days.
 Or login with: Or login with
+6-Digit Code: 6-Digit Code
+Active Sessions: Active Sessions
+Add Authenticator: Add Authenticator
+Authenticator: Authenticator
+Authenticators: Authenticators
+Choose Authenticator Type: Choose Authenticator Type
+Failed to fetch registration data.: Failed to fetch registration data.
+Logout All Sessions: Logout All Sessions
+Logout This Session: Logout This Session
+Multi Platform Authenticator: Multi Platform Authenticator
+Two Factor Authentication: Two Factor Authentication
+Use Authenticator: Use Authenticator
+Use Password: Use Password
+Use TFA Code: Use TFA Code
+Your Device: Your Device
+Your browser does not support WebAuthn or you are not in secure context.: Your browser does not support WebAuthn or you are not in secure context.
 
 # Common
 Save: Save
