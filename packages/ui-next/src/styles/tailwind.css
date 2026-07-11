@@ -38,7 +38,6 @@
 @keyframes hydro-workspace-out {
   to {
     opacity: 0;
-    filter: blur(6px);
     transform: translateY(-8px) scale(0.985);
   }
 }
@@ -46,12 +45,10 @@
 @keyframes hydro-workspace-in {
   from {
     opacity: 0;
-    filter: blur(8px);
     transform: translateY(14px) scale(0.985);
   }
   to {
     opacity: 1;
-    filter: blur(0);
     transform: translateY(0) scale(1);
   }
 }
@@ -1879,20 +1876,38 @@ a {
 }
 
 .hydro-scratchpad-console__tabs {
+  display: flex;
   min-height: 38px;
-  border-bottom-color: var(--hydro-border);
+  flex: 0 0 38px;
+  gap: 2px;
+  align-items: stretch;
+  padding-inline: 8px;
+  border-bottom: 1px solid var(--hydro-border);
   background-color: color-mix(in srgb, var(--hydro-surface-tint) 72%, var(--hydro-surface-raised));
 }
 
-.hydro-scratchpad-console__tabs .mantine-Tabs-tab {
+.hydro-scratchpad-console__tab {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 0 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
   color: var(--hydro-text-muted);
+  background: transparent;
   font-size: 0.76rem;
   font-weight: 700;
+  cursor: pointer;
 }
 
-.hydro-scratchpad-console__tabs .mantine-Tabs-tab[data-active] {
+.hydro-scratchpad-console__tab[aria-selected='true'] {
   border-color: var(--hydro-primary);
   color: var(--hydro-primary-strong);
+}
+
+.hydro-scratchpad-console__tab:focus-visible {
+  outline: 2px solid var(--hydro-primary);
+  outline-offset: -3px;
 }
 
 .hydro-scratchpad-console__panel,
@@ -1902,25 +1917,47 @@ a {
   background-color: var(--hydro-bg-soft);
 }
 
-.hydro-scratchpad-tabs,
-.hydro-scratchpad-pretest,
-.hydro-scratchpad-io-grid,
-.hydro-scratchpad-input-wrap,
-.hydro-scratchpad-input,
-.hydro-scratchpad-input .mantine-Textarea-wrapper {
+.hydro-scratchpad-console-workspace {
+  display: flex;
   min-height: 0;
-  height: 100%;
+  flex: 1 1 0;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.hydro-scratchpad-tabs > .mantine-Tabs-panel {
+.hydro-scratchpad-console__body {
+  position: relative;
+  min-width: 0;
   min-height: 0;
+  flex: 1 1 0;
   overflow: hidden;
+}
+
+.hydro-scratchpad-console__panel {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 12px;
+  overflow: auto;
 }
 
 .hydro-scratchpad-io-grid {
   display: grid;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.hydro-scratchpad-io-panel {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: 36px minmax(0, 1fr);
   overflow: hidden;
 }
 
@@ -1930,38 +1967,55 @@ a {
 
 .hydro-scratchpad-io-panel__header {
   display: flex;
-  min-height: 36px;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 0 12px;
   border-bottom: 1px solid var(--hydro-border);
   color: var(--hydro-primary-strong);
   background: color-mix(in srgb, var(--hydro-primary-soft) 38%, var(--hydro-surface-raised));
 }
 
-.hydro-scratchpad-input textarea {
+.hydro-scratchpad-input {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
   min-height: 0;
   height: 100%;
+  overflow: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-color: color-mix(in srgb, var(--hydro-primary) 48%, transparent) transparent;
   padding: 12px;
   border: 0;
   border-radius: 0;
   color: var(--hydro-text);
   background: var(--hydro-bg-soft);
   caret-color: var(--hydro-primary);
+  font-family: var(--hydro-font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  resize: none;
 }
 
-.hydro-scratchpad-input textarea:focus {
+.hydro-scratchpad-input:focus {
+  outline: 0;
   box-shadow: inset 3px 0 0 var(--hydro-primary);
 }
 
 .hydro-scratchpad-output {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   padding: 12px;
   color: var(--hydro-text);
   background: var(--hydro-bg-soft);
+  overflow: auto !important;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
   scrollbar-color: color-mix(in srgb, var(--hydro-primary) 48%, transparent) transparent;
 }
 
-.hydro-scratchpad-input textarea::placeholder {
+.hydro-scratchpad-input::placeholder {
   color: var(--hydro-text-subtle);
 }
 
@@ -2356,18 +2410,6 @@ a {
   .hydro-message-content { max-width: 86%; }
 }
 
-@media (max-width: 767px) {
-  .hydro-scratchpad-io-grid {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: repeat(2, minmax(0, 1fr));
-  }
-
-  .hydro-scratchpad-io-panel--output {
-    border-top: 1px solid var(--hydro-border);
-    border-left: 0;
-  }
-}
-
 .hydro-top-nav :is(.mantine-Button-root, .mantine-ActionIcon-root, .mantine-UnstyledButton-root) {
   background-image: none !important;
 }
@@ -2516,6 +2558,66 @@ a {
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--hydro-glass-highlight) 74%, transparent);
   -webkit-backdrop-filter: blur(6px) saturate(108%);
   backdrop-filter: blur(6px) saturate(108%);
+}
+
+/* Keep motion compositor-friendly: one entrance per section, no per-row paint storm. */
+.hydro-ambient__wash,
+.hydro-ambient__ripple {
+  filter: none;
+  contain: paint;
+}
+
+.hydro-problem-list .hydro-data-table tbody tr,
+.hydro-record-list .hydro-data-table tbody tr,
+.hydro-contest-item,
+.hydro-training-item,
+.hydro-training-enrolled-item {
+  animation: none;
+}
+
+.hydro-record-filter,
+.hydro-record-select-dropdown,
+.hydro-training-header,
+.hydro-scratchpad-statement__header,
+.hydro-scratchpad-toolbar,
+.hydro-scratchpad-select-dropdown {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.hydro-panel,
+.hydro-card,
+.hydro-content-card,
+.hydro-table-wrap,
+.hydro-paginator,
+.hydro-empty-state,
+.mantine-Card-root,
+.mantine-Paper-root,
+.mantine-Modal-content,
+.mantine-Drawer-content,
+.mantine-Popover-dropdown,
+.mantine-Menu-dropdown,
+.mantine-Combobox-dropdown,
+.mantine-Input-input,
+.mantine-PillsInput-input,
+.mantine-SegmentedControl-root,
+.mantine-Tooltip-tooltip,
+.mantine-Badge-root {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hydro-reveal,
+  .hydro-problem-list,
+  .hydro-contest-feature-grid,
+  .hydro-training-list,
+  .hydro-record-filter,
+  .hydro-record-list,
+  .hydro-scratchpad-shell {
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
 }
 
 @media (max-width: 640px) {

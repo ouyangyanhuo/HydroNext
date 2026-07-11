@@ -2,7 +2,7 @@ import 'allotment/dist/style.css';
 
 import {
   ActionIcon, Badge, Button, Divider, Drawer, Group, NumberInput,
-  Paper, Select, Stack, Tabs, Text, Textarea, Title, Tooltip,
+  Paper, Select, Stack, Text, Title, Tooltip,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -171,15 +171,32 @@ export function Scratchpad({
   }, []);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setClock(Date.now()), 1000);
+    const cooldownEnd = Math.max(cooldownUntil.pretest, cooldownUntil.submit);
+    if (cooldownEnd <= Date.now()) return undefined;
+    const timer = window.setInterval(() => {
+      const now = Date.now();
+      setClock(now);
+      if (now >= cooldownEnd) window.clearInterval(timer);
+    }, 1000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [cooldownUntil.pretest, cooldownUntil.submit]);
 
   useEffect(() => {
-    const update = () => setViewportWidth(document.documentElement.clientWidth || window.innerWidth);
+    let frame: number | null = null;
+    const update = () => {
+      if (frame !== null) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = null;
+        const nextWidth = document.documentElement.clientWidth || window.innerWidth;
+        setViewportWidth((current) => (current === nextWidth ? current : nextWidth));
+      });
+    };
     update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    window.addEventListener('resize', update, { passive: true });
+    return () => {
+      window.removeEventListener('resize', update);
+      if (frame !== null) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   useEffect(() => {
@@ -506,68 +523,68 @@ export function Scratchpad({
                     />
                   </Allotment.Pane>
                   <Allotment.Pane preferredSize={190} minSize={130}>
-                    <Stack gap={0} className="hydro-scratchpad-console h-full">
+                    <Stack gap={0} className="hydro-scratchpad-console h-full min-h-0 overflow-hidden">
                       <Divider />
-                      <Tabs
-                        value={activePanel}
-                        onChange={setActivePanel}
-                        keepMounted={false}
-                        className="hydro-scratchpad-tabs flex h-full min-h-0 flex-col"
-                      >
-                        <Tabs.List className="hydro-scratchpad-console__tabs" px="xs">
-                          <Tabs.Tab value="records">{t('Records')}</Tabs.Tab>
-                          <Tabs.Tab value="pretest" leftSection={<IconTerminal2 size={14} />}>{t('Self Test')}</Tabs.Tab>
-                        </Tabs.List>
-                        <Tabs.Panel value="records" className="min-h-0 flex-1">
-                          <Paper p="sm" className="hydro-scratchpad-console__panel h-full overflow-auto rounded-none">
-                            {renderResult(submitResult, t('No records found'))}
-                          </Paper>
-                        </Tabs.Panel>
-                        <Tabs.Panel value="pretest" className="hydro-scratchpad-pretest min-h-0 flex-1">
-                          <div className="hydro-scratchpad-io-grid">
-                            <Paper p={0} className="hydro-scratchpad-io-panel flex h-full min-h-0 flex-col overflow-hidden rounded-none">
-                              <div className="hydro-scratchpad-io-panel__header">
-                                <Text size="xs" fw={750}>{t('Input')}</Text>
-                                <Text size="xs" c="dimmed">stdin</Text>
-                              </div>
-                              <div className="hydro-scratchpad-input-wrap min-h-0 flex-1">
-                                <Textarea
+                      <div className="hydro-scratchpad-console-workspace">
+                        <div className="hydro-scratchpad-console__tabs" role="tablist" aria-label={t('Self Test')}>
+                          <button
+                            type="button"
+                            role="tab"
+                            aria-selected={activePanel === 'records'}
+                            className="hydro-scratchpad-console__tab"
+                            onClick={() => setActivePanel('records')}
+                          >
+                            {t('Records')}
+                          </button>
+                          <button
+                            type="button"
+                            role="tab"
+                            aria-selected={activePanel === 'pretest'}
+                            className="hydro-scratchpad-console__tab"
+                            onClick={() => setActivePanel('pretest')}
+                          >
+                            <IconTerminal2 size={14} />
+                            {t('Self Test')}
+                          </button>
+                        </div>
+                        <div className="hydro-scratchpad-console__body">
+                          {activePanel === 'records' ? (
+                            <div className="hydro-scratchpad-console__panel">
+                              {renderResult(submitResult, t('No records found'))}
+                            </div>
+                          ) : (
+                            <div className="hydro-scratchpad-io-grid">
+                              <section className="hydro-scratchpad-io-panel">
+                                <header className="hydro-scratchpad-io-panel__header">
+                                  <Text size="xs" fw={750}>{t('Input')}</Text>
+                                  <Text size="xs" c="dimmed">stdin</Text>
+                                </header>
+                                <textarea
                                   value={input}
-                                  onChange={(e) => setInput(e.currentTarget.value)}
+                                  onChange={(event) => setInput(event.currentTarget.value)}
                                   placeholder={`${t('Input')}…`}
                                   className="hydro-scratchpad-input"
-                                  styles={{
-                                    input: {
-                                      height: '100%',
-                                      overflow: 'auto',
-                                      fontFamily: 'var(--hydro-font-mono)',
-                                      fontSize: '13px',
-                                      resize: 'none',
-                                    },
-                                    root: { height: '100%' },
-                                    wrapper: { height: '100%' },
-                                  }}
+                                  aria-label={`${t('Self Test')} ${t('Input')}`}
+                                  spellCheck={false}
                                 />
-                              </div>
-                            </Paper>
-                            <Paper
-                              p={0}
-                              className={[
-                                'hydro-scratchpad-io-panel hydro-scratchpad-io-panel--output',
-                                'flex h-full min-h-0 flex-col overflow-hidden rounded-none',
-                              ].join(' ')}
-                            >
-                              <div className="hydro-scratchpad-io-panel__header">
-                                <Text size="xs" fw={750}>{t('Output')}</Text>
-                                <Text size="xs" c="dimmed">stdout / stderr</Text>
-                              </div>
-                              <div className="hydro-scratchpad-output min-h-0 flex-1 overflow-auto font-mono text-xs">
-                                {renderPretestOutput(displayedPretestResult)}
-                              </div>
-                            </Paper>
-                          </div>
-                        </Tabs.Panel>
-                      </Tabs>
+                              </section>
+                              <section className="hydro-scratchpad-io-panel hydro-scratchpad-io-panel--output">
+                                <header className="hydro-scratchpad-io-panel__header">
+                                  <Text size="xs" fw={750}>{t('Output')}</Text>
+                                  <Text size="xs" c="dimmed">stdout / stderr</Text>
+                                </header>
+                                <div
+                                  className="hydro-scratchpad-output font-mono text-xs"
+                                  tabIndex={0}
+                                  aria-label={`${t('Self Test')} ${t('Output')}`}
+                                >
+                                  {renderPretestOutput(displayedPretestResult)}
+                                </div>
+                              </section>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </Stack>
                   </Allotment.Pane>
                 </Allotment>

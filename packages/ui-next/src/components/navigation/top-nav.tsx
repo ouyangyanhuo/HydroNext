@@ -130,12 +130,12 @@ function ThemeToggle() {
     frameRef.current = window.requestAnimationFrame(() => {
       setTransition((current) => (current ? { ...current, expanded: true } : current));
     });
-    timersRef.current.push(window.setTimeout(() => setTheme(targetTheme), 900));
+    timersRef.current.push(window.setTimeout(() => setTheme(targetTheme), 690));
     timersRef.current.push(window.setTimeout(() => {
       setTransition(null);
       setAnimating(false);
       timersRef.current = [];
-    }, 980));
+    }, 760));
   };
 
   const toggleTheme = async (event: MouseEvent<HTMLButtonElement>) => {
@@ -174,8 +174,8 @@ function ThemeToggle() {
           ],
         },
         {
-          duration: 900,
-          easing: 'cubic-bezier(.22, 1, .36, 1)',
+          duration: 720,
+          easing: 'cubic-bezier(.4, 0, .2, 1)',
           pseudoElement: '::view-transition-new(root)',
         } as KeyframeAnimationOptions,
       );
@@ -204,7 +204,7 @@ function ThemeToggle() {
           <IconSun
             size={18}
             stroke={2.2}
-            className={`absolute transition-all duration-300 ${
+            className={`absolute transition-[transform,opacity] duration-200 ${
               theme === 'light' ? 'rotate-0 scale-100 opacity-100' : 'rotate-90 scale-0 opacity-0'
             }`}
             style={{ transitionTimingFunction: 'var(--hydro-ease-spring)' }}
@@ -212,7 +212,7 @@ function ThemeToggle() {
           <IconLetterP
             size={18}
             stroke={2.2}
-            className={`absolute transition-all duration-300 ${
+            className={`absolute transition-[transform,opacity] duration-200 ${
               theme === 'paper' ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'
             }`}
             style={{ transitionTimingFunction: 'var(--hydro-ease-spring)' }}
@@ -220,7 +220,7 @@ function ThemeToggle() {
           <IconMoon
             size={18}
             stroke={2.2}
-            className={`absolute transition-all duration-300 ${
+            className={`absolute transition-[transform,opacity] duration-200 ${
               theme === 'dark' ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'
             }`}
             style={{ transitionTimingFunction: 'var(--hydro-ease-spring)' }}
@@ -230,10 +230,11 @@ function ThemeToggle() {
       {transition && (
         <div
           aria-hidden="true"
-          className="pointer-events-none fixed left-0 top-0 z-[9999] h-0.5 w-0.5 rounded-full transition-transform duration-[900ms] ease-out"
+          className="pointer-events-none fixed left-0 top-0 z-[9999] h-0.5 w-0.5 rounded-full transition-transform duration-[720ms]"
           style={{
             background: transition.targetTheme === 'dark' ? '#0b1114' : transition.targetTheme === 'paper' ? '#efe8de' : '#eef3f6',
             transform: `translate(${transition.x}px, ${transition.y}px) translate(-50%, -50%) scale(${transition.expanded ? transition.radius : 0})`,
+            transitionTimingFunction: 'cubic-bezier(.4, 0, .2, 1)',
           }}
         />
       )}
@@ -293,7 +294,7 @@ function AccentColorPicker() {
       position="bottom-end"
       withArrow
       shadow="md"
-      closeOnClickOutside={false}
+      closeOnClickOutside
       classNames={{ dropdown: 'hydro-topbar-dropdown' }}
     >
       <Popover.Target>
@@ -436,7 +437,7 @@ export function TopNav() {
                 </Button>
               ))}
               <div
-                className="absolute bottom-0 h-[3px] rounded-full bg-[var(--hydro-primary)] transition-all duration-300 ease-out"
+                className="absolute bottom-0 h-[3px] rounded-full bg-[var(--hydro-primary)] transition-[left,width] duration-200 ease-out"
                 style={{ left: indicator.left, width: indicator.width }}
               />
             </div>
