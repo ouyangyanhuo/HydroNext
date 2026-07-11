@@ -23,7 +23,7 @@ export function MarkdownEditor({
   const panelHeight = Math.max(minRows * 24, 160);
 
   return (
-    <Tabs value={activeTab} onChange={setActiveTab}>
+    <Tabs value={activeTab} onChange={setActiveTab} keepMounted={false}>
       <Tabs.List>
         <Tabs.Tab value="write">{t('Write')}</Tabs.Tab>
         <Tabs.Tab value="preview">{t('Preview')}</Tabs.Tab>

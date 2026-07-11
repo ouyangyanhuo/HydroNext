@@ -64,18 +64,18 @@ async function getMonaco() {
     getWorker(_: any, label: string) {
       const lang = label.toLowerCase();
       if (['javascript', 'typescript'].includes(lang)) {
-        return import('monaco-editor/esm/vs/language/typescript/ts.worker?worker').then((w) => new w.default());
+        return import('monaco-editor/esm/vs/language/typescript/ts.worker?worker').then(({ default: Worker }) => new Worker());
       }
       if (['json'].includes(lang)) {
-        return import('monaco-editor/esm/vs/language/json/json.worker?worker').then((w) => new w.default());
+        return import('monaco-editor/esm/vs/language/json/json.worker?worker').then(({ default: Worker }) => new Worker());
       }
       if (['css', 'scss', 'less'].includes(lang)) {
-        return import('monaco-editor/esm/vs/language/css/css.worker?worker').then((w) => new w.default());
+        return import('monaco-editor/esm/vs/language/css/css.worker?worker').then(({ default: Worker }) => new Worker());
       }
       if (['html'].includes(lang)) {
-        return import('monaco-editor/esm/vs/language/html/html.worker?worker').then((w) => new w.default());
+        return import('monaco-editor/esm/vs/language/html/html.worker?worker').then(({ default: Worker }) => new Worker());
       }
-      return import('monaco-editor/esm/vs/editor/editor.worker?worker').then((w) => new w.default());
+      return import('monaco-editor/esm/vs/editor/editor.worker?worker').then(({ default: Worker }) => new Worker());
     },
   };
   monacoInstance = m;
@@ -141,41 +141,55 @@ export function CodeEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<typeof import('monaco-editor') | null>(null);
+  const onChangeRef = useRef(onChange);
+  const onContentChangeRef = useRef(onContentChange);
+  const onMountRef = useRef(onMount);
+  const initialOptionsRef = useRef({ value, language, readOnly, minimap, fontSize, tabSize, wordWrap, theme });
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+    onContentChangeRef.current = onContentChange;
+    onMountRef.current = onMount;
+  }, [onChange, onContentChange, onMount]);
 
   useEffect(() => {
     let disposed = false;
     getMonaco().then((monaco) => {
       if (disposed || !containerRef.current) return;
+      const initial = initialOptionsRef.current;
       monacoRef.current = monaco;
       const editor = monaco.editor.create(containerRef.current, {
-        value,
-        language: resolveMonacoLang(language),
-        readOnly,
-        minimap: { enabled: minimap },
+        value: initial.value,
+        language: resolveMonacoLang(initial.language),
+        readOnly: initial.readOnly,
+        minimap: { enabled: initial.minimap },
         scrollBeyondLastLine: false,
-        fontSize,
+        fontSize: initial.fontSize,
         lineNumbers: 'on',
         automaticLayout: true,
-        tabSize,
+        tabSize: initial.tabSize,
         insertSpaces: true,
-        wordWrap,
-        theme: getDefaultTheme(theme || loadStoredEditorConfig().theme),
+        wordWrap: initial.wordWrap,
+        theme: getDefaultTheme(initial.theme || loadStoredEditorConfig().theme),
       });
       editorRef.current = editor;
-      applyEditorTheme(monaco, theme || loadStoredEditorConfig().theme);
-      if (onChange || onContentChange) {
+      applyEditorTheme(monaco, initial.theme || loadStoredEditorConfig().theme);
+      if (onChangeRef.current || onContentChangeRef.current) {
         editor.onDidChangeModelContent((event: any) => {
-          if (onChange) onChange(editor.getValue());
-          if (onContentChange) onContentChange(event, editor);
+          onChangeRef.current?.(editor.getValue());
+          onContentChangeRef.current?.(event, editor);
         });
       }
-      onMount?.(editor, monaco);
+      onMountRef.current?.(editor, monaco);
 
       setLoading(false);
     });
-    return () => { disposed = true; editorRef.current?.dispose(); };
-  }, [language, readOnly]);
+    return () => {
+      disposed = true;
+      editorRef.current?.dispose();
+    };
+  }, []);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -188,11 +202,12 @@ export function CodeEditor({
     editor.updateOptions({
       fontSize,
       tabSize,
+      readOnly,
       insertSpaces: true,
       minimap: { enabled: minimap },
       wordWrap,
     });
-  }, [fontSize, tabSize, minimap, wordWrap]);
+  }, [fontSize, tabSize, minimap, readOnly, wordWrap]);
 
   useEffect(() => {
     const monaco = monacoRef.current;

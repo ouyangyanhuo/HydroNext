@@ -1,5 +1,4 @@
-import {
-  Badge, Button, Card, Checkbox, Group, Modal, NumberInput,
+import { Button, Card, Checkbox, Group, Modal, NumberInput,
   Paper, SimpleGrid, Stack, Table, Text, Title,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';

@@ -1,7 +1,7 @@
 import { Badge, Button, Checkbox, Group, Paper, ScrollArea, Stack, Table, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
 import { useSessionStore } from '@/stores/session';
@@ -37,7 +37,11 @@ function toBigIntValue(value: any): bigint {
     const text = value.trim();
     if (!text) return 0n;
     if (text.startsWith('BigInt::')) {
-      try { return BigInt(text.slice(8)); } catch { return 0n; }
+      try {
+        return BigInt(text.slice(8));
+      } catch {
+        return 0n;
+      }
     }
     try {
       return BigInt(text);
@@ -74,29 +78,29 @@ function hasPerm(rolePerm: any, permKey: any) {
   }
 }
 
+function initialSelection(roles: any[], families: [string, any[]][]) {
+  const selected: Record<string, Set<number>> = {};
+  for (const role of roles) {
+    const values = new Set<number>();
+    for (const [, perms] of families) {
+      for (const perm of perms) {
+        const index = bitIndex(perm.key);
+        if (hasPerm(role.perm, perm.key)) values.add(index);
+      }
+    }
+    selected[role._id] = values;
+  }
+  return selected;
+}
+
 export default function DomainPermissionPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const domainId = useSessionStore((s) => s.ui.domainId);
   const roles = useMemo(() => normalizeRoles(args.roles), [args.roles]);
   const families = useMemo(() => normalizeFamilies(args.PERMS_BY_FAMILY), [args.PERMS_BY_FAMILY]);
-  const [selected, setSelected] = useState<Record<string, Set<number>>>({});
+  const [selected, setSelected] = useState<Record<string, Set<number>>>(() => initialSelection(roles, families));
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const next: Record<string, Set<number>> = {};
-    for (const role of roles) {
-      const values = new Set<number>();
-      for (const [, perms] of families) {
-        for (const perm of perms as any[]) {
-          const index = bitIndex(perm.key);
-          if (hasPerm(role.perm, perm.key)) values.add(index);
-        }
-      }
-      next[role._id] = values;
-    }
-    setSelected(next);
-  }, [roles, families]);
 
   const toggle = (roleId: string, value: number, checked: boolean) => {
     setSelected((prev) => {

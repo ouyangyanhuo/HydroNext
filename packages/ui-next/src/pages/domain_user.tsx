@@ -57,15 +57,7 @@ function formatUserLabel(user: UserSearchItem) {
   return user.displayName ? `${user.uname} (${user.displayName})` : user.uname;
 }
 
-function AddUserDialog({
-  opened,
-  onClose,
-  roleOptions,
-  defaultRole,
-  domainId,
-  loading,
-  onSubmit,
-}: {
+interface AddUserDialogProps {
   opened: boolean;
   onClose: () => void;
   roleOptions: { value: string, label: string }[];
@@ -73,7 +65,17 @@ function AddUserDialog({
   domainId: string;
   loading: boolean;
   onSubmit: (uids: number[], role: string) => void | Promise<void>;
-}) {
+}
+
+function AddUserDialogContent({
+  opened,
+  onClose,
+  roleOptions,
+  defaultRole,
+  domainId,
+  loading,
+  onSubmit,
+}: AddUserDialogProps) {
   const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [role, setRole] = useState(defaultRole);
@@ -83,23 +85,9 @@ function AddUserDialog({
   const [searchError, setSearchError] = useState('');
 
   useEffect(() => {
-    if (!opened) return;
-    setQuery('');
-    setResults([]);
-    setSelectedUsers([]);
-    setSearchError('');
-    setRole(defaultRole);
-  }, [opened, defaultRole]);
-
-  useEffect(() => {
     if (!opened) return undefined;
     const trimmed = query.trim();
-    if (!trimmed) {
-      setResults([]);
-      setSearchError('');
-      setSearching(false);
-      return undefined;
-    }
+    if (!trimmed) return undefined;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setSearching(true);
@@ -151,7 +139,15 @@ function AddUserDialog({
           label={t('Search users by username or UID')}
           placeholder={t('Type to search users')}
           value={query}
-          onChange={(e) => setQuery(e.currentTarget.value)}
+          onChange={(e) => {
+            const nextQuery = e.currentTarget.value;
+            setQuery(nextQuery);
+            if (!nextQuery.trim()) {
+              setResults([]);
+              setSearchError('');
+              setSearching(false);
+            }
+          }}
           rightSection={searching ? <Loader size={16} /> : null}
           autoFocus
         />
@@ -236,6 +232,11 @@ function AddUserDialog({
   );
 }
 
+function AddUserDialog(props: AddUserDialogProps) {
+  const stateKey = `${props.opened ? 'open' : 'closed'}:${props.defaultRole}`;
+  return <AddUserDialogContent key={stateKey} {...props} />;
+}
+
 export default function DomainUserPage() {
   const { args } = usePageData();
   const { t } = useI18n();
@@ -252,18 +253,9 @@ export default function DomainUserPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState('');
 
-  useEffect(() => {
-    setRoleDraft((prev) => Object.fromEntries(users.map((user: any) => [
-      user._id,
-      prev[user._id] || user.role || 'default',
-    ])));
-  }, [users]);
-
-  useEffect(() => {
-    if (!roleOptions.some((option) => option.value === bulkRole)) {
-      setBulkRole(roleOptions[0]?.value || 'default');
-    }
-  }, [bulkRole, roleOptions]);
+  const validBulkRole = roleOptions.some((option) => option.value === bulkRole)
+    ? bulkRole
+    : (roleOptions[0]?.value || 'default');
 
   const selectableUsers = users.filter((user: any) => user._id !== currentUser?._id);
   const allSelected = selectableUsers.length > 0 && selectableUsers.every((user: any) => selected.includes(user._id));
@@ -281,7 +273,7 @@ export default function DomainUserPage() {
       if (!res.ok || data.error) {
         notifications.show({ title: formatErrorMessage(data.error, t('Operation failed')), message: '', color: 'red' });
       } else if (data.redirect) {
-        window.location.href = data.redirect;
+        window.location.assign(data.redirect);
       } else {
         notifications.show({ title: successMessage, message: '', color: 'green' });
         if (reload) window.location.reload();
@@ -408,11 +400,11 @@ export default function DomainUserPage() {
             </Button>
           </Group>
           <Group gap="xs">
-            <Select size="xs" w={160} data={roleOptions} value={bulkRole} onChange={(value) => setBulkRole(value || 'default')} />
+            <Select size="xs" w={160} data={roleOptions} value={validBulkRole} onChange={(value) => setBulkRole(value || 'default')} />
             <Button
               disabled={!selected.length}
               loading={loading === 'set_users'}
-              onClick={() => post({ operation: 'set_users', uids: selected, role: bulkRole, join: false }, t('Saved'))}
+              onClick={() => post({ operation: 'set_users', uids: selected, role: validBulkRole, join: false }, t('Saved'))}
             >
               {t('Set Roles for Selected User')}
             </Button>

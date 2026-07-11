@@ -41,6 +41,9 @@ export interface CodeReplayProps {
   };
 }
 
+const EMPTY_EVENTS: ReplayEvent[] = [];
+const EMPTY_SNAPSHOTS: ReplaySnapshot[] = [];
+
 function applyEvent(code: string, event: ReplayEvent) {
   if (event.changes?.length) {
     let next = code;
@@ -66,6 +69,11 @@ function eventTime(event: ReplayEvent) {
 function formatReplayTime(ms: number) {
   const seconds = Math.floor(ms / 1000);
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function replayTimeAt(events: ReplayEvent[], duration: number, index: number) {
+  if (index <= 0) return 0;
+  return events[index - 1] ? eventTime(events[index - 1]) : duration;
 }
 
 function buildStates(events: ReplayEvent[], snapshots: ReplaySnapshot[], initialCode: string, finalCode?: string) {
@@ -96,8 +104,8 @@ export function CodeReplay({
   replay,
 }: CodeReplayProps) {
   const { t } = useI18n();
-  const events = replay?.events || eventsProp || [];
-  const snapshots = replay?.snapshots || snapshotsProp || [];
+  const events = replay?.events || eventsProp || EMPTY_EVENTS;
+  const snapshots = replay?.snapshots || snapshotsProp || EMPTY_SNAPSHOTS;
   const initialCode = replay?.initialCode ?? initialCodeProp;
   const finalCode = replay?.finalCode ?? finalCodeProp;
   const replayLanguage = replay?.lang || language;
@@ -113,37 +121,28 @@ export function CodeReplay({
   const maxIndex = Math.max(0, states.length - 1);
   const code = states[currentIndex] || '';
   const duration = sortedEvents.length ? eventTime(sortedEvents[sortedEvents.length - 1]) : 0;
-  const timeAt = (index: number) => {
-    if (index <= 0) return 0;
-    return sortedEvents[index - 1] ? eventTime(sortedEvents[index - 1]) : duration;
-  };
-
   const stop = () => {
-    if (timerRef.current) window.clearTimeout(timerRef.current);
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     timerRef.current = null;
     setPlaying(false);
   };
 
   useEffect(() => {
-    if (!playing) return undefined;
-    if (currentIndex >= maxIndex) {
-      setPlaying(false);
-      return undefined;
-    }
-    const delay = Math.max(20, (timeAt(currentIndex + 1) - timeAt(currentIndex)) / Number(speed || 1));
+    if (!playing || currentIndex >= maxIndex) return undefined;
+    const delay = Math.max(20, (
+      replayTimeAt(sortedEvents, duration, currentIndex + 1)
+      - replayTimeAt(sortedEvents, duration, currentIndex)
+    ) / Number(speed || 1));
     timerRef.current = window.setTimeout(() => {
-      setCurrentIndex((prev) => Math.min(maxIndex, prev + 1));
+      const nextIndex = Math.min(maxIndex, currentIndex + 1);
+      setCurrentIndex(nextIndex);
+      if (nextIndex >= maxIndex) setPlaying(false);
     }, delay);
     return () => {
-      if (timerRef.current) window.clearTimeout(timerRef.current);
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
       timerRef.current = null;
     };
-  }, [playing, currentIndex, maxIndex, speed]);
-
-  useEffect(() => {
-    setCurrentIndex(0);
-    setPlaying(false);
-  }, [states]);
+  }, [currentIndex, duration, maxIndex, playing, sortedEvents, speed]);
 
   const handleReset = () => {
     stop();
@@ -160,9 +159,15 @@ export function CodeReplay({
       stop();
       return;
     }
-    if (currentIndex >= maxIndex) setCurrentIndex(0);
-    else setCurrentIndex((prev) => Math.min(maxIndex, prev + 1));
-    setPlaying(true);
+    if (maxIndex === 0) return;
+    if (currentIndex >= maxIndex) {
+      setCurrentIndex(0);
+      setPlaying(true);
+      return;
+    }
+    const nextIndex = Math.min(maxIndex, currentIndex + 1);
+    setCurrentIndex(nextIndex);
+    setPlaying(nextIndex < maxIndex);
   };
 
   return (
@@ -183,7 +188,9 @@ export function CodeReplay({
               {t('Next Step')}
             </Button>
             <Badge size="xs">{currentIndex}/{maxIndex}</Badge>
-            <Text size="xs" c="dimmed">{formatReplayTime(timeAt(currentIndex))} / {formatReplayTime(duration)}</Text>
+            <Text size="xs" c="dimmed">
+              {formatReplayTime(replayTimeAt(sortedEvents, duration, currentIndex))} / {formatReplayTime(duration)}
+            </Text>
           </Group>
           <Slider
             value={currentIndex}

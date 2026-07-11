@@ -1,5 +1,6 @@
 import { Button, Card, Checkbox, Group, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DataTable } from '@/components/common/data-table';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { PageHeader } from '@/components/common/page-header';
@@ -29,6 +30,7 @@ export default function TrainingFilesPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [deleteOpened, setDeleteOpened] = useState(false);
 
   const toggleSelected = (name: string) => {
     setSelected((current) => {
@@ -41,7 +43,6 @@ export default function TrainingFilesPage() {
 
   const removeSelected = async () => {
     if (!selected.size) return;
-    if (!window.confirm(t('Confirm to delete the selected files?'))) return;
     setLoading(true);
     setError('');
     try {
@@ -53,7 +54,10 @@ export default function TrainingFilesPage() {
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
       if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Delete failed')));
-      else window.location.reload();
+      else {
+        setDeleteOpened(false);
+        window.location.reload();
+      }
     } catch (err: any) {
       setError(err?.message || t('Network error'));
     } finally {
@@ -98,7 +102,7 @@ export default function TrainingFilesPage() {
         <Stack gap="lg">
           <PageHeader title={t('Files')}>
             <Group gap="xs">
-              <Button size="xs" variant="light" disabled={!selected.size} loading={loading} onClick={removeSelected}>
+              <Button size="xs" variant="light" disabled={!selected.size} loading={loading} onClick={() => setDeleteOpened(true)}>
                 {t('Remove Selected')}
               </Button>
             </Group>
@@ -155,6 +159,15 @@ export default function TrainingFilesPage() {
           </Card>
         </Stack>
       </div>
+      <ConfirmDialog
+        opened={deleteOpened}
+        onClose={() => setDeleteOpened(false)}
+        onConfirm={removeSelected}
+        title={t('Remove Selected')}
+        message={t('Confirm to delete the selected files?')}
+        confirmLabel={t('Delete')}
+        loading={loading}
+      />
     </div>
   );
 }

@@ -497,9 +497,9 @@ function FileSection({
           defaultValue: renameSingleTarget || '',
         }]}
         onClose={() => setRenameSingleTarget(null)}
-        onSubmit={(values) => {
+        onSubmit={async (values) => {
           if (!renameSingleTarget) return;
-          return submitRenameSingle(renameSingleTarget, String(values.filename || ''));
+          await submitRenameSingle(renameSingleTarget, String(values.filename || ''));
         }}
         confirmLabel={t('Confirm')}
         cancelLabel={t('Cancel')}

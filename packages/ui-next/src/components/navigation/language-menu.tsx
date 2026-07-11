@@ -16,7 +16,7 @@ export function LanguageMenu() {
   const currentLang = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
   const handleChange = (langCode: string) => {
-    window.location.href = `/language/${langCode}`;
+    window.location.assign(`/language/${langCode}`);
   };
 
   return (

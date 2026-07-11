@@ -31,11 +31,15 @@ function getLocaleData(lang?: string): Record<string, string> {
     try {
         const locales = (global as any).Hydro?.locales;
         if (!locales) return {};
-        // Try requested language, then zh, then en
-        for (const l of [lang, 'zh', 'en'].filter(Boolean)) {
-            const dict = locales[l!]?.[Symbol.for('iterate')] || {};
-            if (Object.keys(dict).length > 0) return dict;
+        const normalized = (lang || 'zh').replace(/-/g, '_');
+        const base = normalized.split('_')[0];
+        const candidates = Array.from(new Set(['en', base, normalized]));
+        const result: Record<string, string> = {};
+        for (const candidate of candidates) {
+            Object.assign(result, locales[candidate]?.[Symbol.for('iterate')] || {});
         }
+        if (Object.keys(result).length) return result;
+        return locales.zh?.[Symbol.for('iterate')] || {};
     } catch { /* ignore */ }
     return {};
 }

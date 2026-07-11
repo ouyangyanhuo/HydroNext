@@ -1,4 +1,4 @@
-import { Badge, Button, Card, Checkbox, FileInput, Group, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Button, Card, Checkbox, FileInput, Group, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconArrowLeft, IconFileZip } from '@tabler/icons-react';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';

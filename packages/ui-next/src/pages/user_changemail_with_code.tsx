@@ -23,7 +23,7 @@ export default function UserChangemailWithCodePage() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [navigate]);
 
   return (
     <Center className="min-h-[50vh]">

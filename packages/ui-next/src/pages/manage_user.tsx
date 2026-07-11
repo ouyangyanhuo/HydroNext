@@ -2,7 +2,7 @@ import { formatErrorMessage } from '@/utils/error';
 import { Badge, Button, Card, Group, Modal, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
@@ -34,7 +34,9 @@ export default function ManageUserPage() {
   const totalPages = args.upcount || 1;
   const totalUsers = args.ucount || users.length;
   const initialQuery = args.q || '';
-  const [query, setQuery] = useState(initialQuery);
+  const [queryDraft, setQueryDraft] = useState({ source: initialQuery, value: initialQuery });
+  const query = queryDraft.source === initialQuery ? queryDraft.value : initialQuery;
+  const setQuery = (value: string) => setQueryDraft({ source: initialQuery, value });
   const [dialogUser, setDialogUser] = useState<ManagedUser | null>(null);
   const [deleteUser, setDeleteUser] = useState<ManagedUser | null>(null);
   const [password, setPassword] = useState('');
@@ -45,10 +47,6 @@ export default function ManageUserPage() {
   const pageUrl = useMemo(() => buildUrl('manage_user', {}, initialQuery ? { q: initialQuery } : {}), [buildUrl, initialQuery]);
   const isProtectedUser = (user: ManagedUser) => user._id <= 0 || user._id === 1 || user.priv === -1;
   const isBannedUser = (user: ManagedUser) => user.priv === 0;
-
-  useEffect(() => {
-    setQuery(initialQuery);
-  }, [initialQuery]);
 
   const search = () => {
     const nextQuery = query.trim();

@@ -1,4 +1,4 @@
-import { Button, Stack, Divider, Text, Group } from '@mantine/core';
+import { Button, Divider, Stack } from '@mantine/core';
 import { useI18n } from '@/hooks/use-i18n';
 
 interface OAuthMethod {
@@ -20,7 +20,7 @@ export function OAuthButtons({ methods, redirect = '' }: OAuthButtonsProps) {
 
   const handleOAuth = (method: OAuthMethod) => {
     const url = `/oauth/${method.id}${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`;
-    window.location.href = url;
+    window.location.assign(url);
   };
 
   return (

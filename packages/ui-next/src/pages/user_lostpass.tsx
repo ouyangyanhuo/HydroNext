@@ -6,9 +6,8 @@ import { AuthPanel } from '@/components/auth/auth-panel';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function UserLostpassPage() {
-  
   const { t } = useI18n();
-  
+
   const [mail, setMail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -16,7 +15,9 @@ export default function UserLostpassPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); setError(''); setSuccess('');
+    setLoading(true);
+    setError('');
+    setSuccess('');
     try {
       const res = await fetch('/lostpass', {
         method: 'POST',
@@ -26,7 +27,11 @@ export default function UserLostpassPage() {
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else setSuccess(t('Password reset email sent. Please check your inbox.'));
-    } catch { setError('Network error'); } finally { setLoading(false); }
+    } catch {
+      setError(t('Network error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

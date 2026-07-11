@@ -15,7 +15,7 @@ const PASTE_LIMIT = 30;
 
 function isTargetPage(): boolean {
   const path = window.location.pathname;
-  return /^(\/d\/[^/]+)?\/p\/[^/]+$/.test(path);
+  return /^(?:\/d\/[^/]+)?\/p\/[^/]+$/.test(path);
 }
 
 function notifyOverLimit(length: number) {
@@ -46,7 +46,7 @@ function blockPaste(ev: Event) {
 export const pasteGuardPlugin: PluginDefinition = {
   name: 'contest-settings.paste-guard',
   setup(_api) {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return undefined;
 
     const origAddEventListener = HTMLTextAreaElement.prototype.addEventListener;
     const patchedTextareas = new WeakSet<HTMLTextAreaElement>();

@@ -20,8 +20,8 @@ function md5(str: string): string {
   view.setUint32(paddedLength - 4, Math.floor(bitLength / 0x100000000), true);
 
   let a0 = 0x67452301;
-  let b0 = 0xefcdab89;
-  let c0 = 0x98badcfe;
+  let b0 = 0xEFCDAB89;
+  let c0 = 0x98BADCFE;
   let d0 = 0x10325476;
   const s = [
     7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,

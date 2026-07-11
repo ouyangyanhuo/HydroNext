@@ -5,7 +5,6 @@ import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function UserLostpassWithCodePage() {
-  
   const { t } = useI18n();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
@@ -15,8 +14,12 @@ export default function UserLostpassWithCodePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) { setError(t('Passwords do not match')); return; }
-    setLoading(true); setError('');
+    if (password !== confirmPassword) {
+      setError(t('Passwords do not match'));
+      return;
+    }
+    setLoading(true);
+    setError('');
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
@@ -26,7 +29,11 @@ export default function UserLostpassWithCodePage() {
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else navigate('/login');
-    } catch { setError('Network error'); } finally { setLoading(false); }
+    } catch {
+      setError(t('Network error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

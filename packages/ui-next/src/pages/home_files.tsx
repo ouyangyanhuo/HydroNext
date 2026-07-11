@@ -112,7 +112,8 @@ export default function HomeFilesPage() {
                     </Button>
                   </Table.Td>
                 </Table.Tr>
-              );})}
+              );
+})}
             </Table.Tbody>
           </Table>
           </ScrollArea>

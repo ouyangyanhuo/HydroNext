@@ -26,14 +26,29 @@ export function useWebSocket({
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const pendingMessages = useRef<any[]>([]);
   const shouldReconnect = useRef(autoReconnect);
+  const connectRef = useRef<() => void>(() => {});
+  const handlersRef = useRef({ onMessage, onOpen, onClose, onError });
   const ui = useSessionStore((s) => s.ui);
+
+  useEffect(() => {
+    handlersRef.current = { onMessage, onOpen, onClose, onError };
+  }, [onClose, onError, onMessage, onOpen]);
 
   const connect = useCallback(() => {
     if (!enabled) return;
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+    if (wsRef.current?.readyState === WebSocket.CONNECTING || wsRef.current?.readyState === WebSocket.OPEN) return;
 
     const wsPrefix = ui.ws_prefix || '/';
-    const fullUrl = url.startsWith('ws') ? url : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${wsPrefix}${url}`;
+    const prefixUrl = new URL(wsPrefix, window.location.href);
+    prefixUrl.protocol = prefixUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    if (!prefixUrl.pathname.endsWith('/')) prefixUrl.pathname += '/';
+    const fullUrl = url.startsWith('ws') ? url : new URL(url.replace(/^\/+/, ''), prefixUrl).toString();
+
+    const scheduleReconnect = () => {
+      if (!shouldReconnect.current) return;
+      clearTimeout(reconnectTimer.current);
+      reconnectTimer.current = setTimeout(() => connectRef.current(), reconnectInterval);
+    };
 
     try {
       const ws = new WebSocket(fullUrl);
@@ -43,13 +58,13 @@ export function useWebSocket({
         for (const message of pendingMessages.current.splice(0)) {
           ws.send(JSON.stringify(message));
         }
-        onOpen?.();
+        handlersRef.current.onOpen?.();
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          onMessage?.(data);
+          handlersRef.current.onMessage?.(data);
         } catch {
           // Non-JSON message
         }
@@ -57,26 +72,27 @@ export function useWebSocket({
 
       ws.onclose = () => {
         // console.log('[Hydro WS] Disconnected:', url);
-        onClose?.();
-        if (shouldReconnect.current) {
-          reconnectTimer.current = setTimeout(connect, reconnectInterval);
-        }
+        if (wsRef.current === ws) wsRef.current = null;
+        handlersRef.current.onClose?.();
+        scheduleReconnect();
       };
 
       ws.onerror = (err) => {
         // console.warn('[Hydro WS] Error:', url);
-        onError?.(err);
+        handlersRef.current.onError?.(err);
         ws.close();
       };
 
       wsRef.current = ws;
     } catch (err) {
       // console.warn('[Hydro WS] Failed to connect:', err);
-      if (shouldReconnect.current) {
-        reconnectTimer.current = setTimeout(connect, reconnectInterval);
-      }
+      scheduleReconnect();
     }
-  }, [enabled, url, ui.ws_prefix, onMessage, onOpen, onClose, onError, autoReconnect, reconnectInterval]);
+  }, [enabled, reconnectInterval, ui.ws_prefix, url]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   const send = useCallback((data: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

@@ -8,7 +8,10 @@ function formatFileSize(size?: number) {
   const units = ['B', 'KB', 'MB', 'GB'];
   let value = size;
   let unit = 0;
-  while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit += 1; }
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
   return `${value >= 10 || unit === 0 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`;
 }
 
@@ -58,8 +61,9 @@ function PdfViewer({ url }: { url: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    let loadingTask: { promise: Promise<any>, destroy: () => Promise<void> } | undefined;
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) return undefined;
     container.innerHTML = '';
 
     (async () => {
@@ -70,7 +74,7 @@ function PdfViewer({ url }: { url: string }) {
           import.meta.url,
         ).toString();
 
-        const loadingTask = pdfjsLib.getDocument({ url });
+        loadingTask = pdfjsLib.getDocument({ url });
         const pdf = await loadingTask.promise;
         if (cancelled) return;
         setPageCount(pdf.numPages);
@@ -98,7 +102,10 @@ function PdfViewer({ url }: { url: string }) {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      void loadingTask?.destroy();
+    };
   }, [url]);
 
   return (
@@ -120,25 +127,30 @@ function DocxViewer({ url }: { url: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) return undefined;
     container.innerHTML = '';
 
     (async () => {
       try {
         const { renderAsync } = await import('docx-preview');
-        const resp = await fetch(url);
+        const resp = await fetch(url, { signal: controller.signal });
+        if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
         const buffer = await resp.arrayBuffer();
         if (cancelled) return;
         await renderAsync(buffer, container, undefined, { className: 'docx-preview' });
       } catch (err: any) {
-        if (!cancelled) setError(err?.message || 'Failed to load document');
+        if (!cancelled && err?.name !== 'AbortError') setError(err?.message || 'Failed to load document');
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, [url]);
 
   return (
@@ -153,40 +165,44 @@ function DocxViewer({ url }: { url: string }) {
 export interface FilePreviewModalProps {
   opened: boolean;
   onClose: () => void;
-  file: { name: string; size: number } | null;
+  file: { name: string, size: number } | null;
   fileUrl: string;
   canEdit?: boolean;
   onSave?: (filename: string, content: string) => Promise<void>;
 }
 
-export function FilePreviewModal({ opened, onClose, file, fileUrl, canEdit = false, onSave }: FilePreviewModalProps) {
+function FilePreviewModalContent({ opened, onClose, file, fileUrl, canEdit = false, onSave }: Omit<FilePreviewModalProps, 'file'> & { file: NonNullable<FilePreviewModalProps['file']> }) {
   const { t } = useI18n();
   const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const ext = getFileExt(file.name);
+  const shouldLoadText = opened && file.size > 0 && file.size <= 8 * 1024 * 1024 && isPreviewableText(ext);
+  const [loading, setLoading] = useState(shouldLoadText);
+  const [editing, setEditing] = useState(file.size === 0);
   const [saving, setSaving] = useState(false);
-  const ext = file ? getFileExt(file.name) : '';
 
   useEffect(() => {
-    if (!opened || !file) return;
-    setContent('');
-    setEditing(false);
-    if (file.size === 0) {
-      setEditing(true);
-      return;
-    }
-    if (isPreviewableText(ext) && file.size <= 8 * 1024 * 1024) {
-      setLoading(true);
-      fetch(fileUrl)
-        .then((r) => r.text())
-        .then((text) => { setContent(text); setEditing(true); })
-        .catch(() => setContent(''))
-        .finally(() => setLoading(false));
-    }
-  }, [opened, file, fileUrl, ext]);
+    if (!shouldLoadText) return undefined;
+    const controller = new AbortController();
+    fetch(fileUrl, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+        return response.text();
+      })
+      .then((text) => {
+        setContent(text);
+        setEditing(true);
+      })
+      .catch((error) => {
+        if (error?.name !== 'AbortError') setContent('');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [fileUrl, shouldLoadText]);
 
   const handleSave = async () => {
-    if (!file || !onSave) return;
+    if (!onSave) return;
     setSaving(true);
     try {
       await onSave(file.name, content);
@@ -195,8 +211,6 @@ export function FilePreviewModal({ opened, onClose, file, fileUrl, canEdit = fal
       setSaving(false);
     }
   };
-
-  if (!file) return null;
 
   const isDoc = ext === 'pdf' || isDocx(ext) || isOldOffice(ext);
 
@@ -222,8 +236,8 @@ export function FilePreviewModal({ opened, onClose, file, fileUrl, canEdit = fal
             <source src={fileUrl} />
           </video>
         )}
-        {ext === 'pdf' && <PdfViewer url={fileUrl} />}
-        {isDocx(ext) && <DocxViewer url={fileUrl} />}
+        {ext === 'pdf' && <PdfViewer key={fileUrl} url={fileUrl} />}
+        {isDocx(ext) && <DocxViewer key={fileUrl} url={fileUrl} />}
         {loading && <Text size="sm" c="dimmed">{t('Loading...')}</Text>}
         {editing && (
           <CodeEditor
@@ -243,7 +257,7 @@ export function FilePreviewModal({ opened, onClose, file, fileUrl, canEdit = fal
           <Text size="sm" c="dimmed">{t('Cannot preview this file type.')}</Text>
         )}
         <Group justify="flex-end" gap="xs">
-          <Button variant="default" size="xs" onClick={() => window.open(fileUrl)}>
+          <Button variant="default" size="xs" onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}>
             {t('Download')}
           </Button>
           {canEdit && editing && onSave && (
@@ -255,4 +269,10 @@ export function FilePreviewModal({ opened, onClose, file, fileUrl, canEdit = fal
       </Stack>
     </Modal>
   );
+}
+
+export function FilePreviewModal(props: FilePreviewModalProps) {
+  if (!props.file) return null;
+  const stateKey = `${props.opened ? 'open' : 'closed'}:${props.file.name}:${props.file.size}:${props.fileUrl}`;
+  return <FilePreviewModalContent key={stateKey} {...props} file={props.file} />;
 }

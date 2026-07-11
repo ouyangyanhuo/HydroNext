@@ -1,6 +1,6 @@
 import { formatErrorMessage } from '@/utils/error';
 import { Badge, Button, Card, Checkbox, Group, NumberInput, Select, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -59,18 +59,19 @@ export default function ManageScriptPage() {
   const navigate = useNavigate();
   const scripts = useMemo(() => normalizeScripts(args.scripts || {}), [args.scripts]);
   const [selected, setSelected] = useState(scripts[0]?.id || '');
+  const selectedScript = useMemo(() => scripts.find((script) => script.id === selected), [scripts, selected]);
+  const fields = useMemo(() => schemaFields(selectedScript), [selectedScript]);
   const [rawArgs, setRawArgs] = useState('{}');
-  const [formArgs, setFormArgs] = useState<Record<string, any>>({});
+  const [formArgs, setFormArgs] = useState<Record<string, any>>(() => initialValues(fields));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const selectedScript = useMemo(() => scripts.find((script) => script.id === selected), [scripts, selected]);
-  const fields = useMemo(() => schemaFields(selectedScript), [selectedScript]);
-
-  useEffect(() => {
-    setFormArgs(initialValues(fields));
+  const selectScript = (scriptId: string) => {
+    const nextScript = scripts.find((script) => script.id === scriptId);
+    setSelected(scriptId);
+    setFormArgs(initialValues(schemaFields(nextScript)));
     setRawArgs('{}');
-  }, [selected, fields]);
+  };
 
   const handleRun = async () => {
     if (!selected) return;
@@ -112,7 +113,7 @@ export default function ManageScriptPage() {
               label={t('Script')}
               data={scripts.map((script) => ({ value: script.id, label: `${script.id} - ${t(script.description || 'None')}` }))}
               value={selected}
-              onChange={(value) => setSelected(value || '')}
+              onChange={(value) => selectScript(value || '')}
               searchable
             />
             {fields.length ? (

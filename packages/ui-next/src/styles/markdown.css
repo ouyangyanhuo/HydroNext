@@ -1,3 +1,5 @@
+@import 'katex/dist/katex.min.css';
+
 .hydro-markdown {
   --markdown-code-bg: color-mix(in srgb, var(--hydro-bg) 72%, var(--hydro-surface-muted));
   --markdown-code-keyword: #7048a8;
@@ -459,6 +461,30 @@
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0.3rem 0.15rem;
+}
+
+.hydro-markdown .hydro-math--block {
+  display: block;
+  width: 100%;
+  margin: 1.25em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.35rem 0.2rem;
+  text-align: center;
+  overscroll-behavior-inline: contain;
+}
+
+.hydro-markdown .hydro-math:not(.hydro-math--block) {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: -0.12em;
+}
+
+.hydro-markdown .katex-error {
+  border-bottom: 1px dashed var(--hydro-danger);
+  color: var(--hydro-danger);
+  font-family: var(--hydro-font-mono);
+  white-space: pre-wrap;
 }
 
 .hydro-markdown .katex {

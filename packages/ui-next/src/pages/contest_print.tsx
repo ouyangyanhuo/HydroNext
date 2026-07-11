@@ -1,6 +1,6 @@
 import { Badge, Button, Group, Paper, Stack, Table, Text, TextInput, Textarea } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
@@ -9,6 +9,16 @@ import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { PERM, useHasPerm } from '@/hooks/use-permission';
 import { formatErrorMessage } from '@/utils/error';
+
+function escapePrintHtml(value: unknown) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  }[character] || character));
+}
 
 function printPlainTask(task: any, udoc: any) {
   const printWindow = window.open('', '_blank', 'width=800,height=600,popup=1');
@@ -19,13 +29,13 @@ function printPlainTask(task: any, udoc: any) {
     count += Math.ceil(line.length / 100) || 1;
     return count <= 300;
   }).join('\n');
-  printWindow.document.write(`<!doctype html><html><head><title>${task.title}</title><style>
+  printWindow.document.write(`<!doctype html><html><head><title>${escapePrintHtml(task.title)}</title><style>
     body{font-family:monospace;margin:10px;font-size:14px;line-height:1.2}
     .header{border-bottom:1px solid #ccc;margin-bottom:8px}
     pre{white-space:pre-wrap}
   </style></head><body>
-    <div class="header">[${udoc?.uname || task.owner}] ${udoc?.school || ''} ${udoc?.displayName || ''}<br>Filename: ${task.title}</div>
-    <pre>${content.replace(/[&<>]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch] || ch))}</pre>
+    <div class="header">[${escapePrintHtml(udoc?.uname || task.owner)}] ${escapePrintHtml(udoc?.school)} ${escapePrintHtml(udoc?.displayName)}<br>Filename: ${escapePrintHtml(task.title)}</div>
+    <pre>${escapePrintHtml(content)}</pre>
   </body></html>`);
   printWindow.document.close();
   setTimeout(() => printWindow.print(), 300);
@@ -43,7 +53,7 @@ export default function ContestPrintPage() {
   const [udict, setUdict] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState('');
 
-  const post = async (payload: Record<string, any>, fallback = t('Failed')) => {
+  const post = useCallback(async (payload: Record<string, any>, fallback = t('Failed')) => {
     const res = await fetch(window.location.href, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -52,9 +62,9 @@ export default function ContestPrintPage() {
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, fallback));
     return data;
-  };
+  }, [t]);
 
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     try {
       const data = await post({ operation: 'get_print_task' });
       setTasks(data.tasks || []);
@@ -62,13 +72,16 @@ export default function ContestPrintPage() {
     } catch {
       // The page itself still works when task polling is unavailable.
     }
-  };
+  }, [post]);
 
   useEffect(() => {
-    loadTasks();
+    const initialTimer = window.setTimeout(loadTasks, 0);
     const timer = window.setInterval(loadTasks, 10000);
-    return () => window.clearInterval(timer);
-  }, []);
+    return () => {
+      window.clearTimeout(initialTimer);
+      window.clearInterval(timer);
+    };
+  }, [loadTasks]);
 
   const submitText = async () => {
     if (!content.trim()) return;

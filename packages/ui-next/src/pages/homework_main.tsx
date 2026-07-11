@@ -5,6 +5,7 @@ import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
+import { useCurrentTime } from '@/hooks/use-time';
 
 export default function HomeworkMainPage() {
   const { args } = usePageData();
@@ -13,6 +14,7 @@ export default function HomeworkMainPage() {
   const page = args.page || 1;
   const hpcount = args.hpcount || 1;
   const tsdict = args.tsdict || {};
+  const now = useCurrentTime();
 
   return (
     <Stack gap="lg">
@@ -22,7 +24,6 @@ export default function HomeworkMainPage() {
       ) : (
         <Stack gap="xs">
           {hdocs.map((h: any) => {
-            const now = Date.now();
             const endAt = new Date(h.endAt).getTime();
             const isFinished = now >= endAt;
             return (

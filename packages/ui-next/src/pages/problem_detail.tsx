@@ -1,8 +1,10 @@
 import { Badge, Button, Card, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { FormDialog } from '@/components/common/form-dialog';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Scratchpad } from '@/components/editor/scratchpad';
@@ -16,6 +18,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, hasPrivValue, PERM, PRIV, useHasPerm } from '@/hooks/use-permission';
+import { useDeadlinePassed } from '@/hooks/use-time';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 import { extractLocalizedContent } from '@/utils/i18n-content';
@@ -31,6 +34,20 @@ type ProblemTransitionDocument = Document & {
 
 function safeFilename(name: string) {
   return name.replace(/[\\/:*?"<>|]/g, '_');
+}
+
+function parseContentObject(content: any): Record<string, any> | null {
+  if (!content) return null;
+  if (typeof content === 'object') return content;
+  if (typeof content === 'string' && content.trim().startsWith('{') && content.trim().endsWith('}')) {
+    try {
+      const parsed = JSON.parse(content);
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 async function downloadProblemZip(pdoc: any, title: string) {
@@ -85,20 +102,6 @@ async function downloadProblemZip(pdoc: any, title: string) {
   a.download = `${safeFilename(title || root)}.zip`;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-function parseContentObject(content: any): Record<string, any> | null {
-  if (!content) return null;
-  if (typeof content === 'object') return content;
-  if (typeof content === 'string' && content.trim().startsWith('{') && content.trim().endsWith('}')) {
-    try {
-      const parsed = JSON.parse(content);
-      if (parsed && typeof parsed === 'object') return parsed;
-    } catch {
-      return null;
-    }
-  }
-  return null;
 }
 
 function contentLanguages(content: any) {
@@ -255,20 +258,26 @@ function ProblemSidebar({
   const buildUrl = useBuildUrl();
   const pid = pdoc.pid || pdoc.docId;
   const [rejudgeLoading, setRejudgeLoading] = useState(false);
+  const [rejudgeOpened, setRejudgeOpened] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
   const [copyLoading, setCopyLoading] = useState(false);
   const [copyOpened, setCopyOpened] = useState(false);
   const [copyError, setCopyError] = useState('');
 
   const rejudge = async () => {
-    if (!window.confirm(t('Confirm rejudge this problem?'))) return;
     setRejudgeLoading(true);
     try {
-      await fetch(window.location.href, {
+      const response = await fetch(window.location.href, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ operation: 'rejudge', pid: pdoc.docId }),
       });
+      const data = await response.json();
+      if (!response.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Operation failed')));
+      notifications.show({ title: t('Rejudge request submitted'), message: '', color: 'green' });
+      setRejudgeOpened(false);
+    } catch (error: any) {
+      notifications.show({ title: error?.message || t('Operation failed'), message: '', color: 'red' });
     } finally {
       setRejudgeLoading(false);
     }
@@ -279,7 +288,7 @@ function ProblemSidebar({
     try {
       await downloadProblemZip(pdoc, pdoc.title || String(pid));
     } catch (err: any) {
-      window.alert(err?.message || t('Download failed'));
+      notifications.show({ title: err?.message || t('Download failed'), message: '', color: 'red' });
     } finally {
       setDownloadLoading(false);
     }
@@ -348,7 +357,7 @@ function ProblemSidebar({
           )}
 
           {canRejudge && (
-            <Button onClick={rejudge} variant="subtle" fullWidth size="sm" justify="flex-start" loading={rejudgeLoading}>
+            <Button onClick={() => setRejudgeOpened(true)} variant="subtle" fullWidth size="sm" justify="flex-start" loading={rejudgeLoading}>
               {t('Rejudge all submissions')}
             </Button>
           )}
@@ -429,6 +438,15 @@ function ProblemSidebar({
         loading={copyLoading}
         error={copyError}
       />
+      <ConfirmDialog
+        opened={rejudgeOpened}
+        onClose={() => setRejudgeOpened(false)}
+        onConfirm={rejudge}
+        title={t('Rejudge all submissions')}
+        message={t('Confirm rejudge this problem?')}
+        confirmLabel={t('Rejudge')}
+        loading={rejudgeLoading}
+      />
     </Stack>
   );
 }
@@ -482,18 +500,20 @@ export default function ProblemDetailPage() {
   const fallbackCanSubmit = hasPermValue(user.perm, PERM.PERM_SUBMIT_PROBLEM);
   const accepted = psdoc?.status === 1;
   const isAuthenticated = Boolean(user._id && user._id !== 0);
-  const contestClosed = Boolean(args.tdoc) && (() => {
-    const now = Date.now();
+  const contestDeadline = (() => {
+    if (!args.tdoc) return undefined;
+    const deadlines: number[] = [];
     const endAt = new Date(args.tdoc.endAt).getTime();
-    if (Number.isFinite(endAt) && endAt <= now) return true;
+    if (Number.isFinite(endAt)) deadlines.push(endAt);
     const tsEndAt = args.tsdoc?.endAt ? new Date(args.tsdoc.endAt).getTime() : Number.NaN;
-    if (Number.isFinite(tsEndAt) && tsEndAt <= now) return true;
+    if (Number.isFinite(tsEndAt)) deadlines.push(tsEndAt);
     const startAt = args.tsdoc?.startAt ? new Date(args.tsdoc.startAt).getTime() : Number.NaN;
     if (args.tdoc.duration && Number.isFinite(startAt)) {
-      return startAt + Number(args.tdoc.duration) * 60 * 60 * 1000 <= now;
+      deadlines.push(startAt + Number(args.tdoc.duration) * 60 * 60 * 1000);
     }
-    return false;
+    return deadlines.length ? Math.min(...deadlines) : undefined;
   })();
+  const contestClosed = useDeadlinePassed(contestDeadline);
   const canSubmitProblem = Boolean(args.canSubmitProblem ?? (tid ? args.mode === 'contest' : fallbackCanSubmit));
   const canEditProblem = Boolean(args.canEditProblem ?? hasPermValue(user.perm, PERM.PERM_EDIT_PROBLEM));
   const canConfigureProblem = Boolean(args.canConfigureProblem ?? (canEditProblem && !pdoc.reference));

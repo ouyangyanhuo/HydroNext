@@ -40,7 +40,7 @@ export default function HomeDomainPage() {
       if (data.error) {
         notifications.show({ title: formatErrorMessage(data.error, t('Failed')), message: '', color: 'red' });
       } else if (data.redirect) {
-        window.location.href = data.redirect;
+        window.location.assign(data.redirect);
       } else {
         window.location.reload();
       }
@@ -65,7 +65,7 @@ export default function HomeDomainPage() {
       if (data.error) {
         notifications.show({ title: formatErrorMessage(data.error, t('Failed')), message: '', color: 'red' });
       } else if (data.redirect) {
-        window.location.href = data.redirect;
+        window.location.assign(data.redirect);
       } else {
         window.location.reload();
       }

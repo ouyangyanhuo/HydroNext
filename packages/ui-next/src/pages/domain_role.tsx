@@ -1,6 +1,5 @@
 import { formatErrorMessage } from '@/utils/error';
 import { Badge, Button, Checkbox, Group, Paper, Stack, Table, Text } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { FormDialog } from '@/components/common/form-dialog';

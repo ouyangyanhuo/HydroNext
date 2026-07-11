@@ -584,3 +584,62 @@ Rose: 로즈
 Sans-serif: 산세리프
 Serif: 세리프
 Your Status: 내 상태
+## Reused from existing Hydro Korean locale sources
+(Not changed): 수정되지 않음
+Active Sessions: 활성 세션
+All Contests: 전체 대회
+All {0} Contests: 전체 {0} 대회
+Attended: 참가함
+Begin Date: 시작 날짜
+Cancel Score: 채점 취소
+Create a contest: 대회 만들기
+Created By: 제작자
+Description: 문제 설명
+Duration (hours): 지속시간 (h)
+Enroll Training: 학습 참여
+Enrolled: 참여함
+Enrollees: 참여 없음
+Information: 정보
+Invitation Code: 초대 코드
+Judged At: 채점 시각
+Judged By: 채점자
+Logout All Sessions: 모든 세션에서 로그아웃
+Logout This Session: 이 세션에서 로그아웃
+Manager: 관리
+Memory Cost: 메모리
+Not Attended: 참여하지 않음
+Not Enrolled: 참가하지 않음
+Params: 파라미터
+Partic.: 참여자
+Peak Memory: 메모리
+Ready (☆▽☆): 준비 완료! (☆▽☆)
+Rejudge: 재채점
+Run Pretest: 프리테스트 실행
+Save All Changes: 변경사항 저장
+Sorry, there are no training plans.: 학습 계획 없음
+This section cannot be challenged at present, so please complete the following sections first: 아래 섹션을 먼저 해결해 주세요.
+Time Cost: 시간
+Total Time: 총 시간
+View Details: 세부사항
+setting_customize: 개인 설정
+setting_display: 표시 설정
+setting_domain: 그룹 설정
+setting_info: 정보 설정
+setting_server: 서버 설정
+setting_session: 세션 설정
+setting_storage: 설정 저장
+setting_usage: 언어 설정
+
+## Reused by matching identical Chinese translations in Hydro locale sources
+Auto: 자동
+Import User: 사용자 불러오기
+New Filename: 새 파일명
+Run Self Test: 프리테스트 실행
+Test Case: 테스트 케이스
+other: 기타
+problem_type.communication: 커뮤니케이션
+problem_type.default: 전통
+problem_type.interactive: 인터랙티브
+problem_type.objective: 객관식
+problem_type.submit_answer: 답안 제출
+粘贴内容超过限制: 붙여넣기 제한 초과

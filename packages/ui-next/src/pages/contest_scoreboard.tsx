@@ -7,7 +7,11 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
+import { useDeadlinePassed } from '@/hooks/use-time';
 import { formatErrorMessage } from '@/utils/error';
+
+const EMPTY_ARRAY: any[] = [];
+const EMPTY_OBJECT: Record<string, any> = {};
 
 function starKey(tdoc: any) {
   return `scoreboard-star/${tdoc.domainId}/${tdoc.docId || tdoc._id}`;
@@ -26,7 +30,7 @@ function isContestOngoing(tdoc: any) {
   return new Date(tdoc.beginAt).getTime() <= now && now <= new Date(tdoc.endAt).getTime();
 }
 
-function CellValue({ cell, canViewRecord }: { cell: any; canViewRecord: boolean }) {
+function CellValue({ cell, canViewRecord }: { cell: any, canViewRecord: boolean }) {
   if (cell.type === 'record' && cell.raw && canViewRecord) {
     return (
       <Link to="record_detail" params={{ rid: cell.raw }} className="no-underline">
@@ -70,12 +74,12 @@ export default function ContestScoreboardPage() {
   const rows = args.rows || [];
   const header = rows[0] || [];
   const bodyRows = rows.slice(1);
-  const tdoc = args.tdoc || {};
+  const tdoc = args.tdoc || EMPTY_OBJECT;
   const tid = tdoc.docId || tdoc._id;
   const udict = args.udict || {};
   const pdict = args.pdict || {};
-  const groups = args.groups || [];
-  const availableViews = args.availableViews || {};
+  const groups = args.groups || EMPTY_ARRAY;
+  const availableViews = args.availableViews || EMPTY_OBJECT;
   const viewRoute = name === 'homework_scoreboard' ? 'homework_scoreboard_view' : 'contest_scoreboard_view';
   const [filter, setFilter] = useState(() => {
     const hash = window.location.hash.slice(1);
@@ -89,6 +93,7 @@ export default function ContestScoreboardPage() {
     }
   });
   const [loading, setLoading] = useState(false);
+  const contestEnded = useDeadlinePassed(tdoc.endAt);
 
   useEffect(() => {
     localStorage.setItem(starKey(tdoc), JSON.stringify(stars));
@@ -175,7 +180,7 @@ export default function ContestScoreboardPage() {
                 {t(String(label))}
               </Button>
             ))}
-            {tdoc.lockAt && !tdoc.unlocked && new Date(tdoc.endAt).getTime() <= Date.now() && (
+            {tdoc.lockAt && !tdoc.unlocked && contestEnded && (
               <Button size="xs" variant="light" onClick={unlock} loading={loading}>{t('Unlock scoreboard')}</Button>
             )}
           </Group>
@@ -189,7 +194,7 @@ export default function ContestScoreboardPage() {
       {tdoc.lockAt && !tdoc.unlocked && (
         <Paper withBorder p="md" className="bg-[var(--hydro-surface)]">
           <Text size="sm" c="dimmed">
-            {new Date(tdoc.endAt).getTime() <= Date.now()
+            {contestEnded
               ? t('Please wait until contest host unfreeze the scoreboard.')
               : t('The scoreboard was frozen.')}
           </Text>

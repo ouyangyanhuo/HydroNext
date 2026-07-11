@@ -1,41 +1,41 @@
-import { useEffect, useMemo, useRef } from 'react';
 import { Box } from '@mantine/core';
-import MarkdownIt from 'markdown-it';
-import markPlugin from 'markdown-it-mark';
 import hljs from 'highlight.js/lib/core';
-import { useSessionStore } from '@/stores/session';
-import { extractLocalizedContent } from '@/utils/i18n-content';
-
-import cpp from 'highlight.js/lib/languages/cpp';
+import bash from 'highlight.js/lib/languages/bash';
 import c from 'highlight.js/lib/languages/c';
-import python from 'highlight.js/lib/languages/python';
+import cpp from 'highlight.js/lib/languages/cpp';
+import csharp from 'highlight.js/lib/languages/csharp';
+import css from 'highlight.js/lib/languages/css';
+import delphi from 'highlight.js/lib/languages/delphi';
+import dockerfile from 'highlight.js/lib/languages/dockerfile';
+import go from 'highlight.js/lib/languages/go';
+import haskell from 'highlight.js/lib/languages/haskell';
 import java from 'highlight.js/lib/languages/java';
 import javascript from 'highlight.js/lib/languages/javascript';
-import typescript from 'highlight.js/lib/languages/typescript';
-import go from 'highlight.js/lib/languages/go';
-import rust from 'highlight.js/lib/languages/rust';
-import ruby from 'highlight.js/lib/languages/ruby';
-import php from 'highlight.js/lib/languages/php';
-import kotlin from 'highlight.js/lib/languages/kotlin';
-import scala from 'highlight.js/lib/languages/scala';
-import swift from 'highlight.js/lib/languages/swift';
-import csharp from 'highlight.js/lib/languages/csharp';
-import bash from 'highlight.js/lib/languages/bash';
-import sql from 'highlight.js/lib/languages/sql';
 import json from 'highlight.js/lib/languages/json';
+import kotlin from 'highlight.js/lib/languages/kotlin';
+import latexLanguage from 'highlight.js/lib/languages/latex';
+import lua from 'highlight.js/lib/languages/lua';
+import markdown from 'highlight.js/lib/languages/markdown';
+import matlab from 'highlight.js/lib/languages/matlab';
+import perl from 'highlight.js/lib/languages/perl';
+import php from 'highlight.js/lib/languages/php';
+import plaintext from 'highlight.js/lib/languages/plaintext';
+import python from 'highlight.js/lib/languages/python';
+import r from 'highlight.js/lib/languages/r';
+import ruby from 'highlight.js/lib/languages/ruby';
+import rust from 'highlight.js/lib/languages/rust';
+import scala from 'highlight.js/lib/languages/scala';
+import sql from 'highlight.js/lib/languages/sql';
+import swift from 'highlight.js/lib/languages/swift';
+import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
-import css from 'highlight.js/lib/languages/css';
-import markdown from 'highlight.js/lib/languages/markdown';
-import latex from 'highlight.js/lib/languages/latex';
-import delphi from 'highlight.js/lib/languages/delphi';
-import haskell from 'highlight.js/lib/languages/haskell';
-import lua from 'highlight.js/lib/languages/lua';
-import r from 'highlight.js/lib/languages/r';
-import perl from 'highlight.js/lib/languages/perl';
-import matlab from 'highlight.js/lib/languages/matlab';
-import dockerfile from 'highlight.js/lib/languages/dockerfile';
-import plaintext from 'highlight.js/lib/languages/plaintext';
+import MarkdownIt from 'markdown-it';
+import markPlugin from 'markdown-it-mark';
+import { useEffect, useMemo, useRef } from 'react';
+import { useSessionStore } from '@/stores/session';
+import { extractLocalizedContent } from '@/utils/i18n-content';
+import { markdownXssPlugin } from './markdown-xss';
 
 hljs.registerLanguage('cpp', cpp);
 hljs.registerLanguage('c', c);
@@ -60,7 +60,7 @@ hljs.registerLanguage('html', xml);
 hljs.registerLanguage('yaml', yaml);
 hljs.registerLanguage('css', css);
 hljs.registerLanguage('markdown', markdown);
-hljs.registerLanguage('latex', latex);
+hljs.registerLanguage('latex', latexLanguage);
 hljs.registerLanguage('delphi', delphi);
 hljs.registerLanguage('pascal', delphi);
 hljs.registerLanguage('haskell', haskell);
@@ -101,7 +101,9 @@ function mathInline(state: any, silent: boolean) {
   }
   const start = state.pos + 1;
   let match = start;
-  while ((match = state.src.indexOf('$', match)) !== -1) {
+  while (match !== -1) {
+    match = state.src.indexOf('$', match);
+    if (match === -1) break;
     let pos = match - 1;
     while (state.src[pos] === '\\') pos -= 1;
     if ((match - pos) % 2) break;
@@ -171,26 +173,19 @@ function mathBlock(state: any, start: number, end: number, silent: boolean) {
 }
 
 function katexPlugin(md: MarkdownIt) {
-  const renderKatex = (latex: string, displayMode = false) => {
-    const katex = (window as any).katex;
-    if (!katex) return escapeHtml(latex);
-    try {
-      latex = latex.replace(/\\def\{\\([a-zA-Z0-9]+)\}/g, '\\def\\$1');
-      return katex.renderToString(latex, { throwOnError: false, strict: 'ignore', displayMode });
-    } catch (error: any) {
-      return `<p class='${displayMode ? 'katex-block ' : ''}katex-error' title='${escapeHtml(error.toString())}'>${escapeHtml(latex)}</p>`;
-    }
-  };
+  const renderPlaceholder = (source: string, displayMode = false) => displayMode
+    ? `<div class="hydro-math hydro-math--block" data-display="true">${escapeHtml(source)}</div>`
+    : `<span class="hydro-math" data-display="false">${escapeHtml(source)}</span>`;
 
   md.inline.ruler.after('escape', 'math_inline', mathInline);
   md.block.ruler.after('blockquote', 'math_block', mathBlock, {
     alt: ['paragraph', 'reference', 'blockquote', 'list'],
   });
-  md.renderer.rules.math_inline = (tokens, idx) => renderKatex(tokens[idx].content);
-  md.renderer.rules.math_block = (tokens, idx) => `${renderKatex(tokens[idx].content, true)}\n`;
+  md.renderer.rules.math_inline = (tokens, idx) => renderPlaceholder(tokens[idx].content);
+  md.renderer.rules.math_block = (tokens, idx) => `${renderPlaceholder(tokens[idx].content, true)}\n`;
 }
 
-const EMBED_REGEX = /@\[([a-zA-Z].+?)\]\((.*?)\)/;
+const EMBED_REGEX = /^@\[([a-zA-Z].+?)\]\((.*?)\)/;
 
 const FILE_ICON_MAP: Record<string, string> = {
   pdf: '📄', doc: '📝', docx: '📝', ppt: '📊', pptx: '📊', xls: '📈', xlsx: '📈',
@@ -213,26 +208,32 @@ function fileMediaPlugin(md: MarkdownIt) {
   });
 
   md.renderer.rules.file_media = (tokens, idx) => {
-    let src = tokens[idx].attrGet('src') || '';
+    const src = tokens[idx].attrGet('src') || '';
     const service = (tokens[idx].attrGet('service') || '').toLowerCase();
     const ext = src.split('.').pop()?.toLowerCase() || service;
     const isFile = src.startsWith('file://') || src.startsWith('./') || src.startsWith('../');
     const displayName = src.replace(/^file:\/\//, '').replace(/^\.\//, '');
     const icon = FILE_ICON_MAP[ext] || FILE_ICON_MAP[service] || '📎';
-    const encodedName = encodeURIComponent(displayName);
+    const normalizedSrc = md.normalizeLink(src);
+    const validExternalUrl = md.validateLink(normalizedSrc);
+    const externalLink = validExternalUrl
+      ? `<a href="${md.utils.escapeHtml(normalizedSrc)}" target="_blank" rel="noopener noreferrer">${icon} ${md.utils.escapeHtml(displayName)}</a>`
+      : `<span class="text-[var(--hydro-text-muted)]">${icon} ${md.utils.escapeHtml(displayName)}</span>`;
     if (service === 'pdf' || ext === 'pdf') {
       if (isFile) {
         return `<div class="file-inline-viewer my-3 rounded-md border border-[var(--hydro-border)] overflow-hidden" data-file-src="${md.utils.escapeHtml(displayName)}" data-file-ext="pdf"><div class="flex items-center justify-center p-8 text-sm text-[var(--hydro-text-muted)]">${icon} Loading PDF...</div></div>`;
       }
-      return `<iframe src="${md.utils.escapeHtml(src)}?noDisposition=1" style="width:100%;min-height:70vh;border:none;" allowfullscreen></iframe>`;
+      if (!validExternalUrl) return externalLink;
+      return `<iframe src="${md.utils.escapeHtml(normalizedSrc)}" style="width:100%;min-height:70vh;border:none;" allowfullscreen></iframe>`;
     }
     if (['docx', 'doc', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext)) {
+      if (!isFile) return externalLink;
       return `<div class="file-inline-viewer my-3 rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] p-4" data-file-src="${md.utils.escapeHtml(displayName)}" data-file-ext="${md.utils.escapeHtml(ext)}"><div class="flex items-center gap-2 text-sm text-[var(--hydro-text-muted)]">${icon} Loading ${md.utils.escapeHtml(displayName)}...</div></div>`;
     }
     if (isFile) {
-      return `<a href="javascript:;" class="file-preview-link hydro-subtle-link inline-flex items-center gap-1 rounded border border-[var(--hydro-border)] bg-[var(--hydro-surface)] px-2 py-1 text-sm font-medium hover:bg-[var(--hydro-surface-muted)]" data-file-src="${md.utils.escapeHtml(displayName)}" data-file-ext="${md.utils.escapeHtml(ext)}">${icon} ${md.utils.escapeHtml(displayName)}</a>`;
+      return `<a href="#" class="file-preview-link hydro-subtle-link inline-flex items-center gap-1 rounded border border-[var(--hydro-border)] bg-[var(--hydro-surface)] px-2 py-1 text-sm font-medium hover:bg-[var(--hydro-surface-muted)]" data-file-src="${md.utils.escapeHtml(displayName)}" data-file-ext="${md.utils.escapeHtml(ext)}">${icon} ${md.utils.escapeHtml(displayName)}</a>`;
     }
-    return `<a href="${md.utils.escapeHtml(src)}" target="_blank" rel="noopener">${icon} ${md.utils.escapeHtml(displayName)}</a>`;
+    return externalLink;
   };
 }
 
@@ -244,6 +245,7 @@ const md = new MarkdownIt({
 md.use(markPlugin);
 md.use(katexPlugin);
 md.use(fileMediaPlugin);
+md.use(markdownXssPlugin);
 
 const LANG_LABELS: Record<string, string> = {
   js: 'JavaScript', javascript: 'JavaScript', ts: 'TypeScript', typescript: 'TypeScript',
@@ -302,14 +304,55 @@ export function MarkdownRenderer({ content, className, language, pid }: Markdown
 
   const html = useMemo(() => {
     if (!rawText) return '';
-    if (rawText.trim().startsWith('<')) return rawText;
     return md.render(rawText);
   }, [rawText]);
 
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!ref.current || !pid) return;
+    const root = ref.current;
+    if (!root) return undefined;
+    const elements = Array.from(root.querySelectorAll<HTMLElement>('.hydro-math:not([data-rendered])'));
+    if (!elements.length) return undefined;
+    let cancelled = false;
+    import('katex').then(({ default: katex }) => {
+      if (cancelled) return;
+      elements.forEach((element) => {
+        const source = (element.textContent || '').replace(/\\def\{\\([a-zA-Z0-9]+)\}/g, '\\def\\$1');
+        try {
+          katex.render(source, element, {
+            displayMode: element.dataset.display === 'true',
+            output: 'htmlAndMathml',
+            strict: 'ignore',
+            throwOnError: false,
+          });
+          element.dataset.rendered = 'true';
+        } catch (error: any) {
+          element.classList.add('katex-error');
+          element.title = String(error?.message || error);
+        }
+      });
+    }).catch((error) => {
+      if (cancelled) return;
+      elements.forEach((element) => {
+        element.classList.add('katex-error');
+        element.title = String(error?.message || error);
+      });
+    });
+    return () => { cancelled = true; };
+  }, [html]);
+
+  useEffect(() => {
+    if (!ref.current || !pid) return undefined;
+    let cancelled = false;
+    const controllers: AbortController[] = [];
+    const blobUrls: string[] = [];
+    const setMessage = (container: Element, message: string, isError = false) => {
+      const element = document.createElement('div');
+      element.className = `p-4 text-sm ${isError ? 'text-red-500' : 'text-[var(--hydro-text-muted)]'}`;
+      element.textContent = message;
+      container.replaceChildren(element);
+    };
 
     // Handle PDF inline viewers
     const pdfContainers = ref.current.querySelectorAll('.file-inline-viewer[data-file-ext="pdf"]');
@@ -320,17 +363,25 @@ export function MarkdownRenderer({ content, className, language, pid }: Markdown
       const filename = container.getAttribute('data-file-src');
       if (!filename) return;
       const url = `${domainPrefix}/p/${pid}/file/${encodeURIComponent(filename)}?type=additional_file`;
-      fetch(url, { redirect: 'follow' })
+      const controller = new AbortController();
+      controllers.push(controller);
+      fetch(url, { redirect: 'follow', signal: controller.signal })
         .then((res) => {
           if (!res.ok) throw new Error(`${res.status}`);
           return res.blob();
         })
         .then((blob) => {
+          if (cancelled) return;
           const blobUrl = URL.createObjectURL(blob);
-          container.innerHTML = `<iframe src="${blobUrl}#toolbar=0&navpanes=0&view=FitH" style="width:100%;height:70vh;border:none;" allowfullscreen></iframe>`;
+          blobUrls.push(blobUrl);
+          const iframe = document.createElement('iframe');
+          iframe.src = `${blobUrl}#toolbar=0&navpanes=0&view=FitH`;
+          iframe.style.cssText = 'width:100%;height:70vh;border:none;';
+          iframe.setAttribute('allowfullscreen', '');
+          container.replaceChildren(iframe);
         })
-        .catch(() => {
-          container.innerHTML = `<div class="p-4 text-sm text-red-500">Failed to load ${filename}</div>`;
+        .catch((error) => {
+          if (!cancelled && error?.name !== 'AbortError') setMessage(container, `Failed to load ${filename}`, true);
         });
     });
 
@@ -342,21 +393,29 @@ export function MarkdownRenderer({ content, className, language, pid }: Markdown
       const filename = container.getAttribute('data-file-src');
       if (!filename) return;
       const url = `${domainPrefix}/p/${pid}/file/${encodeURIComponent(filename)}?type=additional_file`;
-      container.innerHTML = '<div class="text-sm text-[var(--hydro-text-muted)]">Loading...</div>';
-      import('docx-preview').then(({ renderAsync }) =>
-        fetch(url, { redirect: 'follow' })
-          .then((r) => {
-            if (!r.ok) throw new Error(`${r.status}`);
-            return r.arrayBuffer();
+      setMessage(container, 'Loading...');
+      const controller = new AbortController();
+      controllers.push(controller);
+      import('docx-preview').then(({ renderAsync }) => (
+        fetch(url, { redirect: 'follow', signal: controller.signal })
+          .then((response) => {
+            if (!response.ok) throw new Error(`${response.status}`);
+            return response.arrayBuffer();
           })
           .then((buf) => {
-            container.innerHTML = '';
-            renderAsync(buf, container as HTMLElement, undefined, { className: 'docx-preview' });
+            if (cancelled) return undefined;
+            container.replaceChildren();
+            return renderAsync(buf, container as HTMLElement, undefined, { className: 'docx-preview' });
           })
-      ).catch(() => {
-        container.innerHTML = `<div class="p-4 text-sm text-red-500">Failed to load ${filename}</div>`;
+      )).catch((error) => {
+        if (!cancelled && error?.name !== 'AbortError') setMessage(container, `Failed to load ${filename}`, true);
       });
     });
+    return () => {
+      cancelled = true;
+      controllers.forEach((controller) => controller.abort());
+      blobUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
   }, [html, pid]);
 
   if (!html) return null;

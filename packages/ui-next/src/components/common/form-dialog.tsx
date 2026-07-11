@@ -30,10 +30,7 @@ function DomainSelectField({
   const [selectedDomain, setSelectedDomain] = useState<any>(null);
 
   useEffect(() => {
-    if (!search.trim()) {
-      setResults([]);
-      return undefined;
-    }
+    if (!search.trim()) return undefined;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setSearching(true);
@@ -75,15 +72,17 @@ function DomainSelectField({
     onChange(null);
   };
 
-  if (selectedDomain) {
+  if (selectedDomain || value) {
+    const domainId = selectedDomain?._id || value;
+    const domainName = selectedDomain?.name || value;
     return (
       <div>
         <Text size="sm" fw={500} mb={4}>{label}</Text>
         <Group gap="sm">
-          <Avatar src={selectedDomain.avatar} size="sm" radius="xl">{selectedDomain.name?.[0]?.toUpperCase()}</Avatar>
+          <Avatar src={selectedDomain?.avatar} size="sm" radius="xl">{domainName?.[0]?.toUpperCase()}</Avatar>
           <div>
-            <Text size="sm" fw={500}>{selectedDomain.name}</Text>
-            <Text size="xs" c="dimmed">{selectedDomain._id}</Text>
+            <Text size="sm" fw={500}>{domainName}</Text>
+            <Text size="xs" c="dimmed">{domainId}</Text>
           </div>
           <Button size="compact-xs" variant="subtle" color="red" ml="auto" onClick={clearSelection}>
             Change
@@ -99,7 +98,14 @@ function DomainSelectField({
         label={label}
         placeholder={placeholder || 'Search by domain ID or name'}
         value={search}
-        onChange={(e) => setSearch(e.currentTarget.value)}
+        onChange={(e) => {
+          const nextSearch = e.currentTarget.value;
+          setSearch(nextSearch);
+          if (!nextSearch.trim()) {
+            setResults([]);
+            setSearching(false);
+          }
+        }}
         rightSection={searching ? <Text size="xs" c="dimmed">...</Text> : null}
       />
       {results.length > 0 && (
@@ -145,7 +151,7 @@ export interface FormDialogProps {
   error?: string;
 }
 
-export function FormDialog({
+function FormDialogContent({
   opened,
   title,
   fields,
@@ -156,14 +162,9 @@ export function FormDialog({
   loading = false,
   error,
 }: FormDialogProps) {
-  const [values, setValues] = useState<Record<string, FieldValue>>({});
-
-  useEffect(() => {
-    if (!opened) return;
-    setValues(Object.fromEntries(
+  const [values, setValues] = useState<Record<string, FieldValue>>(() => Object.fromEntries(
       fields.map((field) => [field.name, field.defaultValue ?? '']),
     ) as Record<string, FieldValue>);
-  }, [opened]);
 
   const setValue = (name: string, value: FieldValue) => {
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -263,4 +264,9 @@ export function FormDialog({
       </Stack>
     </Modal>
   );
+}
+
+export function FormDialog(props: FormDialogProps) {
+  const defaultsKey = props.fields.map((field) => `${field.name}:${String(field.defaultValue ?? '')}`).join('|');
+  return <FormDialogContent key={`${props.opened ? 'open' : 'closed'}:${defaultsKey}`} {...props} />;
 }

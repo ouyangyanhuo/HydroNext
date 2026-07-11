@@ -95,7 +95,7 @@ const DEFAULT_ABOUT = `
 `.trim();
 
 function parseSections(raw: string) {
-  const sections: { id: string; title: string; content: string }[] = [];
+  const sections: { id: string, title: string, content: string }[] = [];
   for (const line of raw.split('\n')) {
     if (line.startsWith('# ')) {
       const heading = line.slice(2).trim();

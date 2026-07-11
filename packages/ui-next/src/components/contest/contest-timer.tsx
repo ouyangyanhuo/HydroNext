@@ -19,7 +19,7 @@ function formatDuration(ms: number): string {
 
 export function ContestTimer({ beginAt, endAt, onStatusChange }: ContestTimerProps) {
   const { t } = useI18n();
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -36,7 +36,7 @@ export function ContestTimer({ beginAt, endAt, onStatusChange }: ContestTimerPro
     if (isFinished) onStatusChange?.('finished');
     else if (isRunning) onStatusChange?.('running');
     else onStatusChange?.('upcoming');
-  }, [isFinished, isRunning]);
+  }, [isFinished, isRunning, onStatusChange]);
 
   return (
     <Group gap="md">

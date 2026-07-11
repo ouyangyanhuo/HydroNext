@@ -1,4 +1,4 @@
-import { Badge, Button, Card, Group, Progress, Select, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Button, Card, Group, Progress, Select, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
@@ -30,7 +30,7 @@ function formatSubmitAt(value: any) {
   if (!Number.isNaN(direct.getTime())) return direct.toLocaleString();
   const text = String(value);
   if (/^[0-9a-f]{24}$/i.test(text)) {
-    const time = parseInt(text.slice(0, 8), 16) * 1000;
+    const time = Number.parseInt(text.slice(0, 8), 16) * 1000;
     return new Date(time).toLocaleString();
   }
   return '-';

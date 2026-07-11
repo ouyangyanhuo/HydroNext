@@ -21,10 +21,10 @@ export default function CodeReplayPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!dataUrl) return;
+    if (!dataUrl) return undefined;
     let disposed = false;
-    setLoading(true);
-    fetch(dataUrl, { headers: { Accept: 'application/json' } })
+    const controller = new AbortController();
+    fetch(dataUrl, { headers: { Accept: 'application/json' }, signal: controller.signal })
       .then(async (res) => {
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         return await res.json();
@@ -33,12 +33,15 @@ export default function CodeReplayPage() {
         if (!disposed) setData(body);
       })
       .catch((err) => {
-        if (!disposed) setError(err?.message || t('No replay data is available.'));
+        if (!disposed && err?.name !== 'AbortError') setError(err?.message || t('No replay data is available.'));
       })
       .finally(() => {
         if (!disposed) setLoading(false);
       });
-    return () => { disposed = true; };
+    return () => {
+      disposed = true;
+      controller.abort();
+    };
   }, [t, dataUrl]);
 
   const replay = data.replay || {};

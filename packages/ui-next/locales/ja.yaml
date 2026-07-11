@@ -584,3 +584,19 @@ Rose: ローズ
 Sans-serif: サンセリフ
 Serif: セリフ
 Your Status: あなたのステータス
+
+## Reused by matching identical Chinese translations in this locale
+Auto: 自動
+Create a contest: コンテストを作成
+Enrolled: 登録済み
+New Filename: 新しいファイル名
+Ready (☆▽☆): 予定
+Test Case: テストケース
+other: その他
+problem_type.communication: コミュニケーション
+problem_type.default: 伝統
+problem_type.interactive: インタラクティブ
+problem_type.objective: 客観問題
+problem_type.submit_answer: 解答提出
+setting_domain: ドメイン設定
+粘贴内容超过限制: ペースト制限を超過しました

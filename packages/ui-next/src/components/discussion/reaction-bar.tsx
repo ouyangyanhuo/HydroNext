@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Group, Badge, ActionIcon, Tooltip } from '@mantine/core';
+import { Badge, Group, Tooltip } from '@mantine/core';
 import { useI18n } from '@/hooks/use-i18n';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 

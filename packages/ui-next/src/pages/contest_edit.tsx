@@ -215,7 +215,7 @@ export default function ContestEditPage() {
       })
       .catch(() => undefined);
     return () => { disposed = true; };
-  }, [domainId]);
+  }, [domainId, form.pids]);
 
   useEffect(() => {
     let disposed = false;
@@ -236,7 +236,7 @@ export default function ContestEditPage() {
       })
       .catch(() => undefined);
     return () => { disposed = true; };
-  }, [domainId]);
+  }, [domainId, form.maintainer]);
 
   const searchProblems = async (query: string) => {
     if (!domainId) return;

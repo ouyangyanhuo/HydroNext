@@ -6,43 +6,15 @@
  * the current language, with fallback to English, then the first available value.
  */
 
-export function extractLocalizedContent(
-  content: any,
-  language: string,
-): string {
-  if (!content) return '';
-
-  // If it's a string, try to parse as JSON first (backend may serialize multilingual objects)
-  if (typeof content === 'string') {
-    // Only try to parse if it looks like a JSON object
-    if (content.startsWith('{') && content.endsWith('}')) {
-      try {
-        const parsed = JSON.parse(content);
-        if (typeof parsed === 'object' && parsed !== null) {
-          return extractFromObject(parsed, language);
-        }
-      } catch {
-        // Not valid JSON, return as-is
-      }
-    }
-    return content;
-  }
-
-  // If it's a multilingual object like { "en": "...", "zh": "..." }
-  if (typeof content === 'object') {
-    return extractFromObject(content, language);
-  }
-
-  return String(content);
-}
-
 function extractFromObject(obj: Record<string, any>, language: string): string {
-  // Try exact match (e.g., "zh")
-  if (obj[language]) return String(obj[language]);
+  const normalized = (language || 'en').replace(/-/g, '_');
+  const candidates = [language, normalized, normalized.toLowerCase()];
+  for (const candidate of candidates) {
+    if (candidate && obj[candidate] != null) return String(obj[candidate]);
+  }
 
-  // Try base language (e.g., "zh" from "zh_TW")
-  const baseLang = language.split('_')[0];
-  if (baseLang !== language && obj[baseLang]) return String(obj[baseLang]);
+  const baseLang = normalized.split('_')[0];
+  if (obj[baseLang] != null) return String(obj[baseLang]);
 
   // Fallback to English
   if (obj.en) return String(obj.en);
@@ -52,4 +24,27 @@ function extractFromObject(obj: Record<string, any>, language: string): string {
   if (values.length > 0) return String(values[0]);
 
   return '';
+}
+
+export function extractLocalizedContent(
+  content: any,
+  language: string,
+): string {
+  if (!content) return '';
+
+  if (typeof content === 'string') {
+    const trimmed = content.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (typeof parsed === 'object' && parsed !== null) return extractFromObject(parsed, language);
+      } catch {
+        // Keep non-JSON Markdown unchanged.
+      }
+    }
+    return content;
+  }
+
+  if (typeof content === 'object') return extractFromObject(content, language);
+  return String(content);
 }

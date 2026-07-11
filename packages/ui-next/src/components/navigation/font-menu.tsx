@@ -3,7 +3,7 @@ import { IconLetterA } from '@tabler/icons-react';
 import { useI18n } from '@/hooks/use-i18n';
 import { type FontFamily, useSessionStore } from '@/stores/session';
 
-const FONT_OPTIONS: { value: FontFamily; labelKey: string }[] = [
+const FONT_OPTIONS: { value: FontFamily, labelKey: string }[] = [
   { value: 'sans', labelKey: 'Sans-serif' },
   { value: 'serif', labelKey: 'Serif' },
 ];

@@ -12,6 +12,8 @@ import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 import { getLangDisplay, LANG_DISPLAY } from '@/utils/lang-display';
 
+const EMPTY_FILES: any[] = [];
+
 function toText(config: any) {
   if (!config) return '';
   if (typeof config === 'string') return config;
@@ -72,7 +74,7 @@ function fileOptions(testdata: any[]) {
 }
 
 function parseCasePairs(testdata: any[]) {
-  const inputFiles = testdata.filter((file) => /\.(in|input|txt)$/i.test(file.name));
+  const inputFiles = testdata.filter((file) => /\.(?:in|input|txt)$/i.test(file.name));
   return inputFiles.map((file) => {
     const base = file.name.replace(/\.(in|input|txt)$/i, '');
     const output = testdata.find((item) => item.name === `${base}.out` || item.name === `${base}.ans` || item.name === `${base}.output`);
@@ -85,7 +87,7 @@ export default function ProblemConfigPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const pdoc = args.pdoc || {};
-  const testdata = args.testdata || [];
+  const testdata = args.testdata || EMPTY_FILES;
   const [config, setConfig] = useState(toText(args.config || pdoc.config || {}));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -186,8 +188,8 @@ export default function ProblemConfigPage() {
         headers: { Accept: 'application/json' },
         body: form,
       });
-      const type = res.headers.get('content-type') || '';
-      const data = type.includes('json') ? await res.json() : {};
+      const contentType = res.headers.get('content-type') || '';
+      const data = contentType.includes('json') ? await res.json() : {};
       if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Save failed')));
       else {
         notifications.show({ title: t('Save successfully'), message: '', color: 'green' });

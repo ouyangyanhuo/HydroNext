@@ -1,5 +1,4 @@
 import {
-  Badge,
   Button,
   Card,
   Checkbox,

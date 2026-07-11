@@ -1,6 +1,7 @@
 import { Badge, Button, Card, Divider, Group, Paper, Select, Stack, Text, Textarea, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
@@ -42,6 +43,7 @@ export default function ContestClarificationPage() {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
   const replyTarget = tcdocs.find((doc: any) => String(doc._id) === did);
 
@@ -84,7 +86,6 @@ export default function ContestClarificationPage() {
   };
 
   const deleteClarification = async (doc: any) => {
-    if (!window.confirm(t('Confirm to delete this clarification?'))) return;
     setDeleteLoading(String(doc._id));
     try {
       const res = await fetch(window.location.href, {
@@ -96,6 +97,7 @@ export default function ContestClarificationPage() {
       if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Failed')));
       notifications.show({ title: t('Deleted'), message: '', color: 'green' });
       if (did === String(doc._id)) chooseBroadcast();
+      setDeleteTarget(null);
       navigate(window.location.pathname + window.location.search);
     } catch (err: any) {
       notifications.show({ title: err.message || t('Failed'), message: '', color: 'red' });
@@ -144,7 +146,7 @@ export default function ContestClarificationPage() {
                             color="red"
                             variant="subtle"
                             loading={deleteLoading === String(doc._id)}
-                            onClick={() => deleteClarification(doc)}
+                            onClick={() => setDeleteTarget(doc)}
                           >
                             {t('Delete')}
                           </Button>
@@ -213,6 +215,15 @@ export default function ContestClarificationPage() {
           </Card>
         </div>
       </div>
+      <ConfirmDialog
+        opened={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteClarification(deleteTarget)}
+        title={t('Delete')}
+        message={t('Confirm to delete this clarification?')}
+        confirmLabel={t('Delete')}
+        loading={!!deleteLoading}
+      />
     </Stack>
   );
 }

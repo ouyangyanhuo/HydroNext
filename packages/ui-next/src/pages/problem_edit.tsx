@@ -112,7 +112,7 @@ function StatementEditor({
         </div>
         <Badge variant="light" color="gray">{activeLang}</Badge>
       </Group>
-      <Tabs value={activeLang} onChange={(value) => value && setActiveLang(value)}>
+      <Tabs value={activeLang} onChange={(nextLang) => nextLang && setActiveLang(nextLang)}>
         <Tabs.List>
           {langs.map(([lang, label]) => (
             <Tabs.Tab key={lang} value={lang}>
@@ -147,6 +147,39 @@ function isValidProblemId(pid: string) {
   return /^(?:[a-z0-9]{1,10}-)?[a-z][a-z0-9]*$/i.test(pid);
 }
 
+function ProblemFileList({
+  files,
+  baseUrl,
+  emptyLabel,
+  onPreview,
+}: {
+  files: any[];
+  baseUrl: string;
+  emptyLabel: string;
+  onPreview: (file: any) => void;
+}) {
+  if (!files.length) return <Text c="dimmed" size="sm">{emptyLabel}</Text>;
+  return (
+    <Stack gap={0}>
+      {files.map((file: any) => (
+        <Group key={file.name} justify="space-between" py="xs" px="sm" className="rounded-md hover:bg-[var(--hydro-surface)]">
+          <a
+            href={`${baseUrl}/${encodeURIComponent(file.name)}?type=additional_file`}
+            onClick={(event) => {
+              event.preventDefault();
+              onPreview(file);
+            }}
+            className="hydro-subtle-link min-w-0 truncate text-sm font-semibold"
+          >
+            {file.name}
+          </a>
+          <Text size="xs" c="dimmed" className="shrink-0">{formatSize(file.size)}</Text>
+        </Group>
+      ))}
+    </Stack>
+  );
+}
+
 export default function ProblemEditPage() {
   const { args } = usePageData();
   const { t, language } = useI18n();
@@ -178,6 +211,8 @@ export default function ProblemEditPage() {
   const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);
   const [deleteOpened, setDeleteOpened] = useState(false);
   const pid = pdoc.pid || pdoc.docId;
+  const domainPrefix = window.location.pathname.match(/^(\/d\/[^/]+)/)?.[0] || '';
+  const fileBaseUrl = `${domainPrefix}/p/${pid}/file`;
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -259,7 +294,6 @@ export default function ProblemEditPage() {
     formData.append('file', blob, filename);
     formData.append('type', 'additional_file');
     formData.append('operation', 'upload_file');
-    const domainPrefix = window.location.pathname.match(/^(\/d\/[^/]+)/)?.[0] || '';
     const res = await fetch(`${domainPrefix}/p/${pid}/files`, {
       method: 'POST',
       headers: { Accept: 'application/json' },
@@ -271,26 +305,7 @@ export default function ProblemEditPage() {
     navigate(window.location.href);
   };
 
-  const fileUrl = previewFile ? `/p/${pid}/file/${encodeURIComponent(previewFile.name)}?type=additional_file` : '';
-
-  const FileList = ({ files: fileList }: { files: any[] }) => (
-    fileList.length ? (
-      <Stack gap={0}>
-        {fileList.map((file: any) => (
-          <Group key={file.name} justify="space-between" py="xs" px="sm" className="rounded-md hover:bg-[var(--hydro-surface)]">
-            <a
-              href={fileUrl}
-              onClick={(e) => { e.preventDefault(); setPreviewFile(file); }}
-              className="hydro-subtle-link min-w-0 truncate text-sm font-semibold"
-            >
-              {file.name}
-            </a>
-            <Text size="xs" c="dimmed" className="shrink-0">{formatSize(file.size)}</Text>
-          </Group>
-        ))}
-      </Stack>
-    ) : <Text c="dimmed" size="sm">{t('No files')}</Text>
-  );
+  const fileUrl = previewFile ? `${fileBaseUrl}/${encodeURIComponent(previewFile.name)}?type=additional_file` : '';
 
   return (
     <Stack gap="lg">
@@ -408,9 +423,14 @@ export default function ProblemEditPage() {
                 <Title order={3} size="h4">{t('Additional Files')}</Title>
                 <Badge variant="light">{additionalFiles.length} {t('files')}</Badge>
               </Group>
-              <FileList files={additionalFiles} />
+              <ProblemFileList
+                files={additionalFiles}
+                baseUrl={fileBaseUrl}
+                emptyLabel={t('No files')}
+                onPreview={setPreviewFile}
+              />
               <FileDropzone
-                action={`/p/${pid}/files`}
+                action={`${domainPrefix}/p/${pid}/files`}
                 fields={{ type: 'additional_file' }}
                 onComplete={() => navigate(window.location.href)}
               />

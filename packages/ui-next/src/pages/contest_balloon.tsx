@@ -21,7 +21,7 @@ function alphabetic(index: number) {
 }
 
 function makeBalloonDraft(tdoc: any) {
-  const result: Record<string, { color: string; name: string }> = {};
+  const result: Record<string, { color: string, name: string }> = {};
   for (const pid of tdoc.pids || []) {
     result[String(pid)] = {
       color: tdoc.balloon?.[pid]?.color || '#ffffff',
@@ -41,7 +41,7 @@ export default function ContestBalloonPage() {
   const udict = args.udict || {};
   const tid = tdoc.docId || tdoc._id;
   const [opened, setOpened] = useState(false);
-  const [draft, setDraft] = useState<Record<string, { color: string; name: string }>>(() => makeBalloonDraft(tdoc));
+  const [draft, setDraft] = useState<Record<string, { color: string, name: string }>>(() => makeBalloonDraft(tdoc));
   const [loading, setLoading] = useState('');
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { Badge, Button, Card, Divider, Group, Paper, Select, Stack, Table, Text, Textarea, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { TimeDisplay } from '@/components/common/time-display';
 import { ContestTimer } from '@/components/contest/contest-timer';
 import { Link } from '@/components/link';
@@ -14,6 +14,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { PERM, useHasPerm } from '@/hooks/use-permission';
+import { useDeadlinePassed } from '@/hooks/use-time';
 import { formatErrorMessage } from '@/utils/error';
 
 function alphabetic(index: number) {
@@ -358,8 +359,9 @@ export default function ContestDetailPage() {
   const udict = args.udict || {};
   const canEdit = useHasPerm(PERM.PERM_EDIT_CONTEST) || args.canEdit;
   const tid = tdoc._id || tdoc.docId;
-  const contestNotStarted = useMemo(() => tdoc.beginAt && new Date(tdoc.beginAt).getTime() > Date.now(), [tdoc.beginAt]);
-  const contestEnded = useMemo(() => tdoc.endAt && new Date(tdoc.endAt).getTime() <= Date.now(), [tdoc.endAt]);
+  const contestStarted = useDeadlinePassed(tdoc.beginAt);
+  const contestEnded = useDeadlinePassed(tdoc.endAt);
+  const contestNotStarted = Boolean(tdoc.beginAt) && !contestStarted;
 
   const handleAttend = async () => {
     if (contestEnded) {
