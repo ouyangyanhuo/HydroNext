@@ -1,13 +1,14 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Avatar, Badge, Button, Card, FileInput, Group, Radio, Stack, Text, TextInput } from '@mantine/core';
+import { Avatar, Badge, Card, FileInput, Group, Radio, Stack, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useEffect, useState } from 'react';
+import { IconBuildingCommunity, IconSettings, IconUserCircle } from '@tabler/icons-react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { SettingsForm } from '@/components/common/settings-form';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
+import { formatErrorMessage } from '@/utils/error';
 
 const GRAVATAR_MIRROR = '//cravatar.cn/avatar/';
 
@@ -25,6 +26,17 @@ function getAvatarPreviewUrl(type: string, value: string): string {
   return value;
 }
 
+function parseAvatar(value: string, mail: string) {
+  const index = value.indexOf(':');
+  if (index <= 0) return { type: 'gravatar', value: mail || '' };
+  const provider = value.substring(0, index);
+  const providerValue = value.substring(index + 1);
+  if (provider === 'gravatar' || provider === 'qq' || provider === 'github' || provider === 'url') {
+    return { type: provider, value: providerValue };
+  }
+  return { type: 'gravatar', value: mail || '' };
+}
+
 export default function HomeSettingsPage() {
   const { args } = usePageData();
   const { t } = useI18n();
@@ -33,31 +45,20 @@ export default function HomeSettingsPage() {
   const current = args.current || user || {};
   const [loading, setLoading] = useState(false);
 
-  const [avatarType, setAvatarType] = useState('gravatar');
-  const [avatarValue, setAvatarValue] = useState('');
+  const initialAvatar = parseAvatar(current.avatar || '', current.mail || '');
+  const [avatarType, setAvatarType] = useState(() => initialAvatar.type);
+  const [avatarValue, setAvatarValue] = useState(() => initialAvatar.value);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const avatarPreviewUrl = useMemo(
+    () => (avatarType === 'upload' && avatarFile
+      ? URL.createObjectURL(avatarFile)
+      : getAvatarPreviewUrl(avatarType, avatarValue)),
+    [avatarFile, avatarType, avatarValue],
+  );
 
-  useEffect(() => {
-    const avatar = current.avatar || '';
-    const index = avatar.indexOf(':');
-    if (index > 0) {
-      const provider = avatar.substring(0, index);
-      const value = avatar.substring(index + 1);
-      if (provider === 'gravatar' || provider === 'qq' || provider === 'github') {
-        setAvatarType(provider);
-        setAvatarValue(value);
-      } else if (provider === 'url') {
-        setAvatarType('url');
-        setAvatarValue(value);
-      } else {
-        setAvatarType('gravatar');
-        setAvatarValue('');
-      }
-    } else {
-      setAvatarType('gravatar');
-      setAvatarValue('');
-    }
-  }, [current.avatar]);
+  useEffect(() => () => {
+    if (avatarPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(avatarPreviewUrl);
+  }, [avatarPreviewUrl]);
 
   const handleSubmit = async (payload: Record<string, any>) => {
     setLoading(true);
@@ -110,112 +111,131 @@ export default function HomeSettingsPage() {
   };
 
   const sections = [
-    ['preference', t('Preference')],
-    ['account', t('Account')],
-    ['domain', t('Domain')],
+    { key: 'preference', label: t('Preference'), icon: IconSettings },
+    { key: 'account', label: t('Account'), icon: IconUserCircle },
+    { key: 'domain', label: t('Domain'), icon: IconBuildingCommunity },
   ];
+  const currentSection = sections.find((section) => section.key === category) || sections[0];
 
   return (
-    <Stack gap="lg">
-      <PageHeader title={t('Settings')}>
-        <Group gap="xs">
-          {sections.map(([key, label]) => (
-            <Button
+    <main className="hydro-settings-page">
+      <div className="hydro-settings-header">
+        <PageHeader title={t('Settings')} />
+        <Text size="sm" c="dimmed">{currentSection.label}</Text>
+      </div>
+      <div className="hydro-settings-layout">
+        <nav className="hydro-settings-nav" aria-label={t('Settings')}>
+          {sections.map(({ key, label, icon: Icon }) => (
+            <a
               key={key}
-              component="a"
               href={`/home/settings/${key}`}
-              variant={category === key ? 'filled' : 'light'}
-              size="xs"
+              className="hydro-settings-nav__item"
+              aria-current={category === key ? 'page' : undefined}
             >
-              {label}
-            </Button>
+              <Icon size={18} stroke={1.8} />
+              <span>{label}</span>
+            </a>
           ))}
-        </Group>
-      </PageHeader>
-      {category === 'account' && (
-        <Card withBorder p="lg" className="hydro-content-card">
-          <Stack gap="md">
-            <Group justify="space-between">
-              <Text fw={700}>{t('Avatar')}</Text>
-              <Badge variant="light">{avatarType}</Badge>
-            </Group>
-            <Group gap="lg" align="flex-start">
-              <Avatar
-                src={avatarType === 'upload' && avatarFile ? URL.createObjectURL(avatarFile) : getAvatarPreviewUrl(avatarType, avatarValue)}
-                size={96}
-                radius="xl"
-              />
-              <Stack gap="sm" className="flex-1">
-                <Radio.Group
-                  value={avatarType}
-                  onChange={(value) => {
-                    setAvatarType(value);
-                    if (value === 'upload') {
-                      setAvatarValue('');
-                    } else if (value === 'gravatar') {
-                      setAvatarValue(current.mail || '');
-                    } else {
-                      setAvatarValue('');
-                    }
-                  }}
-                >
-                  <Group gap="md">
-                    <Radio value="gravatar" label="Cravatar" />
-                    <Radio value="qq" label="QQ" />
-                    <Radio value="github" label="GitHub" />
-                    <Radio value="upload" label={t('Upload')} />
-                  </Group>
-                </Radio.Group>
-                {avatarType === 'gravatar' && (
-                  <TextInput
-                    placeholder={t('Email for Cravatar')}
-                    value={avatarValue}
-                    onChange={(e) => setAvatarValue(e.currentTarget.value)}
-                    size="sm"
+        </nav>
+        <Stack gap="lg" className="hydro-settings-content">
+          {category === 'account' && (
+            <Card withBorder p="lg" className="hydro-content-card hydro-settings-avatar">
+              <Stack gap="md">
+                <div className="hydro-settings-section__header">
+                  <Text fw={750}>{t('Avatar')}</Text>
+                  <Badge variant="light">{avatarType}</Badge>
+                </div>
+                <Group gap="xl" align="flex-start" wrap="wrap">
+                  <Avatar
+                    src={avatarPreviewUrl}
+                    size={112}
+                    radius="xl"
+                    className="hydro-settings-avatar__preview"
                   />
-                )}
-                {avatarType === 'qq' && (
-                  <TextInput
-                    placeholder={t('QQ Number')}
-                    value={avatarValue}
-                    onChange={(e) => setAvatarValue(e.currentTarget.value)}
-                    size="sm"
-                  />
-                )}
-                {avatarType === 'github' && (
-                  <TextInput
-                    placeholder={t('GitHub Username')}
-                    value={avatarValue}
-                    onChange={(e) => setAvatarValue(e.currentTarget.value)}
-                    size="sm"
-                  />
-                )}
-                {avatarType === 'upload' && (
-                  <FileInput
-                    placeholder={t('Choose avatar file')}
-                    accept="image/*"
-                    value={avatarFile}
-                    onChange={setAvatarFile}
-                    size="sm"
-                  />
-                )}
-                <Text size="xs" c="dimmed">
-                  {t('Cravatar uses your email to fetch avatar from')} cravatar.cn
-                </Text>
+                  <Stack gap="md" className="min-w-64 flex-1">
+                    <Radio.Group
+                      value={avatarType}
+                      onChange={(value) => {
+                        setAvatarType(value);
+                        if (value === 'upload') {
+                          setAvatarValue('');
+                        } else if (value === 'gravatar') {
+                          setAvatarValue(current.mail || '');
+                        } else {
+                          setAvatarValue('');
+                        }
+                      }}
+                    >
+                      <Group gap="xs" className="hydro-settings-avatar__providers">
+                        <Radio value="gravatar" label="Cravatar" />
+                        <Radio value="qq" label="QQ" />
+                        <Radio value="github" label="GitHub" />
+                        <Radio value="url" label="URL" />
+                        <Radio value="upload" label={t('Upload')} />
+                      </Group>
+                    </Radio.Group>
+                    {avatarType === 'gravatar' && (
+                      <TextInput
+                        placeholder={t('Email for Cravatar')}
+                        value={avatarValue}
+                        onChange={(e) => setAvatarValue(e.currentTarget.value)}
+                        size="sm"
+                      />
+                    )}
+                    {avatarType === 'qq' && (
+                      <TextInput
+                        placeholder={t('QQ Number')}
+                        value={avatarValue}
+                        onChange={(e) => setAvatarValue(e.currentTarget.value)}
+                        size="sm"
+                      />
+                    )}
+                    {avatarType === 'github' && (
+                      <TextInput
+                        placeholder={t('GitHub Username')}
+                        value={avatarValue}
+                        onChange={(e) => setAvatarValue(e.currentTarget.value)}
+                        size="sm"
+                      />
+                    )}
+                    {avatarType === 'url' && (
+                      <TextInput
+                        placeholder="https://example.com/avatar.png"
+                        value={avatarValue}
+                        onChange={(e) => setAvatarValue(e.currentTarget.value)}
+                        size="sm"
+                      />
+                    )}
+                    {avatarType === 'upload' && (
+                      <FileInput
+                        placeholder={t('Choose avatar file')}
+                        accept="image/*"
+                        value={avatarFile}
+                        onChange={setAvatarFile}
+                        size="sm"
+                      />
+                    )}
+                    <Text size="xs" c="dimmed">
+                      {t('Cravatar uses your email to fetch avatar from')} cravatar.cn
+                    </Text>
+                  </Stack>
+                </Group>
               </Stack>
-            </Group>
-          </Stack>
-        </Card>
-      )}
-      <SettingsForm
-        settings={args.settings || {}}
-        current={current}
-        payloadMode="flat"
-        extraPayload={{ category }}
-        loading={loading}
-        onSubmit={handleSubmit}
-        excludeKeys={category === 'account' ? ['avatar'] : []}
-      />
-    </Stack>
+            </Card>
+          )}
+          <SettingsForm
+            key={category}
+            settings={args.settings || {}}
+            current={current}
+            payloadMode="flat"
+            extraPayload={{ category }}
+            loading={loading}
+            onSubmit={handleSubmit}
+            excludeKeys={category === 'account' ? ['avatar'] : []}
+            variant="personal"
+          />
+        </Stack>
+      </div>
+    </main>
   );
 }

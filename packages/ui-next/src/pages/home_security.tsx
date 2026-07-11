@@ -1,11 +1,22 @@
-import { formatErrorMessage } from '@/utils/error';
 import { Alert, Badge, Button, Card, Divider, Group, PasswordInput, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
+import { IconDevices, IconKey, IconLink, IconLock } from '@tabler/icons-react';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { TimeDisplay } from '@/components/common/time-display';
 import { PageHeader } from '@/components/common/page-header';
+import { TimeDisplay } from '@/components/common/time-display';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+import { formatErrorMessage } from '@/utils/error';
+
+function SecurityTitle({ icon, children }: { icon: ReactNode, children: ReactNode }) {
+  return (
+    <div className="hydro-security-card__title">
+      <span className="hydro-security-card__icon">{icon}</span>
+      <Title order={3} size="h4">{children}</Title>
+    </div>
+  );
+}
 
 function credentialIdToBase64(input: any) {
   if (!input) return '';
@@ -90,188 +101,186 @@ export default function HomeSecurityPage() {
   };
 
   return (
-    <Stack gap="lg">
-      <PageHeader title={t('Security')} />
-      {error && <Text c="red" size="sm">{error}</Text>}
-      {success && <Text c="green" size="sm">{success}</Text>}
-
-      {user?.mail?.endsWith('.local') && (
-        <Alert color="yellow" variant="light">{t("You haven't set an email.")}</Alert>
-      )}
-
+    <main className="hydro-security-page">
+      <div className="hydro-settings-header">
+        <PageHeader title={t('Security')} />
+      </div>
       <Stack gap="lg">
-        <Card withBorder p="lg" className="hydro-content-card">
-          <Title order={4} mb="sm">{t('Change Password')}</Title>
-          <Stack gap="md">
-            <PasswordInput
-              label={args.sudoUid ? t("SuperUser's Password") : t('Current Password')}
-              value={current}
-              onChange={(e) => setCurrent(e.currentTarget.value)}
-            />
-            <PasswordInput label={t('New Password')} value={password} onChange={(e) => setPassword(e.currentTarget.value)} />
-            <PasswordInput label={t('Repeat Password')} value={verifyPassword} onChange={(e) => setVerifyPassword(e.currentTarget.value)} />
-            <Group justify="flex-end">
-              <Button onClick={handleChangePassword} loading={loading === 'change_password'}>{t('Change Password')}</Button>
-            </Group>
-          </Stack>
-        </Card>
+        {error && <Alert color="red" variant="light">{error}</Alert>}
+        {success && <Alert color="green" variant="light">{success}</Alert>}
 
-        <Card withBorder p="lg" className="hydro-content-card">
-          <Group justify="space-between" mb="sm">
-            <Title order={4}>{t('Linked Accounts')}</Title>
-          </Group>
-          <Stack gap="sm">
-            <Group justify="space-between" align="center">
-              <Stack gap={2}>
-                <Text fw={600}>{t('Email Account')}</Text>
-                <Text c="dimmed" size="sm">{user?.mail || '-'}</Text>
-              </Stack>
-              <Button size="xs" variant="light" onClick={() => setShowChangeMail((value) => !value)}>
-                {t('Change')}
-              </Button>
-            </Group>
-            {showChangeMail && (
-              <Stack gap="xs">
-                <PasswordInput label={t('Current Password')} value={mailPassword} onChange={(e) => setMailPassword(e.currentTarget.value)} />
-                <TextInput label={t('New Email')} value={mail} onChange={(e) => setMail(e.currentTarget.value)} />
-                <Group justify="flex-end">
-                  <Button size="xs" onClick={handleChangeMail} loading={loading === 'change_mail'}>{t('Submit')}</Button>
-                </Group>
-              </Stack>
-            )}
-            <Divider />
-            {relations.filter((relation: any) => relation.platform !== 'mail').map((relation: any) => {
-              const method = loginMethods.find((item: any) => item.id === relation.platform);
-              return (
-                <Group key={relation.platform} justify="space-between" align="center">
-                  <Stack gap={2}>
-                    <Text fw={600}>{method?.name || relation.platform}</Text>
-                    <Text c="dimmed" size="sm">{relation.id}</Text>
-                  </Stack>
+        {user?.mail?.endsWith('.local') && (
+          <Alert color="yellow" variant="light">{t("You haven't set an email.")}</Alert>
+        )}
+
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+          <Card withBorder p="lg" className="hydro-content-card hydro-security-card">
+            <SecurityTitle icon={<IconLock size={18} />}>{t('Change Password')}</SecurityTitle>
+            <Stack gap="md">
+              <PasswordInput
+                label={args.sudoUid ? t("SuperUser's Password") : t('Current Password')}
+                value={current}
+                onChange={(e) => setCurrent(e.currentTarget.value)}
+              />
+              <PasswordInput label={t('New Password')} value={password} onChange={(e) => setPassword(e.currentTarget.value)} />
+              <PasswordInput label={t('Repeat Password')} value={verifyPassword} onChange={(e) => setVerifyPassword(e.currentTarget.value)} />
+              <Group justify="flex-end">
+                <Button onClick={handleChangePassword} loading={loading === 'change_password'}>{t('Change Password')}</Button>
+              </Group>
+            </Stack>
+          </Card>
+
+          <Card withBorder p="lg" className="hydro-content-card hydro-security-card">
+            <SecurityTitle icon={<IconLink size={18} />}>{t('Linked Accounts')}</SecurityTitle>
+            <Stack gap="sm">
+              <Group justify="space-between" align="center" className="hydro-security-row">
+                <Stack gap={2}>
+                  <Text fw={600}>{t('Email Account')}</Text>
+                  <Text c="dimmed" size="sm">{user?.mail || '-'}</Text>
+                </Stack>
+                <Button size="xs" variant="light" onClick={() => setShowChangeMail((value) => !value)}>
+                  {t('Change')}
+                </Button>
+              </Group>
+              {showChangeMail && (
+                <Stack gap="xs">
+                  <PasswordInput label={t('Current Password')} value={mailPassword} onChange={(e) => setMailPassword(e.currentTarget.value)} />
+                  <TextInput label={t('New Email')} value={mail} onChange={(e) => setMail(e.currentTarget.value)} />
+                  <Group justify="flex-end">
+                    <Button size="xs" onClick={handleChangeMail} loading={loading === 'change_mail'}>{t('Submit')}</Button>
+                  </Group>
+                </Stack>
+              )}
+              <Divider />
+              {relations.filter((relation: any) => relation.platform !== 'mail').map((relation: any) => {
+                const method = loginMethods.find((item: any) => item.id === relation.platform);
+                return (
+                  <Group key={relation.platform} justify="space-between" align="center" className="hydro-security-row">
+                    <Stack gap={2}>
+                      <Text fw={600}>{method?.name || relation.platform}</Text>
+                      <Text c="dimmed" size="sm">{relation.id}</Text>
+                    </Stack>
+                    <Button
+                      size="xs"
+                      variant="light"
+                      onClick={() => postOperation({ operation: 'unlink_account', platform: relation.platform }, t('Unlinked'))}
+                      loading={loading === 'unlink_account'}
+                    >
+                      {t('Unlink')}
+                    </Button>
+                  </Group>
+                );
+              })}
+              {loginMethods.filter((method: any) => !linkedPlatforms.has(method.id)).map((method: any) => (
+                <Group key={method.id} justify="space-between" align="center" className="hydro-security-row">
+                  <Text fw={600}>{method.name || method.id}</Text>
                   <Button
                     size="xs"
                     variant="light"
-                    onClick={() => postOperation({ operation: 'unlink_account', platform: relation.platform }, t('Unlinked'))}
-                    loading={loading === 'unlink_account'}
+                    onClick={() => postOperation({ operation: 'link_account', platform: method.id })}
+                    loading={loading === 'link_account'}
                   >
-                    {t('Unlink')}
+                    {t('Link')}
                   </Button>
                 </Group>
-              );
-            })}
-            {loginMethods.filter((method: any) => !linkedPlatforms.has(method.id)).map((method: any) => (
-              <Group key={method.id} justify="space-between" align="center">
-                <Text fw={600}>{method.name || method.id}</Text>
-                <Button
-                  size="xs"
-                  variant="light"
-                  onClick={() => postOperation({ operation: 'link_account', platform: method.id })}
-                  loading={loading === 'link_account'}
-                >
-                  {t('Link')}
-                </Button>
-              </Group>
-            ))}
-          </Stack>
-        </Card>
-      </Stack>
+              ))}
+            </Stack>
+          </Card>
+        </SimpleGrid>
 
-      <Card withBorder p="lg" className="hydro-content-card">
-        <Group justify="space-between" mb="md">
-          <Title order={4}>{t('Authenticators')}</Title>
-        </Group>
-        <Stack gap="sm">
-          {user?.tfa && (
-            <Group justify="space-between" align="center">
-              <Stack gap={2}>
-                <Text fw={600}>{t('Two Factor Authentication')}</Text>
-                <Text c="dimmed" size="sm">{t('Authenticator')}</Text>
-              </Stack>
-              <Button
-                size="xs"
-                variant="light"
-                color="red"
-                onClick={() => postOperation({ operation: 'disable_tfa' }, t('Removed'))}
-                loading={loading === 'disable_tfa'}
-              >
-                {t('Remove')}
-              </Button>
-            </Group>
-          )}
-          {authenticators.map((authenticator: any, index: number) => {
-            const id = credentialIdToBase64(authenticator.credentialID);
-            return (
-              <Group key={id || index} justify="space-between" align="center">
+        <Card withBorder p="lg" className="hydro-content-card hydro-security-card">
+          <SecurityTitle icon={<IconKey size={18} />}>{t('Authenticators')}</SecurityTitle>
+          <Stack gap="sm">
+            {user?.tfa && (
+              <Group justify="space-between" align="center" className="hydro-security-row">
                 <Stack gap={2}>
-                  <Text fw={600}>{authenticator.name || t('Authenticator')}</Text>
-                  <Text c="dimmed" size="sm">
-                    {authenticator.credentialDeviceType || '-'} / {authenticator.fmt || '-'}
-                  </Text>
-                  {authenticator.regat && <TimeDisplay date={authenticator.regat} />}
+                  <Text fw={600}>{t('Two Factor Authentication')}</Text>
+                  <Text c="dimmed" size="sm">{t('Authenticator')}</Text>
                 </Stack>
                 <Button
                   size="xs"
                   variant="light"
                   color="red"
-                  disabled={!id}
-                  onClick={() => postOperation({ operation: 'disable_authn', id }, t('Removed'))}
-                  loading={loading === 'disable_authn'}
+                  onClick={() => postOperation({ operation: 'disable_tfa' }, t('Removed'))}
+                  loading={loading === 'disable_tfa'}
                 >
                   {t('Remove')}
                 </Button>
               </Group>
-            );
-          })}
-          {!authenticators.length && !user?.tfa && <Text c="dimmed" size="sm">{t('No authenticators')}</Text>}
-        </Stack>
-      </Card>
-
-      <Card withBorder p="lg" className="hydro-content-card">
-        <Group justify="space-between" mb="md">
-          <Title order={4}>{t('Active Sessions')}</Title>
-        </Group>
-        <Stack gap="md">
-          {sessions.map((session: any) => (
-            <Group key={session._id} justify="space-between" align="flex-start" wrap="nowrap">
-              <Stack gap={4}>
-                <Group gap="xs">
-                  <Text fw={600}>{session.updateUaInfo?.browser?.name || t('Unknown Browser')}</Text>
-                  {session.isCurrent && <Badge size="sm" color="green">{t('Current')}</Badge>}
+            )}
+            {authenticators.map((authenticator: any, index: number) => {
+              const id = credentialIdToBase64(authenticator.credentialID);
+              return (
+                <Group key={id || index} justify="space-between" align="center" className="hydro-security-row">
+                  <Stack gap={2}>
+                    <Text fw={600}>{authenticator.name || t('Authenticator')}</Text>
+                    <Text c="dimmed" size="sm">
+                      {authenticator.credentialDeviceType || '-'} / {authenticator.fmt || '-'}
+                    </Text>
+                    {authenticator.regat && <TimeDisplay date={authenticator.regat} />}
+                  </Stack>
+                  <Button
+                    size="xs"
+                    variant="light"
+                    color="red"
+                    disabled={!id}
+                    onClick={() => postOperation({ operation: 'disable_authn', id }, t('Removed'))}
+                    loading={loading === 'disable_authn'}
+                  >
+                    {t('Remove')}
+                  </Button>
                 </Group>
-                <Text c="dimmed" size="sm">
-                  {session.updateUaInfo?.os?.name || t('Unknown OS')} {session.updateUaInfo?.os?.version || ''}
-                </Text>
-                <Text c="dimmed" size="sm">{session.updateIp || session.createIp || '-'}</Text>
-                {session.updateAt && <TimeDisplay date={session.updateAt} />}
-              </Stack>
-              {!session.isCurrent && (
-                <Button
-                  size="xs"
-                  variant="light"
-                  onClick={() => postOperation({ operation: 'delete_token', tokenDigest: session._id }, t('Logged out'))}
-                  loading={loading === 'delete_token'}
-                >
-                  {t('Logout This Session')}
-                </Button>
-              )}
+              );
+            })}
+            {!authenticators.length && !user?.tfa && <Text c="dimmed" size="sm">{t('No authenticators')}</Text>}
+          </Stack>
+        </Card>
+
+        <Card withBorder p="lg" className="hydro-content-card hydro-security-card">
+          <SecurityTitle icon={<IconDevices size={18} />}>{t('Active Sessions')}</SecurityTitle>
+          <Stack gap="md">
+            {sessions.map((session: any) => (
+              <Group key={session._id} justify="space-between" align="flex-start" wrap="nowrap" className="hydro-security-session">
+                <Stack gap={4}>
+                  <Group gap="xs">
+                    <Text fw={600}>{session.updateUaInfo?.browser?.name || t('Unknown Browser')}</Text>
+                    {session.isCurrent && <Badge size="sm" color="green">{t('Current')}</Badge>}
+                  </Group>
+                  <Text c="dimmed" size="sm">
+                    {session.updateUaInfo?.os?.name || t('Unknown OS')} {session.updateUaInfo?.os?.version || ''}
+                  </Text>
+                  <Text c="dimmed" size="sm">{session.updateIp || session.createIp || '-'}</Text>
+                  {session.updateAt && <TimeDisplay date={session.updateAt} />}
+                </Stack>
+                {!session.isCurrent && (
+                  <Button
+                    size="xs"
+                    variant="light"
+                    onClick={() => postOperation({ operation: 'delete_token', tokenDigest: session._id }, t('Logged out'))}
+                    loading={loading === 'delete_token'}
+                  >
+                    {t('Logout This Session')}
+                  </Button>
+                )}
+              </Group>
+            ))}
+            <Divider />
+            <Group justify="space-between">
+              <Text c="dimmed" size="sm">
+                {args.geoipProvider ? `IP geo-location data is provided by ${args.geoipProvider}.` : t('Manage all active login sessions.')}
+              </Text>
+              <Button
+                color="red"
+                variant="light"
+                onClick={() => postOperation({ operation: 'delete_all_tokens' })}
+                loading={loading === 'delete_all_tokens'}
+              >
+                {t('Logout All Sessions')}
+              </Button>
             </Group>
-          ))}
-          <Divider />
-          <Group justify="space-between">
-            <Text c="dimmed" size="sm">
-              {args.geoipProvider ? `IP geo-location data is provided by ${args.geoipProvider}.` : t('Manage all active login sessions.')}
-            </Text>
-            <Button
-              color="red"
-              variant="light"
-              onClick={() => postOperation({ operation: 'delete_all_tokens' })}
-              loading={loading === 'delete_all_tokens'}
-            >
-              {t('Logout All Sessions')}
-            </Button>
-          </Group>
-        </Stack>
-      </Card>
-    </Stack>
+          </Stack>
+        </Card>
+      </Stack>
+    </main>
   );
 }

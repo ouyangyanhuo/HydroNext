@@ -6,18 +6,19 @@ import {
   Group,
   PasswordInput,
   Select,
-  SimpleGrid,
   Stack,
+  Text,
   Textarea,
   TextInput,
   Title,
 } from '@mantine/core';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useI18n } from '@/hooks/use-i18n';
 
 const FLAG_HIDDEN = 1;
 const FLAG_DISABLED = 2;
 const FLAG_SECRET = 4;
+const EMPTY_KEYS: string[] = [];
 
 type PayloadMode = 'flat' | 'nested';
 
@@ -42,11 +43,12 @@ interface SettingsFormProps {
   loading?: boolean;
   onSubmit: (payload: Record<string, any>) => void | Promise<void>;
   excludeKeys?: string[];
+  variant?: 'default' | 'personal';
 }
 
 function getByPath(source: Record<string, any>, key: string) {
   if (!source) return undefined;
-  if (Object.prototype.hasOwnProperty.call(source, key)) return source[key];
+  if (Object.hasOwn(source, key)) return source[key];
   return key.split('.').reduce((cursor, part) => (cursor == null ? undefined : cursor[part]), source);
 }
 
@@ -202,15 +204,23 @@ export function SettingsForm({
   submitLabel,
   loading = false,
   onSubmit,
-  excludeKeys = [],
+  excludeKeys = EMPTY_KEYS,
+  variant = 'default',
 }: SettingsFormProps) {
   const { t } = useI18n();
   const normalized = useMemo(
     () => normalizeSettings(settings, current).filter((s) => !excludeKeys.includes(s.key)),
     [settings, current, excludeKeys],
   );
-  const [values, setValues] = useState<Record<string, any>>({});
-  const [initialized, setInitialized] = useState(false);
+  const [values, setValues] = useState<Record<string, any>>(() => Object.fromEntries(
+    normalized.map((setting) => {
+      const currentValue = getByPath(current, setting.key);
+      return [
+        setting.key,
+        ((setting.flag || 0) & FLAG_SECRET) ? '' : (currentValue ?? setting.value ?? ''),
+      ];
+    }),
+  ));
   const groups = useMemo(() => groupByFamily(normalized), [normalized]);
   const booleanKeys = useMemo(
     () => normalized
@@ -219,44 +229,56 @@ export function SettingsForm({
     [normalized],
   );
 
-  useEffect(() => {
-    if (!initialized && normalized.length > 0) {
-      setValues(Object.fromEntries(normalized.map((setting) => {
-        const currentValue = getByPath(current, setting.key);
-        return [
-          setting.key,
-          ((setting.flag || 0) & FLAG_SECRET) ? '' : (currentValue ?? setting.value ?? ''),
-        ];
-      })));
-      setInitialized(true);
-    }
-  }, [normalized, current, initialized]);
-
   const handleSubmit = async () => {
     await onSubmit(buildSettingsPayload(values, booleanKeys, payloadMode, extraPayload));
   };
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className={variant === 'personal' ? 'hydro-settings-form' : undefined}>
       {groups.map(([family, items]) => (
-        <Card key={family} withBorder p="lg" className="hydro-content-card">
-          <Group justify="space-between" mb="md">
-            <Title order={3} size="h4">{t(family)}</Title>
-          </Group>
-          <Stack gap="md">
+        <Card
+          key={family}
+          withBorder
+          p="lg"
+          className={variant === 'personal' ? 'hydro-content-card hydro-settings-section' : 'hydro-content-card'}
+        >
+          {variant === 'personal' ? (
+            <div className="hydro-settings-section__header">
+              <Title order={3} size="h4">{t(family)}</Title>
+              <Badge variant="light" size="sm">{items.length}</Badge>
+            </div>
+          ) : (
+            <Group justify="space-between" mb="md">
+              <Title order={3} size="h4">{t(family)}</Title>
+            </Group>
+          )}
+          <div className={variant === 'personal' ? 'hydro-settings-fields' : 'flex flex-col gap-4'}>
             {items.map((setting) => (
-              <SettingInput
+              <div
                 key={setting.key}
-                setting={setting}
-                value={values[setting.key]}
-                onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
-              />
+                className={variant === 'personal' && (
+                  setting.type === 'boolean'
+                  || setting.type === 'textarea'
+                  || setting.type === 'markdown'
+                  || setting.type === 'json'
+                ) ? 'hydro-settings-field hydro-settings-field--wide' : 'hydro-settings-field'}
+              >
+                <SettingInput
+                  setting={setting}
+                  value={values[setting.key]}
+                  onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
+                />
+              </div>
             ))}
-          </Stack>
+          </div>
         </Card>
       ))}
-      <Group justify="flex-end">
-        <Button onClick={handleSubmit} loading={loading}>
+      <Group
+        justify={variant === 'personal' ? 'space-between' : 'flex-end'}
+        className={variant === 'personal' ? 'hydro-settings-savebar' : undefined}
+      >
+        {variant === 'personal' ? <Text size="xs" c="dimmed">{t('Save All Changes')}</Text> : null}
+        <Button onClick={handleSubmit} loading={loading} className="hydro-settings-save">
           {submitLabel || t('Save All Changes')}
         </Button>
       </Group>

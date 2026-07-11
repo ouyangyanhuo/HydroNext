@@ -2318,6 +2318,336 @@ a {
   background: linear-gradient(to top, var(--hydro-surface-raised) 45%, transparent);
 }
 
+.hydro-settings-page {
+  width: min(100%, 1120px);
+  margin-inline: auto;
+}
+
+.hydro-settings-header {
+  margin-bottom: 20px;
+  padding: 18px 20px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
+  box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-settings-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.hydro-settings-nav {
+  position: sticky;
+  top: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
+  box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-settings-nav__item {
+  display: flex;
+  min-height: 42px;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 11px;
+  border-radius: var(--hydro-radius-md);
+  color: var(--hydro-text-muted);
+  font-size: 0.86rem;
+  font-weight: 680;
+  text-decoration: none;
+  transition: color var(--hydro-duration-fast) ease,
+              background-color var(--hydro-duration-fast) ease;
+}
+
+.hydro-settings-nav__item:hover {
+  color: var(--hydro-text);
+  background: var(--hydro-surface-muted);
+}
+
+.hydro-settings-nav__item[aria-current='page'] {
+  color: var(--hydro-primary-strong);
+  background: var(--hydro-primary-soft);
+}
+
+.hydro-settings-content {
+  min-width: 0;
+}
+
+.hydro-settings-section {
+  overflow: hidden;
+}
+
+.hydro-settings-section__header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px 0 18px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--hydro-border);
+}
+
+.hydro-settings-section__header .mantine-Badge-root,
+.hydro-settings-avatar .mantine-Badge-root {
+  color: var(--hydro-primary-strong);
+  background: var(--hydro-primary-soft);
+}
+
+.hydro-settings-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 16px;
+}
+
+.hydro-settings-field {
+  min-width: 0;
+}
+
+.hydro-settings-field--wide {
+  grid-column: 1 / -1;
+}
+
+.hydro-settings-field--wide:has(.mantine-Checkbox-root) {
+  padding: 12px 14px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-md);
+  background: color-mix(in srgb, var(--hydro-surface-muted) 54%, transparent);
+}
+
+.hydro-settings-form .mantine-InputWrapper-label {
+  margin-bottom: 5px;
+  color: var(--hydro-text);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.hydro-settings-form .mantine-InputWrapper-description {
+  margin-bottom: 7px;
+  color: var(--hydro-text-muted);
+  line-height: 1.45;
+}
+
+.hydro-settings-form .mantine-Input-input {
+  border-color: var(--hydro-border);
+  background: color-mix(in srgb, var(--hydro-bg-soft) 72%, var(--hydro-surface-raised));
+}
+
+.hydro-settings-form .mantine-Input-input:focus {
+  border-color: var(--hydro-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
+}
+
+.hydro-settings-savebar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 5;
+  padding: 10px 12px 10px 16px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background: color-mix(in srgb, var(--hydro-surface-raised) 92%, transparent);
+  box-shadow: var(--hydro-shadow-md);
+}
+
+.hydro-settings-save {
+  min-width: 142px;
+}
+
+.hydro-settings-avatar__preview {
+  flex: 0 0 auto;
+  border: 3px solid var(--hydro-surface-raised);
+  outline: 1px solid color-mix(in srgb, var(--hydro-primary) 34%, var(--hydro-border));
+  box-shadow: var(--hydro-shadow-md);
+}
+
+.hydro-settings-avatar__providers .mantine-Radio-root {
+  padding: 7px 10px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-md);
+  background: var(--hydro-bg-soft);
+}
+
+@media (max-width: 760px) {
+  .hydro-settings-layout { grid-template-columns: minmax(0, 1fr); }
+  .hydro-settings-nav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .hydro-settings-nav__item { min-width: max-content; }
+  .hydro-settings-fields { grid-template-columns: minmax(0, 1fr); }
+  .hydro-settings-field--wide { grid-column: auto; }
+  .hydro-settings-savebar { bottom: 8px; }
+}
+
+.hydro-security-page,
+.hydro-user-profile {
+  width: min(100%, 1120px);
+  margin-inline: auto;
+}
+
+.hydro-security-card {
+  min-width: 0;
+}
+
+.hydro-security-card__title {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: -4px 0 16px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--hydro-border);
+}
+
+.hydro-security-card__icon {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--hydro-primary) 24%, var(--hydro-border));
+  border-radius: var(--hydro-radius-md);
+  color: var(--hydro-primary-strong);
+  background: var(--hydro-primary-soft);
+}
+
+.hydro-security-row,
+.hydro-security-session {
+  padding: 11px 12px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-md);
+  background: color-mix(in srgb, var(--hydro-surface-muted) 54%, transparent);
+}
+
+.hydro-security-page .mantine-Input-input {
+  border-color: var(--hydro-border);
+  background: color-mix(in srgb, var(--hydro-bg-soft) 72%, var(--hydro-surface-raised));
+}
+
+.hydro-security-page .mantine-Input-input:focus {
+  border-color: var(--hydro-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
+}
+
+.hydro-user-profile__hero {
+  overflow: hidden;
+}
+
+.hydro-user-profile__cover {
+  position: relative;
+  height: 148px;
+  overflow: hidden;
+}
+
+.hydro-user-profile__cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgb(8 18 22 / 20%);
+}
+
+.hydro-user-profile__info {
+  padding: 0 24px 24px;
+}
+
+.hydro-user-profile__identity {
+  min-width: 0;
+}
+
+.hydro-user-profile__avatar {
+  width: 96px;
+  height: 96px;
+  margin-top: -42px;
+  flex: 0 0 auto;
+  border: 4px solid var(--hydro-surface-raised);
+  border-radius: 50%;
+  background: var(--hydro-primary-soft);
+  box-shadow: var(--hydro-shadow-md);
+  object-fit: cover;
+}
+
+.hydro-user-profile__facts {
+  row-gap: 10px;
+}
+
+.hydro-user-profile__facts > .mantine-Text-root {
+  min-width: 90px;
+  padding: 8px 10px;
+  border-radius: var(--hydro-radius-md);
+  background: color-mix(in srgb, var(--hydro-surface-muted) 56%, transparent);
+  line-height: 1.4;
+}
+
+.hydro-user-profile__stat {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--hydro-border);
+  background: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
+}
+
+.hydro-user-profile__stat::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  content: '';
+  background: var(--hydro-primary);
+  opacity: 0.62;
+}
+
+.hydro-user-profile__tabs {
+  overflow: hidden;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
+  box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-user-profile__tablist {
+  padding-inline: 12px;
+  background: color-mix(in srgb, var(--hydro-surface-muted) 54%, transparent);
+}
+
+.hydro-user-profile__tabs .mantine-Tabs-panel {
+  padding: 18px;
+}
+
+.hydro-user-profile__tabs .mantine-Tabs-tab[data-active] {
+  border-color: var(--hydro-primary);
+  color: var(--hydro-primary-strong);
+}
+
+.hydro-user-profile__problem {
+  transition: border-color var(--hydro-duration-fast) ease,
+              transform var(--hydro-duration-fast) ease;
+}
+
+.hydro-user-profile__problem:hover {
+  border-color: color-mix(in srgb, var(--hydro-primary) 42%, var(--hydro-border));
+  transform: translateX(3px);
+}
+
+.hydro-user-profile__tags .mantine-Badge-root {
+  color: var(--hydro-primary-strong);
+  background: var(--hydro-primary-soft);
+}
+
+@media (max-width: 700px) {
+  .hydro-user-profile__info { padding: 0 16px 18px; }
+  .hydro-user-profile__info-layout { flex-direction: column; }
+  .hydro-user-profile__identity { align-items: flex-start; }
+  .hydro-user-profile__avatar { width: 78px; height: 78px; }
+  .hydro-user-profile__facts > .mantine-Text-root { min-width: calc(50% - 8px); }
+  .hydro-security-session { flex-wrap: wrap; }
+}
+
 .hydro-record-source {
   height: clamp(280px, 44vh, 520px);
   overscroll-behavior: contain;
