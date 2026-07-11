@@ -1,13 +1,12 @@
 import { Badge, Button, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconFilter, IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS_TEXTS } from '@/components/record/status-map';
-import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -27,9 +26,9 @@ export default function RecordMainPage() {
   const domainId = useSessionStore((s) => s.ui.domainId);
   const canViewCodeReplay = useHasPriv(PRIV.PRIV_READ_RECORD_CODE);
 
-  const rdocs = args.rdocs || [];
-  const pdict = args.pdict || {};
-  const udict = args.udict || {};
+  const rdocs = useMemo(() => args.rdocs || [], [args.rdocs]);
+  const pdict = useMemo(() => args.pdict || {}, [args.pdict]);
+  const udict = useMemo(() => args.udict || {}, [args.udict]);
   const page = args.page || 1;
   const totalPages = args.tpcount || 1;
 
@@ -41,23 +40,22 @@ export default function RecordMainPage() {
     typeof args.filterStatus === 'number' ? String(args.filterStatus) : ALL_FILTER,
   );
 
-  const configuredLangs = args.langs || (window as any).LANGS || {};
-  const languageMap = new Map<string, string>();
-  Object.entries(configuredLangs).forEach(([id, info]: [string, any]) => {
-    if (!info?.hidden) languageMap.set(id, info?.display || info?.name || id);
-  });
-  rdocs.forEach((record: any) => {
-    if (record.lang && !languageMap.has(record.lang)) languageMap.set(record.lang, record.lang);
-  });
-  if (args.filterLang && !languageMap.has(args.filterLang)) languageMap.set(args.filterLang, args.filterLang);
-  const languageOptions = [
-    { value: ALL_FILTER, label: t('All Languages') },
-    ...Array.from(languageMap, ([value, label]) => ({ value, label })),
-  ];
-  const statusOptions = [
+  const languageOptions = useMemo(() => {
+    const configuredLangs = args.langs || (window as any).LANGS || {};
+    const languageMap = new Map<string, string>();
+    Object.entries(configuredLangs).forEach(([id, info]: [string, any]) => {
+      if (!info?.hidden) languageMap.set(id, info?.display || info?.name || id);
+    });
+    rdocs.forEach((record: any) => {
+      if (record.lang && !languageMap.has(record.lang)) languageMap.set(record.lang, record.lang);
+    });
+    if (args.filterLang && !languageMap.has(args.filterLang)) languageMap.set(args.filterLang, args.filterLang);
+    return [{ value: ALL_FILTER, label: t('All Languages') }, ...Array.from(languageMap, ([value, label]) => ({ value, label }))];
+  }, [args.filterLang, args.langs, rdocs, t]);
+  const statusOptions = useMemo(() => [
     { value: ALL_FILTER, label: t('All Submissions') },
     ...Object.entries(STATUS_TEXTS).map(([value, label]) => ({ value, label: t(label) })),
-  ];
+  ], [t]);
 
   const handleFilter = () => {
     const url = new URL(window.location.href);
@@ -83,16 +81,12 @@ export default function RecordMainPage() {
     navigate(buildUrl('record_main'));
   };
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       key: '_id',
       title: '#',
       width: 80,
-      render: (r: any) => (
-        <Link to="record_detail" params={{ rid: r._id }} className="hydro-record-id">
-          {String(r._id).slice(-6)}
-        </Link>
-      ),
+      render: (r: any) => <Text size="xs" fw={700} ff="monospace">{String(r._id).slice(-6)}</Text>,
     },
     {
       key: 'status',
@@ -106,7 +100,7 @@ export default function RecordMainPage() {
       width: 120,
       render: (r: any) => {
         const udoc = udict[r.uid];
-        return udoc ? <UserLink user={udoc} size="xs" /> : <Text size="xs" c="dimmed">{r.uid}</Text>;
+        return <Text size="xs" fw={600}>{udoc?.uname || udoc?.displayName || r.uid}</Text>;
       },
     },
     {
@@ -119,6 +113,7 @@ export default function RecordMainPage() {
             to="problem_detail"
             params={{ pid: pdoc.pid || pdoc.docId }}
             className="hydro-subtle-link"
+            onClick={(event) => event.stopPropagation()}
           >
             <Text size="sm" fw={650}>{pdoc.pid}. {pdoc.title}</Text>
           </Link>
@@ -189,7 +184,11 @@ export default function RecordMainPage() {
         ) : null
       ),
     },
-  ];
+  ], [buildUrl, canViewCodeReplay, domainId, pdict, t, udict, user._id]);
+
+  const openRecord = useCallback((record: any) => {
+    navigate(buildUrl('record_detail', { rid: record._id }));
+  }, [buildUrl, navigate]);
 
   return (
     <main className="hydro-record-page">
@@ -247,7 +246,13 @@ export default function RecordMainPage() {
         </form>
 
         <div className="hydro-record-list">
-          <DataTable columns={columns} data={rdocs} emptyMessage={t('No records found')} />
+          <DataTable
+            columns={columns}
+            data={rdocs}
+            emptyMessage={t('No records found')}
+            onRowClick={openRecord}
+            rowLabel={(record) => `${t('Record')} ${String(record._id).slice(-6)}`}
+          />
         </div>
 
         <Paginator page={page} totalPages={totalPages} />

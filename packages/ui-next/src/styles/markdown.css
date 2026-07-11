@@ -1,15 +1,24 @@
-/* Markdown content styles */
 .hydro-markdown {
-  line-height: 1.6;
-  word-wrap: break-word;
+  --markdown-code-bg: color-mix(in srgb, var(--hydro-bg) 72%, var(--hydro-surface-muted));
+  --markdown-code-keyword: #7048a8;
+  --markdown-code-string: #247354;
+  --markdown-code-number: #a85c1b;
+  --markdown-code-variable: #9a4057;
+  --markdown-code-comment: #758287;
+
+  color: var(--hydro-text);
+  font-size: 0.95rem;
+  line-height: 1.76;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
 }
 
 .hydro-markdown > :first-child {
-  margin-top: 0;
+  margin-top: 0 !important;
 }
 
 .hydro-markdown > :last-child {
-  margin-bottom: 0;
+  margin-bottom: 0 !important;
 }
 
 .hydro-markdown h1,
@@ -18,209 +27,477 @@
 .hydro-markdown h4,
 .hydro-markdown h5,
 .hydro-markdown h6 {
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  font-weight: 600;
-  line-height: 1.25;
+  color: var(--hydro-text);
+  font-weight: 750;
+  letter-spacing: -0.018em;
+  line-height: 1.3;
+  scroll-margin-top: 5rem;
+  text-wrap: balance;
+}
+
+.hydro-markdown h1,
+.hydro-markdown h2 {
+  border-bottom: 1px solid var(--hydro-border);
+  padding-bottom: 0.42em;
 }
 
 .hydro-markdown h1 {
-  font-size: 2em;
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid var(--hydro-border);
+  font-size: clamp(1.55rem, 3vw, 1.9rem);
+  margin: 0 0 0.8em;
 }
 
 .hydro-markdown h2 {
-  font-size: 1.5em;
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid var(--hydro-border);
+  font-size: clamp(1.28rem, 2.4vw, 1.48rem);
+  margin: 1.9em 0 0.72em;
 }
 
 .hydro-markdown h3 {
-  font-size: 1.25em;
+  font-size: 1.18rem;
+  margin: 1.7em 0 0.65em;
 }
 
 .hydro-markdown h4 {
-  font-size: 1em;
+  font-size: 1.05rem;
+  margin: 1.55em 0 0.6em;
 }
 
-.hydro-markdown h5 {
-  font-size: 0.875em;
-}
-
+.hydro-markdown h5,
 .hydro-markdown h6 {
-  font-size: 0.85em;
-  color: var(--hydro-text-secondary);
+  color: var(--hydro-text-muted);
+  font-size: 0.95rem;
+  margin: 1.45em 0 0.55em;
+  text-transform: none;
 }
 
 .hydro-markdown p {
-  margin-top: 0;
-  margin-bottom: 1em;
-}
-
-.hydro-markdown a {
-  color: var(--hydro-primary);
-  text-decoration: none;
-}
-
-.hydro-markdown a:hover {
-  text-decoration: underline;
+  margin: 0 0 1.05em;
 }
 
 .hydro-markdown strong {
-  font-weight: 600;
+  color: var(--hydro-text);
+  font-weight: 700;
 }
 
-.hydro-markdown em {
-  font-style: italic;
+.hydro-markdown a {
+  color: var(--hydro-primary-strong);
+  font-weight: 550;
+  text-decoration-color: color-mix(in srgb, var(--hydro-primary) 42%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition:
+    color 160ms ease,
+    text-decoration-color 160ms ease;
 }
 
-.hydro-markdown del {
-  text-decoration: line-through;
+.hydro-markdown a:hover {
+  color: var(--hydro-primary);
+  text-decoration-color: currentColor;
 }
 
-.hydro-markdown code:not(pre code) {
-  padding: 0.2em 0.4em;
-  margin: 0;
-  font-size: 85%;
-  background-color: var(--hydro-glass-surface-muted);
-  border: 1px solid var(--hydro-border);
-  border-radius: 4px;
-  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
-  -webkit-backdrop-filter: blur(6px) saturate(108%);
-  backdrop-filter: blur(6px) saturate(108%);
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+.hydro-markdown a:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid color-mix(in srgb, var(--hydro-primary) 55%, transparent);
+  outline-offset: 3px;
+}
+
+.hydro-markdown mark {
+  background: color-mix(in srgb, var(--hydro-accent-soft) 78%, transparent);
+  border-radius: 0.24em;
+  color: var(--hydro-text);
+  padding: 0.08em 0.24em;
+}
+
+.hydro-markdown hr {
+  border: 0;
+  border-top: 1px solid var(--hydro-border);
+  margin: 2rem 0;
+}
+
+.hydro-markdown :not(pre) > code {
+  background: color-mix(in srgb, var(--hydro-primary-soft) 68%, var(--hydro-surface));
+  border: 1px solid color-mix(in srgb, var(--hydro-primary) 18%, var(--hydro-border));
+  border-radius: 0.36em;
+  color: var(--hydro-primary-strong);
+  font-family: var(--mantine-font-family-monospace), ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.875em;
+  font-variant-ligatures: none;
+  padding: 0.14em 0.38em;
+  word-break: break-word;
 }
 
 .hydro-markdown pre {
-  padding: 1em;
-  margin-top: 0;
-  margin-bottom: 1em;
-  overflow: auto;
-  font-size: 85%;
-  line-height: 1.45;
-  background-color: var(--hydro-glass-surface-strong);
-  background-image: linear-gradient(135deg, var(--hydro-glass-highlight), transparent 48%);
-  border-radius: 6px;
+  background: var(--markdown-code-bg);
   border: 1px solid var(--hydro-border);
-  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
-  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
-  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
+  border-radius: 10px;
+  color: var(--hydro-text);
+  font-family: var(--mantine-font-family-monospace), ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.86em;
+  line-height: 1.68;
+  margin: 1.25em 0;
+  overflow: auto;
+  padding: 1rem 1.1rem;
+  tab-size: 4;
 }
 
 .hydro-markdown pre code {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: block;
+  font: inherit;
+  min-width: max-content;
   padding: 0;
+  white-space: pre;
+}
+
+.hydro-markdown .code-block-wrapper {
+  margin: 1.25em 0;
+  position: relative;
+}
+
+.hydro-markdown .code-block-wrapper pre {
   margin: 0;
-  font-size: 100%;
-  background-color: transparent;
-  border-radius: 0;
+}
+
+.hydro-markdown .code-block-wrapper:has(.code-lang-label) pre {
+  padding-top: 2.35rem;
+}
+
+.hydro-markdown .code-lang-label {
+  align-items: center;
+  background: color-mix(in srgb, var(--hydro-surface-raised) 92%, transparent);
+  border-bottom: 1px solid var(--hydro-border);
+  border-left: 1px solid var(--hydro-border);
+  border-radius: 0 9px 0 7px;
+  color: var(--hydro-text-muted);
+  display: inline-flex;
+  font-family: var(--mantine-font-family-monospace), ui-monospace, monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  padding: 0.48rem 0.62rem;
+  position: absolute;
+  right: 1px;
+  text-transform: uppercase;
+  top: 1px;
+  z-index: 1;
+}
+
+.hydro-markdown .hljs {
+  background: transparent;
+  color: var(--hydro-text);
+  padding: 0;
+}
+
+.hydro-markdown .hljs-comment,
+.hydro-markdown .hljs-quote {
+  color: var(--markdown-code-comment);
+  font-style: italic;
+}
+
+.hydro-markdown .hljs-keyword,
+.hydro-markdown .hljs-selector-tag,
+.hydro-markdown .hljs-literal,
+.hydro-markdown .hljs-section,
+.hydro-markdown .hljs-link {
+  color: var(--markdown-code-keyword);
+}
+
+.hydro-markdown .hljs-string,
+.hydro-markdown .hljs-regexp,
+.hydro-markdown .hljs-attribute,
+.hydro-markdown .hljs-attr,
+.hydro-markdown .hljs-symbol,
+.hydro-markdown .hljs-bullet {
+  color: var(--markdown-code-string);
+}
+
+.hydro-markdown .hljs-number,
+.hydro-markdown .hljs-meta,
+.hydro-markdown .hljs-doctag,
+.hydro-markdown .hljs-selector-attr,
+.hydro-markdown .hljs-selector-pseudo {
+  color: var(--markdown-code-number);
+}
+
+.hydro-markdown .hljs-variable,
+.hydro-markdown .hljs-template-variable,
+.hydro-markdown .hljs-tag,
+.hydro-markdown .hljs-name,
+.hydro-markdown .hljs-deletion {
+  color: var(--markdown-code-variable);
+}
+
+.hydro-markdown .hljs-title,
+.hydro-markdown .hljs-title.class_,
+.hydro-markdown .hljs-title.function_,
+.hydro-markdown .hljs-built_in,
+.hydro-markdown .hljs-type,
+.hydro-markdown .hljs-property {
+  color: var(--hydro-primary-strong);
+  font-weight: 650;
+}
+
+.hydro-markdown .hljs-params,
+.hydro-markdown .hljs-formula,
+.hydro-markdown .hljs-subst {
+  color: var(--hydro-text);
+}
+
+.hydro-markdown .hljs-addition {
+  background: color-mix(in srgb, var(--hydro-success) 12%, transparent);
+  color: var(--hydro-success);
+}
+
+.hydro-markdown .hljs-deletion {
+  background: color-mix(in srgb, var(--hydro-danger) 11%, transparent);
+}
+
+.hydro-markdown .hljs-emphasis {
+  font-style: italic;
+}
+
+.hydro-markdown .hljs-strong {
+  font-weight: 700;
 }
 
 .hydro-markdown blockquote {
-  margin: 0 0 1em 0;
-  padding: 0.5em 1em;
-  color: var(--hydro-text-secondary);
-  border-left: 4px solid var(--hydro-border);
-  background-color: var(--hydro-glass-surface-muted);
-  background-image: linear-gradient(135deg, var(--hydro-glass-highlight), transparent 52%);
-  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
-  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
-  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 72%, var(--hydro-surface));
+  border: 1px solid color-mix(in srgb, var(--hydro-primary) 22%, var(--hydro-border));
+  border-left: 4px solid var(--hydro-primary);
+  border-radius: 0 8px 8px 0;
+  color: var(--hydro-text);
+  display: block;
+  margin: 1.25em 0;
+  padding: 0.9rem 1rem;
+}
+
+.hydro-markdown blockquote p {
+  color: inherit;
 }
 
 .hydro-markdown blockquote > :last-child {
   margin-bottom: 0;
 }
 
+.hydro-markdown blockquote blockquote {
+  margin: 0.85em 0 0;
+}
+
 .hydro-markdown ul,
 .hydro-markdown ol {
-  margin-top: 0;
-  margin-bottom: 1em;
-  padding-left: 2em;
+  display: block;
+  margin: 0 0 1.05em;
+  padding-left: 1.55rem;
+}
+
+.hydro-markdown ul {
+  list-style-type: disc;
+}
+
+.hydro-markdown ol {
+  list-style-type: decimal;
+}
+
+.hydro-markdown ul ul {
+  list-style-type: circle;
+}
+
+.hydro-markdown ul ul ul {
+  list-style-type: square;
+}
+
+.hydro-markdown ol ol {
+  list-style-type: lower-alpha;
 }
 
 .hydro-markdown li {
-  margin-bottom: 0.25em;
+  display: list-item;
+  margin: 0.28em 0;
+  padding-left: 0.14rem;
 }
 
-.hydro-markdown li + li {
-  margin-top: 0.25em;
+.hydro-markdown li::marker {
+  color: var(--hydro-primary);
+  font-weight: 650;
 }
 
-.hydro-markdown img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 4px;
+.hydro-markdown li > ul,
+.hydro-markdown li > ol {
+  margin-bottom: 0;
+  margin-top: 0.28em;
 }
 
-.hydro-markdown hr {
-  height: 1px;
-  margin: 1.5em 0;
-  padding: 0;
-  background-color: var(--hydro-border);
-  border: 0;
+.hydro-markdown .task-list-item {
+  list-style: none;
+}
+
+.hydro-markdown .task-list-item input[type='checkbox'] {
+  accent-color: var(--hydro-primary);
+  margin: 0 0.46rem 0 -1.35rem;
+  transform: translateY(1px);
 }
 
 .hydro-markdown table {
-  width: 100%;
-  margin-bottom: 1em;
-  border-collapse: collapse;
-  border-spacing: 0;
-  background-color: var(--hydro-glass-surface);
-  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
-  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(108%);
-  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(108%);
-}
-
-.hydro-markdown table th,
-.hydro-markdown table td {
-  padding: 0.5em 1em;
   border: 1px solid var(--hydro-border);
+  border-collapse: separate;
+  border-radius: 9px;
+  border-spacing: 0;
+  display: block;
+  font-size: 0.9em;
+  margin: 1.3em 0;
+  max-width: 100%;
+  overflow-x: auto;
+  width: max-content;
 }
 
-.hydro-markdown table th {
-  font-weight: 600;
-  background-color: var(--hydro-glass-surface-muted);
+.hydro-markdown th,
+.hydro-markdown td {
+  border-bottom: 1px solid var(--hydro-border);
+  border-right: 1px solid var(--hydro-border);
+  min-width: 7rem;
+  padding: 0.68rem 0.82rem;
+  text-align: left;
+  vertical-align: top;
 }
 
-.hydro-markdown table tr:nth-child(even) {
-  background-color: color-mix(in srgb, var(--hydro-glass-surface-muted) 72%, transparent);
+.hydro-markdown th {
+  background: color-mix(in srgb, var(--hydro-primary-soft) 45%, var(--hydro-surface));
+  color: var(--hydro-text);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hydro-markdown tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--hydro-surface-muted) 48%, transparent);
+}
+
+.hydro-markdown tr:last-child td {
+  border-bottom: 0;
+}
+
+.hydro-markdown th:last-child,
+.hydro-markdown td:last-child {
+  border-right: 0;
+}
+
+.hydro-markdown tbody tr {
+  transition: background-color 140ms ease;
+}
+
+.hydro-markdown tbody tr:hover td {
+  background: color-mix(in srgb, var(--hydro-primary-soft) 34%, var(--hydro-surface));
+}
+
+.hydro-markdown img {
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 82%, transparent);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--hydro-text) 7%, transparent);
+  display: block;
+  height: auto;
+  margin: 1.3em auto;
+  max-width: 100%;
+}
+
+.hydro-markdown figure {
+  margin: 1.4em 0;
+}
+
+.hydro-markdown figure img {
+  margin-bottom: 0.65rem;
+}
+
+.hydro-markdown figcaption {
+  color: var(--hydro-text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.hydro-markdown kbd {
+  background: var(--hydro-surface-raised);
+  border: 1px solid var(--hydro-border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--hydro-text) 8%, transparent);
+  color: var(--hydro-text);
+  font-family: var(--mantine-font-family-monospace), ui-monospace, monospace;
+  font-size: 0.78em;
+  padding: 0.12em 0.4em;
+}
+
+.hydro-markdown details {
+  background: color-mix(in srgb, var(--hydro-surface-muted) 58%, transparent);
+  border: 1px solid var(--hydro-border);
+  border-radius: 9px;
+  margin: 1.2em 0;
+  padding: 0.75rem 0.9rem;
+}
+
+.hydro-markdown summary {
+  color: var(--hydro-text);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.hydro-markdown details[open] summary {
+  margin-bottom: 0.75rem;
+}
+
+.hydro-markdown iframe,
+.hydro-markdown video {
+  border: 1px solid var(--hydro-border);
+  border-radius: 10px;
+  display: block;
+  margin: 1.3em auto;
+  max-width: 100%;
 }
 
 .hydro-markdown .katex-display {
-  margin: 1em 0;
+  margin: 1.25em 0;
+  max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
+  padding: 0.3rem 0.15rem;
 }
 
 .hydro-markdown .katex {
-  font-size: 1.1em;
+  color: var(--hydro-text);
+  font-size: 1.06em;
 }
 
-/* Code block wrapper and language label */
-.code-block-wrapper {
-  position: relative;
-  margin-bottom: 1em;
+[data-mantine-color-scheme='dark'] .hydro-markdown {
+  --markdown-code-bg: color-mix(in srgb, var(--hydro-bg) 82%, #071013);
+  --markdown-code-keyword: #c7a7ff;
+  --markdown-code-string: #86d7ad;
+  --markdown-code-number: #f0b570;
+  --markdown-code-variable: #f29aae;
+  --markdown-code-comment: #71868d;
 }
 
-.code-lang-label {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--hydro-text-muted);
-  background: var(--hydro-glass-surface-strong);
-  border-left: 1px solid var(--hydro-border);
-  border-bottom: 1px solid var(--hydro-border);
-  border-radius: 0 6px 0 4px;
-  user-select: none;
-  pointer-events: none;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  -webkit-backdrop-filter: blur(6px) saturate(108%);
-  backdrop-filter: blur(6px) saturate(108%);
-  z-index: 1;
+@media (max-width: 48rem) {
+  .hydro-markdown {
+    font-size: 0.925rem;
+    line-height: 1.7;
+  }
+
+  .hydro-markdown pre {
+    border-radius: 8px;
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+  }
+
+  .hydro-markdown th,
+  .hydro-markdown td {
+    padding: 0.58rem 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-markdown a,
+  .hydro-markdown tbody tr {
+    transition: none;
+  }
 }

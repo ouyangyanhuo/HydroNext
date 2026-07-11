@@ -5,7 +5,9 @@ import {
   Paper, Select, Stack, Tabs, Text, Textarea, Title, Tooltip,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconPlayerPlay, IconSend, IconSettings, IconX } from '@tabler/icons-react';
+import {
+  IconCode, IconFileText, IconPlayerPlay, IconSend, IconSettings, IconTerminal2, IconX,
+} from '@tabler/icons-react';
 import { Allotment } from 'allotment';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -127,18 +129,19 @@ export function Scratchpad({
   const [pretestResult, setPretestResult] = useState<any>(null);
   const [pretestRid, setPretestRid] = useState<string>();
   const [error, setError] = useState('');
+  const [activePanel, setActivePanel] = useState<string | null>('records');
   const [settingsOpened, setSettingsOpened] = useState(false);
   const [editorConfig, setEditorConfig] = useState<EditorConfig>(() => loadStoredEditorConfig());
   const [cooldownUntil, setCooldownUntil] = useState({ pretest: 0, submit: 0 });
   const [viewportWidth, setViewportWidth] = useState(() => document.documentElement.clientWidth || window.innerWidth);
-  const [, setClock] = useState(Date.now());
+  const [clock, setClock] = useState(() => Date.now());
   const fontSize = Number(editorConfig.fontSize || getStoredNumber('hydro/editor/fontSize', 14));
   const tabSize = Number(editorConfig.tabSize || getStoredNumber('hydro/editor/tabSize', 4));
   const theme = editorConfig.theme || '';
   const replayRef = useRef({
     sessionId: '',
     initialCode: defaultCode,
-    startedAt: Date.now(),
+    startedAt: 0,
     events: [] as ReplayEvent[],
     snapshots: [] as ReplaySnapshot[],
     lastSnapshotAt: 0,
@@ -187,10 +190,9 @@ export function Scratchpad({
     if (lang) localStorage.setItem(`${cacheKey}#lang`, lang);
   }, [cacheKey, lang]);
 
-  useEffect(() => {
-    if (!pretestUpdate) return;
-    setPretestResult((current: any) => ({ ...(current || {}), ...pretestUpdate, rid: pretestRid }));
-  }, [pretestRid, pretestUpdate]);
+  const displayedPretestResult = pretestUpdate
+    ? { ...(pretestResult || {}), ...pretestUpdate, rid: pretestRid }
+    : pretestResult;
 
   const ensureReplaySession = useCallback(() => {
     const replay = replayRef.current;
@@ -214,9 +216,9 @@ export function Scratchpad({
     if (!resolvedReplayUrl || !user?._id) return;
     ensureReplaySession();
     const replay = replayRef.current;
-    const t = Date.now() - replay.startedAt;
+    const elapsed = Date.now() - replay.startedAt;
     replay.events.push({
-      t,
+      t: elapsed,
       lang,
       selections: getSelections(editor),
       changes: (event.changes || []).map((change: any) => ({
@@ -226,9 +228,9 @@ export function Scratchpad({
         range: change.range,
       })),
     });
-    if (t - replay.lastSnapshotAt > 30000) {
-      replay.lastSnapshotAt = t;
-      replay.snapshots.push({ t, code: editor.getValue(), lang });
+    if (elapsed - replay.lastSnapshotAt > 30000) {
+      replay.lastSnapshotAt = elapsed;
+      replay.snapshots.push({ t: elapsed, code: editor.getValue(), lang });
     }
   }, [ensureReplaySession, lang, resolvedReplayUrl, user?._id]);
 
@@ -265,11 +267,13 @@ export function Scratchpad({
       replay.flushing = false;
     }
     return sessionId;
-  }, [ensureReplaySession, lang, pid, resolvedReplayUrl, ui.pdoc?.docId, ui.tdoc, user?._id]);
+  }, [ensureReplaySession, lang, pid, resolvedReplayUrl, ui.pdoc, ui.tdoc, user?._id]);
 
   const postJudge = useCallback(async (pretest: boolean) => {
     const now = Date.now();
     if (now < (pretest ? cooldownUntil.pretest : cooldownUntil.submit)) return;
+    setClock(now);
+    setActivePanel(pretest ? 'pretest' : 'records');
     if (!lang) {
       notifications.show({ title: t('Please select a language'), message: '', color: 'red' });
       setError(t('Please select a language'));
@@ -316,14 +320,18 @@ export function Scratchpad({
       if (pretest) setPretesting(false);
       else setSubmitting(false);
     }
-  }, [cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, flushReplay, resolvedSubmitUrl, input, navigate]);
+  }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, flushReplay, resolvedSubmitUrl, input, navigate]);
 
-  const pretestCooldown = Math.max(0, Math.ceil((cooldownUntil.pretest - Date.now()) / 1000));
-  const submitCooldown = Math.max(0, Math.ceil((cooldownUntil.submit - Date.now()) / 1000));
+  const pretestCooldown = Math.max(0, Math.ceil((cooldownUntil.pretest - clock) / 1000));
+  const submitCooldown = Math.max(0, Math.ceil((cooldownUntil.submit - clock) / 1000));
 
   const renderResult = (result: any, emptyText: string) => {
     if (error) return <Text c="red" size="sm">{error}</Text>;
     if (!result) return <Text size="sm" c="dimmed">{emptyText}</Text>;
+    const hasResultDetails = Boolean(
+      result.compilerTexts || result.compilerText || result.judgeTexts || result.judgeText
+      || result.message || result.output || result.testCases || result.cases,
+    );
     return (
       <Stack gap="xs">
         <Group gap="xs">
@@ -335,7 +343,7 @@ export function Scratchpad({
             </Button>
           )}
         </Group>
-        {(result.compilerTexts || result.compilerText || result.judgeTexts || result.judgeText || result.message || result.output || result.testCases || result.cases) && (
+        {hasResultDetails && (
           <Text size="xs" className="whitespace-pre-wrap font-mono">
             {[
               ...(Array.isArray(result.compilerTexts) ? result.compilerTexts : [result.compilerText]).filter(Boolean),
@@ -357,7 +365,10 @@ export function Scratchpad({
     if (!result) return <Text size="sm" c="dimmed">{t('No result')}</Text>;
     const lines: string[] = [];
     if (result.status !== undefined) {
-      lines.push(`${t(STATUS_TEXTS[result.status] || String(result.status))} ${Math.round(Number(result.time) || 0)}ms ${Math.round(Number(result.memory) || 0)}KiB`);
+      const statusText = t(STATUS_TEXTS[result.status] || String(result.status));
+      const timeText = `${Math.round(Number(result.time) || 0)}ms`;
+      const memoryText = `${Math.round(Number(result.memory) || 0)}KiB`;
+      lines.push(`${statusText} ${timeText} ${memoryText}`);
     } else if (result.rid) {
       lines.push(t('Waiting'));
     }
@@ -376,7 +387,7 @@ export function Scratchpad({
 
   return (
     <div
-      className="relative -my-8 overflow-hidden md:-my-10"
+      className="hydro-scratchpad-shell relative -my-8 overflow-hidden md:-my-10"
       style={{
         width: viewportWidth ? `${viewportWidth}px` : '100vw',
         marginLeft: viewportWidth ? `calc(50% - ${viewportWidth / 2}px)` : 'calc(50% - 50vw)',
@@ -384,26 +395,41 @@ export function Scratchpad({
         maxWidth: '100vw',
       }}
     >
-      <Paper className="h-[calc(100vh-4rem)] min-h-[560px] overflow-hidden rounded-none border-x-0 border-y border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]">
-        <Allotment>
+      <Paper
+        className={[
+          'hydro-scratchpad-frame h-[calc(100dvh-4rem)] min-h-[560px] overflow-hidden rounded-none',
+          'border-x-0 border-y border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]',
+        ].join(' ')}
+      >
+        <Allotment vertical={viewportWidth < 900}>
           {statement && (
-            <Allotment.Pane preferredSize="38%" minSize={280}>
-              <div className="h-full overflow-auto border-r border-[var(--hydro-border)] p-5">
-                <Group justify="space-between" mb="md" align="flex-start">
-                  <div>
-                    <Text size="xs" c="dimmed" fw={800}>{t('Problem')}</Text>
-                    {title && <Title order={3} size="h4">{title}</Title>}
-                  </div>
-                </Group>
-                {statement}
+            <Allotment.Pane preferredSize={viewportWidth < 900 ? '42%' : '38%'} minSize={viewportWidth < 900 ? 180 : 280}>
+              <div className="hydro-scratchpad-statement h-full overflow-auto">
+                <div className="hydro-scratchpad-statement__header">
+                  <Group gap="sm" align="flex-start" wrap="nowrap">
+                    <span className="hydro-scratchpad-pane-icon" aria-hidden="true">
+                      <IconFileText size={17} stroke={1.8} />
+                    </span>
+                    <div className="min-w-0">
+                      <Text size="xs" c="dimmed" fw={800}>{t('Problem')}</Text>
+                      {title && <Title order={3} size="h4" className="truncate">{title}</Title>}
+                    </div>
+                  </Group>
+                </div>
+                <div className="hydro-scratchpad-statement__body">
+                  {statement}
+                </div>
               </div>
             </Allotment.Pane>
           )}
 
-          <Allotment.Pane minSize={420}>
-            <Stack gap={0} className="h-full min-h-0">
-              <Group justify="space-between" p="xs" className="border-b border-[var(--hydro-border)] bg-[var(--hydro-surface)]">
-                <Group gap="xs" wrap="nowrap">
+          <Allotment.Pane minSize={viewportWidth < 900 ? 320 : 420}>
+            <Stack gap={0} className="hydro-scratchpad-editor-pane h-full min-h-0">
+              <div className="hydro-scratchpad-toolbar">
+                <Group gap="sm" wrap="nowrap" className="hydro-scratchpad-toolbar__language">
+                  <span className="hydro-scratchpad-pane-icon" aria-hidden="true">
+                    <IconCode size={17} stroke={1.8} />
+                  </span>
                   <Select
                     data={langOptions}
                     value={lang}
@@ -411,17 +437,20 @@ export function Scratchpad({
                     placeholder={t('Language')}
                     searchable
                     size="xs"
-                    w={190}
+                    className="hydro-scratchpad-language-select"
+                    classNames={{ dropdown: 'hydro-scratchpad-select-dropdown' }}
                   />
                 </Group>
-                <Group gap="xs" wrap="nowrap">
+                <Group gap="xs" wrap="nowrap" className="hydro-scratchpad-toolbar__actions">
                   {canUsePretest && (
                     <Button
                       size="xs"
+                      variant="light"
                       leftSection={<IconPlayerPlay size={14} />}
                       onClick={() => postJudge(true)}
                       loading={pretesting}
                       disabled={submitting || pretestCooldown > 0}
+                      className="hydro-scratchpad-run-action"
                     >
                       {pretestCooldown ? `${t('Run Self Test')} (${pretestCooldown}s)` : t('Run Self Test')}
                     </Button>
@@ -432,27 +461,39 @@ export function Scratchpad({
                     onClick={() => postJudge(false)}
                     loading={submitting}
                     disabled={pretesting || submitCooldown > 0}
+                    className="hydro-scratchpad-submit-action"
                   >
                     {submitCooldown ? `${t('Submit Solution')} (${submitCooldown}s)` : t('Submit Solution')}
                   </Button>
                   <Tooltip label={t('Editor Settings')}>
-                    <ActionIcon variant="subtle" onClick={() => setSettingsOpened(true)} aria-label={t('Editor Settings')}>
+                    <ActionIcon
+                      className="hydro-scratchpad-tool-action"
+                      variant="subtle"
+                      onClick={() => setSettingsOpened(true)}
+                      aria-label={t('Editor Settings')}
+                    >
                       <IconSettings size={18} />
                     </ActionIcon>
                   </Tooltip>
                   {onClose && (
                     <Tooltip label={t('Quit Scratchpad')}>
-                      <ActionIcon size="lg" variant="subtle" color="gray" onClick={onClose} aria-label={t('Quit Scratchpad')}>
+                      <ActionIcon
+                        className="hydro-scratchpad-tool-action"
+                        size="lg"
+                        variant="subtle"
+                        onClick={onClose}
+                        aria-label={t('Quit Scratchpad')}
+                      >
                         <IconX size={18} />
                       </ActionIcon>
                     </Tooltip>
                   )}
                 </Group>
-              </Group>
+              </div>
 
-              <div className="min-h-0 flex-1">
+              <div className="hydro-scratchpad-editor min-h-0 flex-1">
                 <Allotment vertical>
-                  <Allotment.Pane minSize={320}>
+                  <Allotment.Pane minSize={260}>
                     <CodeEditor
                       value={code}
                       onChange={setCode}
@@ -464,36 +505,64 @@ export function Scratchpad({
                       theme={theme}
                     />
                   </Allotment.Pane>
-                  <Allotment.Pane preferredSize={180} minSize={120}>
-                    <Stack gap={0} className="h-full">
+                  <Allotment.Pane preferredSize={190} minSize={130}>
+                    <Stack gap={0} className="hydro-scratchpad-console h-full">
                       <Divider />
-                      <Tabs defaultValue="records" keepMounted={false} className="flex h-full flex-col">
-                        <Tabs.List px="xs">
+                      <Tabs
+                        value={activePanel}
+                        onChange={setActivePanel}
+                        keepMounted={false}
+                        className="hydro-scratchpad-tabs flex h-full min-h-0 flex-col"
+                      >
+                        <Tabs.List className="hydro-scratchpad-console__tabs" px="xs">
                           <Tabs.Tab value="records">{t('Records')}</Tabs.Tab>
-                          <Tabs.Tab value="pretest">{t('Self Test')}</Tabs.Tab>
+                          <Tabs.Tab value="pretest" leftSection={<IconTerminal2 size={14} />}>{t('Self Test')}</Tabs.Tab>
                         </Tabs.List>
                         <Tabs.Panel value="records" className="min-h-0 flex-1">
-                          <Paper p="sm" className="h-full overflow-auto border-t border-[var(--hydro-border)]">
+                          <Paper p="sm" className="hydro-scratchpad-console__panel h-full overflow-auto rounded-none">
                             {renderResult(submitResult, t('No records found'))}
                           </Paper>
                         </Tabs.Panel>
-                        <Tabs.Panel value="pretest" className="min-h-0 flex-1">
-                          <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-2">
-                            <Paper p="sm" className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-t border-[var(--hydro-border)]">
-                              <Text size="xs" c="dimmed" fw={700} mb={6}>{t('Input')}</Text>
-                              <div className="min-h-0 flex-1">
+                        <Tabs.Panel value="pretest" className="hydro-scratchpad-pretest min-h-0 flex-1">
+                          <div className="hydro-scratchpad-io-grid">
+                            <Paper p={0} className="hydro-scratchpad-io-panel flex h-full min-h-0 flex-col overflow-hidden rounded-none">
+                              <div className="hydro-scratchpad-io-panel__header">
+                                <Text size="xs" fw={750}>{t('Input')}</Text>
+                                <Text size="xs" c="dimmed">stdin</Text>
+                              </div>
+                              <div className="hydro-scratchpad-input-wrap min-h-0 flex-1">
                                 <Textarea
                                   value={input}
                                   onChange={(e) => setInput(e.currentTarget.value)}
-                                  placeholder={t('Input')}
-                                  styles={{ input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '13px', height: '100%', resize: 'none', overflow: 'auto' }, wrapper: { height: '100%' }, root: { height: '100%' } }}
+                                  placeholder={`${t('Input')}…`}
+                                  className="hydro-scratchpad-input"
+                                  styles={{
+                                    input: {
+                                      height: '100%',
+                                      overflow: 'auto',
+                                      fontFamily: 'var(--hydro-font-mono)',
+                                      fontSize: '13px',
+                                      resize: 'none',
+                                    },
+                                    root: { height: '100%' },
+                                    wrapper: { height: '100%' },
+                                  }}
                                 />
                               </div>
                             </Paper>
-                            <Paper p="sm" className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-t border-l border-[var(--hydro-border)]">
-                              <Text size="xs" c="dimmed" fw={700} mb={6}>{t('Output')}</Text>
-                              <div className="min-h-0 flex-1 overflow-auto font-mono text-xs">
-                                {renderPretestOutput(pretestResult)}
+                            <Paper
+                              p={0}
+                              className={[
+                                'hydro-scratchpad-io-panel hydro-scratchpad-io-panel--output',
+                                'flex h-full min-h-0 flex-col overflow-hidden rounded-none',
+                              ].join(' ')}
+                            >
+                              <div className="hydro-scratchpad-io-panel__header">
+                                <Text size="xs" fw={750}>{t('Output')}</Text>
+                                <Text size="xs" c="dimmed">stdout / stderr</Text>
+                              </div>
+                              <div className="hydro-scratchpad-output min-h-0 flex-1 overflow-auto font-mono text-xs">
+                                {renderPretestOutput(displayedPretestResult)}
                               </div>
                             </Paper>
                           </div>
@@ -503,13 +572,27 @@ export function Scratchpad({
                   </Allotment.Pane>
                 </Allotment>
               </div>
+
+              <div className="hydro-scratchpad-statusbar">
+                <Text size="xs" fw={700}>{langOptions.find((option) => option.value === lang)?.label || lang || t('Language')}</Text>
+                <Group gap="md" wrap="nowrap">
+                  <Text size="xs" c="dimmed">{t('Font Size')}: {fontSize}px</Text>
+                  <Text size="xs" c="dimmed">{t('Tab Size')}: {tabSize}</Text>
+                </Group>
+              </div>
             </Stack>
           </Allotment.Pane>
         </Allotment>
       </Paper>
 
-      <Drawer opened={settingsOpened} onClose={() => setSettingsOpened(false)} title={t('Editor Settings')} position="right">
-        <Stack gap="md">
+      <Drawer
+        opened={settingsOpened}
+        onClose={() => setSettingsOpened(false)}
+        title={t('Editor Settings')}
+        position="right"
+        classNames={{ content: 'hydro-scratchpad-settings', header: 'hydro-scratchpad-settings__header' }}
+      >
+        <Stack gap="md" className="hydro-scratchpad-settings__form">
           <NumberInput
             label={t('Font Size')}
             value={fontSize}
@@ -533,6 +616,7 @@ export function Scratchpad({
             onChange={(value) => updateEditorConfig({ theme: value || undefined })}
             searchable
             clearable
+            classNames={{ dropdown: 'hydro-scratchpad-select-dropdown' }}
           />
         </Stack>
       </Drawer>

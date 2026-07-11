@@ -3,7 +3,6 @@ import { Box } from '@mantine/core';
 import MarkdownIt from 'markdown-it';
 import markPlugin from 'markdown-it-mark';
 import hljs from 'highlight.js/lib/core';
-import 'highlight.js/styles/github.css';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 

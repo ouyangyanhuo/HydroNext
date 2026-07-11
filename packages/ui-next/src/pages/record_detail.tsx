@@ -8,8 +8,8 @@ import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData, useUiContext } from '@/context/page-data';
-import { useCurrentUser } from '@/hooks/use-current-user';
 import { useBuildUrl } from '@/hooks/use-build-url';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useRecordSocket } from '@/hooks/use-record-socket';
@@ -185,7 +185,7 @@ function CaseTable({ cases, subtasks }: { cases: any[], subtasks: Record<string,
 
 function Metric({ label, value }: { label: string, value: string | number }) {
   return (
-    <div className="min-w-24 rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-tint)] px-3 py-2">
+    <div className="hydro-record-metric min-w-24 px-3 py-2">
       <Text size="xs" c="dimmed" fw={700} tt="uppercase">{label}</Text>
       <Text size="sm" fw={700} className="truncate text-[var(--hydro-text)]">{value}</Text>
     </div>
@@ -203,10 +203,10 @@ function InfoRow({ label, children }: { label: string, children: ReactNode }) {
 
 function OutputBlock({ title, content }: { title: string, content: string }) {
   return (
-    <Card withBorder p="lg" className="hydro-content-card">
+    <Card withBorder p="lg" className="hydro-content-card hydro-record-card">
       <Stack gap="sm">
         <Text size="sm" fw={700}>{title}</Text>
-        <div className="overflow-x-auto rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-bg-soft)]">
+        <div className="hydro-record-output">
           <Code block className="min-w-max bg-transparent p-3">{content}</Code>
         </div>
       </Stack>
@@ -272,10 +272,10 @@ export default function RecordDetailPage() {
   };
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-record-detail">
       {error && <Text c="red" size="sm">{error}</Text>}
-      <Card withBorder p="xl" className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]">
-        <Badge variant="light" color="hydroTeal" mb="sm">
+      <Card withBorder p="xl" className="hydro-record-hero overflow-hidden">
+        <Badge variant="light" className="hydro-record-accent-badge" mb="sm">
           {t('Record')}
         </Badge>
         <Group justify="space-between" align="flex-start" gap="lg" wrap="wrap">
@@ -319,7 +319,7 @@ export default function RecordDetailPage() {
         <div className="min-w-0 flex-1">
           <Stack gap="md">
             {cases.length > 0 && (
-              <Card withBorder p={0} className="hydro-content-card overflow-hidden">
+              <Card withBorder p={0} className="hydro-content-card hydro-record-card overflow-hidden">
                 <Group justify="space-between" p="lg">
                   <Text size="sm" fw={700}>{t('Test Cases')}</Text>
                   <Badge variant="light">{cases.length}</Badge>
@@ -339,7 +339,7 @@ export default function RecordDetailPage() {
             )}
 
             {rdoc.code && (
-              <Card withBorder p="lg" className="hydro-content-card">
+              <Card withBorder p="lg" className="hydro-content-card hydro-record-card">
                 <Stack gap="sm">
                   <Group justify="space-between">
                     <Text size="sm" fw={700}>{t('Source Code')}</Text>
@@ -349,8 +349,8 @@ export default function RecordDetailPage() {
                       </Button>
                     )}
                   </Group>
-                  <div className="overflow-x-auto rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-bg-soft)]">
-                    <Code block className="min-w-max bg-transparent p-3">{rdoc.code}</Code>
+                  <div className="hydro-record-source" tabIndex={0} aria-label={t('Source Code')}>
+                    <Code block className="min-w-max bg-transparent p-4">{rdoc.code}</Code>
                   </div>
                 </Stack>
               </Card>
@@ -390,14 +390,22 @@ export default function RecordDetailPage() {
                 </InfoRow>
                 {pdoc && (
                   <InfoRow label={t('Problem')}>
-                    <Link to="problem_detail" params={{ pid: pdoc.pid || pdoc.docId }} className="block max-w-40 truncate text-xs no-underline hover:underline">
+                    <Link
+                      to="problem_detail"
+                      params={{ pid: pdoc.pid || pdoc.docId }}
+                      className="block max-w-40 truncate text-xs no-underline hover:underline"
+                    >
                       {pdoc.pid || pdoc.docId}. {problemTitle}
                     </Link>
                   </InfoRow>
                 )}
                 {tdoc && (
                   <InfoRow label={t(tdoc.rule === 'homework' ? 'Homework' : 'Contest')}>
-                    <Link to={tdoc.rule === 'homework' ? 'homework_detail' : 'contest_detail'} params={{ tid: tdoc.docId || tdoc._id }} className="block max-w-40 truncate text-xs no-underline hover:underline">
+                    <Link
+                      to={tdoc.rule === 'homework' ? 'homework_detail' : 'contest_detail'}
+                      params={{ tid: tdoc.docId || tdoc._id }}
+                      className="block max-w-40 truncate text-xs no-underline hover:underline"
+                    >
                       {contestTitle}
                     </Link>
                   </InfoRow>
@@ -439,14 +447,28 @@ export default function RecordDetailPage() {
               <Card withBorder p="md" className="hydro-panel">
                 <Title order={3} size="h5" mb="sm">{t('History')}</Title>
                 <Stack gap={4}>
-                  <Link to="record_detail" params={{ rid: rdoc._id }} className={`rounded-md px-2 py-1 text-xs no-underline ${!rev ? 'bg-[var(--hydro-primary-soft)] text-[var(--hydro-primary)]' : 'hover:bg-[var(--hydro-surface)]'}`}>
+                  <Link
+                    to="record_detail"
+                    params={{ rid: rdoc._id }}
+                    className={[
+                      'rounded-md px-2 py-1 text-xs no-underline',
+                      !rev
+                        ? 'bg-[var(--hydro-primary-soft)] text-[var(--hydro-primary)]'
+                        : 'hover:bg-[var(--hydro-surface)]',
+                    ].join(' ')}
+                  >
                     {t('Latest Version')}
                   </Link>
                   {Object.entries(allRevs).map(([rid, date]) => (
                     <a
                       key={rid}
                       href={`?rev=${rid}`}
-                      className={`rounded-md px-2 py-1 text-xs no-underline ${String(rev) === rid ? 'bg-[var(--hydro-primary-soft)] text-[var(--hydro-primary)]' : 'hover:bg-[var(--hydro-surface)]'}`}
+                      className={[
+                        'rounded-md px-2 py-1 text-xs no-underline',
+                        String(rev) === rid
+                          ? 'bg-[var(--hydro-primary-soft)] text-[var(--hydro-primary)]'
+                          : 'hover:bg-[var(--hydro-surface)]',
+                      ].join(' ')}
                     >
                       <TimeDisplay date={date as any} format="absolute" />
                     </a>

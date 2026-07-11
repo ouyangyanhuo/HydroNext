@@ -33,7 +33,7 @@ function UserMenu() {
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
 
   return (
-    <Menu shadow="md" width={220} position="bottom-end">
+    <Menu shadow="md" width={220} position="bottom-end" classNames={{ dropdown: 'hydro-topbar-dropdown' }}>
       <Menu.Target>
         <UnstyledButton className="flex items-center gap-2 rounded-md px-2 py-1 transition hover:bg-[var(--hydro-surface-muted)]">
           <Avatar src={getAvatarUrl(user.avatar, 32)} size={32} radius="xl" />
@@ -237,7 +237,7 @@ function ThemeToggle() {
           }}
         />
       )}
-      <Menu shadow="md" width={190} position="bottom-end">
+      <Menu shadow="md" width={190} position="bottom-end" classNames={{ dropdown: 'hydro-topbar-dropdown' }}>
         <Menu.Target>
           <ActionIcon
             aria-label={t('Theme mode')}
@@ -287,7 +287,15 @@ function AccentColorPicker() {
   const isPreset = PRESET_KEYS.includes(accentColor);
 
   return (
-    <Popover opened={opened} onChange={close} position="bottom-end" withArrow shadow="md" closeOnClickOutside={false}>
+    <Popover
+      opened={opened}
+      onChange={close}
+      position="bottom-end"
+      withArrow
+      shadow="md"
+      closeOnClickOutside={false}
+      classNames={{ dropdown: 'hydro-topbar-dropdown' }}
+    >
       <Popover.Target>
         <Tooltip label={t('Theme color')} withArrow>
           <ActionIcon
@@ -395,7 +403,7 @@ export function TopNav() {
 
   return (
     <>
-      <div className="border-b border-[var(--hydro-border)] bg-[var(--hydro-nav-bg)] backdrop-blur-xl">
+      <div className="hydro-top-nav border-b border-[var(--hydro-border)] bg-[var(--hydro-nav-bg)] backdrop-blur-xl">
         <div className="hydro-container flex h-16 items-center justify-between">
           <Group gap="lg" wrap="nowrap">
             <Link to="homepage" className="group flex min-w-0 items-center gap-3 no-underline">

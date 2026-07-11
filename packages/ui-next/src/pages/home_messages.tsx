@@ -1,12 +1,23 @@
-import { getAvatarUrl } from '@/utils/avatar';
-import { formatErrorMessage } from '@/utils/error';
-import { ActionIcon, Avatar, Badge, Button, Group, Loader, Modal, Paper, ScrollArea, Stack, Text, Textarea, TextInput, UnstyledButton } from '@mantine/core';
+import {
+  ActionIcon, Avatar, Button, Group, Loader, Modal, Paper, ScrollArea, Stack, Text, Textarea, TextInput, UnstyledButton,
+} from '@mantine/core';
+import { IconPlus, IconSend, IconTrash } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { EmptyState } from '@/components/common/empty-state';
 import { TimeDisplay } from '@/components/common/time-display';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+import { getAvatarUrl } from '@/utils/avatar';
+import { formatErrorMessage } from '@/utils/error';
+
+function avatarSource(user: any) {
+  return user?.avatarUrl || getAvatarUrl(user?.avatar || '');
+}
+
+function avatarInitial(user: any) {
+  return String(user?.displayName || user?.uname || user?._id || '?').trim().charAt(0).toLocaleUpperCase();
+}
 
 function SendMessageDialog({
   opened,
@@ -26,21 +37,9 @@ function SendMessageDialog({
   const [searching, setSearching] = useState(false);
 
   useEffect(() => {
-    if (!opened) {
-      setQuery('');
-      setResults([]);
-      return;
-    }
-  }, [opened]);
-
-  useEffect(() => {
     if (!opened) return undefined;
     const trimmed = query.trim();
-    if (!trimmed) {
-      setResults([]);
-      setSearching(false);
-      return undefined;
-    }
+    if (!trimmed) return undefined;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setSearching(true);
@@ -50,7 +49,7 @@ function SendMessageDialog({
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
             args: { search: trimmed, limit: 10 },
-            projection: ['_id', 'uname', 'displayName', 'avatar'],
+            projection: ['_id', 'uname', 'displayName', 'avatar', 'avatarUrl'],
           }),
           signal: controller.signal,
         });
@@ -59,8 +58,8 @@ function SendMessageDialog({
           const users = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
           setResults(users.filter((u: any) => Number.isSafeInteger(Number(u._id))));
         }
-      } catch {
-        // ignore
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') setResults([]);
       } finally {
         if (!controller.signal.aborted) setSearching(false);
       }
@@ -72,7 +71,16 @@ function SendMessageDialog({
   }, [domainId, opened, query]);
 
   return (
-    <Modal opened={opened} onClose={onClose} title={t('New Message')} size="md">
+    <Modal
+      opened={opened}
+      onClose={() => {
+        setQuery('');
+        setResults([]);
+        onClose();
+      }}
+      title={t('New Message')}
+      size="md"
+    >
       <Stack gap="md">
         <TextInput
           label={t('Search users')}
@@ -81,6 +89,10 @@ function SendMessageDialog({
           onChange={(e) => {
             const val = e.currentTarget.value;
             setQuery(val);
+            if (!val.trim()) {
+              setResults([]);
+              setSearching(false);
+            }
           }}
           rightSection={searching ? <Loader size={16} /> : null}
           autoFocus
@@ -94,10 +106,15 @@ function SendMessageDialog({
                     key={u._id}
                     p="sm"
                     className="w-full hover:bg-[var(--hydro-surface-muted)] border-b border-[var(--hydro-border)] last:border-b-0"
-                    onClick={() => onSubmit(u)}
+                    disabled={loading}
+                    onClick={() => {
+                      setQuery('');
+                      setResults([]);
+                      onSubmit(u);
+                    }}
                   >
                     <Group gap="sm">
-                      <Avatar src={getAvatarUrl(u.avatar || '')} size="sm" radius="xl" />
+                      <Avatar src={avatarSource(u)} size="sm" radius="xl">{avatarInitial(u)}</Avatar>
                       <div>
                         <Text size="sm" fw={500}>{u.displayName || u.uname}</Text>
                         <Text size="xs" c="dimmed">UID {u._id}</Text>
@@ -121,7 +138,7 @@ function getMessageTime(message: any) {
   const raw = message?.createAt || message?._id;
   const id = typeof raw === 'string' ? raw : raw?.$oid || raw?.toString?.();
   if (typeof id === 'string' && /^[0-9a-f]{24}$/i.test(id)) {
-    return parseInt(id.slice(0, 8), 16) * 1000;
+    return Number.parseInt(id.slice(0, 8), 16) * 1000;
   }
   const time = new Date(raw).getTime();
   return Number.isNaN(time) ? 0 : time;
@@ -144,7 +161,7 @@ function normalizeConversations(input: any, udict: Record<string, any>, currentU
   if (Array.isArray(input)) {
     const map = new Map<number, any>();
     for (const message of input) {
-      const rawTarget = message.from === currentUserId ? message.to : message.from;
+      const rawTarget = Number(message.from) === Number(currentUserId) ? message.to : message.from;
       const targetId = Number(Array.isArray(rawTarget) ? rawTarget[0] : rawTarget);
       if (!map.has(targetId)) {
         map.set(targetId, {
@@ -188,20 +205,17 @@ export default function HomeMessagesPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const user = useSessionStore((s) => s.user);
-  const udict = args.udict || {};
+  const udict = useMemo(() => args.udict || {}, [args.udict]);
   const initialConversations = useMemo(() => normalizeConversations(args.messages, udict, user?._id), [args.messages, udict, user?._id]);
   const [conversations, setConversations] = useState<any[]>(initialConversations);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(() => Number(initialConversations[0]?._id) || null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [draft, setDraft] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState('');
+  const [deletingMessageId, setDeletingMessageId] = useState('');
   const [error, setError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setConversations(initialConversations);
-  }, [initialConversations]);
 
   const selected = useMemo(() => {
     const existing = conversations.find((c: any) => Number(c._id) === selectedId);
@@ -215,8 +229,8 @@ export default function HomeMessagesPage() {
   }, [conversations, selectedId, selectedUser, udict]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [selected?.messages?.length]);
+    messagesEndRef.current?.scrollIntoView({ block: 'end' });
+  }, [selectedId, selected?.messages?.length]);
 
   const post = async (payload: Record<string, any>) => {
     setLoading(String(payload.operation || 'operation'));
@@ -276,7 +290,9 @@ export default function HomeMessagesPage() {
 
   const deleteMessage = async (messageId: any) => {
     const normalizedId = normalizeMessageId(messageId);
+    setDeletingMessageId(normalizedId);
     const data = await post({ operation: 'delete_message', messageId });
+    setDeletingMessageId('');
     if (data === null) return;
     setConversations((prev) => sortConversations(prev.map((conv) => (
       Number(conv._id) === selectedId
@@ -296,12 +312,12 @@ export default function HomeMessagesPage() {
   const targetId = selectedId || 0;
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] min-h-[520px] overflow-hidden rounded-md border border-[var(--hydro-border)]">
-      <Paper w={300} className="shrink-0 flex flex-col overflow-hidden rounded-none border-0 border-r border-[var(--hydro-border)]">
+    <main className="hydro-messages">
+      <Paper className="hydro-messages__sidebar">
         <Group justify="space-between" p="sm" className="border-b border-[var(--hydro-border)]">
           <Text fw={700} size="sm">{t('Messages')}</Text>
           <ActionIcon size="sm" variant="subtle" onClick={() => setDialogOpen(true)}>
-            +
+            <IconPlus size={17} />
           </ActionIcon>
         </Group>
         <ScrollArea className="flex-1">
@@ -318,11 +334,16 @@ export default function HomeMessagesPage() {
                   <UnstyledButton
                     key={otherId}
                     p="sm"
-                    className={`border-b border-[var(--hydro-border)] hover:bg-[var(--hydro-surface-muted)] ${isActive ? 'bg-[var(--hydro-surface-muted)]' : ''}`}
+                    className={[
+                      'border-b border-[var(--hydro-border)] hover:bg-[var(--hydro-surface-muted)]',
+                      isActive ? 'bg-[var(--hydro-surface-muted)]' : '',
+                    ].join(' ')}
                     onClick={() => openConversation(otherId, other)}
                   >
                     <Group gap="sm" wrap="nowrap">
-                      <Avatar src={getAvatarUrl(other.avatar || '')} size="sm" radius="xl" />
+                      <Avatar src={avatarSource(other)} size={40} radius="xl" className="hydro-message-avatar">
+                        {avatarInitial(other)}
+                      </Avatar>
                       <div className="min-w-0 flex-1">
                         <Group justify="space-between">
                           <Text size="sm" fw={500} truncate>{other.uname || otherId}</Text>
@@ -334,7 +355,7 @@ export default function HomeMessagesPage() {
                         </Group>
                         {lastMsg && (
                           <Text size="xs" c="dimmed" truncate>
-                            {lastMsg.from === user?._id ? `${t('Me')}: ` : ''}{messageText(lastMsg)}
+                            {Number(lastMsg.from) === Number(user?._id) ? `${t('Me')}: ` : ''}{messageText(lastMsg)}
                           </Text>
                         )}
                       </div>
@@ -347,51 +368,60 @@ export default function HomeMessagesPage() {
         </ScrollArea>
       </Paper>
 
-      <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
+      <section className="hydro-messages__chat">
         {selected ? (
           <>
             <Group gap="sm" p="sm" className="border-b border-[var(--hydro-border)] shrink-0">
-              <Avatar src={getAvatarUrl(target.avatar || '')} size="sm" radius="xl" />
+              <Avatar src={avatarSource(target)} size={36} radius="xl" className="hydro-message-avatar">
+                {avatarInitial(target)}
+              </Avatar>
               <div>
                 <Text size="sm" fw={600}>{target.uname || targetId}</Text>
                 <Text size="xs" c="dimmed">UID {targetId}</Text>
               </div>
             </Group>
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            <div className="hydro-messages__timeline">
               <Stack gap="sm" justify="flex-end" className="min-h-full">
                 {(selected.messages || []).map((message: any) => {
-                  const fromMe = message.from === user?._id;
+                  const fromMe = Number(message.from) === Number(user?._id);
                   return (
                     <Group key={message._id} justify={fromMe ? 'flex-end' : 'flex-start'} align="flex-end" gap="xs">
                       {!fromMe && (
-                        <Avatar src={getAvatarUrl(target.avatar || '')} size="xs" radius="xl" />
+                        <Avatar src={avatarSource(target)} size={30} radius="xl" className="hydro-message-avatar">
+                          {avatarInitial(target)}
+                        </Avatar>
                       )}
-                      <div className={`max-w-[70%] ${fromMe ? 'order-first' : ''}`}>
+                      <div className={`hydro-message-content ${fromMe ? 'order-first' : ''}`}>
                         <Paper
                           p="xs"
                           radius="md"
                           bg={fromMe ? 'var(--hydro-primary)' : 'var(--hydro-surface-muted)'}
-                          className={fromMe ? 'text-white' : ''}
+                          className={fromMe ? 'hydro-message-bubble hydro-message-bubble--mine' : 'hydro-message-bubble'}
                         >
                           <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>{messageText(message)}</Text>
                         </Paper>
                         <Group gap="xs" justify={fromMe ? 'flex-end' : 'flex-start'} mt={2}>
                           <TimeDisplay date={message.createAt || message._id} format="relative" size="xs" />
                           {fromMe && (
-                            <Text
+                            <ActionIcon
                               size="xs"
-                              c="red"
-                              className="cursor-pointer hover:underline"
+                              variant="subtle"
+                              color="red"
+                              loading={deletingMessageId === normalizeMessageId(message._id)}
+                              aria-label={t('Delete')}
+                              className="hydro-message-delete"
                               onClick={() => deleteMessage(message._id)}
                             >
-                              {t('Delete')}
-                            </Text>
+                              <IconTrash size={12} />
+                            </ActionIcon>
                           )}
                         </Group>
                       </div>
                       {fromMe && (
-                        <Avatar src={getAvatarUrl(user?.avatar || '')} size="xs" radius="xl" />
+                        <Avatar src={avatarSource(user)} size={30} radius="xl" className="hydro-message-avatar">
+                          {avatarInitial(user)}
+                        </Avatar>
                       )}
                     </Group>
                   );
@@ -421,6 +451,7 @@ export default function HomeMessagesPage() {
               />
               <Button
                 size="sm"
+                leftSection={<IconSend size={15} />}
                 disabled={!draft.trim()}
                 loading={loading === 'send'}
                 onClick={send}
@@ -435,7 +466,7 @@ export default function HomeMessagesPage() {
           </div>
         )}
         {error && <Text c="red" size="sm" p="sm">{error}</Text>}
-      </div>
+      </section>
 
       <SendMessageDialog
         opened={dialogOpen}
@@ -446,6 +477,6 @@ export default function HomeMessagesPage() {
         }}
         loading={loading === 'send'}
       />
-    </div>
+    </main>
   );
 }

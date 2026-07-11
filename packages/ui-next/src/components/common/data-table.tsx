@@ -1,4 +1,6 @@
 import { ScrollArea, Table } from '@mantine/core';
+import type { KeyboardEvent, MouseEvent } from 'react';
+import { memo } from 'react';
 import { EmptyState } from './empty-state';
 
 interface Column<T> {
@@ -16,15 +18,19 @@ interface DataTableProps<T> {
   emptyMessage?: string;
   striped?: boolean;
   highlightOnHover?: boolean;
+  onRowClick?: (item: T) => void;
+  rowLabel?: (item: T) => string;
 }
 
-export function DataTable<T extends Record<string, any>>({
+function DataTableComponent<T extends Record<string, any>>({
   columns,
   data,
   keyField = '_id',
   emptyMessage = 'No data',
   striped = true,
   highlightOnHover = true,
+  onRowClick,
+  rowLabel,
 }: DataTableProps<T>) {
   if (!data || data.length === 0) {
     return <EmptyState message={emptyMessage} />;
@@ -50,18 +56,39 @@ export function DataTable<T extends Record<string, any>>({
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {data.map((item) => (
-              <Table.Tr key={item[keyField]}>
-                {columns.map((col) => (
-                  <Table.Td key={col.key} style={{ textAlign: col.align }}>
-                    {col.render ? col.render(item) : item[col.key]}
-                  </Table.Td>
-                ))}
-              </Table.Tr>
-            ))}
+            {data.map((item) => {
+              const activate = (event: MouseEvent<HTMLTableRowElement> | KeyboardEvent<HTMLTableRowElement>) => {
+                const target = event.target as HTMLElement;
+                if (target.closest('a, button, input, select, textarea, [role="button"]')) return;
+                onRowClick?.(item);
+              };
+              return (
+                <Table.Tr
+                  key={item[keyField]}
+                  className={onRowClick ? 'hydro-data-table__clickable-row' : undefined}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  aria-label={onRowClick ? rowLabel?.(item) : undefined}
+                  onClick={onRowClick ? activate : undefined}
+                  onKeyDown={onRowClick ? (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      activate(event);
+                    }
+                  } : undefined}
+                >
+                  {columns.map((col) => (
+                    <Table.Td key={col.key} style={{ textAlign: col.align }}>
+                      {col.render ? col.render(item) : item[col.key]}
+                    </Table.Td>
+                  ))}
+                </Table.Tr>
+              );
+            })}
           </Table.Tbody>
         </Table>
       </ScrollArea>
     </div>
   );
 }
+
+export const DataTable = memo(DataTableComponent) as typeof DataTableComponent;

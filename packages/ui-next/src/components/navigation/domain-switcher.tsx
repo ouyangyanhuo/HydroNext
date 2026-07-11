@@ -78,6 +78,7 @@ export function DomainSwitcher() {
       opened={opened}
       onChange={handleOpenedChange}
       position="bottom-end"
+      classNames={{ dropdown: 'hydro-topbar-dropdown' }}
     >
       <Menu.Target>
         <Button

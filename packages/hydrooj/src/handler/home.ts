@@ -590,9 +590,13 @@ class HomeMessagesHandler extends Handler {
             const raw = m.from === this.user._id ? m.to : m.from;
             const targetArr = Array.isArray(raw) ? raw : [raw];
             for (const target of targetArr) {
+                const targetUser = udict[target] || { _id: target, uname: String(target), avatar: '' };
                 parsed[target] ||= {
                     _id: target,
-                    udoc: { ...udict[target], avatarUrl: avatar(udict[target].avatar) },
+                    udoc: {
+                        ...targetUser,
+                        avatarUrl: targetUser.avatar ? avatar(targetUser.avatar) : '',
+                    },
                     messages: [],
                 };
                 parsed[target].messages.push(m);
@@ -617,7 +621,7 @@ class HomeMessagesHandler extends Handler {
     @param('messageId', Types.ObjectId)
     async postDeleteMessage({ }, messageId: ObjectId) {
         const msg = await message.get(messageId);
-        if (msg.from === this.user._id) await message.del(messageId);
+        if (msg?.from === this.user._id) await message.del(messageId);
         else throw new PermissionError();
         this.back();
     }

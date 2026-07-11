@@ -1,18 +1,20 @@
-import { ActionIcon, Badge, Button, Card, Collapse, Divider, Group, Stack, Text, Tooltip } from '@mantine/core';
-import { IconArrowLeft, IconArrowUp, IconLink, IconMessage, IconPencil, IconThumbUp, IconTrash, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
-import { useState } from 'react';
+import { ActionIcon, Badge, Button, Card, Group, Stack, Text, Tooltip } from '@mantine/core';
+import {
+  IconArrowLeft, IconArrowUp, IconChevronDown, IconChevronUp, IconLink, IconMessage, IconPencil, IconTrash,
+} from '@tabler/icons-react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
+import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { UserAvatar } from '@/components/user/user-avatar';
-import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
-import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useBuildUrl } from '@/hooks/use-build-url';
+import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 
@@ -20,7 +22,7 @@ const MAX_HEIGHT = 260;
 
 function docDate(id: any) {
   const text = String(id || '');
-  if (/^[0-9a-f]{24}$/i.test(text)) return parseInt(text.slice(0, 8), 16) * 1000;
+  if (/^[0-9a-f]{24}$/i.test(text)) return Number.parseInt(text.slice(0, 8), 16) * 1000;
   return id;
 }
 
@@ -74,25 +76,33 @@ function UserBadges({ user }: { user: any }) {
   );
 }
 
-function CollapsibleContent({ content, maxHeight = MAX_HEIGHT }: { content: any; maxHeight?: number }) {
+function CollapsibleContent({ content, maxHeight = MAX_HEIGHT }: { content: any, maxHeight?: number }) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const [overflowing, setOverflowing] = useState(false);
-  const ref = (el: HTMLDivElement | null) => {
-    if (el) setOverflowing(el.scrollHeight > maxHeight + 20);
-  };
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const element = contentRef.current;
+    if (!element) return undefined;
+    const update = () => setOverflowing(element.scrollHeight > maxHeight + 20);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [content, maxHeight]);
 
   return (
     <div className="relative">
       <div
-        ref={ref}
+        ref={contentRef}
         className="overflow-hidden transition-[max-height] duration-300"
         style={{ maxHeight: expanded ? 'none' : maxHeight, transitionTimingFunction: 'var(--hydro-ease-in-out)' }}
       >
         <MarkdownRenderer content={content || ''} />
       </div>
       {overflowing && !expanded && (
-        <div className="relative -mt-8 flex justify-center bg-gradient-to-t from-[var(--hydro-surface-raised)] via-[var(--hydro-surface-raised)] to-transparent pb-2 pt-12">
+        <div className="hydro-solution-fade relative -mt-8 flex justify-center pb-2 pt-12">
           <Button
             variant="subtle"
             size="compact-xs"
@@ -135,7 +145,7 @@ function Composer({
   const [content, setContent] = useState(initial);
 
   return (
-    <Card withBorder p="md" className="hydro-content-card">
+    <Card withBorder p="md" className="hydro-content-card hydro-solution-composer">
       <Stack gap="sm">
         {error && <Text c="red" size="sm">{error}</Text>}
         <MarkdownEditor
@@ -186,6 +196,8 @@ function SolutionCard({
   const vote = pssdict[sid]?.vote || pssdict[solution._id]?.vote || 0;
 
   const run = async (operation: string, payload: Record<string, any> = {}, confirmText?: string) => {
+    // Native confirmation keeps destructive actions explicit without adding persistent dialog state.
+    // eslint-disable-next-line no-alert
     if (confirmText && !window.confirm(confirmText)) return;
     setBusy(operation);
     setError('');
@@ -207,9 +219,9 @@ function SolutionCard({
   const udoc = user || { _id: solution.owner, uname: String(solution.owner) };
 
   return (
-    <Card withBorder p="lg" className="hydro-content-card">
+    <Card withBorder p="lg" className="hydro-content-card hydro-solution-card">
       <div className="flex gap-3">
-        <div className="flex shrink-0 flex-col items-center gap-1 pt-1">
+        <div className="hydro-solution-vote flex shrink-0 flex-col items-center gap-1 pt-1">
           <Tooltip label={t('Like')} position="left" withArrow>
             <ActionIcon
               variant={vote === 1 ? 'filled' : 'subtle'}
@@ -292,12 +304,12 @@ function SolutionCard({
           )}
 
           {!!solution.reply?.length && (
-            <Stack gap="xs" className="ml-6 border-l-2 border-[var(--hydro-border)] pl-3">
+            <Stack gap="xs" className="hydro-solution-replies ml-6 pl-3">
               {solution.reply.map((reply: any) => {
                 const rid = docId(reply);
                 const replyUser = udict[reply.owner] || { _id: reply.owner, uname: String(reply.owner) };
                 return (
-                  <div key={rid} className="rounded-md bg-[var(--hydro-surface-muted)] p-3">
+                  <div key={rid} className="hydro-solution-reply p-3">
                     <Group justify="space-between" align="flex-start" gap="sm" mb="xs">
                       <Group gap="xs" wrap="nowrap">
                         <UserAvatar user={replyUser} size={20} />
@@ -394,15 +406,24 @@ export default function ProblemSolutionPage() {
   };
 
   return (
-    <Stack gap="lg">
-      <PageHeader title={`${t('Solutions')} - ${pdoc.pid}. ${pdoc.title}`}>
-        <Group gap="xs">
-          <Button component="a" href={buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId })} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
-            {t('Back')}
-          </Button>
-          <Badge variant="light">{pscount} {t('solutions')}</Badge>
-        </Group>
-      </PageHeader>
+    <Stack gap="lg" className="hydro-solution-page">
+      <div className="hydro-solution-header">
+        <PageHeader title={`${pdoc.pid}. ${pdoc.title}`}>
+          <Group gap="xs">
+            <Button
+              component="a"
+              href={buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId })}
+              variant="subtle"
+              size="xs"
+              leftSection={<IconArrowLeft size={14} />}
+            >
+              {t('Back')}
+            </Button>
+            <Badge variant="light" className="hydro-solution-count">{pscount} {t('solutions')}</Badge>
+          </Group>
+        </PageHeader>
+        <Text size="sm" c="dimmed">{t('Solutions')}</Text>
+      </div>
 
       {isLoggedIn && !sid && (
         <Composer

@@ -149,33 +149,45 @@ function formatTime(pdoc: any) {
 
 function ProblemMeta({ pdoc, owner }: { pdoc: any, owner?: any }) {
   const { t } = useI18n();
-  const items = [
+  const primaryItems = [
     { label: 'ID', value: String(pdoc.docId || pdoc.pid || '-') },
     { label: t('Time Limit'), value: formatTime(pdoc) },
     { label: t('Memory Limit'), value: formatMemory(pdoc) },
     { label: t('Problem Type'), value: t(`problemType::${pdoc.config?.type || 'default'}`) },
+  ];
+  const stats = [
     { label: t('Tried'), value: String(pdoc.nSubmit ?? '-') },
     { label: t('Accepted'), value: String(pdoc.nAccept ?? '-') },
     { label: t('Difficulty'), value: estimateDifficulty(pdoc) },
   ];
 
   return (
-    <div className="flex flex-wrap divide-x divide-[var(--hydro-border)] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)]">
-      {items.map((item) => (
-        <div key={item.label} className="flex min-w-0 flex-1 flex-col items-center px-3 py-2">
-          <Text size="xs" c="dimmed" fw={700}>{item.label}</Text>
-          <Text size="sm" fw={800} className="text-[var(--hydro-text)]">{item.value}</Text>
-        </div>
-      ))}
-      {owner && (
-        <div className="flex min-w-0 flex-1 items-center justify-center gap-2 px-3 py-2">
-          <UserAvatar user={owner} size={24} link={false} />
-          <div className="min-w-0">
-            <Text size="xs" c="dimmed" fw={700}>{t('Uploaded By')}</Text>
-            <UserLink user={owner} size="sm" />
+    <div className="hydro-problem-meta">
+      <div className="hydro-problem-meta__primary">
+        {primaryItems.map((item) => (
+          <div key={item.label} className="hydro-problem-meta__item">
+            <Text size="xs" c="dimmed" fw={700}>{item.label}</Text>
+            <Text size="sm" fw={800} truncate className="text-[var(--hydro-text)]">{item.value}</Text>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+      <div className="hydro-problem-meta__secondary">
+        {stats.map((item) => (
+          <Group key={item.label} gap={6} wrap="nowrap">
+            <Text size="xs" c="dimmed">{item.label}</Text>
+            <Text size="xs" fw={750}>{item.value}</Text>
+          </Group>
+        ))}
+        {owner && (
+          <div className="ml-auto flex min-w-0 items-center gap-2">
+            <UserAvatar user={owner} size={24} link={false} />
+            <div className="min-w-0">
+              <Text size="xs" c="dimmed" fw={700}>{t('Uploaded By')}</Text>
+              <UserLink user={owner} size="sm" />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
