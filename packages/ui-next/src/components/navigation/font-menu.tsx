@@ -16,7 +16,7 @@ export function FontMenu() {
   const current = FONT_OPTIONS.find((f) => f.value === fontFamily) || FONT_OPTIONS[0];
 
   return (
-    <Menu shadow="md" width={160}>
+    <Menu shadow="md" width={160} classNames={{ dropdown: 'hydro-topbar-dropdown' }}>
       <Menu.Target>
         <Button variant="subtle" size="xs" px="xs" leftSection={<IconLetterA size={16} />}>
           {t(current.labelKey)}

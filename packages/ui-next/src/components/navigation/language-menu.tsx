@@ -20,7 +20,7 @@ export function LanguageMenu() {
   };
 
   return (
-    <Menu shadow="md" width={160}>
+    <Menu shadow="md" width={160} classNames={{ dropdown: 'hydro-topbar-dropdown' }}>
       <Menu.Target>
         <Button variant="subtle" size="xs" px="xs" leftSection={<IconLanguage size={16} />}>
           {currentLang.name}

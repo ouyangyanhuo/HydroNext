@@ -1680,6 +1680,27 @@ a {
   text-decoration: underline;
 }
 
+.hydro-record-score {
+  min-width: 56px;
+  padding-inline: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.hydro-record-score .mantine-Badge-label {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.hydro-record-replay {
+  white-space: nowrap;
+}
+
+.hydro-record-list .hydro-data-table td {
+  height: 56px;
+  vertical-align: middle;
+}
+
 @media (max-width: 980px) {
   .hydro-record-filter__fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2691,6 +2712,227 @@ a {
   backdrop-filter: none;
 }
 
+.hydro-doc-page,
+.hydro-problem-statistics {
+  width: min(100%, 1180px);
+  margin-inline: auto;
+}
+
+.hydro-doc-page__description {
+  margin-top: -14px;
+  margin-bottom: 24px;
+  color: var(--hydro-text-muted);
+  font-size: 0.9rem;
+}
+
+.hydro-doc-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+  gap: clamp(22px, 4vw, 52px);
+  align-items: start;
+}
+
+.hydro-doc-toc {
+  position: sticky;
+  top: 88px;
+  max-height: calc(100vh - 116px);
+  overflow: auto;
+  padding: 4px 0 14px;
+  scrollbar-width: thin;
+}
+
+.hydro-doc-toc__title {
+  margin-bottom: 10px;
+  color: var(--hydro-text-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.hydro-doc-toc__nav {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--hydro-border);
+}
+
+.hydro-doc-toc__link {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 7px;
+  padding: 7px 10px 7px 13px;
+  border-left: 2px solid transparent;
+  color: var(--hydro-text-muted);
+  font-size: 0.78rem;
+  font-weight: 620;
+  line-height: 1.35;
+  text-decoration: none;
+  transform: translateX(-1px);
+  transition: border-color var(--hydro-duration-fast) ease,
+              color var(--hydro-duration-fast) ease,
+              background-color var(--hydro-duration-fast) ease;
+}
+
+.hydro-doc-toc__link span {
+  color: color-mix(in srgb, var(--hydro-primary) 64%, var(--hydro-text-muted));
+  font-family: var(--hydro-font-mono);
+  font-size: 0.7rem;
+}
+
+.hydro-doc-toc__link:hover,
+.hydro-doc-toc__link:focus-visible {
+  border-left-color: var(--hydro-primary);
+  color: var(--hydro-primary-strong);
+  background-color: var(--hydro-primary-soft);
+  outline: none;
+}
+
+.hydro-doc-article {
+  overflow: hidden;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background-color: var(--hydro-surface-raised);
+  box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-doc-section {
+  scroll-margin-top: 88px;
+  padding: clamp(22px, 3.5vw, 38px);
+  border-bottom: 1px solid var(--hydro-border);
+}
+
+.hydro-doc-section:last-child {
+  border-bottom: 0;
+}
+
+.hydro-doc-section__heading {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  margin-bottom: 20px;
+}
+
+.hydro-doc-section__heading > span {
+  color: var(--hydro-primary);
+  font-family: var(--hydro-font-mono);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.hydro-doc-section__heading h3 {
+  color: var(--hydro-text);
+  font-size: clamp(1.12rem, 2vw, 1.42rem);
+  line-height: 1.3;
+}
+
+.hydro-problem-statistics__metrics {
+  --stat-color: var(--hydro-primary);
+}
+
+.hydro-problem-statistics__metric {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  min-height: 104px;
+  padding: 18px;
+  border-left: 3px solid var(--stat-color);
+  background-color: var(--hydro-surface-raised);
+}
+
+.hydro-problem-statistics__metric[data-tone='success'] { --stat-color: var(--hydro-success); }
+.hydro-problem-statistics__metric[data-tone='neutral'] { --stat-color: var(--hydro-text-muted); }
+
+.hydro-problem-statistics__metric-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--stat-color);
+  background-color: color-mix(in srgb, var(--stat-color) 12%, var(--hydro-surface-raised));
+}
+
+.hydro-problem-statistics__metric-value {
+  color: var(--hydro-text);
+  font-size: 1.5rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+.hydro-problem-statistics__metric-label {
+  margin-top: 6px;
+  color: var(--hydro-text-muted);
+  font-size: 0.74rem;
+  font-weight: 650;
+}
+
+.hydro-problem-statistics__distribution,
+.hydro-problem-statistics__records {
+  background-color: var(--hydro-surface-raised);
+  background-image: none;
+}
+
+.hydro-problem-statistics__distribution .mantine-Progress-root {
+  background-color: var(--hydro-bg-soft);
+}
+
+.hydro-problem-statistics__sorts .mantine-Select-root {
+  min-width: 120px;
+}
+
+@media (max-width: 760px) {
+  .hydro-doc-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .hydro-doc-toc {
+    position: static;
+    max-height: none;
+    overflow: hidden;
+    padding-bottom: 2px;
+  }
+
+  .hydro-doc-toc__title { margin-bottom: 8px; }
+
+  .hydro-doc-toc__nav {
+    flex-direction: row;
+    overflow-x: auto;
+    border-left: 0;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+  }
+
+  .hydro-doc-toc__link {
+    display: flex;
+    min-width: max-content;
+    border: 1px solid var(--hydro-border);
+    border-radius: 999px;
+    padding: 7px 11px;
+    background-color: var(--hydro-surface-raised);
+    transform: none;
+  }
+
+  .hydro-doc-toc__link:hover,
+  .hydro-doc-toc__link:focus-visible {
+    border-color: var(--hydro-primary);
+  }
+
+  .hydro-doc-section { scroll-margin-top: 70px; }
+
+  .hydro-problem-statistics__sorts {
+    width: 100%;
+  }
+
+  .hydro-problem-statistics__sorts .mantine-Select-root {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
 .hydro-messages {
   display: grid;
   grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
@@ -2793,13 +3035,25 @@ a {
 }
 
 .hydro-topbar-dropdown {
+  opacity: 1 !important;
+  background-color: var(--hydro-surface-raised) !important;
   background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.hydro-topbar-dropdown :is(.mantine-Popover-dropdown, .mantine-Combobox-dropdown) {
+  opacity: 1 !important;
+  background-color: var(--hydro-surface-raised) !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 [data-mantine-color-scheme='dark'] .hydro-top-nav,
 [data-mantine-color-scheme='dark'] .hydro-topbar-dropdown {
   border-color: var(--hydro-border);
-  background-color: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
+  background-color: var(--hydro-surface-raised);
   background-image: none !important;
   box-shadow: var(--hydro-shadow-sm);
 }

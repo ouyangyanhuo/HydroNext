@@ -122,6 +122,11 @@
   background: color-mix(in srgb, var(--hydro-primary-soft) 76%, var(--hydro-surface-raised));
 }
 
+.hydro-markdown .hydro-mention--loading {
+  color: var(--hydro-text-muted);
+  cursor: progress;
+}
+
 .hydro-markdown mark {
   background: color-mix(in srgb, var(--hydro-accent-soft) 78%, transparent);
   border-radius: 0.24em;

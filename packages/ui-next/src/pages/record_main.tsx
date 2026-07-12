@@ -17,6 +17,12 @@ import { useSessionStore } from '@/stores/session';
 
 const ALL_FILTER = '__all__';
 
+export function formatScore(score: unknown): string {
+  const value = Number(score);
+  if (!Number.isFinite(value)) return '-';
+  return Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
+}
+
 export default function RecordMainPage() {
   const { args } = usePageData();
   const { t } = useI18n();
@@ -86,7 +92,7 @@ export default function RecordMainPage() {
       key: '_id',
       title: '#',
       width: 80,
-      render: (r: any) => <Text size="xs" fw={700} ff="monospace">{String(r._id).slice(-6)}</Text>,
+      render: (r: any) => <Text className="hydro-record-id">{String(r._id).slice(-6)}</Text>,
     },
     {
       key: 'status',
@@ -153,12 +159,17 @@ export default function RecordMainPage() {
     {
       key: 'score',
       title: t('Score'),
-      width: 60,
+      width: 84,
       align: 'center' as const,
       render: (r: any) => (
         r.score != null ? (
-          <Badge size="xs" variant="light" color={r.score === 100 ? 'green' : 'yellow'}>
-            {r.score}
+          <Badge
+            size="sm"
+            variant="light"
+            color={Number(r.score) >= 100 ? 'green' : 'yellow'}
+            className="hydro-record-score"
+          >
+            {formatScore(r.score)}
           </Badge>
         ) : (
           <Text size="xs" c="dimmed">-</Text>
@@ -178,6 +189,7 @@ export default function RecordMainPage() {
             size="compact-xs"
             variant="light"
             leftSection={<IconPlayerPlay size={14} />}
+            className="hydro-record-replay"
           >
             {t('Code Replay')}
           </Button>

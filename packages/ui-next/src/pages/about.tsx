@@ -1,5 +1,4 @@
-import { Paper, Stack, Title } from '@mantine/core';
-import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
+import { DocumentationLayout } from '@/components/common/documentation-layout';
 import { usePageData, useUiContext } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 
@@ -117,14 +116,14 @@ export default function AboutPage() {
   const sections = Array.isArray(args.sections) && args.sections.length ? args.sections : parseSections(raw);
 
   return (
-    <Stack gap="lg">
-      <Title order={2}>{t('About')}</Title>
-      {sections.map((section: any) => (
-        <Paper key={section.id || section.title} withBorder p="lg" className="hydro-content-card">
-          <Title order={3} id={section.id} mb="md">{section.title}</Title>
-          <MarkdownRenderer content={section.content || ''} />
-        </Paper>
-      ))}
-    </Stack>
+    <DocumentationLayout
+      title={t('About')}
+      description={name}
+      sections={sections.map((section: any) => ({
+        id: section.id || section.title,
+        title: section.title,
+        content: section.content || '',
+      }))}
+    />
   );
 }

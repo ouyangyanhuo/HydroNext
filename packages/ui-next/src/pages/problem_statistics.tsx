@@ -1,5 +1,6 @@
 import { Button, Card, Group, Progress, Select, SimpleGrid, Stack, Text, Title } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconChartBar, IconCircleCheck, IconSend } from '@tabler/icons-react';
+import type { ReactNode } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
@@ -54,15 +55,18 @@ function statRecordStatus(record: any) {
 
 function StatusBreakdown({ stats }: { stats: Record<string, number> }) {
   const { t } = useI18n();
+  const colors: Record<string, string> = {
+    AC: 'green', WA: 'red', TLE: 'orange', MLE: 'yellow', RE: 'pink', CE: 'grape',
+  };
   const items = ['AC', 'WA', 'TLE', 'MLE', 'RE', 'CE']
-    .map((key) => ({ key, value: stats?.[key] || 0 }))
+    .map((key) => ({ key, value: stats?.[key] || 0, color: colors[key] }))
     .filter((item) => item.value > 0);
   const total = items.reduce((sum, item) => sum + item.value, 0);
 
   if (!total) return null;
 
   return (
-    <Card withBorder p="lg" className="hydro-content-card">
+    <Card withBorder p="lg" className="hydro-content-card hydro-problem-statistics__distribution">
       <Stack gap="md">
         <Title order={3} size="h4">{t('Status Distribution')}</Title>
         <Stack gap="sm">
@@ -72,11 +76,28 @@ function StatusBreakdown({ stats }: { stats: Record<string, number> }) {
                 <Text size="xs" fw={700}>{item.key}</Text>
                 <Text size="xs" c="dimmed">{item.value}</Text>
               </Group>
-              <Progress value={(item.value / total) * 100} size="sm" radius="xl" />
+              <Progress value={(item.value / total) * 100} size="sm" radius="xl" color={item.color} />
             </div>
           ))}
         </Stack>
       </Stack>
+    </Card>
+  );
+}
+
+function MetricCard({ icon, value, label, tone }: {
+  icon: ReactNode;
+  value: string | number;
+  label: string;
+  tone: 'primary' | 'success' | 'neutral';
+}) {
+  return (
+    <Card withBorder className="hydro-problem-statistics__metric" data-tone={tone}>
+      <span className="hydro-problem-statistics__metric-icon" aria-hidden="true">{icon}</span>
+      <div>
+        <Text className="hydro-problem-statistics__metric-value">{value}</Text>
+        <Text className="hydro-problem-statistics__metric-label">{label}</Text>
+      </div>
     </Card>
   );
 }
@@ -99,6 +120,7 @@ export default function ProblemStatisticsPage() {
   const accepted = pdoc.nAccept || 0;
   const submitted = pdoc.nSubmit || 0;
   const acceptRate = submitted ? Math.round((accepted / submitted) * 100) : 0;
+  const problemName = [pdoc.pid || pdoc.docId, pdoc.title].filter(Boolean).join(' · ');
 
   const updateQuery = (key: string, value?: string | null) => {
     const url = new URL(window.location.href);
@@ -164,37 +186,28 @@ export default function ProblemStatisticsPage() {
   ];
 
   return (
-    <Stack gap="lg">
-      <PageHeader title={`${t('Statistics')} - ${pdoc.pid}. ${pdoc.title}`}>
+    <Stack gap="lg" className="hydro-problem-statistics">
+      <PageHeader title={`${t('Statistics')}${problemName ? ` · ${problemName}` : ''}`}>
         <Button component="a" href={buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId })} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
       </PageHeader>
-      <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-        <Card withBorder p="md" ta="center" className="hydro-content-card">
-          <Text size="xl" fw={700}>{submitted}</Text>
-          <Text size="xs" c="dimmed">{t('Total Submissions')}</Text>
-        </Card>
-        <Card withBorder p="md" ta="center" className="hydro-content-card">
-          <Text size="xl" fw={700}>{accepted}</Text>
-          <Text size="xs" c="dimmed">{t('Accepted')}</Text>
-        </Card>
-        <Card withBorder p="md" ta="center" className="hydro-content-card">
-          <Text size="xl" fw={700}>{acceptRate}%</Text>
-          <Text size="xs" c="dimmed">{t('Accept Rate')}</Text>
-        </Card>
+      <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" className="hydro-problem-statistics__metrics">
+        <MetricCard icon={<IconSend size={22} stroke={1.8} />} value={submitted} label={t('Total Submissions')} tone="primary" />
+        <MetricCard icon={<IconCircleCheck size={22} stroke={1.8} />} value={accepted} label={t('Accepted')} tone="success" />
+        <MetricCard icon={<IconChartBar size={22} stroke={1.8} />} value={`${acceptRate}%`} label={t('Accept Rate')} tone="neutral" />
       </SimpleGrid>
 
       <StatusBreakdown stats={stats} />
 
-      <Card withBorder p="lg" className="hydro-content-card">
+      <Card withBorder p="lg" className="hydro-content-card hydro-problem-statistics__records">
         <Stack gap="md">
           <Group justify="space-between" align="flex-start" gap="md">
             <div>
               <Title order={3} size="h4">{t('Submission Statistics')}</Title>
               <Text size="sm" c="dimmed">{rscount} {t('submissions')}</Text>
             </div>
-            <Group gap="xs">
+            <Group gap="xs" className="hydro-problem-statistics__sorts">
               <Select
                 aria-label={t('Sort')}
                 size="xs"

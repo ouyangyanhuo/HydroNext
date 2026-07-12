@@ -187,6 +187,7 @@ function katexPlugin(md: MarkdownIt) {
 
 const MENTION_REGEX = /^@\[\]\(\/user\/(\d+)\)/;
 const IMAGE_SIZE_REGEX = /^!\[([^\]]*)\]\((\S+)\s+=(\d+%?)?x(\d+%?)?\)/;
+const mentionNameCache = new Map<string, string | null>();
 
 function imageSizePlugin(md: MarkdownIt) {
   md.inline.ruler.before('image', 'image_with_size', (state, silent) => {
@@ -226,7 +227,7 @@ function mentionPlugin(md: MarkdownIt) {
 
   md.renderer.rules.user_mention = (tokens, idx) => {
     const uid = tokens[idx].content;
-    return `<a class="hydro-mention" href="/user/${uid}">@${uid}</a>`;
+    return `<a class="hydro-mention hydro-mention--loading" href="/user/${uid}" data-user-id="${uid}" title="UID ${uid}">@${uid}</a>`;
   };
 }
 
@@ -375,6 +376,7 @@ interface MarkdownRendererProps {
 
 export function MarkdownRenderer({ content, className, language, pid }: MarkdownRendererProps) {
   const sessionLanguage = useSessionStore((s) => s.language);
+  const domainId = useSessionStore((s) => s.ui.domainId);
   const rawText = extractLocalizedContent(content, language || sessionLanguage);
 
   const html = useMemo(() => {
@@ -383,6 +385,68 @@ export function MarkdownRenderer({ content, className, language, pid }: Markdown
   }, [rawText]);
 
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return undefined;
+    const mentions = Array.from(root.querySelectorAll<HTMLAnchorElement>('.hydro-mention[data-user-id]'));
+    if (!mentions.length) return undefined;
+    const cachePrefix = `${domainId}:`;
+    const applyName = (element: HTMLAnchorElement, name: string | null) => {
+      const uid = element.dataset.userId || '';
+      element.textContent = `@${name || uid}`;
+      element.title = name ? `@${name} · UID ${uid}` : `UID ${uid}`;
+      element.classList.remove('hydro-mention--loading');
+    };
+    const pendingIds = new Set<number>();
+    mentions.forEach((element) => {
+      const uid = Number(element.dataset.userId);
+      if (!Number.isSafeInteger(uid) || uid <= 0) return;
+      const key = `${cachePrefix}${uid}`;
+      if (mentionNameCache.has(key)) applyName(element, mentionNameCache.get(key) ?? null);
+      else pendingIds.add(uid);
+    });
+    if (!pendingIds.size) return undefined;
+
+    const controller = new AbortController();
+    fetch(`/d/${encodeURIComponent(domainId)}/api/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        args: { ids: Array.from(pendingIds) },
+        projection: ['_id', 'uname', 'displayName'],
+      }),
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(String(response.status));
+        return response.json();
+      })
+      .then((payload) => {
+        const users = Array.isArray(payload) ? payload : (Array.isArray(payload?.data) ? payload.data : []);
+        const resolvedIds = new Set<number>();
+        users.forEach((user: any) => {
+          const uid = Number(user?._id);
+          if (!Number.isSafeInteger(uid)) return;
+          const name = String(user.displayName || user.uname || '').trim() || null;
+          mentionNameCache.set(`${cachePrefix}${uid}`, name);
+          resolvedIds.add(uid);
+        });
+        pendingIds.forEach((uid) => {
+          if (!resolvedIds.has(uid)) mentionNameCache.set(`${cachePrefix}${uid}`, null);
+        });
+        mentions.forEach((element) => {
+          const uid = Number(element.dataset.userId);
+          if (Number.isSafeInteger(uid)) applyName(element, mentionNameCache.get(`${cachePrefix}${uid}`) ?? null);
+        });
+      })
+      .catch((error) => {
+        if (error?.name === 'AbortError') return;
+        mentions.forEach((element) => applyName(element, null));
+      });
+
+    return () => controller.abort();
+  }, [domainId, html]);
 
   useEffect(() => {
     const root = ref.current;

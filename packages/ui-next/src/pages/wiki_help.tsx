@@ -1,5 +1,4 @@
-import { Paper, Stack, Title } from '@mantine/core';
-import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
+import { DocumentationLayout } from '@/components/common/documentation-layout';
 import { useUiContext } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 
@@ -173,16 +172,13 @@ export default function WikiHelpPage() {
   const { t } = useI18n();
   const ui = useUiContext();
   const name = ui.domain?.name || ui.serverName || 'HNTOU OJ';
+  const sections = HELP_SECTIONS.map((section) => ({
+    ...section,
+    title: t(section.title),
+    content: section.content.replace(/\{\{ name \}\}/g, name),
+  }));
 
   return (
-    <Stack gap="lg">
-      <Title order={2}>{t('Help')}</Title>
-      {HELP_SECTIONS.map((section) => (
-        <Paper key={section.id} withBorder p="lg" className="hydro-content-card">
-          <Title order={3} id={section.id} mb="md">{t(section.title)}</Title>
-          <MarkdownRenderer content={section.content.replace(/\{\{ name \}\}/g, name)} />
-        </Paper>
-      ))}
-    </Stack>
+    <DocumentationLayout title={t('Help')} description={name} sections={sections} />
   );
 }
