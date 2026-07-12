@@ -185,11 +185,70 @@ function katexPlugin(md: MarkdownIt) {
   md.renderer.rules.math_block = (tokens, idx) => `${renderPlaceholder(tokens[idx].content, true)}\n`;
 }
 
+const MENTION_REGEX = /^@\[\]\(\/user\/(\d+)\)/;
+const IMAGE_SIZE_REGEX = /^!\[([^\]]*)\]\((\S+)\s+=(\d+%?)?x(\d+%?)?\)/;
+
+function imageSizePlugin(md: MarkdownIt) {
+  md.inline.ruler.before('image', 'image_with_size', (state, silent) => {
+    if (state.src.charCodeAt(state.pos) !== 0x21) return false;
+    const match = IMAGE_SIZE_REGEX.exec(state.src.slice(state.pos));
+    if (!match || (!match[3] && !match[4])) return false;
+    const src = state.md.normalizeLink(match[2]);
+    if (!state.md.validateLink(src)) return false;
+    if (!silent) {
+      const children: any[] = [];
+      state.md.inline.parse(match[1], state.md, state.env, children);
+      const token = state.push('image', 'img', 0);
+      token.attrSet('src', src);
+      token.attrSet('alt', '');
+      if (match[3]) token.attrSet('width', match[3]);
+      if (match[4]) token.attrSet('height', match[4]);
+      token.children = children;
+    }
+    state.pos += match[0].length;
+    return true;
+  });
+}
+
+function mentionPlugin(md: MarkdownIt) {
+  md.inline.ruler.before('link', 'user_mention', (state, silent) => {
+    if (state.src.charCodeAt(state.pos) !== 0x40) return false;
+    const match = MENTION_REGEX.exec(state.src.slice(state.pos));
+    if (!match) return false;
+    if (!silent) {
+      const token = state.push('user_mention', 'a', 0);
+      token.attrSet('href', `/user/${match[1]}`);
+      token.content = match[1];
+    }
+    state.pos += match[0].length;
+    return true;
+  });
+
+  md.renderer.rules.user_mention = (tokens, idx) => {
+    const uid = tokens[idx].content;
+    return `<a class="hydro-mention" href="/user/${uid}">@${uid}</a>`;
+  };
+}
+
 const EMBED_REGEX = /^@\[([a-zA-Z].+?)\]\((.*?)\)/;
+const WEB_URL_REGEX = /^(?:https?:)?\/\//i;
+const BILIBILI_ID_REGEX = /^(BV[0-9A-Za-z]{10})$/;
+const BILIBILI_URL_REGEX = /(?:bilibili\.com\/video\/|player\.bilibili\.com\/player\.html\?.*?bvid=)(BV[0-9A-Z]{10})/i;
 
 const FILE_ICON_MAP: Record<string, string> = {
   pdf: '📄', doc: '📝', docx: '📝', ppt: '📊', pptx: '📊', xls: '📈', xlsx: '📈',
 };
+
+function isWebUrl(url: string) {
+  return WEB_URL_REGEX.test(url) || url.startsWith('/');
+}
+
+function getBilibiliId(src: string) {
+  const direct = BILIBILI_ID_REGEX.exec(src.trim());
+  if (direct) return direct[1];
+  const fromUrl = BILIBILI_URL_REGEX.exec(src);
+  return fromUrl?.[1] || '';
+}
 
 function fileMediaPlugin(md: MarkdownIt) {
   md.inline.ruler.before('emphasis', 'file_media', (state, silent) => {
@@ -219,6 +278,16 @@ function fileMediaPlugin(md: MarkdownIt) {
     const externalLink = validExternalUrl
       ? `<a href="${md.utils.escapeHtml(normalizedSrc)}" target="_blank" rel="noopener noreferrer">${icon} ${md.utils.escapeHtml(displayName)}</a>`
       : `<span class="text-[var(--hydro-text-muted)]">${icon} ${md.utils.escapeHtml(displayName)}</span>`;
+    if (service === 'video') {
+      if (!validExternalUrl || !isWebUrl(normalizedSrc)) return externalLink;
+      const safeSrc = md.utils.escapeHtml(normalizedSrc);
+      return `<video class="hydro-markdown-video" controls preload="metadata" src="${safeSrc}">Your browser does not support embedded video.</video>`;
+    }
+    if (service === 'bilibili') {
+      const bvid = getBilibiliId(src);
+      if (!bvid) return externalLink;
+      return `<div class="hydro-markdown-embed"><iframe src="https://player.bilibili.com/player.html?bvid=${bvid}&amp;autoplay=0" title="Bilibili video ${bvid}" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+    }
     if (service === 'pdf' || ext === 'pdf') {
       if (isFile) {
         return `<div class="file-inline-viewer my-3 rounded-md border border-[var(--hydro-border)] overflow-hidden" data-file-src="${md.utils.escapeHtml(displayName)}" data-file-ext="pdf"><div class="flex items-center justify-center p-8 text-sm text-[var(--hydro-text-muted)]">${icon} Loading PDF...</div></div>`;
@@ -243,9 +312,15 @@ const md = new MarkdownIt({
 });
 
 md.use(markPlugin);
+md.use(imageSizePlugin);
 md.use(katexPlugin);
+md.use(mentionPlugin);
 md.use(fileMediaPlugin);
 md.use(markdownXssPlugin);
+
+export function renderMarkdown(content: string): string {
+  return md.render(content);
+}
 
 const LANG_LABELS: Record<string, string> = {
   js: 'JavaScript', javascript: 'JavaScript', ts: 'TypeScript', typescript: 'TypeScript',
@@ -304,7 +379,7 @@ export function MarkdownRenderer({ content, className, language, pid }: Markdown
 
   const html = useMemo(() => {
     if (!rawText) return '';
-    return md.render(rawText);
+    return renderMarkdown(rawText);
   }, [rawText]);
 
   const ref = useRef<HTMLDivElement>(null);

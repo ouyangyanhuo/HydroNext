@@ -1,5 +1,5 @@
 import { Anchor, Badge, Button, Card, Group, Paper, SimpleGrid, Stack, Tabs, Text, Title } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
@@ -30,17 +30,17 @@ export default function UserDetailPage() {
   const [tab, setTab] = useState<string | null>('bio');
 
   const udoc = args.udoc || {};
+  const stats = args.stats || udoc;
   const sdoc = args.sdoc || {};
   const pdocs = args.pdocs || [];
   const tags = args.tags || [];
   const isSelf = currentUser._id === udoc._id;
 
-  const rank = useMemo(() => {
-    if (!udoc.rp) return '-';
-    return `#${udoc.rank || '-'}`;
-  }, [udoc.rp, udoc.rank]);
-
-  const backgroundUrl = useMemo(() => getBackgroundUrl(udoc._id || 0), [udoc._id]);
+  const rankValue = Number(stats.rank);
+  const rank = Number.isFinite(rankValue) && rankValue > 0 ? `#${rankValue}` : '-';
+  const rpValue = Number(stats.rp);
+  const rp = Number.isFinite(rpValue) ? String(Math.round(rpValue * 100) / 100) : '0';
+  const backgroundUrl = getBackgroundUrl(udoc._id || 0);
 
   return (
     <main className="hydro-user-profile">
@@ -131,15 +131,15 @@ export default function UserDetailPage() {
 
         <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" className="hydro-user-profile__stats">
           <Paper withBorder p="md" ta="center" className="hydro-user-profile__stat">
-            <Text size="xl" fw={700}>{udoc.nAccept || 0}</Text>
+            <Text size="xl" fw={700}>{Number(stats.nAccept) || 0}</Text>
             <Text size="xs" c="dimmed">{t('Solved')}</Text>
           </Paper>
           <Paper withBorder p="md" ta="center" className="hydro-user-profile__stat">
-            <Text size="xl" fw={700}>{udoc.nSubmit || 0}</Text>
+            <Text size="xl" fw={700}>{Number(stats.nSubmit) || 0}</Text>
             <Text size="xs" c="dimmed">{t('Submissions')}</Text>
           </Paper>
           <Paper withBorder p="md" ta="center" className="hydro-user-profile__stat">
-            <Text size="xl" fw={700}>{udoc.rp || 0}</Text>
+            <Text size="xl" fw={700}>{rp}</Text>
             <Text size="xs" c="dimmed">{t('RP')}</Text>
           </Paper>
           <Paper withBorder p="md" ta="center" className="hydro-user-profile__stat">

@@ -437,7 +437,18 @@ class UserDetailHandler extends Handler {
             serializedUdoc.bio = udoc.bio;
         }
         this.response.body = {
-            isSelfProfile, udoc: serializedUdoc, sdoc, pdocs, tags, tdocs,
+            isSelfProfile,
+            udoc: serializedUdoc,
+            stats: {
+                nAccept: udoc.nAccept || 0,
+                nSubmit: udoc.nSubmit || 0,
+                rank: udoc.rank || 0,
+                rp: udoc.rp || 0,
+            },
+            sdoc,
+            pdocs,
+            tags,
+            tdocs,
         };
         if (this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION)) {
             const psdocs = await SolutionModel.getByUser(domainId, uid).limit(10).toArray();

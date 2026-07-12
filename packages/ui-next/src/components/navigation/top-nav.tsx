@@ -362,6 +362,7 @@ function AccentColorPicker() {
               swatches={[]}
               withPicker
               withEyeDropper={false}
+              popoverProps={{ withinPortal: false }}
             />
           </div>
         </div>

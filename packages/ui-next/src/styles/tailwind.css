@@ -2679,6 +2679,16 @@ a {
 .hydro-record-source {
   height: clamp(280px, 44vh, 520px);
   overscroll-behavior: contain;
+  background-color: color-mix(in srgb, var(--hydro-bg-soft) 82%, var(--hydro-surface-raised));
+  background-image: none;
+}
+
+.hydro-record-source .mantine-Code-root {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .hydro-messages {

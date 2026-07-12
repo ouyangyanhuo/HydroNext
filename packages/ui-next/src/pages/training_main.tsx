@@ -12,6 +12,7 @@ import { useNavigate } from '@/context/router';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
+import { getTrainingViewState, isTrainingEnrolled } from '@/utils/training';
 
 function getTrainingPids(tdoc: any) {
   if (Array.isArray(tdoc.pids)) return tdoc.pids;
@@ -27,7 +28,7 @@ function getSections(tdoc: any) {
 }
 
 function trainingProgress(tsdoc: any, total: number) {
-  if (!tsdoc?.enroll || !total) return 0;
+  if (!isTrainingEnrolled(tsdoc) || !total) return 0;
   if (tsdoc.done) return 100;
   return Math.round(((tsdoc.donePids?.length || 0) / total) * 100);
 }
@@ -37,7 +38,8 @@ function TrainingCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
   const pids = getTrainingPids(tdoc);
   const sections = getSections(tdoc);
   const progress = trainingProgress(tsdoc, pids.length);
-  const state = tsdoc?.done ? 'completed' : tsdoc?.enroll ? 'progress' : 'outside';
+  const enrolled = isTrainingEnrolled(tsdoc);
+  const state = getTrainingViewState(tsdoc);
 
   return (
     <Link
@@ -48,12 +50,12 @@ function TrainingCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
       <div className="hydro-training-item__participants">
         <IconUsers size={18} stroke={1.7} aria-hidden="true" />
         <Text fw={850} size="lg">{tdoc.attend || 0}</Text>
-        <Text size="xs" c="dimmed" fw={650}>{t('Enrolled')}</Text>
+        <Text size="xs" c="dimmed" fw={650}>{t('Enrollees')}</Text>
       </div>
 
       <div className="hydro-training-item__content">
         <Group gap="xs" mb={7} wrap="wrap">
-          {tsdoc?.enroll ? (
+          {enrolled ? (
             <Badge size="xs" color={tsdoc.done ? 'green' : 'blue'} variant="light">
               {tsdoc.done ? t('Completed') : t('In Progress')}
             </Badge>
@@ -79,7 +81,7 @@ function TrainingCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
               {t('{0} problems').replace('{0}', String(pids.length))}
             </span>
           </div>
-          {tsdoc?.enroll && (
+          {enrolled && (
             <div className="hydro-training-item__progress">
               <Progress value={progress} size="sm" />
               <Text size="xs" c="dimmed" fw={700}>{progress}%</Text>
@@ -129,7 +131,7 @@ export default function TrainingMainPage() {
   const q = args.q || '';
   const [search, setSearch] = useState(q);
 
-  const enrolled = Object.values(tsdict).filter((tsdoc: any) => tsdoc?.enroll);
+  const enrolled = Object.values(tsdict).filter(isTrainingEnrolled);
 
   const handleSearch = () => {
     const url = new URL(window.location.href);

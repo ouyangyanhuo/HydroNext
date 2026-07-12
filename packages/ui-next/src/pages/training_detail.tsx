@@ -12,6 +12,7 @@ import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { getAvatarUrl } from '@/utils/avatar';
 import { formatErrorMessage } from '@/utils/error';
+import { isTrainingEnrolled } from '@/utils/training';
 
 function getNodes(tdoc: any) {
   if (Array.isArray(tdoc.dag)) return tdoc.dag;
@@ -141,10 +142,11 @@ export default function TrainingDetailPage() {
   const udict = args.udict || {};
   const enrolledUsers = Object.entries<any>(udict);
   const canEdit = Boolean(args.canEdit || (tdoc.owner && user?._id === tdoc.owner));
-  const progress = tsdoc.enroll && pids.length
+  const enrolled = isTrainingEnrolled(tsdoc);
+  const progress = enrolled && pids.length
     ? (tsdoc.done ? 100 : Math.round(((tsdoc.donePids?.length || 0) / pids.length) * 100))
     : 0;
-  const compare = Boolean(new URLSearchParams(window.location.search).get('uid') && tsdoc.enroll);
+  const compare = Boolean(new URLSearchParams(window.location.search).get('uid') && enrolled);
 
   const enroll = async () => {
     setLoading(true);
@@ -189,7 +191,7 @@ export default function TrainingDetailPage() {
                 <Title order={1} className="text-3xl text-[var(--hydro-text)]">{tdoc.title}</Title>
                 {tdoc.content && <Text size="sm" c="dimmed" mt="xs">{tdoc.content}</Text>}
               </div>
-              {tsdoc.enroll && (
+              {enrolled && (
                 <Badge size="lg" color={tsdoc.done ? 'green' : 'blue'} variant="light">
                   {tsdoc.done ? t('Completed') : t('In Progress')}
                 </Badge>
@@ -204,7 +206,7 @@ export default function TrainingDetailPage() {
               <Text size="sm">{t('Login to join training plan')}</Text>
             </Card>
           )}
-          {isLoggedIn && !tsdoc.enroll && (
+          {isLoggedIn && !enrolled && (
             <Card withBorder p="md" className="border-[var(--hydro-warning)]" style={{ background: 'rgba(233, 161, 0, 0.08)' }}>
               <Text size="sm">{t('page.training_detail.invalid_when_not_enrolled')}</Text>
             </Card>
@@ -224,8 +226,8 @@ export default function TrainingDetailPage() {
 
           {nodes.map((node: any, index: number) => {
             const state = nsdict[node._id] || {};
-            const status = nodeStatus(state, !!tsdoc.enroll);
-            const invalid = state.isInvalid || (!tsdoc.enroll && isLoggedIn);
+            const status = nodeStatus(state, enrolled);
+            const invalid = state.isInvalid || (!enrolled && isLoggedIn);
             const titleLines = String(node.title || '').split('\n');
             return (
               <Card key={node._id || index} withBorder p={0} className="hydro-content-card overflow-hidden">
@@ -256,7 +258,7 @@ export default function TrainingDetailPage() {
                   pdict={pdict}
                   psdict={psdict}
                   selfPsdict={selfPsdict}
-                  enrolled={!!tsdoc.enroll}
+                  enrolled={enrolled}
                   compare={compare}
                   invalid={invalid}
                 />
@@ -270,7 +272,7 @@ export default function TrainingDetailPage() {
         <Stack gap="md">
           <Card withBorder p="md" className="hydro-panel">
             <Stack gap="xs">
-              {isLoggedIn && !tsdoc.enroll && (
+              {isLoggedIn && !enrolled && (
                 <Button fullWidth size="xs" onClick={enroll} loading={loading}>{t('Enroll Training')}</Button>
               )}
               {canEdit && (
@@ -316,12 +318,12 @@ export default function TrainingDetailPage() {
                 <div>
                   <Group justify="space-between">
                     <Text size="xs" c="dimmed" fw={700}>{t('Status')}</Text>
-                    <Text size="xs">{tsdoc.enroll ? t(tsdoc.done ? 'Completed' : 'In Progress') : t('Not Enrolled')}</Text>
+                    <Text size="xs">{enrolled ? t(tsdoc.done ? 'Completed' : 'In Progress') : t('Not Enrolled')}</Text>
                   </Group>
-                  {tsdoc.enroll && <Progress value={progress} mt={6} />}
+                  {enrolled && <Progress value={progress} mt={6} />}
                 </div>
               )}
-              {tsdoc.enroll && (
+              {enrolled && (
                 <Group justify="space-between">
                   <Text size="xs" c="dimmed" fw={700}>{t('Progress')}</Text>
                   <Text size="xs">{t('Completed')} {progress}%</Text>
