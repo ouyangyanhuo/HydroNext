@@ -4,7 +4,7 @@ import { useSessionStore } from '@/stores/session';
 interface WebSocketOptions {
   url: string;
   onMessage?: (data: any) => void;
-  onOpen?: () => void;
+  onOpen?: (send: (data: any) => void) => void;
   onClose?: () => void;
   onError?: (event: Event) => void;
   autoReconnect?: boolean;
@@ -58,7 +58,7 @@ export function useWebSocket({
         for (const message of pendingMessages.current.splice(0)) {
           ws.send(JSON.stringify(message));
         }
-        handlersRef.current.onOpen?.();
+        handlersRef.current.onOpen?.((data) => ws.send(JSON.stringify(data)));
       };
 
       ws.onmessage = (event) => {

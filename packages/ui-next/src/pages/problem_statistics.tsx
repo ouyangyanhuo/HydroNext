@@ -13,6 +13,8 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
+const ALL_LANGUAGE = '__all__';
+
 function formatMemory(memory?: number) {
   if (memory == null) return '-';
   return `${Math.round(memory / 1024)} MB`;
@@ -121,6 +123,20 @@ export default function ProblemStatisticsPage() {
   const submitted = pdoc.nSubmit || 0;
   const acceptRate = submitted ? Math.round((accepted / submitted) * 100) : 0;
   const problemName = [pdoc.pid || pdoc.docId, pdoc.title].filter(Boolean).join(' · ');
+  const currentLang = new URLSearchParams(window.location.search).get('lang') || ALL_LANGUAGE;
+  const configuredLangs = (window as any).LANGS || {};
+  const problemLangs = Array.isArray(pdoc.config?.langs)
+    ? new Set(pdoc.config.langs.map(String))
+    : null;
+  const languageOptions = [
+    { value: ALL_LANGUAGE, label: t('All Languages') },
+    ...Object.entries<any>(configuredLangs)
+      .filter(([id, info]) => !info?.hidden && !info?.disabled && (!problemLangs || problemLangs.has(id)))
+      .map(([value, info]) => ({ value, label: info?.display || info?.name || value })),
+  ];
+  if (currentLang !== ALL_LANGUAGE && !languageOptions.some((option) => option.value === currentLang)) {
+    languageOptions.push({ value: currentLang, label: configuredLangs[currentLang]?.display || currentLang });
+  }
 
   const updateQuery = (key: string, value?: string | null) => {
     const url = new URL(window.location.href);
@@ -168,7 +184,9 @@ export default function ProblemStatisticsPage() {
       key: 'lang',
       title: t('Language'),
       width: 110,
-      render: (r: any) => <Text size="xs" c="dimmed">{r.lang || '-'}</Text>,
+      render: (r: any) => (
+        <Text size="xs" c="dimmed">{configuredLangs[r.lang]?.display || configuredLangs[r.lang]?.name || r.lang || '-'}</Text>
+      ),
     },
     {
       key: 'length',
@@ -226,6 +244,15 @@ export default function ProblemStatisticsPage() {
                   { value: '-1', label: t('Descending') },
                 ]}
                 onChange={(value) => updateQuery('direction', value)}
+              />
+              <Select
+                aria-label={t('Language')}
+                size="xs"
+                w={160}
+                searchable
+                value={currentLang}
+                data={languageOptions}
+                onChange={(value) => updateQuery('lang', value === ALL_LANGUAGE ? null : value)}
               />
             </Group>
           </Group>

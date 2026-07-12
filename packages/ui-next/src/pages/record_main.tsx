@@ -13,6 +13,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
+import { useWebSocket } from '@/hooks/use-websocket';
 import { useSessionStore } from '@/stores/session';
 
 const ALL_FILTER = '__all__';
@@ -21,6 +22,25 @@ export function formatScore(score: unknown): string {
   const value = Number(score);
   if (!Number.isFinite(value)) return '-';
   return Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
+}
+
+export function mergeLiveRecord(
+  current: any[],
+  record: any,
+  options: { matches: boolean, page: number, allowPush: boolean, limit: number },
+): any[] {
+  const rid = String(record._id);
+  const index = current.findIndex((item) => String(item._id) === rid);
+  if (!options.matches) {
+    return index < 0 ? current : current.filter((_, currentIndex) => currentIndex !== index);
+  }
+  if (index >= 0) {
+    const next = [...current];
+    next[index] = { ...next[index], ...record };
+    return next;
+  }
+  if (options.page !== 1 || !options.allowPush) return current;
+  return [record, ...current].slice(0, options.limit);
 }
 
 export default function RecordMainPage() {
@@ -32,11 +52,14 @@ export default function RecordMainPage() {
   const domainId = useSessionStore((s) => s.ui.domainId);
   const canViewCodeReplay = useHasPriv(PRIV.PRIV_READ_RECORD_CODE);
 
-  const rdocs = useMemo(() => args.rdocs || [], [args.rdocs]);
-  const pdict = useMemo(() => args.pdict || {}, [args.pdict]);
-  const udict = useMemo(() => args.udict || {}, [args.udict]);
+  const initialRdocs = useMemo(() => args.rdocs || [], [args.rdocs]);
+  const initialPdict = useMemo(() => args.pdict || {}, [args.pdict]);
+  const initialUdict = useMemo(() => args.udict || {}, [args.udict]);
+  const [rdocs, setRdocs] = useState<any[]>(initialRdocs);
+  const [pdict, setPdict] = useState<Record<string, any>>(initialPdict);
+  const [udict, setUdict] = useState<Record<string, any>>(initialUdict);
   const page = args.page || 1;
-  const totalPages = args.tpcount || 1;
+  const totalPages = args.tpcount || Math.max(1, page + (args.hasNextPage ? 1 : 0));
 
   const [uidOrName, setUidOrName] = useState(String(args.filterUidOrName || ''));
   const [pid, setPid] = useState(String(args.filterPid || ''));
@@ -58,10 +81,68 @@ export default function RecordMainPage() {
     if (args.filterLang && !languageMap.has(args.filterLang)) languageMap.set(args.filterLang, args.filterLang);
     return [{ value: ALL_FILTER, label: t('All Languages') }, ...Array.from(languageMap, ([value, label]) => ({ value, label }))];
   }, [args.filterLang, args.langs, rdocs, t]);
+  const languageLabels = useMemo(
+    () => new Map(languageOptions.map((option) => [option.value, option.label])),
+    [languageOptions],
+  );
   const statusOptions = useMemo(() => [
     { value: ALL_FILTER, label: t('All Submissions') },
     ...Object.entries(STATUS_TEXTS).map(([value, label]) => ({ value, label: t(label) })),
   ], [t]);
+
+  const socketUrl = useMemo(() => {
+    const params = new URLSearchParams({ domainId, noTemplate: 'true' });
+    if (args.filterTid) params.set('tid', String(args.filterTid));
+    if (args.filterUidOrName) params.set('uidOrName', String(args.filterUidOrName));
+    if (args.filterPid) params.set('pid', String(args.filterPid));
+    if (args.filterLang) params.set('lang', String(args.filterLang));
+    if (typeof args.filterStatus === 'number') params.set('status', String(args.filterStatus));
+    if (args.all) params.set('all', 'true');
+    if (args.allDomain) params.set('allDomain', 'true');
+    return `record-conn?${params.toString()}`;
+  }, [args.all, args.allDomain, args.filterLang, args.filterPid, args.filterStatus,
+    args.filterTid, args.filterUidOrName, domainId]);
+  const initialRids = useMemo(
+    () => initialRdocs.map((record: any) => String(record._id)),
+    [initialRdocs],
+  );
+  const handleSocketOpen = useCallback((send: (payload: any) => void) => {
+    send({ rids: initialRids });
+  }, [initialRids]);
+
+  const handleSocketMessage = useCallback((payload: any) => {
+    const record = payload?.rdoc;
+    if (!record?._id) return;
+    const matchesStatus = typeof args.filterStatus !== 'number'
+      || Number(record.status) === args.filterStatus;
+    const matchesLanguage = !args.filterLang || record.lang === args.filterLang;
+    setRdocs((current) => {
+      const limit = Number(args.limit) || current.length || 100;
+      return mergeLiveRecord(current, record, {
+        matches: matchesStatus && matchesLanguage,
+        page,
+        allowPush: !new URLSearchParams(window.location.search).has('nopush'),
+        limit,
+      });
+    });
+    if (payload.udoc?._id != null) {
+      setUdict((current) => ({ ...current, [payload.udoc._id]: payload.udoc }));
+    }
+    if (payload.pdoc?.docId != null) {
+      setPdict((current) => ({
+        ...current,
+        [payload.pdoc.docId]: payload.pdoc,
+        [`${payload.pdoc.domainId}/${payload.pdoc.docId}`]: payload.pdoc,
+      }));
+    }
+  }, [args.filterLang, args.filterStatus, args.limit, page]);
+
+  useWebSocket({
+    url: socketUrl,
+    onOpen: handleSocketOpen,
+    onMessage: handleSocketMessage,
+    autoReconnect: true,
+  });
 
   const handleFilter = () => {
     const url = new URL(window.location.href);
@@ -132,7 +213,9 @@ export default function RecordMainPage() {
       key: 'lang',
       title: t('Language'),
       width: 100,
-      render: (r: any) => <Text size="xs" c="dimmed" fw={600}>{r.lang || '-'}</Text>,
+      render: (r: any) => (
+        <Text size="xs" c="dimmed" fw={600}>{languageLabels.get(r.lang) || r.lang || '-'}</Text>
+      ),
     },
     {
       key: 'time',
@@ -196,7 +279,7 @@ export default function RecordMainPage() {
         ) : null
       ),
     },
-  ], [buildUrl, canViewCodeReplay, domainId, pdict, t, udict, user._id]);
+  ], [buildUrl, canViewCodeReplay, domainId, languageLabels, pdict, t, udict, user._id]);
 
   const openRecord = useCallback((record: any) => {
     navigate(buildUrl('record_detail', { rid: record._id }));

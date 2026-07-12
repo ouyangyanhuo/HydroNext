@@ -92,9 +92,11 @@ export class RecordListHandler extends ContestDetailBaseHandler {
         let cursor = record.getMulti(allDomain ? '' : domainId, q).sort('_id', -1);
         if (!full) cursor = cursor.project(buildProjection(record.PROJECTION_LIST));
         const limit = full ? 10 : system.get('pagination.record');
-        let rdocs = invalid
+        const pageDocs = invalid
             ? [] as RecordDoc[]
-            : await cursor.skip((page - 1) * limit).limit(limit).toArray();
+            : await cursor.skip((page - 1) * limit).limit(limit + 1).toArray();
+        const hasNextPage = pageDocs.length > limit;
+        let rdocs = pageDocs.slice(0, limit);
         const canViewHiddenProblem = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN);
         const [udict, pdict] = full ? [{}, {}]
             : await Promise.all([
@@ -121,6 +123,8 @@ export class RecordListHandler extends ContestDetailBaseHandler {
             filterUidOrName: uidOrName,
             filterLang: lang,
             filterStatus: status,
+            hasNextPage,
+            limit,
             notification,
         };
         if (this.user.hasPriv(PRIV.PRIV_VIEW_JUDGE_STATISTICS) && stat) {
@@ -258,17 +262,20 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
     tid: string;
     uid: number;
     pid: number;
+    lang: string;
     status: number;
     pretest = false;
     tdoc: Tdoc;
     applyProjection = false;
     noTemplate = false;
+    watchedRids = new Set<string>();
     queue: Map<string, () => Promise<any>> = new Map();
     throttleQueueClear: () => void;
 
     @param('tid', Types.ObjectId, true)
     @param('pid', Types.ProblemId, true)
     @param('uidOrName', Types.UidOrName, true)
+    @param('lang', Types.String, true)
     @param('status', Types.Int, true)
     @param('pretest', Types.Boolean)
     @param('all', Types.Boolean)
@@ -276,7 +283,7 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
     @param('noTemplate', Types.Boolean, true)
     async prepare(
         domainId: string, tid?: ObjectId, pid?: string | number, uidOrName?: string,
-        status?: number, pretest = false, all = false, allDomain = false, noTemplate = false,
+        lang?: string, status?: number, pretest = false, all = false, allDomain = false, noTemplate = false,
     ) {
         if (tid) {
             this.tdoc = await contest.get(domainId, tid);
@@ -305,7 +312,8 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
             if (pdoc) this.pid = pdoc.docId;
             else throw new ProblemNotFoundError(domainId, pid);
         }
-        if (status) this.status = status;
+        if (lang) this.lang = lang;
+        if (typeof status === 'number') this.status = status;
         if (all) {
             this.checkPerm(PERM.PERM_VIEW_CONTEST_HIDDEN_SCOREBOARD);
             this.checkPerm(PERM.PERM_VIEW_HOMEWORK_HIDDEN_SCOREBOARD);
@@ -321,6 +329,7 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
 
     async message(msg: { rids: string[] }) {
         if (!(msg.rids instanceof Array)) return;
+        this.watchedRids = new Set(msg.rids.map(String));
         const rids = msg.rids.map((id) => new ObjectId(id));
         const rdocs = await record.getMulti(this.args.domainId, { _id: { $in: rids } })
             .project<RecordDoc>(buildProjection(record.PROJECTION_LIST)).toArray();
@@ -343,6 +352,10 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
         }
         if (typeof this.pid === 'number' && rdoc.pid !== this.pid) return;
         if (typeof this.uid === 'number' && rdoc.uid !== this.uid) return;
+        if (this.lang && rdoc.lang !== this.lang) return;
+        if (typeof this.status === 'number'
+            && rdoc.status !== this.status
+            && !this.watchedRids.has(rdoc._id.toHexString())) return;
 
         let [udoc, pdoc] = await Promise.all([
             user.getById(this.args.domainId, rdoc.uid),
@@ -357,7 +370,14 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
         if (this.pretest) {
             this.queueSend(rdoc._id.toHexString(), async () => ({ rdoc: omit(rdoc, ['code', 'input']) }));
         } else if (this.noTemplate) {
-            this.queueSend(rdoc._id.toHexString(), async () => ({ rdoc }));
+            this.queueSend(rdoc._id.toHexString(), async () => ({
+                rdoc,
+                udoc: udoc ? pick(udoc, [
+                    '_id', 'uname',
+                    ...this.user.hasPerm(PERM.PERM_VIEW_USER_PRIVATE_INFO) ? ['displayName'] : [],
+                ]) : null,
+                pdoc: pdoc ? pick(pdoc, ['domainId', 'docId', 'pid', 'title']) : null,
+            }));
         } else {
             this.queueSend(rdoc._id.toHexString(), async () => ({
                 html: await this.renderHTML('record_main_tr.html', {

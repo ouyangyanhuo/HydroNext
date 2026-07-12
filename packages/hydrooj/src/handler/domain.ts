@@ -25,6 +25,7 @@ import { log2 } from '../utils';
 class DomainRankHandler extends Handler {
     @query('page', Types.PositiveInt, true)
     async get(domainId: string, page = 1) {
+        const limit = this.ctx.setting.get('pagination.ranking') || 100;
         const [dudocs, upcount, ucount] = await this.paginate(
             domain.getMultiUserInDomain(domainId, { uid: { $gt: 1 }, rp: { $gt: 0 }, join: true }).sort({ rp: -1 }),
             page,
@@ -34,7 +35,7 @@ class DomainRankHandler extends Handler {
         const udocs = dudocs.map((i) => udict[i.uid]);
         this.response.template = 'ranking.html';
         this.response.body = {
-            udocs, upcount, ucount, page,
+            udocs, upcount, ucount, page, limit,
         };
     }
 }

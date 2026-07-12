@@ -155,10 +155,13 @@ class TrainingDetailHandler extends Handler {
             donePids: Array.from(donePids),
             done: doneNids.size === tdoc.dag.length,
         });
-        const groups = this.user.hasPerm(PERM.PERM_EDIT_DOMAIN)
-            ? await user.listGroup(domainId) : [];
+        const [selfTsdoc, groups] = await Promise.all([
+            shouldCompare ? training.getStatus(domainId, tdoc.docId, this.user._id) : tsdoc,
+            this.user.hasPerm(PERM.PERM_EDIT_DOMAIN) ? user.listGroup(domainId) : [],
+        ]);
         this.response.body = {
-            tdoc, tsdoc, pids, pdict, psdict, ndict, nsdict, udoc, udict, selfPsdict, groups, missing,
+            tdoc, tsdoc, selfTsdoc, shouldCompare,
+            pids, pdict, psdict, ndict, nsdict, udoc, udict, selfPsdict, groups, missing,
             canEdit: this.user.own(tdoc) || this.user.hasPerm(PERM.PERM_EDIT_TRAINING),
         };
         this.response.body.tdoc.description = this.response.body.tdoc.description

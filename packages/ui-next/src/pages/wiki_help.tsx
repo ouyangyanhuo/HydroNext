@@ -11,7 +11,7 @@ const HELP_SECTIONS = [
 
 通过合理的设置角色及其权限，可以把域设为公开或私有。
 
-默认域为 system，用户直接访问 HNTOU OJ 域名就会访问此域，点击 HNTOU OJ Logo 会从任意域跳转回 system 域。
+默认域为 system，用户直接访问 {{ name }} 域名就会访问此域，点击 {{ name }} Logo 会从任意域跳转回 system 域。
 
 每个域的题库、讨论、训练以及比赛是独立且自治的。
 `.trim(),
@@ -19,21 +19,21 @@ const HELP_SECTIONS = [
   {
     id: 'compiler',
     title: "Compilers' Version and Parameters",
-    content: 'HNTOU OJ 使用 [HydroJudge](https://github.com/hydro-dev/Hydro/tree/master/packages/hydrojudge) 进行评测，编译参数和当前所用编译器版本见状态页。',
+    content: '{{ name }} 使用 [HydroJudge](https://github.com/hydro-dev/Hydro/tree/master/packages/hydrojudge) 进行评测，编译参数和当前所用编译器版本见状态页。',
   },
   {
     id: 'limits',
     title: 'Limitations',
     content: `
-HNTOU OJ 评测机使用进程的 CPU 时间计算时间消耗，时间的限定为题目中评测点所指定的时间。
+{{ name }} 评测机使用进程的 CPU 时间计算时间消耗，时间的限定为题目中评测点所指定的时间。
 
-HNTOU OJ 评测机使用进程虚拟内存与物理内存总和计算内存空间消耗。内存空间默认限定为 256MiB，题目中特别指明的，限定为题目中评测点所指定的内存空间。
+{{ name }} 评测机使用进程虚拟内存与物理内存总和计算内存空间消耗。内存空间默认限定为 256MiB，题目中特别指明的，限定为题目中评测点所指定的内存空间。
 `.trim(),
   },
   {
     id: 'io',
     title: 'IO',
-    content: '若无特殊说明，HNTOU OJ 使用标准输入输出（控制台输入输出，屏幕输入输出，STD I/O）。',
+    content: '若无特殊说明，{{ name }} 使用标准输入输出（控制台输入输出，屏幕输入输出，STD I/O）。',
   },
   {
     id: 'status',
@@ -114,7 +114,7 @@ IOI(Strict) 赛制下，每道题的排行榜得分将为用户每个子任务�
   {
     id: 'acratio',
     title: 'Accepted Ratio',
-    content: '通过率的影响极其恶劣，HNTOU OJ 不提供也不承认通过率。',
+    content: '通过率的影响极其恶劣，{{ name }} 不提供也不承认通过率。',
   },
   {
     id: 'rp',
@@ -125,7 +125,7 @@ IOI(Strict) 赛制下，每道题的排行榜得分将为用户每个子任务�
     id: 'pbmdiff',
     title: 'Difficulty Algorithm',
     content: `
-HNTOU OJ 中题目的难度，根据递交数、通过率以及每个递交的递交时间和评测结果，通过算法计算得出。
+{{ name }} 中题目的难度，根据递交数、通过率以及每个递交的递交时间和评测结果，通过算法计算得出。
 
 因此，请注意以下几点：
 
@@ -153,7 +153,7 @@ HNTOU OJ 中题目的难度，根据递交数、通过率以及每个递交的�
     id: 'markdown',
     title: 'Markdown',
     content: `
-HNTOU OJ 的 Markdown 区域使用 [CommonMark](http://commonmark.org/help/) 语法，并扩展了以下功能：
+{{ name }} 的 Markdown 区域使用 [CommonMark](http://commonmark.org/help/) 语法，并扩展了以下功能：
 
 - 基于 [Katex](https://onemathematicalcat.org/MathJaxDocumentation/TeXSyntax.htm) 语法的数学公式支持。
 - 使用 \`@[](/user/uid)\` 提及用户。
@@ -171,7 +171,7 @@ HNTOU OJ 的 Markdown 区域使用 [CommonMark](http://commonmark.org/help/) 语
 export default function WikiHelpPage() {
   const { t } = useI18n();
   const ui = useUiContext();
-  const name = ui.domain?.name || ui.serverName || 'HNTOU OJ';
+  const name = ui.domain?.name || ui.serverName || 'Hydro';
   const sections = HELP_SECTIONS.map((section) => ({
     ...section,
     title: t(section.title),

@@ -143,10 +143,13 @@ export default function TrainingDetailPage() {
   const enrolledUsers = Object.entries<any>(udict);
   const canEdit = Boolean(args.canEdit || (tdoc.owner && user?._id === tdoc.owner));
   const enrolled = isTrainingEnrolled(tsdoc);
+  const selfEnrolled = isTrainingEnrolled(args.selfTsdoc || tsdoc);
   const progress = enrolled && pids.length
     ? (tsdoc.done ? 100 : Math.round(((tsdoc.donePids?.length || 0) / pids.length) * 100))
     : 0;
-  const compare = Boolean(new URLSearchParams(window.location.search).get('uid') && enrolled);
+  const compare = Boolean(args.shouldCompare ?? (
+    new URLSearchParams(window.location.search).get('uid') && enrolled
+  ));
 
   const enroll = async () => {
     setLoading(true);
@@ -272,7 +275,7 @@ export default function TrainingDetailPage() {
         <Stack gap="md">
           <Card withBorder p="md" className="hydro-panel">
             <Stack gap="xs">
-              {isLoggedIn && !enrolled && (
+              {isLoggedIn && !selfEnrolled && (
                 <Button fullWidth size="xs" onClick={enroll} loading={loading}>{t('Enroll Training')}</Button>
               )}
               {canEdit && (
