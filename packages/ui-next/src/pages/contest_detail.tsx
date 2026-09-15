@@ -2,6 +2,7 @@ import { Badge, Button, Card, Divider, Group, Paper, Select, Stack, Table, Text,
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
+import { DeleteResourceButton } from '@/components/common/delete-resource-button';
 import { TimeDisplay } from '@/components/common/time-display';
 import { ContestTimer } from '@/components/contest/contest-timer';
 import { Link } from '@/components/link';
@@ -358,6 +359,7 @@ export default function ContestDetailPage() {
   const pdict = args.pdict || {};
   const udict = args.udict || {};
   const canEdit = useHasPerm(PERM.PERM_EDIT_CONTEST) || args.canEdit;
+  const canDelete = Boolean(args.canDelete);
   const tid = tdoc._id || tdoc.docId;
   const contestStarted = useDeadlinePassed(tdoc.beginAt);
   const contestEnded = useDeadlinePassed(tdoc.endAt);
@@ -559,6 +561,15 @@ export default function ContestDetailPage() {
               <Button component={Link} href={buildUrl('record_main', {}, { tid: String(tid), uidOrName: String(user._id) })} variant="subtle" fullWidth>
                 {t('My Submissions')}
               </Button>
+            )}
+
+            {canDelete && (
+              <DeleteResourceButton
+                actionUrl={buildUrl('contest_edit', { tid })}
+                fallbackUrl={buildUrl('contest_main')}
+                label={t('Delete Contest')}
+                message={t('Confirm deleting this contest? Its files and status will be deleted as well.')}
+              />
             )}
           </Stack>
         </div>

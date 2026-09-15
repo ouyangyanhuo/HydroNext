@@ -93,6 +93,8 @@ Cancel: 取消
 Confirm: 确认
 Delete: 删除
 Delete failed: 删除失败
+Delete Contest: 删除比赛
+Delete Training Plan: 删除训练计划
 Delete Problem: 删除题目
 Select All: 全选
 Create: 创建
@@ -117,6 +119,8 @@ A standard program is a program that solves the problem.: 标准程序是能正�
 Confirm to delete the file?: 确认删除该文件？
 Confirm to delete the selected files?: 确认删除选中的文件？
 Confirm to delete this problem?: 确认删除此题目？
+Confirm deleting this contest? Its files and status will be deleted as well.: 确认删除此比赛？相关文件和状态也会一并删除。
+Confirm deleting this training? Its files and status will be deleted as well.: 确认删除此训练计划？相关文件和状态也会一并删除。
 Download Selected: 下载选中
 Remove Selected: 移除选中
 Rename Selected: 重命名选中
@@ -139,6 +143,7 @@ Import: 导入
 Export: 导出
 Loading...: 加载中...
 'Page {0} of {1}': '第 {0} / {1} 页'
+Rows per page: 每页行数
 just now: 刚刚
 '{0}m ago': '{0} 分钟前'
 '{0}h ago': '{0} 小时前'
@@ -486,6 +491,7 @@ Recent Contests: 最近比赛
 Recent Discussions: 最近讨论
 Powered by: 基于
 Paste limit exceeded: 粘贴内容超过限制
+'Pasting more than {0} characters is not allowed (currently {1}).': '粘贴内容不能超过 {0} 个字符（当前 {1} 个字符）。'
 粘贴内容超过限制: 粘贴内容超过限制
 File too large: 文件过大
 'File too large: {name}': '文件过大：{name}'

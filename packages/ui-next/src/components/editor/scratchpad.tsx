@@ -112,6 +112,10 @@ export function Scratchpad({
     () => getScratchpadCacheKey(user?._id, ui.domainId, pid, contestId),
     [contestId, pid, ui.domainId, user?._id],
   );
+  const replayStorageKey = useMemo(
+    () => `code-replay/${user?._id || 'guest'}/${ui.domainId || ''}/${pid}${contestId ? `@${contestId}` : ''}`,
+    [contestId, pid, ui.domainId, user?._id],
+  );
   const [lang, setLang] = useState(() => {
     const cachedLang = getStoredString(`${cacheKey}#lang`, defaultLang);
     if (cachedLang && langOptions.some((option) => option.value === cachedLang)) return cachedLang;
@@ -214,11 +218,10 @@ export function Scratchpad({
   const ensureReplaySession = useCallback(() => {
     const replay = replayRef.current;
     if (replay.sessionId) return replay.sessionId;
-    const key = `code-replay/${user?._id || 'guest'}/${ui.domainId || ''}/${pid}${contestId ? `@${contestId}` : ''}`;
-    let sessionId = sessionStorage.getItem(key);
+    let sessionId = sessionStorage.getItem(replayStorageKey);
     if (!sessionId) {
       sessionId = randomSessionId();
-      sessionStorage.setItem(key, sessionId);
+      sessionStorage.setItem(replayStorageKey, sessionId);
     }
     replay.sessionId = sessionId;
     replay.initialCode = code;
@@ -227,7 +230,20 @@ export function Scratchpad({
     replay.snapshots = [{ t: 0, code, lang }];
     replay.lastSnapshotAt = 0;
     return sessionId;
-  }, [code, contestId, lang, pid, ui.domainId, user?._id]);
+  }, [code, lang, replayStorageKey]);
+
+  const resetReplaySession = useCallback((initialCode: string) => {
+    sessionStorage.removeItem(replayStorageKey);
+    replayRef.current = {
+      sessionId: '',
+      initialCode,
+      startedAt: Date.now(),
+      events: [],
+      snapshots: [{ t: 0, code: initialCode, lang }],
+      lastSnapshotAt: 0,
+      flushing: false,
+    };
+  }, [lang, replayStorageKey]);
 
   const captureChange = useCallback((event: any, editor: any) => {
     if (!resolvedReplayUrl || !user?._id) return;
@@ -262,7 +278,7 @@ export function Scratchpad({
     replay.flushing = true;
     try {
       const tid = ui.tdoc?._id || ui.tdoc?.docId || new URLSearchParams(window.location.search).get('tid') || undefined;
-      await fetch(resolvedReplayUrl, {
+      const response = await fetch(resolvedReplayUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
@@ -276,14 +292,19 @@ export function Scratchpad({
           snapshots,
         }),
       });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.error) {
+        throw new Error(data.error?.message || `Replay upload failed (${response.status})`);
+      }
+      return sessionId;
     } catch (err) {
       replay.events.unshift(...events);
       replay.snapshots.unshift(...snapshots);
       console.warn('Failed to flush code replay:', err);
+      return '';
     } finally {
       replay.flushing = false;
     }
-    return sessionId;
   }, [ensureReplaySession, lang, pid, resolvedReplayUrl, ui.pdoc, ui.tdoc, user?._id]);
 
   const postJudge = useCallback(async (pretest: boolean) => {
@@ -330,14 +351,17 @@ export function Scratchpad({
         else if (pretest) {
           setPretestResult(data);
           if (data.rid) setPretestRid(String(data.rid));
-        } else if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }));
-        else setSubmitResult(data);
+        } else if (data.rid) {
+          resetReplaySession(code);
+          navigate(buildUrl('record_detail', { rid: data.rid }));
+        } else setSubmitResult(data);
       }
     } catch { setError('Network error'); } finally {
       if (pretest) setPretesting(false);
       else setSubmitting(false);
     }
-  }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, flushReplay, resolvedSubmitUrl, input, navigate]);
+  }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, flushReplay,
+    resolvedSubmitUrl, input, navigate, resetReplaySession]);
 
   const pretestCooldown = Math.max(0, Math.ceil((cooldownUntil.pretest - clock) / 1000));
   const submitCooldown = Math.max(0, Math.ceil((cooldownUntil.submit - clock) / 1000));

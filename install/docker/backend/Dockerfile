@@ -3,7 +3,7 @@ FROM node:22
 WORKDIR /hydrooj
 
 COPY install/docker/backend/entrypoint.sh /root/entrypoint.sh
-COPY package.json yarn.lock .yarnrc.yml .npmrc ./
+COPY package.json .yarnrc.yml .npmrc ./
 COPY .yarn ./.yarn
 COPY build ./build
 COPY framework ./framework
@@ -14,7 +14,7 @@ COPY examples ./examples
 COPY tsconfig*.json ./
 
 RUN corepack enable && \
-    yarn install --immutable && \
+    yarn install && \
     yarn workspace @hydrooj/ui-next vite build && \
     npm install -g pm2 && \
     mkdir -p /opt/hydro-addons && \

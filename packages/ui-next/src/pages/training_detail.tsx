@@ -2,6 +2,7 @@ import { Avatar, Badge, Button, Card, Group, Progress, Stack, Table, Text, Title
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
+import { DeleteResourceButton } from '@/components/common/delete-resource-button';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -142,6 +143,7 @@ export default function TrainingDetailPage() {
   const udict = args.udict || {};
   const enrolledUsers = Object.entries<any>(udict);
   const canEdit = Boolean(args.canEdit || (tdoc.owner && user?._id === tdoc.owner));
+  const canDelete = Boolean(args.canDelete);
   const enrolled = isTrainingEnrolled(tsdoc);
   const selfEnrolled = isTrainingEnrolled(args.selfTsdoc || tsdoc);
   const progress = enrolled && pids.length
@@ -291,6 +293,14 @@ export default function TrainingDetailPage() {
               <Button component={Link} to="wiki_help" fullWidth size="xs" variant="subtle">
                 {t('Help')}
               </Button>
+              {canDelete && (
+                <DeleteResourceButton
+                  actionUrl={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id })}
+                  fallbackUrl={buildUrl('training_main')}
+                  label={t('Delete Training Plan')}
+                  message={t('Confirm deleting this training? Its files and status will be deleted as well.')}
+                />
+              )}
             </Stack>
           </Card>
 

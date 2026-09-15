@@ -163,6 +163,7 @@ class TrainingDetailHandler extends Handler {
             tdoc, tsdoc, selfTsdoc, shouldCompare,
             pids, pdict, psdict, ndict, nsdict, udoc, udict, selfPsdict, groups, missing,
             canEdit: this.user.own(tdoc) || this.user.hasPerm(PERM.PERM_EDIT_TRAINING),
+            canDelete: this.user.hasPerm(PERM.PERM_EDIT_TRAINING),
         };
         this.response.body.tdoc.description = this.response.body.tdoc.description
             .replace(/\(file:\/\//g, `(./${tdoc.docId}/file/`)

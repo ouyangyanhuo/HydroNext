@@ -92,6 +92,8 @@ Cancel: 取消
 Confirm: 確認
 Delete: 刪除
 Delete failed: 刪除失敗
+Delete Contest: 刪除比賽
+Delete Training Plan: 刪除訓練計畫
 Delete Problem: 刪除題目
 Select All: 全選
 Create: 建立
@@ -116,6 +118,8 @@ A standard program is a program that solves the problem.: 標準程式是能正�
 Confirm to delete the file?: 確認刪除該檔案？
 Confirm to delete the selected files?: 確認刪除選取的檔案？
 Confirm to delete this problem?: 確認刪除此題目？
+Confirm deleting this contest? Its files and status will be deleted as well.: 確認刪除此比賽？相關檔案和狀態也會一併刪除。
+Confirm deleting this training? Its files and status will be deleted as well.: 確認刪除此訓練計畫？相關檔案和狀態也會一併刪除。
 Download Selected: 下載選取
 Remove Selected: 移除選取
 Rename Selected: 重新命名選取
@@ -138,6 +142,7 @@ Import: 匯入
 Export: 匯出
 Loading...: 載入中...
 'Page {0} of {1}': '第 {0} / {1} 頁'
+Rows per page: 每頁筆數
 just now: 剛剛
 '{0}m ago': '{0} 分鐘前'
 '{0}h ago': '{0} 小時前'
@@ -484,6 +489,7 @@ Recent Contests: 最近比賽
 Recent Discussions: 最近討論
 Powered by: 基於
 Paste limit exceeded: 貼上內容超過限制
+'Pasting more than {0} characters is not allowed (currently {1}).': '貼上內容不能超過 {0} 個字元（目前 {1} 個字元）。'
 粘贴内容超过限制: 貼上內容超過限制
 File too large: 檔案過大
 'File too large: {name}': '檔案過大：{name}'

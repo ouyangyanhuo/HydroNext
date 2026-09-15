@@ -129,14 +129,14 @@ function writeStoredAccent(color: AccentColorValue) {
 }
 
 function readStoredFont(): FontFamily {
-  if (typeof window === 'undefined') return 'sans';
+  if (typeof window === 'undefined') return 'serif';
   try {
     const value = window.localStorage.getItem(FONT_STORAGE_KEY);
     if (value === 'serif' || value === 'sans') return value;
   } catch {
     // Ignore storage failures in restricted browser contexts.
   }
-  return 'sans';
+  return 'serif';
 }
 
 function writeStoredFont(font: FontFamily) {

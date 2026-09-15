@@ -60,6 +60,8 @@ Cancel: キャンセル
 Confirm: 確認
 Delete: 削除
 Delete failed: 削除失敗
+Delete Contest: コンテストを削除
+Delete Training Plan: トレーニングプランを削除
 Delete Problem: 問題を削除​
 Select All: すべて選択
 Create: 作成
@@ -83,6 +85,8 @@ A standard program is a program that solves the problem.: 標準プログラム�
 Confirm to delete the file?: このファイルを削除しますか？
 Confirm to delete the selected files?: 選択したファイルを削除しますか？
 Confirm to delete this problem?: この問題を削除しますか？
+Confirm deleting this contest? Its files and status will be deleted as well.: このコンテストを削除しますか？関連するファイルとステータスも削除されます。
+Confirm deleting this training? Its files and status will be deleted as well.: このトレーニングプランを削除しますか？関連するファイルとステータスも削除されます。
 Download Selected: 選択をダウンロード
 Remove Selected: 選択を削除
 Rename Selected: 選択を名前変更
@@ -315,6 +319,7 @@ Recent Contests: 最近のコンテスト
 Recent Discussions: 最近のディスカッション
 Powered by: Powered by
 Paste limit exceeded: ペースト制限を超過しました
+'Pasting more than {0} characters is not allowed (currently {1}).': '{0}文字を超える内容は貼り付けできません（現在{1}文字）。'
 File too large: ファイルが大きすぎます
 "File too large: {name}": "ファイルが大きすぎます: {name}"
 Drag files here or click to upload: ここにファイルをドラッグまたはクリックしてアップロード
@@ -521,6 +526,7 @@ About preferredPrefix option: preferredPrefix オプションについて
 Contest has not started yet: コンテストはまだ始まっていません
 Enter a new name for the file: ファイルの新しい名前を入力してください
 'Page {0} of {1}': '{0} / {1} ページ'
+Rows per page: 1ページの件数
 just now: たった今
 '{0}m ago': '{0}分前'
 '{0}h ago': '{0}時間前'

@@ -17,6 +17,7 @@ import { useWebSocket } from '@/hooks/use-websocket';
 import { useSessionStore } from '@/stores/session';
 
 const ALL_FILTER = '__all__';
+const RECORD_PAGE_SIZES = [25, 50] as const;
 
 export function formatScore(score: unknown): string {
   const value = Number(score);
@@ -43,8 +44,7 @@ export function mergeLiveRecord(
   return [record, ...current].slice(0, options.limit);
 }
 
-export default function RecordMainPage() {
-  const { args } = usePageData();
+function RecordMainContent({ args }: { args: any }) {
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const navigate = useNavigate();
@@ -59,7 +59,10 @@ export default function RecordMainPage() {
   const [pdict, setPdict] = useState<Record<string, any>>(initialPdict);
   const [udict, setUdict] = useState<Record<string, any>>(initialUdict);
   const page = args.page || 1;
-  const totalPages = args.tpcount || Math.max(1, page + (args.hasNextPage ? 1 : 0));
+  const totalPages = Math.max(1, Number(args.rpcount) || 1);
+  const pageSize = RECORD_PAGE_SIZES.includes(Number(args.limit) as 25 | 50)
+    ? Number(args.limit)
+    : 50;
 
   const [uidOrName, setUidOrName] = useState(String(args.filterUidOrName || ''));
   const [pid, setPid] = useState(String(args.filterPid || ''));
@@ -165,7 +168,7 @@ export default function RecordMainPage() {
     setTid('');
     setLang(ALL_FILTER);
     setStatus(ALL_FILTER);
-    navigate(buildUrl('record_main'));
+    navigate(buildUrl('record_main', {}, { pageSize: String(pageSize) }));
   };
 
   const columns = useMemo(() => [
@@ -350,8 +353,29 @@ export default function RecordMainPage() {
           />
         </div>
 
-        <Paginator page={page} totalPages={totalPages} />
+        <Paginator
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          pageSizes={RECORD_PAGE_SIZES}
+        />
       </Stack>
     </main>
   );
+}
+
+export default function RecordMainPage() {
+  const { args } = usePageData();
+  const pageStateKey = [
+    args.page,
+    args.limit,
+    args.filterUidOrName,
+    args.filterPid,
+    args.filterTid,
+    args.filterLang,
+    args.filterStatus,
+    args.all,
+    args.allDomain,
+  ].join(':');
+  return <RecordMainContent key={pageStateKey} args={args} />;
 }

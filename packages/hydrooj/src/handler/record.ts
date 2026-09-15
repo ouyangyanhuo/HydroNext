@@ -14,7 +14,6 @@ import problem, { ProblemDoc } from '../model/problem';
 import record from '../model/record';
 import { langs } from '../model/setting';
 import storage from '../model/storage';
-import system from '../model/system';
 import TaskModel from '../model/task';
 import user from '../model/user';
 import {
@@ -26,6 +25,7 @@ import { postJudge } from './judge';
 
 export class RecordListHandler extends ContestDetailBaseHandler {
     @param('page', Types.PositiveInt, true)
+    @param('pageSize', Types.PositiveInt, true)
     @param('pid', Types.ProblemId, true)
     @param('tid', Types.ObjectId, true)
     @param('uidOrName', Types.UidOrName, true)
@@ -36,7 +36,7 @@ export class RecordListHandler extends ContestDetailBaseHandler {
     @param('allDomain', Types.Boolean)
     @param('stat', Types.Boolean)
     async get(
-        domainId: string, page = 1, pid?: string | number, tid?: ObjectId,
+        domainId: string, page = 1, pageSize = 50, pid?: string | number, tid?: ObjectId,
         uidOrName?: string, lang?: string, status?: number, full = false,
         all = false, allDomain = false, stat = false,
     ) {
@@ -91,12 +91,11 @@ export class RecordListHandler extends ContestDetailBaseHandler {
         }
         let cursor = record.getMulti(allDomain ? '' : domainId, q).sort('_id', -1);
         if (!full) cursor = cursor.project(buildProjection(record.PROJECTION_LIST));
-        const limit = full ? 10 : system.get('pagination.record');
-        const pageDocs = invalid
-            ? [] as RecordDoc[]
-            : await cursor.skip((page - 1) * limit).limit(limit + 1).toArray();
-        const hasNextPage = pageDocs.length > limit;
-        let rdocs = pageDocs.slice(0, limit);
+        const limit = full ? 10 : [25, 50].includes(pageSize) ? pageSize : 50;
+        const [pageDocs, rpcount, rcount] = invalid
+            ? [[] as RecordDoc[], 0, 0]
+            : await this.paginate(cursor, page, limit);
+        let rdocs = pageDocs;
         const canViewHiddenProblem = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN);
         const [udict, pdict] = full ? [{}, {}]
             : await Promise.all([
@@ -123,7 +122,8 @@ export class RecordListHandler extends ContestDetailBaseHandler {
             filterUidOrName: uidOrName,
             filterLang: lang,
             filterStatus: status,
-            hasNextPage,
+            rpcount,
+            rcount,
             limit,
             notification,
         };

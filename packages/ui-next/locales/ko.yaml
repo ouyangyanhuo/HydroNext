@@ -60,6 +60,8 @@ Cancel: 취소
 Confirm: 확인
 Delete: 삭제
 Delete failed: 삭제 실패
+Delete Contest: 대회 삭제
+Delete Training Plan: 훈련 계획 삭제
 Delete Problem: 문제 삭제
 Select All: 전체 선택
 Create: 만들기
@@ -83,6 +85,8 @@ A standard program is a program that solves the problem.: 표준 프로그램은
 Confirm to delete the file?: 이 파일을 삭제하시겠습니까?
 Confirm to delete the selected files?: 선택한 파일을 삭제하시겠습니까?
 Confirm to delete this problem?: 이 문제를 삭제하시겠습니까?
+Confirm deleting this contest? Its files and status will be deleted as well.: 이 대회를 삭제하시겠습니까? 관련 파일과 상태도 함께 삭제됩니다.
+Confirm deleting this training? Its files and status will be deleted as well.: 이 훈련 계획을 삭제하시겠습니까? 관련 파일과 상태도 함께 삭제됩니다.
 Download Selected: 선택 다운로드
 Remove Selected: 선택 삭제
 Rename Selected: 선택 이름 변경
@@ -315,6 +319,7 @@ Recent Contests: 최근 대회
 Recent Discussions: 최근 토론
 Powered by: Powered by
 Paste limit exceeded: 붙여넣기 제한 초과
+'Pasting more than {0} characters is not allowed (currently {1}).': '{0}자를 초과하는 내용은 붙여넣을 수 없습니다(현재 {1}자).'
 File too large: 파일이 너무 큽니다
 "File too large: {name}": "파일이 너무 큽니다: {name}"
 Drag files here or click to upload: 여기에 파일을 드래그하거나 클릭하여 업로드
@@ -521,6 +526,7 @@ About preferredPrefix option: preferredPrefix 옵션에 대해
 Contest has not started yet: 대회가 아직 시작되지 않았습니다
 Enter a new name for the file: 파일의 새 이름을 입력하세요
 'Page {0} of {1}': '{0} / {1} 페이지'
+Rows per page: 페이지당 행 수
 just now: 방금
 '{0}m ago': '{0}분 전'
 '{0}h ago': '{0}시간 전'

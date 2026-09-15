@@ -7,7 +7,7 @@ const DEFAULT_ABOUT = `
 [{{ name }}](#) 致力于为用户提供安全、完善、开放的在线评测及题目交流等服务。
 
 # contact 联系我们
-[联系我们](https://hydro.js.org/#%E8%81%94%E7%B3%BB%E6%88%91%E4%BB%AC)
+请联系系统管理员
 
 # privacy 隐私政策
 #### 1. 收集的信息

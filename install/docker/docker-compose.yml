@@ -15,6 +15,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+      
   oj-backend:
     build:
       context: ../..

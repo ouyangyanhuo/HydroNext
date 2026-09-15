@@ -168,6 +168,7 @@ export class ContestDetailHandler extends ContestDetailBaseHandler {
             files: (this.tsdoc?.attend && !contest.isNotStarted(this.tdoc)) ? sortFiles(this.tdoc.privateFiles || []) : [],
             urlForFile: (filename: string) => this.url('contest_file_download', { tid, filename, type: 'private' }),
             canEdit,
+            canDelete: this.user.hasPerm(PERM.PERM_EDIT_CONTEST),
         };
         if (this.request.json) return;
         this.response.body.tdoc.content = this.response.body.tdoc.content

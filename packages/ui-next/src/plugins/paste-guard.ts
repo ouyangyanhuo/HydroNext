@@ -1,83 +1,68 @@
-/**
- * Paste Guard Plugin
- *
- * Restricts pasting content longer than 30 characters in the code editor
- * on problem detail pages (practice mode).
- *
- * Strategy: intercept Monaco's textarea by patching addEventListener on the
- * textarea prototype, so our capture listener is registered BEFORE Monaco's.
- * Also patch navigator.clipboard.readText as fallback.
- */
+/** Prevent participants from pasting into the problem code editor. */
 
+import { localeData } from '@/globals';
+import {
+  PERM, PRIV, hasPermValue, hasPrivValue,
+} from '@/hooks/use-permission';
 import type { PluginDefinition } from '@/registry/plugin';
+import { useSessionStore } from '@/stores/session';
+import {
+  CODE_PASTE_LIMIT, getPasteCharacterCount, isCodePasteOverLimit,
+} from '@/utils/paste-limit';
 
-const PASTE_LIMIT = 30;
-
-function isTargetPage(): boolean {
-  const path = window.location.pathname;
-  return /^(?:\/d\/[^/]+)?\/p\/[^/]+$/.test(path);
+function translate(key: string, ...args: Array<string | number>) {
+  const windowLocales = (window as any).LOCALES as Record<string, string> | undefined;
+  let text = localeData[key] || windowLocales?.[key] || key;
+  args.forEach((arg, index) => {
+    text = text.replaceAll(`{${index}}`, String(arg));
+  });
+  return text;
 }
 
-function notifyOverLimit(length: number) {
-  const notifStore = (window as any).__hydroNotificationStore;
-  if (notifStore) {
-    try {
-      notifStore.getState().add({
-        title: '粘贴内容超过限制',
-        message: `粘贴内容不能超过 ${PASTE_LIMIT} 个字符（当前 ${length} 个字符）`,
-        color: 'red',
-      });
-    } catch (e) {
-      console.warn('[Hydro] Failed to show paste warning:', e);
-    }
+export function canPasteCode() {
+  const user = useSessionStore.getState().user;
+  return hasPermValue(user.perm, PERM.PERM_EDIT_PROBLEM)
+    || hasPermValue(user.perm, PERM.PERM_EDIT_DOMAIN)
+    || hasPrivValue(user.priv, PRIV.PRIV_EDIT_SYSTEM)
+    || hasPrivValue(user.priv, PRIV.PRIV_UNLIMITED_ACCESS);
+}
+
+export function isProblemCodeEditorPaste(event: Event) {
+  if (!/^(?:\/d\/[^/]+)?\/p\/[^/]+$/.test(window.location.pathname)) return false;
+  const target = event.target;
+  return target instanceof Element && Boolean(target.closest('.monaco-editor'));
+}
+
+function notifyPasteBlocked(length: number) {
+  try {
+    window.__hydroNotificationStore?.getState().add({
+      title: translate('Paste limit exceeded'),
+      message: translate(
+        'Pasting more than {0} characters is not allowed (currently {1}).',
+        CODE_PASTE_LIMIT,
+        length,
+      ),
+      color: 'red',
+    });
+  } catch (error) {
+    console.warn('[Hydro] Failed to show paste warning:', error);
   }
 }
 
-function blockPaste(ev: Event) {
-  if (!isTargetPage()) return;
-  const text = (ev as ClipboardEvent).clipboardData?.getData('text/plain') || '';
-  if (text.length > PASTE_LIMIT) {
-    ev.preventDefault();
-    ev.stopImmediatePropagation();
-    notifyOverLimit(text.length);
-  }
+function blockPaste(event: ClipboardEvent) {
+  if (canPasteCode() || !isProblemCodeEditorPaste(event)) return;
+  const text = event.clipboardData?.getData('text/plain') || '';
+  if (!isCodePasteOverLimit(text)) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  notifyPasteBlocked(getPasteCharacterCount(text));
 }
 
 export const pasteGuardPlugin: PluginDefinition = {
-  name: 'contest-settings.paste-guard',
-  setup(_api) {
+  name: 'editor.paste-guard',
+  setup() {
     if (typeof window === 'undefined') return undefined;
-
-    const origAddEventListener = HTMLTextAreaElement.prototype.addEventListener;
-    const patchedTextareas = new WeakSet<HTMLTextAreaElement>();
-
-    HTMLTextAreaElement.prototype.addEventListener = function (type: string, listener: any, options?: any) {
-      if (type === 'paste' && this.classList.contains('inputarea') && !patchedTextareas.has(this)) {
-        patchedTextareas.add(this);
-        origAddEventListener.call(this, 'paste', blockPaste, true);
-      }
-      return origAddEventListener.call(this, type, listener, options);
-    };
-
-    const clipboard = navigator.clipboard;
-    const origReadText = clipboard?.readText?.bind(clipboard);
-    if (origReadText) {
-      clipboard.readText = async () => {
-        const text = await origReadText();
-        if (isTargetPage() && text.length > PASTE_LIMIT) {
-          notifyOverLimit(text.length);
-          return '';
-        }
-        return text;
-      };
-    }
-
     document.addEventListener('paste', blockPaste, true);
-
-    return () => {
-      HTMLTextAreaElement.prototype.addEventListener = origAddEventListener;
-      if (origReadText && clipboard) clipboard.readText = origReadText;
-      document.removeEventListener('paste', blockPaste, true);
-    };
+    return () => document.removeEventListener('paste', blockPaste, true);
   },
 };

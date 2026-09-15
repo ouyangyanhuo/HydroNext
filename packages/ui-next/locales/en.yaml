@@ -80,6 +80,8 @@ Cancel: Cancel
 Confirm: Confirm
 Delete: Delete
 Delete failed: Delete failed
+Delete Contest: Delete Contest
+Delete Training Plan: Delete Training Plan
 Delete Problem: Delete Problem
 Select All: Select All
 Create: Create
@@ -104,6 +106,8 @@ A standard program is a program that solves the problem.: A standard program is 
 Confirm to delete the file?: Confirm to delete the file?
 Confirm to delete the selected files?: Confirm to delete the selected files?
 Confirm to delete this problem?: Confirm to delete this problem?
+Confirm deleting this contest? Its files and status will be deleted as well.: Confirm deleting this contest? Its files and status will be deleted as well.
+Confirm deleting this training? Its files and status will be deleted as well.: Confirm deleting this training? Its files and status will be deleted as well.
 Download Selected: Download Selected
 Remove Selected: Remove Selected
 Rename Selected: Rename Selected
@@ -124,6 +128,7 @@ Import: Import
 Export: Export
 Loading...: Loading...
 'Page {0} of {1}': 'Page {0} of {1}'
+Rows per page: Rows per page
 just now: just now
 '{0}m ago': '{0}m ago'
 '{0}h ago': '{0}h ago'
@@ -363,6 +368,7 @@ Recent Contests: Recent Contests
 Recent Discussions: Recent Discussions
 Powered by: Powered by
 Paste limit exceeded: Paste limit exceeded
+'Pasting more than {0} characters is not allowed (currently {1}).': 'Pasting more than {0} characters is not allowed (currently {1}).'
 File too large: File too large
 'File too large: {name}': 'File too large: {name}'
 Drag files here or click to upload: Drag files here or click to upload

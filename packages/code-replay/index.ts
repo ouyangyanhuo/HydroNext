@@ -79,6 +79,10 @@ function trimCode(code: string) {
     return code.length > MAX_CODE_SIZE ? code.slice(-MAX_CODE_SIZE) : code;
 }
 
+function isDuplicateKeyError(error: unknown) {
+    return typeof error === 'object' && error !== null && (error as { code?: number }).code === 11000;
+}
+
 function normalizeEvent(event: any): ReplayEvent | null {
     if (!event || typeof event !== 'object') return null;
     const changes = event.changes instanceof Array ? event.changes : [];
@@ -152,7 +156,18 @@ export class CodeReplayModel {
         };
         const events = payload.events?.slice(0, MAX_BATCH_EVENTS) || [];
         const snapshots = payload.snapshots?.slice(0, MAX_BATCH_SNAPSHOTS) || [];
-        await coll.updateOne({ _id: sessionId, uid }, update, { upsert: true });
+        try {
+            await coll.updateOne({
+                _id: sessionId,
+                uid,
+                rid: { $exists: false },
+            }, update, { upsert: true });
+        } catch (error) {
+            // A submitted session is immutable. Reusing it would merge a later
+            // editing timeline into the record that already owns the session.
+            if (isDuplicateKeyError(error)) throw new ValidationError('sessionId');
+            throw error;
+        }
         if (events.length || snapshots.length) {
             await collChunk.insertOne({
                 _id: new ObjectId(),
@@ -181,18 +196,31 @@ export class CodeReplayModel {
         if (lang) $set.lang = lang;
         if (typeof finalCode === 'string') $set.finalCode = trimCode(finalCode);
         // $unset expiresAt so MongoDB TTL index ignores bound sessions
-        await coll.updateOne({ _id: sessionId, uid, domainId }, {
-            $set,
-            $unset: { expiresAt: '' },
-            $setOnInsert: {
+        try {
+            await coll.updateOne({
                 _id: sessionId,
-                domainId,
                 uid,
-                pid,
-                initialCode: trimCode(finalCode || ''),
-                createdAt: now,
-            },
-        }, { upsert: true });
+                domainId,
+                $or: [
+                    { rid: { $exists: false } },
+                    { rid },
+                ],
+            }, {
+                $set,
+                $unset: { expiresAt: '' },
+                $setOnInsert: {
+                    _id: sessionId,
+                    domainId,
+                    uid,
+                    pid,
+                    initialCode: trimCode(finalCode || ''),
+                    createdAt: now,
+                },
+            }, { upsert: true });
+        } catch (error) {
+            if (isDuplicateKeyError(error)) throw new ValidationError('sessionId');
+            throw error;
+        }
         await collChunk.updateMany(
             { sessionId, uid, domainId },
             { $set: { rid }, $unset: { expiresAt: '' } },
