@@ -1,4 +1,7 @@
 import { useSessionStore } from '@/stores/session';
+import { toBigInt } from '@/utils/permissions';
+
+export { toBigInt } from '@/utils/permissions';
 
 // Hydro global privilege constants.
 export const PRIV = {
@@ -109,19 +112,6 @@ export function useHasPriv(priv: number | bigint): boolean {
     return (BigInt(userPriv) & priv) === priv;
   }
   return (userPriv & priv) === priv;
-}
-
-export function toBigInt(value: unknown): bigint {
-  if (typeof value === 'bigint') return value;
-  if (typeof value === 'number') return BigInt(value);
-  if (typeof value === 'string') {
-    try {
-      return BigInt(value.endsWith('n') ? value.slice(0, -1) : value);
-    } catch {
-      return 0n;
-    }
-  }
-  return 0n;
 }
 
 export function hasPermValue(value: unknown, perm: bigint): boolean {

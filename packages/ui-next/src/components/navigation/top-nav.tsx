@@ -11,7 +11,7 @@ import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
+import { PERM, PRIV, useHasPerm, useHasPriv } from '@/hooks/use-permission';
 import { getPageMetadata } from '@/registry/page-metadata';
 import { type ThemeMode, useSessionStore } from '@/stores/session';
 import { ACCENT_PRESETS, DEFAULT_ACCENT, PRESET_KEYS } from '@/styles/accent-colors';
@@ -377,6 +377,7 @@ const NAV_ITEMS = [
   { to: 'contest_main', label: 'Contests' },
   { to: 'training_main', label: 'Training' },
   { to: 'record_main', label: 'Records' },
+  { to: 'ranking', label: 'Ranking' },
 ] as const;
 
 export function TopNav() {
@@ -390,6 +391,8 @@ export function TopNav() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
+  const canViewRanking = useHasPerm(PERM.PERM_VIEW_RANKING);
+  const visibleNavItems = canViewRanking ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.to !== 'ranking');
 
   useEffect(() => {
     const activeTab = activeNav ? tabRefs.current.get(activeNav) : undefined;
@@ -420,7 +423,7 @@ export function TopNav() {
               </span>
             </Link>
             <div ref={containerRef} className="relative hidden lg:flex">
-              {NAV_ITEMS.map((item) => (
+              {visibleNavItems.map((item) => (
                 <Button
                   key={item.to}
                   component={Link}
@@ -463,7 +466,7 @@ export function TopNav() {
 
       <Drawer opened={opened} onClose={close} title={serverName || 'Hydro'} size="xs">
         <Stack gap="xs">
-          {NAV_ITEMS.map((item) => (
+          {visibleNavItems.map((item) => (
             <Button
               key={item.to}
               component={Link}

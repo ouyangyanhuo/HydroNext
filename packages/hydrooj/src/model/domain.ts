@@ -319,6 +319,7 @@ export async function apply(ctx: Context) {
             collUser,
             { key: { domainId: 1, uid: 1 }, name: 'uid', unique: true },
             { key: { domainId: 1, rp: -1, uid: 1 }, name: 'rp', sparse: true },
+            { key: { domainId: 1, join: 1, uid: 1 }, name: 'joinedUserRanking' },
         ),
     ]);
 }

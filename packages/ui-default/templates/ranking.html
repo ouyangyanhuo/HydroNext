@@ -5,10 +5,17 @@
 <div class="row">
   <div class="medium-12 columns">
     <div class="section">
+      <div class="section__header">
+        <h1 class="section__title">{{ _('ranking') }}</h1>
+        <div class="section__tools">
+          <a class="button{{ ' primary' if sort == 'rp' else '' }}" href="{{ url('ranking', query={sort:'rp'}) }}">{{ _('RP Ranking') }}</a>
+          <a class="button{{ ' primary' if sort != 'rp' else '' }}" href="{{ url('ranking') }}">{{ _('Solved Ranking') }}</a>
+        </div>
+      </div>
       <div class="section__body no-padding">
         <div data-fragment-id="ranking">
           {% if not udocs.length %}
-            {% if page == 1 %}
+            {% if page == 1 and sort != 'solved' %}
               <blockquote class="note">{{ _('The ranking page is not updated realtime.') }}</blockquote>
             {% endif %}
           {{ nothing.render('Sorry, there are no users in this domain.') }}
@@ -19,7 +26,7 @@
               <col class="col--user">
               <col class="col--rp">
               {% for key, def in model.rp %}
-                {% if not def.hidden %}
+                {% if sort != 'solved' and not def.hidden %}
                   <col class="col--detail rp-{{ key }}">
                 {% endif %}
               {% endfor %}
@@ -30,24 +37,24 @@
               <tr>
                 <th class="col--rank">{{ _('Rank') }}</th>
                 <th class="col--user">{{ _('Username') }}</th>
-                <th class="col--rp">{{ _('RP') }}</th>
+                <th class="col--rp">{{ _('Solved') if sort == 'solved' else _('RP') }}</th>
                 {% for key, def in model.rp %}
-                  {% if not def.hidden %}
+                  {% if sort != 'solved' and not def.hidden %}
                     <th class="col--detail rp-{{ key }}">{{ _('rpDetailText_' + key) }}</th>
                   {% endif %}
                 {% endfor %}
-                <th class="col--ac">{{ _('Accept') }}</th>
+                <th class="col--ac">{{ _('RP') if sort == 'solved' else _('Accept') }}</th>
                 <th class="col--bio">{{ _('Bio') }}</th>
               </tr>
             </thead>
             <tbody>
-              {% if handler.user.hasPriv(PRIV.PRIV_USER_PROFILE) %}
+              {% if sort != 'solved' and handler.user.hasPriv(PRIV.PRIV_USER_PROFILE) %}
               <tr>
                 <td class="col--rank">{{ handler.user.rank|default('-') }}</td>
                 <td class="col--user">{{ user.render_inline(handler.user) }}</td>
                 <td class="col--rp">{{ handler.user.rp|default(0)|round(0) }}</td>
                 {% for key, def in model.rp %}
-                  {% if not def.hidden %}
+                  {% if sort != 'solved' and not def.hidden %}
                     <td class="col--detail rp-{{ key }}">{{ handler.user.rpInfo[key]|round if (handler.user.rpInfo|default({}))[key] else '-' }}</td>
                   {% endif %}
                 {% endfor %}
@@ -57,21 +64,21 @@
               {% endif %}
               {%- for udoc in udocs -%}
               <tr>
-                <td class="col--rank">{{ (page - 1) * model.system.get('pagination.ranking') + loop.index }}</td>
+                <td class="col--rank">{{ (page - 1) * limit + loop.index }}</td>
                 <td class="col--user">{{ user.render_inline(udoc) }}</td>
-                <td class="col--rp">{{ udoc.rp|default(0)|round(0) }}</td>
+                <td class="col--rp">{{ solvedCounts[udoc._id]|default(0) if sort == 'solved' else udoc.rp|default(0)|round(0) }}</td>
                 {% for key, def in model.rp %}
-                  {% if not def.hidden %}
+                  {% if sort != 'solved' and not def.hidden %}
                     <td class="col--detail rp-{{ key }}">{{ udoc.rpInfo[key]|round if udoc.rpInfo[key] else '-' }}</td>
                   {% endif %}
                 {% endfor %}
-                <td class="col--ac">{{ udoc.nAccept|default(0) }}</td>
+                <td class="col--ac">{{ udoc.rp|default(0)|round(0) if sort == 'solved' else udoc.nAccept|default(0) }}</td>
                 <td class="col--bio">{{ udoc.bio|default('')|truncate(64, true)|markdownInline|safe }}</td>
               </tr>
               {%- endfor -%}
             </tbody>
           </table>
-          {{ paginator.render(page, upcount) }}
+          {{ paginator.render(page, upcount, add_qs='sort=rp' if sort == 'rp' else '') }}
           {% endif %}
         </div>
       </div>

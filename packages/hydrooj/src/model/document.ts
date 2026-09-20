@@ -447,6 +447,7 @@ export async function apply(ctx: Context) {
         collStatus,
         { key: { domainId: 1, docType: 1, docId: 1, uid: 1 }, name: 'basic', unique: true },
         { key: { domainId: 1, docType: 1, docId: 1, status: 1, rid: 1, rp: 1 }, name: 'rp', sparse: true },
+        { key: { domainId: 1, docType: 1, status: 1, uid: 1 }, name: 'solvedRanking' },
         { key: { domainId: 1, docType: 1, docId: 1, score: -1 }, name: 'contestRuleOI', sparse: true },
         { key: { domainId: 1, docType: 1, docId: 1, accept: -1, time: 1 }, name: 'contestRuleACM', sparse: true },
         { key: { domainId: 1, docType: 1, uid: 1, enroll: 1, docId: 1 }, name: 'training', sparse: true },
