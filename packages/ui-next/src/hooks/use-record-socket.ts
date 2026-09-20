@@ -1,4 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { useSessionStore } from '@/stores/session';
+import { buildRecordSocketUrl } from '@/utils/record-socket-url';
 import { useWebSocket } from './use-websocket';
 
 interface RecordUpdate {
@@ -18,9 +20,8 @@ interface RecordUpdate {
  */
 export function useRecordSocket(rid: string | undefined) {
   const [record, setRecord] = useState<RecordUpdate | null>(null);
-  const socketUrl = rid
-    ? `record-detail-conn?rid=${encodeURIComponent(rid)}&noTemplate=true`
-    : 'record-detail-conn';
+  const domainId = useSessionStore((state) => state.ui.domainId);
+  const socketUrl = buildRecordSocketUrl(rid, domainId);
 
   const handleMessage = useCallback((data: any) => {
     const payload = data?.rdoc || data;
