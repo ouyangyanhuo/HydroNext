@@ -4,17 +4,19 @@ import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function ProblemRandomPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const pid = args.pid;
 
   useEffect(() => {
-    if (pid) navigate(`/p/${pid}`);
-  }, [navigate, pid]);
+    if (pid) navigate(buildUrl('problem_detail', { pid }));
+  }, [buildUrl, navigate, pid]);
 
   return (
     <Stack gap="lg">

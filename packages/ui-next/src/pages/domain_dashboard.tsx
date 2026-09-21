@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { UserLink } from '@/components/user/user-link';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useDomain } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
@@ -15,6 +16,7 @@ import { useSessionStore } from '@/stores/session';
 export default function DomainDashboardPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const domain = useDomain();
   const user = useSessionStore((s) => s.user);
   const ddoc = args.domain || args.ddoc || domain;
@@ -35,7 +37,7 @@ export default function DomainDashboardPage() {
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else if (data.redirect) window.location.href = data.redirect;
-      else window.location.href = '/home/domain';
+      else window.location.href = buildUrl('home_domain');
     } catch {
       setError('Network error');
     } finally {

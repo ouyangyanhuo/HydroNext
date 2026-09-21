@@ -22,6 +22,7 @@ import { Link } from '@/components/link';
 import { STATUS } from '@/components/record/status-map';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
@@ -623,6 +624,7 @@ export default function ProblemFilesPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const pdoc = args.pdoc || {};
   const testdata = args.testdata || [];
   const additionalFiles = args.additional_file || [];
@@ -681,7 +683,7 @@ export default function ProblemFilesPage() {
             </div>
             <Button
               component={Link as any}
-              href={`/d/${reference.domainId}/p/${reference.pid}`}
+              href={buildUrl('problem_detail', { domainId: reference.domainId, pid: reference.pid })}
               variant="light"
               size="xs"
             >

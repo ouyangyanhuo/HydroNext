@@ -6,6 +6,7 @@ import { FileDropzone } from '@/components/common/file-dropzone';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 
@@ -19,6 +20,7 @@ function formatSize(size: number) {
 export default function HomeFilesPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const user = useSessionStore((s) => s.user);
   const files = args.files || args.udocs || [];
   const uid = args.uid || user?._id;
@@ -100,14 +102,14 @@ export default function HomeFilesPage() {
                     />
                   </Table.Td>
                   <Table.Td>
-                    <Text component="a" href={`/file/${uid}/${encodeURIComponent(name)}`} size="sm" className="hover:underline">
+                    <Text component="a" href={buildUrl('fs_download', { uid, filename: name })} size="sm" className="hover:underline">
                       {name}
                     </Text>
                   </Table.Td>
                   <Table.Td><Text size="xs" c="dimmed">{formatSize(f.length || f.size || 0)}</Text></Table.Td>
                   <Table.Td><TimeDisplay date={f.lastModified || f.uploadDate || f._id} format="relative" /></Table.Td>
                   <Table.Td>
-                    <Button component="a" href={`/file/${uid}/${encodeURIComponent(name)}`} size="xs" variant="light">
+                    <Button component="a" href={buildUrl('fs_download', { uid, filename: name })} size="xs" variant="light">
                       {t('Download')}
                     </Button>
                   </Table.Td>

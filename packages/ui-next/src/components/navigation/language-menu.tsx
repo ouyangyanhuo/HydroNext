@@ -1,5 +1,6 @@
 import { Button, Menu, Text } from '@mantine/core';
 import { IconLanguage } from '@tabler/icons-react';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useSessionStore } from '@/stores/session';
 
 const LANGUAGES = [
@@ -12,11 +13,12 @@ const LANGUAGES = [
 
 export function LanguageMenu() {
   const language = useSessionStore((s) => s.language);
+  const buildUrl = useBuildUrl();
 
   const currentLang = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
   const handleChange = (langCode: string) => {
-    window.location.assign(`/language/${langCode}`);
+    window.location.assign(buildUrl('switch_language', { lang: langCode }));
   };
 
   return (

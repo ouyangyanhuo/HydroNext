@@ -1,4 +1,5 @@
 import { Button, Divider, Stack } from '@mantine/core';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 interface OAuthMethod {
@@ -15,11 +16,12 @@ interface OAuthButtonsProps {
 
 export function OAuthButtons({ methods, redirect = '' }: OAuthButtonsProps) {
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
 
   if (!methods || methods.length === 0) return null;
 
   const handleOAuth = (method: OAuthMethod) => {
-    const url = `/oauth/${method.id}${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`;
+    const url = buildUrl('user_oauth', { type: method.id }, redirect ? { redirect } : {});
     window.location.assign(url);
   };
 

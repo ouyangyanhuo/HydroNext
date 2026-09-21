@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function ProblemHackPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const pdoc = args.pdoc || {};
   const langs = args.langs || {};
   const [lang, setLang] = useState('');
@@ -31,7 +33,7 @@ export default function ProblemHackPage() {
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Hack failed')));
       else if (data.redirect) navigate(data.redirect);
-      else if (data.rid) navigate(`/record/${data.rid}`);
+      else if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }));
       else navigate(window.location.pathname.replace('/hack', ''));
     } catch { setError('Network error'); } finally { setLoading(false); }
   };

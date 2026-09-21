@@ -457,7 +457,7 @@ export default function ProblemSolutionPage() {
       {!sid && <Paginator page={page} totalPages={pcount} />}
       {sid && (
         <Card withBorder p="md" className="hydro-content-card">
-          <Button variant="light" fullWidth onClick={() => navigate(`/p/${pdoc.pid || pdoc.docId}/solution`)}>
+          <Button variant="light" fullWidth onClick={() => navigate(buildUrl('problem_solution', { pid: pdoc.pid || pdoc.docId }))}>
             {t('View all {0} solutions').replace('{0}', String(pscount))}
           </Button>
         </Card>

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { EmptyState } from '@/components/common/empty-state';
 import { TimeDisplay } from '@/components/common/time-display';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
@@ -204,6 +205,7 @@ function normalizeMessageId(id: any) {
 export default function HomeMessagesPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const user = useSessionStore((s) => s.user);
   const udict = useMemo(() => args.udict || {}, [args.udict]);
   const initialConversations = useMemo(() => normalizeConversations(args.messages, udict, user?._id), [args.messages, udict, user?._id]);
@@ -236,7 +238,7 @@ export default function HomeMessagesPage() {
     setLoading(String(payload.operation || 'operation'));
     setError('');
     try {
-      const res = await fetch('/home/messages', {
+      const res = await fetch(buildUrl('home_messages'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(payload),

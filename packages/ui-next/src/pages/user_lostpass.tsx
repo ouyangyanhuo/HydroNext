@@ -3,10 +3,12 @@ import { Button, Group, Stack, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { Link } from '@/components/link';
 import { AuthPanel } from '@/components/auth/auth-panel';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function UserLostpassPage() {
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
 
   const [mail, setMail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,7 +21,7 @@ export default function UserLostpassPage() {
     setError('');
     setSuccess('');
     try {
-      const res = await fetch('/lostpass', {
+      const res = await fetch(buildUrl('user_lostpass'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ mail }),

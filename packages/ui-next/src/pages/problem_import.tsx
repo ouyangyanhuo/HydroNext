@@ -13,7 +13,7 @@ const IMPORT_SOURCES = [
     icon: IconCopy,
     title: 'Hydro',
     description: 'Import problems from a Hydro system export file (.zip)',
-    href: '/problem/import/hydro',
+    route: 'problem_import_hydro',
   },
 ];
 
@@ -59,7 +59,7 @@ export default function ProblemImportPage() {
             p="lg"
             className="hydro-content-card cursor-pointer transition-all duration-200 hover:shadow-md"
             component="a"
-            href={source.id === 'hydro' ? buildUrl('problem_import_hydro') : source.href}
+            href={buildUrl(source.route)}
           >
             <Stack gap="sm">
               <Group gap="sm">

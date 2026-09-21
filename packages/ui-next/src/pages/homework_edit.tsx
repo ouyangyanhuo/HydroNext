@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function HomeworkEditPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const tdoc = args.tdoc || {};
   const isNew = !tdoc.docId;
   const [form, setForm] = useState({ title: tdoc.title || '', content: tdoc.content || '', beginAt: tdoc.beginAt ? new Date(tdoc.beginAt).toISOString().slice(0, 16) : '', endAt: tdoc.endAt ? new Date(tdoc.endAt).toISOString().slice(0, 16) : '' });
@@ -22,7 +24,7 @@ export default function HomeworkEditPage() {
       const res = await fetch(window.location.href, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
-      else navigate(isNew ? '/h' : `/h/${tdoc.docId}`);
+      else navigate(isNew ? buildUrl('homework_main') : buildUrl('homework_detail', { tid: tdoc.docId }));
     } catch { setError('Network error'); } finally { setLoading(false); }
   };
 

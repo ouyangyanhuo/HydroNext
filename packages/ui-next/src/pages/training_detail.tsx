@@ -311,7 +311,7 @@ export default function TrainingDetailPage() {
                 {enrolledUsers.slice(0, 20).map(([uid, enrolledUser]) => (
                   <Link
                     key={uid}
-                    href={`/training/${tdoc.docId || tdoc._id}?uid=${uid}`}
+                    href={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id }, { uid: String(uid) })}
                     className="rounded px-2 py-1 no-underline hover:bg-[var(--hydro-surface-hover)]"
                   >
                     <Group gap="xs" wrap="nowrap">

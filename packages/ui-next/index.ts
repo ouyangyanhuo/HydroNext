@@ -9,6 +9,7 @@ import {
     Context, Handler, Logger,
     NotFoundError, param, size, Types,
 } from 'hydrooj';
+import { resolveBuildIdentifier } from './build-identifier';
 
 const logger = new Logger('ui-next');
 
@@ -192,6 +193,7 @@ export async function apply(ctx: Context) {
         logger.info('ui-next is disabled via configuration');
         return;
     }
+    const buildIdentifier = resolveBuildIdentifier(global.Hydro.version.hydrooj);
 
     if (process.env.DEV) {
         const vite = await createServer({
@@ -237,6 +239,7 @@ export async function apply(ctx: Context) {
                     url: context.handler.context.req.url!,
                     route_map: getRouteMap(ctx),
                     endpoint: ctx.setting.get('server.url') || undefined,
+                    build_id: buildIdentifier,
                     locale: getLocaleData(userLang),
                     lang: userLang || 'zh',
                 }, serializer(false, context.handler));
@@ -275,6 +278,7 @@ export async function apply(ctx: Context) {
                     url: context.handler.context.req.url!,
                     route_map: getRouteMap(ctx),
                     endpoint: ctx.setting.get('server.url') || undefined,
+                    build_id: buildIdentifier,
                     plugins_url: `/plugins/${hashes['plugins.js'] || '00000000'}/plugins.js`,
                     locale: getLocaleData(userLang),
                     lang: userLang || 'zh',

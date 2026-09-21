@@ -2,11 +2,13 @@ import { formatErrorMessage } from '@/utils/error';
 import { Button, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function UserVerifyPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -22,7 +24,7 @@ export default function UserVerifyPage() {
       });
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Verification failed')));
-      else navigate('/');
+      else navigate(buildUrl('homepage'));
     } catch { setError('Network error'); } finally { setLoading(false); }
   };
 

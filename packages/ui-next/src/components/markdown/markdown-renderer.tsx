@@ -33,6 +33,7 @@ import yaml from 'highlight.js/lib/languages/yaml';
 import MarkdownIt from 'markdown-it';
 import markPlugin from 'markdown-it-mark';
 import { useEffect, useMemo, useRef } from 'react';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { markdownXssPlugin } from './markdown-xss';
@@ -218,7 +219,8 @@ function mentionPlugin(md: MarkdownIt) {
     if (!match) return false;
     if (!silent) {
       const token = state.push('user_mention', 'a', 0);
-      token.attrSet('href', `/user/${match[1]}`);
+      const prefix = String(state.env?.userUrlPrefix || '/user').replace(/\/$/, '');
+      token.attrSet('href', `${prefix}/${match[1]}`);
       token.content = match[1];
     }
     state.pos += match[0].length;
@@ -227,7 +229,8 @@ function mentionPlugin(md: MarkdownIt) {
 
   md.renderer.rules.user_mention = (tokens, idx) => {
     const uid = tokens[idx].content;
-    return `<a class="hydro-mention hydro-mention--loading" href="/user/${uid}" data-user-id="${uid}" title="UID ${uid}">@${uid}</a>`;
+    const href = tokens[idx].attrGet('href') || `/user/${uid}`;
+    return `<a class="hydro-mention hydro-mention--loading" href="${md.utils.escapeHtml(href)}" data-user-id="${uid}" title="UID ${uid}">@${uid}</a>`;
   };
 }
 
@@ -319,8 +322,8 @@ md.use(mentionPlugin);
 md.use(fileMediaPlugin);
 md.use(markdownXssPlugin);
 
-export function renderMarkdown(content: string): string {
-  return md.render(content);
+export function renderMarkdown(content: string, env: Record<string, unknown> = {}): string {
+  return md.render(content, env);
 }
 
 const LANG_LABELS: Record<string, string> = {
@@ -377,12 +380,17 @@ interface MarkdownRendererProps {
 export function MarkdownRenderer({ content, className, language, pid }: MarkdownRendererProps) {
   const sessionLanguage = useSessionStore((s) => s.language);
   const domainId = useSessionStore((s) => s.ui.domainId);
+  const buildUrl = useBuildUrl();
   const rawText = extractLocalizedContent(content, language || sessionLanguage);
+  const userUrlPrefix = useMemo(
+    () => buildUrl('user_detail', { uid: '__uid__' }).replace(/\/__uid__$/, ''),
+    [buildUrl],
+  );
 
   const html = useMemo(() => {
     if (!rawText) return '';
-    return renderMarkdown(rawText);
-  }, [rawText]);
+    return renderMarkdown(rawText, { userUrlPrefix });
+  }, [rawText, userUrlPrefix]);
 
   const ref = useRef<HTMLDivElement>(null);
 

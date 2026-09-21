@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function ProblemSubmitPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
 
   const pdoc = args.pdoc || {};
   const langs = args.langs || {};
@@ -50,9 +52,9 @@ export default function ProblemSubmitPage() {
       } else if (data.redirect) {
         navigate(data.redirect);
       } else if (data.rid) {
-        navigate(`/record/${data.rid}`);
+        navigate(buildUrl('record_detail', { rid: data.rid }));
       } else if (data.tid) {
-        navigate(`/contest/${data.tid}/problems`);
+        navigate(buildUrl('contest_problemlist', { tid: data.tid }));
       } else {
         navigate(window.location.pathname.replace('/submit', ''));
       }

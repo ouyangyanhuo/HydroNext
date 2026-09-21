@@ -4,6 +4,7 @@ import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
@@ -26,6 +27,7 @@ function formatGender(gender: any, t: (key: string) => string) {
 export default function UserDetailPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const currentUser = useSessionStore((s) => s.user);
   const [tab, setTab] = useState<string | null>('bio');
 
@@ -115,12 +117,12 @@ export default function UserDetailPage() {
               </Group>
               <Group gap="sm">
                 {isSelf && (
-                  <Button component="a" href="/home/settings/account" size="xs" variant="light">
+                  <Button component={Link} to="home_settings" params={{ category: 'account' }} size="xs" variant="light">
                     {t('Edit Profile')}
                   </Button>
                 )}
                 {!isSelf && udoc._id && (
-                  <Button component="a" href={`/home/messages?target=${udoc._id}`} size="xs" variant="light">
+                  <Button component={Link} href={buildUrl('home_messages', {}, { target: String(udoc._id) })} size="xs" variant="light">
                     {t('Send Message')}
                   </Button>
                 )}

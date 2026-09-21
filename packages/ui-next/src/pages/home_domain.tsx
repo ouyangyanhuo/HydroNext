@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { usePermission, PRIV } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
@@ -14,6 +15,7 @@ import { useSessionStore } from '@/stores/session';
 export default function HomeDomainPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const user = useSessionStore((s) => s.user);
   const { hasPriv } = usePermission();
   const [loadingId, setLoadingId] = useState('');
@@ -31,7 +33,7 @@ export default function HomeDomainPage() {
   const run = async (payload: Record<string, any>) => {
     setLoadingId(payload.id || payload.operation);
     try {
-      const res = await fetch('/home/domain', {
+      const res = await fetch(buildUrl('home_domain'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(payload),
@@ -86,7 +88,7 @@ export default function HomeDomainPage() {
     <Stack gap="lg">
       <PageHeader title={t('My Domains')}>
         {canCreateDomain && (
-          <Button component="a" href="/home/domain/create" size="xs">{t('Create Domain')}</Button>
+          <Button component={Link} to="home_domain_create" size="xs">{t('Create Domain')}</Button>
         )}
       </PageHeader>
       {ddocs.length === 0 ? (

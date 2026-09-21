@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { verifyWithWebAuthn } from '@/components/auth/authenticator';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
@@ -13,8 +14,9 @@ export default function UserSudoPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const user = useSessionStore((state) => state.user);
-  const redirect = args.redirect || '/';
+  const redirect = args.redirect || buildUrl('homepage');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [method, setMethod] = useState<'password' | 'tfa'>(() => (user?.tfa ? 'tfa' : 'password'));
@@ -44,7 +46,7 @@ export default function UserSudoPage() {
   const handleWebAuthn = async () => {
     setAuthnLoading(true);
     try {
-      const authnChallenge = await verifyWithWebAuthn(t);
+      const authnChallenge = await verifyWithWebAuthn(t, '', buildUrl('user_webauthn'));
       await submitVerification({ authnChallenge });
     } catch (err: any) {
       notifications.show({ title: err?.message || t('Verification failed'), message: '', color: 'red' });

@@ -318,7 +318,7 @@ export default function ContestEditPage() {
       } else {
         notifications.show({ title: isNew ? t('Created successfully') : t('Saved'), message: '', color: 'green' });
         if (data.redirect) navigate(data.redirect);
-        else if (data.tid) navigate(`/contest/${data.tid}`);
+        else if (data.tid) navigate(buildUrl('contest_detail', { tid: data.tid }));
         else navigate(isNew ? buildUrl('contest_main') : buildUrl('contest_detail', { tid: tdoc.docId }));
       }
     } catch (err: any) {

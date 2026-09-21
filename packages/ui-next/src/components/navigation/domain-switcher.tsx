@@ -1,6 +1,7 @@
 import { Avatar, Button, Group, Loader, Menu, ScrollArea, Text } from '@mantine/core';
 import { IconChevronDown } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 
@@ -17,6 +18,7 @@ export function DomainSwitcher() {
   const domainId = useSessionStore((s) => s.ui.domainId);
   const domain = useSessionStore((s) => s.ui.domain);
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const [domains, setDomains] = useState<DomainItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [opened, setOpened] = useState(false);
@@ -25,7 +27,7 @@ export function DomainSwitcher() {
     if (domains.length > 0) return;
     setLoading(true);
     try {
-      const res = await fetch('/home/domain', {
+      const res = await fetch(buildUrl('home_domain'), {
         headers: { Accept: 'application/json' },
       });
       if (res.ok) {
@@ -37,7 +39,7 @@ export function DomainSwitcher() {
     } finally {
       setLoading(false);
     }
-  }, [domains.length]);
+  }, [buildUrl, domains.length]);
 
   const handleOpenedChange = (nextOpened: boolean) => {
     setOpened(nextOpened);

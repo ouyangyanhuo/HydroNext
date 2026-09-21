@@ -2,11 +2,13 @@ import { formatErrorMessage } from '@/utils/error';
 import { Button, Paper, PasswordInput, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function UserLostpassWithCodePage() {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ export default function UserLostpassWithCodePage() {
       });
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
-      else navigate('/login');
+      else navigate(buildUrl('user_login'));
     } catch {
       setError(t('Network error'));
     } finally {

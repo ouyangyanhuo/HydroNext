@@ -2,11 +2,13 @@ import { formatErrorMessage } from '@/utils/error';
 import { Button, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function UserRegisterWithCodePage() {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const [uname, setUname] = useState('');
   const [password, setPassword] = useState('');
   const [verifyPassword, setVerifyPassword] = useState('');
@@ -42,7 +44,7 @@ export default function UserRegisterWithCodePage() {
       if (data.error) {
         setError(formatErrorMessage(data.error, t('Registration failed')));
       } else {
-        navigate('/');
+        navigate(buildUrl('homepage'));
       }
     } catch {
       setError(t('Network error'));

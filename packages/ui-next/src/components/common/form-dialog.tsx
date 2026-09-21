@@ -1,5 +1,6 @@
 import { Avatar, Button, Group, Modal, NumberInput, PasswordInput, Paper, ScrollArea, Stack, Text, Textarea, TextInput, UnstyledButton } from '@mantine/core';
 import { useEffect, useState } from 'react';
+import { useBuildUrl } from '@/hooks/use-build-url';
 
 type FieldValue = string | number | boolean | null;
 
@@ -24,6 +25,7 @@ function DomainSelectField({
   label: string;
   placeholder?: string;
 }) {
+  const buildUrl = useBuildUrl();
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
@@ -35,9 +37,7 @@ function DomainSelectField({
     const timer = window.setTimeout(async () => {
       setSearching(true);
       try {
-        const params = new URLSearchParams();
-        params.set('q', search.trim());
-        const res = await fetch(`/domain/search?${params.toString()}`, {
+        const res = await fetch(buildUrl('domain_search', {}, { q: search.trim() }), {
           headers: { Accept: 'application/json' },
           signal: controller.signal,
         });
@@ -58,7 +58,7 @@ function DomainSelectField({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [search]);
+  }, [buildUrl, search]);
 
   const selectDomain = (domain: any) => {
     setSelectedDomain(domain);

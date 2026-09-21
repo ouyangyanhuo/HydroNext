@@ -59,7 +59,7 @@ class SystemHandler extends Handler {
 
 class SystemMainHandler extends SystemHandler {
     async get() {
-        this.response.redirect = '/manage/dashboard';
+        this.response.redirect = this.url('manage_dashboard');
     }
 }
 

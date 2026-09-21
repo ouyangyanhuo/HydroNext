@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 import { getLangDisplay, LANG_DISPLAY } from '@/utils/lang-display';
@@ -86,6 +87,7 @@ export default function ProblemConfigPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const pdoc = args.pdoc || {};
   const testdata = args.testdata || EMPTY_FILES;
   const [config, setConfig] = useState(toText(args.config || pdoc.config || {}));
@@ -183,7 +185,7 @@ export default function ProblemConfigPage() {
       form.append('filename', 'config.yaml');
       form.append('type', 'testdata');
       form.append('file', new Blob([config], { type: 'text/yaml' }), 'config.yaml');
-      const res = await fetch(window.location.href.replace('/config', '/files'), {
+      const res = await fetch(buildUrl('problem_files', { pid }), {
         method: 'POST',
         headers: { Accept: 'application/json' },
         body: form,
@@ -209,8 +211,7 @@ export default function ProblemConfigPage() {
     formData.append('file', blob, filename);
     formData.append('type', 'testdata');
     formData.append('operation', 'upload_file');
-    const domainPrefix = window.location.pathname.match(/^(\/d\/[^/]+)/)?.[0] || '';
-    const res = await fetch(`${domainPrefix}/p/${pid}/files`, {
+    const res = await fetch(buildUrl('problem_files', { pid }), {
       method: 'POST',
       headers: { Accept: 'application/json' },
       body: formData,
@@ -221,7 +222,9 @@ export default function ProblemConfigPage() {
     navigate(window.location.href);
   };
 
-  const fileUrl = previewFile ? `/p/${pid}/file/${encodeURIComponent(previewFile.name)}?type=testdata` : '';
+  const fileUrl = previewFile
+    ? buildUrl('problem_file_download', { pid, filename: previewFile.name }, { type: 'testdata' })
+    : '';
 
   return (
     <Stack gap="lg">
@@ -531,7 +534,7 @@ export default function ProblemConfigPage() {
               </Stack>
             ) : <Text c="dimmed" size="sm">{t('No files')}</Text>}
             <FileDropzone
-              action={`/p/${pid}/files`}
+              action={buildUrl('problem_files', { pid })}
               fields={{ type: 'testdata' }}
               onComplete={() => navigate(window.location.href)}
             />

@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
@@ -42,6 +43,7 @@ function generateTfaSecret(length = 20) {
 export default function HomeSecurityPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const user = useSessionStore((s) => s.user);
   const serverName = useSessionStore((s) => s.ui.serverName);
   const sessions = args.sessions || [];
@@ -70,7 +72,7 @@ export default function HomeSecurityPage() {
     setLoading(String(payload.operation || 'operation'));
     setSuccess('');
     try {
-      const res = await fetch('/home/security', {
+      const res = await fetch(buildUrl('home_security'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(payload),
@@ -146,7 +148,7 @@ export default function HomeSecurityPage() {
   };
 
   const fetchSecurityOperation = async (payload: Record<string, any>) => {
-    const res = await fetch('/home/security', {
+    const res = await fetch(buildUrl('home_security'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(payload),

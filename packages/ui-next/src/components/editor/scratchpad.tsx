@@ -379,7 +379,7 @@ export function Scratchpad({
           {result.status !== undefined && <RecordStatusBadge status={result.status} size="xs" />}
           {result.score !== undefined && <Badge size="xs">{result.score}</Badge>}
           {result.rid && (
-            <Button variant="subtle" size="xs" onClick={() => navigate(`/record/${result.rid}`)}>
+            <Button variant="subtle" size="xs" onClick={() => navigate(buildUrl('record_detail', { rid: result.rid }))}>
               {t('View Record')}
             </Button>
           )}

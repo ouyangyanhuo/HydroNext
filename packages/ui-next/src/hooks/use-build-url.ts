@@ -1,6 +1,7 @@
 import { compile } from 'path-to-regexp';
 import { useCallback } from 'react';
 import { useUiContext } from '@/context/page-data';
+import { getDomainPrefix } from '@/utils/domain-url';
 import { useRouteMap } from './use-route-map';
 
 export interface UrlParams {
@@ -14,11 +15,7 @@ export function useBuildUrl() {
   const getPrefix = useCallback(
     (id?: string) => {
       id ||= domainId;
-      const domainHost = Array.isArray(domain.host) ? domain.host : [domain.host];
-      const currentHost = window.location.host;
-      return id === (domainHost && domainHost.includes(currentHost) ? domainId : 'system')
-        ? ''
-        : `/d/${id}`;
+      return getDomainPrefix(domainId, domain.host, window.location.host, id);
     },
     [domainId, domain],
   );

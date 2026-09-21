@@ -8,12 +8,14 @@ import { OAuthButtons } from '@/components/auth/oauth-buttons';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 export default function UserLoginPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const [uname, setUname] = useState('');
   const [password, setPassword] = useState('');
   const [rememberme, setRememberme] = useState(false);
@@ -22,7 +24,7 @@ export default function UserLoginPage() {
   const [methods, setMethods] = useState<{ tfa: boolean, authn: boolean } | null>(null);
   const [tfa, setTfa] = useState('');
 
-  const redirect = args.redirect || '/';
+  const redirect = args.redirect || buildUrl('homepage');
 
   const submitLogin = async (tfaCode = '', authnChallenge = '') => {
     setLoading(true);
@@ -35,7 +37,7 @@ export default function UserLoginPage() {
       formData.append('tfa', tfaCode);
       formData.append('authnChallenge', authnChallenge);
 
-      const res = await fetch('/login', {
+      const res = await fetch(buildUrl('user_login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
         body: formData.toString(),
@@ -69,7 +71,7 @@ export default function UserLoginPage() {
   const handleWebAuthn = async () => {
     setAuthnLoading(true);
     try {
-      const challenge = await verifyWithWebAuthn(t, uname);
+      const challenge = await verifyWithWebAuthn(t, uname, buildUrl('user_webauthn'));
       await submitLogin('', challenge);
     } catch (err: any) {
       notifications.show({ title: err?.message || t('Verification failed'), message: '', color: 'red' });
@@ -83,7 +85,7 @@ export default function UserLoginPage() {
     if (!methods) {
       setLoading(true);
       try {
-        const nextMethods = await getAuthenticatorMethods(uname, t);
+        const nextMethods = await getAuthenticatorMethods(uname, t, buildUrl('user_tfa'));
         if (!nextMethods.authn && !nextMethods.tfa) {
           await submitLogin();
           return;

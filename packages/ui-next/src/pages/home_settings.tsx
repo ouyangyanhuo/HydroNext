@@ -4,7 +4,9 @@ import { IconBuildingCommunity, IconSettings, IconUserCircle } from '@tabler/ico
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { SettingsForm } from '@/components/common/settings-form';
+import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
@@ -40,6 +42,7 @@ function parseAvatar(value: string, mail: string) {
 export default function HomeSettingsPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const user = useSessionStore((s) => s.user);
   const category = args.category || 'preference';
   const current = args.current || user || {};
@@ -67,7 +70,7 @@ export default function HomeSettingsPage() {
         if (avatarType === 'upload' && avatarFile) {
           const formData = new FormData();
           formData.append('file', avatarFile);
-          const uploadRes = await fetch('/home/avatar', {
+          const uploadRes = await fetch(buildUrl('home_avatar'), {
             method: 'POST',
             body: formData,
           });
@@ -76,7 +79,7 @@ export default function HomeSettingsPage() {
             throw new Error(data.error?.message || 'Upload failed');
           }
         } else if (avatarType !== 'upload') {
-          const avatarRes = await fetch('/home/avatar', {
+          const avatarRes = await fetch(buildUrl('home_avatar'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
             body: JSON.stringify({ avatar: `${avatarType}:${avatarValue}` }),
@@ -126,15 +129,16 @@ export default function HomeSettingsPage() {
       <div className="hydro-settings-layout">
         <nav className="hydro-settings-nav" aria-label={t('Settings')}>
           {sections.map(({ key, label, icon: Icon }) => (
-            <a
+            <Link
               key={key}
-              href={`/home/settings/${key}`}
+              to="home_settings"
+              params={{ category: key }}
               className="hydro-settings-nav__item"
               aria-current={category === key ? 'page' : undefined}
             >
               <Icon size={18} stroke={1.8} />
               <span>{label}</span>
-            </a>
+            </Link>
           ))}
         </nav>
         <Stack gap="lg" className="hydro-settings-content">

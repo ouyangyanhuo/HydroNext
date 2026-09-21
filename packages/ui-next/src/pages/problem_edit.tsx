@@ -247,8 +247,12 @@ export default function ProblemEditPage() {
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Save failed')));
       else if (data.redirect) navigate(data.redirect);
-      else if (data.pid) navigate(`/p/${data.pid}`);
-      else navigate(isNew ? '/p' : `/p/${body.pid || pdoc.docId}`);
+      else if (data.pid) navigate(buildUrl('problem_detail', { pid: data.pid }));
+      else {
+        navigate(isNew
+          ? buildUrl('problem_main')
+          : buildUrl('problem_detail', { pid: body.pid || pdoc.docId }));
+      }
     } catch { setError('Network error'); } finally { setLoading(false); }
   };
 

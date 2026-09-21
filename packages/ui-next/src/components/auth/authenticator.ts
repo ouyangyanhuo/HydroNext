@@ -12,8 +12,14 @@ async function readJson(response: Response) {
   return type.includes('json') ? response.json() : {};
 }
 
-export async function getAuthenticatorMethods(uname: string, t: Translate): Promise<AuthenticatorMethods> {
-  const response = await fetch(`/user/tfa?q=${encodeURIComponent(uname)}`, {
+export async function getAuthenticatorMethods(
+  uname: string,
+  t: Translate,
+  endpoint = '/user/tfa',
+): Promise<AuthenticatorMethods> {
+  const url = new URL(endpoint, window.location.origin);
+  url.searchParams.set('q', uname);
+  const response = await fetch(url.pathname + url.search, {
     headers: { Accept: 'application/json' },
   });
   const data = await readJson(response);
@@ -21,14 +27,15 @@ export async function getAuthenticatorMethods(uname: string, t: Translate): Prom
   return { authn: Boolean(data.authn), tfa: Boolean(data.tfa) };
 }
 
-export async function verifyWithWebAuthn(t: Translate, uname = ''): Promise<string> {
+export async function verifyWithWebAuthn(t: Translate, uname = '', endpoint = '/user/webauthn'): Promise<string> {
   const { browserSupportsWebAuthn, startAuthentication } = await import('@simplewebauthn/browser');
   if (!window.isSecureContext || !browserSupportsWebAuthn()) {
     throw new Error(t('Your browser does not support WebAuthn or you are not in secure context.'));
   }
 
-  const query = uname ? `?uname=${encodeURIComponent(uname)}` : '';
-  const optionsResponse = await fetch(`/user/webauthn${query}`, {
+  const url = new URL(endpoint, window.location.origin);
+  if (uname) url.searchParams.set('uname', uname);
+  const optionsResponse = await fetch(url.pathname + url.search, {
     headers: { Accept: 'application/json' },
   });
   const optionsData = await readJson(optionsResponse);
@@ -38,7 +45,7 @@ export async function verifyWithWebAuthn(t: Translate, uname = ''): Promise<stri
   if (!optionsData.authOptions?.challenge) throw new Error(t('Failed to fetch registration data.'));
 
   const result = await startAuthentication({ optionsJSON: optionsData.authOptions });
-  const verifyResponse = await fetch('/user/webauthn', {
+  const verifyResponse = await fetch(url.pathname, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ result }),

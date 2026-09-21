@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 
 function normalizeScripts(scripts: any) {
@@ -57,6 +58,7 @@ export default function ManageScriptPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const buildUrl = useBuildUrl();
   const scripts = useMemo(() => normalizeScripts(args.scripts || {}), [args.scripts]);
   const [selected, setSelected] = useState(scripts[0]?.id || '');
   const selectedScript = useMemo(() => scripts.find((script) => script.id === selected), [scripts, selected]);
@@ -89,7 +91,7 @@ export default function ManageScriptPage() {
       const data = type.includes('json') ? await res.json() : {};
       if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Run failed')));
       else if (data.redirect) navigate(data.redirect);
-      else if (data.rid) navigate(`/record/${data.rid}`);
+      else if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }));
     } catch (err: any) {
       setError(err?.message || t('Invalid JSON'));
     } finally {
