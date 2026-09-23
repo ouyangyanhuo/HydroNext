@@ -276,7 +276,10 @@ export default function ProblemMainPage() {
             })}
             className="hydro-subtle-link"
           >
-            <Text size="sm" fw={700}>{extractLocalizedContent(p.title, lang)}</Text>
+            <Group gap="xs" wrap="wrap">
+              <Text size="sm" fw={700}>{extractLocalizedContent(p.title, lang)}</Text>
+              {p.hidden && <Badge size="xs" color="red" variant="light">{t('Hidden')}</Badge>}
+            </Group>
             <ProblemTags tags={p.tag} />
           </Link>
         );

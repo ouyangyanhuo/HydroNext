@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import { Dictionary, escapeRegExp } from 'lodash';
 import { LRUCache } from 'lru-cache';
 import { Filter } from 'mongodb';
@@ -13,6 +14,13 @@ import UserModel, { deleteUserCache } from './user';
 const coll = db.collection('domain');
 const collUser = db.collection('domain.user');
 const cache = new LRUCache<string, DomainDoc>({ max: 1000, ttl: 300 * 1000 });
+const INVITE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function createInviteCode() {
+    let code = '';
+    for (let i = 0; i < 8; i++) code += INVITE_CODE_ALPHABET[randomInt(INVITE_CODE_ALPHABET.length)];
+    return code;
+}
 
 interface DomainUserArg {
     _id: number;
@@ -48,8 +56,12 @@ class DomainModel {
 
     @ArgMethod
     static async add(domainId: string, owner: number, name: string, bulletin: string) {
+        let inviteCode = createInviteCode();
+        // eslint-disable-next-line no-await-in-loop
+        while (await coll.findOne({ _inviteCode: inviteCode }, { projection: { _id: 1 } })) inviteCode = createInviteCode();
         const ddoc: DomainDoc = {
             _id: domainId,
+            _inviteCode: inviteCode,
             lower: domainId.toLowerCase(),
             owner,
             name,
@@ -314,6 +326,7 @@ export async function apply(ctx: Context) {
             coll,
             { key: { lower: 1 }, name: 'lower', unique: true },
             { key: { host: 1 }, name: 'host', sparse: true },
+            { key: { _inviteCode: 1 }, name: 'inviteCode', unique: true, sparse: true },
         ),
         db.ensureIndexes(
             collUser,

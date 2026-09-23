@@ -4,6 +4,12 @@ import DomainModel from '../../model/domain';
 import system from '../../model/system';
 
 export default async (ctx: KoaContext, next) => {
+    const domainRoot = /^\/d\/([^/]+)$/.exec(ctx.request.path);
+    if (domainRoot) {
+        const query = ctx.request.querystring ? `?${ctx.request.querystring}` : '';
+        ctx.redirect(`/d/${domainRoot[1]}/${query}`);
+        return;
+    }
     const forceDomain = /^\/d\/([^/]+)\//.exec(ctx.request.path);
     ctx.originalPath = ctx.request.path;
     ctx.path = ctx.request.path = ctx.request.path.replace(/^\/d\/[^/]+\//, '/');

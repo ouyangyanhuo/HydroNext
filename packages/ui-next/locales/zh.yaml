@@ -760,6 +760,15 @@ Domain Dashboard: 域仪表盘
 Join Domain: 加入域
 A unique invitation code of up to 8 characters is generated automatically.: 系统会自动生成唯一且不超过 8 位的邀请码。
 Enter an invitation code to find and join a domain.: 输入邀请码以查找并加入对应的域。
+This invitation link never expires.: 此邀请链接永久有效。
+Create Training Category: 创建训练分类
+Edit Training Category: 编辑训练分类
+Category Name: 分类名称
+Training Plans: 训练计划
+Select all training plans included in this category.: 选择要列入该分类的所有训练计划。
+Delete Category: 删除分类
+Confirm to delete this category?: 确定删除此分类吗？
+'{0} ranked users': '{0} 名参赛者参与排名'
 Change Email: 修改邮箱
 
 # Theme

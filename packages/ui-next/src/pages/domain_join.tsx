@@ -1,20 +1,23 @@
-import { formatErrorMessage } from '@/utils/error';
-import { getAvatarUrl } from '@/utils/avatar';
 import { Avatar, Button, Card, Group, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { getAvatarUrl } from '@/utils/avatar';
+import { formatErrorMessage } from '@/utils/error';
 
 const JOIN_METHOD_CODE = 2;
 
 export default function DomainJoinPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const domainInfo = args.domainInfo || {};
   const joinSettings = args.joinSettings;
-  const [code, setCode] = useState(args.code || '');
+  const targetDomainId = args.target || domainInfo._id || 'system';
+  const [code, setCode] = useState(String(args.code || '').toUpperCase());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -27,9 +30,11 @@ export default function DomainJoinPage() {
         body: JSON.stringify({ code, target: args.target, redirect: args.redirect }),
       });
       const data = await res.json();
-      if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
-      else if (data.redirect) window.location.href = data.redirect;
-      else window.location.href = `/d/${args.target || domainInfo._id || 'system'}`;
+      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Failed')));
+      else {
+        const destination = data.redirect || buildUrl('homepage', { domainId: targetDomainId });
+        window.location.assign(destination);
+      }
     } catch { setError('Network error'); } finally { setLoading(false); }
   };
 
@@ -69,7 +74,8 @@ export default function DomainJoinPage() {
               label={t('Invitation Code')}
               description={t('You need to enter the invitation code to join the domain.')}
               value={code}
-              onChange={(e) => setCode(e.currentTarget.value)}
+              onChange={(e) => setCode(e.currentTarget.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase())}
+              maxLength={8}
               required
               autoFocus
             />

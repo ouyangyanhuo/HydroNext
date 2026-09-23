@@ -1,10 +1,10 @@
-import { Alert, Button, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Button, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
-import { TimeDisplay } from '@/components/common/time-display';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useSessionStore } from '@/stores/session';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
@@ -27,22 +27,23 @@ function optionData(range: any) {
 export default function DomainJoinApplicationsPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const storeDomainId = useSessionStore((s) => s.ui.domainId);
   const domainId = args.domain?._id || args.domainId || storeDomainId || window.location.pathname.split('/')[2] || 'system';
   const joinSettings = args.joinSettings || null;
   const roleOptions = optionData(args.rolesWithText || []);
-  const expireOptions = optionData(args.expirations || {});
   const [form, setForm] = useState({
     method: String(joinSettings?.method ?? 0),
     role: joinSettings?.role || roleOptions[0]?.value || '',
     group: joinSettings?.group || '',
-    expire: expireOptions[0]?.value || '0',
-    invitationCode: joinSettings?.code || '',
+    invitationCode: args.invitationCode || joinSettings?.code || '',
   });
   const [loading, setLoading] = useState(false);
 
-  const joinUrl = `${args.url_prefix || '/'}d/${domainId}/domain/join`;
-  const codeUrl = form.invitationCode ? `${joinUrl}?code=${encodeURIComponent(form.invitationCode)}` : '';
+  const joinUrl = new URL(buildUrl('domain_join', { domainId }), window.location.origin).toString();
+  const codeUrl = form.method === '2' && form.invitationCode
+    ? `${joinUrl}?code=${encodeURIComponent(form.invitationCode)}`
+    : '';
 
   const handleSave = async () => {
     setLoading(true);
@@ -54,8 +55,6 @@ export default function DomainJoinApplicationsPage() {
           method: Number(form.method),
           role: form.role,
           group: form.group,
-          expire: Number(form.expire),
-          invitationCode: form.invitationCode,
         }),
       });
       const type = res.headers.get('content-type') || '';
@@ -83,26 +82,13 @@ export default function DomainJoinApplicationsPage() {
         <Button onClick={handleSave} loading={loading} size="xs">{t('Update Settings')}</Button>
       </PageHeader>
 
-      {joinSettings && (
+      {Number(joinSettings?.method) === 2 && form.method === '2' && codeUrl && (
         <Card withBorder p="lg" className="hydro-content-card">
           <Title order={4} mb="sm">{t('Information')}</Title>
           <Stack gap="xs">
             <Text size="sm" c="dimmed">{t('User can join this domain by visiting the following URL')}:</Text>
-            <TextInput value={joinUrl} readOnly />
-            {joinSettings.method === 2 && codeUrl && (
-              <>
-                <Text size="sm" c="dimmed">{t('Or, with automatically filled invitation code')}:</Text>
-                <TextInput value={codeUrl} readOnly />
-              </>
-            )}
-            {joinSettings.expire && (
-              <Alert color="blue" variant="light">
-                <Group gap="xs">
-                  <Text size="sm">{t('The link will be expired at {0}')}:</Text>
-                  <TimeDisplay date={joinSettings.expire} format="absolute" size="sm" />
-                </Group>
-              </Alert>
-            )}
+            <TextInput value={codeUrl} readOnly />
+            <Text size="xs" c="dimmed">{t('This invitation link never expires.')}</Text>
           </Stack>
         </Card>
       )}
@@ -134,21 +120,14 @@ export default function DomainJoinApplicationsPage() {
               setForm((prev) => ({ ...prev, group }));
             }}
           />
-          <Select
-            label={t('Expire')}
-            description={t('User will no longer be allowed to join the domain after expiration.')}
-            data={expireOptions}
-            value={form.expire}
-            disabled={form.method === '0'}
-            onChange={(value) => setForm((prev) => ({ ...prev, expire: value || '0' }))}
-          />
-          <TextInput
-            label={t('Invitation Code')}
-            description={t('A unique invitation code of up to 8 characters is generated automatically.')}
-            value={form.invitationCode}
-            disabled={form.method !== '2'}
-            readOnly
-          />
+          {form.method === '2' && (
+            <TextInput
+              label={t('Invitation Code')}
+              description={t('A unique invitation code of up to 8 characters is generated automatically.')}
+              value={form.invitationCode}
+              readOnly
+            />
+          )}
           <Group justify="flex-end">
             <Button onClick={handleSave} loading={loading}>{t('Update Settings')}</Button>
           </Group>

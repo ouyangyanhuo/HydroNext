@@ -1,5 +1,8 @@
-import { Badge, Button, Group, Paper, Select, Stack, Table, Text, Title } from '@mantine/core';
+import './ranking.css';
+
+import { Button, Group, Paper, Select, Stack, Table, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconCheck, IconTrophy } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
@@ -31,11 +34,31 @@ function isContestOngoing(tdoc: any) {
   return new Date(tdoc.beginAt).getTime() <= now && now <= new Date(tdoc.endAt).getTime();
 }
 
+function ScoreboardValue({ value }: { value: any }) {
+  const parts = String(value ?? '').split(/(<span class="icon icon-check"><\/span>|<span style="color:orange">.*?<\/span>|\n)/g);
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (!part) return null;
+        if (part === '\n') return <br key={index} />;
+        if (part === '<span class="icon icon-check"></span>') {
+          return <IconCheck key={index} size={15} stroke={2.4} className="inline-block text-[var(--hydro-success)]" />;
+        }
+        if (part.startsWith('<span style="color:orange">')) {
+          return <span key={index} className="text-[var(--hydro-warning)]">{part.replace(/<[^>]+>/g, '')}</span>;
+        }
+        return <span key={index}>{part.replace(/<[^>]+>/g, '')}</span>;
+      })}
+    </>
+  );
+}
+
 function CellValue({ cell, canViewRecord }: { cell: any, canViewRecord: boolean }) {
   if (cell.type === 'record' && cell.raw && canViewRecord) {
+    const color = scoreColor(cell.score ?? cell.value);
     return (
       <Link to="record_detail" params={{ rid: cell.raw }} className="no-underline">
-        <Badge size="xs" color={scoreColor(cell.score ?? cell.value)} variant="light">{cell.value}</Badge>
+        <span className={`scoreboard-record-value${color ? ` scoreboard-record-value--${color}` : ''}`}><ScoreboardValue value={cell.value} /></span>
       </Link>
     );
   }
@@ -47,10 +70,10 @@ function CellValue({ cell, canViewRecord }: { cell: any, canViewRecord: boolean 
             {index > 0 ? '/' : ''}
             {item.raw && canViewRecord ? (
               <Link to="record_detail" params={{ rid: item.raw }} className="no-underline">
-                <Text component="span" size="xs" fw={700}>{item.value}</Text>
+                <Text component="span" size="xs" fw={700}><ScoreboardValue value={item.value} /></Text>
               </Link>
             ) : (
-              <Text component="span" size="xs">{item.value}</Text>
+              <Text component="span" size="xs"><ScoreboardValue value={item.value} /></Text>
             )}
           </span>
         ))}
@@ -61,9 +84,10 @@ function CellValue({ cell, canViewRecord }: { cell: any, canViewRecord: boolean 
     return <Text size="sm" fw={700}>{String(cell.value) === '0' ? '*' : cell.value}</Text>;
   }
   if (cell.type === 'record') {
-    return <Badge size="xs" color={scoreColor(cell.score ?? cell.value)} variant="light">{cell.value || '-'}</Badge>;
+    const color = scoreColor(cell.score ?? cell.value);
+    return <span className={`scoreboard-record-value${color ? ` scoreboard-record-value--${color}` : ''}`}><ScoreboardValue value={cell.value || '-'} /></span>;
   }
-  return <Text size="sm" className="whitespace-pre-wrap">{cell.value}</Text>;
+  return <Text size="sm"><ScoreboardValue value={cell.value} /></Text>;
 }
 
 export default function ContestScoreboardPage() {
@@ -163,13 +187,16 @@ export default function ContestScoreboardPage() {
   };
 
   return (
-    <Stack gap="lg" className={`scoreboard--${tdoc.rule || 'contest'}`}>
-      <Paper withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]">
-        <Group justify="space-between" align="flex-start" gap="md">
+    <Stack gap="xl" className={`ranking-page scoreboard-page scoreboard--${tdoc.rule || 'contest'}`}>
+      <header className="ranking-page-header">
+        <Group gap="md" align="center" wrap="nowrap">
+          <span className="ranking-page-icon" aria-hidden="true"><IconTrophy size={28} stroke={2.1} /></span>
           <div className="min-w-0">
-            <Title order={2}>{tdoc.title}</Title>
+            <Title order={1} className="ranking-page-title">{tdoc.title}</Title>
             <Text size="sm" c="dimmed">{t('Scoreboard')}</Text>
           </div>
+        </Group>
+        <Stack gap="xs" align="flex-end">
           <Group gap="xs" wrap="wrap" justify="flex-end">
             {['html', 'csv', 'ghost'].map((view) => (
               <Button key={view} component={Link} href={buildUrl(viewRoute, { tid, view })} target="_blank" size="xs" variant="light">
@@ -185,12 +212,9 @@ export default function ContestScoreboardPage() {
               <Button size="xs" variant="light" onClick={unlock} loading={loading}>{t('Unlock scoreboard')}</Button>
             )}
           </Group>
-        </Group>
-
-        <Group justify="flex-end" mt="md">
           <Select data={filterOptions} value={filter} onChange={(value) => setFilterAndHash(value || 'all')} size="xs" w={200} />
-        </Group>
-      </Paper>
+        </Stack>
+      </header>
 
       {tdoc.lockAt && !tdoc.unlocked && (
         <Paper withBorder p="md" className="bg-[var(--hydro-surface)]">
@@ -202,9 +226,18 @@ export default function ContestScoreboardPage() {
         </Paper>
       )}
 
-      <Paper withBorder className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table striped highlightOnHover>
+      <section className="ranking-list scoreboard-list" aria-label={t('Scoreboard')}>
+        <div className="ranking-list-header">
+          <Group gap="sm" wrap="nowrap">
+            <span className="ranking-list-icon" aria-hidden="true"><IconTrophy size={24} stroke={1.8} /></span>
+            <div>
+              <Title order={2} size="h4">{t('Leaderboard')}</Title>
+              <Text size="xs" c="dimmed">{t('{0} ranked users').replace('{0}', String(visibleRows.length))}</Text>
+            </div>
+          </Group>
+        </div>
+        <div className="ranking-table-scroll">
+          <Table className="ranking-table" verticalSpacing="sm" highlightOnHover>
             <Table.Thead>
               <Table.Tr>
                 {header.map((column: any, index: number) => (
@@ -254,7 +287,7 @@ export default function ContestScoreboardPage() {
             </Table.Tbody>
           </Table>
         </div>
-      </Paper>
+      </section>
     </Stack>
   );
 }

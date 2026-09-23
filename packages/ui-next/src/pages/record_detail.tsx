@@ -281,19 +281,29 @@ export default function RecordDetailPage() {
     <Stack gap="lg" className="hydro-record-detail">
       {error && <Text c="red" size="sm">{error}</Text>}
       <Card withBorder p="xl" className="hydro-record-hero overflow-hidden">
-        <Group gap="xs" mb="sm">
-          <Button
-            type="button"
-            variant="subtle"
-            size="compact-sm"
-            leftSection={<IconArrowLeft size={15} />}
-            onClick={goBack}
-          >
-            {t('Back')}
-          </Button>
-          <Badge variant="light" className="hydro-record-accent-badge">
-            {t('Record')}
-          </Badge>
+        <Group justify="space-between" align="center" gap="sm" mb="sm" wrap="wrap">
+          <Group gap="xs">
+            <Button
+              type="button"
+              variant="subtle"
+              size="compact-sm"
+              leftSection={<IconArrowLeft size={15} />}
+              onClick={goBack}
+            >
+              {t('Back')}
+            </Button>
+            <Badge variant="light" className="hydro-record-accent-badge">
+              {t('Record')}
+            </Badge>
+          </Group>
+          <Group gap="sm">
+            <RecordStatusBadge status={rdoc.status} size="lg" />
+            {rdoc.score != null && (
+              <Badge variant="light" color={scoreColor} size="lg">
+                {rdoc.score}
+              </Badge>
+            )}
+          </Group>
         </Group>
         <Group justify="space-between" align="flex-start" gap="lg" wrap="wrap">
           <div className="min-w-0">
@@ -309,12 +319,6 @@ export default function RecordDetailPage() {
               <Button component="a" href={codeReplayUrl} size="xs" variant="light">
                 {t('Code Replay')}
               </Button>
-            )}
-            <RecordStatusBadge status={rdoc.status} size="lg" />
-            {rdoc.score != null && (
-              <Badge variant="light" color={scoreColor} size="lg">
-                {rdoc.score}
-              </Badge>
             )}
           </Group>
         </Group>

@@ -1402,7 +1402,34 @@ a {
 .hydro-training-sidebar {
   position: sticky;
   top: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
+
+.scoreboard-page .ranking-table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.scoreboard-page .ranking-table th:nth-child(n + 3),
+.scoreboard-page .ranking-table td:nth-child(n + 3) {
+  width: auto;
+  min-width: 6.5rem;
+  text-align: center;
+}
+
+.scoreboard-record-value {
+  display: inline-block;
+  color: var(--hydro-text-muted);
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.scoreboard-record-value--green { color: var(--hydro-success); }
+.scoreboard-record-value--yellow { color: var(--hydro-warning); }
 
 .hydro-training-enrolled-panel {
   padding: 18px;
@@ -1413,6 +1440,19 @@ a {
   -webkit-backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%);
   backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%);
   animation: hydro-training-list-in 440ms var(--hydro-ease-out) 100ms both;
+}
+
+.hydro-training-category-list {
+  max-height: min(42vh, 360px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hydro-training-category-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .hydro-training-enrolled-item {

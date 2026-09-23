@@ -758,6 +758,15 @@ Domain Dashboard: 域儀表板
 Join Domain: 加入域
 A unique invitation code of up to 8 characters is generated automatically.: 系統會自動產生唯一且不超過 8 位的邀請碼。
 Enter an invitation code to find and join a domain.: 輸入邀請碼以尋找並加入對應的域。
+This invitation link never expires.: 此邀請連結永久有效。
+Create Training Category: 建立訓練分類
+Edit Training Category: 編輯訓練分類
+Category Name: 分類名稱
+Training Plans: 訓練計畫
+Select all training plans included in this category.: 選擇要列入此分類的所有訓練計畫。
+Delete Category: 刪除分類
+Confirm to delete this category?: 確定刪除此分類嗎？
+'{0} ranked users': '{0} 名參賽者參與排名'
 Change Email: 修改信箱
 
 # Theme

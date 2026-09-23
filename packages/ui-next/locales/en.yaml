@@ -606,6 +606,15 @@ Domain Dashboard: Domain Dashboard
 Join Domain: Join Domain
 A unique invitation code of up to 8 characters is generated automatically.: A unique invitation code of up to 8 characters is generated automatically.
 Enter an invitation code to find and join a domain.: Enter an invitation code to find and join a domain.
+This invitation link never expires.: This invitation link never expires.
+Create Training Category: Create Training Category
+Edit Training Category: Edit Training Category
+Category Name: Category Name
+Training Plans: Training Plans
+Select all training plans included in this category.: Select all training plans included in this category.
+Delete Category: Delete Category
+Confirm to delete this category?: Confirm to delete this category?
+'{0} ranked users': '{0} ranked users'
 Forgot Password: Forgot Password
 Change Email: Change Email
 

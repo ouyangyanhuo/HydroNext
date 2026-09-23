@@ -593,6 +593,15 @@ Domain Dashboard: ドメインダッシュボード
 Join Domain: ドメインに参加
 A unique invitation code of up to 8 characters is generated automatically.: 8文字以内の一意な招待コードが自動生成されます。
 Enter an invitation code to find and join a domain.: 招待コードを入力して、対応するドメインに参加します。
+This invitation link never expires.: この招待リンクに有効期限はありません。
+Create Training Category: トレーニングカテゴリを作成
+Edit Training Category: トレーニングカテゴリを編集
+Category Name: カテゴリ名
+Training Plans: トレーニングプラン
+Select all training plans included in this category.: このカテゴリに含めるトレーニングプランを選択します。
+Delete Category: カテゴリを削除
+Confirm to delete this category?: このカテゴリを削除しますか？
+'{0} ranked users': 'ランキング対象 {0} 人'
 Forgot Password: パスワードを忘れた
 Change Email: メールアドレスを変更
 

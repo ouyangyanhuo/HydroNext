@@ -7,6 +7,7 @@ import {
 } from '../error';
 import { Tdoc, TrainingDoc } from '../interface';
 import { PERM, PRIV, STATUS } from '../model/builtin';
+import domain from '../model/domain';
 import * as oplog from '../model/oplog';
 import problem from '../model/problem';
 import storage from '../model/storage';
@@ -60,9 +61,14 @@ async function _parseDagJson(domainId: string, _dag: string): Promise<Tdoc['dag'
 class TrainingMainHandler extends Handler {
     @param('page', Types.PositiveInt, true)
     @param('q', Types.String, true)
-    async get(domainId: string, page = 1, q = '') {
+    @param('category', Types.String, true)
+    async get(domainId: string, page = 1, q = '', category = '') {
         const query: Filter<TrainingDoc> = {};
         if (q) query.title = { $regex: new RegExp(escapeRegExp(q), 'i') };
+        const ddoc = await domain.get(domainId);
+        const categories = Array.isArray(ddoc._trainingCategories) ? ddoc._trainingCategories : [];
+        const selectedCategory = categories.find((item) => item._id === category);
+        if (selectedCategory) query.docId = { $in: selectedCategory.tids || [] };
         await this.ctx.parallel('training/list', query, this);
         const [tdocs, tpcount] = await this.paginate(
             training.getMulti(domainId, query),
@@ -89,11 +95,55 @@ class TrainingMainHandler extends Handler {
             }
         }
         for (const tdoc of tdocs) tdict[tdoc.docId.toHexString()] = tdoc;
+        const canCreateTraining = this.user.hasPerm(PERM.PERM_CREATE_TRAINING);
+        const trainingOptions = canCreateTraining
+            ? await training.getMulti(domainId).project({ docId: 1, title: 1 }).limit(2000).toArray()
+            : [];
         this.response.template = 'training_main.html';
         this.response.body = {
-            tdocs, page, tpcount, tsdict, tdict, q,
-            canCreateTraining: this.user.hasPerm(PERM.PERM_CREATE_TRAINING),
+            tdocs, page, tpcount, tsdict, tdict, q, category,
+            categories,
+            trainingOptions,
+            canCreateTraining,
         };
+    }
+
+    @param('name', Types.Title)
+    @param('tids', Types.ArrayOf(Types.ObjectId))
+    @param('id', Types.String, true)
+    async postCategory(domainId: string, name: string, tids: ObjectId[], id = '') {
+        this.checkPerm(PERM.PERM_CREATE_TRAINING);
+        const uniqueTids = Array.from(new Set(tids.map(String)));
+        const [ddoc, validCount] = await Promise.all([
+            domain.get(domainId),
+            training.count(domainId, { docId: { $in: tids } }),
+        ]);
+        if (validCount !== uniqueTids.length) throw new ValidationError('tids');
+        const categories = Array.isArray(ddoc._trainingCategories) ? [...ddoc._trainingCategories] : [];
+        const categoryIndex = id ? categories.findIndex((item) => item._id === id) : -1;
+        if (id && categoryIndex === -1) throw new ValidationError('id');
+        if (categories.some((item) => item._id !== id && item.name.toLowerCase() === name.toLowerCase())) {
+            throw new ValidationError('name');
+        }
+        const category = {
+            _id: id || new ObjectId().toHexString(),
+            name,
+            tids: uniqueTids.map((tid) => new ObjectId(tid)),
+        };
+        if (categoryIndex === -1) categories.push(category);
+        else categories[categoryIndex] = category;
+        await domain.edit(domainId, { _trainingCategories: categories });
+        this.back({ category });
+    }
+
+    @param('id', Types.String)
+    async postDeleteCategory(domainId: string, id: string) {
+        this.checkPerm(PERM.PERM_CREATE_TRAINING);
+        const ddoc = await domain.get(domainId);
+        const categories = (Array.isArray(ddoc._trainingCategories) ? ddoc._trainingCategories : [])
+            .filter((item) => item._id !== id);
+        await domain.edit(domainId, { _trainingCategories: categories });
+        this.back();
     }
 }
 
@@ -184,9 +234,15 @@ class TrainingDetailHandler extends Handler {
     async postDelete(domainId: string, tid: ObjectId) {
         const tdoc = await training.get(domainId, tid);
         if (!this.user.own(tdoc)) this.checkPerm(PERM.PERM_EDIT_TRAINING);
+        const ddoc = await domain.get(domainId);
+        const categories = (Array.isArray(ddoc._trainingCategories) ? ddoc._trainingCategories : []).map((item) => ({
+            ...item,
+            tids: (item.tids || []).filter((itemTid) => itemTid.toString() !== tid.toString()),
+        }));
         await Promise.all([
             training.del(domainId, tid),
             storage.del(tdoc.files?.map((i) => `training/${domainId}/${tid}/${i.name}`) || [], this.user._id),
+            domain.edit(domainId, { _trainingCategories: categories }),
         ]);
         this.response.redirect = this.url('training_main');
     }

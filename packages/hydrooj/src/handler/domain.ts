@@ -1,7 +1,6 @@
 import { randomInt } from 'node:crypto';
 import { load } from 'js-yaml';
 import { Dictionary } from 'lodash';
-import moment from 'moment-timezone';
 import Schema from 'schemastery';
 import type { Context } from '../context';
 import {
@@ -33,9 +32,29 @@ async function generateUniqueJoinCode() {
         for (let i = 0; i < JOIN_CODE_LENGTH; i++) code += JOIN_CODE_ALPHABET[randomInt(JOIN_CODE_ALPHABET.length)];
         // This lookup also keeps codes unique across domains, allowing code-only join links.
         // eslint-disable-next-line no-await-in-loop
-        if (!await domain.coll.findOne({ '_join.code': code }, { projection: { _id: 1 } })) return code;
+        if (!await domain.coll.findOne({
+            $or: [{ _inviteCode: code }, { '_join.code': code }],
+        }, { projection: { _id: 1 } })) return code;
     }
     throw new Error('Failed to generate a unique domain invitation code');
+}
+
+async function ensureDomainJoinCode(ddoc: DomainDoc) {
+    const persisted = await domain.coll.findOne({ _id: ddoc._id }, { projection: { _inviteCode: 1, _join: 1 } });
+    const storedCode = String(persisted?._inviteCode || persisted?._join?.code || '').trim();
+    if (/^[A-Z0-9]{1,8}$/.test(storedCode)) {
+        const duplicate = await domain.coll.findOne({
+            _id: { $ne: ddoc._id },
+            $or: [{ _inviteCode: storedCode }, { '_join.code': storedCode }],
+        }, { projection: { _id: 1 } });
+        if (!duplicate) {
+            if (ddoc._inviteCode !== storedCode) await domain.edit(ddoc._id, { _inviteCode: storedCode });
+            return storedCode;
+        }
+    }
+    const code = await generateUniqueJoinCode();
+    await domain.edit(ddoc._id, { _inviteCode: code });
+    return code;
 }
 
 class DomainRankHandler extends Handler {
@@ -336,13 +355,17 @@ class DomainJoinApplicationsHandler extends ManageHandler {
         const r = await domain.getRoles(this.domain);
         const roles = r.map((role) => role._id).sort();
         this.response.body.rolesWithText = roles.filter((i) => i !== 'guest').map((role) => [role, role]);
-        this.response.body.joinSettings = domain.getJoinSettings(this.domain, roles);
-        this.response.body.expirations = { ...domain.JOIN_EXPIRATION_RANGE };
-        if (!this.response.body.joinSettings) {
-            delete this.response.body.expirations[domain.JOIN_EXPIRATION_KEEP_CURRENT];
+        const invitationCode = await ensureDomainJoinCode(this.domain);
+        const configuredJoin = this.domain._join;
+        const joinSettings = configuredJoin?.method !== domain.JOIN_METHOD_NONE && roles.includes(configuredJoin?.role)
+            ? { ...configuredJoin, expire: null }
+            : null;
+        if (joinSettings?.method === domain.JOIN_METHOD_CODE) joinSettings.code = invitationCode;
+        if (joinSettings && (configuredJoin.expire || configuredJoin.code !== joinSettings.code)) {
+            await domain.edit(this.domain._id, { _join: joinSettings });
         }
-        this.response.body.url_prefix = (this.domain.host || [])[0] || system.get('server.url');
-        if (!this.response.body.url_prefix.endsWith('/')) this.response.body.url_prefix += '/';
+        this.response.body.joinSettings = joinSettings;
+        this.response.body.invitationCode = invitationCode;
         this.response.template = 'domain_join_applications.html';
     }
 
@@ -350,37 +373,16 @@ class DomainJoinApplicationsHandler extends ManageHandler {
     @post('method', Types.Range([domain.JOIN_METHOD_NONE, domain.JOIN_METHOD_ALL, domain.JOIN_METHOD_CODE]))
     @post('role', Types.Role, true)
     @post('group', Types.Name, true)
-    @post('expire', Types.Int, true)
-    @post('invitationCode', Types.Content, true)
-    async post(domainId: string, method: number, role: string, group = '', expire: number, invitationCode = '') {
+    async post(domainId: string, method: number, role: string, group = '') {
         const r = await domain.getRoles(this.domain);
         const roles = r.map((rl) => rl._id);
-        const current = domain.getJoinSettings(this.domain, roles);
+        const invitationCode = await ensureDomainJoinCode(this.domain);
         let joinSettings;
         if (method === domain.JOIN_METHOD_NONE) joinSettings = null;
         else {
             if (!roles.includes(role)) throw new ValidationError('role');
-            if (!current && expire === domain.JOIN_EXPIRATION_KEEP_CURRENT) throw new ValidationError('expire');
-            joinSettings = { method, role, group };
-            if (expire === domain.JOIN_EXPIRATION_KEEP_CURRENT) joinSettings.expire = current.expire;
-            else if (expire === domain.JOIN_EXPIRATION_UNLIMITED) joinSettings.expire = null;
-            else if (!domain.JOIN_EXPIRATION_RANGE[expire]) throw new ValidationError('expire');
-            else joinSettings.expire = moment().add(expire, 'hours').toDate();
-            if (method === domain.JOIN_METHOD_CODE) {
-                const requestedCode = invitationCode.trim();
-                const legacyCode = requestedCode && requestedCode === current?.code
-                    && !/^[A-Za-z0-9]{1,8}$/.test(requestedCode);
-                if (requestedCode && !legacyCode && !/^[A-Za-z0-9]{1,8}$/.test(requestedCode)) {
-                    throw new ValidationError('invitationCode');
-                }
-                const normalizedCode = legacyCode ? '' : requestedCode;
-                const duplicate = normalizedCode && await domain.coll.findOne({
-                    _id: { $ne: domainId },
-                    '_join.code': normalizedCode,
-                }, { projection: { _id: 1 } });
-                if (duplicate) throw new ValidationError('invitationCode');
-                joinSettings.code = normalizedCode || await generateUniqueJoinCode();
-            }
+            joinSettings = { method, role, group, expire: null };
+            if (method === domain.JOIN_METHOD_CODE) joinSettings.code = invitationCode;
         }
         await domain.edit(domainId, { _join: joinSettings });
         this.back();
@@ -422,7 +424,7 @@ class DomainJoinHandler extends Handler {
         if (!target && domainId === 'system' && code) {
             const invitedDomain = await domain.coll.findOne({
                 '_join.method': domain.JOIN_METHOD_CODE,
-                '_join.code': code,
+                $or: [{ _inviteCode: code }, { '_join.code': code }],
             }, { projection: { _id: 1 } });
             if (!invitedDomain) throw new InvalidJoinInvitationCodeError(domainId);
             resolvedTarget = invitedDomain._id;

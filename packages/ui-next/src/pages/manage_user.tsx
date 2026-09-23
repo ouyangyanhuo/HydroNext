@@ -50,6 +50,9 @@ export default function ManageUserPage() {
   const [newUser, setNewUser] = useState({
     email: '', username: '', displayName: '', password: '', verifyPassword: '',
   });
+  const updateNewUser = (field: keyof typeof newUser, value: string) => {
+    setNewUser((current) => ({ ...current, [field]: value }));
+  };
 
   const pageUrl = useMemo(() => buildUrl('manage_user', {}, initialQuery ? { q: initialQuery } : {}), [buildUrl, initialQuery]);
   const isProtectedUser = (user: ManagedUser) => user._id <= 0 || user._id === 1 || user.priv === -1;
@@ -289,31 +292,31 @@ export default function ManageUserPage() {
             label={t('Email')}
             type="email"
             value={newUser.email}
-            onChange={(e) => setNewUser((current) => ({ ...current, email: e.currentTarget.value }))}
+            onChange={(e) => updateNewUser('email', e.currentTarget.value)}
             required
             autoFocus
           />
           <TextInput
             label={t('Username')}
             value={newUser.username}
-            onChange={(e) => setNewUser((current) => ({ ...current, username: e.currentTarget.value }))}
+            onChange={(e) => updateNewUser('username', e.currentTarget.value)}
             required
           />
           <TextInput
             label={t('Name')}
             value={newUser.displayName}
-            onChange={(e) => setNewUser((current) => ({ ...current, displayName: e.currentTarget.value }))}
+            onChange={(e) => updateNewUser('displayName', e.currentTarget.value)}
           />
           <PasswordInput
             label={t('Password')}
             value={newUser.password}
-            onChange={(e) => setNewUser((current) => ({ ...current, password: e.currentTarget.value }))}
+            onChange={(e) => updateNewUser('password', e.currentTarget.value)}
             required
           />
           <PasswordInput
             label={t('Confirm Password')}
             value={newUser.verifyPassword}
-            onChange={(e) => setNewUser((current) => ({ ...current, verifyPassword: e.currentTarget.value }))}
+            onChange={(e) => updateNewUser('verifyPassword', e.currentTarget.value)}
             required
           />
           <Group justify="flex-end">

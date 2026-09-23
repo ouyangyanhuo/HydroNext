@@ -593,6 +593,15 @@ Domain Dashboard: 도메인 대시보드
 Join Domain: 도메인 가입
 A unique invitation code of up to 8 characters is generated automatically.: 8자 이내의 고유한 초대 코드가 자동으로 생성됩니다.
 Enter an invitation code to find and join a domain.: 초대 코드를 입력하여 해당 도메인을 찾아 가입하세요.
+This invitation link never expires.: 이 초대 링크는 만료되지 않습니다.
+Create Training Category: 훈련 카테고리 만들기
+Edit Training Category: 훈련 카테고리 편집
+Category Name: 카테고리 이름
+Training Plans: 훈련 계획
+Select all training plans included in this category.: 이 카테고리에 포함할 훈련 계획을 선택하세요.
+Delete Category: 카테고리 삭제
+Confirm to delete this category?: 이 카테고리를 삭제하시겠습니까?
+'{0} ranked users': '순위 참여자 {0}명'
 Forgot Password: 비밀번호 찾기
 Change Email: 이메일 변경
 
