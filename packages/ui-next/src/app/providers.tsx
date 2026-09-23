@@ -92,7 +92,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       cssVariablesResolver={cssResolver}
       forceColorScheme={colorScheme === 'paper' ? 'light' : colorScheme}
     >
-      <Notifications position="top-right" />
+      <Notifications position="top-left" />
       <HydroNotifications />
       {children}
     </MantineProvider>

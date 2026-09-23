@@ -46,7 +46,7 @@ export default function RankingPage() {
       || String(user._id).includes(deferredSearch));
   const getSolved = (user: RankingUser) => solvedCounts[user._id] || 0;
   const podium = page === 1 ? [udocs[1], udocs[0], udocs[2]] : [];
-  const emptyMessage = search.trim() ? 'No users match your search.' : 'No users in this domain yet.';
+  const emptyMessage = search.trim() ? 'No users match your search.' : 'No users in this domain have solved a problem.';
 
   return (
     <Stack gap="xl" className="ranking-page">

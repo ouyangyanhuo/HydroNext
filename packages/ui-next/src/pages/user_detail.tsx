@@ -38,6 +38,7 @@ export default function UserDetailPage() {
   const pdocs = args.pdocs || [];
   const tags = args.tags || [];
   const isSelf = currentUser._id === udoc._id;
+  const canViewRecords = Boolean(args.canViewRecords ?? isSelf);
 
   const rankValue = Number(stats.rank);
   const rank = Number.isFinite(rankValue) && rankValue > 0 ? `#${rankValue}` : '-';
@@ -129,20 +130,34 @@ export default function UserDetailPage() {
             <Text size="xl" fw={700}>{Number(stats.nAccept) || 0}</Text>
             <Text size="xs" c="dimmed">{t('Solved')}</Text>
           </Paper>
-          <Link
-            href={buildUrl('record_main', {}, { uidOrName: String(udoc._id) })}
-            className="no-underline"
-          >
+          {canViewRecords ? (
+            <Link
+              href={buildUrl('record_main', {}, { uidOrName: String(udoc._id) })}
+              className="no-underline"
+            >
+              <Paper
+                withBorder
+                p="md"
+                ta="center"
+                className="hydro-user-profile__stat hydro-user-profile__stat--interactive"
+              >
+                <Text size="xl" fw={700}>{Number(stats.nSubmit) || 0}</Text>
+                <Text size="xs" c="dimmed">{t('Submissions')}</Text>
+              </Paper>
+            </Link>
+          ) : (
             <Paper
               withBorder
               p="md"
               ta="center"
-              className="hydro-user-profile__stat"
+              aria-disabled="true"
+              title={t("View other's records")}
+              className="hydro-user-profile__stat hydro-user-profile__stat--disabled"
             >
               <Text size="xl" fw={700}>{Number(stats.nSubmit) || 0}</Text>
               <Text size="xs" c="dimmed">{t('Submissions')}</Text>
             </Paper>
-          </Link>
+          )}
           <Paper withBorder p="md" ta="center" className="hydro-user-profile__stat">
             <Text size="xl" fw={700}>{rp}</Text>
             <Text size="xs" c="dimmed">{t('RP')}</Text>

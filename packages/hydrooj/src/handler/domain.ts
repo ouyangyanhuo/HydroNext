@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import { load } from 'js-yaml';
 import { Dictionary } from 'lodash';
 import moment from 'moment-timezone';
@@ -22,6 +23,20 @@ import {
     Handler, Mutation, param, post, Query, query, requireSudo, Types,
 } from '../service/server';
 import { log2 } from '../utils';
+
+const JOIN_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const JOIN_CODE_LENGTH = 8;
+
+async function generateUniqueJoinCode() {
+    for (let attempt = 0; attempt < 32; attempt++) {
+        let code = '';
+        for (let i = 0; i < JOIN_CODE_LENGTH; i++) code += JOIN_CODE_ALPHABET[randomInt(JOIN_CODE_ALPHABET.length)];
+        // This lookup also keeps codes unique across domains, allowing code-only join links.
+        // eslint-disable-next-line no-await-in-loop
+        if (!await domain.coll.findOne({ '_join.code': code }, { projection: { _id: 1 } })) return code;
+    }
+    throw new Error('Failed to generate a unique domain invitation code');
+}
 
 class DomainRankHandler extends Handler {
     @query('page', Types.PositiveInt, true)
@@ -351,7 +366,21 @@ class DomainJoinApplicationsHandler extends ManageHandler {
             else if (expire === domain.JOIN_EXPIRATION_UNLIMITED) joinSettings.expire = null;
             else if (!domain.JOIN_EXPIRATION_RANGE[expire]) throw new ValidationError('expire');
             else joinSettings.expire = moment().add(expire, 'hours').toDate();
-            if (method === domain.JOIN_METHOD_CODE) joinSettings.code = invitationCode;
+            if (method === domain.JOIN_METHOD_CODE) {
+                const requestedCode = invitationCode.trim();
+                const legacyCode = requestedCode && requestedCode === current?.code
+                    && !/^[A-Za-z0-9]{1,8}$/.test(requestedCode);
+                if (requestedCode && !legacyCode && !/^[A-Za-z0-9]{1,8}$/.test(requestedCode)) {
+                    throw new ValidationError('invitationCode');
+                }
+                const normalizedCode = legacyCode ? '' : requestedCode;
+                const duplicate = normalizedCode && await domain.coll.findOne({
+                    _id: { $ne: domainId },
+                    '_join.code': normalizedCode,
+                }, { projection: { _id: 1 } });
+                if (duplicate) throw new ValidationError('invitationCode');
+                joinSettings.code = normalizedCode || await generateUniqueJoinCode();
+            }
         }
         await domain.edit(domainId, { _join: joinSettings });
         this.back();
@@ -384,35 +413,48 @@ class DomainUserGroupHandler extends ManageHandler {
 class DomainJoinHandler extends Handler {
     joinSettings: any;
     noCheckPermView = true;
+    targetDomainId: string;
 
+    @param('code', Types.Content, true)
     @param('target', Types.DomainId, true)
-    async prepare({ domainId }, target: string = domainId) {
+    async prepare({ domainId }, code: string = '', target?: string) {
+        let resolvedTarget = target || domainId;
+        if (!target && domainId === 'system' && code) {
+            const invitedDomain = await domain.coll.findOne({
+                '_join.method': domain.JOIN_METHOD_CODE,
+                '_join.code': code,
+            }, { projection: { _id: 1 } });
+            if (!invitedDomain) throw new InvalidJoinInvitationCodeError(domainId);
+            resolvedTarget = invitedDomain._id;
+        }
+        this.targetDomainId = resolvedTarget;
         const [ddoc, dudoc] = await Promise.all([
-            domain.get(target),
-            domain.collUser.findOne({ domainId: target, uid: this.user._id }),
+            domain.get(resolvedTarget),
+            domain.collUser.findOne({ domainId: resolvedTarget, uid: this.user._id }),
         ]);
-        if (!ddoc) throw new NotFoundError(target);
+        if (!ddoc) throw new NotFoundError(resolvedTarget);
         const assignedRole = this.user.hasPriv(PRIV.PRIV_MANAGE_ALL_DOMAIN)
             ? 'root'
             : dudoc?.role || 'default';
-        if (dudoc?.join) throw new DomainJoinAlreadyMemberError(target, this.user._id);
+        if (dudoc?.join) throw new DomainJoinAlreadyMemberError(resolvedTarget, this.user._id);
         const r = await domain.getRoles(ddoc);
         const roles = r.map((role) => role._id);
         this.joinSettings = domain.getJoinSettings(ddoc, roles);
         if (assignedRole !== 'default') delete this.joinSettings;
-        else if (!this.joinSettings) throw new DomainJoinForbiddenError(target, 'The link is either invalid or expired.');
-        if (assignedRole === 'guest') throw new DomainJoinForbiddenError(target, 'You are banned by the domain moderator.');
+        else if (!this.joinSettings) throw new DomainJoinForbiddenError(resolvedTarget, 'The link is either invalid or expired.');
+        if (assignedRole === 'guest') throw new DomainJoinForbiddenError(resolvedTarget, 'You are banned by the domain moderator.');
     }
 
     @param('code', Types.Content, true)
     @param('target', Types.DomainId, true)
     @param('redirect', Types.Content, true)
     async get({ domainId }, code: string, target: string = domainId, redirect: string = '') {
+        target = this.targetDomainId;
         this.response.template = 'domain_join.html';
         const ddoc = await domain.get(target);
         const domainInfo = {
             name: ddoc.name,
-            owner: await user.getById(domainId, ddoc.owner),
+            owner: await user.getById(target, ddoc.owner),
             avatar: ddoc.avatar,
             bulletin: ddoc.showBulletin ? ddoc.bulletin : '',
         };
@@ -429,6 +471,7 @@ class DomainJoinHandler extends Handler {
     @param('target', Types.DomainId, true)
     @param('redirect', Types.Content, true)
     async post({ domainId }, code: string, target: string = domainId, redirect: string = '') {
+        target = this.targetDomainId;
         if (this.joinSettings?.method === domain.JOIN_METHOD_CODE) {
             if (this.joinSettings.code !== code) {
                 throw new InvalidJoinInvitationCodeError(target);

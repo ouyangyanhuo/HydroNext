@@ -354,6 +354,7 @@ class UserDetailHandler extends Handler {
             serializedUdoc.bio = udoc.bio;
         }
         this.response.body = {
+            canViewRecords: isSelfProfile || this.user.hasPerm(PERM.PERM_VIEW_RECORD),
             isSelfProfile,
             udoc: serializedUdoc,
             stats: {

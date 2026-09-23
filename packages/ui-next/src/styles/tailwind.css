@@ -1858,7 +1858,15 @@ a {
 }
 
 .hydro-scratchpad-run-action {
-  color: var(--hydro-primary-strong);
+  border-color: var(--mantine-primary-color-filled);
+  color: var(--hydro-surface-raised);
+  background-color: var(--mantine-primary-color-filled);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--mantine-primary-color-filled) 22%, transparent);
+}
+
+.hydro-scratchpad-run-action:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--mantine-primary-color-filled) 82%, var(--hydro-text));
+  background-color: color-mix(in srgb, var(--mantine-primary-color-filled) 88%, var(--hydro-text));
 }
 
 .hydro-scratchpad-run-action,
@@ -2664,6 +2672,23 @@ a {
   height: 2px;
   content: '';
   background: var(--hydro-primary);
+  opacity: 0.62;
+}
+
+.hydro-user-profile__stat--interactive {
+  transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
+              box-shadow var(--hydro-duration-normal) var(--hydro-ease-out),
+              transform var(--hydro-duration-normal) var(--hydro-ease-out);
+}
+
+.hydro-user-profile__stat--interactive:hover {
+  border-color: color-mix(in srgb, var(--hydro-primary) 42%, var(--hydro-border));
+  box-shadow: var(--hydro-shadow-sm);
+  transform: translateY(-1px);
+}
+
+.hydro-user-profile__stat--disabled {
+  cursor: not-allowed;
   opacity: 0.62;
 }
 

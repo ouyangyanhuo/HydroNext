@@ -21,6 +21,7 @@ Ranked by RP in this domain.: このドメインの RP 順に表示します。
 Search users on this page: このページのユーザーを検索
 No users match your search.: このページに一致するユーザーはいません。
 No users in this domain yet.: このドメインにはまだユーザーがいません。
+No users in this domain have solved a problem.: このドメインでは、まだ問題を解いたユーザーはいません。
 RP Ranking: RP ランキング
 Solved Ranking: 正解数ランキング
 Ranked by distinct accepted problems in this domain.: このドメインで正解した異なる問題数で順位を決定します。
@@ -590,6 +591,8 @@ Manage Contest: コンテスト管理
 Edit Training Plan: トレーニングプランを編集
 Domain Dashboard: ドメインダッシュボード
 Join Domain: ドメインに参加
+A unique invitation code of up to 8 characters is generated automatically.: 8文字以内の一意な招待コードが自動生成されます。
+Enter an invitation code to find and join a domain.: 招待コードを入力して、対応するドメインに参加します。
 Forgot Password: パスワードを忘れた
 Change Email: メールアドレスを変更
 

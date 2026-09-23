@@ -279,22 +279,22 @@ export default function RecordDetailPage() {
 
   return (
     <Stack gap="lg" className="hydro-record-detail">
-      <Group justify="flex-start">
-        <Button
-          type="button"
-          variant="subtle"
-          size="compact-sm"
-          leftSection={<IconArrowLeft size={15} />}
-          onClick={goBack}
-        >
-          {t('Back')}
-        </Button>
-      </Group>
       {error && <Text c="red" size="sm">{error}</Text>}
       <Card withBorder p="xl" className="hydro-record-hero overflow-hidden">
-        <Badge variant="light" className="hydro-record-accent-badge" mb="sm">
-          {t('Record')}
-        </Badge>
+        <Group gap="xs" mb="sm">
+          <Button
+            type="button"
+            variant="subtle"
+            size="compact-sm"
+            leftSection={<IconArrowLeft size={15} />}
+            onClick={goBack}
+          >
+            {t('Back')}
+          </Button>
+          <Badge variant="light" className="hydro-record-accent-badge">
+            {t('Record')}
+          </Badge>
+        </Group>
         <Group justify="space-between" align="flex-start" gap="lg" wrap="wrap">
           <div className="min-w-0">
             <Title order={1} className="text-3xl leading-tight text-[var(--hydro-text)] md:text-4xl">

@@ -22,6 +22,7 @@ Ranked by RP in this domain.: 依此域 RP 排名。
 Search users on this page: 搜尋本頁使用者
 No users match your search.: 本頁沒有符合的使用者。
 No users in this domain yet.: 此域尚無使用者。
+No users in this domain have solved a problem.: 此域尚無使用者完成題目
 RP Ranking: RP 排行榜
 Solved Ranking: 解題排行榜
 Ranked by distinct accepted problems in this domain.: 依此域通過的不同題目數量排名。
@@ -755,6 +756,8 @@ Manage Contest: 比賽管理
 Edit Training Plan: 編輯訓練計劃
 Domain Dashboard: 域儀表板
 Join Domain: 加入域
+A unique invitation code of up to 8 characters is generated automatically.: 系統會自動產生唯一且不超過 8 位的邀請碼。
+Enter an invitation code to find and join a domain.: 輸入邀請碼以尋找並加入對應的域。
 Change Email: 修改信箱
 
 # Theme

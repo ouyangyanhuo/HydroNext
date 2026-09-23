@@ -129,7 +129,10 @@ export default function DomainJoinApplicationsPage() {
             description={t('The group to join when user joining the domain.')}
             value={form.group}
             disabled={form.method === '0'}
-            onChange={(e) => setForm((prev) => ({ ...prev, group: e.currentTarget.value }))}
+            onChange={(e) => {
+              const group = e.currentTarget.value;
+              setForm((prev) => ({ ...prev, group }));
+            }}
           />
           <Select
             label={t('Expire')}
@@ -141,10 +144,10 @@ export default function DomainJoinApplicationsPage() {
           />
           <TextInput
             label={t('Invitation Code')}
-            description={t('The invitation code to enter to successfully join the domain. You can only use letters and numbers in the code and it should not be longer than 64 characters.')}
+            description={t('A unique invitation code of up to 8 characters is generated automatically.')}
             value={form.invitationCode}
             disabled={form.method !== '2'}
-            onChange={(e) => setForm((prev) => ({ ...prev, invitationCode: e.currentTarget.value }))}
+            readOnly
           />
           <Group justify="flex-end">
             <Button onClick={handleSave} loading={loading}>{t('Update Settings')}</Button>

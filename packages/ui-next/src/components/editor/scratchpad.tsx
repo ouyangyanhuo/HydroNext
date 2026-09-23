@@ -589,7 +589,7 @@ export function Scratchpad({
                           {canUsePretest ? (
                             <Button
                               size="compact-xs"
-                              variant="light"
+                              variant="filled"
                               leftSection={<IconPlayerPlay size={14} />}
                               onClick={() => postJudge(true)}
                               loading={pretesting}

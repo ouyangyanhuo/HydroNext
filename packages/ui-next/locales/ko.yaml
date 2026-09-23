@@ -21,6 +21,7 @@ Ranked by RP in this domain.: 이 도메인의 RP 순으로 표시합니다.
 Search users on this page: 현재 페이지 사용자 검색
 No users match your search.: 현재 페이지에 일치하는 사용자가 없습니다.
 No users in this domain yet.: 이 도메인에는 아직 사용자가 없습니다.
+No users in this domain have solved a problem.: 이 도메인에서 문제를 해결한 사용자가 아직 없습니다.
 RP Ranking: RP 랭킹
 Solved Ranking: 해결 문제 랭킹
 Ranked by distinct accepted problems in this domain.: 이 도메인에서 정답 처리된 서로 다른 문제 수를 기준으로 순위를 매깁니다.
@@ -590,6 +591,8 @@ Manage Contest: 대회 관리
 Edit Training Plan: 훈련 계획 편집
 Domain Dashboard: 도메인 대시보드
 Join Domain: 도메인 가입
+A unique invitation code of up to 8 characters is generated automatically.: 8자 이내의 고유한 초대 코드가 자동으로 생성됩니다.
+Enter an invitation code to find and join a domain.: 초대 코드를 입력하여 해당 도메인을 찾아 가입하세요.
 Forgot Password: 비밀번호 찾기
 Change Email: 이메일 변경
 
