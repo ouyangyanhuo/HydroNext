@@ -9,6 +9,7 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { useDeadlinePassed } from '@/hooks/use-time';
 import { formatErrorMessage } from '@/utils/error';
+import { formatUserName } from '@/utils/user-name';
 
 const EMPTY_ARRAY: any[] = [];
 const EMPTY_OBJECT: Record<string, any> = {};
@@ -238,7 +239,7 @@ export default function ContestScoreboardPage() {
                                 {stars.includes(uid) ? '★' : '☆'}
                               </Button>
                               <Link to="user_detail" params={{ uid }} className="no-underline hover:underline">
-                                <Text size="sm">{udict[uid]?.displayName || udict[uid]?.uname || cell.value || uid}</Text>
+                                <Text size="sm">{udict[uid] ? formatUserName(udict[uid]) : (cell.value || uid)}</Text>
                               </Link>
                             </Group>
                           ) : (

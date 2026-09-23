@@ -1,4 +1,4 @@
-import { Badge, Button, Group, Paper, Stack, Table, Text, TextInput, Textarea } from '@mantine/core';
+import { Badge, Button, Group, Paper, Stack, Table, Text, Textarea, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useCallback, useEffect, useState } from 'react';
 import { FileDropzone } from '@/components/common/file-dropzone';
@@ -9,6 +9,7 @@ import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { PERM, useHasPerm } from '@/hooks/use-permission';
 import { formatErrorMessage } from '@/utils/error';
+import { formatUserName } from '@/utils/user-name';
 
 function escapePrintHtml(value: unknown) {
   return String(value ?? '').replace(/[&<>"']/g, (character) => ({
@@ -34,7 +35,7 @@ function printPlainTask(task: any, udoc: any) {
     .header{border-bottom:1px solid #ccc;margin-bottom:8px}
     pre{white-space:pre-wrap}
   </style></head><body>
-    <div class="header">[${escapePrintHtml(udoc?.uname || task.owner)}] ${escapePrintHtml(udoc?.school)} ${escapePrintHtml(udoc?.displayName)}<br>Filename: ${escapePrintHtml(task.title)}</div>
+    <div class="header">[${escapePrintHtml(udoc ? formatUserName(udoc) : task.owner)}] ${escapePrintHtml(udoc?.school)}<br>Filename: ${escapePrintHtml(task.title)}</div>
     <pre>${escapePrintHtml(content)}</pre>
   </body></html>`);
   printWindow.document.close();

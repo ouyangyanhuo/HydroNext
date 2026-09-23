@@ -518,6 +518,7 @@ Testdata generated successfully.: 測試資料生成成功。
 Nothing to preview: 暫無預覽內容
 Write: 編寫
 Preview: 預覽
+Build Time: 建置時間
 Version: 版本
 No about page content configured.: 暫未設定關於頁面內容。
 
@@ -528,6 +529,9 @@ Back to Home: 返回首頁
 
 # Scratchpad
 Scratchpad: 線上編輯器
+Code template loaded: 程式碼模板已載入
+Load Code Template: 載入程式碼模板
+No code template is available for this language.: 目前語言沒有可用的程式碼模板。
 Open Scratchpad: 開啟線上編輯器
 Quit Scratchpad: 結束線上編輯模式
 Enter Online Programming Mode: 進入線上程式設計模式

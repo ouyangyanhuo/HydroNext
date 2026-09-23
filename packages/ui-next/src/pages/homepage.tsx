@@ -1,6 +1,6 @@
 import { Badge, Button, Group, Stack, Text, Title } from '@mantine/core';
 import {
-  IconArrowUpRight, IconChevronRight, IconCode, IconLogin2, IconTrophy, IconUserPlus,
+  IconArrowUpRight, IconChevronRight, IconCode, IconLogin2, IconTrophy,
 } from '@tabler/icons-react';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
@@ -9,6 +9,7 @@ import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
+import { formatUserName } from '@/utils/user-name';
 
 function SectionLink({ to, label }: { to: string, label: string }) {
   return (
@@ -39,12 +40,12 @@ function WelcomeHero({ problemCount, contestCount }: { problemCount: number, con
     <section className="hydro-home-hero hydro-reveal" aria-labelledby="hydro-home-title">
       <div className="hydro-home-hero__copy">
         <Title id="hydro-home-title" order={1} className="hydro-home-title">
-          {isLoggedIn ? `${t('Welcome')}, ${user.uname}` : t('Welcome to HNTOU OJ')}
+          {isLoggedIn ? `${t('Welcome')}, ${formatUserName(user)}` : t('Welcome to HNTOU OJ')}
         </Title>
         <Text className="hydro-home-lead">
           {isLoggedIn
             ? t('Explore problems, contests, and improve your skills.')
-            : t('Login or register to start solving problems.')}
+            : t('Sign in to continue to Hydro.')}
         </Text>
         {!isLoggedIn && (
           <Group mt="lg" gap="sm">
@@ -56,16 +57,6 @@ function WelcomeHero({ problemCount, contestCount }: { problemCount: number, con
               className="hydro-primary-action"
             >
               {t('Login')}
-            </Button>
-            <Button
-              component={Link}
-              to="user_register"
-              size="md"
-              variant="default"
-              leftSection={<IconUserPlus size={18} stroke={2} />}
-              className="hydro-secondary-action"
-            >
-              {t('Register')}
             </Button>
           </Group>
         )}

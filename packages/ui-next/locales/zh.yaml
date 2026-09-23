@@ -520,6 +520,7 @@ Testdata generated successfully.: 测试数据生成成功。
 Nothing to preview: 暂无预览内容
 Write: 编写
 Preview: 预览
+Build Time: 构建时间
 Version: 版本
 No about page content configured.: 暂未配置关于页面内容。
 
@@ -530,6 +531,9 @@ Back to Home: 返回首页
 
 # Scratchpad
 Scratchpad: 在线编辑器
+Code template loaded: 代码模板已加载
+Load Code Template: 加载代码模板
+No code template is available for this language.: 当前语言暂无可用的代码模板。
 Open Scratchpad: 打开在线编辑器
 Quit Scratchpad: 退出在线编辑模式
 Enter Online Programming Mode: 进入在线编程模式

@@ -16,6 +16,7 @@ import { getPageMetadata } from '@/registry/page-metadata';
 import { type ThemeMode, useSessionStore } from '@/stores/session';
 import { ACCENT_PRESETS, DEFAULT_ACCENT, PRESET_KEYS } from '@/styles/accent-colors';
 import { getAvatarUrl } from '@/utils/avatar';
+import { formatUserName } from '@/utils/user-name';
 import { DomainSwitcher } from './domain-switcher';
 
 interface RootViewTransition {
@@ -38,7 +39,7 @@ function UserMenu() {
         <UnstyledButton className="flex items-center gap-2 rounded-md px-2 py-1 transition hover:bg-[var(--hydro-surface-muted)]">
           <Avatar src={getAvatarUrl(user.avatar, 32)} size={32} radius="xl" />
           <Text size="sm" fw={600} className="hidden text-[var(--hydro-text)] sm:block">
-            {user.uname}
+            {formatUserName(user)}
           </Text>
         </UnstyledButton>
       </Menu.Target>
@@ -51,9 +52,6 @@ function UserMenu() {
         </Menu.Item>
         <Menu.Item component={Link} to="home_security">
           {t('Security')}
-        </Menu.Item>
-        <Menu.Item component={Link} to="home_messages">
-          {t('Messages')}
         </Menu.Item>
         <Menu.Item component={Link} to="home_files">
           {t('My Files')}
@@ -80,14 +78,9 @@ function GuestMenu() {
   const { t } = useI18n();
 
   return (
-    <Group gap="xs">
-      <Button component={Link} to="user_login" variant="subtle">
-        {t('Login')}
-      </Button>
-      <Button component={Link} to="user_register">
-        {t('Register')}
-      </Button>
-    </Group>
+    <Button component={Link} to="user_login" variant="subtle">
+      {t('Login')}
+    </Button>
   );
 }
 
@@ -509,14 +502,9 @@ export function TopNav() {
                 </Button>
               </>
             ) : (
-              <>
-                <Button component={Link} to="user_login" variant="subtle" fullWidth justify="flex-start" onClick={close}>
-                  {t('Login')}
-                </Button>
-                <Button component={Link} to="user_register" fullWidth justify="flex-start" onClick={close}>
-                  {t('Register')}
-                </Button>
-              </>
+              <Button component={Link} to="user_login" variant="subtle" fullWidth justify="flex-start" onClick={close}>
+                {t('Login')}
+              </Button>
             )}
           </div>
         </Stack>

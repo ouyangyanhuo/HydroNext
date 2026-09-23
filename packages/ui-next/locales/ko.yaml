@@ -339,6 +339,7 @@ Uploading...: 업로드 중...
 Nothing to preview: 미리보기 없음
 Write: 작성
 Preview: 미리보기
+Build Time: 빌드 시간
 Version: 버전
 No about page content configured.: 소개 페이지가 설정되지 않았습니다.
 
@@ -349,6 +350,9 @@ Back to Home: 홈으로 돌아가기
 
 # Scratchpad
 Scratchpad: 스크래치패드
+Code template loaded: 코드 템플릿을 불러왔습니다
+Load Code Template: 코드 템플릿 불러오기
+No code template is available for this language.: 이 언어에 사용할 수 있는 코드 템플릿이 없습니다.
 Open Scratchpad: 스크래치패드 열기
 
 # Search placeholders

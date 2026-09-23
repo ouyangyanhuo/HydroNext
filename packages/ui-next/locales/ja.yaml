@@ -339,6 +339,7 @@ Uploading...: アップロード中...
 Nothing to preview: プレビューなし
 Write: 書く
 Preview: プレビュー
+Build Time: ビルド日時
 Version: バージョン
 No about page content configured.: 概要ページが設定されていません。
 
@@ -349,6 +350,9 @@ Back to Home: ホームに戻る
 
 # Scratchpad
 Scratchpad: スクラッチパッド
+Code template loaded: コードテンプレートを読み込みました
+Load Code Template: コードテンプレートを読み込む
+No code template is available for this language.: この言語で利用できるコードテンプレートはありません。
 Open Scratchpad: スクラッチパッドを開く
 
 # Search placeholders

@@ -11,6 +11,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
 import { formatErrorMessage } from '@/utils/error';
+import { formatUserName } from '@/utils/user-name';
 
 function avatarSource(user: any) {
   return user?.avatarUrl || getAvatarUrl(user?.avatar || '');
@@ -117,7 +118,7 @@ function SendMessageDialog({
                     <Group gap="sm">
                       <Avatar src={avatarSource(u)} size="sm" radius="xl">{avatarInitial(u)}</Avatar>
                       <div>
-                        <Text size="sm" fw={500}>{u.displayName || u.uname}</Text>
+                        <Text size="sm" fw={500}>{formatUserName(u)}</Text>
                         <Text size="xs" c="dimmed">UID {u._id}</Text>
                       </div>
                     </Group>

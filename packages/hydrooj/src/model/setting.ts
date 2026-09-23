@@ -280,7 +280,7 @@ DomainSetting(
 
 DomainUserSetting(Schema.object({
     displayName: Schema.transform(String, (input) => saslPrep(input)).default('').description('Display Name')
-        .extra('family', 'setting_info').extra('flag', FLAG_PRIVATE),
+        .extra('family', 'setting_info').extra('flag', FLAG_PUBLIC),
 
     rpInfo: Schema.any().extra('family', 'setting_storage').disabled().hidden(),
 

@@ -3,8 +3,8 @@ import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
+import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Scratchpad } from '@/components/editor/scratchpad';
@@ -458,6 +458,13 @@ export default function ProblemDetailPage() {
   const { t } = useI18n();
   const sessionLanguage = useSessionStore((s) => s.language);
   const buildUrl = useBuildUrl();
+  const listSearch = new URLSearchParams(window.location.search);
+  const problemListQuery = Object.fromEntries(
+    ['page', 'q', 'sort']
+      .map((key) => [key, listSearch.get(key)] as const)
+      .filter((entry): entry is [string, string] => Boolean(entry[1])),
+  );
+  const problemListUrl = buildUrl('problem_main', {}, problemListQuery);
 
   const pdoc = args.pdoc || {};
   const psdoc = args.psdoc;
@@ -627,7 +634,7 @@ export default function ProblemDetailPage() {
             <Group justify="space-between" align="flex-start" gap="md" wrap="wrap" className="border-b border-[var(--hydro-border)] pb-4">
               <div className="min-w-0 flex-1">
                 <Group gap="xs" mb="xs">
-                  <Button component="a" href={buildUrl('problem_main')} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                  <Button component="a" href={problemListUrl} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
                     {t('Back')}
                   </Button>
                 </Group>

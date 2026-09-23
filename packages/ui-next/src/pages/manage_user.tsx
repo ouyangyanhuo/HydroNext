@@ -1,7 +1,6 @@
-import { formatErrorMessage } from '@/utils/error';
 import { Badge, Button, Card, Group, Modal, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react';
+import { IconPlus, IconRefresh, IconSearch, IconTrash, IconUpload } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
@@ -13,10 +12,13 @@ import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
+import { formatUserName } from '@/utils/user-name';
 
 interface ManagedUser {
   _id: number;
   uname: string;
+  displayName?: string;
   mail?: string;
   priv?: number;
   regat?: string;
@@ -43,6 +45,11 @@ export default function ManageUserPage() {
   const [verifyPassword, setVerifyPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [createOpened, setCreateOpened] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newUser, setNewUser] = useState({
+    email: '', username: '', displayName: '', password: '', verifyPassword: '',
+  });
 
   const pageUrl = useMemo(() => buildUrl('manage_user', {}, initialQuery ? { q: initialQuery } : {}), [buildUrl, initialQuery]);
   const isProtectedUser = (user: ManagedUser) => user._id <= 0 || user._id === 1 || user.priv === -1;
@@ -61,6 +68,45 @@ export default function ManageUserPage() {
 
   const openDeleteDialog = (user: ManagedUser) => {
     setDeleteUser(user);
+  };
+
+  const openCreateDialog = () => {
+    setNewUser({ email: '', username: '', displayName: '', password: '', verifyPassword: '' });
+    setCreateOpened(true);
+  };
+
+  const submitCreate = async () => {
+    if (newUser.password !== newUser.verifyPassword) {
+      notifications.show({ title: t('Passwords do not match'), message: '', color: 'red' });
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await fetch(window.location.href, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          operation: 'create_user',
+          email: newUser.email,
+          username: newUser.username,
+          password: newUser.password,
+          displayName: newUser.displayName,
+        }),
+      });
+      const type = res.headers.get('content-type') || '';
+      const data = type.includes('json') ? await res.json() : {};
+      if (!res.ok || data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, t('Save failed')), message: '', color: 'red' });
+      } else {
+        notifications.show({ title: t('Save successfully'), message: '', color: 'green' });
+        setCreateOpened(false);
+        window.location.reload();
+      }
+    } catch (err: any) {
+      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
+    } finally {
+      setCreating(false);
+    }
   };
 
   const submitReset = async () => {
@@ -188,7 +234,15 @@ export default function ManageUserPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('User Management')}>
-        <Badge variant="light">{t('Total')}: {totalUsers}</Badge>
+        <Group gap="xs">
+          <Badge variant="light">{t('Total')}: {totalUsers}</Badge>
+          <Button component={Link} to="manage_user_import" size="xs" variant="default" leftSection={<IconUpload size={14} />}>
+            {t('Import User')}
+          </Button>
+          <Button size="xs" leftSection={<IconPlus size={14} />} onClick={openCreateDialog}>
+            {t('Create')} {t('User')}
+          </Button>
+        </Group>
       </PageHeader>
 
       <Card withBorder p="lg" className="hydro-content-card">
@@ -226,6 +280,57 @@ export default function ManageUserPage() {
       </Card>
 
       <Modal
+        opened={createOpened}
+        title={`${t('Create')} ${t('User')}`}
+        onClose={() => setCreateOpened(false)}
+      >
+        <Stack gap="md">
+          <TextInput
+            label={t('Email')}
+            type="email"
+            value={newUser.email}
+            onChange={(e) => setNewUser((current) => ({ ...current, email: e.currentTarget.value }))}
+            required
+            autoFocus
+          />
+          <TextInput
+            label={t('Username')}
+            value={newUser.username}
+            onChange={(e) => setNewUser((current) => ({ ...current, username: e.currentTarget.value }))}
+            required
+          />
+          <TextInput
+            label={t('Name')}
+            value={newUser.displayName}
+            onChange={(e) => setNewUser((current) => ({ ...current, displayName: e.currentTarget.value }))}
+          />
+          <PasswordInput
+            label={t('Password')}
+            value={newUser.password}
+            onChange={(e) => setNewUser((current) => ({ ...current, password: e.currentTarget.value }))}
+            required
+          />
+          <PasswordInput
+            label={t('Confirm Password')}
+            value={newUser.verifyPassword}
+            onChange={(e) => setNewUser((current) => ({ ...current, verifyPassword: e.currentTarget.value }))}
+            required
+          />
+          <Group justify="flex-end">
+            <Button variant="default" size="xs" onClick={() => setCreateOpened(false)}>{t('Cancel')}</Button>
+            <Button
+              size="xs"
+              onClick={submitCreate}
+              loading={creating}
+              disabled={!newUser.email || !newUser.username || !newUser.password || !newUser.verifyPassword}
+            >
+              {t('Create')}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
         opened={!!dialogUser}
         title={dialogUser ? `${t('Reset Password')} #${dialogUser._id}` : t('Reset Password')}
         onClose={() => setDialogUser(null)}
@@ -233,7 +338,7 @@ export default function ManageUserPage() {
         <Stack gap="md">
           {dialogUser && (
             <Text size="sm">
-              {t('Reset password for')} <Text component="span" fw={700}>{dialogUser.uname}</Text>
+              {t('Reset password for')} <Text component="span" fw={700}>{formatUserName(dialogUser)}</Text>
             </Text>
           )}
           <PasswordInput
@@ -264,7 +369,7 @@ export default function ManageUserPage() {
         <Stack gap="md">
           {deleteUser && (
             <Text size="sm">
-              {t('Ban user confirmation')} <Text component="span" fw={700}>{deleteUser.uname}</Text>
+              {t('Ban user confirmation')} <Text component="span" fw={700}>{formatUserName(deleteUser)}</Text>
             </Text>
           )}
           <Group justify="flex-end">

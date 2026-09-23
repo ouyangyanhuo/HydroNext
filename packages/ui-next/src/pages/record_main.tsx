@@ -15,6 +15,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { useSessionStore } from '@/stores/session';
+import { formatUserName } from '@/utils/user-name';
 
 const ALL_FILTER = '__all__';
 const RECORD_PAGE_SIZES = [25, 50] as const;
@@ -190,7 +191,7 @@ function RecordMainContent({ args }: { args: any }) {
       width: 120,
       render: (r: any) => {
         const udoc = udict[r.uid];
-        return <Text size="xs" fw={600}>{udoc?.uname || udoc?.displayName || r.uid}</Text>;
+        return <Text size="xs" fw={600}>{udoc ? formatUserName(udoc) : r.uid}</Text>;
       },
     },
     {

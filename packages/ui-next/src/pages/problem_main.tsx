@@ -159,6 +159,7 @@ export default function ProblemMainPage() {
   const { args } = usePageData();
   const user = useUserContext();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const navigate = useNavigate();
   const { loading: routeLoading } = useRouterState();
   const storeCanCreate = useHasPerm(PERM.PERM_CREATE_PROBLEM);
@@ -268,8 +269,11 @@ export default function ProblemMainPage() {
         const lang = useSessionStore.getState().language;
         return (
           <Link
-            to="problem_detail"
-            params={{ pid: p.pid || p.docId }}
+            href={buildUrl('problem_detail', { pid: p.pid || p.docId }, {
+              page: String(page),
+              ...(qs ? { q: qs } : {}),
+              ...(sort !== 'default' ? { sort } : {}),
+            })}
             className="hydro-subtle-link"
           >
             <Text size="sm" fw={700}>{extractLocalizedContent(p.title, lang)}</Text>

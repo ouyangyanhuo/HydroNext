@@ -282,15 +282,13 @@ a {
   line-height: 1.65;
 }
 
-.hydro-primary-action,
-.hydro-secondary-action {
+.hydro-primary-action {
   min-width: 118px;
   transition: transform var(--hydro-duration-normal) var(--hydro-ease-out),
               box-shadow var(--hydro-duration-normal) var(--hydro-ease-out);
 }
 
-.hydro-primary-action:hover,
-.hydro-secondary-action:hover {
+.hydro-primary-action:hover {
   transform: translateY(-2px);
 }
 
@@ -666,7 +664,6 @@ a {
   }
 
   .hydro-primary-action,
-  .hydro-secondary-action,
   .hydro-stat__icon,
   .hydro-data-row,
   .hydro-data-row::before,
@@ -675,7 +672,6 @@ a {
   }
 
   .hydro-primary-action:hover,
-  .hydro-secondary-action:hover,
   .hydro-data-row:hover,
   .hydro-stat:hover .hydro-stat__icon {
     transform: none;
@@ -1867,6 +1863,7 @@ a {
 
 .hydro-scratchpad-run-action,
 .hydro-scratchpad-submit-action,
+.hydro-scratchpad-template-action,
 .hydro-scratchpad-tool-action {
   transition: box-shadow var(--hydro-duration-normal) var(--hydro-ease-out),
               transform var(--hydro-duration-normal) var(--hydro-ease-out);
@@ -1874,14 +1871,17 @@ a {
 
 .hydro-scratchpad-run-action:hover,
 .hydro-scratchpad-submit-action:hover,
+.hydro-scratchpad-template-action:hover,
 .hydro-scratchpad-tool-action:hover {
   transform: translateY(-1px);
 }
 
+.hydro-scratchpad-template-action,
 .hydro-scratchpad-tool-action {
   color: var(--hydro-text-muted);
 }
 
+.hydro-scratchpad-template-action:hover,
 .hydro-scratchpad-tool-action:hover {
   color: var(--hydro-primary-strong);
   background-color: var(--hydro-primary-soft);
@@ -1896,15 +1896,29 @@ a {
   background-color: var(--hydro-bg-soft);
 }
 
-.hydro-scratchpad-console__tabs {
+.hydro-scratchpad-console__toolbar {
   display: flex;
-  min-height: 38px;
-  flex: 0 0 38px;
-  gap: 2px;
-  align-items: stretch;
-  padding-inline: 8px;
+  min-height: 40px;
+  flex: 0 0 40px;
+  align-items: center;
   border-bottom: 1px solid var(--hydro-border);
   background-color: color-mix(in srgb, var(--hydro-surface-tint) 72%, var(--hydro-surface-raised));
+}
+
+.hydro-scratchpad-console__tabs {
+  display: flex;
+  min-width: 0;
+  align-self: stretch;
+  flex: 1 1 auto;
+  gap: 2px;
+  align-items: stretch;
+  padding-left: 8px;
+}
+
+.hydro-scratchpad-console__run-action {
+  flex: 0 0 auto;
+  margin: 5px 8px 5px auto;
+  white-space: nowrap;
 }
 
 .hydro-scratchpad-console__tab {
@@ -2126,6 +2140,7 @@ a {
 
   .hydro-scratchpad-run-action,
   .hydro-scratchpad-submit-action,
+  .hydro-scratchpad-template-action,
   .hydro-scratchpad-tool-action,
   .hydro-scratchpad-toolbar .mantine-Input-input,
   .hydro-scratchpad-settings__form .mantine-Input-input,
@@ -2135,6 +2150,7 @@ a {
 
   .hydro-scratchpad-run-action:hover,
   .hydro-scratchpad-submit-action:hover,
+  .hydro-scratchpad-template-action:hover,
   .hydro-scratchpad-tool-action:hover {
     transform: none;
   }
@@ -3152,6 +3168,21 @@ a {
   box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
   -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(112%);
   backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(112%);
+}
+
+/* Interactive overlays must stay fully opaque over dense page content. */
+.mantine-Modal-content,
+.mantine-Drawer-content,
+.mantine-Popover-dropdown,
+.mantine-Menu-dropdown,
+.mantine-Combobox-dropdown,
+.mantine-Notification-root,
+.mantine-Alert-root {
+  opacity: 1 !important;
+  background-color: var(--hydro-surface-raised) !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .mantine-Accordion-item,

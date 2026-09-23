@@ -19,9 +19,6 @@
     <ol class="nav__list nav__list--secondary clearfix">
     {% if not handler.user.hasPriv(PRIV.PRIV_USER_PROFILE) %}
       <li class="nav__list-item"><a href="{{ url('user_login') }}" class="nav__item" name="nav_login">{{ _('Login') }}</a></li>
-      {% if handler.user.hasPriv(PRIV.PRIV_REGISTER_USER) and model.system.get('server.login') %}
-      <li class="nav__list-item"><a href="{{ url('user_register') }}" class="nav__item--round">{{ _('Sign Up') }}</a></li>
-      {% endif %}
       <li class="nav__list-item nojs--hide" data-dropdown-pos="bottom right" data-dropdown-custom-class="nav__dropdown" data-dropdown-target="#menu-nav-user" data-dropdown-disabledconstrainToWindow data-dropdown-trigger-desktop-only>
         <a href="javascript:;" class="nav__item">
           <span class="icon icon-global"></span>Language <span class="icon icon-expand_more"></span>
@@ -57,16 +54,11 @@
       </li>
     {% endif %}
       <li class="nav__list-item" data-dropdown-pos="bottom right" data-dropdown-custom-class="nav__dropdown" data-dropdown-target="#menu-nav-user" data-dropdown-disabledconstrainToWindow data-dropdown-trigger-desktop-only>
-        <a href="{{ url('user_detail', uid=handler.user._id) }}" class="nav__item">{{ handler.user.uname }} <span class="icon icon-expand_more nojs--hide"></span></a>
+        <a href="{{ url('user_detail', uid=handler.user._id) }}" class="nav__item">{% if handler.user.displayName and handler.user.displayName != handler.user.uname %}{{ handler.user.displayName }} ({{ handler.user.uname }}){% else %}{{ handler.user.uname }}{% endif %} <span class="icon icon-expand_more nojs--hide"></span></a>
         <ol class="dropdown-target menu" id="menu-nav-user">
           <li class="menu__item">
             <a href="{{ url('user_detail', uid=handler.user._id) }}" class="menu__link">
               <span class="icon icon-account--circle"></span> {{ _('My Profile') }}
-            </a>
-          </li>
-          <li class="menu__item">
-            <a href="{{ url('home_messages') }}" class="menu__link">
-              <span class="icon icon-comment--multiple"></span> {{ _('home_messages') }}
             </a>
           </li>
           <li class="menu__seperator"></li>

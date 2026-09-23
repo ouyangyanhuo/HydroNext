@@ -3,22 +3,19 @@ import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import moment from 'moment-timezone';
 import { Binary } from 'mongodb';
 import Schema from 'schemastery';
-import { randomstring } from '@hydrooj/utils';
 import type { Context } from '../context';
 import {
     AuthOperationError, BadRequestError, BlacklistedError, BuiltinLoginError,
     ForbiddenError, InvalidTokenError, NotFoundError,
-    SystemError, UserAlreadyExistError, UserFacingError,
+    RegistrationDisabledError, SystemError, UserFacingError,
     UserNotFoundError, ValidationError, VerifyPasswordError,
 } from '../error';
-import { TokenDoc, Udoc, User } from '../interface';
+import { User } from '../interface';
 import avatar from '../lib/avatar';
 import { sendMail } from '../lib/mail';
 import { verifyTFA } from '../lib/verifyTFA';
-import BlackListModel from '../model/blacklist';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as ContestModel from '../model/contest';
-import domain from '../model/domain';
 import * as oplog from '../model/oplog';
 import problem, { ProblemDoc } from '../model/problem';
 import ScheduleModel from '../model/schedule';
@@ -27,7 +24,7 @@ import system from '../model/system';
 import token from '../model/token';
 import user, { deleteUserCache } from '../model/user';
 import {
-    Handler, param, post, Query, Types,
+    Handler, param, Query, Types,
 } from '../service/server';
 
 async function successfulAuth(this: Handler, udoc: User) {
@@ -233,102 +230,19 @@ class UserLogoutHandler extends Handler {
     }
 }
 
-// rename to RegisterSendMailHandler
 export class UserRegisterHandler extends Handler {
     noCheckPermView = true;
+
     async prepare() {
-        if (!system.get('server.login')) throw new BuiltinLoginError();
-    }
-
-    async get() {
-        this.response.template = 'user_register.html';
-    }
-
-    @post('mail', Types.Email)
-    async post({ }, mail: string) {
-        if (await user.getByEmail('system', mail)) throw new UserAlreadyExistError(mail);
-        const mailDomain = mail.split('@')[1];
-        if (await BlackListModel.get(`mail::${mailDomain}`)) throw new BlacklistedError(mailDomain);
-        await Promise.all([
-            this.limitRate('send_mail', 60, 1, mail),
-            this.limitRate('send_mail', 3600, 30),
-            oplog.log(this, 'user.register', {}),
-        ]);
-        const t = await token.add(
-            token.TYPE_REGISTRATION,
-            system.get('session.unsaved_expire_seconds'),
-            {
-                mail,
-                redirect: this.domain.registerRedirect,
-                identity: {
-                    provider: 'mail',
-                    platform: 'mail',
-                    id: mail,
-                },
-            },
-        );
-        const prefix = this.domain.host
-            ? `${this.domain.host instanceof Array ? this.domain.host[0] : this.domain.host}`
-            : system.get('server.url');
-        if (system.get('smtp.verify') && system.get('smtp.user')) {
-            const m = await this.renderHTML('user_register_mail.html', {
-                path: `/register/${t[0]}`,
-                url_prefix: prefix.endsWith('/') ? prefix.slice(0, -1) : prefix,
-            });
-            await sendMail(mail, 'Sign Up', 'user_register_mail', m.toString());
-            this.response.template = 'user_register_mail_sent.html';
-            this.response.body = { mail };
-        } else this.response.redirect = this.url('user_register_with_code', { code: t[0] });
+        throw new RegistrationDisabledError();
     }
 }
 
 class UserRegisterWithCodeHandler extends Handler {
     noCheckPermView = true;
-    tdoc: TokenDoc;
 
-    @param('code', Types.String)
-    async prepare({ }, code: string) {
-        this.tdoc = await token.get(code, token.TYPE_REGISTRATION);
-        if (!this.tdoc?.identity) {
-            // prevent brute forcing tokens
-            await this.limitRate('user_register_with_code', 60, 5);
-            throw new InvalidTokenError(token.TYPE_TEXTS[token.TYPE_REGISTRATION], code);
-        }
-    }
-
-    async get() {
-        this.response.template = 'user_register_with_code.html';
-        this.response.body = this.tdoc;
-    }
-
-    @param('password', Types.Password)
-    @param('verifyPassword', Types.Password)
-    @param('uname', Types.Username, true)
-    @param('code', Types.String)
-    async post(
-        domainId: string, password: string, verify: string,
-        uname = '', code: string,
-    ) {
-        const provider = this.ctx.oauth.providers[this.tdoc.identity.provider];
-        if (!provider) throw new SystemError(`OAuth provider ${this.tdoc.identity.provider} not found`);
-        if (provider.lockUsername) uname = this.tdoc.identity.username;
-        if (!Types.Username[1](uname)) throw new ValidationError('uname');
-        if (password !== verify) throw new VerifyPasswordError();
-        const randomEmail = `${randomstring(12)}@invalid.local`; // some random email to remove in the future
-        const uid = await user.create(this.tdoc.mail || randomEmail, uname, password, undefined, this.request.ip);
-        await token.del(code, token.TYPE_REGISTRATION);
-        const [id, mailDomain] = this.tdoc.mail.split('@');
-        const $set: any = this.tdoc.set || {};
-        if (mailDomain === 'qq.com' && !Number.isNaN(+id)) {
-            $set.avatar = `qq:${id}`;
-            $set.qq = `${id}`;
-        }
-        if (this.session.viewLang) $set.viewLang = this.session.viewLang;
-        if (Object.keys($set).length) await user.setById(uid, $set);
-        if (Object.keys(this.tdoc.setInDomain || {}).length) await domain.setUserInDomain(domainId, uid, this.tdoc.setInDomain);
-        await this.ctx.oauth.set(this.tdoc.identity.platform, this.tdoc.identity.id, uid);
-        await successfulAuth.call(this, await user.getById(domainId, uid));
-        this.response.redirect = this.tdoc.redirect || this.url('home_settings', { category: 'preference' });
+    async prepare() {
+        throw new RegistrationDisabledError();
     }
 }
 
@@ -415,12 +329,15 @@ class UserDetailHandler extends Handler {
             ));
         }
         for (const pdoc of pdocs) {
-            for (const tag of pdoc.tag) {
+            for (const tag of pdoc.tag || []) {
                 if (acInfo[tag]) acInfo[tag]++;
                 else acInfo[tag] = 1;
             }
         }
-        const tags = Object.entries(acInfo).sort((a, b) => b[1] - a[1]).slice(0, 20);
+        const tags = Object.entries(acInfo)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 20)
+            .map(([name, count]) => ({ name, count }));
         const tsdocs = await ContestModel.getMultiStatus(domainId, { uid, attend: { $exists: true } }).project({ docId: 1 }).toArray();
         const tdocs = await ContestModel.getMulti(domainId, { docId: { $in: tsdocs.map((i) => i.docId) } })
             .project({ docId: 1, title: 1, rule: 1 }).sort({ _id: -1 }).toArray();
@@ -524,41 +441,7 @@ class OauthCallbackHandler extends Handler {
             delete this.session.oauthRedirect;
             return;
         }
-        if (!provider.canRegister) throw new ForbiddenError('No binded account found');
-        this.checkPriv(PRIV.PRIV_REGISTER_USER);
-        let username = '';
-        r.uname ||= [];
-        const mailDomain = r.email.split('@')[1];
-        if (await BlackListModel.get(`mail::${mailDomain}`)) throw new BlacklistedError(mailDomain);
-        for (const uname of r.uname) {
-            // eslint-disable-next-line no-await-in-loop
-            const nudoc = await user.getByUname('system', uname);
-            if (!nudoc) {
-                username = uname;
-                break;
-            }
-        }
-        const set: Partial<Udoc> = { ...r.set };
-        if (r.bio) set.bio = r.bio;
-        if (r.viewLang) set.viewLang = r.viewLang;
-        if (r.avatar) set.avatar = r.avatar;
-        const [t] = await token.add(
-            token.TYPE_REGISTRATION,
-            system.get('session.unsaved_expire_seconds'),
-            {
-                mail: r.email,
-                username,
-                redirect: this.domain.registerRedirect,
-                set,
-                setInDomain: r.setInDomain,
-                identity: {
-                    provider: args.type,
-                    platform: args.type,
-                    id: r._id,
-                },
-            },
-        );
-        this.response.redirect = this.url('user_register_with_code', { code: t });
+        throw new RegistrationDisabledError();
     }
 }
 

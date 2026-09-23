@@ -10,6 +10,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
 import { formatErrorMessage } from '@/utils/error';
+import { formatUserName } from '@/utils/user-name';
 
 function normalizeRoles(input: any) {
   if (Array.isArray(input)) return input;
@@ -54,7 +55,7 @@ interface UserSearchItem {
 }
 
 function formatUserLabel(user: UserSearchItem) {
-  return user.displayName ? `${user.uname} (${user.displayName})` : user.uname;
+  return formatUserName(user);
 }
 
 interface AddUserDialogProps {

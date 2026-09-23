@@ -17,6 +17,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
+import { formatUserName } from '@/utils/user-name';
 
 const MAX_HEIGHT = 260;
 
@@ -243,7 +244,7 @@ function SolutionCard({
               <Stack gap={0}>
                 <Group gap={6} wrap="nowrap" align="center">
                   <Link to="user_detail" params={{ uid: udoc._id }} className="no-underline">
-                    <Text size="sm" fw={600} className="hover:underline">{udoc.uname}</Text>
+                    <Text size="sm" fw={600} className="hover:underline">{formatUserName(udoc)}</Text>
                   </Link>
                   <UserBadges user={udoc} />
                 </Group>
@@ -314,7 +315,7 @@ function SolutionCard({
                       <Group gap="xs" wrap="nowrap">
                         <UserAvatar user={replyUser} size={20} />
                         <Link to="user_detail" params={{ uid: replyUser._id }} className="no-underline">
-                          <Text size="xs" fw={600} className="hover:underline">{replyUser.uname}</Text>
+                          <Text size="xs" fw={600} className="hover:underline">{formatUserName(replyUser)}</Text>
                         </Link>
                         <UserBadges user={replyUser} />
                         <Text size="xs" c="dimmed">

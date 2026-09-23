@@ -1,11 +1,11 @@
 import {
-    omit, pick, throttle, uniqBy,
+    escapeRegExp, omit, pick, throttle, uniqBy,
 } from 'lodash';
 import { Filter, ObjectId } from 'mongodb';
 import {
     ContestNotFoundError, HackRejudgeFailedError,
     PermissionError, PretestRejudgeFailedError, ProblemConfigError,
-    ProblemNotFoundError, RecordNotFoundError, UserNotFoundError,
+    RecordNotFoundError,
 } from '../error';
 import { RecordDoc, Tdoc } from '../interface';
 import { PERM, PRIV, STATUS } from '../model/builtin';
@@ -23,12 +23,52 @@ import { buildProjection, Time } from '../utils';
 import { ContestDetailBaseHandler } from './contest';
 import { postJudge } from './judge';
 
+async function resolveRecordUserIds(domainId: string, value: string) {
+    const keyword = value.trim();
+    if (!keyword) return [];
+    if (/^-?\d+$/.test(keyword)) {
+        const udoc = await user.getById(domainId, +keyword);
+        return udoc ? [udoc._id] : [];
+    }
+    const exact = await user.getByUname(domainId, keyword)
+        || (keyword.includes('@') ? await user.getByEmail(domainId, keyword) : null);
+    if (exact) return [exact._id];
+    return await user.getFuzzyIds(domainId, keyword);
+}
+
+async function resolveRecordProblemIds(
+    domainId: string,
+    value: string | number,
+    tdoc: Tdoc | null,
+    canViewHidden: boolean,
+) {
+    let keyword: string | number = value;
+    if (typeof keyword === 'string' && tdoc && /^[A-Z]$/.test(keyword)) {
+        keyword = tdoc.pids[Number.parseInt(keyword, 36) - 10];
+    }
+    const exact = await problem.get(domainId, keyword);
+    if (exact && (canViewHidden || !exact.hidden) && (!tdoc || tdoc.pids.includes(exact.docId))) return [exact.docId];
+
+    const $regex = escapeRegExp(String(value).trim());
+    if (!$regex) return [];
+    const query: Filter<ProblemDoc> = {
+        $or: [
+            { title: { $regex, $options: 'i' } },
+            { pid: { $regex, $options: 'i' } },
+        ],
+    };
+    if (!canViewHidden) query.hidden = { $ne: true };
+    if (tdoc) query.docId = { $in: tdoc.pids };
+    const pdocs = await problem.getMulti(domainId, query, ['docId']).toArray();
+    return pdocs.map((pdoc) => pdoc.docId);
+}
+
 export class RecordListHandler extends ContestDetailBaseHandler {
     @param('page', Types.PositiveInt, true)
     @param('pageSize', Types.PositiveInt, true)
-    @param('pid', Types.ProblemId, true)
+    @param('pid', Types.String, true)
     @param('tid', Types.ObjectId, true)
-    @param('uidOrName', Types.UidOrName, true)
+    @param('uidOrName', Types.String, true)
     @param('lang', Types.String, true)
     @param('status', Types.Int, true)
     @param('fullStatus', Types.Boolean)
@@ -47,19 +87,19 @@ export class RecordListHandler extends ContestDetailBaseHandler {
         const q: Filter<RecordDoc> = { contest: tid };
         if (full) uidOrName = this.user._id.toString();
         if (uidOrName) {
-            const udoc = await user.getById(domainId, +uidOrName)
-                || await user.getByUname(domainId, uidOrName)
-                || await user.getByEmail(domainId, uidOrName);
-            if (udoc) q.uid = udoc._id;
+            const uids = await resolveRecordUserIds(domainId, uidOrName);
+            if (uids.length) q.uid = { $in: uids };
             else invalid = true;
         }
-        if (q.uid !== this.user._id) this.checkPerm(PERM.PERM_VIEW_RECORD);
+        const isSelfOnly = q.uid && typeof q.uid === 'object'
+            && '$in' in q.uid && q.uid.$in.length === 1 && q.uid.$in[0] === this.user._id;
+        if (!isSelfOnly) this.checkPerm(PERM.PERM_VIEW_RECORD);
         if (tid) {
             tdoc = await contest.get(domainId, tid);
             this.tdoc = tdoc;
             if (!tdoc) throw new ContestNotFoundError(domainId, pid);
             if (!contest.canShowScoreboard.call(this, tdoc, true)) throw new PermissionError(PERM.PERM_VIEW_CONTEST_HIDDEN_SCOREBOARD);
-            if (!contest[q.uid === this.user._id ? 'canShowSelfRecord' : 'canShowRecord'].call(this, tdoc, true)) {
+            if (!contest[isSelfOnly ? 'canShowSelfRecord' : 'canShowRecord'].call(this, tdoc, true)) {
                 throw new PermissionError(PERM.PERM_VIEW_CONTEST_HIDDEN_SCOREBOARD);
             }
             if (!(await contest.getStatus(domainId, tid, this.user._id))?.attend) {
@@ -70,11 +110,10 @@ export class RecordListHandler extends ContestDetailBaseHandler {
             }
         }
         if (pid) {
-            if (typeof pid === 'string' && tdoc && /^[A-Z]$/.test(pid)) {
-                pid = tdoc.pids[Number.parseInt(pid, 36) - 10];
-            }
-            const pdoc = await problem.get(domainId, pid);
-            if (pdoc) q.pid = pdoc.docId;
+            const pids = await resolveRecordProblemIds(
+                domainId, pid, tdoc, this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN),
+            );
+            if (pids.length) q.pid = { $in: pids };
             else invalid = true;
         }
         if (lang) q.lang = lang;
@@ -261,7 +300,8 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
     allDomain = false;
     tid: string;
     uid: number;
-    pid: number;
+    uids?: Set<number>;
+    pids?: Set<number>;
     lang: string;
     status: number;
     pretest = false;
@@ -273,8 +313,8 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
     throttleQueueClear: () => void;
 
     @param('tid', Types.ObjectId, true)
-    @param('pid', Types.ProblemId, true)
-    @param('uidOrName', Types.UidOrName, true)
+    @param('pid', Types.String, true)
+    @param('uidOrName', Types.String, true)
     @param('lang', Types.String, true)
     @param('status', Types.Int, true)
     @param('pretest', Types.Boolean)
@@ -298,19 +338,15 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
             this.pretest = true;
             this.uid = this.user._id;
         } else if (uidOrName) {
-            let udoc = await user.getById(domainId, +uidOrName);
-            if (udoc) this.uid = udoc._id;
-            else {
-                udoc = await user.getByUname(domainId, uidOrName);
-                if (udoc) this.uid = udoc._id;
-                else throw new UserNotFoundError(uidOrName);
-            }
+            this.uids = new Set(await resolveRecordUserIds(domainId, uidOrName));
         }
-        if (this.uid !== this.user._id) this.checkPerm(PERM.PERM_VIEW_RECORD);
+        const isSelfOnly = this.uid === this.user._id
+            || (this.uids?.size === 1 && this.uids.has(this.user._id));
+        if (!isSelfOnly) this.checkPerm(PERM.PERM_VIEW_RECORD);
         if (pid) {
-            const pdoc = await problem.get(domainId, pid);
-            if (pdoc) this.pid = pdoc.docId;
-            else throw new ProblemNotFoundError(domainId, pid);
+            this.pids = new Set(await resolveRecordProblemIds(
+                domainId, pid, this.tdoc, this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN),
+            ));
         }
         if (lang) this.lang = lang;
         if (typeof status === 'number') this.status = status;
@@ -350,8 +386,9 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
                 }
             }
         }
-        if (typeof this.pid === 'number' && rdoc.pid !== this.pid) return;
+        if (this.pids && !this.pids.has(rdoc.pid)) return;
         if (typeof this.uid === 'number' && rdoc.uid !== this.uid) return;
+        if (this.uids && !this.uids.has(rdoc.uid)) return;
         if (this.lang && rdoc.lang !== this.lang) return;
         if (typeof this.status === 'number'
             && rdoc.status !== this.status
@@ -372,10 +409,7 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
         } else if (this.noTemplate) {
             this.queueSend(rdoc._id.toHexString(), async () => ({
                 rdoc,
-                udoc: udoc ? pick(udoc, [
-                    '_id', 'uname',
-                    ...this.user.hasPerm(PERM.PERM_VIEW_USER_PRIVATE_INFO) ? ['displayName'] : [],
-                ]) : null,
+                udoc: udoc ? pick(udoc, ['_id', 'uname', 'displayName']) : null,
                 pdoc: pdoc ? pick(pdoc, ['domainId', 'docId', 'pid', 'title']) : null,
             }));
         } else {

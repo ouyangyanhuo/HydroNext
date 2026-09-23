@@ -1,4 +1,5 @@
 import { Badge, Button, Card, Code, Group, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
 import { TimeDisplay } from '@/components/common/time-display';
@@ -250,6 +251,11 @@ export default function RecordDetailPage() {
   const problemTitle = extractLocalizedContent(pdoc.title, language);
   const contestTitle = extractLocalizedContent(tdoc?.title, language);
 
+  const goBack = () => {
+    if (window.history.length > 1) window.history.back();
+    else window.location.assign(buildUrl('record_main'));
+  };
+
   const submitOperation = async (operation: 'rejudge' | 'cancel') => {
     setActionLoading(operation);
     setError('');
@@ -273,6 +279,17 @@ export default function RecordDetailPage() {
 
   return (
     <Stack gap="lg" className="hydro-record-detail">
+      <Group justify="flex-start">
+        <Button
+          type="button"
+          variant="subtle"
+          size="compact-sm"
+          leftSection={<IconArrowLeft size={15} />}
+          onClick={goBack}
+        >
+          {t('Back')}
+        </Button>
+      </Group>
       {error && <Text c="red" size="sm">{error}</Text>}
       <Card withBorder p="xl" className="hydro-record-hero overflow-hidden">
         <Badge variant="light" className="hydro-record-accent-badge" mb="sm">

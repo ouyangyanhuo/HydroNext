@@ -6,7 +6,7 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconCode, IconFileText, IconPlayerPlay, IconSend, IconSettings, IconTerminal2, IconX,
+  IconCode, IconFileText, IconPlayerPlay, IconSend, IconSettings, IconTemplate, IconTerminal2, IconX,
 } from '@tabler/icons-react';
 import { Allotment } from 'allotment';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -24,6 +24,7 @@ import {
   loadStoredEditorConfig,
   saveStoredEditorConfig,
 } from './code-editor';
+import { getCodeTemplate } from './code-templates';
 
 interface ScratchpadProps {
   pid: string | number;
@@ -162,6 +163,7 @@ export function Scratchpad({
     const type = ui.pdoc?.config?.type;
     return !type || type === 'default' || type === 'remote_judge';
   }, [lang, langs, ui.pdoc?.config?.type]);
+  const selectedCodeTemplate = getCodeTemplate(lang);
 
   const updateEditorConfig = useCallback((patch: EditorConfig) => {
     setEditorConfig((current) => {
@@ -244,6 +246,21 @@ export function Scratchpad({
       flushing: false,
     };
   }, [lang, replayStorageKey]);
+
+  const loadCodeTemplate = useCallback(() => {
+    if (!selectedCodeTemplate) {
+      notifications.show({
+        title: t('No code template is available for this language.'),
+        message: '',
+        color: 'yellow',
+      });
+      return;
+    }
+    setCode(selectedCodeTemplate);
+    setError('');
+    resetReplaySession(selectedCodeTemplate);
+    notifications.show({ title: t('Code template loaded'), message: '', color: 'green' });
+  }, [resetReplaySession, selectedCodeTemplate, t]);
 
   const captureChange = useCallback((event: any, editor: any) => {
     if (!resolvedReplayUrl || !user?._id) return;
@@ -483,19 +500,6 @@ export function Scratchpad({
                   />
                 </Group>
                 <Group gap="xs" wrap="nowrap" className="hydro-scratchpad-toolbar__actions">
-                  {canUsePretest && (
-                    <Button
-                      size="xs"
-                      variant="light"
-                      leftSection={<IconPlayerPlay size={14} />}
-                      onClick={() => postJudge(true)}
-                      loading={pretesting}
-                      disabled={submitting || pretestCooldown > 0}
-                      className="hydro-scratchpad-run-action"
-                    >
-                      {pretestCooldown ? `${t('Run Self Test')} (${pretestCooldown}s)` : t('Run Self Test')}
-                    </Button>
-                  )}
                   <Button
                     size="xs"
                     leftSection={<IconSend size={14} />}
@@ -506,6 +510,16 @@ export function Scratchpad({
                   >
                     {submitCooldown ? `${t('Submit Solution')} (${submitCooldown}s)` : t('Submit Solution')}
                   </Button>
+                  <Tooltip label={t('Load Code Template')}>
+                    <ActionIcon
+                      className="hydro-scratchpad-template-action"
+                      variant="subtle"
+                      onClick={loadCodeTemplate}
+                      aria-label={t('Load Code Template')}
+                    >
+                      <IconTemplate size={18} />
+                    </ActionIcon>
+                  </Tooltip>
                   <Tooltip label={t('Editor Settings')}>
                     <ActionIcon
                       className="hydro-scratchpad-tool-action"
@@ -550,26 +564,41 @@ export function Scratchpad({
                     <Stack gap={0} className="hydro-scratchpad-console h-full min-h-0 overflow-hidden">
                       <Divider />
                       <div className="hydro-scratchpad-console-workspace">
-                        <div className="hydro-scratchpad-console__tabs" role="tablist" aria-label={t('Self Test')}>
-                          <button
-                            type="button"
-                            role="tab"
-                            aria-selected={activePanel === 'records'}
-                            className="hydro-scratchpad-console__tab"
-                            onClick={() => setActivePanel('records')}
-                          >
-                            {t('Records')}
-                          </button>
-                          <button
-                            type="button"
-                            role="tab"
-                            aria-selected={activePanel === 'pretest'}
-                            className="hydro-scratchpad-console__tab"
-                            onClick={() => setActivePanel('pretest')}
-                          >
-                            <IconTerminal2 size={14} />
-                            {t('Self Test')}
-                          </button>
+                        <div className="hydro-scratchpad-console__toolbar">
+                          <div className="hydro-scratchpad-console__tabs" role="tablist" aria-label={t('Self Test')}>
+                            <button
+                              type="button"
+                              role="tab"
+                              aria-selected={activePanel === 'records'}
+                              className="hydro-scratchpad-console__tab"
+                              onClick={() => setActivePanel('records')}
+                            >
+                              {t('Records')}
+                            </button>
+                            <button
+                              type="button"
+                              role="tab"
+                              aria-selected={activePanel === 'pretest'}
+                              className="hydro-scratchpad-console__tab"
+                              onClick={() => setActivePanel('pretest')}
+                            >
+                              <IconTerminal2 size={14} />
+                              {t('Self Test')}
+                            </button>
+                          </div>
+                          {canUsePretest ? (
+                            <Button
+                              size="compact-xs"
+                              variant="light"
+                              leftSection={<IconPlayerPlay size={14} />}
+                              onClick={() => postJudge(true)}
+                              loading={pretesting}
+                              disabled={submitting || pretestCooldown > 0}
+                              className="hydro-scratchpad-run-action hydro-scratchpad-console__run-action"
+                            >
+                              {pretestCooldown ? `${t('Run Self Test')} (${pretestCooldown}s)` : t('Run Self Test')}
+                            </Button>
+                          ) : null}
                         </div>
                         <div className="hydro-scratchpad-console__body">
                           {activePanel === 'records' ? (

@@ -410,9 +410,10 @@ class UserModel {
     static async getListForRender(domainId: string, uids: number[], extraFields?: string[]): Promise<BaseUserDict>;
     static async getListForRender(domainId: string, uids: number[], arg: string[] | boolean, extraFields?: string[]) {
         const _extraFields = Array.isArray(arg) ? arg : Array.isArray(extraFields) ? extraFields : [];
-        const showPrivateInfo = arg === true || _extraFields.includes('displayName');
+        const showPrivateInfo = arg === true;
         const fields = Array.from(new Set([
             ...(await UserModel.getById('system', 0)).getFields(showPrivateInfo ? 'private' : 'public'),
+            'displayName',
             ..._extraFields,
         ]));
         const [udocs, vudocs, dudocs] = await Promise.all([
@@ -423,9 +424,7 @@ class UserModel {
         const udict = {};
         for (const udoc of udocs) udict[udoc._id] = udoc;
         for (const udoc of vudocs) udict[udoc._id] = udoc;
-        if (showPrivateInfo) {
-            for (const dudoc of dudocs) Object.assign(udict[dudoc.uid], omit(dudoc, ['_id', 'uid']));
-        }
+        for (const dudoc of dudocs) Object.assign(udict[dudoc.uid], omit(dudoc, ['_id', 'uid']));
         for (const uid of uids) udict[uid] ||= { ...UserModel.defaultUser };
         for (const key in udict) {
             udict[key].school ||= '';
@@ -441,9 +440,23 @@ class UserModel {
         const $regex = `^${escapeRegExp(prefix.toLowerCase())}`;
         const udocs = await coll.find({ unameLower: { $regex } })
             .limit(limit).project({ _id: 1 }).toArray();
-        const dudocs = await domain.getMultiUserInDomain(domainId, { displayName: { $regex } }).limit(limit).project({ uid: 1 }).toArray();
+        const dudocs = await domain.getMultiUserInDomain(domainId, { displayName: { $regex, $options: 'i' } })
+            .limit(limit).project({ uid: 1 }).toArray();
         const uids = uniq([...udocs.map(({ _id }) => _id), ...dudocs.map(({ uid }) => uid)]);
         return await Promise.all(uids.map((_id) => UserModel.getById(domainId, _id)));
+    }
+
+    static async getFuzzyIds(domainId: string, keyword: string) {
+        const value = keyword.trim();
+        if (!value) return [];
+        const usernameRegex = escapeRegExp(value.toLowerCase());
+        const displayNameRegex = escapeRegExp(value);
+        const [udocs, dudocs] = await Promise.all([
+            coll.find({ unameLower: { $regex: usernameRegex } }).project<{ _id: number }>({ _id: 1 }).toArray(),
+            domain.getMultiUserInDomain(domainId, { displayName: { $regex: displayNameRegex, $options: 'i' } })
+                .project<{ uid: number }>({ uid: 1 }).toArray(),
+        ]);
+        return uniq([...udocs.map(({ _id }) => _id), ...dudocs.map(({ uid }) => uid)]);
     }
 
     @ArgMethod

@@ -13,11 +13,13 @@ import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { getAvatarUrl } from '@/utils/avatar';
+import { formatUserName } from '@/utils/user-name';
 
 interface RankingUser {
   _id: number;
   uname: string;
   avatar?: string;
+  displayName?: string;
   rp?: number;
 }
 
@@ -40,6 +42,7 @@ export default function RankingPage() {
   const visibleUsers = udocs
     .map((user, index) => ({ user, rank: (page - 1) * pageSize + index + 1 }))
     .filter(({ user }) => !deferredSearch || user.uname?.toLocaleLowerCase().includes(deferredSearch)
+      || user.displayName?.toLocaleLowerCase().includes(deferredSearch)
       || String(user._id).includes(deferredSearch));
   const getSolved = (user: RankingUser) => solvedCounts[user._id] || 0;
   const podium = page === 1 ? [udocs[1], udocs[0], udocs[2]] : [];
@@ -89,7 +92,7 @@ export default function RankingPage() {
                   {rank === 1 ? <IconCrown size={34} stroke={1.7} /> : <IconMedal size={30} stroke={1.6} />}
                 </span>
                 <Avatar src={getAvatarUrl(user.avatar || '')} size={rank === 1 ? 68 : 58} radius="xl" className="ranking-podium-avatar" />
-                <Text className="ranking-podium-name" fw={700} truncate>{user.uname}</Text>
+                <Text className="ranking-podium-name" fw={700} truncate>{formatUserName(user)}</Text>
                 <div className="ranking-podium-stats">
                   <div><strong>{getSolved(user)}</strong><span>{t('Solved')}</span></div>
                   <div><strong>{getRp(user)}</strong><span>{t('RP')}</span></div>
@@ -143,7 +146,7 @@ export default function RankingPage() {
                   <Table.Td>
                     <Link to="user_detail" params={{ uid: user._id }} className="ranking-table-user">
                       <Avatar src={getAvatarUrl(user.avatar || '')} size={27} radius="xl" />
-                      <span>{user.uname}</span>
+                      <span>{formatUserName(user)}</span>
                     </Link>
                   </Table.Td>
                   <Table.Td fw={solvedRanking ? 700 : undefined}>{getSolved(user)}</Table.Td>

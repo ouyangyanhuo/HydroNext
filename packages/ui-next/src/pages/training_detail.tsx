@@ -126,6 +126,13 @@ export default function TrainingDetailPage() {
   const user = useUserContext();
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
+  const listSearch = new URLSearchParams(window.location.search);
+  const trainingListQuery = Object.fromEntries(
+    ['page', 'q']
+      .map((key) => [key, listSearch.get(key)] as const)
+      .filter((entry): entry is [string, string] => Boolean(entry[1])),
+  );
+  const trainingListUrl = buildUrl('training_main', {}, trainingListQuery);
   const isLoggedIn = useIsLoggedIn();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -188,7 +195,7 @@ export default function TrainingDetailPage() {
             <Group justify="space-between" align="flex-start" gap="md">
               <div className="min-w-0">
                 <Group gap="xs" mb="sm">
-                  <Button component="a" href={buildUrl('training_main')} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                  <Button component="a" href={trainingListUrl} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
                     {t('Back')}
                   </Button>
                   <Badge variant="light">{t('Training')}</Badge>
@@ -296,7 +303,7 @@ export default function TrainingDetailPage() {
               {canDelete && (
                 <DeleteResourceButton
                   actionUrl={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id })}
-                  fallbackUrl={buildUrl('training_main')}
+                  fallbackUrl={trainingListUrl}
                   label={t('Delete Training Plan')}
                   message={t('Confirm deleting this training? Its files and status will be deleted as well.')}
                 />
@@ -311,7 +318,10 @@ export default function TrainingDetailPage() {
                 {enrolledUsers.slice(0, 20).map(([uid, enrolledUser]) => (
                   <Link
                     key={uid}
-                    href={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id }, { uid: String(uid) })}
+                    href={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id }, {
+                      ...trainingListQuery,
+                      uid: String(uid),
+                    })}
                     className="rounded px-2 py-1 no-underline hover:bg-[var(--hydro-surface-hover)]"
                   >
                     <Group gap="xs" wrap="nowrap">

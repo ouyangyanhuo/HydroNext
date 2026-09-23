@@ -12,6 +12,7 @@ import { useDomainId } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 import { getLangDisplay, LANG_DISPLAY } from '@/utils/lang-display';
+import { formatUserName } from '@/utils/user-name';
 
 interface SearchOption {
   value: string;
@@ -227,7 +228,7 @@ export default function ContestEditPage() {
         setUserOptions((current) => mergeOptions(
           udocs.map((udoc) => ({
             value: String(udoc._id),
-            label: `${udoc.uname}${udoc.displayName ? ` (${udoc.displayName})` : ''}`,
+            label: formatUserName(udoc),
             description: `UID = ${udoc._id}`,
             avatarUrl: udoc.avatarUrl,
           })),
@@ -275,7 +276,7 @@ export default function ContestEditPage() {
       setUserOptions((current) => mergeOptions(
         udocs.map((udoc: any) => ({
           value: String(udoc._id),
-          label: `${udoc.uname}${udoc.displayName ? ` (${udoc.displayName})` : ''}`,
+          label: formatUserName(udoc),
           description: `UID = ${udoc._id}`,
           avatarUrl: udoc.avatarUrl,
         })),

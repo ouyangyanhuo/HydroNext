@@ -9,6 +9,7 @@ import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
 import { usePageData, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
@@ -33,8 +34,9 @@ function trainingProgress(tsdoc: any, total: number) {
   return Math.round(((tsdoc.donePids?.length || 0) / total) * 100);
 }
 
-function TrainingCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
+function TrainingCard({ tdoc, tsdoc, page, query }: { tdoc: any, tsdoc?: any, page: number, query: string }) {
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const pids = getTrainingPids(tdoc);
   const sections = getSections(tdoc);
   const progress = trainingProgress(tsdoc, pids.length);
@@ -43,8 +45,10 @@ function TrainingCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
 
   return (
     <Link
-      to="training_detail"
-      params={{ tid: tdoc.docId || tdoc._id }}
+      href={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id }, {
+        page: String(page),
+        ...(query ? { q: query } : {}),
+      })}
       className={`hydro-training-item hydro-training-item--${state}`}
     >
       <div className="hydro-training-item__participants">
@@ -95,13 +99,16 @@ function TrainingCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
   );
 }
 
-function EnrolledTraining({ tsdoc, tdoc }: { tsdoc: any, tdoc: any }) {
+function EnrolledTraining({ tsdoc, tdoc, page, query }: { tsdoc: any, tdoc: any, page: number, query: string }) {
+  const buildUrl = useBuildUrl();
   const progress = trainingProgress(tsdoc, getTrainingPids(tdoc).length);
 
   return (
     <Link
-      to="training_detail"
-      params={{ tid: tsdoc.docId || tsdoc._id }}
+      href={buildUrl('training_detail', { tid: tsdoc.docId || tsdoc._id }, {
+        page: String(page),
+        ...(query ? { q: query } : {}),
+      })}
       className={`hydro-training-enrolled-item${tsdoc.done ? ' hydro-training-enrolled-item--completed' : ''}`}
     >
       <Group justify="space-between" gap="sm" wrap="nowrap">
@@ -179,6 +186,8 @@ export default function TrainingMainPage() {
                   key={tdoc.docId || tdoc._id}
                   tdoc={tdoc}
                   tsdoc={tsdict[tdoc.docId || tdoc._id]}
+                  page={page}
+                  query={q}
                 />
               ))}
             </div>
@@ -202,6 +211,8 @@ export default function TrainingMainPage() {
                       key={tsdoc.docId || tsdoc._id}
                       tsdoc={tsdoc}
                       tdoc={tdict[tsdoc.docId] || tdict[tsdoc._id] || {}}
+                      page={page}
+                      query={q}
                     />
                   ))}
                 </Stack>

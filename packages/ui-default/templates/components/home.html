@@ -3,7 +3,6 @@
 <div class="section side">
   <ol class="menu">
     {{ sidemenu.render_item('account--circle', 'user_detail', {uid:handler.user._id}, label='My Profile') }}
-    {{ sidemenu.render_item('comment--multiple', 'home_messages') }}
     <li class="menu__seperator"></li>
     {{ sidemenu.render_item('web', 'home_settings', {category:'domain'}, label='Domain Settings', menu_item='home_domain') }}
     {{ sidemenu.render_item('web', 'home_domain', label='My Domains', memu_item='home_domains') }}

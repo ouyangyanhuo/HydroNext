@@ -19,8 +19,7 @@
             </div>
             <div class="media__body profile-header__main">
               <h1>
-                {{ udoc['uname'] }}
-                {% if handler.user.hasPerm(perm.PERM_VIEW_USER_PRIVATE_INFO) and udoc.displayName %}<small>({{ udoc['displayName'] }})</small>{% endif %}
+                {% if udoc.displayName and udoc.displayName != udoc.uname %}{{ udoc.displayName }} <small>({{ udoc.uname }})</small>{% else %}{{ udoc.uname }}{% endif %}
               </h1>
               <p>
                 {{ _('UID') }}: {{ udoc['_id'] }},
@@ -42,9 +41,6 @@
                   <span class="icon icon-edit"></span>
                 </a>
               {% endif %}
-                <a class="profile-header__contact-item" href="{{ url('home_messages', query={target:udoc._id}) }}" target="_blank" data-tooltip="{{ _('Send Message') }}">
-                  <span class="icon icon-comment--multiple"></span>
-                </a>
               {% if udoc['mail'] %}
                 <a class="profile-header__contact-item" href="javascript:;" data-copy="{{ udoc['mail'] | base64_encode }}" data-tooltip="{{ _('Copy Email') }}">
                   <span class="icon icon-mail"></span>

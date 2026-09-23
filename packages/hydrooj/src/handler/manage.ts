@@ -387,6 +387,22 @@ class SystemUserManageHandler extends SystemHandler {
     }
 
     @requireSudo
+    @param('email', Types.Email)
+    @param('username', Types.Username)
+    @param('password', Types.Password)
+    @param('displayName', Types.ShortString, true)
+    async postCreateUser(
+        domainId: string, email: string, username: string, password: string, displayName = '',
+    ) {
+        const uid = await user.create(email, username, password, undefined, this.request.ip);
+        await Promise.all([
+            displayName ? domain.setUserInDomain(domainId, uid, { displayName }) : Promise.resolve(),
+            oplog.log(this, 'user.create', { uid, email, username }),
+        ]);
+        this.response.body = { uid };
+    }
+
+    @requireSudo
     @param('uid', Types.PositiveInt)
     @param('password', Types.Password)
     async postResetPassword(domainId: string, uid: number, password: string) {

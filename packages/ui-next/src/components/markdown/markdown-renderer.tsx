@@ -36,6 +36,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
+import { formatUserName } from '@/utils/user-name';
 import { markdownXssPlugin } from './markdown-xss';
 
 hljs.registerLanguage('cpp', cpp);
@@ -436,7 +437,7 @@ export function MarkdownRenderer({ content, className, language, pid }: Markdown
         users.forEach((user: any) => {
           const uid = Number(user?._id);
           if (!Number.isSafeInteger(uid)) return;
-          const name = String(user.displayName || user.uname || '').trim() || null;
+          const name = formatUserName(user).trim() || null;
           mentionNameCache.set(`${cachePrefix}${uid}`, name);
           resolvedIds.add(uid);
         });

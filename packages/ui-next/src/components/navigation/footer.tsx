@@ -1,12 +1,28 @@
-import { Anchor, Group, Text, Tooltip } from '@mantine/core';
+import { Anchor, Group, Stack, Text, Tooltip } from '@mantine/core';
 import { Link } from '@/components/link';
-import { buildIdentifier } from '@/globals';
+import { buildIdentifier, buildTime } from '@/globals';
 import { useI18n } from '@/hooks/use-i18n';
 import { FontMenu } from './font-menu';
 import { LanguageMenu } from './language-menu';
 
+function formatBuildTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const parts = new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;
+}
+
 export function Footer() {
   const { t } = useI18n();
+  const formattedBuildTime = formatBuildTime(buildTime);
 
   return (
     <footer className="border-t border-[var(--hydro-border)] bg-[var(--hydro-nav-bg)]">
@@ -19,20 +35,32 @@ export function Footer() {
               </Text>
               {buildIdentifier ? (
                 <Tooltip
-                  label={buildIdentifier}
+                  label={(
+                    <Stack gap={5}>
+                      <div>
+                        <Text size="10px" c="dimmed" fw={700}>{t('Version')}</Text>
+                        <Text size="xs" ff="monospace" className="break-all">{buildIdentifier}</Text>
+                      </div>
+                      {formattedBuildTime ? (
+                        <div>
+                          <Text size="10px" c="dimmed" fw={700}>{t('Build Time')}</Text>
+                          <Text size="xs" ff="monospace">{formattedBuildTime}</Text>
+                        </div>
+                      ) : null}
+                    </Stack>
+                  )}
                   position="top-start"
                   openDelay={180}
                   withArrow
                   multiline
                   maw={360}
-                  classNames={{ tooltip: 'font-mono break-all' }}
                 >
                   <Text
                     component="span"
                     tabIndex={0}
                     size="10px"
                     c="dimmed"
-                    aria-label={`${t('Version')}: ${buildIdentifier}`}
+                    aria-label={`${t('Version')}: ${buildIdentifier}${formattedBuildTime ? `; ${t('Build Time')}: ${formattedBuildTime}` : ''}`}
                     className="cursor-help select-none border-b border-dotted border-[var(--hydro-text-muted)] leading-none"
                   >
                     {t('Version')}

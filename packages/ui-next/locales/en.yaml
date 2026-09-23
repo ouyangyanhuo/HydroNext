@@ -387,6 +387,7 @@ Uploading...: Uploading...
 Nothing to preview: Nothing to preview
 Write: Write
 Preview: Preview
+Build Time: Build Time
 Version: Version
 No about page content configured.: No about page content configured.
 
@@ -397,6 +398,9 @@ Back to Home: Back to Home
 
 # Scratchpad
 Scratchpad: Scratchpad
+Code template loaded: Code template loaded
+Load Code Template: Load Code Template
+No code template is available for this language.: No code template is available for this language.
 Open Scratchpad: Open Scratchpad
 Quit Scratchpad: Quit Scratchpad
 Enter Online Programming Mode: Enter Online Programming Mode

@@ -27,72 +27,56 @@ class DomainRankHandler extends Handler {
     @query('page', Types.PositiveInt, true)
     @query('sort', Types.String, true)
     async get(domainId: string, page = 1, sort = 'solved') {
-        const limit = this.ctx.setting.get('pagination.ranking') || 100;
-        if (sort !== 'rp') {
-            const [result] = await document.collStatus.aggregate<{
-                users: { _id: number, solved: number }[];
-                total: { count: number }[];
-            }>([
-                { $match: { domainId, docType: document.TYPE_PROBLEM, status: STATUS.STATUS_ACCEPTED, uid: { $gt: 1 } } },
-                { $group: { _id: '$uid', solved: { $sum: 1 } } },
-                {
-                    $unionWith: {
-                        coll: domain.collUser.collectionName,
-                        pipeline: [
-                            { $match: { domainId, join: true, uid: { $gt: 1 } } },
-                            { $project: { _id: '$uid', solved: { $literal: 0 } } },
-                        ],
-                    },
-                },
-                { $group: { _id: '$_id', solved: { $max: '$solved' } } },
-                {
-                    $lookup: {
-                        from: domain.collUser.collectionName,
-                        localField: '_id',
-                        foreignField: 'uid',
-                        pipeline: [{ $match: { domainId, join: true } }, { $project: { _id: 1 } }],
-                        as: 'membership',
-                    },
-                },
-                { $match: { 'membership.0': { $exists: true } } },
-                { $sort: { solved: -1, _id: 1 } },
-                {
-                    $facet: {
-                        users: [{ $skip: (page - 1) * limit }, { $limit: limit }, { $project: { solved: 1 } }],
-                        total: [{ $count: 'count' }],
-                    },
-                },
-            ], { allowDiskUse: true }).toArray();
-            const rows = result?.users || [];
-            const ucount = result?.total[0]?.count || 0;
-            const udict = await user.getList(domainId, rows.map((row) => row._id));
-            this.response.template = 'ranking.html';
-            this.response.body = {
-                udocs: rows.map((row) => udict[row._id]),
-                solvedCounts: Object.fromEntries(rows.map((row) => [row._id, row.solved])),
-                upcount: Math.ceil(ucount / limit),
-                ucount,
-                page,
-                limit,
-                sort: 'solved',
-            };
-            return;
-        }
-        const [dudocs, upcount, ucount] = await this.paginate(
-            domain.getMultiUserInDomain(domainId, { uid: { $gt: 1 }, rp: { $gt: 0 }, join: true }).sort({ rp: -1 }),
-            page,
-            'ranking',
-        );
-        const udict = await user.getList(domainId, dudocs.map((dudoc) => dudoc.uid));
-        const udocs = dudocs.map((i) => udict[i.uid]);
-        const solvedRows = udocs.length ? await document.collStatus.aggregate<{ _id: number, solved: number }>([
-            { $match: { domainId, docType: document.TYPE_PROBLEM, status: STATUS.STATUS_ACCEPTED, uid: { $in: udocs.map((u) => u._id) } } },
+        const limit = Math.max(1, Math.min(Number(this.ctx.setting.get('pagination.ranking')) || 50, 50));
+        const rankingSort = sort === 'rp' ? 'rp' : 'solved';
+        const membershipMatch = rankingSort === 'rp'
+            ? { domainId, join: true, rp: { $gt: 0 } }
+            : { domainId, join: true };
+        const [result] = await document.collStatus.aggregate<{
+            users: { _id: number, solved: number, rp: number }[];
+            total: { count: number }[];
+        }>([
+            { $match: { domainId, docType: document.TYPE_PROBLEM, status: STATUS.STATUS_ACCEPTED, uid: { $gt: 1 } } },
             { $group: { _id: '$uid', solved: { $sum: 1 } } },
-        ]).toArray() : [];
+            {
+                $lookup: {
+                    from: domain.collUser.collectionName,
+                    localField: '_id',
+                    foreignField: 'uid',
+                    pipeline: [{ $match: membershipMatch }, { $project: { rp: 1 } }],
+                    as: 'membership',
+                },
+            },
+            { $match: { 'membership.0': { $exists: true } } },
+            { $set: { rp: { $ifNull: [{ $arrayElemAt: ['$membership.rp', 0] }, 0] } } },
+            { $sort: rankingSort === 'rp' ? { rp: -1, solved: -1, _id: 1 } : { solved: -1, rp: -1, _id: 1 } },
+            {
+                $facet: {
+                    users: [{ $skip: (page - 1) * limit }, { $limit: limit }, { $project: { solved: 1, rp: 1 } }],
+                    total: [{ $count: 'count' }],
+                },
+            },
+        ], { allowDiskUse: true }).toArray();
+        const rows = result?.users || [];
+        const ucount = result?.total[0]?.count || 0;
+        const udict = await user.getList(domainId, rows.map((row) => row._id));
+        const udocs = rows.map((row) => {
+            const udoc = udict[row._id];
+            return {
+                ...udoc.serialize(this),
+                displayName: udoc.displayName || '',
+                rp: Number(row.rp) || 0,
+            };
+        });
         this.response.template = 'ranking.html';
         this.response.body = {
-            udocs, solvedCounts: Object.fromEntries(solvedRows.map((row) => [row._id, row.solved])),
-            upcount, ucount, page, limit, sort: 'rp',
+            udocs,
+            solvedCounts: Object.fromEntries(rows.map((row) => [row._id, row.solved])),
+            upcount: Math.ceil(ucount / limit),
+            ucount,
+            page,
+            limit,
+            sort: rankingSort,
         };
     }
 }

@@ -18,6 +18,7 @@ export const isInjected: boolean = !!injectionData.HYDRO_INJECTED;
 export const hydroDomains: string[] = injectionData.hydro_domains ?? [];
 export const pluginsUrl: string | undefined = injectionData.plugins_url;
 export const buildIdentifier: string = String(injectionData.build_id || '');
+export const buildTime: string = String(injectionData.build_time || '');
 
 interface RouteMapStore {
   _routeMap: Record<string, string>;

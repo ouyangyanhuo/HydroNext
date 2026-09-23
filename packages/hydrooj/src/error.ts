@@ -12,6 +12,7 @@ export const SendMailError = Err('SendMailError', UserFacingError, 'Failed to se
 
 export const AlreadyVotedError = Err('AlreadyVotedError', ForbiddenError, "You've already voted.");
 export const BuiltinLoginError = Err('BuiltinLoginError', ForbiddenError, 'Builtin login is disabled.');
+export const RegistrationDisabledError = Err('RegistrationDisabledError', ForbiddenError, 'Public registration is disabled. Please contact a system administrator.');
 export const LoginError = Err('LoginError', ForbiddenError, 'Invalid password for user {0}.');
 export const AccessDeniedError = Err('AccessDeniedError', ForbiddenError, 'Access denied.');
 export const UserAlreadyExistError = Err('UserAlreadyExistError', ForbiddenError, 'User {0} already exists.');

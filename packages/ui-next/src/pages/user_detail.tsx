@@ -8,6 +8,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
+import { formatUserName } from '@/utils/user-name';
 
 const BACKGROUND_COUNT = 21;
 
@@ -60,15 +61,12 @@ export default function UserDetailPage() {
               <Group gap="lg" align="flex-start" className="hydro-user-profile__identity">
                 <img
                   src={getAvatarUrl(udoc.avatar || '', 96)}
-                  alt={udoc.displayName || udoc.uname || ''}
+                  alt={formatUserName(udoc)}
                   className="hydro-user-profile__avatar"
                 />
                 <Stack gap={6}>
                   <Group gap="sm" align="baseline">
-                    <Title order={3}>{udoc.displayName || udoc.uname}</Title>
-                    {udoc.displayName && (
-                      <Text size="sm" c="dimmed">({udoc.uname})</Text>
-                    )}
+                    <Title order={3}>{formatUserName(udoc)}</Title>
                     <Text size="xs" c="dimmed">UID {udoc._id}</Text>
                   </Group>
                   <Group gap="md" wrap="wrap">
@@ -121,11 +119,6 @@ export default function UserDetailPage() {
                     {t('Edit Profile')}
                   </Button>
                 )}
-                {!isSelf && udoc._id && (
-                  <Button component={Link} href={buildUrl('home_messages', {}, { target: String(udoc._id) })} size="xs" variant="light">
-                    {t('Send Message')}
-                  </Button>
-                )}
               </Group>
             </Group>
           </div>
@@ -136,10 +129,20 @@ export default function UserDetailPage() {
             <Text size="xl" fw={700}>{Number(stats.nAccept) || 0}</Text>
             <Text size="xs" c="dimmed">{t('Solved')}</Text>
           </Paper>
-          <Paper withBorder p="md" ta="center" className="hydro-user-profile__stat">
-            <Text size="xl" fw={700}>{Number(stats.nSubmit) || 0}</Text>
-            <Text size="xs" c="dimmed">{t('Submissions')}</Text>
-          </Paper>
+          <Link
+            href={buildUrl('record_main', {}, { uidOrName: String(udoc._id) })}
+            className="no-underline"
+          >
+            <Paper
+              withBorder
+              p="md"
+              ta="center"
+              className="hydro-user-profile__stat"
+            >
+              <Text size="xl" fw={700}>{Number(stats.nSubmit) || 0}</Text>
+              <Text size="xs" c="dimmed">{t('Submissions')}</Text>
+            </Paper>
+          </Link>
           <Paper withBorder p="md" ta="center" className="hydro-user-profile__stat">
             <Text size="xl" fw={700}>{rp}</Text>
             <Text size="xs" c="dimmed">{t('RP')}</Text>
@@ -201,11 +204,15 @@ export default function UserDetailPage() {
           <Card withBorder p="lg" className="hydro-content-card hydro-user-profile__tags">
             <Title order={4} mb="sm">{t('Problem Tags')}</Title>
             <Group gap="xs">
-              {tags.map((tag: any) => (
-                <Badge key={tag._id || tag.name} variant="light">
-                  {tag.name || tag._id} ({tag.count || 0})
-                </Badge>
-              ))}
+              {tags.map((tag: any) => {
+                const name = Array.isArray(tag) ? tag[0] : (tag.name || tag._id);
+                const count = Array.isArray(tag) ? tag[1] : tag.count;
+                return (
+                  <Badge key={name} variant="light">
+                    {name} ({Number(count) || 0})
+                  </Badge>
+                );
+              })}
             </Group>
           </Card>
         )}

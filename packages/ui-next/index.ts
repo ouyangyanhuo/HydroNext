@@ -9,7 +9,7 @@ import {
     Context, Handler, Logger,
     NotFoundError, param, size, Types,
 } from 'hydrooj';
-import { resolveBuildIdentifier } from './build-identifier';
+import { resolveBuildIdentifier, resolveBuildTime } from './build-identifier';
 
 const logger = new Logger('ui-next');
 
@@ -194,6 +194,7 @@ export async function apply(ctx: Context) {
         return;
     }
     const buildIdentifier = resolveBuildIdentifier(global.Hydro.version.hydrooj);
+    const buildTime = resolveBuildTime(process.env, process.cwd(), new Date().toISOString());
 
     if (process.env.DEV) {
         const vite = await createServer({
@@ -240,6 +241,7 @@ export async function apply(ctx: Context) {
                     route_map: getRouteMap(ctx),
                     endpoint: ctx.setting.get('server.url') || undefined,
                     build_id: buildIdentifier,
+                    build_time: buildTime,
                     locale: getLocaleData(userLang),
                     lang: userLang || 'zh',
                 }, serializer(false, context.handler));
@@ -279,6 +281,7 @@ export async function apply(ctx: Context) {
                     route_map: getRouteMap(ctx),
                     endpoint: ctx.setting.get('server.url') || undefined,
                     build_id: buildIdentifier,
+                    build_time: buildTime,
                     plugins_url: `/plugins/${hashes['plugins.js'] || '00000000'}/plugins.js`,
                     locale: getLocaleData(userLang),
                     lang: userLang || 'zh',
