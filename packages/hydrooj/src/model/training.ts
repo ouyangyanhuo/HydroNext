@@ -12,6 +12,10 @@ export function getMultiStatus(domainId: string, query: Filter<TrainingStatusDoc
     return document.getMultiStatus(domainId, document.TYPE_TRAINING, query);
 }
 
+export function countStatus(domainId: string, query: Filter<TrainingStatusDoc>) {
+    return document.countStatus(domainId, document.TYPE_TRAINING, query);
+}
+
 export async function getListStatus(domainId: string, uid: number, tids: ObjectId[]) {
     const tsdocs = await getMultiStatus(
         domainId, { uid, docId: { $in: Array.from(new Set(tids)) } },
@@ -125,6 +129,7 @@ global.Hydro.model.training = {
     getList,
     getMulti,
     getMultiStatus,
+    countStatus,
     getStatus,
     enroll,
     setStatus,

@@ -761,7 +761,13 @@ Enter an invitation code to find and join a domain.: 輸入邀請碼以尋找並
 This invitation link never expires.: 此邀請連結永久有效。
 Create Training Category: 建立訓練分類
 Edit Training Category: 編輯訓練分類
+Enrolled Training Plans: 已報名的訓練計畫
+View all: 檢視全部
+No enrolled users.: 暫無已報名使用者。
+Viewing progress for: 正在檢視以下使用者的訓練進度
+Back to my progress: 返回我的訓練進度
 Category Name: 分類名稱
+Search categories...: 搜尋分類...
 Training Plans: 訓練計畫
 Select all training plans included in this category.: 選擇要列入此分類的所有訓練計畫。
 Delete Category: 刪除分類
@@ -782,3 +788,9 @@ Rose: 玫瑰色
 Sans-serif: 無襯線體
 Serif: 襯線體
 Your Status: 您的狀態
+
+# 比賽題目計時
+Contest starts in: 距離比賽開始
+Contest time remaining: 比賽剩餘時間
+Time on this problem: 本題用時
+Visible time on this problem; saved in this tab.: 累計停留在本題頁面的時間，於目前分頁內儲存。

@@ -1,7 +1,11 @@
-import { ActionIcon, Badge, Button, Group, Modal, MultiSelect, Progress, Stack, Text, TextInput, Title } from '@mantine/core';
+import {
+  ActionIcon, Badge, Button, Center, Group, Loader, Modal, MultiSelect, Pagination, Progress, SimpleGrid, Stack, Text,
+  TextInput, Title,
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconArrowUpRight, IconBook2, IconChecklist, IconFolder, IconPencil, IconPlus, IconSearch, IconTrash, IconUsers,
+  IconArrowUpRight, IconBook2, IconChecklist, IconChevronRight, IconFolder, IconPencil, IconPlus, IconSearch,
+  IconTrash, IconUsers,
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
@@ -125,6 +129,44 @@ function EnrolledTraining({ tsdoc, tdoc, page, query, category }: { tsdoc: any, 
   );
 }
 
+function TrainingCategoryItem({ item, query, selected, canManage, onEdit, onDelete }: {
+  item: any;
+  query: string;
+  selected: boolean;
+  canManage: boolean;
+  onEdit: (item: any) => void;
+  onDelete: (item: any) => void;
+}) {
+  const { t } = useI18n();
+  const buildUrl = useBuildUrl();
+
+  return (
+    <Group gap={4} wrap="nowrap">
+      <Button
+        component={Link}
+        href={buildUrl('training_main', {}, { ...(query ? { q: query } : {}), category: item._id })}
+        variant={selected ? 'light' : 'subtle'}
+        justify="space-between"
+        size="xs"
+        fullWidth
+        rightSection={<Badge size="xs" variant="transparent">{item.tids?.length || 0}</Badge>}
+      >
+        <Text size="xs" truncate>{item.name}</Text>
+      </Button>
+      {canManage && (
+        <Group gap={2} wrap="nowrap">
+          <ActionIcon size="sm" variant="subtle" aria-label={t('Edit')} title={t('Edit')} onClick={() => onEdit(item)}>
+            <IconPencil size={14} />
+          </ActionIcon>
+          <ActionIcon size="sm" variant="subtle" color="red" aria-label={t('Delete')} title={t('Delete')} onClick={() => onDelete(item)}>
+            <IconTrash size={14} />
+          </ActionIcon>
+        </Group>
+      )}
+    </Group>
+  );
+}
+
 export default function TrainingMainPage() {
   const { args } = usePageData();
   const user = useUserContext();
@@ -150,13 +192,30 @@ export default function TrainingMainPage() {
   }));
   const [search, setSearch] = useState(q);
   const [categoryOpened, setCategoryOpened] = useState(false);
+  const [categoryListOpened, setCategoryListOpened] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [categoryPage, setCategoryPage] = useState(1);
   const [categoryName, setCategoryName] = useState('');
   const [categoryTids, setCategoryTids] = useState<string[]>([]);
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [deleteCategory, setDeleteCategory] = useState<any>(null);
+  const [enrolledOpened, setEnrolledOpened] = useState(false);
+  const [enrolledLoading, setEnrolledLoading] = useState(false);
+  const [enrolledPage, setEnrolledPage] = useState(1);
+  const [enrolledPageCount, setEnrolledPageCount] = useState(1);
+  const [enrolledItems, setEnrolledItems] = useState<{ tsdoc: any, tdoc: any }[]>([]);
+  const [enrolledSearch, setEnrolledSearch] = useState('');
+  const enrolledCount = Number(args.enrolledCount) || 0;
+  const [enrolledTotal, setEnrolledTotal] = useState(enrolledCount);
+  const enrolledPreview = (args.enrolledPreview || [])
+    .slice(0, 5)
+    .map((tsdoc: any) => ({ tsdoc, tdoc: tdict[String(tsdoc.docId)] || {} }));
+  const filteredCategories = categories.filter((item: any) => String(item.name || '')
+    .toLocaleLowerCase().includes(categorySearch.trim().toLocaleLowerCase()));
+  const categoryPageCount = Math.max(1, Math.ceil(filteredCategories.length / 12));
+  const visibleCategories = filteredCategories.slice((categoryPage - 1) * 12, categoryPage * 12);
 
-  const enrolled = Object.values(tsdict).filter(isTrainingEnrolled);
   const hasSidebar = categories.length > 0 || isLoggedIn || canCreateTraining;
 
   const handleSearch = () => {
@@ -176,10 +235,22 @@ export default function TrainingMainPage() {
   };
 
   const openCategoryEditor = (item?: any) => {
+    setCategoryListOpened(false);
     setEditingCategory(item || null);
     setCategoryName(item?.name || '');
     setCategoryTids((item?.tids || []).map(String));
     setCategoryOpened(true);
+  };
+
+  const openCategoryList = () => {
+    setCategorySearch('');
+    setCategoryPage(1);
+    setCategoryListOpened(true);
+  };
+
+  const confirmCategoryDelete = (item: any) => {
+    setCategoryListOpened(false);
+    setDeleteCategory(item);
   };
 
   const submitCategory = async () => {
@@ -225,6 +296,40 @@ export default function TrainingMainPage() {
       setCategoryLoading(false);
       setDeleteCategory(null);
     }
+  };
+
+  const loadEnrolledPage = async (nextPage: number, keyword = enrolledSearch) => {
+    setEnrolledLoading(true);
+    try {
+      const normalizedKeyword = keyword.trim();
+      const res = await fetch(buildUrl('training_enrolled', {}, {
+        page: String(nextPage),
+        ...(normalizedKeyword ? { q: normalizedKeyword } : {}),
+      }), {
+        headers: { Accept: 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Load failed')));
+      const nextItems = (data.tsdocs || []).map((tsdoc: any) => ({
+        tsdoc,
+        tdoc: data.tdict?.[String(tsdoc.docId)] || {},
+      }));
+      setEnrolledItems(nextItems);
+      setEnrolledPage(Number(data.page) || nextPage);
+      setEnrolledPageCount(Math.max(1, Number(data.pageCount) || 1));
+      setEnrolledTotal(Number(data.total) || 0);
+    } catch (error: any) {
+      notifications.show({ title: error?.message || t('Load failed'), message: '', color: 'red' });
+    } finally {
+      setEnrolledLoading(false);
+    }
+  };
+
+  const openEnrolled = () => {
+    setEnrolledSearch('');
+    setEnrolledTotal(enrolledCount);
+    setEnrolledOpened(true);
+    void loadEnrolledPage(1, '');
   };
 
   return (
@@ -298,64 +403,59 @@ export default function TrainingMainPage() {
                 >
                   {t('All Training Plans')}
                 </Button>
-                {categories.map((item: any) => (
-                  <Group key={item._id} gap={4} wrap="nowrap">
-                    <Button
-                      component={Link}
-                      href={buildUrl('training_main', {}, { ...(q ? { q } : {}), category: item._id })}
-                      variant={category === item._id ? 'light' : 'subtle'}
-                      justify="space-between"
-                      size="xs"
-                      fullWidth
-                      rightSection={<Badge size="xs" variant="transparent">{item.tids?.length || 0}</Badge>}
-                    >
-                      <Text size="xs" truncate>{item.name}</Text>
-                    </Button>
-                    {canCreateTraining && (
-                      <Group gap={2} wrap="nowrap">
-                        <ActionIcon
-                          size="sm"
-                          variant="subtle"
-                          aria-label={t('Edit')}
-                          title={t('Edit')}
-                          onClick={() => openCategoryEditor(item)}
-                        >
-                          <IconPencil size={14} />
-                        </ActionIcon>
-                        <ActionIcon
-                          size="sm"
-                          variant="subtle"
-                          color="red"
-                          aria-label={t('Delete')}
-                          title={t('Delete')}
-                          onClick={() => setDeleteCategory(item)}
-                        >
-                          <IconTrash size={14} />
-                        </ActionIcon>
-                      </Group>
-                    )}
-                  </Group>
+                {categories.slice(0, 5).map((item: any) => (
+                  <TrainingCategoryItem
+                    key={item._id}
+                    item={item}
+                    query={q}
+                    selected={category === item._id}
+                    canManage={canCreateTraining}
+                    onEdit={openCategoryEditor}
+                    onDelete={confirmCategoryDelete}
+                  />
                 ))}
+                {categories.length > 5 && (
+                  <Button
+                    fullWidth
+                    variant="subtle"
+                    justify="space-between"
+                    rightSection={<IconChevronRight size={16} />}
+                    onClick={openCategoryList}
+                  >
+                    {t('View all')}
+                  </Button>
+                )}
               </Stack>
             </section>
 
             {isLoggedIn && <section className="hydro-training-enrolled-panel">
               <Group justify="space-between" align="center" mb="md">
                 <Title order={3} size="h5">{t('Enrolled')}</Title>
-                {enrolled.length > 0 && <Badge size="xs" variant="light">{enrolled.length}</Badge>}
+                <Badge size="xs" variant="light">{enrolledCount}</Badge>
               </Group>
-              {enrolled.length ? (
-                <Stack gap={6}>
-                  {enrolled.map((tsdoc: any) => (
+              {enrolledCount ? (
+                <Stack gap="xs">
+                  {enrolledPreview.map(({ tsdoc, tdoc }: { tsdoc: any, tdoc: any }) => (
                     <EnrolledTraining
                       key={tsdoc.docId || tsdoc._id}
                       tsdoc={tsdoc}
-                      tdoc={tdict[tsdoc.docId] || tdict[tsdoc._id] || {}}
+                      tdoc={tdoc}
                       page={page}
                       query={q}
                       category={category}
                     />
                   ))}
+                  {enrolledCount > 5 && (
+                    <Button
+                      fullWidth
+                      variant="subtle"
+                      justify="space-between"
+                      rightSection={<IconChevronRight size={16} />}
+                      onClick={openEnrolled}
+                    >
+                      {t('View all')}
+                    </Button>
+                  )}
                 </Stack>
               ) : (
                 <div className="hydro-training-enrolled-empty">
@@ -367,6 +467,53 @@ export default function TrainingMainPage() {
           </aside>
         )}
       </div>
+
+      <Modal
+        opened={categoryListOpened}
+        onClose={() => setCategoryListOpened(false)}
+        title={(
+          <Group gap="xs">
+            <IconFolder size={19} />
+            <Text fw={750}>{t('Categories')}</Text>
+            <Badge size="sm" variant="light">{filteredCategories.length}</Badge>
+          </Group>
+        )}
+        size="lg"
+      >
+        <Stack gap="md">
+          <TextInput
+            value={categorySearch}
+            onChange={(event) => {
+              setCategorySearch(event.currentTarget.value);
+              setCategoryPage(1);
+            }}
+            placeholder={t('Search categories...')}
+            leftSection={<IconSearch size={15} />}
+          />
+          {visibleCategories.length ? (
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+              {visibleCategories.map((item: any) => (
+                <TrainingCategoryItem
+                  key={item._id}
+                  item={item}
+                  query={q}
+                  selected={category === item._id}
+                  canManage={canCreateTraining}
+                  onEdit={openCategoryEditor}
+                  onDelete={confirmCategoryDelete}
+                />
+              ))}
+            </SimpleGrid>
+          ) : (
+            <EmptyState message={t('No categories')} />
+          )}
+          {categoryPageCount > 1 && (
+            <Center>
+              <Pagination value={categoryPage} total={categoryPageCount} onChange={setCategoryPage} />
+            </Center>
+          )}
+        </Stack>
+      </Modal>
 
       <Modal
         opened={categoryOpened}
@@ -400,6 +547,63 @@ export default function TrainingMainPage() {
               {editingCategory ? t('Save') : t('Create')}
             </Button>
           </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
+        opened={enrolledOpened}
+        onClose={() => setEnrolledOpened(false)}
+        title={(
+          <Group gap="xs">
+            <IconBook2 size={19} />
+            <Text fw={750}>{t('Enrolled Training Plans')}</Text>
+            <Badge size="sm" variant="light">{enrolledTotal}</Badge>
+          </Group>
+        )}
+        size="lg"
+      >
+        <Stack gap="md">
+          <Group gap="sm" wrap="nowrap">
+            <TextInput
+              value={enrolledSearch}
+              onChange={(event) => setEnrolledSearch(event.currentTarget.value)}
+              onKeyDown={(event) => event.key === 'Enter' && void loadEnrolledPage(1)}
+              placeholder={t('Search training...')}
+              leftSection={<IconSearch size={15} />}
+              className="flex-1"
+            />
+            <Button onClick={() => void loadEnrolledPage(1)} loading={enrolledLoading}>{t('Search')}</Button>
+          </Group>
+          {enrolledLoading ? (
+            <Center mih={220}><Loader size="sm" /></Center>
+          ) : enrolledItems.length ? (
+            <Stack gap="sm">
+              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                {enrolledItems.map(({ tsdoc, tdoc }) => (
+                  <EnrolledTraining
+                    key={tsdoc.docId || tsdoc._id}
+                    tsdoc={tsdoc}
+                    tdoc={tdoc}
+                    page={page}
+                    query={q}
+                    category={category}
+                  />
+                ))}
+              </SimpleGrid>
+              {enrolledPageCount > 1 && (
+                <Center mt="sm">
+                  <Pagination
+                    value={enrolledPage}
+                    total={enrolledPageCount}
+                    onChange={(nextPage) => void loadEnrolledPage(nextPage)}
+                    disabled={enrolledLoading}
+                  />
+                </Center>
+              )}
+            </Stack>
+          ) : (
+            <EmptyState message={t('No training')} />
+          )}
         </Stack>
       </Modal>
 

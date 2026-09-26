@@ -1,4 +1,4 @@
-import { Badge, Button, Card, Code, Group, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core';
+import { Badge, Button, Card, Code, Group, Stack, Table, Text, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
@@ -186,9 +186,9 @@ function CaseTable({ cases, subtasks }: { cases: any[], subtasks: Record<string,
 
 function Metric({ label, value }: { label: string, value: string | number }) {
   return (
-    <div className="hydro-record-metric min-w-24 px-3 py-2">
+    <div className="hydro-record-metric min-w-0 px-3 py-2">
       <Text size="xs" c="dimmed" fw={700} tt="uppercase">{label}</Text>
-      <Text size="sm" fw={700} className="truncate text-[var(--hydro-text)]">{value}</Text>
+      <Text size="sm" fw={700} className="truncate text-[var(--hydro-text)]" title={String(value)}>{value}</Text>
     </div>
   );
 }
@@ -322,13 +322,15 @@ export default function RecordDetailPage() {
             )}
           </Group>
         </Group>
-        <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="sm" mt="lg">
-          {rdoc.score != null && <Metric label={t('Score')} value={rdoc.score} />}
-          {rdoc.time != null && <Metric label={t('Total Time')} value={`${isLimitStatus ? '>= ' : ''}${formatTime(rdoc.time)}`} />}
-          {peakTime != null && <Metric label={t('Peak Time')} value={`${isLimitStatus ? '>= ' : ''}${formatTime(peakTime)}`} />}
-          {rdoc.memory != null && <Metric label={t('Peak Memory')} value={`${isLimitStatus ? '>= ' : ''}${formatMemory(rdoc.memory)}`} />}
-          {rdoc.lang && <Metric label={t('Language')} value={rdoc.lang} />}
-        </SimpleGrid>
+        <div className="hydro-record-metrics-scroll mt-5">
+          <div className="hydro-record-metrics">
+            <Metric label={t('Score')} value={rdoc.score ?? '-'} />
+            <Metric label={t('Total Time')} value={rdoc.time == null ? '-' : `${isLimitStatus ? '>= ' : ''}${formatTime(rdoc.time)}`} />
+            <Metric label={t('Peak Time')} value={peakTime == null ? '-' : `${isLimitStatus ? '>= ' : ''}${formatTime(peakTime)}`} />
+            <Metric label={t('Peak Memory')} value={rdoc.memory == null ? '-' : `${isLimitStatus ? '>= ' : ''}${formatMemory(rdoc.memory)}`} />
+            <Metric label={t('Language')} value={rdoc.lang || '-'} />
+          </div>
+        </div>
         {isJudging && (
           <Text c="blue" size="sm" mt="md" fw={600}>
             {t('Judging...')}

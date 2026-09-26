@@ -596,7 +596,13 @@ Enter an invitation code to find and join a domain.: 招待コードを入力し
 This invitation link never expires.: この招待リンクに有効期限はありません。
 Create Training Category: トレーニングカテゴリを作成
 Edit Training Category: トレーニングカテゴリを編集
+Enrolled Training Plans: 登録済みトレーニングプラン
+View all: すべて表示
+No enrolled users.: 登録ユーザーはいません。
+Viewing progress for: 次のユーザーの進捗を表示中
+Back to my progress: 自分の進捗に戻る
 Category Name: カテゴリ名
+Search categories...: カテゴリを検索...
 Training Plans: トレーニングプラン
 Select all training plans included in this category.: このカテゴリに含めるトレーニングプランを選択します。
 Delete Category: カテゴリを削除
@@ -618,6 +624,12 @@ Rose: ローズ
 Sans-serif: サンセリフ
 Serif: セリフ
 Your Status: あなたのステータス
+
+# コンテスト問題のタイマー
+Contest starts in: コンテスト開始まで
+Contest time remaining: コンテストの残り時間
+Time on this problem: この問題の経過時間
+Visible time on this problem; saved in this tab.: この問題のページを表示していた時間。このタブに保存されます。
 
 ## Reused by matching identical Chinese translations in this locale
 Auto: 自動

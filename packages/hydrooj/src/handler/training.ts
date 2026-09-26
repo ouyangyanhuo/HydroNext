@@ -5,7 +5,7 @@ import { sortFiles } from '@hydrooj/utils/lib/utils';
 import {
     FileLimitExceededError, FileUploadError, ProblemNotFoundError, ValidationError,
 } from '../error';
-import { Tdoc, TrainingDoc } from '../interface';
+import { Tdoc, TrainingDoc, TrainingStatusDoc } from '../interface';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import domain from '../model/domain';
 import * as oplog from '../model/oplog';
@@ -17,6 +17,8 @@ import user from '../model/user';
 import {
     Handler, param, post, Types,
 } from '../service/server';
+
+const TRAINING_MODAL_PAGE_SIZE = 12;
 
 async function _parseDagJson(domainId: string, _dag: string): Promise<Tdoc['dag']> {
     const parsed = [];
@@ -79,20 +81,22 @@ class TrainingMainHandler extends Handler {
         for (const tdoc of tdocs) tids.add(tdoc.docId);
         const tsdict = {};
         let tdict = {};
+        let enrolledCount = 0;
+        let enrolledPreview = [];
         if (this.user.hasPriv(PRIV.PRIV_USER_PROFILE)) {
             const enrolledTids: Set<ObjectId> = new Set();
             const tsdocs = await training.getMultiStatus(domainId, {
                 uid: this.user._id,
                 $or: [{ docId: { $in: Array.from(tids) } }, { enroll: 1 }],
-            }).toArray();
+            }).sort({ _id: -1 }).toArray();
             for (const tsdoc of tsdocs) {
                 tsdict[tsdoc.docId.toHexString()] = tsdoc;
-                enrolledTids.add(tsdoc.docId);
+                if (tsdoc.enroll) enrolledTids.add(tsdoc.docId);
             }
+            enrolledCount = enrolledTids.size;
+            enrolledPreview = tsdocs.filter((tsdoc) => tsdoc.enroll).slice(0, 5);
             for (const tid of tids) enrolledTids.delete(tid);
-            if (enrolledTids.size) {
-                tdict = await training.getList(domainId, Array.from(enrolledTids));
-            }
+            if (enrolledTids.size) tdict = await training.getList(domainId, Array.from(enrolledTids));
         }
         for (const tdoc of tdocs) tdict[tdoc.docId.toHexString()] = tdoc;
         const canCreateTraining = this.user.hasPerm(PERM.PERM_CREATE_TRAINING);
@@ -105,6 +109,8 @@ class TrainingMainHandler extends Handler {
             categories,
             trainingOptions,
             canCreateTraining,
+            enrolledCount,
+            enrolledPreview,
         };
     }
 
@@ -147,20 +153,105 @@ class TrainingMainHandler extends Handler {
     }
 }
 
+class TrainingEnrolledHandler extends Handler {
+    @param('page', Types.PositiveInt, true)
+    @param('q', Types.String, true)
+    async get(domainId: string, page = 1, q = '') {
+        this.checkPriv(PRIV.PRIV_USER_PROFILE);
+        const query: Filter<TrainingStatusDoc> = { uid: this.user._id, enroll: 1 };
+        if (q.trim()) {
+            const tdocs = await training.getMulti(domainId, {
+                title: { $regex: escapeRegExp(q.trim()), $options: 'i' },
+            }).project({ docId: 1 }).toArray();
+            query.docId = { $in: tdocs.map((tdoc) => tdoc.docId) };
+        }
+        const [tsdocs, total] = await Promise.all([
+            training.getMultiStatus(domainId, query)
+                .sort({ _id: -1 })
+                .skip((page - 1) * TRAINING_MODAL_PAGE_SIZE)
+                .limit(TRAINING_MODAL_PAGE_SIZE)
+                .toArray(),
+            training.countStatus(domainId, query),
+        ]);
+        const tdocs = await training.getMulti(domainId, { docId: { $in: tsdocs.map((tsdoc) => tsdoc.docId) } })
+            .project({ docId: 1, title: 1, dag: 1 })
+            .toArray();
+        const tdict = Object.fromEntries(tdocs.map((tdoc) => [tdoc.docId.toHexString(), tdoc]));
+        this.response.body = {
+            tsdocs,
+            tdict,
+            page,
+            total,
+            pageCount: Math.max(1, Math.ceil(total / TRAINING_MODAL_PAGE_SIZE)),
+            pageSize: TRAINING_MODAL_PAGE_SIZE,
+        };
+    }
+}
+
+class TrainingEnrolledUsersHandler extends Handler {
+    @param('tid', Types.ObjectId)
+    @param('page', Types.PositiveInt, true)
+    @param('q', Types.String, true)
+    async get(domainId: string, tid: ObjectId, page = 1, q = '') {
+        const canViewEnrolledUsers = this.user.hasPerm(PERM.PERM_EDIT_TRAINING)
+            || (this.user.hasPriv(PRIV.PRIV_USER_PROFILE) && this.ctx.setting.get('training.enrolled-users'));
+        if (!canViewEnrolledUsers) this.checkPerm(PERM.PERM_EDIT_TRAINING);
+        await training.get(domainId, tid);
+        const query: Filter<TrainingStatusDoc> = { docId: tid, uid: { $gt: 1 }, enroll: 1 };
+        if (q.trim()) {
+            const keyword = q.trim();
+            const matchedUids = await user.getFuzzyIds(domainId, keyword);
+            if (/^\d+$/.test(keyword)) matchedUids.push(+keyword);
+            query.uid = { $in: Array.from(new Set(matchedUids)).filter((uid) => uid > 1) };
+        }
+        const [tsdocs, total] = await Promise.all([
+            training.getMultiStatus(domainId, query)
+                .sort({ uid: 1 })
+                .skip((page - 1) * TRAINING_MODAL_PAGE_SIZE)
+                .limit(TRAINING_MODAL_PAGE_SIZE)
+                .project({ uid: 1 })
+                .toArray(),
+            training.countStatus(domainId, query),
+        ]);
+        const uids = tsdocs.map((tsdoc) => tsdoc.uid);
+        const udict = await user.getListForRender(
+            domainId,
+            uids,
+            this.user.hasPerm(PERM.PERM_VIEW_USER_PRIVATE_INFO),
+        );
+        this.response.body = {
+            uids,
+            udict,
+            page,
+            total,
+            pageCount: Math.max(1, Math.ceil(total / TRAINING_MODAL_PAGE_SIZE)),
+            pageSize: TRAINING_MODAL_PAGE_SIZE,
+        };
+    }
+}
+
 class TrainingDetailHandler extends Handler {
     @param('tid', Types.ObjectId)
     @param('uid', Types.PositiveInt, true)
-    async get(domainId: string, tid: ObjectId, uid = this.user._id) {
+    @param('viewRecords', Types.Boolean)
+    async get(domainId: string, tid: ObjectId, uid = this.user._id, viewRecords = false) {
         const tdoc = await training.get(domainId, tid);
         await this.ctx.parallel('training/get', tdoc, this);
-        let enrollUsers: number[] = [];
         let shouldCompare = false;
+        let enrollUsers: number[] = [];
         const pids = training.getPids(tdoc.dag);
-        if (this.user.hasPriv(PRIV.PRIV_USER_PROFILE) && this.ctx.setting.get('training.enrolled-users')) {
+        const canViewEnrolledUsers = this.user.hasPerm(PERM.PERM_EDIT_TRAINING)
+            || (this.user.hasPriv(PRIV.PRIV_USER_PROFILE) && this.ctx.setting.get('training.enrolled-users'));
+        if (canViewEnrolledUsers) {
             enrollUsers = (await training.getMultiStatus(domainId, { docId: tid, uid: { $gt: 1 }, enroll: 1 })
-                .project({ uid: 1 }).limit(500).toArray()).map((x) => +x.uid);
-            shouldCompare = uid !== this.user._id;
+                .sort({ uid: 1 }).project({ uid: 1 }).limit(500).toArray()).map((status) => +status.uid);
+            shouldCompare = uid !== this.user._id && enrollUsers.includes(uid);
+            if (uid !== this.user._id && !shouldCompare) uid = this.user._id;
         } else uid = this.user._id;
+        if (viewRecords) {
+            this.checkPerm(PERM.PERM_VIEW_RECORD);
+            viewRecords = shouldCompare;
+        }
         const canViewHidden = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN);
         const [udoc, udict, pdict] = await Promise.all([
             user.getById(domainId, tdoc.owner),
@@ -212,8 +303,14 @@ class TrainingDetailHandler extends Handler {
         this.response.body = {
             tdoc, tsdoc, selfTsdoc, shouldCompare,
             pids, pdict, psdict, ndict, nsdict, udoc, udict, selfPsdict, groups, missing,
+            viewedUdoc: shouldCompare ? udict[uid] : null,
+            viewedUid: shouldCompare ? uid : null,
+            viewRecords,
+            canViewOtherRecords: this.user.hasPerm(PERM.PERM_VIEW_RECORD),
             canEdit: this.user.own(tdoc) || this.user.hasPerm(PERM.PERM_EDIT_TRAINING),
             canDelete: this.user.hasPerm(PERM.PERM_EDIT_TRAINING),
+            canViewEnrolledUsers,
+            enrolledUserPreview: enrollUsers.slice(0, 5),
         };
         this.response.body.tdoc.description = this.response.body.tdoc.description
             .replace(/\(file:\/\//g, `(./${tdoc.docId}/file/`)
@@ -370,7 +467,9 @@ export class TrainingFileDownloadHandler extends Handler {
 
 export async function apply(ctx) {
     ctx.Route('training_main', '/training', TrainingMainHandler, PERM.PERM_VIEW_TRAINING);
+    ctx.Route('training_enrolled', '/training/enrolled', TrainingEnrolledHandler, PERM.PERM_VIEW_TRAINING);
     ctx.Route('training_create', '/training/create', TrainingEditHandler);
+    ctx.Route('training_enrolled_users', '/training/:tid/enrolled-users', TrainingEnrolledUsersHandler, PERM.PERM_VIEW_TRAINING);
     ctx.Route('training_detail', '/training/:tid', TrainingDetailHandler, PERM.PERM_VIEW_TRAINING);
     ctx.Route('training_edit', '/training/:tid/edit', TrainingEditHandler);
     ctx.Route('training_files', '/training/:tid/file', TrainingFilesHandler, PERM.PERM_VIEW_TRAINING);

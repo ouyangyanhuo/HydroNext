@@ -609,7 +609,13 @@ Enter an invitation code to find and join a domain.: Enter an invitation code to
 This invitation link never expires.: This invitation link never expires.
 Create Training Category: Create Training Category
 Edit Training Category: Edit Training Category
+Enrolled Training Plans: Enrolled Training Plans
+View all: View all
+No enrolled users.: No enrolled users.
+Viewing progress for: Viewing progress for
+Back to my progress: Back to my progress
 Category Name: Category Name
+Search categories...: Search categories...
 Training Plans: Training Plans
 Select all training plans included in this category.: Select all training plans included in this category.
 Delete Category: Delete Category
@@ -631,3 +637,9 @@ Rose: Rose
 Sans-serif: Sans-serif
 Serif: Serif
 Your Status: Your Status
+
+# Contest problem timer
+Contest starts in: Contest starts in
+Contest time remaining: Contest time remaining
+Time on this problem: Time on this problem
+Visible time on this problem; saved in this tab.: Visible time on this problem; saved in this tab.

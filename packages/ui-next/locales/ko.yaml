@@ -596,7 +596,13 @@ Enter an invitation code to find and join a domain.: 초대 코드를 입력하�
 This invitation link never expires.: 이 초대 링크는 만료되지 않습니다.
 Create Training Category: 훈련 카테고리 만들기
 Edit Training Category: 훈련 카테고리 편집
+Enrolled Training Plans: 등록한 훈련 계획
+View all: 모두 보기
+No enrolled users.: 등록한 사용자가 없습니다.
+Viewing progress for: 다음 사용자의 훈련 진행 상황을 보는 중
+Back to my progress: 내 진행 상황으로 돌아가기
 Category Name: 카테고리 이름
+Search categories...: 카테고리 검색...
 Training Plans: 훈련 계획
 Select all training plans included in this category.: 이 카테고리에 포함할 훈련 계획을 선택하세요.
 Delete Category: 카테고리 삭제
@@ -618,6 +624,12 @@ Rose: 로즈
 Sans-serif: 산세리프
 Serif: 세리프
 Your Status: 내 상태
+
+# 대회 문제 타이머
+Contest starts in: 대회 시작까지
+Contest time remaining: 대회 남은 시간
+Time on this problem: 이 문제에 사용한 시간
+Visible time on this problem; saved in this tab.: 이 문제 페이지를 보고 있던 누적 시간입니다. 현재 탭에 저장됩니다.
 ## Reused from existing Hydro Korean locale sources
 (Not changed): 수정되지 않음
 Active Sessions: 활성 세션

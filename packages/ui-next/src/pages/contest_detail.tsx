@@ -360,6 +360,7 @@ export default function ContestDetailPage() {
   const udict = args.udict || {};
   const canEdit = useHasPerm(PERM.PERM_EDIT_CONTEST) || args.canEdit;
   const canDelete = Boolean(args.canDelete);
+  const canViewAllRecords = Boolean(args.canViewAllRecords);
   const tid = tdoc._id || tdoc.docId;
   const contestStarted = useDeadlinePassed(tdoc.beginAt);
   const contestEnded = useDeadlinePassed(tdoc.endAt);
@@ -553,9 +554,11 @@ export default function ContestDetailPage() {
               </>
             )}
 
-            <Button component={Link} href={buildUrl('record_main', {}, { tid: String(tid) })} variant="subtle" fullWidth>
-              {t('All Submissions')}
-            </Button>
+            {canViewAllRecords && (
+              <Button component={Link} href={buildUrl('record_main', {}, { tid: String(tid) })} variant="subtle" fullWidth>
+                {t('All Submissions')}
+              </Button>
+            )}
 
             {tsdoc.attend && (
               <Button component={Link} href={buildUrl('record_main', {}, { tid: String(tid), uidOrName: String(user._id) })} variant="subtle" fullWidth>

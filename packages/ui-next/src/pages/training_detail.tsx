@@ -1,6 +1,9 @@
-import { Avatar, Badge, Button, Card, Group, Progress, Stack, Table, Text, Title } from '@mantine/core';
+import {
+  Avatar, Badge, Button, Card, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, Stack, Table, Text,
+  TextInput, Title,
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconChevronRight, IconSearch, IconUsers } from '@tabler/icons-react';
 import { useState } from 'react';
 import { DeleteResourceButton } from '@/components/common/delete-resource-button';
 import { Link } from '@/components/link';
@@ -14,6 +17,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { getAvatarUrl } from '@/utils/avatar';
 import { formatErrorMessage } from '@/utils/error';
 import { isTrainingEnrolled } from '@/utils/training';
+import { formatUserName } from '@/utils/user-name';
 
 function getNodes(tdoc: any) {
   if (Array.isArray(tdoc.dag)) return tdoc.dag;
@@ -57,6 +61,8 @@ function TrainingProblemTable({
   enrolled,
   compare,
   invalid,
+  viewRecords,
+  viewedUid,
 }: {
   node: any;
   pdict: Record<string, any>;
@@ -65,8 +71,11 @@ function TrainingProblemTable({
   enrolled: boolean;
   compare: boolean;
   invalid: boolean;
+  viewRecords: boolean;
+  viewedUid?: number;
 }) {
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
   const pids = node.pids || [];
 
   return (
@@ -103,8 +112,22 @@ function TrainingProblemTable({
                 <Table.Td>
                   {disabled ? (
                     <Text size="sm" c="dimmed">{pdoc.title || pid}</Text>
+                  ) : viewRecords && viewedUid ? (
+                    <Link
+                      href={buildUrl('record_main', {}, {
+                        uidOrName: String(viewedUid),
+                        pid: String(pdoc.pid || pdoc.docId || pid),
+                      })}
+                      className="text-sm font-semibold no-underline hover:underline"
+                    >
+                      {pdoc.pid || pdoc.docId || String.fromCharCode(65 + index)}. {pdoc.title || pid}
+                    </Link>
                   ) : (
-                    <Link to="problem_detail" params={{ pid: pdoc.pid || pdoc.docId || pid }} className="text-sm font-semibold no-underline hover:underline">
+                    <Link
+                      to="problem_detail"
+                      params={{ pid: pdoc.pid || pdoc.docId || pid }}
+                      className="text-sm font-semibold no-underline hover:underline"
+                    >
                       {pdoc.pid || pdoc.docId || String.fromCharCode(65 + index)}. {pdoc.title || pid}
                     </Link>
                   )}
@@ -136,6 +159,13 @@ export default function TrainingDetailPage() {
   const isLoggedIn = useIsLoggedIn();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [enrolledUsersOpened, setEnrolledUsersOpened] = useState(false);
+  const [enrolledUsersLoading, setEnrolledUsersLoading] = useState(false);
+  const [enrolledUsersPage, setEnrolledUsersPage] = useState(1);
+  const [enrolledUsersPageCount, setEnrolledUsersPageCount] = useState(1);
+  const [enrolledUsers, setEnrolledUsers] = useState<{ uid: number, user: any }[]>([]);
+  const [enrolledUsersTotal, setEnrolledUsersTotal] = useState<number | null>(null);
+  const [enrolledUsersSearch, setEnrolledUsersSearch] = useState('');
 
   const tdoc = args.tdoc || {};
   const tsdoc = args.tsdoc || {};
@@ -147,10 +177,19 @@ export default function TrainingDetailPage() {
   const selfPsdict = args.selfPsdict || {};
   const nsdict = args.nsdict || {};
   const missing = args.missing || [];
-  const udict = args.udict || {};
-  const enrolledUsers = Object.entries<any>(udict);
   const canEdit = Boolean(args.canEdit || (tdoc.owner && user?._id === tdoc.owner));
   const canDelete = Boolean(args.canDelete);
+  const canViewEnrolledUsers = Boolean(args.canViewEnrolledUsers);
+  const canViewOtherRecords = Boolean(args.canViewOtherRecords);
+  const viewedUser = args.viewedUdoc;
+  const viewedUid = Number(args.viewedUid) || undefined;
+  const viewRecords = Boolean(args.viewRecords && viewedUid);
+  const enrolledUserPreview = (args.enrolledUserPreview || []).slice(0, 5).map((uid: number) => ({
+    uid,
+    user: args.udict?.[uid] || {},
+  }));
+  const enrolledUserCount = Number(tdoc.attend) || 0;
+  const enrolledUsersResultCount = enrolledUsersTotal ?? enrolledUserCount;
   const enrolled = isTrainingEnrolled(tsdoc);
   const selfEnrolled = isTrainingEnrolled(args.selfTsdoc || tsdoc);
   const progress = enrolled && pids.length
@@ -185,6 +224,34 @@ export default function TrainingDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadEnrolledUsersPage = async (nextPage: number, keyword = enrolledUsersSearch) => {
+    setEnrolledUsersLoading(true);
+    try {
+      const normalizedKeyword = keyword.trim();
+      const res = await fetch(buildUrl('training_enrolled_users', { tid: tdoc.docId || tdoc._id }, {
+        page: String(nextPage),
+        ...(normalizedKeyword ? { q: normalizedKeyword } : {}),
+      }), { headers: { Accept: 'application/json' } });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Load failed')));
+      setEnrolledUsers((data.uids || []).map((uid: number) => ({ uid, user: data.udict?.[uid] || {} })));
+      setEnrolledUsersPage(Number(data.page) || nextPage);
+      setEnrolledUsersPageCount(Math.max(1, Number(data.pageCount) || 1));
+      setEnrolledUsersTotal(Number(data.total) || 0);
+    } catch (loadError: any) {
+      notifications.show({ title: loadError?.message || t('Load failed'), message: '', color: 'red' });
+    } finally {
+      setEnrolledUsersLoading(false);
+    }
+  };
+
+  const openEnrolledUsers = () => {
+    setEnrolledUsersSearch('');
+    setEnrolledUsersTotal(enrolledUserCount);
+    setEnrolledUsersOpened(true);
+    void loadEnrolledUsersPage(1, '');
   };
 
   return (
@@ -256,7 +323,8 @@ export default function TrainingDetailPage() {
                 {state.isInvalid && node.requireNids?.length > 0 && (
                   <div className="border-b border-[var(--hydro-border)] p-4">
                     <Text size="sm" c="dimmed">
-                      {t('This section cannot be challenged at present, so please complete the following sections first')}: {node.requireNids.join(', ')}
+                      {t('This section cannot be challenged at present, so please complete the following sections first')}
+                      : {node.requireNids.join(', ')}
                     </Text>
                   </div>
                 )}
@@ -273,6 +341,8 @@ export default function TrainingDetailPage() {
                   enrolled={enrolled}
                   compare={compare}
                   invalid={invalid}
+                  viewRecords={viewRecords}
+                  viewedUid={viewedUid}
                 />
               </Card>
             );
@@ -311,26 +381,78 @@ export default function TrainingDetailPage() {
             </Stack>
           </Card>
 
-          {enrolledUsers.length > 0 && (
-            <Card withBorder p="md" className="hydro-panel">
-              <Title order={3} size="h5" mb="sm">{t('Enrolled Users')}</Title>
-              <Stack gap={4}>
-                {enrolledUsers.slice(0, 20).map(([uid, enrolledUser]) => (
-                  <Link
-                    key={uid}
-                    href={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id }, {
-                      ...trainingListQuery,
-                      uid: String(uid),
-                    })}
-                    className="rounded px-2 py-1 no-underline hover:bg-[var(--hydro-surface-hover)]"
-                  >
-                    <Group gap="xs" wrap="nowrap">
-                      <Avatar src={getAvatarUrl(enrolledUser.avatar || '', 24)} size={20} radius="xl" />
-                      <Text size="xs" truncate>{enrolledUser.displayName && enrolledUser.displayName !== enrolledUser.uname ? `${enrolledUser.displayName} (${enrolledUser.uname})` : enrolledUser.uname}</Text>
-                    </Group>
-                  </Link>
-                ))}
+          {compare && viewedUser && (
+            <Card withBorder p="md" className="hydro-panel hydro-training-viewing-panel">
+              <Stack gap="sm">
+                <Group justify="space-between" gap="xs">
+                  <Text size="xs" c="dimmed" fw={700}>{t('Viewing progress for')}</Text>
+                  <Badge size="xs" color={tsdoc.done ? 'green' : 'blue'} variant="light">
+                    {t(tsdoc.done ? 'Completed' : 'In Progress')}
+                  </Badge>
+                </Group>
+                <Group gap="sm" wrap="nowrap">
+                  <Avatar
+                    src={getAvatarUrl(viewedUser.avatar || '', 40)}
+                    alt={formatUserName(viewedUser)}
+                    size={38}
+                    radius="xl"
+                  />
+                  <Text size="sm" fw={800} truncate className="min-w-0 flex-1">{formatUserName(viewedUser)}</Text>
+                </Group>
+                <Button
+                  component={Link}
+                  href={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id }, trainingListQuery)}
+                  variant="light"
+                  size="xs"
+                  fullWidth
+                >
+                  {t('Back to my progress')}
+                </Button>
               </Stack>
+            </Card>
+          )}
+
+          {canViewEnrolledUsers && (
+            <Card withBorder p="md" className="hydro-panel">
+              <Group justify="space-between" mb="sm">
+                <Title order={3} size="h5">{t('Enrolled Users')}</Title>
+                <Badge size="xs" variant="light">{enrolledUserCount}</Badge>
+              </Group>
+              {enrolledUserPreview.length ? (
+                <Stack gap={6}>
+                  {enrolledUserPreview.map(({ uid, user: enrolledUser }) => (
+                    <Link
+                      key={uid}
+                      href={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id }, {
+                        ...trainingListQuery,
+                        uid: String(uid),
+                        ...(canViewOtherRecords ? { viewRecords: 'true' } : {}),
+                      })}
+                      className="hydro-training-enrolled-user"
+                    >
+                      <Avatar src={getAvatarUrl(enrolledUser.avatar || '', 36)} size={34} radius="xl" />
+                      <div className="min-w-0 flex-1">
+                        <Text size="sm" fw={700} truncate>{formatUserName(enrolledUser) || `UID ${uid}`}</Text>
+                        <Text size="xs" c="dimmed">UID {uid}</Text>
+                      </div>
+                      <IconChevronRight size={16} aria-hidden="true" />
+                    </Link>
+                  ))}
+                  {enrolledUserCount > 5 && (
+                    <Button
+                      fullWidth
+                      variant="subtle"
+                      justify="space-between"
+                      rightSection={<IconChevronRight size={16} />}
+                      onClick={openEnrolledUsers}
+                    >
+                      {t('View all')}
+                    </Button>
+                  )}
+                </Stack>
+              ) : (
+                <Text c="dimmed" ta="center" py="sm">{t('No enrolled users.')}</Text>
+              )}
             </Card>
           )}
 
@@ -364,6 +486,71 @@ export default function TrainingDetailPage() {
           </Card>
         </Stack>
       </div>
+
+      <Modal
+        opened={enrolledUsersOpened}
+        onClose={() => setEnrolledUsersOpened(false)}
+        title={(
+          <Group gap="xs">
+            <IconUsers size={19} />
+            <Text fw={750}>{t('Enrolled Users')}</Text>
+            <Badge size="sm" variant="light">{enrolledUsersResultCount}</Badge>
+          </Group>
+        )}
+        size="lg"
+      >
+        <Stack gap="md">
+          <Group gap="sm" wrap="nowrap">
+            <TextInput
+              value={enrolledUsersSearch}
+              onChange={(event) => setEnrolledUsersSearch(event.currentTarget.value)}
+              onKeyDown={(event) => event.key === 'Enter' && void loadEnrolledUsersPage(1)}
+              placeholder={t('Search users')}
+              leftSection={<IconSearch size={15} />}
+              className="flex-1"
+            />
+            <Button onClick={() => void loadEnrolledUsersPage(1)} loading={enrolledUsersLoading}>{t('Search')}</Button>
+          </Group>
+          {enrolledUsersLoading ? (
+            <Center mih={220}><Loader size="sm" /></Center>
+          ) : enrolledUsers.length ? (
+            <Stack gap={6}>
+              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                {enrolledUsers.map(({ uid, user: enrolledUser }) => (
+                  <Link
+                    key={uid}
+                    href={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id }, {
+                      ...trainingListQuery,
+                      uid: String(uid),
+                      ...(canViewOtherRecords ? { viewRecords: 'true' } : {}),
+                    })}
+                    className="hydro-training-enrolled-user"
+                  >
+                    <Avatar src={getAvatarUrl(enrolledUser.avatar || '', 36)} size={34} radius="xl" />
+                    <div className="min-w-0 flex-1">
+                      <Text size="sm" fw={700} truncate>{formatUserName(enrolledUser) || `UID ${uid}`}</Text>
+                      <Text size="xs" c="dimmed">UID {uid}</Text>
+                    </div>
+                    <IconChevronRight size={16} aria-hidden="true" />
+                  </Link>
+                ))}
+              </SimpleGrid>
+              {enrolledUsersPageCount > 1 && (
+                <Center mt="sm">
+                  <Pagination
+                    value={enrolledUsersPage}
+                    total={enrolledUsersPageCount}
+                    onChange={(nextPage) => void loadEnrolledUsersPage(nextPage)}
+                    disabled={enrolledUsersLoading}
+                  />
+                </Center>
+              )}
+            </Stack>
+          ) : (
+            <Text c="dimmed" ta="center" py="xl">{t('No enrolled users.')}</Text>
+          )}
+        </Stack>
+      </Modal>
     </div>
   );
 }

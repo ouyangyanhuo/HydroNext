@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';
 import { TimeDisplay } from '@/components/common/time-display';
+import { ContestProblemTimer } from '@/components/contest/contest-problem-timer';
 import { Scratchpad } from '@/components/editor/scratchpad';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
@@ -521,6 +522,23 @@ export default function ProblemDetailPage() {
     return deadlines.length ? Math.min(...deadlines) : undefined;
   })();
   const contestClosed = useDeadlinePassed(contestDeadline);
+  const timerKey = `hydro:contest-problem-time:v1:${JSON.stringify([
+    ui.domainId || pdoc.domainId, String(tid || ''), user._id || 0, pdoc.docId || pid,
+  ])}`;
+  const contestBeginAt = Math.max(
+    new Date(args.tdoc?.beginAt).getTime() || 0,
+    new Date(args.tsdoc?.startAt).getTime() || 0,
+  );
+  const contestTimer = tid && args.tdoc && contestDeadline !== undefined ? (
+    <ContestProblemTimer
+      key={timerKey}
+      storageKey={timerKey}
+      tid={String(tid)}
+      title={extractLocalizedContent(args.tdoc.title, sessionLanguage)}
+      beginAt={contestBeginAt}
+      endAt={contestDeadline}
+    />
+  ) : null;
   const canSubmitProblem = Boolean(args.canSubmitProblem ?? (tid ? args.mode === 'contest' : fallbackCanSubmit));
   const canEditProblem = Boolean(args.canEditProblem ?? hasPermValue(user.perm, PERM.PERM_EDIT_PROBLEM));
   const canConfigureProblem = Boolean(args.canConfigureProblem ?? (canEditProblem && !pdoc.reference));
@@ -611,6 +629,7 @@ export default function ProblemDetailPage() {
   if (scratchpadOpen) {
     return (
       <div ref={workspaceRef} className="problem-workspace">
+        {contestTimer}
         <Scratchpad
           pid={pdoc.pid || pdoc.docId}
           langs={scratchpadLangs}
@@ -628,6 +647,7 @@ export default function ProblemDetailPage() {
 
   return (
     <div ref={workspaceRef} className="problem-workspace flex flex-col lg:flex-row gap-6">
+      {contestTimer}
       <div className="flex-1 min-w-0">
         <Stack gap="lg">
           <Paper withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]">

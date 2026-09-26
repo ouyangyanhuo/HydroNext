@@ -1478,6 +1478,37 @@ a {
   transform: translateX(3px);
 }
 
+.hydro-training-enrolled-user {
+  display: flex;
+  min-width: 0;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-md);
+  color: var(--hydro-text);
+  text-decoration: none;
+  background-color: var(--hydro-surface-raised);
+  transition: border-color var(--hydro-duration-fast) var(--hydro-ease-out),
+              background-color var(--hydro-duration-fast) var(--hydro-ease-out),
+              transform var(--hydro-duration-normal) var(--hydro-ease-out);
+}
+
+.hydro-training-enrolled-user:hover,
+.hydro-training-enrolled-user:focus-visible {
+  border-color: color-mix(in srgb, var(--hydro-primary) 38%, var(--hydro-border));
+  color: var(--hydro-text);
+  text-decoration: none;
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 48%, var(--hydro-surface-raised));
+  transform: translateX(3px);
+}
+
+.hydro-panel.hydro-training-viewing-panel {
+  border-color: color-mix(in srgb, var(--hydro-primary) 30%, var(--hydro-border));
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 30%, var(--hydro-surface-raised));
+  background-image: none;
+}
+
 .hydro-training-enrolled-empty {
   display: flex;
   min-height: 120px;
@@ -1774,6 +1805,71 @@ a {
   .hydro-record-filter .mantine-Input-input:focus {
     transform: none;
   }
+}
+
+.hydro-contest-problem-timer {
+  position: fixed;
+  left: max(16px, env(safe-area-inset-left));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 150;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 12px 20px 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--hydro-primary) 30%, var(--hydro-border));
+  border-radius: 999px;
+  color: var(--hydro-text);
+  background: var(--hydro-surface-raised);
+  box-shadow: var(--hydro-shadow-lg);
+}
+
+.hydro-contest-problem-timer__contest {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--hydro-primary);
+  background: var(--hydro-primary-soft);
+}
+
+.hydro-contest-problem-timer__contest:focus-visible {
+  outline: 2px solid var(--hydro-primary);
+  outline-offset: 3px;
+}
+
+.hydro-contest-problem-timer__metric {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hydro-contest-problem-timer__metric:last-child {
+  padding-left: 14px;
+  border-left: 1px solid var(--hydro-border);
+}
+
+.hydro-contest-problem-timer__label {
+  color: var(--hydro-text-muted);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.hydro-contest-problem-timer__value {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 16px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.hydro-contest-problem-timer__metric--urgent .hydro-contest-problem-timer__value {
+  color: var(--hydro-warning);
 }
 
 @keyframes hydro-scratchpad-in {
@@ -2344,6 +2440,18 @@ a {
   border: 1px solid color-mix(in srgb, var(--hydro-primary) 26%, var(--hydro-border));
   border-radius: var(--hydro-radius-md);
   background: color-mix(in srgb, var(--hydro-primary-soft) 54%, var(--hydro-surface-raised));
+}
+
+.hydro-record-metrics-scroll {
+  overflow-x: auto;
+  scrollbar-color: color-mix(in srgb, var(--hydro-primary) 42%, transparent) transparent;
+}
+
+.hydro-record-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 700px;
 }
 
 .hydro-record-output,
