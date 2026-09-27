@@ -1,5 +1,6 @@
 import 'allotment/dist/style.css';
 
+import { captureReplayChanges, replayBatches } from '@hydrooj/code-replay/replay';
 import {
   ActionIcon, Badge, Button, Divider, Drawer, Group, NumberInput,
   Paper, Select, Stack, Text, Title, Tooltip,
@@ -40,6 +41,7 @@ interface ScratchpadProps {
 }
 
 interface ReplayEvent {
+  seq: number;
   t: number;
   lang?: string;
   changes: {
@@ -52,6 +54,7 @@ interface ReplayEvent {
 }
 
 interface ReplaySnapshot {
+  afterSeq: number;
   t: number;
   code: string;
   lang?: string;
@@ -145,12 +148,13 @@ export function Scratchpad({
   const theme = editorConfig.theme || '';
   const replayRef = useRef({
     sessionId: '',
-    initialCode: defaultCode,
+    initialCode: code,
     startedAt: 0,
     events: [] as ReplayEvent[],
     snapshots: [] as ReplaySnapshot[],
     lastSnapshotAt: 0,
     flushing: false,
+    sequence: 0,
   });
   const pretestUpdate = useRecordSocket(pretestRid);
 
@@ -217,33 +221,31 @@ export function Scratchpad({
     ? { ...(pretestResult || {}), ...pretestUpdate, rid: pretestRid }
     : pretestResult;
 
-  const ensureReplaySession = useCallback(() => {
+  const ensureReplaySession = useCallback((initialCode: string) => {
     const replay = replayRef.current;
     if (replay.sessionId) return replay.sessionId;
-    let sessionId = sessionStorage.getItem(replayStorageKey);
-    if (!sessionId) {
-      sessionId = randomSessionId();
-      sessionStorage.setItem(replayStorageKey, sessionId);
-    }
+    // A persisted ID without its events/clock cannot resume a timeline safely.
+    const sessionId = randomSessionId();
     replay.sessionId = sessionId;
-    replay.initialCode = code;
-    replay.startedAt = Date.now();
+    replay.initialCode = initialCode;
+    replay.startedAt = performance.now();
     replay.events = [];
-    replay.snapshots = [{ t: 0, code, lang }];
+    replay.snapshots = [{ t: 0, afterSeq: 0, code: initialCode, lang }];
     replay.lastSnapshotAt = 0;
     return sessionId;
-  }, [code, lang, replayStorageKey]);
+  }, [lang]);
 
   const resetReplaySession = useCallback((initialCode: string) => {
     sessionStorage.removeItem(replayStorageKey);
     replayRef.current = {
       sessionId: '',
       initialCode,
-      startedAt: Date.now(),
+      startedAt: performance.now(),
       events: [],
-      snapshots: [{ t: 0, code: initialCode, lang }],
+      snapshots: [{ t: 0, afterSeq: 0, code: initialCode, lang }],
       lastSnapshotAt: 0,
       flushing: false,
+      sequence: 0,
     };
   }, [lang, replayStorageKey]);
 
@@ -258,65 +260,64 @@ export function Scratchpad({
     }
     setCode(selectedCodeTemplate);
     setError('');
-    resetReplaySession(selectedCodeTemplate);
     notifications.show({ title: t('Code template loaded'), message: '', color: 'green' });
-  }, [resetReplaySession, selectedCodeTemplate, t]);
+  }, [selectedCodeTemplate, t]);
 
-  const captureChange = useCallback((event: any, editor: any) => {
+  const captureChange = useCallback((event: any, editor: any, previousValue: string) => {
     if (!resolvedReplayUrl || !user?._id) return;
-    ensureReplaySession();
+    ensureReplaySession(previousValue);
     const replay = replayRef.current;
-    const elapsed = Date.now() - replay.startedAt;
+    const elapsed = performance.now() - replay.startedAt;
+    const currentValue = editor.getValue();
+    const changes = captureReplayChanges(previousValue, currentValue, event.changes || []);
+    if (!changes.length) return;
     replay.events.push({
+      seq: ++replay.sequence,
       t: elapsed,
       lang,
       selections: getSelections(editor),
-      changes: (event.changes || []).map((change: any) => ({
-        rangeOffset: change.rangeOffset,
-        rangeLength: change.rangeLength,
-        text: change.text,
-        range: change.range,
-      })),
+      changes,
     });
     if (elapsed - replay.lastSnapshotAt > 30000) {
       replay.lastSnapshotAt = elapsed;
-      replay.snapshots.push({ t: elapsed, code: editor.getValue(), lang });
+      replay.snapshots.push({ t: elapsed, afterSeq: replay.sequence, code: editor.getValue(), lang });
     }
   }, [ensureReplaySession, lang, resolvedReplayUrl, user?._id]);
 
   const flushReplay = useCallback(async (finalCode: string) => {
     if (!resolvedReplayUrl || !user?._id) return '';
-    const sessionId = ensureReplaySession();
+    ensureReplaySession(finalCode);
+    // Each upload attempt is immutable. A failed/partially accepted request
+    // must not duplicate events when submission is retried.
+    const sessionId = randomSessionId();
     const replay = replayRef.current;
-    const events = replay.events.splice(0);
-    const snapshots = replay.snapshots.splice(0);
-    snapshots.push({ t: Date.now() - replay.startedAt, code: finalCode, lang });
-    if (!events.length && snapshots.length <= 1) return sessionId;
+    const events = replay.events.slice();
+    const snapshots = replay.snapshots.slice();
+    snapshots.push({ t: performance.now() - replay.startedAt, afterSeq: replay.sequence, code: finalCode, lang });
     replay.flushing = true;
     try {
       const tid = ui.tdoc?._id || ui.tdoc?.docId || new URLSearchParams(window.location.search).get('tid') || undefined;
-      const response = await fetch(resolvedReplayUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          pid: ui.pdoc?.docId || pid,
-          tid,
-          lang,
-          initialCode: replay.initialCode,
-          finalCode,
-          events,
-          snapshots,
-        }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.error) {
-        throw new Error(data.error?.message || `Replay upload failed (${response.status})`);
+      for (const batch of replayBatches(events, snapshots)) {
+        const response = await fetch(resolvedReplayUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            pid: ui.pdoc?.docId || pid,
+            tid,
+            lang,
+            initialCode: replay.initialCode,
+            finalCode,
+            ...batch,
+          }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.error) {
+          throw new Error(data.error?.message || `Replay upload failed (${response.status})`);
+        }
       }
       return sessionId;
     } catch (err) {
-      replay.events.unshift(...events);
-      replay.snapshots.unshift(...snapshots);
       console.warn('Failed to flush code replay:', err);
       return '';
     } finally {

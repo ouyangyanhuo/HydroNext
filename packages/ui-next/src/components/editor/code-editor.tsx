@@ -1,6 +1,6 @@
 import { Center, Loader } from '@mantine/core';
-import { useEffect, useRef, useState } from 'react';
 import themeList from 'monaco-themes/themes/themelist.json';
+import { useEffect, useRef, useState } from 'react';
 
 const LANG_MAP: Record<string, string> = {
   bash: 'shell',
@@ -85,7 +85,7 @@ async function getMonaco() {
 interface CodeEditorProps {
   value: string;
   onChange?: (value: string) => void;
-  onContentChange?: (event: any, editor: any) => void;
+  onContentChange?: (event: any, editor: any, previousValue: string) => void;
   onMount?: (editor: any, monaco: typeof import('monaco-editor')) => void;
   language?: string;
   readOnly?: boolean;
@@ -176,9 +176,12 @@ export function CodeEditor({
       editorRef.current = editor;
       applyEditorTheme(monaco, initial.theme || loadStoredEditorConfig().theme);
       if (onChangeRef.current || onContentChangeRef.current) {
+        let previousValue = editor.getValue();
         editor.onDidChangeModelContent((event: any) => {
-          onChangeRef.current?.(editor.getValue());
-          onContentChangeRef.current?.(event, editor);
+          const before = previousValue;
+          previousValue = editor.getValue();
+          onContentChangeRef.current?.(event, editor, before);
+          onChangeRef.current?.(previousValue);
         });
       }
       onMountRef.current?.(editor, monaco);
@@ -194,7 +197,7 @@ export function CodeEditor({
   useEffect(() => {
     const editor = editorRef.current;
     if (editor && editor.getValue() !== value) editor.setValue(value);
-  }, [value]);
+  }, [value, loading]);
 
   useEffect(() => {
     const editor = editorRef.current;

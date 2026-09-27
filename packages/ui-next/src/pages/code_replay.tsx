@@ -1,7 +1,7 @@
 import { Button, Card, Group, Loader, Stack, Text, Title } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { CodeReplay } from '@/components/record/code-replay';
 import { Link } from '@/components/link';
+import { CodeReplay } from '@/components/record/code-replay';
 import { usePageData, useUiContext } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 
@@ -15,10 +15,11 @@ export default function CodeReplayPage() {
   const { args } = usePageData();
   const ui = useUiContext();
   const { t } = useI18n();
-  const [data, setData] = useState<any>(args);
   const dataUrl = normalizeReplayDataUrl(ui.codeReplayDataUrl);
-  const [loading, setLoading] = useState(!!dataUrl);
-  const [error, setError] = useState('');
+  const [result, setResult] = useState<{ url: string, data?: any, error?: string }>({ url: '' });
+  const loading = result.url !== dataUrl;
+  const data = loading ? args : result.data || args;
+  const error = loading ? '' : result.error;
 
   useEffect(() => {
     if (!dataUrl) return undefined;
@@ -30,13 +31,12 @@ export default function CodeReplayPage() {
         return await res.json();
       })
       .then((body) => {
-        if (!disposed) setData(body);
+        if (!disposed) setResult({ url: dataUrl, data: body });
       })
       .catch((err) => {
-        if (!disposed && err?.name !== 'AbortError') setError(err?.message || t('No replay data is available.'));
-      })
-      .finally(() => {
-        if (!disposed) setLoading(false);
+        if (!disposed && err?.name !== 'AbortError') {
+          setResult({ url: dataUrl, error: err?.message || t('No replay data is available.') });
+        }
       });
     return () => {
       disposed = true;
@@ -75,7 +75,7 @@ export default function CodeReplayPage() {
           <Text c="red" size="sm">{error}</Text>
         </Card>
       ) : replay?._id ? (
-        <CodeReplay replay={replay} language={replay.lang || rdoc.lang} />
+        <CodeReplay key={replay._id} replay={replay} language={replay.lang || rdoc.lang} />
       ) : (
         <Card withBorder p="xl" className="hydro-content-card">
           <Text size="sm" c="dimmed">{t('No replay data is available.')}</Text>

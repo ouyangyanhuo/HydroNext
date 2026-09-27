@@ -1,9 +1,11 @@
 import {
-  $, NamedPage, addPage, ctx, i18n, loadMonaco, request, secureRandomString,
+  $, addPage, ctx, i18n, loadMonaco, NamedPage, request, secureRandomString,
 } from '@hydrooj/ui-default';
 import type * as monacoTypes from 'monaco-editor';
+import { buildReplayStates, captureReplayChanges, replayBatches } from '../replay';
 
 interface ReplayEvent {
+  seq?: number;
   t: number;
   changes: {
     rangeOffset: number;
@@ -16,6 +18,7 @@ interface ReplayEvent {
 }
 
 interface ReplaySnapshot {
+  afterSeq?: number;
   t: number;
   code: string;
   lang?: string;
@@ -25,7 +28,6 @@ const CAPTURE_PAGES = ['problem_detail', 'contest_detail_problem', 'homework_det
 const FLUSH_INTERVAL = 2500;
 const SNAPSHOT_INTERVAL = 30000;
 const MAX_BATCH_EVENTS = 200;
-const MAX_PENDING_EVENTS = 2000;
 
 function getSessionUrl() {
   return UiContext.codeReplaySessionUrl || '/code-replay/session';
@@ -46,11 +48,8 @@ function getSessionStorageKey() {
 
 function getSessionId() {
   const key = getSessionStorageKey();
-  let sessionId = sessionStorage.getItem(key);
-  if (!sessionId) {
-    sessionId = secureRandomString(32);
-    sessionStorage.setItem(key, sessionId);
-  }
+  const sessionId = secureRandomString(32);
+  sessionStorage.setItem(key, sessionId);
   return sessionId;
 }
 
@@ -67,15 +66,6 @@ function serializeSelections(editor: monacoTypes.editor.IStandaloneCodeEditor) {
   }));
 }
 
-function applyChanges(code: string, event: ReplayEvent) {
-  const changes = [...event.changes].sort((a, b) => b.rangeOffset - a.rangeOffset);
-  let next = code;
-  for (const change of changes) {
-    next = next.slice(0, change.rangeOffset) + change.text + next.slice(change.rangeOffset + change.rangeLength);
-  }
-  return next;
-}
-
 class ScratchpadReplayCapture {
   sessionId = getSessionId();
   initialCode = '';
@@ -88,12 +78,15 @@ class ScratchpadReplayCapture {
   lastSnapshotAt = 0;
   installed = false;
   flushing = false;
+  sequence = 0;
+  flushPromise: Promise<boolean> = Promise.resolve(true);
 
   constructor(public editor: monacoTypes.editor.IStandaloneCodeEditor) {
-    this.initialCode = editor.getValue({ lineEnding: '\n', preserveBOM: false });
+    this.initialCode = editor.getValue();
     this.finalCode = this.initialCode;
     this.pendingSnapshots.push({
       t: 0,
+      afterSeq: 0,
       code: this.initialCode,
       lang: this.lang,
     });
@@ -108,23 +101,23 @@ class ScratchpadReplayCapture {
     });
     this.editor.onDidChangeModelContent((event) => {
       this.lang = getLangFromStore();
-      this.finalCode = this.editor.getValue({ lineEnding: '\n', preserveBOM: false });
+      const previousValue = this.finalCode;
+      this.finalCode = this.editor.getValue();
+      const changes = captureReplayChanges(previousValue, this.finalCode, event.changes);
+      if (!changes.length) return;
       this.pendingEvents.push({
+        seq: ++this.sequence,
         t: Date.now() - this.startedAt,
         lang: this.lang,
         selections: serializeSelections(this.editor),
-        changes: event.changes.map((change) => ({
-          rangeOffset: change.rangeOffset,
-          rangeLength: change.rangeLength,
-          text: change.text,
-          range: change.range,
-        })),
+        changes,
       });
       if (Date.now() - this.lastSnapshotAt > SNAPSHOT_INTERVAL) {
         this.lastSnapshotAt = Date.now();
         this.pendingSnapshots.push({
           t: Date.now() - this.startedAt,
           code: this.finalCode,
+          afterSeq: this.sequence,
           lang: this.lang,
         });
       }
@@ -169,8 +162,10 @@ class ScratchpadReplayCapture {
     this.initialCode = this.finalCode;
     this.startedAt = Date.now();
     this.pendingEvents = [];
+    this.sequence = 0;
     this.pendingSnapshots = [{
       t: 0,
+      afterSeq: 0,
       code: this.initialCode,
       lang: this.lang,
     }];
@@ -181,13 +176,14 @@ class ScratchpadReplayCapture {
     if (typeof payload?.lang === 'string') this.lang = payload.lang;
     else this.lang = getLangFromStore();
     if (typeof payload?.code === 'string') this.finalCode = payload.code;
-    else this.finalCode = this.editor.getValue({ lineEnding: '\n', preserveBOM: false });
+    else this.finalCode = this.editor.getValue();
   }
 
   addSnapshot() {
     this.pendingSnapshots.push({
       t: Date.now() - this.startedAt,
       code: this.finalCode,
+      afterSeq: this.sequence,
       lang: this.lang,
     });
   }
@@ -200,7 +196,12 @@ class ScratchpadReplayCapture {
     }, FLUSH_INTERVAL);
   }
 
-  async flush() {
+  flush() {
+    this.flushPromise = this.flushPromise.then(() => this.flushPending());
+    return this.flushPromise;
+  }
+
+  async flushPending() {
     if (this.flushTimer) {
       window.clearTimeout(this.flushTimer);
       this.flushTimer = null;
@@ -210,24 +211,19 @@ class ScratchpadReplayCapture {
     if (!events.length && !snapshots.length) return true;
     this.flushing = true;
     try {
-      await request.post(getSessionUrl(), this.payload(events, snapshots));
+      const payload = this.payload(events, snapshots);
+      for (const batch of replayBatches(events, snapshots)) {
+        await request.post(getSessionUrl(), {
+          ...payload,
+          ...batch,
+        });
+      }
       this.flushing = false;
       return true;
     } catch (e) {
       this.flushing = false;
-      // Cap pending array size to prevent memory leaks during prolonged network failures
-      const totalPending = this.pendingEvents.length + events.length;
-      if (totalPending > MAX_PENDING_EVENTS) {
-        // Keep only the most recent events, discard older ones
-        const keep = Math.floor(MAX_PENDING_EVENTS / 2);
-        this.pendingEvents = this.pendingEvents.slice(-keep);
-        this.pendingSnapshots = this.pendingSnapshots.slice(-Math.floor(this.pendingSnapshots.length / 2));
-        // Re-add only recent events from the failed batch
-        this.pendingEvents.unshift(...events.slice(-keep));
-      } else {
-        this.pendingEvents.unshift(...events);
-        this.pendingSnapshots.unshift(...snapshots);
-      }
+      this.pendingEvents.unshift(...events);
+      this.pendingSnapshots.unshift(...snapshots);
       // Replay capture must not block normal editing or submission.
       console.warn(e);
       return false;
@@ -357,24 +353,10 @@ async function installReplayPlayer() {
 
   const replay = data.replay;
   const events: ReplayEvent[] = replay.events || [];
-  const snapshots: ReplaySnapshot[] = [...replay.snapshots || []].sort((a, b) => a.t - b.t);
-  const states = [replay.initialCode || ''];
-  let currentCode = states[0];
-  let snapshotIndex = 0;
-  for (const event of events) {
-    while (snapshotIndex < snapshots.length && snapshots[snapshotIndex].t <= event.t) {
-      currentCode = snapshots[snapshotIndex].code;
-      snapshotIndex++;
-    }
-    currentCode = applyChanges(currentCode, event);
-    states.push(currentCode);
-  }
-  if (typeof replay.finalCode === 'string' && replay.finalCode !== states[states.length - 1]) {
-    states.push(replay.finalCode);
-  }
+  const { states, times } = buildReplayStates(events, replay.snapshots || [], replay.initialCode || '', replay.finalCode);
 
   const maxIndex = Math.max(0, states.length - 1);
-  const duration = events.length ? events[events.length - 1].t : 0;
+  const duration = times[times.length - 1];
   container.innerHTML = `
     <div class="row">
       <div class="medium-12 columns">
@@ -428,7 +410,7 @@ async function installReplayPlayer() {
 
   function eventTime(i: number) {
     if (i <= 0) return 0;
-    return events[i - 1]?.t || duration;
+    return times[i] || 0;
   }
 
   function render(target: number) {

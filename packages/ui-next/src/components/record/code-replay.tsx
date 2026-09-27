@@ -1,30 +1,8 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { Paper, Group, Button, Slider, Text, Stack, Badge, Select } from '@mantine/core';
-import { useI18n } from '@/hooks/use-i18n';
+import { buildReplayStates, type ReplayEvent, type ReplaySnapshot } from '@hydrooj/code-replay/replay';
+import { Badge, Button, Group, Paper, Select, Slider, Stack, Text } from '@mantine/core';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CodeEditor } from '@/components/editor/code-editor';
-
-interface ReplayChange {
-  rangeOffset: number;
-  rangeLength: number;
-  text: string;
-}
-
-interface ReplayEvent {
-  type?: 'insert' | 'delete' | 'replace';
-  position?: number;
-  text?: string;
-  length?: number;
-  timestamp?: number;
-  t?: number;
-  lang?: string;
-  changes?: ReplayChange[];
-}
-
-interface ReplaySnapshot {
-  t: number;
-  code: string;
-  lang?: string;
-}
+import { useI18n } from '@/hooks/use-i18n';
 
 export interface CodeReplayProps {
   events?: ReplayEvent[];
@@ -44,55 +22,9 @@ export interface CodeReplayProps {
 const EMPTY_EVENTS: ReplayEvent[] = [];
 const EMPTY_SNAPSHOTS: ReplaySnapshot[] = [];
 
-function applyEvent(code: string, event: ReplayEvent) {
-  if (event.changes?.length) {
-    let next = code;
-    for (const change of [...event.changes].sort((a, b) => b.rangeOffset - a.rangeOffset)) {
-      const pos = Math.max(0, Math.min(change.rangeOffset, next.length));
-      const len = Math.max(0, change.rangeLength || 0);
-      next = next.slice(0, pos) + (change.text || '') + next.slice(pos + len);
-    }
-    return next;
-  }
-
-  const pos = Math.max(0, Math.min(event.position || 0, code.length));
-  if (event.type === 'insert') return code.slice(0, pos) + (event.text || '') + code.slice(pos);
-  if (event.type === 'delete') return code.slice(0, pos) + code.slice(pos + (event.length || 1));
-  if (event.type === 'replace') return code.slice(0, pos) + (event.text || '') + code.slice(pos + (event.length || 0));
-  return code;
-}
-
-function eventTime(event: ReplayEvent) {
-  return Number(event.t ?? event.timestamp ?? 0) || 0;
-}
-
 function formatReplayTime(ms: number) {
   const seconds = Math.floor(ms / 1000);
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-}
-
-function replayTimeAt(events: ReplayEvent[], duration: number, index: number) {
-  if (index <= 0) return 0;
-  return events[index - 1] ? eventTime(events[index - 1]) : duration;
-}
-
-function buildStates(events: ReplayEvent[], snapshots: ReplaySnapshot[], initialCode: string, finalCode?: string) {
-  const sortedEvents = [...events].sort((a, b) => eventTime(a) - eventTime(b));
-  const sortedSnapshots = [...snapshots].sort((a, b) => a.t - b.t);
-  const states = [initialCode];
-  let currentCode = initialCode;
-  let snapshotIndex = 0;
-
-  for (const event of sortedEvents) {
-    while (snapshotIndex < sortedSnapshots.length && sortedSnapshots[snapshotIndex].t <= eventTime(event)) {
-      currentCode = sortedSnapshots[snapshotIndex].code;
-      snapshotIndex++;
-    }
-    currentCode = applyEvent(currentCode, event);
-    states.push(currentCode);
-  }
-  if (typeof finalCode === 'string' && finalCode !== states[states.length - 1]) states.push(finalCode);
-  return { states, events: sortedEvents };
 }
 
 export function CodeReplay({
@@ -109,8 +41,8 @@ export function CodeReplay({
   const initialCode = replay?.initialCode ?? initialCodeProp;
   const finalCode = replay?.finalCode ?? finalCodeProp;
   const replayLanguage = replay?.lang || language;
-  const { states, events: sortedEvents } = useMemo(
-    () => buildStates(events, snapshots, initialCode, finalCode),
+  const { states, times } = useMemo(
+    () => buildReplayStates(events, snapshots, initialCode, finalCode),
     [events, snapshots, initialCode, finalCode],
   );
   const [playing, setPlaying] = useState(false);
@@ -120,7 +52,7 @@ export function CodeReplay({
 
   const maxIndex = Math.max(0, states.length - 1);
   const code = states[currentIndex] || '';
-  const duration = sortedEvents.length ? eventTime(sortedEvents[sortedEvents.length - 1]) : 0;
+  const duration = times[times.length - 1];
   const stop = () => {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     timerRef.current = null;
@@ -130,8 +62,8 @@ export function CodeReplay({
   useEffect(() => {
     if (!playing || currentIndex >= maxIndex) return undefined;
     const delay = Math.max(20, (
-      replayTimeAt(sortedEvents, duration, currentIndex + 1)
-      - replayTimeAt(sortedEvents, duration, currentIndex)
+      times[currentIndex + 1]
+      - (times[currentIndex] || 0)
     ) / Number(speed || 1));
     timerRef.current = window.setTimeout(() => {
       const nextIndex = Math.min(maxIndex, currentIndex + 1);
@@ -142,7 +74,7 @@ export function CodeReplay({
       if (timerRef.current !== null) window.clearTimeout(timerRef.current);
       timerRef.current = null;
     };
-  }, [currentIndex, duration, maxIndex, playing, sortedEvents, speed]);
+  }, [currentIndex, duration, maxIndex, playing, times, speed]);
 
   const handleReset = () => {
     stop();
@@ -189,14 +121,15 @@ export function CodeReplay({
             </Button>
             <Badge size="xs">{currentIndex}/{maxIndex}</Badge>
             <Text size="xs" c="dimmed">
-              {formatReplayTime(replayTimeAt(sortedEvents, duration, currentIndex))} / {formatReplayTime(duration)}
+              {formatReplayTime((times[currentIndex] || 0))} / {formatReplayTime(duration)}
             </Text>
           </Group>
           <Slider
             value={currentIndex}
             onChange={handleSliderChange}
             min={0}
-            max={maxIndex}
+            max={Math.max(1, maxIndex)}
+            disabled={maxIndex === 0}
             step={1}
             style={{ flex: 1 }}
             size="sm"

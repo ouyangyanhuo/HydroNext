@@ -22,6 +22,19 @@ The plugin stores replay metadata in `code_replay` and replay event chunks in `c
 - final submitted code
 - bound submission record id
 
+Both ui-default and ui-next use the shared `replay.ts` playback implementation.
+New recordings carry monotonically increasing event sequence numbers; snapshots
+identify the event they follow (`afterSeq`). Uploads are split into batches of
+200 events / 20 snapshots. A fresh editing timeline never reuses a persisted
+session ID without its event history. ui-next also uses a fresh upload ID when
+retrying a submission, so a partially accepted upload cannot duplicate edits.
+
+Legacy timestamp-only recordings remain playable, but their periodic snapshots
+are not interleaved with edits: timestamps do not identify whether a snapshot is
+before or after another edit in the same millisecond. Previously discarded edits
+(for example, past the old 500-event upload limit) cannot be recovered; the final
+submitted code is still shown as a fallback.
+
 Unsubmitted sessions expire after seven days. Sessions bound to a submission record are retained.
 
 ## Routes

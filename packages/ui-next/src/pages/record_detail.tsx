@@ -383,7 +383,7 @@ export default function RecordDetailPage() {
               <Card withBorder p="lg" className="hydro-content-card">
                 <Stack gap="sm">
                   <Text size="sm" fw={700}>{t('Code Replay')}</Text>
-                  <CodeReplay events={rdoc.replay} initialCode="" language={rdoc.lang} />
+                  <CodeReplay key={String(rdoc._id)} events={rdoc.replay} initialCode="" language={rdoc.lang} />
                 </Stack>
               </Card>
             )}

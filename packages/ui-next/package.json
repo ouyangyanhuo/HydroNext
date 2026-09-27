@@ -26,6 +26,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hydrooj/code-replay": "workspace:*",
     "@mantine/core": "^9.3.1",
     "@mantine/hooks": "^9.3.1",
     "@mantine/notifications": "^9.3.1",

@@ -1,8 +1,7 @@
 import {
-    ContestModel, Context, db, Handler, NotFoundError, ObjectId,
-    PERM, PRIV, PermissionError, ProblemModel, RecordModel,
-    RecordNotFoundError, STATUS, UserModel, ValidationError, param,
-    Types,
+    ContestModel, Context, db, Handler, NotFoundError, ObjectId, param,
+    PERM, PermissionError, PRIV, ProblemModel, RecordModel,
+    RecordNotFoundError, STATUS, Types, UserModel, ValidationError,
 } from 'hydrooj';
 
 interface ReplayChange {
@@ -13,6 +12,7 @@ interface ReplayChange {
 }
 
 interface ReplayEvent {
+    seq?: number;
     t: number;
     changes: ReplayChange[];
     selections?: unknown[];
@@ -20,6 +20,7 @@ interface ReplayEvent {
 }
 
 interface ReplaySnapshot {
+    afterSeq?: number;
     t: number;
     code: string;
     lang?: string;
@@ -99,6 +100,7 @@ function normalizeEvent(event: any): ReplayEvent | null {
     ));
     if (!normalizedChanges.length) return null;
     const normalized: ReplayEvent = {
+        seq: Number.isSafeInteger(event.seq) && event.seq > 0 ? event.seq : undefined,
         t: Math.max(0, Number(event.t) || 0),
         changes: normalizedChanges,
         selections: event.selections instanceof Array ? event.selections : undefined,
@@ -111,6 +113,7 @@ function normalizeEvent(event: any): ReplayEvent | null {
 function normalizeSnapshot(snapshot: any): ReplaySnapshot | null {
     if (!snapshot || typeof snapshot !== 'object') return null;
     return {
+        afterSeq: Number.isSafeInteger(snapshot.afterSeq) && snapshot.afterSeq >= 0 ? snapshot.afterSeq : undefined,
         t: Math.max(0, Number(snapshot.t) || 0),
         code: trimCode(String(snapshot.code || '')),
         lang: typeof snapshot.lang === 'string' ? snapshot.lang : undefined,
@@ -154,12 +157,16 @@ export class CodeReplayModel {
                 expiresAt: new Date(Date.now() + UNBOUND_EXPIRE_SECONDS * 1000),
             },
         };
-        const events = payload.events?.slice(0, MAX_BATCH_EVENTS) || [];
-        const snapshots = payload.snapshots?.slice(0, MAX_BATCH_SNAPSHOTS) || [];
+        const events = payload.events || [];
+        const snapshots = payload.snapshots || [];
+        if (events.length > MAX_BATCH_EVENTS || snapshots.length > MAX_BATCH_SNAPSHOTS) {
+            throw new ValidationError('events', 'Replay batch too large');
+        }
         try {
             await coll.updateOne({
                 _id: sessionId,
                 uid,
+                domainId,
                 rid: { $exists: false },
             }, update, { upsert: true });
         } catch (error) {
@@ -290,7 +297,7 @@ async function canViewRecordCode(handler: Handler, rdoc: any): Promise<boolean> 
     if (tdoc) {
         const tsdoc = await ContestModel.getStatus(rdoc.domainId, tdoc.docId, handler.user._id);
         if (handler.user.own(tdoc)) return true;
-        if (tdoc?.allowViewCode && ContestModel.isDone(tdoc) && !!tsdoc?.attend) return true;
+        if (tdoc?.allowViewCode && ContestModel.isDone(tdoc) && tsdoc?.attend) return true;
         if (!tsdoc?.attend && pdoc && !ProblemModel.canViewBy(pdoc, handler.user)) return false;
     } else if (pdoc && !ProblemModel.canViewBy(pdoc, handler.user)) {
         return false;
@@ -341,6 +348,9 @@ class CodeReplaySessionHandler extends Handler {
         const normalizedSnapshots = rawSnapshots
             .map(normalizeSnapshot)
             .filter(Boolean) as ReplaySnapshot[];
+        if (normalizedEvents.length !== rawEvents.length || normalizedSnapshots.length !== rawSnapshots.length) {
+            throw new ValidationError('events', 'Invalid replay data');
+        }
         await CodeReplayModel.append(this.user._id, domainId, sessionId, {
             pid,
             tid,
@@ -457,14 +467,14 @@ export async function apply(ctx: Context) {
         'Code Replay': '代码回放',
         'Replay editing process': '回放编辑过程',
         'No replay data is available.': '没有可用的回放数据。',
-        'Play': '播放',
-        'Pause': '暂停',
-        'Restart': '重新开始',
+        Play: '播放',
+        Pause: '暂停',
+        Restart: '重新开始',
         'Previous Step': '上一步',
         'Next Step': '下一步',
-        'Speed': '速度',
-        'Events': '事件数',
-        'Duration': '持续时间',
+        Speed: '速度',
+        Events: '事件数',
+        Duration: '持续时间',
     });
     ctx.i18n.load('en', {
         code_replay: 'Code Replay',
