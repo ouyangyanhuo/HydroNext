@@ -6,6 +6,7 @@ import {
     FileLimitExceededError, FileUploadError, ProblemNotFoundError, ValidationError,
 } from '../error';
 import { Tdoc, TrainingDoc, TrainingStatusDoc } from '../interface';
+import { canViewTrainingRecords, checkTrainingRecordAccess } from '../lib/training-record-access';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import domain from '../model/domain';
 import * as oplog from '../model/oplog';
@@ -235,6 +236,7 @@ class TrainingDetailHandler extends Handler {
     @param('uid', Types.PositiveInt, true)
     @param('viewRecords', Types.Boolean)
     async get(domainId: string, tid: ObjectId, uid = this.user._id, viewRecords = false) {
+        if (viewRecords) checkTrainingRecordAccess(this);
         const tdoc = await training.get(domainId, tid);
         await this.ctx.parallel('training/get', tdoc, this);
         let shouldCompare = false;
@@ -248,10 +250,7 @@ class TrainingDetailHandler extends Handler {
             shouldCompare = uid !== this.user._id && enrollUsers.includes(uid);
             if (uid !== this.user._id && !shouldCompare) uid = this.user._id;
         } else uid = this.user._id;
-        if (viewRecords) {
-            this.checkPerm(PERM.PERM_VIEW_RECORD);
-            viewRecords = shouldCompare;
-        }
+        viewRecords &&= shouldCompare;
         const canViewHidden = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN);
         const [udoc, udict, pdict] = await Promise.all([
             user.getById(domainId, tdoc.owner),
@@ -306,7 +305,7 @@ class TrainingDetailHandler extends Handler {
             viewedUdoc: shouldCompare ? udict[uid] : null,
             viewedUid: shouldCompare ? uid : null,
             viewRecords,
-            canViewOtherRecords: this.user.hasPerm(PERM.PERM_VIEW_RECORD),
+            canViewOtherRecords: canViewTrainingRecords(this.user),
             canEdit: this.user.own(tdoc) || this.user.hasPerm(PERM.PERM_EDIT_TRAINING),
             canDelete: this.user.hasPerm(PERM.PERM_EDIT_TRAINING),
             canViewEnrolledUsers,

@@ -1,5 +1,6 @@
 {% import "components/home.html" as home with context %}
 {% import "components/problem.html" as problem with context %}
+{% import "components/paginator.html" as paginator with context %}
 {% extends "layout/basic.html" %}
 {% block content %}
 {{ set(UiContext, 'udoc', udoc) }}
@@ -118,6 +119,9 @@
                       {{ col(pdocs.slice(_mark*2, _mark*3)) }}
                       {{ col(pdocs.slice(_mark*3)) }}
                     </div>
+                    {% if acceptedPageCount > 1 %}
+                      {{ paginator.render(acceptedPage, acceptedPageCount, 'tab=accepted#tab-1') }}
+                    {% endif %}
                   </div>
                 </div>
               </li>

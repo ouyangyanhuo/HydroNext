@@ -46,6 +46,16 @@ describe('App', () => {
         await agent.get('/api/user?args={"id":2}&projection=uname').expect(null);
     });
 
+    it('User profile returns bounded accepted-problem pagination', async () => {
+        const res = await agent.get('/user/1?page=2&tab=accepted').expect(200);
+        const args = getPageArgs(res);
+        assert.equal(args.acceptedPageSize, 50);
+        assert.ok(args.pdocs.length <= 50);
+        assert.ok(args.acceptedCount >= args.pdocs.length);
+        assert.ok(args.acceptedPage >= 1 && args.acceptedPage <= args.acceptedPageCount);
+        assert.equal(args.acceptedPageCount, Math.max(1, Math.ceil(args.acceptedCount / 50)));
+    });
+
     it('Create User', async () => {
         const redirect = await agent.post('/register')
             .send({ mail: 'test@example.com' })

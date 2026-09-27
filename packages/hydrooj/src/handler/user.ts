@@ -13,6 +13,7 @@ import {
 import { User } from '../interface';
 import avatar from '../lib/avatar';
 import { sendMail } from '../lib/mail';
+import { paginateAcceptedProblems } from '../lib/user-profile-pagination';
 import { verifyTFA } from '../lib/verifyTFA';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as ContestModel from '../model/contest';
@@ -308,7 +309,8 @@ class UserLostPassWithCodeHandler extends Handler {
 
 class UserDetailHandler extends Handler {
     @param('uid', Types.Int)
-    async get(domainId: string, uid: number) {
+    @param('page', Types.PositiveInt, true)
+    async get(domainId: string, uid: number, page = 1) {
         if (uid === 0) throw new UserNotFoundError(0);
         const isSelfProfile = this.user._id === uid;
         const [udoc, sdoc] = await Promise.all([
@@ -317,27 +319,25 @@ class UserDetailHandler extends Handler {
         ]);
         if (!udoc) throw new UserNotFoundError(uid);
         const pdocs: ProblemDoc[] = [];
-        const acInfo: Record<string, number> = {};
+        let accepted = paginateAcceptedProblems([], page);
         const canViewHidden = this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN);
         if (this.user.hasPerm(PERM.PERM_VIEW_PROBLEM)) {
-            const psdocs = await problem.getMultiStatus(domainId, { uid, status: STATUS.STATUS_ACCEPTED }).toArray();
-            pdocs.push(...Object.values(
-                await problem.getList(
-                    domainId, psdocs.map((i) => i.docId), canViewHidden,
-                    false, problem.PROJECTION_LIST, true,
-                ),
-            ));
-        }
-        for (const pdoc of pdocs) {
-            for (const tag of pdoc.tag || []) {
-                if (acInfo[tag]) acInfo[tag]++;
-                else acInfo[tag] = 1;
+            const psdocs = await problem.getMultiStatus(domainId, { uid, status: STATUS.STATUS_ACCEPTED })
+                .project({ docId: 1 }).toArray();
+            // Keep global tag counts, but fetch full list documents only for the
+            // current page. Hidden/deleted problems never affect visible totals.
+            const visible = await problem.getMulti(domainId, {
+                docId: { $in: psdocs.map((i) => i.docId) },
+                ...(canViewHidden ? {} : { hidden: { $ne: true } }),
+            }, ['docId', 'tag']).toArray();
+            accepted = paginateAcceptedProblems(visible, page);
+            if (accepted.ids.length) {
+                pdocs.push(...await problem.getMulti(domainId, {
+                    docId: { $in: accepted.ids },
+                    ...(canViewHidden ? {} : { hidden: { $ne: true } }),
+                }).sort({ docId: 1 }).toArray());
             }
         }
-        const tags = Object.entries(acInfo)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 20)
-            .map(([name, count]) => ({ name, count }));
         const tsdocs = await ContestModel.getMultiStatus(domainId, { uid, attend: { $exists: true } }).project({ docId: 1 }).toArray();
         const tdocs = await ContestModel.getMulti(domainId, { docId: { $in: tsdocs.map((i) => i.docId) } })
             .project({ docId: 1, title: 1, rule: 1 }).sort({ _id: -1 }).toArray();
@@ -365,7 +365,11 @@ class UserDetailHandler extends Handler {
             },
             sdoc,
             pdocs,
-            tags,
+            tags: accepted.tags,
+            acceptedPage: accepted.page,
+            acceptedPageCount: accepted.pageCount,
+            acceptedPageSize: accepted.pageSize,
+            acceptedCount: accepted.total,
             tdocs,
         };
         if (this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION)) {

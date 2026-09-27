@@ -1,5 +1,6 @@
 import { Anchor, Badge, Button, Card, Group, Paper, SimpleGrid, Stack, Tabs, Text, Title } from '@mantine/core';
 import { useState } from 'react';
+import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
@@ -30,7 +31,10 @@ export default function UserDetailPage() {
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const currentUser = useSessionStore((s) => s.user);
-  const [tab, setTab] = useState<string | null>('bio');
+  const [tab, setTab] = useState<string | null>(() => {
+    const query = new URLSearchParams(window.location.search);
+    return query.get('tab') === 'accepted' || query.has('page') ? 'accepted' : 'bio';
+  });
 
   const udoc = args.udoc || {};
   const stats = args.stats || udoc;
@@ -188,7 +192,7 @@ export default function UserDetailPage() {
             {pdocs.length > 0 ? (
               <>
                 <Text size="sm" c="dimmed" mb="sm">
-                  {t('Accepted')}: {pdocs.length}
+                  {t('Accepted')}: {args.acceptedCount ?? pdocs.length}
                 </Text>
                 <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing="sm">
                   {pdocs.map((pdoc: any) => (
@@ -208,6 +212,11 @@ export default function UserDetailPage() {
                     </Anchor>
                   ))}
                 </SimpleGrid>
+                <Paginator
+                  page={Number(args.acceptedPage) || 1}
+                  totalPages={Number(args.acceptedPageCount) || 1}
+                  baseUrl={buildUrl('user_detail', { uid: udoc._id }, { tab: 'accepted' })}
+                />
               </>
             ) : (
               <Text c="dimmed" ta="center" py="xl">{t('No accepted problems')}</Text>

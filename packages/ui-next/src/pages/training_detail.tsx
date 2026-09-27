@@ -183,7 +183,7 @@ export default function TrainingDetailPage() {
   const canViewOtherRecords = Boolean(args.canViewOtherRecords);
   const viewedUser = args.viewedUdoc;
   const viewedUid = Number(args.viewedUid) || undefined;
-  const viewRecords = Boolean(args.viewRecords && viewedUid);
+  const viewRecords = Boolean(args.viewRecords && canViewOtherRecords && viewedUid);
   const enrolledUserPreview = (args.enrolledUserPreview || []).slice(0, 5).map((uid: number) => ({
     uid,
     user: args.udict?.[uid] || {},
@@ -426,7 +426,7 @@ export default function TrainingDetailPage() {
                       href={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id }, {
                         ...trainingListQuery,
                         uid: String(uid),
-                        ...(canViewOtherRecords ? { viewRecords: 'true' } : {}),
+                        viewRecords: String(canViewOtherRecords),
                       })}
                       className="hydro-training-enrolled-user"
                     >
@@ -522,7 +522,7 @@ export default function TrainingDetailPage() {
                     href={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id }, {
                       ...trainingListQuery,
                       uid: String(uid),
-                      ...(canViewOtherRecords ? { viewRecords: 'true' } : {}),
+                      viewRecords: String(canViewOtherRecords),
                     })}
                     className="hydro-training-enrolled-user"
                   >

@@ -3344,6 +3344,8 @@ a {
 }
 
 /* Interactive overlays must stay fully opaque over dense page content. */
+.mantine-Modal-header,
+.mantine-Drawer-header,
 .mantine-Modal-content,
 .mantine-Drawer-content,
 .mantine-Popover-dropdown,
@@ -3356,6 +3358,31 @@ a {
   background-image: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+}
+
+/* Match sticky headers to their dialog, with a clear gap before the content. */
+.mantine-Modal-header,
+.mantine-Drawer-header {
+  color: var(--hydro-text);
+  border-bottom: 1px solid var(--hydro-border);
+  padding-block: 16px;
+  gap: 16px;
+}
+
+.mantine-Modal-title,
+.mantine-Drawer-title {
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mantine-Modal-body,
+.mantine-Drawer-body {
+  padding-top: 20px;
+}
+
+.mantine-Alert-title {
+  margin-bottom: 10px;
 }
 
 .mantine-Accordion-item,
