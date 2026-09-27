@@ -35,6 +35,18 @@ before or after another edit in the same millisecond. Previously discarded edits
 (for example, past the old 500-event upload limit) cannot be recovered; the final
 submitted code is still shown as a fallback.
 
+## Thinking time (ui-next)
+
+The timeline uses elapsed time, not the number of editing events. Gaps of at
+least five seconds without an edit are shown as blank, outlined regions; this is
+an idle-time heuristic, not a measurement of the user's actual thought process.
+The optional **Skip thinking time** switch jumps across these regions while
+keeping the selected speed in active regions. Manual seeking and single-step
+controls still work with skipping enabled. The last submission snapshot retains
+the idle tail after the last edit. New ui-next sessions start when the editor is
+mounted, so the pause before the first edit can also be recorded. Older recordings
+cannot recover any time that was never captured.
+
 Unsubmitted sessions expire after seven days. Sessions bound to a submission record are retained.
 
 ## Routes

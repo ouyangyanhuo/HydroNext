@@ -20,7 +20,8 @@ export interface ReplaySnapshot {
 }
 
 export function eventTime(event: ReplayEvent) {
-    return Math.max(0, Number(event.t ?? event.timestamp ?? 0) || 0);
+    const time = Number(event.t ?? event.timestamp ?? 0);
+    return Number.isFinite(time) ? Math.max(0, time) : 0;
 }
 
 export function applyEvent(code: string, event: ReplayEvent) {
@@ -84,11 +85,16 @@ export function buildReplayStates(events: ReplayEvent[], snapshots: ReplaySnapsh
         states.push(checkpoints.get(i + 1)?.code ?? applyEvent(states[i], ordered[i]));
         times.push(Math.max(times[i], eventTime(ordered[i])));
     }
+    // The last snapshot is captured on submit; preserve the idle tail after the
+    // last edit instead of ending the timeline prematurely.
+    const duration = snapshots.reduce((end, snapshot) => (
+        Number.isFinite(snapshot.t) ? Math.max(end, snapshot.t) : end
+    ), times[times.length - 1]);
     if (typeof finalCode === 'string' && finalCode !== states[states.length - 1]) {
         states.push(finalCode);
-        times.push(times[times.length - 1]);
+        times.push(duration);
     }
-    return { states, times, events: ordered };
+    return { states, times, duration, events: ordered };
 }
 
 /** Keep both arrays below the server limits without silently losing edits. */

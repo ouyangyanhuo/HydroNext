@@ -1,4 +1,5 @@
 import { Button, Card, Group, Loader, Stack, Text, Title } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { Link } from '@/components/link';
 import { CodeReplay } from '@/components/record/code-replay';
@@ -50,21 +51,27 @@ export default function CodeReplayPage() {
 
   return (
     <Stack gap="lg">
-      <Card withBorder p="xl" className="hydro-content-card">
-        <Group justify="space-between" align="flex-start" gap="md">
-          <div className="min-w-0">
-            <Title order={1} className="text-3xl text-[var(--hydro-text)]">{t('Code Replay')}</Title>
-            <Text size="sm" c="dimmed" mt="xs">
-              {pdoc.pid || pdoc.docId ? `${pdoc.pid || pdoc.docId}. ${pdoc.title || ''}` : t('Replay editing process')}
-            </Text>
-          </div>
-          {rdoc._id && (
-            <Button component={Link} to="record_detail" params={{ rid: rdoc._id }} variant="light" size="xs">
-              {t('Back')}
-            </Button>
-          )}
-        </Group>
-      </Card>
+      <Group justify="space-between" align="center" gap="md" wrap="nowrap">
+        <div className="min-w-0 flex-1">
+          <Title order={1} size="h2" className="text-[var(--hydro-text)]">{t('Code Replay')}</Title>
+          <Text size="sm" c="dimmed" mt={4} style={{ overflowWrap: 'anywhere' }}>
+            {pdoc.pid || pdoc.docId ? `${pdoc.pid || pdoc.docId}. ${pdoc.title || ''}` : t('Replay editing process')}
+          </Text>
+        </div>
+        {rdoc._id && (
+          <Button
+            component={Link}
+            to="record_detail"
+            params={{ rid: rdoc._id }}
+            variant="default"
+            size="sm"
+            leftSection={<IconArrowLeft size={16} />}
+            style={{ flexShrink: 0 }}
+          >
+            {t('Back')}
+          </Button>
+        )}
+      </Group>
 
       {loading ? (
         <Card withBorder p="xl" className="hydro-content-card">

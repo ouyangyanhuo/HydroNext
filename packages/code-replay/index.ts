@@ -465,6 +465,11 @@ export async function apply(ctx: Context) {
     ctx.i18n.load('zh', {
         code_replay: '代码回放',
         'Code Replay': '代码回放',
+        Editing: '编辑中',
+        'Pauses of at least {0} seconds are shown as thinking time.': '连续至少 {0} 秒没有编辑操作的区段显示为思考时间。',
+        'Replay timeline': '回放时间轴',
+        'Skip thinking time': '跳过思考时间',
+        'Thinking time': '思考时间',
         'Replay editing process': '回放编辑过程',
         'No replay data is available.': '没有可用的回放数据。',
         Play: '播放',

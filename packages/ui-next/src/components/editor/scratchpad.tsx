@@ -554,6 +554,9 @@ export function Scratchpad({
                       value={code}
                       onChange={setCode}
                       onContentChange={captureChange}
+                      onMount={(editor) => {
+                        if (resolvedReplayUrl && user?._id) ensureReplaySession(editor.getValue());
+                      }}
                       language={lang}
                       height="100%"
                       fontSize={fontSize}
