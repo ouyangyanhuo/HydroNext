@@ -151,7 +151,7 @@ export default function TrainingDetailPage() {
   const buildUrl = useBuildUrl();
   const listSearch = new URLSearchParams(window.location.search);
   const trainingListQuery = Object.fromEntries(
-    ['page', 'q']
+    ['page', 'q', 'category', 'sort']
       .map((key) => [key, listSearch.get(key)] as const)
       .filter((entry): entry is [string, string] => Boolean(entry[1])),
   );

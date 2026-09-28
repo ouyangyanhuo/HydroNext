@@ -3,6 +3,16 @@ __id: zh_TW
 __interface: yes
 __langname: 繁體中文
 
+# List sorting
+Ascending ID: 題目編號正序
+Default order: 預設排序
+Descending ID: 題目編號倒序
+Oldest first: 最早新增
+Recently added: 最近新增
+Sort order: 排序方式
+Title ascending: 標題正序
+Title descending: 標題倒序
+
 # Navigation
 Home: 首頁
 Problems: 題目

@@ -46,6 +46,16 @@ describe('App', () => {
         await agent.get('/api/user?args={"id":2}&projection=uname').expect(null);
     });
 
+    it('List routes accept and return every explicit sorting mode', async () => {
+        for (const route of ['/p', '/training']) {
+            for (const sort of ['default', 'asc', 'desc', 'recent', 'oldest']) {
+                // eslint-disable-next-line no-await-in-loop
+                const response = await agent.get(`${route}?sort=${sort}`).expect(200);
+                assert.equal(getPageArgs(response).sort, sort);
+            }
+        }
+    });
+
     it('User profile returns bounded accepted-problem pagination', async () => {
         const res = await agent.get('/user/1?page=2&tab=accepted').expect(200);
         const args = getPageArgs(res);

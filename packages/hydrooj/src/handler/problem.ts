@@ -23,6 +23,7 @@ import {
 import {
     ProblemDoc, ProblemSearchOptions, ProblemStatusDoc, RecordDoc, User,
 } from '../interface';
+import { LIST_SORT_MODES, type ListSortMode, PROBLEM_LIST_SORT } from '../lib/list-sort';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as discussion from '../model/discussion';
@@ -113,12 +114,12 @@ export class ProblemMainHandler extends Handler {
     @param('limit', Types.PositiveInt, true)
     @param('pjax', Types.Boolean)
     @param('quick', Types.Boolean)
-    @param('sort', Types.Range(['default', 'recent']), true)
-    async get(domainId: string, page = 1, q = '', limit: number, pjax = false, quick = false, sortStrategy = 'default') {
+    @param('sort', Types.Range([...LIST_SORT_MODES]), true)
+    async get(domainId: string, page = 1, q = '', limit: number, pjax = false, quick = false, sortStrategy: ListSortMode = 'default') {
         this.response.template = 'problem_main.html';
         if (!limit || limit > this.ctx.setting.get('pagination.problem') || page > 1) limit = this.ctx.setting.get('pagination.problem');
         this.queryContext.query = buildQuery(this.user);
-        if (sortStrategy === 'recent') this.queryContext.hint = 'basic';
+        if (sortStrategy === 'recent' || sortStrategy === 'oldest') this.queryContext.hint = 'basic';
         // eslint-disable-next-line ts/no-shadow
         const query = this.queryContext.query;
         const psdict = {};
@@ -144,7 +145,17 @@ export class ProblemMainHandler extends Handler {
         if (text) category.push(text);
         if (category.length) this.UiContext.extraTitleContent = category.join(',');
         let total = 0;
-        if (text) {
+        if (text && sortStrategy !== 'default') {
+            // Apply explicit order to the entire matching set before pagination,
+            // not just the page of relevance-ranked hits from a search provider.
+            const $regex = new RegExp(escapeRegExp(text), 'i');
+            query.$and ||= [];
+            query.$and.push({ $or: [
+                { title: { $regex } }, { pid: { $regex } }, { tag: text },
+                ...(Number.isSafeInteger(+text) ? [{ docId: +text }] : []),
+            ] });
+            this.queryContext.hint = 'basic';
+        } else if (text) {
             const result = await search(domainId, q, { skip: (page - 1) * limit, limit });
             total = result.total;
             this.queryContext.pcountRelation = result.countRelation;
@@ -155,10 +166,7 @@ export class ProblemMainHandler extends Handler {
         }
         const sort = this.queryContext.sort;
         await this.ctx.parallel('problem/list', query, this, sort);
-        const sortKey = ({
-            default: { sort: 1, docId: 1 },
-            recent: { docId: -1 },
-        } as const)[sortStrategy];
+        const sortKey = PROBLEM_LIST_SORT[sortStrategy];
         let [pdocs, ppcount, pcount] = this.queryContext.fail
             ? [[], 0, 0]
             : await this.paginate(
@@ -171,7 +179,6 @@ export class ProblemMainHandler extends Handler {
             ppcount = Math.ceil(total / limit);
         }
         if (sort.length) pdocs = pdocs.sort((a, b) => sort.indexOf(`${a.domainId}/${a.docId}`) - sort.indexOf(`${b.domainId}/${b.docId}`));
-        if (text && pcount > pdocs.length) pcount = pdocs.length;
         if (this.user.hasPriv(PRIV.PRIV_USER_PROFILE)) {
             Object.assign(psdict, await problem.getListStatus(
                 domainId, this.user._id,

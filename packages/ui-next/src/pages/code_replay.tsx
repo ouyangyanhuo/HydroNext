@@ -1,10 +1,12 @@
 import { Button, Card, Group, Loader, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import { Link } from '@/components/link';
 import { CodeReplay } from '@/components/record/code-replay';
 import { usePageData, useUiContext } from '@/context/page-data';
+import { useNavigate } from '@/context/router';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { goBackOrFallback } from '@/utils/history-back';
 
 function normalizeReplayDataUrl(url?: string) {
   const normalized = (url || `${window.location.pathname}/data`)
@@ -16,6 +18,8 @@ export default function CodeReplayPage() {
   const { args } = usePageData();
   const ui = useUiContext();
   const { t } = useI18n();
+  const buildUrl = useBuildUrl();
+  const navigate = useNavigate();
   const dataUrl = normalizeReplayDataUrl(ui.codeReplayDataUrl);
   const [result, setResult] = useState<{ url: string, data?: any, error?: string }>({ url: '' });
   const loading = result.url !== dataUrl;
@@ -58,19 +62,19 @@ export default function CodeReplayPage() {
             {pdoc.pid || pdoc.docId ? `${pdoc.pid || pdoc.docId}. ${pdoc.title || ''}` : t('Replay editing process')}
           </Text>
         </div>
-        {rdoc._id && (
-          <Button
-            component={Link}
-            to="record_detail"
-            params={{ rid: rdoc._id }}
-            variant="default"
-            size="sm"
-            leftSection={<IconArrowLeft size={16} />}
-            style={{ flexShrink: 0 }}
-          >
-            {t('Back')}
-          </Button>
-        )}
+        <Button
+          onClick={() => goBackOrFallback(window.history, () => {
+            void navigate(rdoc._id
+              ? buildUrl('record_detail', { rid: rdoc._id })
+              : buildUrl('record_main'));
+          })}
+          variant="default"
+          size="sm"
+          leftSection={<IconArrowLeft size={16} />}
+          style={{ flexShrink: 0 }}
+        >
+          {t('Back')}
+        </Button>
       </Group>
 
       {loading ? (

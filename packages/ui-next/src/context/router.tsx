@@ -30,7 +30,7 @@ export interface RouterState {
 }
 
 interface RouterNavigateContextValue {
-  navigate: (url: string) => Promise<void>;
+  navigate: (url: string, options?: { replace?: boolean }) => Promise<void>;
 }
 
 function getRoutePath(url: string): string {
@@ -71,7 +71,7 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
   }, []);
 
   const fetchPage = useCallback(
-    async (url: string, init = false, push = false) => {
+    async (url: string, init = false, push = false, replace = false) => {
       abortRef.current?.abort();
       const gen = ++genRef.current;
       const controller = new AbortController();
@@ -123,7 +123,7 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
               const nextUrl = new URL(url, window.location.href);
               if (push && nextUrl.href !== window.location.href) {
                 const historyUrl = nextUrl.pathname + nextUrl.search + nextUrl.hash;
-                history.pushState({ url: nextUrl.pathname + nextUrl.search }, '', historyUrl);
+                history[replace ? 'replaceState' : 'pushState']({ url: nextUrl.pathname + nextUrl.search }, '', historyUrl);
               }
               setData((prev) => ({
                 ...prev,
@@ -161,7 +161,7 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
           const nextUrl = new URL(url, window.location.href);
           if (push && nextUrl.href !== window.location.href) {
             const historyUrl = nextUrl.pathname + nextUrl.search + nextUrl.hash;
-            history.pushState({ url: nextUrl.pathname + nextUrl.search }, '', historyUrl);
+            history[replace ? 'replaceState' : 'pushState']({ url: nextUrl.pathname + nextUrl.search }, '', historyUrl);
           }
           setData((prev) => ({
             ...prev,
@@ -185,7 +185,8 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
       console.error('[Hydro] all endpoints failed:', lastError);
       if (!isCurrent()) return false;
       dispatch({ type: 'FETCH_ERROR', error: lastError! });
-      window.location.href = url;
+      if (replace) window.location.replace(url);
+      else window.location.href = url;
       return false;
     },
     [setData],
@@ -229,12 +230,13 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
     [state.status, state.error],
   );
 
-  const navigate = useCallback(async (url: string) => {
+  const navigate = useCallback(async (url: string, options?: { replace?: boolean }) => {
     if (!canNavigateInDocument(url)) {
-      window.location.href = url;
+      if (options?.replace) window.location.replace(url);
+      else window.location.href = url;
       return;
     }
-    await fetchPage(url, false, true);
+    await fetchPage(url, false, true, options?.replace);
   }, [canNavigateInDocument, fetchPage]);
 
   const navigateValue = useMemo<RouterNavigateContextValue>(() => ({ navigate }), [navigate]);
@@ -254,7 +256,7 @@ export function useRouterState(): RouterState {
   return ctx;
 }
 
-export function useNavigate(): (url: string) => Promise<void> {
+export function useNavigate(): RouterNavigateContextValue['navigate'] {
   const ctx = useContext(RouterNavigateContext);
   if (!ctx) throw new Error('useNavigate must be used within RouterProvider');
   return ctx.navigate;

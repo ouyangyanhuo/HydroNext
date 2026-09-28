@@ -3,6 +3,16 @@ __id: zh
 __interface: yes
 __langname: 简体中文
 
+# List sorting
+Ascending ID: 题目编号正序
+Default order: 默认排序
+Descending ID: 题目编号倒序
+Oldest first: 最早添加
+Recently added: 最近添加
+Sort order: 排序方式
+Title ascending: 标题正序
+Title descending: 标题倒序
+
 # Navigation
 Home: 首页
 Problems: 题目

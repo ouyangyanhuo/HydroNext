@@ -6,6 +6,7 @@ import {
     FileLimitExceededError, FileUploadError, ProblemNotFoundError, ValidationError,
 } from '../error';
 import { Tdoc, TrainingDoc, TrainingStatusDoc } from '../interface';
+import { LIST_SORT_MODES, type ListSortMode, TRAINING_LIST_SORT } from '../lib/list-sort';
 import { canViewTrainingRecords, checkTrainingRecordAccess } from '../lib/training-record-access';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import domain from '../model/domain';
@@ -65,7 +66,8 @@ class TrainingMainHandler extends Handler {
     @param('page', Types.PositiveInt, true)
     @param('q', Types.String, true)
     @param('category', Types.String, true)
-    async get(domainId: string, page = 1, q = '', category = '') {
+    @param('sort', Types.Range([...LIST_SORT_MODES]), true)
+    async get(domainId: string, page = 1, q = '', category = '', sort: ListSortMode = 'default') {
         const query: Filter<TrainingDoc> = {};
         if (q) query.title = { $regex: new RegExp(escapeRegExp(q), 'i') };
         const ddoc = await domain.get(domainId);
@@ -74,7 +76,7 @@ class TrainingMainHandler extends Handler {
         if (selectedCategory) query.docId = { $in: selectedCategory.tids || [] };
         await this.ctx.parallel('training/list', query, this);
         const [tdocs, tpcount] = await this.paginate(
-            training.getMulti(domainId, query),
+            training.getMulti(domainId, query).sort(TRAINING_LIST_SORT[sort]),
             page,
             'training',
         );
@@ -106,7 +108,7 @@ class TrainingMainHandler extends Handler {
             : [];
         this.response.template = 'training_main.html';
         this.response.body = {
-            tdocs, page, tpcount, tsdict, tdict, q, category,
+            tdocs, page, tpcount, tsdict, tdict, q, category, sort,
             categories,
             trainingOptions,
             canCreateTraining,

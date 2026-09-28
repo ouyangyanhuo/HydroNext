@@ -1,8 +1,9 @@
-import { Badge, Button, Card, Checkbox, Group, HoverCard, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Button, Card, Checkbox, Group, HoverCard, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DataTable } from '@/components/common/data-table';
+import { ListSortSelect } from '@/components/common/list-sort-select';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
@@ -67,7 +68,7 @@ function normalizeCategories(categories: any) {
   return [];
 }
 
-function ProblemSidebar({ categories, query }: { categories: any, query: string }) {
+function ProblemSidebar({ categories, query, sort }: { categories: any, query: string, sort: string }) {
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const groups = normalizeCategories(categories);
@@ -89,7 +90,7 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
                   ].join(' ')}
                 >
                   <Link
-                    href={buildUrl('problem_main', {}, { q: `category:${category}` })}
+                    href={buildUrl('problem_main', {}, { q: `category:${category}`, sort })}
                     className="hydro-subtle-link block"
                   >
                     <Group justify="space-between" gap="xs" wrap="nowrap">
@@ -125,7 +126,7 @@ function ProblemSidebar({ categories, query }: { categories: any, query: string 
                       {children.map((tag) => (
                         <Link
                           key={tag}
-                          href={buildUrl('problem_main', {}, { q: `category:${tag}` })}
+                          href={buildUrl('problem_main', {}, { q: `category:${tag}`, sort })}
                           className="no-underline"
                         >
                           <Badge variant="light">{tag}</Badge>
@@ -181,7 +182,6 @@ export default function ProblemMainPage() {
   const listKey = `${page}:${qs}:${sort}:${pdocs[0]?.docId || 'empty'}`;
 
   const [search, setSearch] = useState(qs);
-  const [sortValue, setSortValue] = useState(sort);
   const [selected, setSelected] = useState<number[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -229,8 +229,7 @@ export default function ProblemMainPage() {
     } else {
       url.searchParams.delete('q');
     }
-    if (sortValue && sortValue !== 'default') url.searchParams.set('sort', sortValue);
-    else url.searchParams.delete('sort');
+    url.searchParams.set('sort', sort);
     url.searchParams.delete('page');
     navigate(url.pathname + url.search);
   };
@@ -272,7 +271,7 @@ export default function ProblemMainPage() {
             href={buildUrl('problem_detail', { pid: p.pid || p.docId }, {
               page: String(page),
               ...(qs ? { q: qs } : {}),
-              ...(sort !== 'default' ? { sort } : {}),
+              sort,
             })}
             className="hydro-subtle-link"
           >
@@ -326,16 +325,7 @@ export default function ProblemMainPage() {
             size="xs"
             className="w-[190px] sm:w-[260px]"
           />
-          <Select
-            data={[
-              { value: 'default', label: t('sort::default') },
-              { value: 'recent', label: t('sort::recent') },
-            ]}
-            value={sortValue}
-            onChange={(v) => setSortValue(v || 'default')}
-            size="xs"
-            className="w-[130px]"
-          />
+          <ListSortSelect kind="problem" />
           <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
           {canCreate && <Button size="xs" variant="light" component={Link} to="problem_create">{t('Create Problem')}</Button>}
           {canCreate && <Button size="xs" variant="light" component={Link} to="problem_import">{t('Import Problems')}</Button>}
@@ -365,7 +355,7 @@ export default function ProblemMainPage() {
         </div>
 
         <div className="w-full shrink-0 lg:w-72">
-          <ProblemSidebar categories={categories} query={search} />
+          <ProblemSidebar categories={categories} query={search} sort={sort} />
         </div>
       </div>
 

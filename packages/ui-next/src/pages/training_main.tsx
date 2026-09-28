@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { EmptyState } from '@/components/common/empty-state';
+import { ListSortSelect } from '@/components/common/list-sort-select';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
@@ -45,6 +46,7 @@ function TrainingCard({ tdoc, tsdoc, page, query, category }: { tdoc: any, tsdoc
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const pids = getTrainingPids(tdoc);
+  const { args } = usePageData();
   const sections = getSections(tdoc);
   const progress = trainingProgress(tsdoc, pids.length);
   const enrolled = isTrainingEnrolled(tsdoc);
@@ -54,6 +56,7 @@ function TrainingCard({ tdoc, tsdoc, page, query, category }: { tdoc: any, tsdoc
     <Link
       href={buildUrl('training_detail', { tid: tdoc.docId || tdoc._id }, {
         page: String(page),
+        sort: args.sort || 'default',
         ...(query ? { q: query } : {}),
         ...(category ? { category } : {}),
       })}
@@ -109,12 +112,14 @@ function TrainingCard({ tdoc, tsdoc, page, query, category }: { tdoc: any, tsdoc
 
 function EnrolledTraining({ tsdoc, tdoc, page, query, category }: { tsdoc: any, tdoc: any, page: number, query: string, category: string }) {
   const buildUrl = useBuildUrl();
+  const { args } = usePageData();
   const progress = trainingProgress(tsdoc, getTrainingPids(tdoc).length);
 
   return (
     <Link
       href={buildUrl('training_detail', { tid: tsdoc.docId || tsdoc._id }, {
         page: String(page),
+        sort: args.sort || 'default',
         ...(query ? { q: query } : {}),
         ...(category ? { category } : {}),
       })}
@@ -139,12 +144,13 @@ function TrainingCategoryItem({ item, query, selected, canManage, onEdit, onDele
 }) {
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
+  const { args } = usePageData();
 
   return (
     <Group gap={4} wrap="nowrap">
       <Button
         component={Link}
-        href={buildUrl('training_main', {}, { ...(query ? { q: query } : {}), category: item._id })}
+        href={buildUrl('training_main', {}, { ...(query ? { q: query } : {}), category: item._id, sort: args.sort || 'default' })}
         variant={selected ? 'light' : 'subtle'}
         justify="space-between"
         size="xs"
@@ -223,6 +229,7 @@ export default function TrainingMainPage() {
     if (search) url.searchParams.set('q', search);
     else url.searchParams.delete('q');
     url.searchParams.delete('page');
+    url.searchParams.set('sort', args.sort || 'default');
     navigate(url.pathname + url.search);
   };
 
@@ -346,6 +353,7 @@ export default function TrainingMainPage() {
             className="hydro-training-header-actions__search"
           />
           <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
+          <ListSortSelect kind="training" />
           {canCreateTraining && (
             <Button
               component={Link}
@@ -396,7 +404,7 @@ export default function TrainingMainPage() {
               <Stack gap={6} className="hydro-training-category-list">
                 <Button
                   component={Link}
-                  href={buildUrl('training_main', {}, q ? { q } : {})}
+                  href={buildUrl('training_main', {}, { ...(q ? { q } : {}), sort: args.sort || 'default' })}
                   variant={!category ? 'light' : 'subtle'}
                   justify="flex-start"
                   size="xs"

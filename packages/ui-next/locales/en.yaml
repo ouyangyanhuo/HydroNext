@@ -3,6 +3,16 @@ __id: en
 __interface: yes
 __langname: English
 
+# List sorting
+Ascending ID: Ascending ID
+Default order: Default order
+Descending ID: Descending ID
+Oldest first: Oldest first
+Recently added: Recently added
+Sort order: Sort order
+Title ascending: Title ascending
+Title descending: Title descending
+
 # Navigation
 Home: Home
 Problems: Problems
