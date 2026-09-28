@@ -1,9 +1,10 @@
 import './ranking.css';
 
-import { Button, Group, Paper, Select, Stack, Table, Text, Title } from '@mantine/core';
+import { Button, Group, Paper, Stack, Table, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconTrophy } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
+import { ShortSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -212,7 +213,7 @@ export default function ContestScoreboardPage() {
               <Button size="xs" variant="light" onClick={unlock} loading={loading}>{t('Unlock scoreboard')}</Button>
             )}
           </Group>
-          <Select data={filterOptions} value={filter} onChange={(value) => setFilterAndHash(value || 'all')} size="xs" w={200} />
+          <ShortSelect data={filterOptions} value={filter} onChange={(value) => setFilterAndHash(value || 'all')} size="xs" w={200} />
         </Stack>
       </header>
 

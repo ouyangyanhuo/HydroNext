@@ -1,8 +1,9 @@
-import { Badge, Button, Card, Divider, Group, Paper, Select, Stack, Table, Text, Textarea, Title, Tooltip } from '@mantine/core';
+import { Badge, Button, Card, Divider, Group, Paper, Stack, Table, Text, Textarea, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { DeleteResourceButton } from '@/components/common/delete-resource-button';
+import { LongSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
 import { ContestTimer } from '@/components/contest/contest-timer';
 import { Link } from '@/components/link';
@@ -276,7 +277,8 @@ function ClarificationList({ tdoc, pdict, tcdocs, udict, tsdoc }: { tdoc: any, p
       {tsdoc?.attend && (
         <Stack gap="sm" mt="lg">
           <Title order={5}>{t('Send Clarification Request')}</Title>
-          <Select
+          <LongSelect
+            searchable={false}
             label={t('Subject')}
             value={subject}
             onChange={(value) => setSubject(value || '0')}

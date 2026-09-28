@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './tokens.css';
+@import './select.css';
 
 @keyframes hydro-fade-in {
   from { opacity: 0; }
@@ -835,8 +836,27 @@ a {
 .hydro-problem-toolbar .mantine-Input-input,
 .hydro-problem-toolbar .mantine-Button-root {
   transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
-              box-shadow var(--hydro-duration-normal) var(--hydro-ease-out),
-              transform var(--hydro-duration-normal) var(--hydro-ease-out);
+              box-shadow var(--hydro-duration-normal) var(--hydro-ease-out);
+}
+
+/* One height contract for list toolbar inputs, selects, and buttons. */
+:is(.hydro-problem-toolbar, .hydro-contest-header-actions, .hydro-training-header-actions) {
+  --hydro-toolbar-control-height: calc(1.875rem * var(--mantine-scale, 1));
+}
+
+:is(.hydro-problem-toolbar, .hydro-contest-header-actions, .hydro-training-header-actions)
+:is(.mantine-Input-wrapper, .mantine-Button-root) {
+  --input-height: var(--hydro-toolbar-control-height);
+  --button-height: var(--hydro-toolbar-control-height);
+}
+
+:is(.hydro-problem-toolbar, .hydro-contest-header-actions, .hydro-training-header-actions)
+:is(.mantine-Input-input, .mantine-Button-root) {
+  box-sizing: border-box;
+  height: var(--hydro-toolbar-control-height);
+  min-height: var(--hydro-toolbar-control-height) !important;
+  max-height: var(--hydro-toolbar-control-height) !important;
+  transform: none;
 }
 
 .hydro-problem-toolbar .mantine-Input-input {
@@ -847,11 +867,6 @@ a {
     var(--hydro-primary-soft) 18%,
     var(--hydro-glass-surface-strong)
   );
-}
-
-.hydro-problem-toolbar .mantine-Input-input:focus,
-.hydro-problem-toolbar .mantine-Button-root:hover {
-  transform: translateY(-1px);
 }
 
 .hydro-problem-toolbar .mantine-Input-input:focus {
@@ -1027,7 +1042,6 @@ a {
 .hydro-contest-header-actions .mantine-Input-input:focus {
   border-color: var(--hydro-primary);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
-  transform: translateY(-1px);
 }
 
 .hydro-contest-list {
@@ -1227,55 +1241,6 @@ a {
   max-width: 100%;
 }
 
-.hydro-list-sort .mantine-Input-input.hydro-list-sort__input {
-  color: var(--hydro-text);
-  background: var(--hydro-surface-raised);
-  border: 1px solid var(--hydro-border);
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
-}
-
-.hydro-list-sort .mantine-Input-input.hydro-list-sort__input:hover,
-.hydro-list-sort .mantine-Input-input.hydro-list-sort__input:focus {
-  border-color: var(--hydro-primary);
-  transform: none;
-}
-
-.hydro-list-sort .hydro-list-sort__input:focus-visible {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hydro-primary) 15%, transparent);
-}
-
-.hydro-list-sort .mantine-Input-section {
-  color: var(--hydro-primary);
-  pointer-events: none;
-}
-
-.hydro-list-sort__dropdown {
-  padding: 6px;
-  border: 1px solid var(--hydro-border);
-  border-radius: 12px;
-  color: var(--hydro-text);
-}
-
-.hydro-list-sort__option {
-  padding: 9px 10px;
-  border-radius: 7px;
-  font-size: 13px;
-}
-
-.hydro-list-sort__option[data-combobox-selected],
-.hydro-list-sort__option[data-checked] {
-  color: var(--hydro-primary);
-  background: color-mix(in srgb, var(--hydro-primary) 12%, var(--hydro-surface-raised));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hydro-list-sort .mantine-Input-input.hydro-list-sort__input {
-    transition: none;
-  }
-}
-
 .hydro-training-header-actions .mantine-Input-input {
   border-color: color-mix(in srgb, var(--hydro-primary) 16%, var(--hydro-border));
   color: var(--hydro-text);
@@ -1288,7 +1253,29 @@ a {
 .hydro-training-header-actions .mantine-Input-input:focus {
   border-color: var(--hydro-primary);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
-  transform: translateY(-1px);
+}
+
+.hydro-training-category-grid .hydro-training-category-item {
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-md);
+  background: color-mix(in srgb, var(--hydro-primary) 5%, var(--hydro-surface-raised));
+}
+
+.hydro-training-category-grid .hydro-training-category-item:hover,
+.hydro-training-category-grid .hydro-training-category-item:focus-within {
+  background: color-mix(in srgb, var(--hydro-primary) 9%, var(--hydro-surface-raised));
+}
+
+.hydro-training-category-grid .hydro-training-category-item[data-selected='true'] {
+  border-color: color-mix(in srgb, var(--hydro-primary) 35%, var(--hydro-border));
+  background: color-mix(in srgb, var(--hydro-primary) 12%, var(--hydro-surface-raised));
+}
+
+.hydro-training-category-grid .hydro-training-category-item > .mantine-Button-root {
+  flex: 1;
+  min-width: 0;
 }
 
 .hydro-training-layout {
@@ -1742,20 +1729,6 @@ a {
   transform: translateY(-1px);
 }
 
-.hydro-record-select-dropdown {
-  border-color: color-mix(in srgb, var(--hydro-primary) 16%, var(--hydro-border));
-  background-color: var(--hydro-glass-surface-strong);
-  box-shadow: var(--hydro-shadow-lg);
-  -webkit-backdrop-filter: blur(var(--hydro-glass-blur)) saturate(122%);
-  backdrop-filter: blur(var(--hydro-glass-blur)) saturate(122%);
-}
-
-.hydro-record-select-dropdown .mantine-Select-option:hover,
-.hydro-record-select-dropdown .mantine-Select-option[data-combobox-selected] {
-  color: var(--hydro-primary-strong);
-  background-color: var(--hydro-primary-soft);
-}
-
 .hydro-record-list {
   animation: hydro-record-panel-in 420ms var(--hydro-ease-out) 80ms both;
 }
@@ -2033,20 +2006,6 @@ a {
 .hydro-scratchpad-input .mantine-Input-input:focus {
   border-color: var(--hydro-primary);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
-}
-
-.hydro-scratchpad-select-dropdown {
-  border-color: color-mix(in srgb, var(--hydro-primary) 18%, var(--hydro-border));
-  background-color: var(--hydro-glass-surface-strong);
-  box-shadow: var(--hydro-shadow-lg);
-  -webkit-backdrop-filter: blur(var(--hydro-glass-blur)) saturate(122%);
-  backdrop-filter: blur(var(--hydro-glass-blur)) saturate(122%);
-}
-
-.hydro-scratchpad-select-dropdown .mantine-Combobox-option:hover,
-.hydro-scratchpad-select-dropdown .mantine-Combobox-option[data-combobox-selected] {
-  color: var(--hydro-primary-strong);
-  background-color: var(--hydro-primary-soft);
 }
 
 .hydro-scratchpad-toolbar__actions {
@@ -3489,11 +3448,10 @@ a {
 }
 
 .hydro-record-filter,
-.hydro-record-select-dropdown,
 .hydro-training-header,
 .hydro-scratchpad-statement__header,
 .hydro-scratchpad-toolbar,
-.hydro-scratchpad-select-dropdown {
+.hydro-select__dropdown {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }

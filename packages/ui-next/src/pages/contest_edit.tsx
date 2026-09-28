@@ -1,9 +1,10 @@
-import { Avatar, Badge, Button, Card, Checkbox, Group, MultiSelect, NumberInput, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Avatar, Badge, Button, Card, Checkbox, Group, NumberInput, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
+import { LongSelect, TagMultiSelect } from '@/components/common/select';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -109,7 +110,7 @@ function AsyncTagSelect({
   onChange: (value: string[]) => void;
 }) {
   return (
-    <MultiSelect
+    <TagMultiSelect
       className={className}
       label={label}
       placeholder={placeholder}
@@ -353,7 +354,8 @@ export default function ContestEditPage() {
               <Badge variant="light">{form.rule}</Badge>
             </Group>
             <SimpleGrid cols={{ base: 1, sm: 4 }} spacing="md">
-              <Select
+              <LongSelect
+                searchable={false}
                 label={t('Rule')}
                 data={Object.entries(rules).map(([value, label]) => ({ value, label: String(label) }))}
                 value={form.rule}
@@ -407,7 +409,8 @@ export default function ContestEditPage() {
                 onChange={(value) => setForm({ ...form, maintainer: value.join(',') })}
               />
               <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-                <Select
+                <LongSelect
+                  searchable={false}
                   label={t('Permission Control')}
                   value={form.permission}
                   data={[
@@ -430,7 +433,7 @@ export default function ContestEditPage() {
           <Card withBorder p="lg" className="hydro-content-card">
             <Title order={3} size="h4" mb="md">{t('Contest Settings')}</Title>
             <Stack gap="md">
-              <MultiSelect
+              <TagMultiSelect
                 label={t('Submission language limit')}
                 placeholder={t('Unlimited')}
                 data={langs}

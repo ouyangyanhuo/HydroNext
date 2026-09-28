@@ -1,11 +1,12 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Badge, Button, Card, Checkbox, Group, NumberInput, Select, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
+import { Badge, Button, Card, Checkbox, Group, NumberInput, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
+import { LongSelect } from '@/components/common/select';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 function normalizeScripts(scripts: any) {
   if (Array.isArray(scripts)) {
@@ -111,7 +112,7 @@ export default function ManageScriptPage() {
             <Badge variant="light">{scripts.length}</Badge>
           </Group>
           <Stack gap="md">
-            <Select
+            <LongSelect
               label={t('Script')}
               data={scripts.map((script) => ({ value: script.id, label: `${script.id} - ${t(script.description || 'None')}` }))}
               value={selected}
@@ -123,7 +124,8 @@ export default function ManageScriptPage() {
                 {fields.map((field) => {
                   if (field.options.length) {
                     return (
-                      <Select
+                      <LongSelect
+                        searchable={false}
                         key={field.name}
                         label={field.name}
                         description={field.description ? t(field.description) : undefined}

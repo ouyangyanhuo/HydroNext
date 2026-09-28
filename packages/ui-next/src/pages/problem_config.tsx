@@ -1,10 +1,11 @@
-import { Badge, Button, Card, Checkbox, Group, MultiSelect, NumberInput, Select, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Button, Card, Checkbox, Group, NumberInput, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import yaml from 'js-yaml';
 import { useMemo, useState } from 'react';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { PageHeader } from '@/components/common/page-header';
+import { LongSelect, TagMultiSelect } from '@/components/common/select';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -250,7 +251,8 @@ export default function ProblemConfigPage() {
 
               <Tabs.Panel value="basic" pt="md">
                 <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-                  <Select
+                  <LongSelect
+                    searchable={false}
                     label={t('Problem Type')}
                     value={type}
                     data={[
@@ -315,7 +317,7 @@ export default function ProblemConfigPage() {
                     </>
                   )}
                   {!['submit_answer', 'objective'].includes(type) && (
-                    <MultiSelect
+                    <TagMultiSelect
                       label={t('Languages')}
                       placeholder={t('Unlimited')}
                       data={languages}
@@ -332,7 +334,8 @@ export default function ProblemConfigPage() {
                 <Stack gap="md">
                   {['default', 'submit_answer'].includes(type) && (
                     <>
-                      <Select
+                      <LongSelect
+                        searchable={false}
                         label={t('CheckerType')}
                         value={checkerMode}
                         data={[
@@ -353,7 +356,7 @@ export default function ProblemConfigPage() {
                       )}
                       {checkerMode === 'testlib' && (
                         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-                          <Select
+                          <LongSelect
                             label={t('Checker')}
                             data={[
                               { value: 'acmp', label: 'acmp' },
@@ -364,7 +367,7 @@ export default function ProblemConfigPage() {
                             value={normalizeFileValue(parsed.checker)}
                             onChange={(value) => updateFileWithLang('checker', value, normalizeLangValue(parsed.checker))}
                           />
-                          <Select
+                          <LongSelect
                             label={t('Language')}
                             data={[{ value: 'auto', label: 'auto' }, ...languages]}
                             searchable
@@ -375,20 +378,21 @@ export default function ProblemConfigPage() {
                       )}
                       {checkerMode === 'other' && (
                         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-                          <Select
+                          <LongSelect
+                            searchable={false}
                             label={t('Interface')}
                             data={['syzoj', 'hustoj', 'qduoj', 'lemon', 'kattis']}
                             value={parsed.checker_type || 'syzoj'}
                             onChange={(value) => updateConfig({ checker_type: value || 'syzoj' })}
                           />
-                          <Select
+                          <LongSelect
                             label={t('Checker')}
                             data={files}
                             searchable
                             value={normalizeFileValue(parsed.checker)}
                             onChange={(value) => updateFileWithLang('checker', value, normalizeLangValue(parsed.checker))}
                           />
-                          <Select
+                          <LongSelect
                             label={t('Language')}
                             data={[{ value: 'auto', label: 'auto' }, ...languages]}
                             searchable
@@ -401,14 +405,14 @@ export default function ProblemConfigPage() {
                   )}
                   {type === 'interactive' && (
                     <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-                      <Select
+                      <LongSelect
                         label={t('Interactor')}
                         data={files}
                         searchable
                         value={normalizeFileValue(parsed.interactor)}
                         onChange={(value) => updateFileWithLang('interactor', value, normalizeLangValue(parsed.interactor))}
                       />
-                      <Select
+                      <LongSelect
                         label={t('Language')}
                         data={[{ value: 'auto', label: 'auto' }, ...languages]}
                         searchable
@@ -419,14 +423,14 @@ export default function ProblemConfigPage() {
                   )}
                   {type === 'communication' && (
                     <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-                      <Select
+                      <LongSelect
                         label={t('Manager')}
                         data={files}
                         searchable
                         value={normalizeFileValue(parsed.manager)}
                         onChange={(value) => updateFileWithLang('manager', value, normalizeLangValue(parsed.manager))}
                       />
-                      <Select
+                      <LongSelect
                         label={t('Language')}
                         data={[{ value: 'auto', label: 'auto' }, ...languages]}
                         searchable
@@ -441,14 +445,14 @@ export default function ProblemConfigPage() {
 
               <Tabs.Panel value="files" pt="md">
                 <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-                  <MultiSelect
+                  <TagMultiSelect
                     label={t('user_extra_files')}
                     data={files}
                     searchable
                     value={Array.isArray(parsed.user_extra_files) ? parsed.user_extra_files : []}
                     onChange={(value) => updateConfig({ user_extra_files: value })}
                   />
-                  <MultiSelect
+                  <TagMultiSelect
                     label={t('judge_extra_files')}
                     data={files}
                     searchable
@@ -475,15 +479,15 @@ export default function ProblemConfigPage() {
                         </Group>
                         <SimpleGrid cols={{ base: 1, sm: 4 }} spacing="sm">
                           <NumberInput label="ID" value={Number(subtask.id || subtaskIndex + 1)} onChange={(value) => updateSubtask(subtaskIndex, { id: Number(value) || subtaskIndex + 1 })} />
-                          <Select label={t('Type')} data={['sum', 'min', 'max']} value={subtask.type || 'sum'} onChange={(value) => updateSubtask(subtaskIndex, { type: value || 'sum' })} />
+                          <LongSelect searchable={false} label={t('Type')} data={['sum', 'min', 'max']} value={subtask.type || 'sum'} onChange={(value) => updateSubtask(subtaskIndex, { type: value || 'sum' })} />
                           <NumberInput label={t('Score')} value={Number(subtask.score || 0)} onChange={(value) => updateSubtask(subtaskIndex, { score: Number(value) || 0 })} />
                           <TextInput label={t('Depend On')} value={(subtask.if || []).join(', ')} onChange={(e) => updateSubtask(subtaskIndex, { if: e.currentTarget.value.split(',').map((i) => i.trim()).filter(Boolean).map(Number) })} />
                         </SimpleGrid>
                         <Stack gap="xs">
                           {(subtask.cases || []).map((item: any, caseIndex: number) => (
                             <SimpleGrid key={caseIndex} cols={{ base: 1, sm: 5 }} spacing="xs">
-                              <Select label={t('Input')} data={files} searchable value={item.input || null} onChange={(value) => updateCase(subtaskIndex, caseIndex, { input: value || '' })} />
-                              <Select label={t('Output')} data={files} searchable value={item.output || null} onChange={(value) => updateCase(subtaskIndex, caseIndex, { output: value || '' })} />
+                              <LongSelect label={t('Input')} data={files} searchable value={item.input || null} onChange={(value) => updateCase(subtaskIndex, caseIndex, { input: value || '' })} />
+                              <LongSelect label={t('Output')} data={files} searchable value={item.output || null} onChange={(value) => updateCase(subtaskIndex, caseIndex, { output: value || '' })} />
                               <TextInput label={t('Time Limit')} value={String(item.time || '')} onChange={(e) => updateCase(subtaskIndex, caseIndex, { time: e.currentTarget.value })} />
                               <TextInput label={t('Memory Limit')} value={String(item.memory || '')} onChange={(e) => updateCase(subtaskIndex, caseIndex, { memory: e.currentTarget.value })} />
                               <Button mt={24} variant="subtle" color="red" onClick={() => removeCase(subtaskIndex, caseIndex)}>{t('Delete')}</Button>

@@ -3,6 +3,10 @@ __id: en
 __interface: yes
 __langname: English
 
+# Record filters
+By Language: By language
+By Status: By status
+
 # List sorting
 Ascending ID: Ascending ID
 Default order: Default order

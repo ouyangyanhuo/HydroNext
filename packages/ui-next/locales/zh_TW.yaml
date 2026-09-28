@@ -3,6 +3,10 @@ __id: zh_TW
 __interface: yes
 __langname: 繁體中文
 
+# Record filters
+By Language: 按語言
+By Status: 按狀態
+
 # List sorting
 Ascending ID: 題目編號正序
 Default order: 預設排序

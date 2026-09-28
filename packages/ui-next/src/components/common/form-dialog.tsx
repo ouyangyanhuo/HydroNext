@@ -1,6 +1,10 @@
-import { Avatar, Button, Group, Modal, NumberInput, PasswordInput, Paper, ScrollArea, Stack, Text, Textarea, TextInput, UnstyledButton } from '@mantine/core';
+import {
+  Avatar, Button, Group, Modal, NumberInput, Paper, PasswordInput, ScrollArea, Stack, Text, Textarea, TextInput, UnstyledButton,
+} from '@mantine/core';
 import { useEffect, useState } from 'react';
+import { LongSelect } from '@/components/common/select';
 import { useBuildUrl } from '@/hooks/use-build-url';
+import { useI18n } from '@/hooks/use-i18n';
 
 type FieldValue = string | number | boolean | null;
 
@@ -162,9 +166,10 @@ function FormDialogContent({
   loading = false,
   error,
 }: FormDialogProps) {
+  const { t } = useI18n();
   const [values, setValues] = useState<Record<string, FieldValue>>(() => Object.fromEntries(
-      fields.map((field) => [field.name, field.defaultValue ?? '']),
-    ) as Record<string, FieldValue>);
+    fields.map((field) => [field.name, field.defaultValue ?? '']),
+  ) as Record<string, FieldValue>);
 
   const setValue = (name: string, value: FieldValue) => {
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -207,19 +212,15 @@ function FormDialogContent({
           }
           if (field.type === 'select') {
             return (
-              <div key={field.name}>
-                <Text size="sm" fw={500} mb={4}>{field.label}</Text>
-                <select
-                  value={String(values[field.name] ?? '')}
-                  onChange={(e) => setValue(field.name, e.target.value)}
-                  className="w-full rounded border border-[var(--hydro-border)] bg-[var(--hydro-surface)] p-2 text-sm"
-                >
-                  <option value="">Select...</option>
-                  {(field.data || []).map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
+              <LongSelect
+                key={fieldKey}
+                {...common}
+                placeholder={field.placeholder || t('Select')}
+                data={field.data || []}
+                value={values[field.name] == null || values[field.name] === '' ? null : String(values[field.name])}
+                onChange={(value) => setValue(field.name, value ?? '')}
+                clearable
+              />
             );
           }
           if (field.type === 'domain') {

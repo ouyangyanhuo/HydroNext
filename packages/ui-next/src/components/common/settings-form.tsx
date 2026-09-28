@@ -1,17 +1,6 @@
-import {
-  Button,
-  Card,
-  Checkbox,
-  Group,
-  PasswordInput,
-  Select,
-  Stack,
-  Text,
-  Textarea,
-  TextInput,
-  Title,
-} from '@mantine/core';
+import { Button, Card, Checkbox, Group, PasswordInput, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useMemo, useState } from 'react';
+import { LongSelect } from '@/components/common/select';
 import { useI18n } from '@/hooks/use-i18n';
 
 const FLAG_HIDDEN = 1;
@@ -145,7 +134,7 @@ function SettingInput({
 
   if (setting.type === 'select' || setting.type === 'radio' || setting.type === 'image_radio') {
     return (
-      <Select
+      <LongSelect
         label={label}
         description={description}
         data={optionData(setting.range)}

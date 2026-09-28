@@ -3,6 +3,10 @@ __id: ko
 __interface: yes
 __langname: 한국어
 
+# Record filters
+By Language: 언어별
+By Status: 상태별
+
 # Navigation
 Home: 홈
 Problems: 문제

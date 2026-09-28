@@ -1,6 +1,5 @@
-import {
-  Group, Pagination, Select, Text,
-} from '@mantine/core';
+import { Group, Pagination, Text } from '@mantine/core';
+import { ShortSelect } from '@/components/common/select';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 import { buildPaginationUrl } from '@/utils/pagination';
@@ -45,7 +44,7 @@ export function Paginator({
       {showPageSize && (
         <Group gap="xs" wrap="nowrap">
           <Text size="xs" c="dimmed">{t('Rows per page')}</Text>
-          <Select
+          <ShortSelect
             value={String(pageSize)}
             data={pageSizeOptions}
             onChange={handlePageSizeChange}
@@ -61,7 +60,7 @@ export function Paginator({
             value={page}
             total={totalPages}
             onChange={handleChange}
-            size="sm"
+            size={30}
           />
         )}
         <Text size="xs" c="dimmed">

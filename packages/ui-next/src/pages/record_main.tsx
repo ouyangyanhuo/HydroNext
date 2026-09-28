@@ -1,9 +1,10 @@
-import { Badge, Button, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Button, Group, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconFilter, IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
+import { ShortSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS_TEXTS } from '@/components/record/status-map';
@@ -325,21 +326,23 @@ function RecordMainContent({ args }: { args: any }) {
             />
             <TextInput label={t('By Problem')} value={pid} onChange={(event) => setPid(event.currentTarget.value)} />
             <TextInput label={t('By Contest')} value={tid} onChange={(event) => setTid(event.currentTarget.value)} />
-            <Select
+            <ShortSelect
+              w="100%"
+              size="sm"
               label={t('By Language')}
               data={languageOptions}
               value={lang}
               onChange={(value) => setLang(value || ALL_FILTER)}
               searchable
-              classNames={{ dropdown: 'hydro-record-select-dropdown' }}
             />
-            <Select
+            <ShortSelect
+              w="100%"
+              size="sm"
               label={t('By Status')}
               data={statusOptions}
               value={status}
               onChange={(value) => setStatus(value || ALL_FILTER)}
               searchable
-              classNames={{ dropdown: 'hydro-record-select-dropdown' }}
             />
           </div>
         </form>

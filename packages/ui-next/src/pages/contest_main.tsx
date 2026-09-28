@@ -1,10 +1,11 @@
-import { Badge, Button, Group, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Button, Group, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import {
   IconArrowUpRight, IconCalendarEvent, IconClock, IconPlus, IconSearch, IconUsers,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '@/components/common/empty-state';
 import { Paginator } from '@/components/common/paginator';
+import { ShortSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { usePageData, useUserContext } from '@/context/page-data';
@@ -220,14 +221,14 @@ export default function ContestMainPage() {
             size="xs"
             className="hydro-contest-header-actions__search"
           />
-          <Select
+          <ShortSelect
             data={[{ value: ALL_FILTER, label: t('All') }, ...groups.map((value: string) => ({ value, label: value }))]}
             value={group || ALL_FILTER}
             onChange={(value) => setGroup(value === ALL_FILTER ? '' : value || '')}
             size="xs"
             className="hydro-contest-header-actions__select"
           />
-          <Select
+          <ShortSelect
             data={ruleOptions}
             value={rule || ALL_FILTER}
             onChange={(value) => setRule(value === ALL_FILTER ? '' : value || '')}

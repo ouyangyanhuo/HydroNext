@@ -1,8 +1,9 @@
-import { Avatar, Badge, Button, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Select, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Avatar, Badge, Button, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
+import { LongSelect, ShortSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
@@ -215,7 +216,8 @@ function AddUserDialogContent({
             <Text c="dimmed" size="sm">{t('No users selected')}</Text>
           )}
         </Stack>
-        <Select
+        <LongSelect
+          searchable={false}
           label={t('Role')}
           data={roleOptions}
           value={role}
@@ -361,7 +363,7 @@ export default function DomainUserPage() {
                       </Group>
                     </Table.Td>
                     <Table.Td>
-                      <Select
+                      <ShortSelect
                         size="xs"
                         w={160}
                         data={roleOptions}
@@ -401,7 +403,7 @@ export default function DomainUserPage() {
             </Button>
           </Group>
           <Group gap="xs">
-            <Select size="xs" w={160} data={roleOptions} value={validBulkRole} onChange={(value) => setBulkRole(value || 'default')} />
+            <ShortSelect size="sm" w={160} data={roleOptions} value={validBulkRole} onChange={(value) => setBulkRole(value || 'default')} />
             <Button
               disabled={!selected.length}
               loading={loading === 'set_users'}

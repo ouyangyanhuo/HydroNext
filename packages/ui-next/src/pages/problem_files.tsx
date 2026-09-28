@@ -1,23 +1,10 @@
-import {
-  ActionIcon,
-  Badge,
-  Button,
-  Card,
-  Checkbox,
-  Divider,
-  Group,
-  Modal,
-  Select,
-  Stack,
-  Text,
-  TextInput,
-  Title,
-} from '@mantine/core';
+import { ActionIcon, Badge, Button, Card, Checkbox, Divider, Group, Modal, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';
+import { LongSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
 import { STATUS } from '@/components/record/status-map';
 import { usePageData } from '@/context/page-data';
@@ -576,7 +563,7 @@ function GenerateTestdata({
     <Card withBorder p="lg" className="hydro-content-card">
       <Stack gap="md">
         <Title order={3} size="h4">{t('Generate Testdata')}</Title>
-        <Select
+        <LongSelect
           label={t('Data Generator')}
           placeholder={t('Select a testdata file')}
           data={fileOptions}
@@ -585,7 +572,7 @@ function GenerateTestdata({
           onChange={(value) => setGen(value || '')}
           size="xs"
         />
-        <Select
+        <LongSelect
           label={t('Standard Program')}
           placeholder={t('Select a testdata file')}
           data={fileOptions}

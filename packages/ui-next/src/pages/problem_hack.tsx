@@ -1,11 +1,12 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Button, Group, Paper, Select, Stack, Text, Textarea, Title } from '@mantine/core';
+import { Button, Group, Paper, Stack, Text, Textarea, Title } from '@mantine/core';
 import { useState } from 'react';
+import { LongSelect } from '@/components/common/select';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function ProblemHackPage() {
   const { args } = usePageData();
@@ -44,7 +45,7 @@ export default function ProblemHackPage() {
       {error && <Text c="red" size="sm">{error}</Text>}
       <Paper withBorder p="lg">
         <Stack gap="md">
-          <Select label={t('Language')} data={langOptions} value={lang} onChange={(v) => setLang(v || '')} searchable />
+          <LongSelect label={t('Language')} data={langOptions} value={lang} onChange={(v) => setLang(v || '')} searchable />
           <CodeEditor value={code} onChange={setCode} language={lang} height={300} />
           <Textarea label={t('Hack Input')} value={input} onChange={(e) => setInput(e.currentTarget.value)} minRows={5} autosize />
           <Group justify="flex-end"><Button onClick={handleSubmit} loading={loading}>{t('Submit Hack')}</Button></Group>

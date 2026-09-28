@@ -1,6 +1,5 @@
 import {
-  ActionIcon, Badge, Button, Center, Group, Loader, Modal, MultiSelect, Pagination, Progress, SimpleGrid, Stack, Text,
-  TextInput, Title,
+  ActionIcon, Badge, Button, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, Stack, Text, TextInput, Title,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -13,6 +12,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { ListSortSelect } from '@/components/common/list-sort-select';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
+import { TagMultiSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
 import { usePageData, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -147,7 +147,7 @@ function TrainingCategoryItem({ item, query, selected, canManage, onEdit, onDele
   const { args } = usePageData();
 
   return (
-    <Group gap={4} wrap="nowrap">
+    <Group gap={4} wrap="nowrap" className="hydro-training-category-item" data-selected={selected}>
       <Button
         component={Link}
         href={buildUrl('training_main', {}, { ...(query ? { q: query } : {}), category: item._id, sort: args.sort || 'default' })}
@@ -499,7 +499,7 @@ export default function TrainingMainPage() {
             leftSection={<IconSearch size={15} />}
           />
           {visibleCategories.length ? (
-            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" className="hydro-training-category-grid">
               {visibleCategories.map((item: any) => (
                 <TrainingCategoryItem
                   key={item._id}
@@ -539,7 +539,7 @@ export default function TrainingMainPage() {
             required
             autoFocus
           />
-          <MultiSelect
+          <TagMultiSelect
             label={t('Training Plans')}
             description={t('Select all training plans included in this category.')}
             data={trainingOptions}

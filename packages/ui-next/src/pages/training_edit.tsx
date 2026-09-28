@@ -1,8 +1,9 @@
-import { Button, Group, MultiSelect, NumberInput, Paper, SimpleGrid, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Button, Group, NumberInput, Paper, SimpleGrid, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useMemo, useRef, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
+import { TagMultiSelect } from '@/components/common/select';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -196,7 +197,7 @@ export default function TrainingEditPage() {
               minRows={8}
             />
           </div>
-          <MultiSelect
+          <TagMultiSelect
             label={t('Problems')}
             description={t('Select problems to generate a basic training plan. You can still edit the JSON plan below.')}
             data={problemData}

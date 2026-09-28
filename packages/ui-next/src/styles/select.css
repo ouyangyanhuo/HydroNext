@@ -1,0 +1,82 @@
+/* All three select variants share the same theme-aware visual foundation. */
+.hydro-select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hydro-select--short {
+  width: 160px;
+  max-width: min(320px, 100%) !important;
+  flex-shrink: 0;
+}
+
+.hydro-select--long,
+.hydro-select--multi {
+  width: 100%;
+}
+
+.hydro-select .mantine-Input-input.hydro-select__input {
+  color: var(--hydro-text);
+  background: var(--hydro-surface-raised);
+  border: 1px solid var(--hydro-border);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transform: none;
+}
+
+.hydro-select--short .hydro-select__input {
+  height: min(var(--hydro-short-height, var(--input-height, 30px)), 48px);
+  min-height: 24px !important;
+  max-height: 48px !important;
+  font-weight: 600;
+}
+
+.hydro-select .hydro-select__input[readonly] {
+  cursor: pointer;
+}
+
+.hydro-select .mantine-Input-input.hydro-select__input:not([data-disabled]):not([data-error]):hover,
+.hydro-select .mantine-Input-input.hydro-select__input:not([data-disabled]):not([data-error]):focus-within {
+  border-color: var(--hydro-primary);
+}
+
+.hydro-select .mantine-Input-input.hydro-select__input:not([data-disabled]):focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hydro-primary) 15%, transparent);
+}
+
+.hydro-select .mantine-Input-input.hydro-select__input[data-error] {
+  border-color: var(--mantine-color-error);
+}
+
+.hydro-select .mantine-Input-input.hydro-select__input[data-disabled] {
+  cursor: not-allowed;
+  color: var(--hydro-text-muted);
+  background: var(--hydro-surface);
+}
+
+/* Portalled dropdowns are not descendants of the field root. */
+.hydro-select__dropdown.mantine-Combobox-dropdown {
+  padding: 6px;
+  color: var(--hydro-text);
+  border: 1px solid var(--hydro-border);
+  border-radius: 12px;
+  background: var(--hydro-surface-raised);
+  box-shadow: var(--hydro-shadow-lg);
+}
+
+.hydro-select__option {
+  border-radius: 7px;
+  padding: 9px 10px;
+  overflow-wrap: anywhere;
+}
+
+.hydro-select__option:not([data-combobox-disabled])[data-combobox-selected],
+.hydro-select__option:not([data-combobox-disabled])[data-checked] {
+  color: var(--hydro-primary);
+  background: color-mix(in srgb, var(--hydro-primary) 12%, var(--hydro-surface-raised));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-select .mantine-Input-input.hydro-select__input {
+    transition: none;
+  }
+}

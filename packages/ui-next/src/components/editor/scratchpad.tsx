@@ -1,16 +1,14 @@
 import 'allotment/dist/style.css';
 
 import { captureReplayChanges, replayBatches } from '@hydrooj/code-replay/replay';
-import {
-  ActionIcon, Badge, Button, Divider, Drawer, Group, NumberInput,
-  Paper, Select, Stack, Text, Title, Tooltip,
-} from '@mantine/core';
+import { ActionIcon, Badge, Button, Divider, Drawer, Group, NumberInput, Paper, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconCode, IconFileText, IconPlayerPlay, IconSend, IconSettings, IconTemplate, IconTerminal2, IconX,
 } from '@tabler/icons-react';
 import { Allotment } from 'allotment';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { LongSelect, ShortSelect } from '@/components/common/select';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS_TEXTS } from '@/components/record/status-map';
 import { useUiContext, useUserContext } from '@/context/page-data';
@@ -489,7 +487,7 @@ export function Scratchpad({
                   <span className="hydro-scratchpad-pane-icon" aria-hidden="true">
                     <IconCode size={17} stroke={1.8} />
                   </span>
-                  <Select
+                  <ShortSelect
                     data={langOptions}
                     value={lang}
                     onChange={(v) => setLang(v || '')}
@@ -497,7 +495,6 @@ export function Scratchpad({
                     searchable
                     size="xs"
                     className="hydro-scratchpad-language-select"
-                    classNames={{ dropdown: 'hydro-scratchpad-select-dropdown' }}
                   />
                 </Group>
                 <Group gap="xs" wrap="nowrap" className="hydro-scratchpad-toolbar__actions">
@@ -514,6 +511,7 @@ export function Scratchpad({
                   <Tooltip label={t('Load Code Template')}>
                     <ActionIcon
                       className="hydro-scratchpad-template-action"
+                      size="input-xs"
                       variant="subtle"
                       onClick={loadCodeTemplate}
                       aria-label={t('Load Code Template')}
@@ -524,6 +522,7 @@ export function Scratchpad({
                   <Tooltip label={t('Editor Settings')}>
                     <ActionIcon
                       className="hydro-scratchpad-tool-action"
+                      size="input-xs"
                       variant="subtle"
                       onClick={() => setSettingsOpened(true)}
                       aria-label={t('Editor Settings')}
@@ -535,7 +534,7 @@ export function Scratchpad({
                     <Tooltip label={t('Quit Scratchpad')}>
                       <ActionIcon
                         className="hydro-scratchpad-tool-action"
-                        size="lg"
+                        size="input-xs"
                         variant="subtle"
                         onClick={onClose}
                         aria-label={t('Quit Scratchpad')}
@@ -683,14 +682,13 @@ export function Scratchpad({
             step={1}
             onChange={(value) => updateEditorConfig({ tabSize: Number(value) || 4 })}
           />
-          <Select
+          <LongSelect
             label={t('Editor Theme')}
             data={EDITOR_THEME_OPTIONS}
             value={theme}
             onChange={(value) => updateEditorConfig({ theme: value || undefined })}
             searchable
             clearable
-            classNames={{ dropdown: 'hydro-scratchpad-select-dropdown' }}
           />
         </Stack>
       </Drawer>

@@ -4,9 +4,10 @@ import { buildReplayStates, type ReplayEvent, type ReplaySnapshot } from '@hydro
 import {
   advanceReplayTime, buildThinkingRanges, replayIndexAtTime, THINKING_THRESHOLD_MS, thinkingRangeAt,
 } from '@hydrooj/code-replay/timeline';
-import { ActionIcon, Badge, Button, Group, Paper, Select, Slider, Stack, Switch, Text, Tooltip } from '@mantine/core';
+import { ActionIcon, Badge, Button, Group, Paper, Slider, Stack, Switch, Text, Tooltip } from '@mantine/core';
 import { IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconPlayerSkipBack, IconPlayerSkipForward, IconRotateClockwise } from '@tabler/icons-react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { ShortSelect } from '@/components/common/select';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { useI18n } from '@/hooks/use-i18n';
 
@@ -167,12 +168,12 @@ export function CodeReplay({
             <div className="hydro-code-replay__preferences">
               <Group gap={8} wrap="nowrap">
                 <Text size="xs" c="dimmed">{t('Speed')}</Text>
-                <Select
+                <ShortSelect
                   aria-label={t('Speed')}
                   value={speed}
                   onChange={(value) => setSpeed(value || '1')}
                   data={['0.5', '1', '2', '4'].map((value) => ({ value, label: `${value}x` }))}
-                  size="xs"
+                  size="sm"
                   w={80}
                   allowDeselect={false}
                 />

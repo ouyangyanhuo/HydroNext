@@ -1,11 +1,12 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Badge, Button, Card, Group, Select, Stack, Text, Title } from '@mantine/core';
+import { Badge, Button, Card, Group, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
+import { LongSelect } from '@/components/common/select';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function ProblemSubmitPage() {
   const { args } = usePageData();
@@ -81,7 +82,7 @@ export default function ProblemSubmitPage() {
       <Card withBorder p="lg" className="hydro-content-card">
         <Stack gap="md">
           {error && <Text c="red" size="sm">{error}</Text>}
-          <Select
+          <LongSelect
             label={t('Language')}
             data={langOptions}
             value={lang}

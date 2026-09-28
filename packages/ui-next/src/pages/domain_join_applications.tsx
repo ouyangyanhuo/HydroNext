@@ -1,12 +1,13 @@
-import { Button, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Button, Card, Group, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
+import { LongSelect } from '@/components/common/select';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
-import { useSessionStore } from '@/stores/session';
 import { useI18n } from '@/hooks/use-i18n';
+import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 
 const JOIN_METHOD_RANGE = [
@@ -96,13 +97,15 @@ export default function DomainJoinApplicationsPage() {
       <Card withBorder p="lg" className="hydro-content-card">
         <Title order={4} mb="md">{t('Settings')}</Title>
         <Stack gap="md">
-          <Select
+          <LongSelect
+            searchable={false}
             label={t('Method')}
             data={JOIN_METHOD_RANGE.map((item) => ({ ...item, label: t(item.label) }))}
             value={form.method}
             onChange={(value) => setForm((prev) => ({ ...prev, method: value || '0' }))}
           />
-          <Select
+          <LongSelect
+            searchable={false}
             label={t('Role Assignment')}
             description={t('The role to assign when user joining the domain.')}
             data={roleOptions}

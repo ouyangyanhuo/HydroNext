@@ -3,6 +3,10 @@ __id: ja
 __interface: yes
 __langname: 日本語
 
+# Record filters
+By Language: 言語で絞り込み
+By Status: 状態で絞り込み
+
 # Navigation
 Home: ホーム
 Problems: 問題

@@ -3,6 +3,10 @@ __id: zh
 __interface: yes
 __langname: 简体中文
 
+# Record filters
+By Language: 按语言
+By Status: 按状态
+
 # List sorting
 Ascending ID: 题目编号正序
 Default order: 默认排序

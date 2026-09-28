@@ -1,9 +1,10 @@
-import { Button, Card, Group, Progress, Select, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Button, Card, Group, Progress, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft, IconChartBar, IconCircleCheck, IconSend } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
+import { ShortSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS } from '@/components/record/status-map';
@@ -226,7 +227,7 @@ export default function ProblemStatisticsPage() {
               <Text size="sm" c="dimmed">{rscount} {t('submissions')}</Text>
             </div>
             <Group gap="xs" className="hydro-problem-statistics__sorts">
-              <Select
+              <ShortSelect
                 aria-label={t('Sort')}
                 size="xs"
                 w={140}
@@ -234,7 +235,7 @@ export default function ProblemStatisticsPage() {
                 data={types.map((type: string) => ({ value: type, label: statLabel(type, t) }))}
                 onChange={(value) => updateQuery('sort', value)}
               />
-              <Select
+              <ShortSelect
                 aria-label={t('Direction')}
                 size="xs"
                 w={120}
@@ -245,7 +246,7 @@ export default function ProblemStatisticsPage() {
                 ]}
                 onChange={(value) => updateQuery('direction', value)}
               />
-              <Select
+              <ShortSelect
                 aria-label={t('Language')}
                 size="xs"
                 w={160}

@@ -1,5 +1,5 @@
-import { Select } from '@mantine/core';
 import { IconArrowsSort, IconChevronDown } from '@tabler/icons-react';
+import { ShortSelect } from '@/components/common/select';
 import { useI18n } from '@/hooks/use-i18n';
 import { useListSort } from '@/hooks/use-list-sort';
 import type { ListKind } from '@/utils/list-sort';
@@ -8,7 +8,7 @@ export function ListSortSelect({ kind }: { kind: ListKind }) {
   const { t } = useI18n();
   const sort = useListSort(kind);
   return (
-    <Select
+    <ShortSelect
       {...sort}
       data={[
         { value: 'default', label: t('Default order') },
@@ -26,7 +26,6 @@ export function ListSortSelect({ kind }: { kind: ListKind }) {
       size="xs"
       radius="md"
       className="hydro-list-sort"
-      classNames={{ input: 'hydro-list-sort__input', dropdown: 'hydro-list-sort__dropdown', option: 'hydro-list-sort__option' }}
       comboboxProps={{ withinPortal: true, zIndex: 400, shadow: 'md', offset: 6 }}
     />
   );

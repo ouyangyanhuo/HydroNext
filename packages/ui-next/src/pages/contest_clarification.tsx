@@ -1,8 +1,9 @@
-import { Badge, Button, Card, Divider, Group, Paper, Select, Stack, Text, Textarea, Title } from '@mantine/core';
+import { Badge, Button, Card, Divider, Group, Paper, Stack, Text, Textarea, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
+import { LongSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
@@ -182,7 +183,8 @@ export default function ContestClarificationPage() {
               )}
               <Stack gap="sm">
                 {mode === 'broadcast' && (
-                  <Select
+                  <LongSelect
+                    searchable={false}
                     label={t('Subject')}
                     value={subject}
                     onChange={(value) => setSubject(value || '0')}
