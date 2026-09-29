@@ -1,4 +1,4 @@
-import { ActionIcon, Avatar, Burger, Button, ColorInput, Drawer, Group, Menu, Popover, Stack, Text, Tooltip, UnstyledButton } from '@mantine/core';
+import { Avatar, Burger, ColorInput, Drawer, Group, Menu, Popover, Stack, Text, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconCheck, IconChevronDown, IconClock, IconLetterP, IconMoon, IconPalette, IconRestore, IconSun,
@@ -7,6 +7,7 @@ import type { MouseEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import logoUrl from '@/assets/logo.png';
+import { ActionIcon, Button, UnstyledButton } from '@/components/common/button';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';

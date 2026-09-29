@@ -1,8 +1,9 @@
-import { Badge, Button, Group, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Group, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import {
   IconArrowUpRight, IconCalendarEvent, IconClock, IconPlus, IconSearch, IconUsers,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { EmptyState } from '@/components/common/empty-state';
 import { Paginator } from '@/components/common/paginator';
 import { ShortSelect } from '@/components/common/select';

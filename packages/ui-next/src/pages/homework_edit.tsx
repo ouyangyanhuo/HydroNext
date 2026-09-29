@@ -1,11 +1,12 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Button, Group, Paper, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Group, Paper, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function HomeworkEditPage() {
   const { args } = usePageData();

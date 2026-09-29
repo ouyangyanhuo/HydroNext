@@ -1,7 +1,8 @@
-import { Button, Group, NumberInput, Paper, SimpleGrid, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Group, NumberInput, Paper, SimpleGrid, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useMemo, useRef, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { TagMultiSelect } from '@/components/common/select';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';

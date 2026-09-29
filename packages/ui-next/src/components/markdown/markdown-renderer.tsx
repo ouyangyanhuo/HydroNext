@@ -1,4 +1,5 @@
 import { Box } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import hljs from 'highlight.js/lib/core';
 import bash from 'highlight.js/lib/languages/bash';
 import c from 'highlight.js/lib/languages/c';
@@ -34,9 +35,11 @@ import MarkdownIt from 'markdown-it';
 import markPlugin from 'markdown-it-mark';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBuildUrl } from '@/hooks/use-build-url';
+import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { formatUserName } from '@/utils/user-name';
+import { attachCodeCopyButtons } from './code-copy';
 import { markdownXssPlugin } from './markdown-xss';
 
 hljs.registerLanguage('cpp', cpp);
@@ -376,9 +379,11 @@ interface MarkdownRendererProps {
   className?: string;
   language?: string;
   pid?: string | number;
+  enableCodeCopy?: boolean;
 }
 
-export function MarkdownRenderer({ content, className, language, pid }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className, language, pid, enableCodeCopy = false }: MarkdownRendererProps) {
+  const { t } = useI18n();
   const sessionLanguage = useSessionStore((s) => s.language);
   const domainId = useSessionStore((s) => s.ui.domainId);
   const buildUrl = useBuildUrl();
@@ -394,6 +399,13 @@ export function MarkdownRenderer({ content, className, language, pid }: Markdown
   }, [rawText, userUrlPrefix]);
 
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!enableCodeCopy || !ref.current) return undefined;
+    return attachCodeCopyButtons(ref.current, { copy: t('Copy code'), copied: t('Code copied') }, () => {
+      notifications.show({ color: 'red', message: t('Copy failed') });
+    });
+  }, [enableCodeCopy, html, sessionLanguage, t]);
 
   useEffect(() => {
     const root = ref.current;

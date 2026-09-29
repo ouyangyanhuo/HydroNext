@@ -1,8 +1,10 @@
+import { createHash, randomBytes } from 'crypto';
 import {
     ContestModel, Context, db, Handler, NotFoundError, ObjectId, param,
     PERM, PermissionError, PRIV, ProblemModel, RecordModel,
     RecordNotFoundError, STATUS, Types, UserModel, ValidationError,
 } from 'hydrooj';
+import { continuousPrefix } from './continuous';
 
 interface ReplayChange {
     rangeOffset: number;
@@ -42,10 +44,14 @@ interface CodeReplaySession {
     updatedAt: Date;
     submittedAt?: Date;
     expiresAt?: Date;
+    continuous?: boolean;
+    sourceSessionId?: string;
+    endSeq?: number;
+    replayChunkIds?: string[];
 }
 
 interface CodeReplayChunk {
-    _id: ObjectId;
+    _id: ObjectId | string;
     sessionId: string;
     domainId: string;
     uid: number;
@@ -121,6 +127,70 @@ function normalizeSnapshot(snapshot: any): ReplaySnapshot | null {
 }
 
 export class CodeReplayModel {
+    static async appendContinuous(uid: number, domainId: string, sessionId: string, payload: {
+        pid: string; tid?: ObjectId; lang?: string; initialCode: string; events: ReplayEvent[];
+    }) {
+        if (!SESSION_ID_RE.test(sessionId) || payload.events.length > MAX_BATCH_EVENTS
+            || payload.initialCode.length > MAX_CODE_SIZE
+            || payload.events.some((event) => !Number.isSafeInteger(event.seq) || event.seq! < 1)) {
+            throw new ValidationError('events', 'Invalid replay data');
+        }
+        const now = new Date();
+        const expiresAt = new Date(Date.now() + UNBOUND_EXPIRE_SECONDS * 1000);
+        try {
+            await coll.updateOne({
+                _id: sessionId, uid, domainId, pid: payload.pid, tid: payload.tid || null,
+                continuous: true, initialCode: payload.initialCode,
+            }, {
+                $set: { updatedAt: now, expiresAt },
+                $setOnInsert: { createdAt: now },
+            }, { upsert: true });
+        } catch (error) {
+            if (isDuplicateKeyError(error)) throw new ValidationError('sessionId');
+            throw error;
+        }
+        if (!payload.events.length) return;
+        // Content-addressed batches make a retry harmless, even after a lost HTTP response.
+        const hash = createHash('sha256').update(JSON.stringify(payload.events)).digest('hex');
+        await collChunk.updateOne({ _id: `${sessionId}:${hash}` }, { $setOnInsert: {
+            sessionId, uid, domainId, events: payload.events, snapshots: [], createdAt: now, expiresAt,
+        } }, { upsert: true });
+    }
+
+    static async checkpoint(uid: number, domainId: string, sessionId: string, payload: {
+        pid: string; tid?: ObjectId; lang?: string; finalCode: string; endSeq: number; endTime: number;
+    }) {
+        const source = await coll.findOne({
+            _id: sessionId, uid, domainId, pid: payload.pid, tid: payload.tid || null, continuous: true,
+        });
+        if (!source || !Number.isFinite(payload.endTime) || payload.endTime < 0 || payload.finalCode.length > MAX_CODE_SIZE) {
+            throw new ValidationError('sessionId');
+        }
+        const chunks = await collChunk.find({ sessionId, uid, domainId }).toArray();
+        let events: ReturnType<typeof continuousPrefix>;
+        try {
+            events = continuousPrefix(chunks.flatMap((chunk) => chunk.events), payload.endSeq, source.initialCode, payload.finalCode);
+        } catch (error) {
+            throw new ValidationError('events', error.message);
+        }
+        if ((events.at(-1)?.t || 0) > payload.endTime) throw new ValidationError('endTime');
+        const checkpointId = randomBytes(24).toString('hex');
+        const now = new Date();
+        await coll.insertOne({
+            _id: checkpointId, uid, domainId, pid: source.pid, tid: source.tid, lang: payload.lang,
+            initialCode: source.initialCode, finalCode: payload.finalCode,
+            sourceSessionId: sessionId, endSeq: payload.endSeq,
+            // Freeze the chunk set too: later uploads cannot alter an older submission.
+            replayChunkIds: chunks.filter((chunk) => chunk.events.some((event) => event.seq! <= payload.endSeq))
+                .map((chunk) => String(chunk._id)),
+            snapshots: [{ t: 0, afterSeq: 0, code: source.initialCode },
+                { t: payload.endTime, afterSeq: payload.endSeq, code: payload.finalCode, lang: payload.lang }],
+            createdAt: source.createdAt, updatedAt: now,
+            expiresAt: new Date(Date.now() + UNBOUND_EXPIRE_SECONDS * 1000),
+        });
+        return checkpointId;
+    }
+
     static async ensureIndexes() {
         await Promise.all([
             coll.createIndex({ rid: 1 }, { sparse: true }),
@@ -168,6 +238,8 @@ export class CodeReplayModel {
                 uid,
                 domainId,
                 rid: { $exists: false },
+                continuous: { $ne: true },
+                sourceSessionId: { $exists: false },
             }, update, { upsert: true });
         } catch (error) {
             // A submitted session is immutable. Reusing it would merge a later
@@ -194,6 +266,16 @@ export class CodeReplayModel {
         pid?: number | string, lang?: string, finalCode?: string,
     ) {
         if (!SESSION_ID_RE.test(sessionId)) return;
+        const existing = await coll.findOne({ _id: sessionId, uid, domainId });
+        if (existing?.continuous) throw new ValidationError('sessionId');
+        if (existing?.sourceSessionId) {
+            const record = await RecordModel.get(domainId, rid);
+            if (!record || record.uid !== uid || String(record.pid) !== String(existing.pid)
+                || String(record.contest || '') !== String(existing.tid || '')
+                || record.lang !== existing.lang || record.code !== existing.finalCode?.replace(/\r\n/g, '\n')) {
+                throw new ValidationError('sessionId', 'Replay does not match submitted record');
+            }
+        }
         const now = new Date();
         const $set: Partial<CodeReplaySession> = {
             rid,
@@ -201,7 +283,7 @@ export class CodeReplayModel {
             updatedAt: now,
         };
         if (lang) $set.lang = lang;
-        if (typeof finalCode === 'string') $set.finalCode = trimCode(finalCode);
+        if (typeof finalCode === 'string' && !existing?.sourceSessionId) $set.finalCode = trimCode(finalCode);
         // $unset expiresAt so MongoDB TTL index ignores bound sessions
         try {
             await coll.updateOne({
@@ -228,18 +310,28 @@ export class CodeReplayModel {
             if (isDuplicateKeyError(error)) throw new ValidationError('sessionId');
             throw error;
         }
-        await collChunk.updateMany(
-            { sessionId, uid, domainId },
-            { $set: { rid }, $unset: { expiresAt: '' } },
-        );
+        if (existing?.sourceSessionId) {
+            await collChunk.updateMany({ _id: { $in: existing.replayChunkIds || [] }, uid, domainId }, { $unset: { expiresAt: '' } });
+        } else {
+            await collChunk.updateMany({ sessionId, uid, domainId }, { $set: { rid }, $unset: { expiresAt: '' } });
+        }
     }
 
     static async getByRid(rid: ObjectId) {
         return await coll.findOne({ rid });
     }
 
-    static async getEvents(sessionId: string) {
-        const chunks = await collChunk.find({ sessionId }).sort({ _id: 1 }).toArray();
+    static async getEvents(sessionId: string, checkpoint?: CodeReplaySession) {
+        const chunks = await collChunk.find(checkpoint?.sourceSessionId
+            ? { _id: { $in: checkpoint.replayChunkIds || [] }, uid: checkpoint.uid, domainId: checkpoint.domainId }
+            : { sessionId }).sort({ _id: 1 }).toArray();
+        if (checkpoint?.sourceSessionId) {
+            return {
+                events: continuousPrefix(chunks.flatMap((chunk) => chunk.events), checkpoint.endSeq!,
+                    checkpoint.initialCode, checkpoint.finalCode || ''),
+                snapshots: [],
+            };
+        }
         return {
             events: chunks.flatMap((chunk) => chunk.events || []).sort((a, b) => a.t - b.t),
             snapshots: chunks.flatMap((chunk) => chunk.snapshots || []).sort((a, b) => a.t - b.t),
@@ -351,6 +443,26 @@ class CodeReplaySessionHandler extends Handler {
         if (normalizedEvents.length !== rawEvents.length || normalizedSnapshots.length !== rawSnapshots.length) {
             throw new ValidationError('events', 'Invalid replay data');
         }
+        if (this.args.replayVersion === 2) {
+            if (this.args.action === 'checkpoint') {
+                const checkpointId = await CodeReplayModel.checkpoint(this.user._id, domainId, sessionId, {
+                    pid, tid, lang, finalCode: finalCode ?? '', endSeq: this.args.endSeq, endTime: this.args.endTime,
+                });
+                this.response.body = { ok: 1, sessionId: checkpointId, replayVersion: 2 };
+            } else {
+                await CodeReplayModel.appendContinuous(this.user._id, domainId, sessionId, {
+                    pid, tid, lang, initialCode, events: normalizedEvents,
+                });
+                let uploadedSeq = 0;
+                if (this.args.action === 'status') {
+                    const chunks = await collChunk.find({ sessionId, uid: this.user._id, domainId }).toArray();
+                    const sequences = new Set(chunks.flatMap((chunk) => chunk.events.map((event) => event.seq)));
+                    while (sequences.has(uploadedSeq + 1)) uploadedSeq++;
+                }
+                this.response.body = { ok: 1, replayVersion: 2, uploadedSeq };
+            }
+            return;
+        }
         await CodeReplayModel.append(this.user._id, domainId, sessionId, {
             pid,
             tid,
@@ -388,7 +500,7 @@ class CodeReplayDataHandler extends Handler {
         const {
             replay, rdoc, pdoc, udoc,
         } = await getReplayForHandler(this, domainId, rid);
-        const replayData = await CodeReplayModel.getEvents(replay._id);
+        const replayData = await CodeReplayModel.getEvents(replay._id, replay);
         this.response.body = {
             replay: {
                 _id: replay._id,
@@ -443,6 +555,7 @@ export async function apply(ctx: Context) {
             );
         } catch (e) {
             logger.warn('Failed to bind replay session %s to record %s: %o', sessionId, rid, e);
+            that.response.body.codeReplayError = true;
         }
     });
 

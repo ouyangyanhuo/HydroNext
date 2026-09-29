@@ -1,12 +1,11 @@
 import './ranking.css';
 
-import {
-  Avatar, Button, Group, Stack, Table, Text, TextInput, Title,
-} from '@mantine/core';
+import { Avatar, Group, Stack, Table, Text, TextInput, Title } from '@mantine/core';
 import {
   IconChartBar, IconCrown, IconMedal, IconSearch, IconTrophy,
 } from '@tabler/icons-react';
 import { useDeferredValue, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';

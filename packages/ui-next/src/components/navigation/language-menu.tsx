@@ -1,5 +1,6 @@
-import { Button, Menu, Text } from '@mantine/core';
+import { Menu, Text } from '@mantine/core';
 import { IconLanguage } from '@tabler/icons-react';
+import { Button } from '@/components/common/button';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useSessionStore } from '@/stores/session';
 

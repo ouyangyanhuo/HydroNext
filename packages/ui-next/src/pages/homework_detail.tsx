@@ -1,6 +1,7 @@
-import { Badge, Button, Group, Paper, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Badge, Group, Paper, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';

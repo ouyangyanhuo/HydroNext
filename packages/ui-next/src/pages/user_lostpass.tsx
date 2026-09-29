@@ -1,10 +1,11 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Button, Group, Stack, Text, TextInput } from '@mantine/core';
+import { Group, Stack, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
-import { Link } from '@/components/link';
 import { AuthPanel } from '@/components/auth/auth-panel';
+import { Button } from '@/components/common/button';
+import { Link } from '@/components/link';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function UserLostpassPage() {
   const { t } = useI18n();

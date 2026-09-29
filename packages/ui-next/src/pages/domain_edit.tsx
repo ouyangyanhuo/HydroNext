@@ -1,7 +1,8 @@
-import { Button, Stack } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { SettingsForm } from '@/components/common/settings-form';
 import { usePageData } from '@/context/page-data';

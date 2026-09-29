@@ -1,7 +1,8 @@
-import { Badge, Button, Group, Stack, Text, Title } from '@mantine/core';
+import { Badge, Group, Stack, Text, Title } from '@mantine/core';
 import {
   IconArrowUpRight, IconChevronRight, IconCode, IconLogin2, IconTrophy,
 } from '@tabler/icons-react';
+import { Button } from '@/components/common/button';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';

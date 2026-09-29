@@ -1,5 +1,6 @@
-import { Anchor, Badge, Button, Card, Group, Paper, SimpleGrid, Stack, Tabs, Text, Title } from '@mantine/core';
+import { Anchor, Badge, Card, Group, Paper, SimpleGrid, Stack, Tabs, Text, Title } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';

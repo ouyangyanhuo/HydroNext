@@ -1,5 +1,6 @@
-import { Button, Group, Image, LoadingOverlay, Modal, ScrollArea, Stack, Text } from '@mantine/core';
+import { Group, Image, LoadingOverlay, Modal, ScrollArea, Stack, Text } from '@mantine/core';
 import { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { useI18n } from '@/hooks/use-i18n';
 

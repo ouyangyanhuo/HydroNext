@@ -1,7 +1,7 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Badge, Button, Card, Group, Modal, Pagination, Stack, Text, Title } from '@mantine/core';
+import { Badge, Card, Group, Modal, Pagination, Stack, Text, Title } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
@@ -10,6 +10,7 @@ import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 interface DomainItem {
   _id: string;

@@ -144,7 +144,7 @@ export function CodeEditor({
   const onChangeRef = useRef(onChange);
   const onContentChangeRef = useRef(onContentChange);
   const onMountRef = useRef(onMount);
-  const initialOptionsRef = useRef({ value, language, readOnly, minimap, fontSize, tabSize, wordWrap, theme });
+  const optionsRef = useRef({ value, language, readOnly, minimap, fontSize, tabSize, wordWrap, theme });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -154,10 +154,15 @@ export function CodeEditor({
   }, [onChange, onContentChange, onMount]);
 
   useEffect(() => {
+    optionsRef.current = { value, language, readOnly, minimap, fontSize, tabSize, wordWrap, theme };
+  }, [value, language, readOnly, minimap, fontSize, tabSize, wordWrap, theme]);
+
+  useEffect(() => {
     let disposed = false;
     getMonaco().then((monaco) => {
       if (disposed || !containerRef.current) return;
-      const initial = initialOptionsRef.current;
+      // Monaco loads asynchronously; use the latest committed props, not mount-time readOnly.
+      const initial = optionsRef.current;
       monacoRef.current = monaco;
       const editor = monaco.editor.create(containerRef.current, {
         value: initial.value,
@@ -191,6 +196,8 @@ export function CodeEditor({
     return () => {
       disposed = true;
       editorRef.current?.dispose();
+      editorRef.current = null;
+      monacoRef.current = null;
     };
   }, []);
 
@@ -210,12 +217,12 @@ export function CodeEditor({
       minimap: { enabled: minimap },
       wordWrap,
     });
-  }, [fontSize, tabSize, minimap, readOnly, wordWrap]);
+  }, [fontSize, tabSize, minimap, readOnly, wordWrap, loading]);
 
   useEffect(() => {
     const monaco = monacoRef.current;
     if (monaco) applyEditorTheme(monaco, theme || loadStoredEditorConfig().theme);
-  }, [theme]);
+  }, [theme, loading]);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -223,7 +230,7 @@ export function CodeEditor({
     const model = editor?.getModel();
     if (!editor || !monaco || !model) return;
     monaco.editor.setModelLanguage(model, resolveMonacoLang(language));
-  }, [language]);
+  }, [language, loading]);
 
   return (
     <div style={{ position: 'relative', height }}>

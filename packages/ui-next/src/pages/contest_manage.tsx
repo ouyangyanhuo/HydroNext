@@ -1,9 +1,8 @@
-import { Button, Card, Checkbox, Group, Modal, NumberInput,
-  Paper, SimpleGrid, Stack, Table, Text, Title,
-} from '@mantine/core';
+import { Card, Checkbox, Group, Modal, NumberInput, Paper, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';

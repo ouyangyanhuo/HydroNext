@@ -1,4 +1,5 @@
-import { Badge, Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Badge, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
 import { useI18n } from '@/hooks/use-i18n';

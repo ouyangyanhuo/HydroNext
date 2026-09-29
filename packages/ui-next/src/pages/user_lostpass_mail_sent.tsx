@@ -1,4 +1,5 @@
-import { Button, Paper, Stack, Text, Title } from '@mantine/core';
+import { Paper, Stack, Text, Title } from '@mantine/core';
+import { Button } from '@/components/common/button';
 import { Link } from '@/components/link';
 import { useI18n } from '@/hooks/use-i18n';
 

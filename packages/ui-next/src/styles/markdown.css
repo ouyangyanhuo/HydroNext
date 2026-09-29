@@ -190,6 +190,39 @@
   padding-top: 2.35rem;
 }
 
+/* Keep the control outside the scrolling pre and leave the last line unobscured. */
+.hydro-markdown .code-block-copyable pre {
+  padding-bottom: 3rem;
+}
+
+.hydro-markdown .code-copy-button {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--hydro-border);
+  border-radius: 6px;
+  color: var(--hydro-text-muted);
+  background: var(--hydro-surface-raised);
+  cursor: pointer;
+}
+
+.hydro-markdown .code-copy-button:hover,
+.hydro-markdown .code-copy-button[data-copied='true'] {
+  color: var(--hydro-primary);
+  border-color: var(--hydro-primary);
+}
+
+.hydro-markdown .code-copy-button:focus-visible {
+  outline: 2px solid var(--hydro-primary);
+  outline-offset: 2px;
+}
+
 .hydro-markdown .code-lang-label {
   align-items: center;
   background: color-mix(in srgb, var(--hydro-surface-raised) 92%, transparent);

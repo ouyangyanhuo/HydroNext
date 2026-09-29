@@ -1,7 +1,8 @@
-import { Avatar, Badge, Button, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Avatar, Badge, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
+import { Button, ButtonBase } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect, ShortSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
@@ -199,14 +200,14 @@ function AddUserDialogContent({
                   variant="light"
                   size="lg"
                   rightSection={(
-                    <button
+                    <ButtonBase
                       type="button"
                       className="ml-1 text-xs"
                       onClick={() => removeUser(user._id)}
                       aria-label={t('Remove')}
                     >
                       x
-                    </button>
+                    </ButtonBase>
                   )}>
                   {formatUserLabel(user)} #{user._id}
                 </Badge>

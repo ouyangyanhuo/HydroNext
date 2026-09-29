@@ -1,0 +1,73 @@
+/* Shared interaction layer only: never override caller height, width, or font size. */
+.hydro-button-feedback:is(.hydro-button, .hydro-icon-button, .hydro-button-base) {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 160ms ease, border-color 160ms ease,
+    color 160ms ease, box-shadow 160ms ease, scale 100ms ease;
+}
+
+.hydro-button-feedback:is(.hydro-button, .hydro-icon-button)[data-variant='default'] {
+  background: var(--hydro-surface-raised);
+  border-color: var(--hydro-border);
+  color: var(--hydro-text);
+}
+
+.hydro-button-feedback:not(:disabled, [data-disabled], [data-loading], [aria-disabled='true']) {
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .hydro-button-feedback:is(.hydro-button, .hydro-icon-button, .hydro-button-base):not(
+    :disabled, [data-disabled], [data-loading], [aria-disabled='true']
+  ):hover {
+    box-shadow: 0 2px 7px color-mix(in srgb, var(--hydro-text) 12%, transparent);
+  }
+
+  .hydro-button-feedback.hydro-button:not(:disabled, [data-disabled], [data-loading], [aria-disabled='true']):hover {
+    background-color: var(--button-hover, var(--mantine-primary-color-filled-hover));
+    color: var(--button-hover-color, var(--button-color));
+  }
+
+  .hydro-button-feedback.hydro-icon-button:not(:disabled, [data-disabled], [data-loading], [aria-disabled='true']):hover {
+    background-color: var(--ai-hover, var(--mantine-primary-color-filled-hover));
+    color: var(--ai-hover-color, var(--ai-color));
+  }
+
+  .hydro-button-feedback:is(.hydro-button, .hydro-icon-button)[data-variant='default']:not(
+    :disabled, [data-disabled], [data-loading], [aria-disabled='true']
+  ):hover,
+  .hydro-button-feedback.hydro-button-base:not(:disabled, [data-disabled], [aria-disabled='true']):hover {
+    background-color: var(--hydro-surface-muted);
+    border-color: color-mix(in srgb, var(--hydro-primary) 45%, var(--hydro-border));
+  }
+}
+
+.hydro-button-feedback:is(.hydro-button, .hydro-icon-button, .hydro-button-base):not(
+  :disabled, [data-disabled], [data-loading], [aria-disabled='true']
+):active {
+  scale: 0.97;
+  box-shadow: inset 0 2px 4px color-mix(in srgb, var(--hydro-text) 18%, transparent);
+}
+
+.hydro-button-feedback:is(.hydro-button, .hydro-icon-button, .hydro-button-base):focus-visible {
+  outline: 2px solid var(--hydro-primary);
+  outline-offset: 3px;
+}
+
+.hydro-button-feedback:is(:disabled, [data-disabled], [aria-disabled='true']) {
+  cursor: not-allowed;
+}
+
+.hydro-button-feedback[data-loading] {
+  cursor: progress;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-button-feedback:is(.hydro-button, .hydro-icon-button, .hydro-button-base) {
+    transition: none;
+  }
+
+  .hydro-button-feedback:is(.hydro-button, .hydro-icon-button, .hydro-button-base):active {
+    scale: none !important;
+  }
+}

@@ -1,6 +1,7 @@
-import { ActionIcon, Badge, Button, Card, Checkbox, Divider, Group, Modal, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Card, Checkbox, Divider, Group, Modal, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
+import { ActionIcon, Button } from '@/components/common/button';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';

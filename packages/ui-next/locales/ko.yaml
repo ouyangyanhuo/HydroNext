@@ -3,6 +3,16 @@ __id: ko
 __interface: yes
 __langname: 한국어
 
+# Code replay
+Replay could not be saved locally. Keep this editor open until submission.: 리플레이를 로컬에 저장하지 못했습니다. 제출이 완료될 때까지 편집기를 닫지 마세요.
+Replay upload failed. Your recording is kept; please retry submission.: 리플레이 업로드에 실패했습니다. 기록은 유지됩니다. 다시 제출해 주세요.
+
+Submission succeeded, but replay could not be linked. Your recording is kept.: 제출은 성공했지만 리플레이를 연결하지 못했습니다. 기록은 유지됩니다.
+
+# Code blocks
+Code copied: 코드가 복사되었습니다
+Copy code: 코드 복사
+
 # Record filters
 By Language: 언어별
 By Status: 상태별

@@ -1,5 +1,6 @@
-import { Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft, IconCopy } from '@tabler/icons-react';
+import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData, useUserContext } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';

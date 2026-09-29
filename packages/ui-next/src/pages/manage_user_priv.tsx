@@ -1,11 +1,12 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Badge, Button, Card, Checkbox, Group, Modal, ScrollArea, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Badge, Card, Checkbox, Group, Modal, ScrollArea, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 function toBigIntValue(value: any) {
   try {

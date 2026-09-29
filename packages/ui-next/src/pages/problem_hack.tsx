@@ -1,5 +1,6 @@
-import { Button, Group, Paper, Stack, Text, Textarea, Title } from '@mantine/core';
+import { Group, Paper, Stack, Text, Textarea, Title } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { LongSelect } from '@/components/common/select';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';

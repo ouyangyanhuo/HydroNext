@@ -1,12 +1,13 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Badge, Button, Checkbox, Group, Paper, Stack, Table, Text } from '@mantine/core';
+import { Badge, Checkbox, Group, Paper, Stack, Table, Text } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { usePageData } from '@/context/page-data';
-import { useSessionStore } from '@/stores/session';
 import { useI18n } from '@/hooks/use-i18n';
+import { useSessionStore } from '@/stores/session';
+import { formatErrorMessage } from '@/utils/error';
 
 const BUILTIN_ROLES = new Set(['root', 'default', 'guest']);
 

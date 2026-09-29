@@ -1,7 +1,8 @@
-import { Badge, Button, Card, Group, NumberInput, Paper, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Card, Group, NumberInput, Paper, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
+import { Button, ButtonBase } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
@@ -375,7 +376,7 @@ export default function ProblemEditPage() {
                       }}
                       onMouseLeave={() => { hoverTimer.current = setTimeout(() => setShowCategory(null), 200); }}
                     >
-                      <button
+                      <ButtonBase
                         type="button"
                         onClick={() => toggleTag(category)}
                         className={`w-full rounded-md border px-2 py-1.5 text-left text-sm font-bold transition-colors ${selected ? 'border-[var(--hydro-primary)] bg-[var(--hydro-primary-soft)] text-[var(--hydro-primary)]' : 'border-transparent hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]'}`}
@@ -384,7 +385,7 @@ export default function ProblemEditPage() {
                           <Text size="sm" fw={700} truncate>{category}</Text>
                           {hasChildren && <Text size="xs" c="dimmed">›</Text>}
                         </Group>
-                      </button>
+                      </ButtonBase>
                       {hasChildren && (
                         <div
                           className={`absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3 shadow-[var(--hydro-shadow-lg)] transition-all duration-200 origin-right ${showCategory === category ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'}`}

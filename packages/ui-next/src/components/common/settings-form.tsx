@@ -1,5 +1,6 @@
-import { Button, Card, Checkbox, Group, PasswordInput, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
+import { Card, Checkbox, Group, PasswordInput, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useMemo, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { LongSelect } from '@/components/common/select';
 import { useI18n } from '@/hooks/use-i18n';
 

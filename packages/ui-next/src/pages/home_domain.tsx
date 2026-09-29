@@ -1,16 +1,17 @@
-import { getAvatarUrl } from '@/utils/avatar';
-import { formatErrorMessage } from '@/utils/error';
-import { Avatar, Button, Card, Group, Modal, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Avatar, Card, Group, Modal, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMemo, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
-import { usePermission, PRIV } from '@/hooks/use-permission';
+import { PRIV, usePermission } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
+import { getAvatarUrl } from '@/utils/avatar';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function HomeDomainPage() {
   const { args } = usePageData();

@@ -1,5 +1,6 @@
-import { Button, Card, Loader, Stack, Text, Title } from '@mantine/core';
+import { Card, Loader, Stack, Text, Title } from '@mantine/core';
 import { useEffect } from 'react';
+import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';

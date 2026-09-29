@@ -1,6 +1,6 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Button, Checkbox, Group, Paper, ScrollArea, Stack, Table, Text } from '@mantine/core';
+import { Checkbox, Group, Paper, ScrollArea, Stack, Table, Text } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { EmptyState } from '@/components/common/empty-state';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { PageHeader } from '@/components/common/page-header';
@@ -9,6 +9,7 @@ import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+import { formatErrorMessage } from '@/utils/error';
 
 function formatSize(size: number) {
   if (!Number.isFinite(size)) return '-';

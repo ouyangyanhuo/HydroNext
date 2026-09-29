@@ -1,10 +1,10 @@
 import {
-  Avatar, Badge, Button, Card, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, Stack, Table, Text,
-  TextInput, Title,
+  Avatar, Badge, Card, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, Stack, Table, Text, TextInput, Title,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconChevronRight, IconSearch, IconUsers } from '@tabler/icons-react';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { DeleteResourceButton } from '@/components/common/delete-resource-button';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';

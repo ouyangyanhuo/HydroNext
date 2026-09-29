@@ -1,7 +1,7 @@
-import { Button } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 import { requestResourceDeletion } from '@/utils/delete-resource';

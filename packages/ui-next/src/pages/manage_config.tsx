@@ -1,10 +1,11 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Badge, Button, Card, Group, Stack, Text, Title } from '@mantine/core';
+import { Badge, Card, Group, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function ManageConfigPage() {
   const { args } = usePageData();

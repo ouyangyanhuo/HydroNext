@@ -3,6 +3,16 @@ __id: zh
 __interface: yes
 __langname: 简体中文
 
+# Code replay
+Replay could not be saved locally. Keep this editor open until submission.: 无法在本地保存回放，请保持编辑器打开，直到完成提交。
+Replay upload failed. Your recording is kept; please retry submission.: 回放上传失败，录制数据已保留，请重试提交。
+
+Submission succeeded, but replay could not be linked. Your recording is kept.: 提交成功，但回放关联失败，录制数据已保留。
+
+# Code blocks
+Code copied: 代码已复制
+Copy code: 复制代码
+
 # Record filters
 By Language: 按语言
 By Status: 按状态

@@ -1,5 +1,6 @@
-import { Badge, Button, Card, Group, Stack, Text, Title } from '@mantine/core';
+import { Badge, Card, Group, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { LongSelect } from '@/components/common/select';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { usePageData } from '@/context/page-data';

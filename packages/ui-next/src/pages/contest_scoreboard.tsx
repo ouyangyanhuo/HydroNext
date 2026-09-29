@@ -1,9 +1,10 @@
 import './ranking.css';
 
-import { Button, Group, Paper, Stack, Table, Text, Title } from '@mantine/core';
+import { Group, Paper, Stack, Table, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconTrophy } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { ShortSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';

@@ -6,7 +6,7 @@
 
 | 组件 | 使用位置 | 默认行为 |
 | --- | --- | --- |
-| `ShortSelect` | 工具栏、筛选、分页、播放速度 | 紧凑尺寸，不搜索；可显式开启搜索 |
+| `ShortSelect` | 工具栏、筛选、播放速度 | 紧凑尺寸，不搜索；可显式开启搜索 |
 | `LongSelect` | 表单、文件、语言等完整字段 | 填满所在表单列，支持搜索；固定枚举可传 `searchable={false}` |
 | `TagMultiSelect` | 题目、语言、用户等多项选择 | 填满所在表单列，支持搜索和已选标签 |
 
@@ -43,7 +43,7 @@
 | 文件 | 字段／位置 | 改用组件 |
 | --- | --- | --- |
 | `components/common/list-sort-select.tsx` | 题目列表和训练列表的排序 | `ShortSelect`；保留排序记忆逻辑 |
-| `components/common/paginator.tsx` | 每页行数 | `ShortSelect`；保留 76px 宽度 |
+| `components/common/paginator.tsx` | 每页行数 | 例外：保留独立 Mantine `Select`，xs 字号、76px 宽度；页码使用 `sm`，不要传数值尺寸影响字号 |
 | `components/common/settings-form.tsx` | 个人、系统等动态设置字段 | `LongSelect` |
 | `components/common/form-dialog.tsx` | 通用弹窗的 select 类型字段 | 原生 `<select>` 改为 `LongSelect`；保留空值、必填和提交校验 |
 | `components/editor/scratchpad.tsx` | 在线编辑器语言、编辑器主题 | 语言为可搜索 `ShortSelect`；主题为 `LongSelect` |
@@ -75,5 +75,5 @@
 
 `packages/ui-next/tests/select-components.spec.ts` 检查尺寸边界、属性与 ref 透传、样式合并，
 并使用现有 jsdom 环境验证弹出选择、搜索、清空、多选标签和明暗主题下的渲染。
-另有扫描测试防止页面重新直接使用 Mantine `Select` / `MultiSelect` 或原生 `<select>`。
+另有扫描测试防止页面重新直接使用 Mantine `Select` / `MultiSelect` 或原生 `<select>`；分页组件为明确保留的独立样式例外。
 这不等同于真实浏览器的布局或截图验收。

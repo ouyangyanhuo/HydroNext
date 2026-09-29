@@ -1,7 +1,8 @@
-import { Badge, Button, Card, Checkbox, Group, NumberInput, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Card, Checkbox, Group, NumberInput, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import yaml from 'js-yaml';
 import { useMemo, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { PageHeader } from '@/components/common/page-header';

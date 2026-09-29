@@ -1,12 +1,11 @@
-import {
-  ActionIcon, Badge, Button, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, Stack, Text, TextInput, Title,
-} from '@mantine/core';
+import { Badge, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconArrowUpRight, IconBook2, IconChecklist, IconChevronRight, IconFolder, IconPencil, IconPlus, IconSearch,
   IconTrash, IconUsers,
 } from '@tabler/icons-react';
 import { useState } from 'react';
+import { ActionIcon, Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { EmptyState } from '@/components/common/empty-state';
 import { ListSortSelect } from '@/components/common/list-sort-select';
@@ -352,8 +351,8 @@ export default function TrainingMainPage() {
             size="xs"
             className="hydro-training-header-actions__search"
           />
-          <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
           <ListSortSelect kind="training" />
+          <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
           {canCreateTraining && (
             <Button
               component={Link}

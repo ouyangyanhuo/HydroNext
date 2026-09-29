@@ -1,6 +1,7 @@
-import { Badge, Button, Group, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Group, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconFilter, IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';

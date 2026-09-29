@@ -1,9 +1,10 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Button, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Paper, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function UserVerifyPage() {
   const { t } = useI18n();

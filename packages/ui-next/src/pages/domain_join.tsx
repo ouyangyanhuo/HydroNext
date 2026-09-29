@@ -1,5 +1,6 @@
-import { Avatar, Button, Card, Group, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Avatar, Card, Group, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';

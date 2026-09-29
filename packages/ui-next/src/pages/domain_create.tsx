@@ -1,8 +1,9 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Button, Card, Group, List, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Card, Group, List, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function DomainCreatePage() {
   const { t } = useI18n();

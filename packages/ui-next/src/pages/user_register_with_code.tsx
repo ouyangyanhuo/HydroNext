@@ -1,9 +1,10 @@
-import { formatErrorMessage } from '@/utils/error';
-import { Button, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function UserRegisterWithCodePage() {
   const { t } = useI18n();

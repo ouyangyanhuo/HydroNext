@@ -1,6 +1,7 @@
-import { Button, Card, Group, Loader, Stack, Text, Title } from '@mantine/core';
+import { Card, Group, Loader, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { CodeReplay } from '@/components/record/code-replay';
 import { usePageData, useUiContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';

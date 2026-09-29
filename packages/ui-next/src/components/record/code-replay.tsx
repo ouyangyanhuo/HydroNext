@@ -4,9 +4,10 @@ import { buildReplayStates, type ReplayEvent, type ReplaySnapshot } from '@hydro
 import {
   advanceReplayTime, buildThinkingRanges, replayIndexAtTime, THINKING_THRESHOLD_MS, thinkingRangeAt,
 } from '@hydrooj/code-replay/timeline';
-import { ActionIcon, Badge, Button, Group, Paper, Slider, Stack, Switch, Text, Tooltip } from '@mantine/core';
+import { Badge, Group, Paper, Slider, Stack, Switch, Text, Tooltip } from '@mantine/core';
 import { IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconPlayerSkipBack, IconPlayerSkipForward, IconRotateClockwise } from '@tabler/icons-react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { ActionIcon, Button } from '@/components/common/button';
 import { ShortSelect } from '@/components/common/select';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { useI18n } from '@/hooks/use-i18n';

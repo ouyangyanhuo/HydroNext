@@ -1,7 +1,8 @@
-import { Badge, Button, Card, Code, Group, Stack, Table, Text, Title } from '@mantine/core';
+import { Badge, Card, Code, Group, Stack, Table, Text, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { CodeReplay } from '@/components/record/code-replay';

@@ -1,8 +1,9 @@
-import { Button, Group, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Group, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconKey, IconLock } from '@tabler/icons-react';
 import { useState } from 'react';
 import { verifyWithWebAuthn } from '@/components/auth/authenticator';
+import { Button } from '@/components/common/button';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';

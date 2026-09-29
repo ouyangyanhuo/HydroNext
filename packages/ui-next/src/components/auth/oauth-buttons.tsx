@@ -1,4 +1,5 @@
-import { Button, Divider, Stack } from '@mantine/core';
+import { Divider, Stack } from '@mantine/core';
+import { Button } from '@/components/common/button';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 

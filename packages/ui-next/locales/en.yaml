@@ -3,6 +3,16 @@ __id: en
 __interface: yes
 __langname: English
 
+# Code replay
+Replay could not be saved locally. Keep this editor open until submission.: Replay could not be saved locally. Keep this editor open until submission.
+Replay upload failed. Your recording is kept; please retry submission.: Replay upload failed. Your recording is kept; please retry submission.
+
+Submission succeeded, but replay could not be linked. Your recording is kept.: Submission succeeded, but replay could not be linked. Your recording is kept.
+
+# Code blocks
+Code copied: Code copied
+Copy code: Copy code
+
 # Record filters
 By Language: By language
 By Status: By status

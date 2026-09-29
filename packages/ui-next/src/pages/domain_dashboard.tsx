@@ -1,17 +1,18 @@
-import { getAvatarUrl } from '@/utils/avatar';
-import { formatErrorMessage } from '@/utils/error';
-import { Avatar, Button, Card, Group, SimpleGrid, Stack, Text } from '@mantine/core';
+import { Avatar, Card, Group, SimpleGrid, Stack, Text } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
-import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { PageHeader } from '@/components/common/page-header';
-import { UserLink } from '@/components/user/user-link';
 import { Link } from '@/components/link';
+import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
+import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useDomain } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+import { getAvatarUrl } from '@/utils/avatar';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function DomainDashboardPage() {
   const { args } = usePageData();

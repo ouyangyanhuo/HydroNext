@@ -1,7 +1,6 @@
-import {
-  Avatar, Button, Group, Modal, NumberInput, Paper, PasswordInput, ScrollArea, Stack, Text, Textarea, TextInput, UnstyledButton,
-} from '@mantine/core';
+import { Avatar, Group, Modal, NumberInput, Paper, PasswordInput, ScrollArea, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useEffect, useState } from 'react';
+import { Button, UnstyledButton } from '@/components/common/button';
 import { LongSelect } from '@/components/common/select';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';

@@ -1024,7 +1024,7 @@ a {
 
 .hydro-contest-header-actions {
   display: grid;
-  grid-template-columns: 210px 128px 148px auto auto;
+  grid-template-columns: 210px 110px 124px auto auto;
   gap: 8px;
   align-items: center;
   animation: hydro-contest-feature-in 460ms var(--hydro-ease-out) 80ms both;
@@ -1236,9 +1236,13 @@ a {
 }
 
 .hydro-list-sort {
-  width: 170px;
+  width: 140px;
   flex-shrink: 0;
   max-width: 100%;
+}
+
+.hydro-contest-header-actions__select.hydro-select--short {
+  width: 100%;
 }
 
 .hydro-training-header-actions .mantine-Input-input {

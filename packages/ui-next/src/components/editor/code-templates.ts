@@ -6,10 +6,11 @@ int main(void) {
 }
 `,
   cpp: `#include <iostream>
+using namespace std;
 
 int main() {
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
 
     return 0;
 }
@@ -37,7 +38,7 @@ type TemplateLanguage = keyof typeof CODE_TEMPLATES;
 function resolveTemplateLanguage(language: string): TemplateLanguage | undefined {
   const normalized = language.trim().toLowerCase();
   if (normalized === 'c' || normalized.startsWith('c.')) return 'c';
-  if (['cc', 'cpp', 'c++'].includes(normalized) || normalized.startsWith('cc.') || normalized.startsWith('cpp.')) return 'cpp';
+  if (['cc', 'cpp', 'c++'].includes(normalized) || /^(?:cc|cpp|c\+\+)\./.test(normalized)) return 'cpp';
   if (normalized === 'java' || normalized.startsWith('java.')) return 'java';
   if (['rs', 'rust'].includes(normalized) || normalized.startsWith('rs.') || normalized.startsWith('rust.')) return 'rust';
   return undefined;

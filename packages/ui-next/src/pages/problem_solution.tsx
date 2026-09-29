@@ -1,8 +1,9 @@
-import { ActionIcon, Badge, Button, Card, Group, Stack, Text, Tooltip } from '@mantine/core';
+import { Badge, Card, Group, Stack, Text, Tooltip } from '@mantine/core';
 import {
   IconArrowLeft, IconArrowUp, IconChevronDown, IconChevronUp, IconLink, IconMessage, IconPencil, IconTrash,
 } from '@tabler/icons-react';
 import { useLayoutEffect, useRef, useState } from 'react';
+import { ActionIcon, Button } from '@/components/common/button';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';

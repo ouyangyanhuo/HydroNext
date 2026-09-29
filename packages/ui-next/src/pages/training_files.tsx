@@ -1,5 +1,6 @@
-import { Button, Card, Checkbox, Group, Stack, Text, Title } from '@mantine/core';
+import { Card, Checkbox, Group, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DataTable } from '@/components/common/data-table';
 import { FileDropzone } from '@/components/common/file-dropzone';

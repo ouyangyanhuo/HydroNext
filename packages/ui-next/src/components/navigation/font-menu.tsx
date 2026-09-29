@@ -1,5 +1,6 @@
-import { Button, Menu } from '@mantine/core';
+import { Menu } from '@mantine/core';
 import { IconLetterA } from '@tabler/icons-react';
+import { Button } from '@/components/common/button';
 import { useI18n } from '@/hooks/use-i18n';
 import { type FontFamily, useSessionStore } from '@/stores/session';
 

@@ -1,7 +1,8 @@
-import { Badge, Button, Card, Divider, Group, Paper, Stack, Table, Text, Textarea, Title, Tooltip } from '@mantine/core';
+import { Badge, Card, Divider, Group, Paper, Stack, Table, Text, Textarea, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { DeleteResourceButton } from '@/components/common/delete-resource-button';
 import { LongSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';

@@ -1,8 +1,9 @@
-import { Badge, Button, Card, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { Badge, Card, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
+import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';
@@ -622,7 +623,7 @@ export default function ProblemDetailPage() {
           ))}
         </Group>
       )}
-      <MarkdownRenderer content={pdoc.content || ''} language={selectedLang} pid={pid} />
+      <MarkdownRenderer content={pdoc.content || ''} language={selectedLang} pid={pid} enableCodeCopy={scratchpadOpen} />
     </Stack>
   );
 
@@ -631,6 +632,7 @@ export default function ProblemDetailPage() {
       <div ref={workspaceRef} className="problem-workspace">
         {contestTimer}
         <Scratchpad
+          key={`${ui.domainId}/${pdoc.docId}/${ui.tdoc?._id || ''}`}
           pid={pdoc.pid || pdoc.docId}
           langs={scratchpadLangs}
           defaultLang={rdoc?.lang || codeLang}

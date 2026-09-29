@@ -1,4 +1,5 @@
-import { Button, Center, Group, Stack, Text, Title } from '@mantine/core';
+import { Center, Group, Stack, Text, Title } from '@mantine/core';
+import { Button } from '@/components/common/button';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';

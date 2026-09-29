@@ -1,13 +1,13 @@
 import 'allotment/dist/style.css';
 
-import { captureReplayChanges, replayBatches } from '@hydrooj/code-replay/replay';
-import { ActionIcon, Badge, Button, Divider, Drawer, Group, NumberInput, Paper, Stack, Text, Title, Tooltip } from '@mantine/core';
+import { Badge, Divider, Drawer, Group, NumberInput, Paper, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconCode, IconFileText, IconPlayerPlay, IconSend, IconSettings, IconTemplate, IconTerminal2, IconX,
 } from '@tabler/icons-react';
 import { Allotment } from 'allotment';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActionIcon, Button, ButtonBase } from '@/components/common/button';
 import { LongSelect, ShortSelect } from '@/components/common/select';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS_TEXTS } from '@/components/record/status-map';
@@ -24,6 +24,8 @@ import {
   saveStoredEditorConfig,
 } from './code-editor';
 import { getCodeTemplate } from './code-templates';
+import { recordCode, recordingCheckpoint, type ReplayRecording, uploadRecordingCheckpoint } from './replay-recording';
+import { memoryRecording, persistRecording, replayDraftKey, restoreRecording } from './replay-storage';
 
 interface ScratchpadProps {
   pid: string | number;
@@ -36,32 +38,6 @@ interface ScratchpadProps {
   onSubmit?: (lang: string, code: string) => Promise<any>;
   submitUrl?: string;
   codeReplaySessionUrl?: string;
-}
-
-interface ReplayEvent {
-  seq: number;
-  t: number;
-  lang?: string;
-  changes: {
-    rangeOffset: number;
-    rangeLength: number;
-    text: string;
-    range?: unknown;
-  }[];
-  selections?: unknown[];
-}
-
-interface ReplaySnapshot {
-  afterSeq: number;
-  t: number;
-  code: string;
-  lang?: string;
-}
-
-function randomSessionId() {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(36).padStart(2, '0')).join('').slice(0, 32);
 }
 
 function getStoredNumber(key: string, fallback: number) {
@@ -115,7 +91,7 @@ export function Scratchpad({
     [contestId, pid, ui.domainId, user?._id],
   );
   const replayStorageKey = useMemo(
-    () => `code-replay/${user?._id || 'guest'}/${ui.domainId || ''}/${pid}${contestId ? `@${contestId}` : ''}`,
+    () => replayDraftKey(`code-replay/${user?._id || 'guest'}/${ui.domainId || ''}/${pid}${contestId ? `@${contestId}` : ''}`),
     [contestId, pid, ui.domainId, user?._id],
   );
   const [lang, setLang] = useState(() => {
@@ -144,20 +120,15 @@ export function Scratchpad({
   const fontSize = Number(editorConfig.fontSize || getStoredNumber('hydro/editor/fontSize', 14));
   const tabSize = Number(editorConfig.tabSize || getStoredNumber('hydro/editor/tabSize', 4));
   const theme = editorConfig.theme || '';
-  const replayRef = useRef({
-    sessionId: '',
-    initialCode: code,
-    startedAt: 0,
-    events: [] as ReplayEvent[],
-    snapshots: [] as ReplaySnapshot[],
-    lastSnapshotAt: 0,
-    flushing: false,
-    sequence: 0,
-  });
+  const replayRef = useRef<ReplayRecording | null>(null);
+  const [readyReplayKey, setReadyReplayKey] = useState<string | null>(null);
+  const replayStorageWarning = useRef(false);
+  const judgePending = useRef(false);
   const pretestUpdate = useRecordSocket(pretestRid);
 
   const resolvedSubmitUrl = submitUrl || `/p/${pid}/submit${window.location.search || ''}`;
   const resolvedReplayUrl = codeReplaySessionUrl || ui.codeReplaySessionUrl;
+  const replayReady = !resolvedReplayUrl || !user?._id || readyReplayKey === replayStorageKey;
   const canUsePretest = useMemo(() => {
     const info = langs[lang] || {};
     if (info.pretest === false) return false;
@@ -219,33 +190,41 @@ export function Scratchpad({
     ? { ...(pretestResult || {}), ...pretestUpdate, rid: pretestRid }
     : pretestResult;
 
-  const ensureReplaySession = useCallback((initialCode: string) => {
-    const replay = replayRef.current;
-    if (replay.sessionId) return replay.sessionId;
-    // A persisted ID without its events/clock cannot resume a timeline safely.
-    const sessionId = randomSessionId();
-    replay.sessionId = sessionId;
-    replay.initialCode = initialCode;
-    replay.startedAt = performance.now();
-    replay.events = [];
-    replay.snapshots = [{ t: 0, afterSeq: 0, code: initialCode, lang }];
-    replay.lastSnapshotAt = 0;
-    return sessionId;
-  }, [lang]);
+  const warnReplayStorage = useCallback(() => {
+    if (replayStorageWarning.current) return;
+    replayStorageWarning.current = true;
+    notifications.show({ color: 'yellow', message: t('Replay could not be saved locally. Keep this editor open until submission.') });
+  }, [t]);
 
-  const resetReplaySession = useCallback((initialCode: string) => {
-    sessionStorage.removeItem(replayStorageKey);
-    replayRef.current = {
-      sessionId: '',
-      initialCode,
-      startedAt: performance.now(),
-      events: [],
-      snapshots: [{ t: 0, afterSeq: 0, code: initialCode, lang }],
-      lastSnapshotAt: 0,
-      flushing: false,
-      sequence: 0,
+  const saveReplay = useCallback((recording: ReplayRecording) => {
+    void persistRecording(replayStorageKey, recording).catch(warnReplayStorage);
+  }, [replayStorageKey, warnReplayStorage]);
+
+  useEffect(() => {
+    let cancelled = false;
+    replayRef.current = null;
+    if (!resolvedReplayUrl || !user?._id) {
+      return undefined;
+    }
+    const initialize = async () => {
+      let recording: ReplayRecording;
+      try {
+        recording = await restoreRecording(replayStorageKey, code);
+      } catch {
+        recording = memoryRecording(replayStorageKey, code);
+        if (!cancelled) warnReplayStorage();
+      }
+      if (cancelled) return;
+      recordCode(recording, code, lang);
+      replayRef.current = recording;
+      saveReplay(recording);
+      setReadyReplayKey(replayStorageKey);
     };
-  }, [lang, replayStorageKey]);
+    void initialize();
+    return () => { cancelled = true; };
+    // Code and language are initial values here; subsequent edits are captured below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [replayStorageKey, resolvedReplayUrl, user?._id, saveReplay, warnReplayStorage]);
 
   const loadCodeTemplate = useCallback(() => {
     if (!selectedCodeTemplate) {
@@ -262,68 +241,44 @@ export function Scratchpad({
   }, [selectedCodeTemplate, t]);
 
   const captureChange = useCallback((event: any, editor: any, previousValue: string) => {
-    if (!resolvedReplayUrl || !user?._id) return;
-    ensureReplaySession(previousValue);
-    const replay = replayRef.current;
-    const elapsed = performance.now() - replay.startedAt;
-    const currentValue = editor.getValue();
-    const changes = captureReplayChanges(previousValue, currentValue, event.changes || []);
-    if (!changes.length) return;
-    replay.events.push({
-      seq: ++replay.sequence,
-      t: elapsed,
-      lang,
-      selections: getSelections(editor),
-      changes,
-    });
-    if (elapsed - replay.lastSnapshotAt > 30000) {
-      replay.lastSnapshotAt = elapsed;
-      replay.snapshots.push({ t: elapsed, afterSeq: replay.sequence, code: editor.getValue(), lang });
+    const recording = replayRef.current;
+    if (!recording) return;
+    recordCode(recording, previousValue, lang);
+    if (recordCode(recording, editor.getValue(), lang, event.changes || [])) {
+      recording.events[recording.events.length - 1].selections = getSelections(editor);
     }
-  }, [ensureReplaySession, lang, resolvedReplayUrl, user?._id]);
+    saveReplay(recording);
+  }, [lang, saveReplay]);
 
   const flushReplay = useCallback(async (finalCode: string) => {
     if (!resolvedReplayUrl || !user?._id) return '';
-    ensureReplaySession(finalCode);
-    // Each upload attempt is immutable. A failed/partially accepted request
-    // must not duplicate events when submission is retried.
-    const sessionId = randomSessionId();
-    const replay = replayRef.current;
-    const events = replay.events.slice();
-    const snapshots = replay.snapshots.slice();
-    snapshots.push({ t: performance.now() - replay.startedAt, afterSeq: replay.sequence, code: finalCode, lang });
-    replay.flushing = true;
+    const recording = replayRef.current;
+    if (!recording) throw new Error('Replay is not ready');
+    recordCode(recording, finalCode, lang);
+    const checkpoint = recordingCheckpoint(recording);
+    // Commit the local prefix before uploading it so a refresh cannot restore
+    // an older sequence than an already acknowledged server checkpoint.
+    await persistRecording(replayStorageKey, recording).catch(warnReplayStorage);
+    const tid = ui.tdoc?._id || ui.tdoc?.docId || new URLSearchParams(window.location.search).get('tid') || undefined;
     try {
-      const tid = ui.tdoc?._id || ui.tdoc?.docId || new URLSearchParams(window.location.search).get('tid') || undefined;
-      for (const batch of replayBatches(events, snapshots)) {
+      return await uploadRecordingCheckpoint(checkpoint, async (payload) => {
         const response = await fetch(resolvedReplayUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({
-            sessionId,
-            pid: ui.pdoc?.docId || pid,
-            tid,
-            lang,
-            initialCode: replay.initialCode,
-            finalCode,
-            ...batch,
-          }),
+          body: JSON.stringify({ ...payload, pid: ui.pdoc?.docId || pid, tid, lang }),
         });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || data.error) {
-          throw new Error(data.error?.message || `Replay upload failed (${response.status})`);
-        }
-      }
-      return sessionId;
+        const data = await response.json();
+        if (!response.ok || data.error) throw new Error(data.error?.message || 'Replay upload failed');
+        return data;
+      });
     } catch (err) {
-      console.warn('Failed to flush code replay:', err);
-      return '';
-    } finally {
-      replay.flushing = false;
+      console.warn('Failed to upload code replay:', err);
+      throw new Error(t('Replay upload failed. Your recording is kept; please retry submission.'));
     }
-  }, [ensureReplaySession, lang, pid, resolvedReplayUrl, ui.pdoc, ui.tdoc, user?._id]);
+  }, [lang, pid, replayStorageKey, resolvedReplayUrl, t, ui.pdoc, ui.tdoc, user?._id, warnReplayStorage]);
 
   const postJudge = useCallback(async (pretest: boolean) => {
+    if (!replayReady || judgePending.current) return;
     const now = Date.now();
     if (now < (pretest ? cooldownUntil.pretest : cooldownUntil.submit)) return;
     setClock(now);
@@ -338,6 +293,7 @@ export function Scratchpad({
       setError(t('Please enter your code'));
       return;
     }
+    judgePending.current = true;
     setCooldownUntil((current) => ({ ...current, [pretest ? 'pretest' : 'submit']: now + 10000 }));
     if (pretest) setPretesting(true);
     else setSubmitting(true);
@@ -363,21 +319,28 @@ export function Scratchpad({
           }),
         });
         const data = await res.json();
-        if (data.error) setError(data.error.message || 'Submission failed');
+        if (!res.ok || data.error) throw new Error(data.error?.message || t('Submission failed'));
         else if (pretest) {
           setPretestResult(data);
           if (data.rid) setPretestRid(String(data.rid));
         } else if (data.rid) {
-          resetReplaySession(code);
+          if (data.codeReplayError) {
+            notifications.show({ color: 'yellow', message: t('Submission succeeded, but replay could not be linked. Your recording is kept.') });
+          }
           navigate(buildUrl('record_detail', { rid: data.rid }));
         } else setSubmitResult(data);
       }
-    } catch { setError('Network error'); } finally {
+    } catch (err: any) {
+      const message = err?.message || t('Network error');
+      setError(message);
+      notifications.show({ color: 'red', message });
+    } finally {
+      judgePending.current = false;
       if (pretest) setPretesting(false);
       else setSubmitting(false);
     }
   }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, flushReplay,
-    resolvedSubmitUrl, input, navigate, resetReplaySession]);
+    resolvedSubmitUrl, input, navigate, replayReady]);
 
   const pretestCooldown = Math.max(0, Math.ceil((cooldownUntil.pretest - clock) / 1000));
   const submitCooldown = Math.max(0, Math.ceil((cooldownUntil.submit - clock) / 1000));
@@ -489,6 +452,7 @@ export function Scratchpad({
                   </span>
                   <ShortSelect
                     data={langOptions}
+                    disabled={!replayReady}
                     value={lang}
                     onChange={(v) => setLang(v || '')}
                     placeholder={t('Language')}
@@ -503,7 +467,7 @@ export function Scratchpad({
                     leftSection={<IconSend size={14} />}
                     onClick={() => postJudge(false)}
                     loading={submitting}
-                    disabled={pretesting || submitCooldown > 0}
+                    disabled={!replayReady || pretesting || submitCooldown > 0}
                     className="hydro-scratchpad-submit-action"
                   >
                     {submitCooldown ? `${t('Submit Solution')} (${submitCooldown}s)` : t('Submit Solution')}
@@ -513,6 +477,7 @@ export function Scratchpad({
                       className="hydro-scratchpad-template-action"
                       size="input-xs"
                       variant="subtle"
+                      disabled={!replayReady}
                       onClick={loadCodeTemplate}
                       aria-label={t('Load Code Template')}
                     >
@@ -553,9 +518,7 @@ export function Scratchpad({
                       value={code}
                       onChange={setCode}
                       onContentChange={captureChange}
-                      onMount={(editor) => {
-                        if (resolvedReplayUrl && user?._id) ensureReplaySession(editor.getValue());
-                      }}
+                      readOnly={!replayReady}
                       language={lang}
                       height="100%"
                       fontSize={fontSize}
@@ -569,7 +532,7 @@ export function Scratchpad({
                       <div className="hydro-scratchpad-console-workspace">
                         <div className="hydro-scratchpad-console__toolbar">
                           <div className="hydro-scratchpad-console__tabs" role="tablist" aria-label={t('Self Test')}>
-                            <button
+                            <ButtonBase
                               type="button"
                               role="tab"
                               aria-selected={activePanel === 'records'}
@@ -577,8 +540,8 @@ export function Scratchpad({
                               onClick={() => setActivePanel('records')}
                             >
                               {t('Records')}
-                            </button>
-                            <button
+                            </ButtonBase>
+                            <ButtonBase
                               type="button"
                               role="tab"
                               aria-selected={activePanel === 'pretest'}
@@ -587,7 +550,7 @@ export function Scratchpad({
                             >
                               <IconTerminal2 size={14} />
                               {t('Self Test')}
-                            </button>
+                            </ButtonBase>
                           </div>
                           {canUsePretest ? (
                             <Button
@@ -596,7 +559,7 @@ export function Scratchpad({
                               leftSection={<IconPlayerPlay size={14} />}
                               onClick={() => postJudge(true)}
                               loading={pretesting}
-                              disabled={submitting || pretestCooldown > 0}
+                              disabled={!replayReady || submitting || pretestCooldown > 0}
                               className="hydro-scratchpad-run-action hydro-scratchpad-console__run-action"
                             >
                               {pretestCooldown ? `${t('Run Self Test')} (${pretestCooldown}s)` : t('Run Self Test')}

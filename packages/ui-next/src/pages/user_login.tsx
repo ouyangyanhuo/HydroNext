@@ -1,10 +1,11 @@
-import { Alert, Anchor, Button, Checkbox, PasswordInput, Stack, TextInput } from '@mantine/core';
+import { Alert, Anchor, Checkbox, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconKey, IconLock } from '@tabler/icons-react';
 import { useState } from 'react';
 import { AuthPanel } from '@/components/auth/auth-panel';
 import { getAuthenticatorMethods, verifyWithWebAuthn } from '@/components/auth/authenticator';
 import { OAuthButtons } from '@/components/auth/oauth-buttons';
+import { Button } from '@/components/common/button';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';

@@ -1,7 +1,8 @@
-import yaml from 'js-yaml';
-import { Badge, Button, Group, Modal, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Badge, Group, Modal, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import yaml from 'js-yaml';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';

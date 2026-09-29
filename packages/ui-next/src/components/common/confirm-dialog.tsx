@@ -1,4 +1,5 @@
-import { Button, Group, Modal, Text } from '@mantine/core';
+import { Group, Modal, Text } from '@mantine/core';
+import { Button } from '@/components/common/button';
 
 interface ConfirmDialogProps {
   opened: boolean;

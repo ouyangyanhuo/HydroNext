@@ -1,6 +1,7 @@
-import { Button, Card, Group, Progress, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Card, Group, Progress, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft, IconChartBar, IconCircleCheck, IconSend } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
+import { Button } from '@/components/common/button';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';

@@ -1,6 +1,7 @@
-import { Badge, Button, Card, Divider, Group, Paper, Stack, Text, Textarea, Title } from '@mantine/core';
+import { Badge, Card, Divider, Group, Paper, Stack, Text, Textarea, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect } from '@/components/common/select';

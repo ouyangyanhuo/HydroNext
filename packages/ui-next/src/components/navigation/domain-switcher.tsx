@@ -1,6 +1,7 @@
-import { Avatar, Button, Group, Loader, Menu, ScrollArea, Text } from '@mantine/core';
+import { Avatar, Group, Loader, Menu, ScrollArea, Text } from '@mantine/core';
 import { IconChevronDown } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
+import { Button } from '@/components/common/button';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';

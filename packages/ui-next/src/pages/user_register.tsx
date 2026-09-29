@@ -1,6 +1,7 @@
-import { Anchor, Button, Group, Stack, Text, TextInput } from '@mantine/core';
+import { Anchor, Group, Stack, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { AuthPanel } from '@/components/auth/auth-panel';
+import { Button } from '@/components/common/button';
 import { Link } from '@/components/link';
 import { useI18n } from '@/hooks/use-i18n';
 

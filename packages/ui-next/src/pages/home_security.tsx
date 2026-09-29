@@ -1,10 +1,9 @@
-import {
-  Alert, Badge, Button, Card, Divider, Group, Modal, PasswordInput, Radio, SimpleGrid, Stack, Text, TextInput, Title,
-} from '@mantine/core';
+import { Alert, Badge, Card, Divider, Group, Modal, PasswordInput, Radio, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconDeviceMobile, IconDevices, IconKey, IconLink, IconLock, IconPlus, IconUsb } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
+import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { usePageData } from '@/context/page-data';

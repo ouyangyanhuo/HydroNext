@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { buildSync } from 'esbuild';
@@ -197,16 +197,31 @@ test('multi select retains selections as pills and emits an array', async () => 
     }
 });
 
-test('pages only use shared variants, not direct Mantine or native selects', () => {
+test('pages use shared variants except the independently styled paginator', () => {
     const root = fileURLToPath(new URL('../src/', import.meta.url));
     function visit(dir: string) {
         for (const entry of readdirSync(dir, { withFileTypes: true })) {
             const path = join(dir, entry.name);
             if (entry.isDirectory()) visit(path);
-            else if (path.endsWith('.tsx') && path !== join(dirname(root), 'src/components/common/select.tsx')) {
+            else if (path.endsWith('.tsx') && !['select.tsx', 'paginator.tsx'].some((name) => path === join(root, 'components/common', name))) {
                 assert.doesNotMatch(readFileSync(path, 'utf8'), /<(?:Select|MultiSelect|select)\b/, path);
             }
         }
     }
     visit(root);
+});
+
+test('paginator retains its dedicated small select and named font size', async () => {
+    const source = readFileSync(new URL('../src/components/common/paginator.tsx', import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /ShortSelect/);
+    assert.match(source, /<Select[\s\S]*?size="xs"[\s\S]*?w=\{76\}/);
+    assert.match(source, /<Pagination[\s\S]*?size="sm"/);
+    const view = await mount(require('@mantine/core').Pagination, { size: 'sm', total: 5 });
+    try {
+        const pagination = view.host.querySelector('.mantine-Pagination-root') as HTMLElement;
+        assert.equal(pagination.style.getPropertyValue('--pagination-control-fz'), 'var(--mantine-font-size-sm)');
+        assert.equal(pagination.style.getPropertyValue('--pagination-control-size'), 'var(--pagination-control-size-sm)');
+    } finally {
+        await view.close();
+    }
 });
