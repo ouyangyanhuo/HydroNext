@@ -64,11 +64,12 @@ class Collection {
     }
 }
 
-async function fixture() {
+async function fixture(access = async (_handler: any, _record: any) => ({ canViewCode: true })) {
     const sessions = new Collection();
     const chunks = new Collection();
     const records = new Map<string, any>();
     const hooks = new Map<string, (...args: any[]) => any>();
+    const routes = new Map<string, any>();
     const module = { exports: {} as any };
     const hydro = {
         db: { collection: (name: string) => (name === 'code_replay' ? sessions : chunks) },
@@ -77,6 +78,9 @@ async function fixture() {
             return record?.domainId === domain ? record : null;
         } },
         Handler: class {}, ObjectId, Types: {}, PRIV: {}, PERM: {}, STATUS: {},
+        getRecordAccess: access, PermissionError: Error,
+        ProblemModel: { PROJECTION_LIST: [], get: async () => ({ docId: 1 }) },
+        UserModel: { getById: async () => ({ _id: 1 }) },
         ValidationError: Error, param: () => () => {},
     };
     runInNewContext(built.outputFiles[0].text, {
@@ -84,10 +88,11 @@ async function fixture() {
         require: (name: string) => (name === 'hydrooj' ? hydro : require(name)),
     });
     await module.exports.apply({
-        logger: () => ({ warn() {} }), Route() {}, i18n: { load() {} },
+        logger: () => ({ warn() {} }), Route: (name: string, _path: string, handler: any) => routes.set(name, handler),
+        i18n: { load() {} },
         on: (name: string, handler: any) => hooks.set(name, handler),
     });
-    return { model: module.exports.CodeReplayModel, sessions, chunks, records, hooks };
+    return { model: module.exports.CodeReplayModel, sessions, chunks, records, hooks, routes };
 }
 
 const sourceId = 'a'.repeat(48);
@@ -133,6 +138,32 @@ test('cross-user/domain/problem access and mismatching record binding are reject
     await assert.rejects(model.bind(1, 'team', sourceId, rid, 1, 'cc', 'wrong'));
 });
 
+test('contest replay binds numeric problem ID and route tid, then remains readable through the data endpoint', async () => {
+    const { model, records, routes } = await fixture();
+    const tid = new ObjectId();
+    const rid = new ObjectId();
+    records.set(String(rid), { domainId: 'team', uid: 1, pid: 42, contest: tid, lang: 'cc', code: 'abc' });
+    // Previous UI uploaded the display PID, while the judge record stores the numeric ID.
+    await model.appendContinuous(1, 'team', sourceId, { ...base, pid: 'J0002', tid, events: [first] });
+    const invalid = await model.checkpoint(1, 'team', sourceId, {
+        ...base, pid: 'J0002', tid, finalCode: 'abc', endSeq: 1, endTime: 150,
+    });
+    await assert.rejects(model.bind(1, 'team', invalid, rid, 42, 'cc', 'abc'));
+    const correctSource = 'b'.repeat(48);
+    await model.appendContinuous(1, 'team', correctSource, { ...base, pid: '42', tid, events: [first] });
+    const checkpoint = await model.checkpoint(1, 'team', correctSource, {
+        ...base, pid: '42', tid, finalCode: 'abc', endSeq: 1, endTime: 150,
+    });
+    await model.bind(1, 'team', checkpoint, rid, 42, 'cc', 'abc');
+    const handler = new (routes.get('code_replay_data'))();
+    handler.response = {};
+    await handler.get('team', rid);
+    assert.equal(handler.response.body.replay.finalCode, 'abc');
+    assert.equal(handler.response.body.replay.events.length, 1);
+    assert.equal(String(handler.response.body.replay.tid), String(tid));
+    assert.equal(String(handler.response.body.replay.rid), String(rid));
+});
+
 test('self-test hook never binds a replay, even if a client supplies a checkpoint ID', async () => {
     const { model, sessions, hooks } = await fixture();
     await model.appendContinuous(1, 'team', sourceId, { ...base, events: [first] });
@@ -142,6 +173,62 @@ test('self-test hook never binds a replay, even if a client supplies a checkpoin
         user: { _id: 1 }, response: { body: { rid: new ObjectId() } },
     });
     assert.equal(sessions.docs.get(checkpoint).rid, undefined);
+});
+
+test('hidden contest responses bind using the internal rid without disclosing it', async () => {
+    const { model, sessions, records, hooks } = await fixture();
+    const tid = new ObjectId();
+    await model.appendContinuous(1, 'team', sourceId, { ...base, tid, events: [first] });
+    const checkpoint = await model.checkpoint(1, 'team', sourceId, { ...base, tid, finalCode: 'abc', endSeq: 1, endTime: 150 });
+    const rid = new ObjectId();
+    records.set(String(rid), { domainId: 'team', uid: 1, pid: 1, contest: tid, lang: 'cc', code: 'abc' });
+    const handler: any = {
+        args: { pretest: false, codeReplaySessionId: checkpoint, domainId: 'team', pid: '1', lang: 'cc', code: 'abc' },
+        submittedRecordId: rid, user: { _id: 1 }, response: { body: { tid } },
+    };
+    await hooks.get('handler/after/ProblemSubmit#post')!(handler);
+    assert.equal(String(sessions.docs.get(checkpoint).rid), String(rid));
+    assert.equal(handler.response.body.codeReplayCommitted, true);
+    assert.equal(handler.response.body.rid, undefined);
+    // Retrying the same binding is idempotent and does not disclose the ID either.
+    await hooks.get('handler/after/ProblemSubmit#post')!(handler);
+    assert.equal(handler.response.body.codeReplayCommitted, true);
+    assert.equal(handler.response.body.rid, undefined);
+});
+
+test('binding failure is explicit even when the contest response hides rid', async () => {
+    const { model, hooks, records } = await fixture();
+    await model.appendContinuous(1, 'team', sourceId, { ...base, events: [first] });
+    const checkpoint = await model.checkpoint(1, 'team', sourceId, { ...base, finalCode: 'abc', endSeq: 1, endTime: 150 });
+    const rid = new ObjectId();
+    records.set(String(rid), { domainId: 'team', uid: 2, pid: 1, lang: 'cc', code: 'abc' });
+    const handler: any = {
+        args: { codeReplaySessionId: checkpoint, domainId: 'team' }, submittedRecordId: rid,
+        user: { _id: 1 }, response: { body: { tid: new ObjectId() } },
+    };
+    await hooks.get('handler/after/ProblemSubmit#post')!(handler);
+    assert.equal(handler.response.body.codeReplayError, true);
+    assert.equal(handler.response.body.codeReplayCommitted, undefined);
+    assert.equal(handler.response.body.rid, undefined);
+});
+
+test('both replay endpoints enforce the shared record access decision', async () => {
+    let checks = 0;
+    const { model, records, routes } = await fixture(async (_handler, record) => {
+        checks++;
+        assert.equal(record.domainId, 'team');
+        throw new Error('Hidden problem');
+    });
+    await model.appendContinuous(1, 'team', sourceId, { ...base, events: [first] });
+    const checkpoint = await model.checkpoint(1, 'team', sourceId, { ...base, finalCode: 'abc', endSeq: 1, endTime: 150 });
+    const rid = new ObjectId();
+    records.set(String(rid), { domainId: 'team', uid: 1, pid: 1, lang: 'cc', code: 'abc' });
+    await model.bind(1, 'team', checkpoint, rid, 1, 'cc', 'abc');
+    await Promise.all(['code_replay', 'code_replay_data'].map(async (route) => {
+        const handler = new (routes.get(route))();
+        await assert.rejects(handler.get('team', rid), /Hidden problem/);
+    }));
+    assert.equal(checks, 2);
 });
 
 test('legacy replay sessions still append, bind, and load without a migration', async () => {

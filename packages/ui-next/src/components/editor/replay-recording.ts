@@ -48,6 +48,22 @@ export function recordingCheckpoint(recording: ReplayRecording, now = Date.now()
   };
 }
 
+/** Advance only after a formal submission is accepted and its replay is linked. */
+export function continueRecording(recording: ReplayRecording, checkpoint: ReturnType<typeof recordingCheckpoint>) {
+  if (recording.sessionId !== checkpoint.sessionId || checkpoint.endSeq > recording.sequence) {
+    throw new Error('Replay checkpoint does not belong to the active recording');
+  }
+  const next = newRecording(checkpoint.finalCode, recording.startedAt + checkpoint.endTime);
+  // Preserve edits made while upload/submission was in flight, including their selections.
+  next.events = recording.events.slice(checkpoint.endSeq).map((event, index) => ({
+    ...event, seq: index + 1, t: Math.max(0, (event.t ?? 0) - checkpoint.endTime),
+  }));
+  next.sequence = next.events.length;
+  next.currentCode = recording.currentCode;
+  next.lastTime = Math.max(0, recording.lastTime - checkpoint.endTime);
+  return next;
+}
+
 export async function uploadRecordingCheckpoint(
   checkpoint: ReturnType<typeof recordingCheckpoint>,
   send: (payload: Record<string, unknown>) => Promise<any>,

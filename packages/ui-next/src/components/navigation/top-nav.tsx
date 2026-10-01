@@ -37,9 +37,14 @@ function UserMenu() {
   return (
     <Menu shadow="md" width={220} position="bottom-end" classNames={{ dropdown: 'hydro-topbar-dropdown' }}>
       <Menu.Target>
-        <UnstyledButton className="flex items-center gap-2 rounded-md px-2 py-1 transition hover:bg-[var(--hydro-surface-muted)]">
-          <Avatar src={getAvatarUrl(user.avatar, 32)} size={32} radius="xl" />
-          <Text size="sm" fw={600} className="hidden text-[var(--hydro-text)] sm:block">
+        <UnstyledButton
+          className="hydro-topbar-user-button"
+          px={10}
+          py={6}
+          aria-label={formatUserName(user)}
+        >
+          <Avatar src={getAvatarUrl(user.avatar, 32)} size={32} radius="xl" style={{ flexShrink: 0 }} />
+          <Text size="sm" fw={600} className="hydro-topbar-user-name" c="var(--hydro-text)">
             {formatUserName(user)}
           </Text>
         </UnstyledButton>

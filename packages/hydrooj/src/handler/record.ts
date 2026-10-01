@@ -8,6 +8,7 @@ import {
     RecordNotFoundError,
 } from '../error';
 import { RecordDoc, Tdoc } from '../interface';
+import { getRecordAccess } from '../lib/record-access';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import problem, { ProblemDoc } from '../model/problem';
@@ -207,41 +208,17 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
         if (rev && allRevs[rev.toString()]) {
             rdoc = { ...rdoc, ...omit(await record.collHistory.findOne({ _id: rev }), ['_id']), progress: null };
         }
-        let canViewDetail = true;
-        if (rdoc.contest?.toString().startsWith('0'.repeat(23))) {
-            if (rdoc.uid !== this.user._id) throw new PermissionError(PERM.PERM_READ_RECORD_CODE);
-        } else if (rdoc.contest) {
-            this.tdoc = await contest.get(domainId, rdoc.contest);
-            let canView = this.user.own(this.tdoc);
-            canView ||= contest.canShowRecord.call(this, this.tdoc);
-            canView ||= contest.canShowSelfRecord.call(this, this.tdoc, true) && rdoc.uid === this.user._id;
-            if (!canView && rdoc.uid !== this.user._id) throw new PermissionError(rid);
-            canViewDetail = canView;
+        const { pdoc, tdoc, tsdoc, canViewDetail, canViewCode } = await getRecordAccess(this, rdoc);
+        this.tdoc = tdoc;
+        this.tsdoc = tsdoc;
+        if (this.tdoc) {
             this.args.tid = this.tdoc.docId;
             if (!this.user.own(this.tdoc) && !this.user.hasPerm(PERM.PERM_EDIT_CONTEST)) {
                 this.rdoc = contest.applyProjection(this.tdoc, this.rdoc, this.user);
             }
         }
 
-        // eslint-disable-next-line prefer-const
-        let [pdoc, self, udoc] = await Promise.all([
-            problem.get(rdoc.domainId, rdoc.pid, problem.PROJECTION_LIST.concat('config')),
-            problem.getStatus(domainId, rdoc.pid, this.user._id),
-            user.getById(domainId, rdoc.uid),
-        ]);
-
-        let canViewCode = rdoc.uid === this.user._id;
-        canViewCode ||= this.user.hasPriv(PRIV.PRIV_READ_RECORD_CODE);
-        canViewCode ||= this.user.hasPerm(PERM.PERM_READ_RECORD_CODE);
-        canViewCode ||= this.user.hasPerm(PERM.PERM_READ_RECORD_CODE_ACCEPT) && self?.status === STATUS.STATUS_ACCEPTED;
-        if (this.tdoc) {
-            this.tsdoc = await contest.getStatus(domainId, this.tdoc.docId, this.user._id);
-            canViewCode ||= this.user.own(this.tdoc);
-            if (this.tdoc.allowViewCode && contest.isDone(this.tdoc)) {
-                canViewCode ||= !!this.tsdoc?.attend;
-            }
-            if (!this.tsdoc?.attend && pdoc && !problem.canViewBy(pdoc, this.user)) throw new PermissionError(PERM.PERM_VIEW_PROBLEM_HIDDEN);
-        } else if (pdoc && !problem.canViewBy(pdoc, this.user)) throw new PermissionError(PERM.PERM_VIEW_PROBLEM_HIDDEN);
+        const udoc = await user.getById(domainId, rdoc.uid);
         if (!canViewCode) {
             rdoc.code = '';
             rdoc.files = {};

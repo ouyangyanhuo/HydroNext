@@ -1,8 +1,8 @@
 import { createHash, randomBytes } from 'crypto';
 import {
-    ContestModel, Context, db, Handler, NotFoundError, ObjectId, param,
+    Context, db, getRecordAccess, Handler, NotFoundError, ObjectId, param,
     PERM, PermissionError, PRIV, ProblemModel, RecordModel,
-    RecordNotFoundError, STATUS, Types, UserModel, ValidationError,
+    RecordNotFoundError, Types, UserModel, ValidationError,
 } from 'hydrooj';
 import { continuousPrefix } from './continuous';
 
@@ -265,7 +265,7 @@ export class CodeReplayModel {
         uid: number, domainId: string, sessionId: string, rid: ObjectId,
         pid?: number | string, lang?: string, finalCode?: string,
     ) {
-        if (!SESSION_ID_RE.test(sessionId)) return;
+        if (!SESSION_ID_RE.test(sessionId)) throw new ValidationError('sessionId');
         const existing = await coll.findOne({ _id: sessionId, uid, domainId });
         if (existing?.continuous) throw new ValidationError('sessionId');
         if (existing?.sourceSessionId) {
@@ -352,52 +352,6 @@ function domainAwareUrl(handler: Handler, name: string, args: Record<string, any
     return url;
 }
 
-/**
- * Check whether the current user can view the source code of a record.
- * Returns true if allowed, false otherwise. Does NOT throw.
- */
-async function canViewRecordCode(handler: Handler, rdoc: any): Promise<boolean> {
-    // Owner can always view their own code
-    if (rdoc.uid === handler.user._id) return true;
-
-    // Non-owner must have PERM_VIEW_RECORD
-    if (!handler.user.hasPerm(PERM.PERM_VIEW_RECORD)) return false;
-
-    // Training-type contest (prefix of 23 zeros) — only owner can view
-    if (rdoc.contest?.toString().startsWith('0'.repeat(23))) return false;
-
-    let tdoc = null;
-    if (rdoc.contest) {
-        tdoc = await ContestModel.get(rdoc.domainId, rdoc.contest);
-        let canView = handler.user.own(tdoc);
-        canView ||= ContestModel.canShowRecord.call(handler, tdoc);
-        canView ||= ContestModel.canShowSelfRecord.call(handler, tdoc, true) && rdoc.uid === handler.user._id;
-        if (!canView) return false;
-    }
-
-    // Global privilege to read any record code
-    if (handler.user.hasPriv(PRIV.PRIV_READ_RECORD_CODE)) return true;
-    if (handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE)) return true;
-
-    const [pdoc, self] = await Promise.all([
-        ProblemModel.get(rdoc.domainId, rdoc.pid, ProblemModel.PROJECTION_LIST.concat('config')),
-        ProblemModel.getStatus(rdoc.domainId, rdoc.pid, handler.user._id),
-    ]);
-
-    if (handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE_ACCEPT) && self?.status === STATUS.STATUS_ACCEPTED) return true;
-
-    if (tdoc) {
-        const tsdoc = await ContestModel.getStatus(rdoc.domainId, tdoc.docId, handler.user._id);
-        if (handler.user.own(tdoc)) return true;
-        if (tdoc?.allowViewCode && ContestModel.isDone(tdoc) && tsdoc?.attend) return true;
-        if (!tsdoc?.attend && pdoc && !ProblemModel.canViewBy(pdoc, handler.user)) return false;
-    } else if (pdoc && !ProblemModel.canViewBy(pdoc, handler.user)) {
-        return false;
-    }
-
-    return false;
-}
-
 async function getReplayForHandler(handler: Handler, domainId: string, rid: ObjectId) {
     const [rdoc, replay] = await Promise.all([
         RecordModel.get(domainId, rid),
@@ -405,7 +359,7 @@ async function getReplayForHandler(handler: Handler, domainId: string, rid: Obje
     ]);
     if (!rdoc) throw new RecordNotFoundError(rid);
     if (!replay) throw new NotFoundError('Code replay');
-    if (!(await canViewRecordCode(handler, rdoc))) throw new PermissionError(PERM.PERM_READ_RECORD_CODE);
+    if (!(await getRecordAccess(handler, rdoc)).canViewCode) throw new PermissionError(PERM.PERM_READ_RECORD_CODE);
     const [pdoc, udoc] = await Promise.all([
         ProblemModel.get(rdoc.domainId, rdoc.pid, ProblemModel.PROJECTION_LIST),
         UserModel.getById(rdoc.domainId, rdoc.uid),
@@ -546,13 +500,14 @@ export async function apply(ctx: Context) {
     ctx.on('handler/after/ProblemSubmit#post', async (that) => {
         if (that.args.pretest) return;
         const sessionId = that.args.codeReplaySessionId;
-        const rid = that.response.body?.rid;
+        const rid = that.submittedRecordId || that.response.body?.rid;
         if (!sessionId || !rid) return;
         try {
             await CodeReplayModel.bind(
                 that.user._id, that.args.domainId, sessionId, rid,
                 that.args.pid, that.args.lang, that.args.code,
             );
+            that.response.body.codeReplayCommitted = true;
         } catch (e) {
             logger.warn('Failed to bind replay session %s to record %s: %o', sessionId, rid, e);
             that.response.body.codeReplayError = true;

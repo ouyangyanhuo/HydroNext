@@ -3236,6 +3236,27 @@ a {
   background-image: none !important;
 }
 
+.hydro-topbar-user-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  flex-shrink: 0;
+  border-radius: var(--mantine-radius-md);
+}
+
+.hydro-topbar-user-name {
+  max-width: 180px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+  .hydro-topbar-user-name { display: none; }
+}
+
 [data-mantine-color-scheme='light'] .hydro-top-nav :is(
   .mantine-Button-root,
   .mantine-ActionIcon-root,

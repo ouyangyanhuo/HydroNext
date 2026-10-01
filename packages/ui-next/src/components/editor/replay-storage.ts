@@ -3,6 +3,8 @@ import { newRecording, type ReplayRecording } from './replay-recording';
 let database: Promise<IDBDatabase> | undefined;
 const activeRecordings = new Map<string, ReplayRecording>();
 const persisted = new WeakMap<ReplayRecording, number>();
+const draftKeys = new Map<string, string>();
+const previousDraftKeys = new Map<string, string>();
 
 function openDatabase() {
   database ||= new Promise<IDBDatabase>((resolve, reject) => {
@@ -27,12 +29,19 @@ function completed(transaction: IDBTransaction) {
 }
 
 export function replayDraftKey(context: string) {
-  let tab = 'default';
+  if (draftKeys.has(context)) return draftKeys.get(context)!;
+  // A document gets its own key even when a browser duplicates sessionStorage.
+  // The previous key is read-only recovery input; restored event streams are forked too.
+  const key = `${context}/${newRecording('').sessionId}`;
   try {
-    tab = sessionStorage.getItem('hydro-replay-tab') || newRecording('').sessionId;
-    sessionStorage.setItem('hydro-replay-tab', tab);
+    const storageKey = `hydro-replay-draft:${context}`;
+    const legacyTab = sessionStorage.getItem('hydro-replay-tab');
+    const previous = sessionStorage.getItem(storageKey) || (legacyTab ? `${context}/${legacyTab}` : '');
+    if (previous) previousDraftKeys.set(key, previous);
+    // Published after persistence, so refreshing during initialization cannot lose the prior draft.
   } catch { /* IndexedDB may remain usable when sessionStorage is disabled. */ }
-  return `${context}/${tab}`;
+  draftKeys.set(context, key);
+  return key;
 }
 
 export function memoryRecording(key: string, initialCode: string) {
@@ -45,7 +54,7 @@ export async function restoreRecording(key: string, initialCode: string) {
   const db = await openDatabase();
   const transaction = db.transaction(['drafts', 'events'], 'readonly');
   const result = new Promise<ReplayRecording | undefined>((resolve, reject) => {
-    const request = transaction.objectStore('drafts').get(key);
+    const request = transaction.objectStore('drafts').get(previousDraftKeys.get(key) || key);
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       const saved = request.result;
@@ -61,7 +70,9 @@ export async function restoreRecording(key: string, initialCode: string) {
           return;
         }
         const recording = { ...saved, events: events.result.map(({ sessionId: _sessionId, ...event }) => event) } as ReplayRecording;
-        persisted.set(recording, saved.sequence);
+        if (previousDraftKeys.has(key)) {
+          recording.sessionId = newRecording('').sessionId;
+        } else persisted.set(recording, saved.sequence);
         resolve(recording);
       };
     };
@@ -83,4 +94,14 @@ export async function persistRecording(key: string, recording: ReplayRecording) 
   transaction.objectStore('drafts').put(metadata, key);
   await completed(transaction);
   persisted.set(recording, Math.max(persisted.get(recording) || 0, metadata.sequence));
+  for (const [context, currentKey] of draftKeys) {
+    if (currentKey !== key) continue;
+    try { sessionStorage.setItem(`hydro-replay-draft:${context}`, key); } catch { /* Keep the in-memory draft usable. */ }
+    break;
+  }
+}
+
+export function replaceRecording(key: string, recording: ReplayRecording) {
+  activeRecordings.set(key, recording);
+  return persistRecording(key, recording);
 }

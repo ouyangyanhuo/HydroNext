@@ -10,6 +10,7 @@ import { FormDialog } from '@/components/common/form-dialog';
 import { TimeDisplay } from '@/components/common/time-display';
 import { ContestProblemTimer } from '@/components/contest/contest-problem-timer';
 import { Scratchpad } from '@/components/editor/scratchpad';
+import { resolveSubmissionContext } from '@/components/editor/submission-context';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -504,8 +505,7 @@ export default function ProblemDetailPage() {
 
   const title = extractLocalizedContent(pdoc.title, selectedLang || sessionLanguage);
   const scratchpadLangs = Object.fromEntries((pdoc.config?.langs || []).map((lang: string) => [lang, { display: getLangDisplay(lang) }]));
-  const submitPid = pdoc.docId || pdoc.pid;
-  const tid = args.tdoc?.docId || args.tdoc?._id || new URLSearchParams(window.location.search).get('tid') || undefined;
+  const { pid: submitPid, tid } = resolveSubmissionContext({ pdoc, tdoc: args.tdoc }, window.location.search, pid);
   const fallbackCanSubmit = hasPermValue(user.perm, PERM.PERM_SUBMIT_PROBLEM);
   const accepted = psdoc?.status === 1;
   const isAuthenticated = Boolean(user._id && user._id !== 0);
@@ -632,7 +632,7 @@ export default function ProblemDetailPage() {
       <div ref={workspaceRef} className="problem-workspace">
         {contestTimer}
         <Scratchpad
-          key={`${ui.domainId}/${pdoc.docId}/${ui.tdoc?._id || ''}`}
+          key={`${ui.domainId}/${pdoc.docId}/${tid || ''}`}
           pid={pdoc.pid || pdoc.docId}
           langs={scratchpadLangs}
           defaultLang={rdoc?.lang || codeLang}

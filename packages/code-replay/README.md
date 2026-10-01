@@ -30,8 +30,11 @@ session ID without its event history.
 
 ### Continuous recordings in ui-next (protocol v2)
 
-- Editing continues across self-tests and formal submissions. A self-test does
-  not upload, bind, or reset the recording.
+- A self-test does not upload, bind, or reset the recording. After a successful
+  formal submission with a linked replay, ui-next starts the next segment from
+  that submission's code. Each replay shows only edits since the previous formal
+  submission, not the entire history. Edits made during upload are carried into
+  the next segment with rebased sequence numbers and timestamps.
 - IndexedDB stores new deltas and their metadata atomically, scoped by user,
   domain, problem, contest, and browser tab. The editor restores this state
   before accepting input; unavailable storage produces a warning rather than
@@ -49,6 +52,25 @@ session ID without its event history.
 - Update ui-next and the backend addon together. Existing ui-default and legacy
   recordings keep their original protocol; no MongoDB version upgrade or data
   migration is required. Historical events already lost cannot be reconstructed.
+
+### Access control, private contest records, and draft recovery
+
+- Record details and both replay endpoints use Hydro's shared `getRecordAccess`
+  policy. Code-reading privileges do not bypass hidden-problem visibility or
+  contest record restrictions; existing participant exceptions remain in effect.
+- The submit handler keeps the created record ID internally. Replay binding uses
+  that ID even when contest rules hide it from the response. Only a successful
+  binding returns `codeReplayCommitted: true`; ui-next advances its segment on
+  that acknowledgement, not on the presence of a public record ID.
+- IndexedDB is authoritative for both code and replay history. Shared localStorage
+  is only an initial fallback when no draft exists. Restoration completes before
+  the editor mounts, so restoring code does not create synthetic edits.
+- Each document/context receives a fresh draft key and forks the restored event
+  stream. Even duplicated tabs with copied sessionStorage cannot overwrite each
+  other's events. The recovery pointer is published only after persistence.
+- Deploy Hydro core, code-replay, and ui-next together for these changes. No
+  database version upgrade is required. Submissions that previously skipped
+  binding are not automatically repaired.
 
 Legacy timestamp-only recordings remain playable, but their periodic snapshots
 are not interleaved with edits: timestamps do not identify whether a snapshot is
@@ -86,7 +108,8 @@ Unsubmitted sessions expire after seven days. Sessions bound to a submission rec
 5. Open the replay and verify play, pause, step, speed, and timeline controls.
 6. In ui-next, edit, run several self-tests, refresh, and formally submit. Check
    that edits from before the self-tests remain visible.
-7. Return to the same editor, edit and submit again. The second replay includes
-   the earlier prefix; the first replay still ends at its original checkpoint.
+7. Return to the same editor, edit, self-test, edit again and submit. The second
+   replay starts with the first submitted code and shows both sets of new edits;
+   the first replay remains unchanged. Refreshing restores the current segment.
 
 The plugin uses Hydro route generation for its capture and replay URLs, including `/d/:domainId/` path-domain deployments.

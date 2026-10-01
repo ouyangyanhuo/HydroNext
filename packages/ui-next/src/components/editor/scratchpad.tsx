@@ -1,6 +1,6 @@
 import 'allotment/dist/style.css';
 
-import { Badge, Divider, Drawer, Group, NumberInput, Paper, Stack, Text, Title, Tooltip } from '@mantine/core';
+import { Badge, Center, Divider, Drawer, Group, Loader, NumberInput, Paper, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconCode, IconFileText, IconPlayerPlay, IconSend, IconSettings, IconTemplate, IconTerminal2, IconX,
@@ -11,7 +11,7 @@ import { ActionIcon, Button, ButtonBase } from '@/components/common/button';
 import { LongSelect, ShortSelect } from '@/components/common/select';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS_TEXTS } from '@/components/record/status-map';
-import { useUiContext, useUserContext } from '@/context/page-data';
+import { usePageData, useUiContext, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
@@ -24,8 +24,9 @@ import {
   saveStoredEditorConfig,
 } from './code-editor';
 import { getCodeTemplate } from './code-templates';
-import { recordCode, recordingCheckpoint, type ReplayRecording, uploadRecordingCheckpoint } from './replay-recording';
-import { memoryRecording, persistRecording, replayDraftKey, restoreRecording } from './replay-storage';
+import { continueRecording, recordCode, recordingCheckpoint, type ReplayRecording, uploadRecordingCheckpoint } from './replay-recording';
+import { memoryRecording, persistRecording, replaceRecording, replayDraftKey, restoreRecording } from './replay-storage';
+import { resolveSubmissionContext } from './submission-context';
 
 interface ScratchpadProps {
   pid: string | number;
@@ -80,12 +81,14 @@ export function Scratchpad({
   const navigate = useNavigate();
   const buildUrl = useBuildUrl();
   const ui = useUiContext();
+  const { args } = usePageData();
   const user = useUserContext();
   const langOptions = useMemo(() => Object.entries(langs).map(([id, info]: [string, any]) => ({
     value: id,
     label: info.display || info.name || id,
   })), [langs]);
-  const contestId = ui.tdoc?._id || ui.tdoc?.docId || new URLSearchParams(window.location.search).get('tid') || '';
+  const submissionContext = resolveSubmissionContext({ pdoc: args.pdoc, tdoc: args.tdoc }, window.location.search, pid);
+  const contestId = submissionContext.tid || '';
   const cacheKey = useMemo(
     () => getScratchpadCacheKey(user?._id, ui.domainId, pid, contestId),
     [contestId, pid, ui.domainId, user?._id],
@@ -133,9 +136,9 @@ export function Scratchpad({
     const info = langs[lang] || {};
     if (info.pretest === false) return false;
     if (info.pretest) return true;
-    const type = ui.pdoc?.config?.type;
+    const type = args.pdoc?.config?.type;
     return !type || type === 'default' || type === 'remote_judge';
-  }, [lang, langs, ui.pdoc?.config?.type]);
+  }, [lang, langs, args.pdoc?.config?.type]);
   const selectedCodeTemplate = getCodeTemplate(lang);
 
   const updateEditorConfig = useCallback((patch: EditorConfig) => {
@@ -215,7 +218,8 @@ export function Scratchpad({
         if (!cancelled) warnReplayStorage();
       }
       if (cancelled) return;
-      recordCode(recording, code, lang);
+      // Code and replay must come from the same atomic draft, never another tab's localStorage.
+      setCode(recording.currentCode);
       replayRef.current = recording;
       saveReplay(recording);
       setReadyReplayKey(replayStorageKey);
@@ -251,7 +255,7 @@ export function Scratchpad({
   }, [lang, saveReplay]);
 
   const flushReplay = useCallback(async (finalCode: string) => {
-    if (!resolvedReplayUrl || !user?._id) return '';
+    if (!resolvedReplayUrl || !user?._id) return null;
     const recording = replayRef.current;
     if (!recording) throw new Error('Replay is not ready');
     recordCode(recording, finalCode, lang);
@@ -259,23 +263,23 @@ export function Scratchpad({
     // Commit the local prefix before uploading it so a refresh cannot restore
     // an older sequence than an already acknowledged server checkpoint.
     await persistRecording(replayStorageKey, recording).catch(warnReplayStorage);
-    const tid = ui.tdoc?._id || ui.tdoc?.docId || new URLSearchParams(window.location.search).get('tid') || undefined;
     try {
-      return await uploadRecordingCheckpoint(checkpoint, async (payload) => {
+      const sessionId = await uploadRecordingCheckpoint(checkpoint, async (payload) => {
         const response = await fetch(resolvedReplayUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ ...payload, pid: ui.pdoc?.docId || pid, tid, lang }),
+          body: JSON.stringify({ ...payload, pid: submissionContext.pid, tid: submissionContext.tid, lang }),
         });
         const data = await response.json();
         if (!response.ok || data.error) throw new Error(data.error?.message || 'Replay upload failed');
         return data;
       });
+      return { sessionId, checkpoint, recording };
     } catch (err) {
       console.warn('Failed to upload code replay:', err);
       throw new Error(t('Replay upload failed. Your recording is kept; please retry submission.'));
     }
-  }, [lang, pid, replayStorageKey, resolvedReplayUrl, t, ui.pdoc, ui.tdoc, user?._id, warnReplayStorage]);
+  }, [lang, submissionContext.pid, submissionContext.tid, replayStorageKey, resolvedReplayUrl, t, user?._id, warnReplayStorage]);
 
   const postJudge = useCallback(async (pretest: boolean) => {
     if (!replayReady || judgePending.current) return;
@@ -306,7 +310,7 @@ export function Scratchpad({
         const res = await onSubmit(lang, code);
         setSubmitResult(res);
       } else {
-        const replaySessionId = pretest ? '' : await flushReplay(code);
+        const replay = pretest ? null : await flushReplay(code);
         const res = await fetch(resolvedSubmitUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -315,7 +319,7 @@ export function Scratchpad({
             code,
             input: pretest ? [input] : undefined,
             pretest,
-            codeReplaySessionId: replaySessionId || undefined,
+            codeReplaySessionId: replay?.sessionId,
           }),
         });
         const data = await res.json();
@@ -323,12 +327,18 @@ export function Scratchpad({
         else if (pretest) {
           setPretestResult(data);
           if (data.rid) setPretestRid(String(data.rid));
-        } else if (data.rid) {
+        } else {
           if (data.codeReplayError) {
             notifications.show({ color: 'yellow', message: t('Submission succeeded, but replay could not be linked. Your recording is kept.') });
+          } else if (data.codeReplayCommitted && replay && replayRef.current === replay.recording) {
+            const next = continueRecording(replay.recording, replay.checkpoint);
+            replayRef.current = next;
+            // Persist the new baseline before navigating away; failure keeps it in memory.
+            await replaceRecording(replayStorageKey, next).catch(warnReplayStorage);
           }
-          navigate(buildUrl('record_detail', { rid: data.rid }));
-        } else setSubmitResult(data);
+          if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }));
+          else setSubmitResult(data);
+        }
       }
     } catch (err: any) {
       const message = err?.message || t('Network error');
@@ -340,7 +350,7 @@ export function Scratchpad({
       else setSubmitting(false);
     }
   }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, flushReplay,
-    resolvedSubmitUrl, input, navigate, replayReady]);
+    resolvedSubmitUrl, input, navigate, replayReady, replayStorageKey, warnReplayStorage]);
 
   const pretestCooldown = Math.max(0, Math.ceil((cooldownUntil.pretest - clock) / 1000));
   const submitCooldown = Math.max(0, Math.ceil((cooldownUntil.submit - clock) / 1000));
@@ -514,7 +524,7 @@ export function Scratchpad({
               <div className="hydro-scratchpad-editor min-h-0 flex-1">
                 <Allotment vertical>
                   <Allotment.Pane minSize={260}>
-                    <CodeEditor
+                    {replayReady ? <CodeEditor
                       value={code}
                       onChange={setCode}
                       onContentChange={captureChange}
@@ -524,7 +534,7 @@ export function Scratchpad({
                       fontSize={fontSize}
                       tabSize={tabSize}
                       theme={theme}
-                    />
+                    /> : <Center h="100%"><Loader size="sm" /></Center>}
                   </Allotment.Pane>
                   <Allotment.Pane preferredSize={190} minSize={130}>
                     <Stack gap={0} className="hydro-scratchpad-console h-full min-h-0 overflow-hidden">

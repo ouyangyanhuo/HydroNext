@@ -494,6 +494,9 @@ export class ProblemDetailHandler extends ContestDetailBaseHandler {
 }
 
 export class ProblemSubmitHandler extends ProblemDetailHandler {
+    // Internal only: plugins must not depend on whether the public response exposes rid.
+    submittedRecordId?: ObjectId;
+
     @param('tid', Types.ObjectId, true)
     async prepare(domainId: string, tid?: ObjectId) {
         if (tid && !contest.isOngoing(this.tdoc, this.tsdoc)) throw new ContestNotLiveError(this.tdoc.docId);
@@ -557,6 +560,7 @@ export class ProblemSubmitHandler extends ProblemDetailHandler {
             domainId, this.pdoc.docId, this.user._id, lang, code, true,
             pretest ? { input, type: 'pretest' } : { contest: tid, files, type: 'judge' },
         );
+        this.submittedRecordId = rid;
         if (!pretest) {
             await Promise.all([
                 problem.inc(domainId, this.pdoc.docId, 'nSubmit', 1),
