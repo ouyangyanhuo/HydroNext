@@ -457,6 +457,7 @@ Back to Problems: 問題一覧に戻る
 Confirm rejudge this problem?: この問題を再判定しますか？
 Download failed: ダウンロード失敗
 Copy failed: コピー失敗
+Copied: コピーしました
 Target: 対象ドメイン
 Monaco Editor: Monacoエディタ
 Pretest: プレテスト
@@ -623,6 +624,7 @@ Delete Category: カテゴリを削除
 Confirm to delete this category?: このカテゴリを削除しますか？
 '{0} ranked users': 'ランキング対象 {0} 人'
 Forgot Password: パスワードを忘れた
+Please contact the administrator: 管理者にお問い合わせください
 Change Email: メールアドレスを変更
 
 # Theme

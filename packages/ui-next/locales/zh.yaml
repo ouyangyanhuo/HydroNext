@@ -79,6 +79,7 @@ Password: 密码
 Remember me: 记住登录状态
 Forgot Password?: 忘记密码？
 Forgot Password: 忘记密码
+Please contact the administrator: 请与管理员联系
 Send Reset Link: 发送重置链接
 Reset Password: 重置密码
 New Password: 新密码
@@ -703,6 +704,7 @@ Back to Problems: 返回题目列表
 Confirm rejudge this problem?: 确认重测此题？
 Download failed: 下载失败
 Copy failed: 复制失败
+Copied: 已复制
 Target: 目标域
 Copy Problem: 复制题目
 Search by domain ID or name: 按域 ID 或名称搜索

@@ -568,6 +568,7 @@ Back to Problems: Back to Problems
 Confirm rejudge this problem?: Confirm rejudge this problem?
 Download failed: Download failed
 Copy failed: Copy failed
+Copied: Copied
 Target: Target
 Monaco Editor: Monaco Editor
 Pretest: Self Test
@@ -646,6 +647,7 @@ Delete Category: Delete Category
 Confirm to delete this category?: Confirm to delete this category?
 '{0} ranked users': '{0} ranked users'
 Forgot Password: Forgot Password
+Please contact the administrator: Please contact the administrator
 Change Email: Change Email
 
 # Theme

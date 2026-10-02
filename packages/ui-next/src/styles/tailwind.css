@@ -3339,6 +3339,19 @@ a {
   .hydro-table-wrap,
   .hydro-paginator,
   .hydro-empty-state,
+  .hydro-auth-card,
+  .hydro-bulletin,
+  .hydro-data-panel,
+  .hydro-problem-meta,
+  .hydro-record-hero,
+  .hydro-record-card,
+  .hydro-solution-header,
+  .hydro-settings-header,
+  .hydro-settings-nav,
+  .hydro-settings-savebar,
+  .hydro-user-profile__stat,
+  .hydro-user-profile__tabs,
+  .hydro-messages,
   .mantine-Card-root,
   .mantine-Paper-root
 ) ,
@@ -3350,9 +3363,26 @@ a {
   .mantine-Combobox-dropdown
 ) {
   border-color: var(--hydro-border);
-  background-color: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
+  background-color: var(--hydro-surface-raised);
   background-image: none;
   box-shadow: var(--hydro-shadow-sm);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Nested night-mode surfaces stay opaque while retaining a separate level. */
+[data-mantine-color-scheme='dark'] :is(.mantine-Card-root, .mantine-Paper-root) .mantine-Paper-root,
+[data-mantine-color-scheme='dark'] :is(
+  .hydro-problem-meta__secondary,
+  .hydro-solution-reply,
+  .hydro-security-row,
+  .hydro-security-session,
+  .hydro-user-profile__tablist,
+  .hydro-settings-field--wide:has(.mantine-Checkbox-root),
+  .hydro-user-profile__facts > .mantine-Text-root
+) {
+  background-color: var(--hydro-surface-muted);
+  background-image: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }

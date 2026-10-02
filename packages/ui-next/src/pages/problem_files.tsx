@@ -1,7 +1,9 @@
 import { Badge, Card, Checkbox, Divider, Group, Modal, Stack, Text, TextInput, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';
@@ -36,7 +38,7 @@ interface RenameDialogProps {
   opened: boolean;
   onClose: () => void;
   files: string[];
-  onRename: (files: string[], newNames: string[]) => Promise<void>;
+  onRename: (files: string[], newNames: string[]) => Promise<boolean>;
 }
 
 function RenameDialog({ opened, onClose, files, onRename }: RenameDialogProps) {
@@ -79,7 +81,7 @@ function RenameDialog({ opened, onClose, files, onRename }: RenameDialogProps) {
     }
     setSaving(true);
     try {
-      await onRename(files, newNames);
+      if (!await onRename(files, newNames)) return;
       onClose();
       setStep('input');
       setFind('');
@@ -196,6 +198,8 @@ function FileSection({
   const { t } = useI18n();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [operating, setOperating] = useState(false);
+  const pending = useRef(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ files: string[], bulk: boolean } | null>(null);
   const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);
   const [renameTarget, setRenameTarget] = useState<string[] | null>(null);
   const [renameSingleTarget, setRenameSingleTarget] = useState<string | null>(null);
@@ -221,6 +225,8 @@ function FileSection({
   };
 
   const postOperation = async (operation: string, body: Record<string, any> = {}) => {
+    if (pending.current) return false;
+    pending.current = true;
     setOperating(true);
     try {
       const res = await fetch(filesBaseUrl, {
@@ -229,28 +235,26 @@ function FileSection({
         body: JSON.stringify({ operation, type, ...body }),
       });
       const data = await res.json();
-      if (data.error) throw new Error(data.error.message || data.error);
+      if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Operation failed')));
       setSelected(new Set());
       onComplete();
+      return true;
     } catch (err: any) {
-      // eslint-disable-next-line no-alert
-      alert(err.message);
+      notifications.show({ color: 'red', message: err?.message || t('Operation failed') });
+      return false;
     } finally {
+      pending.current = false;
       setOperating(false);
     }
   };
 
-  const deleteSingle = async (name: string) => {
-    // eslint-disable-next-line no-alert
-    if (!window.confirm(t('Confirm to delete the file?'))) return;
-    await postOperation('delete_files', { files: [name] });
+  const deleteSingle = (name: string) => {
+    setDeleteTarget({ files: [name], bulk: false });
   };
 
-  const deleteSelected = async () => {
+  const deleteSelected = () => {
     if (!selected.size) return;
-    // eslint-disable-next-line no-alert
-    if (!window.confirm(t('Confirm to delete the selected files?'))) return;
-    await postOperation('delete_files', { files: Array.from(selected) });
+    setDeleteTarget({ files: Array.from(selected), bulk: true });
   };
 
   const renameSingle = async (name: string) => {
@@ -260,12 +264,11 @@ function FileSection({
   const submitRenameSingle = async (name: string, value: string) => {
     const newName = value.trim();
     if (!newName || newName === name) return;
-    await postOperation('rename_files', { files: [name], newNames: [newName] });
-    setRenameSingleTarget(null);
+    if (await postOperation('rename_files', { files: [name], newNames: [newName] })) setRenameSingleTarget(null);
   };
 
   const renameSelected = async (targetFiles: string[], newNames: string[]) => {
-    await postOperation('rename_files', { files: targetFiles, newNames });
+    return postOperation('rename_files', { files: targetFiles, newNames });
   };
 
   const downloadSelected = async () => {
@@ -450,6 +453,18 @@ function FileSection({
         fileUrl={fileUrl}
         canEdit={canEdit}
         onSave={handleSaveFile}
+      />
+
+      <ConfirmDialog
+        opened={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title={t('Delete')}
+        message={t(deleteTarget?.bulk ? 'Confirm to delete the selected files?' : 'Confirm to delete the file?')}
+        loading={operating}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          if (await postOperation('delete_files', { files: deleteTarget.files })) setDeleteTarget(null);
+        }}
       />
 
       {renameTarget && (

@@ -1,23 +1,27 @@
 import { Badge, Card, Group, Stack, Text, Tooltip } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
   IconArrowLeft, IconArrowUp, IconChevronDown, IconChevronUp, IconLink, IconMessage, IconPencil, IconTrash,
 } from '@tabler/icons-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { Link } from '@/components/link';
+import { copyCodeText } from '@/components/markdown/code-copy';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
-import { useIsLoggedIn } from '@/hooks/use-current-user';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
+import { solutionPermissions } from '@/utils/solution-permissions';
 import { formatUserName } from '@/utils/user-name';
 
 const MAX_HEIGHT = 260;
@@ -39,7 +43,7 @@ async function postOperation(payload: Record<string, any>, fallback: string) {
     body: JSON.stringify(payload),
   });
   const data = await res.json();
-  if (data.error) throw new Error(formatErrorMessage(data.error, fallback));
+  if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, fallback));
   return data;
 }
 
@@ -177,7 +181,6 @@ function SolutionCard({
   pssdict,
   udict,
   pid,
-  isLoggedIn,
   onRefresh,
 }: {
   solution: any;
@@ -185,11 +188,15 @@ function SolutionCard({
   pssdict: Record<string, any>;
   udict: Record<string, any>;
   pid: string | number;
-  isLoggedIn: boolean;
-  onRefresh: () => void;
+  onRefresh: (deleted?: boolean) => void;
 }) {
   const { t } = useI18n();
+  const currentUser = useCurrentUser();
+  const permissions = solutionPermissions(currentUser, solution);
+  const buildUrl = useBuildUrl();
   const [busy, setBusy] = useState('');
+  const pending = useRef(false);
+  const [deleting, setDeleting] = useState<{ operation: string, psrid?: string } | null>(null);
   const [error, setError] = useState('');
   const [replying, setReplying] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -197,25 +204,36 @@ function SolutionCard({
   const sid = docId(solution);
   const vote = pssdict[sid]?.vote || pssdict[solution._id]?.vote || 0;
 
-  const run = async (operation: string, payload: Record<string, any> = {}, confirmText?: string) => {
-    // Native confirmation keeps destructive actions explicit without adding persistent dialog state.
-    // eslint-disable-next-line no-alert
-    if (confirmText && !window.confirm(confirmText)) return;
-    setBusy(operation);
+  const run = async (operation: string, payload: Record<string, any> = {}) => {
+    if (pending.current) return false;
+    pending.current = true;
+    setBusy(payload.psrid ? `${operation}:${payload.psrid}` : operation);
     setError('');
     try {
       await postOperation({ operation, psid: sid, ...payload }, t('Operation failed'));
-      onRefresh();
+      if (operation === 'edit_solution') setEditing(false);
+      if (operation === 'edit_reply') setEditingReply('');
+      if (operation === 'reply') setReplying(false);
+      onRefresh(operation === 'delete_solution');
+      return true;
     } catch (err: any) {
       setError(err?.message || t('Operation failed'));
+      notifications.show({ color: 'red', message: err?.message || t('Operation failed') });
+      return false;
     } finally {
+      pending.current = false;
       setBusy('');
     }
   };
 
   const copyLink = async () => {
-    const url = `${window.location.origin}/p/${pid}/solution/${sid}`;
-    await navigator.clipboard?.writeText(url);
+    try {
+      const url = new URL(buildUrl('problem_solution_detail', { pid, sid }), window.location.origin).href;
+      await copyCodeText(url, document);
+      notifications.show({ message: t('Copied'), color: 'green' });
+    } catch {
+      notifications.show({ message: t('Copy failed'), color: 'red' });
+    }
   };
 
   const udoc = user || { _id: solution.owner, uname: String(solution.owner) };
@@ -228,7 +246,8 @@ function SolutionCard({
             <ActionIcon
               variant={vote === 1 ? 'filled' : 'subtle'}
               size="sm"
-              disabled={!isLoggedIn}
+              aria-label={t('Like')}
+              disabled={!permissions.vote || !!busy}
               loading={busy === 'upvote'}
               onClick={() => run('upvote')}
             >
@@ -256,32 +275,34 @@ function SolutionCard({
             </Group>
             <Group gap={2} wrap="nowrap">
               <Tooltip label={t('Copy Link')}>
-                <ActionIcon variant="subtle" size="sm" onClick={copyLink}>
+                <ActionIcon variant="subtle" size="sm" aria-label={t('Copy Link')} onClick={copyLink}>
                   <IconLink size={14} />
                 </ActionIcon>
               </Tooltip>
-              {isLoggedIn && (
+              {permissions.reply && (
                 <Tooltip label={t('Reply')}>
-                  <ActionIcon variant="subtle" size="sm" onClick={() => setReplying((v) => !v)}>
+                  <ActionIcon variant="subtle" size="sm" aria-label={t('Reply')} disabled={!!busy} onClick={() => setReplying((v) => !v)}>
                     <IconMessage size={14} />
                   </ActionIcon>
                 </Tooltip>
               )}
-              {isLoggedIn && (
+              {permissions.edit && (
                 <Tooltip label={t('Edit')}>
-                  <ActionIcon variant="subtle" size="sm" onClick={() => setEditing((v) => !v)}>
+                  <ActionIcon variant="subtle" size="sm" aria-label={t('Edit')} disabled={!!busy} onClick={() => setEditing((v) => !v)}>
                     <IconPencil size={14} />
                   </ActionIcon>
                 </Tooltip>
               )}
-              {isLoggedIn && (
+              {permissions.delete && (
                 <Tooltip label={t('Delete')}>
                   <ActionIcon
                     variant="subtle"
                     size="sm"
                     color="red"
+                    aria-label={t('Delete')}
+                    disabled={!!busy}
                     loading={busy === 'delete_solution'}
-                    onClick={() => run('delete_solution', {}, t('Confirm delete?'))}
+                    onClick={() => setDeleting({ operation: 'delete_solution' })}
                   >
                     <IconTrash size={14} />
                   </ActionIcon>
@@ -292,7 +313,7 @@ function SolutionCard({
 
           {error && <Text c="red" size="sm">{error}</Text>}
 
-          {editing ? (
+          {editing && permissions.edit ? (
             <Composer
               initial={solution.content || ''}
               placeholder={t('Write Your Solution')}
@@ -309,6 +330,7 @@ function SolutionCard({
             <Stack gap="xs" className="hydro-solution-replies ml-6 pl-3">
               {solution.reply.map((reply: any) => {
                 const rid = docId(reply);
+                const replyPermissions = solutionPermissions(currentUser, reply);
                 const replyUser = udict[reply.owner] || { _id: reply.owner, uname: String(reply.owner) };
                 return (
                   <div key={rid} className="hydro-solution-reply p-3">
@@ -323,32 +345,50 @@ function SolutionCard({
                           <TimeDisplay date={docDate(reply._id || reply.docId)} format="relative" />
                         </Text>
                       </Group>
-                      {isLoggedIn && (
-                        <Group gap={2}>
-                          <ActionIcon variant="subtle" size="xs" onClick={() => setReplying(true)}>
+                      <Group gap={2}>
+                        {permissions.reply && (
+                          <ActionIcon
+                            aria-label={t('Reply')}
+                            disabled={!!busy}
+                            variant="subtle"
+                            size="xs"
+                            onClick={() => setReplying(true)}
+                          >
                             <IconMessage size={12} />
                           </ActionIcon>
-                          <ActionIcon variant="subtle" size="xs" onClick={() => setEditingReply(editingReply === rid ? '' : rid)}>
+                        )}
+                        {replyPermissions.editReply && (
+                          <ActionIcon
+                            aria-label={t('Edit')}
+                            disabled={!!busy}
+                            variant="subtle"
+                            size="xs"
+                            onClick={() => setEditingReply(editingReply === rid ? '' : rid)}
+                          >
                             <IconPencil size={12} />
                           </ActionIcon>
+                        )}
+                        {replyPermissions.deleteReply && (
                           <ActionIcon
+                            aria-label={t('Delete')}
+                            disabled={!!busy}
                             variant="subtle"
                             size="xs"
                             color="red"
                             loading={busy === `delete_reply:${rid}`}
-                            onClick={() => run('delete_reply', { psrid: rid }, t('Confirm delete?'))}
+                            onClick={() => setDeleting({ operation: 'delete_reply', psrid: rid })}
                           >
                             <IconTrash size={12} />
                           </ActionIcon>
-                        </Group>
-                      )}
+                        )}
+                      </Group>
                     </Group>
-                    {editingReply === rid ? (
+                    {editingReply === rid && replyPermissions.editReply ? (
                       <Composer
                         initial={reply.content || ''}
                         placeholder={t('Reply')}
                         submitText={t('Update')}
-                        loading={busy === 'edit_reply'}
+                        loading={busy === `edit_reply:${rid}`}
                         onCancel={() => setEditingReply('')}
                         onSubmit={(content) => run('edit_reply', { psrid: rid, content })}
                       />
@@ -361,7 +401,7 @@ function SolutionCard({
             </Stack>
           )}
 
-          {replying && (
+          {replying && permissions.reply && (
             <Composer
               placeholder={t('Reply')}
               submitText={t('Reply')}
@@ -372,6 +412,17 @@ function SolutionCard({
           )}
         </Stack>
       </div>
+      <ConfirmDialog
+        opened={!!deleting}
+        onClose={() => setDeleting(null)}
+        title={t('Delete')}
+        message={t('Confirm delete?')}
+        loading={!!busy}
+        onConfirm={async () => {
+          if (!deleting) return;
+          if (await run(deleting.operation, deleting.psrid ? { psrid: deleting.psrid } : {})) setDeleting(null);
+        }}
+      />
     </Card>
   );
 }
@@ -379,7 +430,8 @@ function SolutionCard({
 export default function ProblemSolutionPage() {
   const { args } = usePageData();
   const { t } = useI18n();
-  const isLoggedIn = useIsLoggedIn();
+  const currentUser = useCurrentUser();
+  const permissions = solutionPermissions(currentUser);
   const navigate = useNavigate();
   const buildUrl = useBuildUrl();
   const pdoc = args.pdoc || {};
@@ -392,7 +444,9 @@ export default function ProblemSolutionPage() {
   const sid = args.sid;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const refresh = () => navigate(window.location.href);
+  const refresh = (deleted = false) => navigate(deleted && sid
+    ? buildUrl('problem_solution', { pid: pdoc.pid || pdoc.docId })
+    : window.location.href);
 
   const handleSubmit = async (content: string) => {
     setLoading(true);
@@ -427,7 +481,7 @@ export default function ProblemSolutionPage() {
         <Text size="sm" c="dimmed">{t('Solutions')}</Text>
       </div>
 
-      {isLoggedIn && !sid && (
+      {permissions.create && !sid && (
         <Composer
           placeholder={t('Write Your Solution')}
           submitText={t('Share')}
@@ -449,7 +503,6 @@ export default function ProblemSolutionPage() {
               pssdict={pssdict}
               udict={udict}
               pid={pdoc.pid || pdoc.docId}
-              isLoggedIn={isLoggedIn}
               onRefresh={refresh}
             />
           ))}

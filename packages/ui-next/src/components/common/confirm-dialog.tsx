@@ -1,5 +1,6 @@
 import { Group, Modal, Text } from '@mantine/core';
 import { Button } from '@/components/common/button';
+import { useI18n } from '@/hooks/use-i18n';
 
 interface ConfirmDialogProps {
   opened: boolean;
@@ -19,20 +20,29 @@ export function ConfirmDialog({
   onConfirm,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   confirmColor = 'red',
   loading = false,
 }: ConfirmDialogProps) {
+  const { t } = useI18n();
   return (
-    <Modal opened={opened} onClose={onClose} title={title} size="sm">
+    <Modal
+      opened={opened}
+      onClose={() => { if (!loading) onClose(); }}
+      title={title}
+      size="sm"
+      closeOnClickOutside={!loading}
+      closeOnEscape={!loading}
+      closeButtonProps={{ disabled: loading }}
+    >
       <Text size="sm" mb="md">{message}</Text>
       <Group justify="flex-end" gap="xs">
-        <Button variant="default" size="xs" onClick={onClose}>
-          {cancelLabel}
+        <Button variant="default" size="xs" onClick={onClose} disabled={loading}>
+          {cancelLabel ?? t('Cancel')}
         </Button>
         <Button color={confirmColor} size="xs" onClick={onConfirm} loading={loading}>
-          {confirmLabel}
+          {confirmLabel ?? t('Confirm')}
         </Button>
       </Group>
     </Modal>
