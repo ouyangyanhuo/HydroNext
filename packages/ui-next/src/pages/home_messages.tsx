@@ -1,24 +1,16 @@
-import { Avatar, Group, Loader, Modal, Paper, ScrollArea, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Group, Loader, Modal, Paper, ScrollArea, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { IconPlus, IconSend, IconTrash } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActionIcon, Button, UnstyledButton } from '@/components/common/button';
 import { EmptyState } from '@/components/common/empty-state';
 import { TimeDisplay } from '@/components/common/time-display';
+import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
-import { getAvatarUrl } from '@/utils/avatar';
 import { formatErrorMessage } from '@/utils/error';
 import { formatUserName } from '@/utils/user-name';
-
-function avatarSource(user: any) {
-  return user?.avatarUrl || getAvatarUrl(user?.avatar || '');
-}
-
-function avatarInitial(user: any) {
-  return String(user?.displayName || user?.uname || user?._id || '?').trim().charAt(0).toLocaleUpperCase();
-}
 
 function SendMessageDialog({
   opened,
@@ -115,7 +107,7 @@ function SendMessageDialog({
                     }}
                   >
                     <Group gap="sm">
-                      <Avatar src={avatarSource(u)} size="sm" radius="xl">{avatarInitial(u)}</Avatar>
+                      <UserAvatar user={u} link={false} size="sm" />
                       <div>
                         <Text size="sm" fw={500}>{formatUserName(u)}</Text>
                         <Text size="xs" c="dimmed">UID {u._id}</Text>
@@ -343,9 +335,7 @@ export default function HomeMessagesPage() {
                     onClick={() => openConversation(otherId, other)}
                   >
                     <Group gap="sm" wrap="nowrap">
-                      <Avatar src={avatarSource(other)} size={40} radius="xl" className="hydro-message-avatar">
-                        {avatarInitial(other)}
-                      </Avatar>
+                      <UserAvatar user={other} link={false} size={40} className="hydro-message-avatar" />
                       <div className="min-w-0 flex-1">
                         <Group justify="space-between">
                           <Text size="sm" fw={500} truncate>{other.uname || otherId}</Text>
@@ -374,9 +364,7 @@ export default function HomeMessagesPage() {
         {selected ? (
           <>
             <Group gap="sm" p="sm" className="border-b border-[var(--hydro-border)] shrink-0">
-              <Avatar src={avatarSource(target)} size={36} radius="xl" className="hydro-message-avatar">
-                {avatarInitial(target)}
-              </Avatar>
+              <UserAvatar user={target} link={false} size={36} className="hydro-message-avatar" />
               <div>
                 <Text size="sm" fw={600}>{target.uname || targetId}</Text>
                 <Text size="xs" c="dimmed">UID {targetId}</Text>
@@ -390,9 +378,7 @@ export default function HomeMessagesPage() {
                   return (
                     <Group key={message._id} justify={fromMe ? 'flex-end' : 'flex-start'} align="flex-end" gap="xs">
                       {!fromMe && (
-                        <Avatar src={avatarSource(target)} size={30} radius="xl" className="hydro-message-avatar">
-                          {avatarInitial(target)}
-                        </Avatar>
+                        <UserAvatar user={target} link={false} size={30} className="hydro-message-avatar" />
                       )}
                       <div className={`hydro-message-content ${fromMe ? 'order-first' : ''}`}>
                         <Paper
@@ -421,9 +407,7 @@ export default function HomeMessagesPage() {
                         </Group>
                       </div>
                       {fromMe && (
-                        <Avatar src={avatarSource(user)} size={30} radius="xl" className="hydro-message-avatar">
-                          {avatarInitial(user)}
-                        </Avatar>
+                        <UserAvatar user={user} link={false} size={30} className="hydro-message-avatar" />
                       )}
                     </Group>
                   );

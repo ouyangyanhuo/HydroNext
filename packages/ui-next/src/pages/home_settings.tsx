@@ -1,10 +1,12 @@
-import { Avatar, Badge, Card, FileInput, Group, Radio, Stack, Text, TextInput } from '@mantine/core';
+import { Badge, Card, FileInput, Group, Radio, Stack, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconBuildingCommunity, IconSettings, IconUserCircle } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { SettingsForm } from '@/components/common/settings-form';
 import { Link } from '@/components/link';
+import { FramedAvatar } from '@/components/user/framed-avatar';
+import { HonorFramePanel } from '@/components/user/honor-frame-panel';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
@@ -150,7 +152,8 @@ export default function HomeSettingsPage() {
                   <Badge variant="light">{avatarType}</Badge>
                 </div>
                 <Group gap="xl" align="flex-start" wrap="wrap">
-                  <Avatar
+                  <FramedAvatar
+                    frame={user.honorFrame}
                     src={avatarPreviewUrl}
                     size={112}
                     radius="xl"
@@ -227,6 +230,7 @@ export default function HomeSettingsPage() {
               </Stack>
             </Card>
           )}
+          {category === 'account' && <HonorFramePanel />}
           <SettingsForm
             key={category}
             settings={args.settings || {}}

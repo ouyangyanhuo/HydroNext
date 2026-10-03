@@ -1,5 +1,23 @@
 __flag: 🇬🇧
 __id: en
+'Discard changes': 'Discard changes'
+'Discard your unsaved changes?': 'Discard your unsaved changes?'
+'Failed to load file': 'Failed to load file'
+'Please select only one file.': 'Please select only one file.'
+'Unsupported file type: {name}': 'Unsupported file type: {name}'
+'Unsaved changes': 'Unsaved changes'
+Choose a PNG or WebP file no larger than 2 MiB.: Choose a PNG or WebP file no larger than 2 MiB.
+Choose frame (coming soon): Choose frame (coming soon)
+Global appearance: Global appearance
+Honor avatar frame: Honor avatar frame
+Honor frames are supplied by system administrators. Equipping will be available after server integration.: Honor frames are supplied by system administrators. Equipping will be available after server integration.
+Honor frames belong to your global account and remain the same in every domain.: Honor frames belong to your global account and remain the same in every domain.
+No domains found: No domains found
+No honor frame equipped: No honor frame equipped
+Preview frame artwork: Preview frame artwork
+Publish frame (coming soon): Publish frame (coming soon)
+Publishing and awarding frames will be enabled after server integration.: Publishing and awarding frames will be enabled after server integration.
+Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.: Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.
 __interface: yes
 __langname: English
 

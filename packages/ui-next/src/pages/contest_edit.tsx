@@ -1,4 +1,4 @@
-import { Avatar, Badge, Card, Checkbox, Group, NumberInput, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Card, Checkbox, Group, NumberInput, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -7,6 +7,7 @@ import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect, TagMultiSelect } from '@/components/common/select';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
+import { FramedAvatar } from '@/components/user/framed-avatar';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -128,7 +129,7 @@ function AsyncTagSelect({
         const item = option as SearchOption;
         return (
           <Group gap="sm" wrap="nowrap">
-            {withAvatar && <Avatar src={item.avatarUrl} size={30} radius="xl" />}
+            {withAvatar && <FramedAvatar src={item.avatarUrl} alt={item.label} size={30} radius="xl" />}
             <div className="min-w-0">
               <Text size="sm" fw={600} truncate>{item.label}</Text>
               {item.description && <Text size="xs" c="dimmed" truncate>{item.description}</Text>}

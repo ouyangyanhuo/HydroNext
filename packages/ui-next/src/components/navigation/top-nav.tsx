@@ -1,4 +1,4 @@
-import { Avatar, Burger, ColorInput, Drawer, Group, Menu, Popover, Stack, Text, Tooltip } from '@mantine/core';
+import { Burger, ColorInput, Drawer, Group, Menu, Popover, Stack, Text, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconCheck, IconChevronDown, IconClock, IconLetterP, IconMoon, IconPalette, IconRestore, IconSun,
@@ -9,6 +9,7 @@ import { flushSync } from 'react-dom';
 import logoUrl from '@/assets/logo.png';
 import { ActionIcon, Button, UnstyledButton } from '@/components/common/button';
 import { Link } from '@/components/link';
+import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
@@ -16,7 +17,6 @@ import { PERM, PRIV, useHasPerm, useHasPriv } from '@/hooks/use-permission';
 import { getPageMetadata } from '@/registry/page-metadata';
 import { type ThemeMode, useSessionStore } from '@/stores/session';
 import { ACCENT_PRESETS, DEFAULT_ACCENT, PRESET_KEYS } from '@/styles/accent-colors';
-import { getAvatarUrl } from '@/utils/avatar';
 import { formatUserName } from '@/utils/user-name';
 import { DomainSwitcher } from './domain-switcher';
 
@@ -43,7 +43,7 @@ function UserMenu() {
           py={6}
           aria-label={formatUserName(user)}
         >
-          <Avatar src={getAvatarUrl(user.avatar, 32)} size={32} radius="xl" style={{ flexShrink: 0 }} />
+          <UserAvatar user={user} size={32} link={false} />
           <Text size="sm" fw={600} className="hydro-topbar-user-name" c="var(--hydro-text)">
             {formatUserName(user)}
           </Text>

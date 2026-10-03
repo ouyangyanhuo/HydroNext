@@ -44,6 +44,7 @@ export function Paginator({
         <Group gap="xs" wrap="nowrap">
           <Text size="xs" c="dimmed">{t('Rows per page')}</Text>
           <Select
+            aria-label={t('Rows per page')}
             value={String(pageSize)}
             data={pageSizeOptions}
             onChange={handlePageSizeChange}

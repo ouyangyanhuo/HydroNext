@@ -1,5 +1,23 @@
 __flag: 🇯🇵
 __id: ja
+'Discard changes': '変更を破棄'
+'Discard your unsaved changes?': '保存していない変更を破棄しますか？'
+'Failed to load file': 'ファイルを読み込めませんでした'
+'Please select only one file.': 'ファイルを1つだけ選択してください。'
+'Unsupported file type: {name}': '対応していないファイル形式：{name}'
+'Unsaved changes': '未保存の変更'
+Choose a PNG or WebP file no larger than 2 MiB.: 2 MiB 以下の PNG または WebP ファイルを選択してください。
+Choose frame (coming soon): フレームを選択（準備中）
+Global appearance: 共通の外観
+Honor avatar frame: 栄誉アバターフレーム
+Honor frames are supplied by system administrators. Equipping will be available after server integration.: 栄誉フレームはシステム管理者が提供します。装着機能はサーバー連携後に利用できます。
+Honor frames belong to your global account and remain the same in every domain.: 栄誉フレームはアカウント共通で、すべてのドメインで同じものが表示されます。
+No domains found: ドメインが見つかりません
+No honor frame equipped: 栄誉フレームは未装着です
+Preview frame artwork: フレーム素材のプレビュー
+Publish frame (coming soon): フレームを公開（準備中）
+Publishing and awarding frames will be enabled after server integration.: 公開と授与はサーバー連携後に利用できます。
+Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.: 透過 PNG または WebP、最大 2 MiB。ローカルプレビューのみで、アップロードはされません。
 __interface: yes
 __langname: 日本語
 

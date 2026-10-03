@@ -1,8 +1,10 @@
 import { Group, Image, LoadingOverlay, Modal, ScrollArea, Stack, Text } from '@mantine/core';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 function formatFileSize(size?: number) {
   if (!size) return '0 B';
@@ -175,10 +177,14 @@ export interface FilePreviewModalProps {
 function FilePreviewModalContent({ opened, onClose, file, fileUrl, canEdit = false, onSave }: Omit<FilePreviewModalProps, 'file'> & { file: NonNullable<FilePreviewModalProps['file']> }) {
   const { t } = useI18n();
   const [content, setContent] = useState('');
+  const initialContent = useRef('');
+  const savePending = useRef(false);
+  const [error, setError] = useState('');
+  const [discardOpened, setDiscardOpened] = useState(false);
   const ext = getFileExt(file.name);
   const shouldLoadText = opened && file.size > 0 && file.size <= 8 * 1024 * 1024 && isPreviewableText(ext);
   const [loading, setLoading] = useState(shouldLoadText);
-  const [editing, setEditing] = useState(file.size === 0);
+  const [editing, setEditing] = useState(file.size === 0 && isPreviewableText(ext));
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -190,45 +196,62 @@ function FilePreviewModalContent({ opened, onClose, file, fileUrl, canEdit = fal
         return response.text();
       })
       .then((text) => {
+        if (controller.signal.aborted) return;
+        initialContent.current = text;
         setContent(text);
         setEditing(true);
       })
-      .catch((error) => {
-        if (error?.name !== 'AbortError') setContent('');
+      .catch((loadError) => {
+        if (!controller.signal.aborted) setError(formatErrorMessage(loadError, t('Failed to load file')));
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [fileUrl, shouldLoadText]);
+  }, [fileUrl, shouldLoadText, t]);
 
   const handleSave = async () => {
-    if (!onSave) return;
+    if (!onSave || !canEdit || !editing || loading || savePending.current) return;
+    savePending.current = true;
     setSaving(true);
+    setError('');
     try {
       await onSave(file.name, content);
+      initialContent.current = content;
       onClose();
+    } catch (err: any) {
+      setError(formatErrorMessage(err, t('Save failed')));
     } finally {
+      savePending.current = false;
       setSaving(false);
     }
   };
 
   const isDoc = ext === 'pdf' || isDocx(ext) || isOldOffice(ext);
+  const requestClose = () => {
+    if (savePending.current || discardOpened) return;
+    if (canEdit && onSave && content !== initialContent.current) setDiscardOpened(true);
+    else onClose();
+  };
 
   return (
     <Modal
       opened={opened}
-      onClose={onClose}
+      onClose={requestClose}
+      closeOnClickOutside={!saving && !discardOpened}
+      closeOnEscape={!saving && !discardOpened}
+      closeButtonProps={{ disabled: saving }}
       title={(
         <Group gap="sm">
           <Text fw={700}>{file.name}</Text>
           <Text size="xs" c="dimmed">{formatFileSize(file.size)}</Text>
         </Group>
       )}
-      size={isDoc ? 'calc(100vw - 120px)' : 'xl'}
+      size={isDoc ? 'min(1200px, calc(100vw - 32px))' : 'xl'}
       scrollAreaComponent={ScrollArea.Autosize}
     >
       <Stack gap="md">
+        {error && <Text size="sm" c="red" role="alert">{error}</Text>}
         {isImage(ext) && (
           <Image src={fileUrl} alt={file.name} maw="100%" fit="contain" />
         )}
@@ -245,6 +268,7 @@ function FilePreviewModalContent({ opened, onClose, file, fileUrl, canEdit = fal
             value={content}
             onChange={setContent}
             language={resolveEditorLang(ext)}
+            readOnly={!canEdit || !onSave || saving}
             height={500}
           />
         )}
@@ -268,6 +292,14 @@ function FilePreviewModalContent({ opened, onClose, file, fileUrl, canEdit = fal
           )}
         </Group>
       </Stack>
+      <ConfirmDialog
+        opened={discardOpened}
+        onClose={() => setDiscardOpened(false)}
+        onConfirm={onClose}
+        title={t('Unsaved changes')}
+        message={t('Discard your unsaved changes?')}
+        confirmLabel={t('Discard changes')}
+      />
     </Modal>
   );
 }

@@ -31,10 +31,16 @@ export const Link: React.FC<React.PropsWithChildren<LinkProps>> = ({
       onClick?.(e);
       if (e.defaultPrevented || isModifiedEvent(e)) return;
       if (target && target !== '_self') return;
-      if (download) return;
+      if (download !== false && download != null) return;
       if (resolvedHref.startsWith('#')) return;
-      const resolved = new URL(resolvedHref, window.location.href);
-      if (resolved.pathname === window.location.pathname && resolved.hash) return;
+      let resolved: URL;
+      try {
+        resolved = new URL(resolvedHref, window.location.href);
+      } catch {
+        return;
+      }
+      if (resolved.origin !== window.location.origin || !['http:', 'https:'].includes(resolved.protocol)) return;
+      if (resolved.pathname === window.location.pathname && resolved.search === window.location.search && resolved.hash) return;
       e.preventDefault();
       navigate(resolvedHref);
     },

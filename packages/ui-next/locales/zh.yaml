@@ -1,5 +1,23 @@
 __flag: 🇨🇳
 __id: zh
+'Discard changes': '放弃修改'
+'Discard your unsaved changes?': '是否放弃尚未保存的修改？'
+'Failed to load file': '文件加载失败'
+'Please select only one file.': '请选择一个文件。'
+'Unsupported file type: {name}': '不支持的文件类型：{name}'
+'Unsaved changes': '尚未保存的修改'
+Choose a PNG or WebP file no larger than 2 MiB.: 请选择不超过 2 MiB 的 PNG 或 WebP 文件。
+Choose frame (coming soon): 选择头像框（暂未开放）
+Global appearance: 全局外观
+Honor avatar frame: 荣誉头像框
+Honor frames are supplied by system administrators. Equipping will be available after server integration.: 荣誉头像框由系统管理员提供，佩戴功能将在接入服务端后开放。
+Honor frames belong to your global account and remain the same in every domain.: 荣誉头像框属于全局账户，在所有域中保持一致。
+No domains found: 未找到域
+No honor frame equipped: 暂未佩戴荣誉头像框
+Preview frame artwork: 预览头像框素材
+Publish frame (coming soon): 发布头像框（暂未开放）
+Publishing and awarding frames will be enabled after server integration.: 发布和颁发功能将在接入服务端后开放。
+Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.: 支持透明 PNG 或 WebP，最大 2 MiB。仅在本地预览，不会上传。
 __interface: yes
 __langname: 简体中文
 

@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
-import { Text, Stack, Progress, Paper } from '@mantine/core';
+import { Paper, Progress, Stack, Text } from '@mantine/core';
+import { useRef, useState } from 'react';
+import { useFileUpload } from '@/hooks/use-file-upload';
 import { useI18n } from '@/hooks/use-i18n';
-import { formatErrorMessage } from '@/utils/error';
 
 interface FileDropzoneProps {
   action: string;
@@ -13,143 +13,78 @@ interface FileDropzoneProps {
   onError?: (error: string) => void;
 }
 
-export function FileDropzone({
-  action,
-  accept = [],
-  fields = {},
-  multiple = true,
-  maxSize = 100 * 1024 * 1024,
-  onComplete,
-  onError,
-}: FileDropzoneProps) {
+export function FileDropzone({ multiple = true, accept = [], ...options }: FileDropzoneProps) {
   const { t } = useI18n();
+  const input = useRef<HTMLInputElement>(null);
+  const depth = useRef(0);
   const [dragging, setDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState('');
-
-  const handleFiles = useCallback(async (files: FileList | File[]) => {
-    const fileArray = Array.from(files);
-    for (const file of fileArray) {
-      if (file.size > maxSize) {
-        const msg = t('File too large: {name}', { name: file.name });
-        setError(msg);
-        onError?.(msg);
-        return;
-      }
-    }
-
-    setUploading(true);
-    setError('');
-    setProgress(0);
-
-    try {
-      const results: any[] = [];
-      for (const [index, file] of fileArray.entries()) {
-        const formData = new FormData();
-        for (const [key, value] of Object.entries(fields)) {
-          formData.append(key, String(value));
-        }
-        if (!('operation' in fields)) formData.append('operation', 'upload_file');
-        formData.append('filename', file.name);
-        formData.append('file', file);
-
-        const xhr = new XMLHttpRequest();
-        xhr.upload.onprogress = (e) => {
-          if (!e.lengthComputable) return;
-          const fileProgress = e.loaded / e.total;
-          setProgress(Math.round(((index + fileProgress) / fileArray.length) * 100));
-        };
-
-        const result = await new Promise<any>((resolve, reject) => {
-          xhr.onload = () => {
-            const contentType = xhr.getResponseHeader('content-type') || '';
-            let payload: any = { ok: xhr.status >= 200 && xhr.status < 400 };
-            if (contentType.includes('json') && xhr.responseText) {
-              try {
-                payload = JSON.parse(xhr.responseText);
-              } catch (err) {
-                reject(err);
-                return;
-              }
-            }
-            if (xhr.status < 200 || xhr.status >= 400) {
-              reject(new Error(payload?.error?.message || xhr.statusText || 'Upload failed'));
-              return;
-            }
-            resolve(payload);
-          };
-          xhr.onerror = () => reject(new Error('Upload failed'));
-          xhr.open('POST', action);
-          xhr.setRequestHeader('Accept', 'application/json');
-          xhr.send(formData);
-        });
-
-        if (result.error) {
-          const msg = formatErrorMessage(result.error, t('Upload failed'));
-          throw new Error(msg);
-        }
-        results.push(result);
-        setProgress(Math.round(((index + 1) / fileArray.length) * 100));
-      }
-      onComplete?.({ ok: true, results });
-    } catch (err: any) {
-      const msg = err.message || 'Upload failed';
-      setError(msg);
-      onError?.(msg);
-    } finally {
-      setUploading(false);
-      setProgress(0);
-    }
-  }, [action, fields, maxSize, onComplete, onError, t]);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
-  }, [handleFiles]);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback(() => setDragging(false), []);
-
-  const handleClick = useCallback(() => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = multiple;
-    if (accept.length) input.accept = accept.join(',');
-    input.onchange = () => { if (input.files) handleFiles(input.files); };
-    input.click();
-  }, [multiple, accept, handleFiles]);
+  const { upload, uploading, progress, error } = useFileUpload({ ...options, multiple, accept, sequential: true });
+  const choose = () => { if (!uploading) input.current?.click(); };
 
   return (
     <Stack gap="sm">
+      <input
+        ref={input}
+        type="file"
+        accept={accept.join(',')}
+        multiple={multiple}
+        disabled={uploading}
+        hidden
+        onChange={(event) => {
+          const files = Array.from(event.currentTarget.files || []);
+          event.currentTarget.value = '';
+          void upload(files);
+        }}
+      />
       <Paper
         p="xl"
         withBorder
+        role="button"
+        tabIndex={0}
+        aria-label={t('Drag files here or click to upload')}
+        aria-disabled={uploading}
+        aria-busy={uploading}
+        className="hydro-file-dropzone"
         style={{
           borderStyle: 'dashed',
-          borderColor: dragging ? 'var(--hydro-primary)' : 'var(--hydro-border)',
-          backgroundColor: dragging ? 'var(--hydro-surface)' : 'transparent',
-          cursor: 'pointer',
-          transition: `all var(--hydro-duration-normal) var(--hydro-ease-out)`,
+          borderColor: dragging && !uploading ? 'var(--hydro-primary)' : 'var(--hydro-border)',
+          backgroundColor: dragging && !uploading ? 'var(--hydro-surface-muted)' : 'var(--hydro-surface-raised)',
+          cursor: uploading ? 'wait' : 'pointer',
+          transition: 'border-color var(--hydro-duration-normal), background-color var(--hydro-duration-normal)',
         }}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onClick={handleClick}
+        onClick={choose}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            choose();
+          }
+        }}
+        onDragEnter={(event) => {
+          event.preventDefault();
+          depth.current++;
+          if (!uploading) setDragging(true);
+        }}
+        onDragOver={(event) => event.preventDefault()}
+        onDragLeave={(event) => {
+          event.preventDefault();
+          depth.current = Math.max(0, depth.current - 1);
+          if (!depth.current) setDragging(false);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          depth.current = 0;
+          setDragging(false);
+          void upload(event.dataTransfer.files);
+        }}
       >
         <Stack align="center" gap="xs">
-          <Text size="sm" c="dimmed">
+          <Text size="sm" c="dimmed" role="status">
             {uploading ? t('Uploading...') : t('Drag files here or click to upload')}
           </Text>
         </Stack>
       </Paper>
-      {uploading && <Progress value={progress} size="sm" animated />}
-      {error && <Text c="red" size="xs">{error}</Text>}
+      {uploading && <Progress value={progress} size="sm" aria-label={t('Uploading...')} />}
+      {error && <Text c="red" size="xs" role="alert">{error}</Text>}
     </Stack>
   );
 }

@@ -3236,6 +3236,50 @@ a {
   background-image: none !important;
 }
 
+.hydro-avatar-frame {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  box-sizing: content-box;
+  padding: var(--hydro-avatar-frame-inset, 4px);
+  vertical-align: middle;
+  isolation: isolate;
+}
+
+.hydro-avatar-frame__decoration {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
+.hydro-user-avatar-link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  border-radius: var(--hydro-radius-md);
+}
+
+.hydro-file-dropzone:focus-visible,
+.hydro-user-avatar-link:focus-visible {
+  outline: 2px solid var(--hydro-primary);
+  outline-offset: 2px;
+}
+
+.hydro-user-profile__avatar-slot {
+  margin-top: -42px;
+}
+
+.hydro-user-profile__avatar-slot .hydro-user-profile__avatar {
+  margin-top: 0;
+  z-index: auto;
+}
+
 .hydro-topbar-user-button {
   display: inline-flex;
   align-items: center;

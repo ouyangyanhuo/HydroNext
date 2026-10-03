@@ -1,6 +1,7 @@
 import { ScrollArea, Table } from '@mantine/core';
 import type { KeyboardEvent, MouseEvent } from 'react';
 import { memo } from 'react';
+import { useI18n } from '@/hooks/use-i18n';
 import { EmptyState } from './empty-state';
 
 interface Column<T> {
@@ -26,14 +27,15 @@ function DataTableComponent<T extends Record<string, any>>({
   columns,
   data,
   keyField = '_id',
-  emptyMessage = 'No data',
+  emptyMessage,
   striped = true,
   highlightOnHover = true,
   onRowClick,
   rowLabel,
 }: DataTableProps<T>) {
+  const { t } = useI18n();
   if (!data || data.length === 0) {
-    return <EmptyState message={emptyMessage} />;
+    return <EmptyState message={emptyMessage ?? t('No data')} />;
   }
 
   return (
@@ -59,7 +61,9 @@ function DataTableComponent<T extends Record<string, any>>({
             {data.map((item) => {
               const activate = (event: MouseEvent<HTMLTableRowElement> | KeyboardEvent<HTMLTableRowElement>) => {
                 const target = event.target as HTMLElement;
-                if (target.closest('a, button, input, select, textarea, [role="button"]')) return;
+                const interactive = 'a, button, input, select, textarea, label, '
+                  + '[role="button"], [role="checkbox"], [role="combobox"], [contenteditable="true"]';
+                if (target.closest(interactive)) return;
                 onRowClick?.(item);
               };
               return (
@@ -70,6 +74,7 @@ function DataTableComponent<T extends Record<string, any>>({
                   aria-label={onRowClick ? rowLabel?.(item) : undefined}
                   onClick={onRowClick ? activate : undefined}
                   onKeyDown={onRowClick ? (event) => {
+                    if (event.target !== event.currentTarget) return;
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
                       activate(event);

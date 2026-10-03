@@ -1,14 +1,14 @@
-import { Avatar, Checkbox, Group, Modal, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Checkbox, Group, Modal, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
+import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
-import { getAvatarUrl } from '@/utils/avatar';
 import { formatErrorMessage } from '@/utils/error';
 
 function canResume(tdoc: any, tsdoc: any) {
@@ -93,7 +93,7 @@ export default function ContestUserPage() {
                   <Table.Td><Text size="xs" ff="monospace">{tsdoc.uid}</Text></Table.Td>
                   <Table.Td>
                     <Group gap="xs" wrap="nowrap">
-                      <Avatar src={getAvatarUrl(udoc.avatar)} size="xs" radius="xl" />
+                      <UserAvatar user={udoc} link={false} size="xs" />
                       <Link to="user_detail" params={{ uid: tsdoc.uid }} className="no-underline hover:underline">
                         <Text size="sm">{udoc.uname || tsdoc.uid}</Text>
                       </Link>

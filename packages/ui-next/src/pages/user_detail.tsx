@@ -5,11 +5,11 @@ import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
+import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
-import { getAvatarUrl } from '@/utils/avatar';
 import { formatUserName } from '@/utils/user-name';
 
 const BACKGROUND_COUNT = 21;
@@ -65,9 +65,11 @@ export default function UserDetailPage() {
           <div className="hydro-user-profile__info">
             <Group justify="space-between" align="flex-start" className="hydro-user-profile__info-layout">
               <Group gap="lg" align="flex-start" className="hydro-user-profile__identity">
-                <img
-                  src={getAvatarUrl(udoc.avatar || '', 96)}
-                  alt={formatUserName(udoc)}
+                <UserAvatar
+                  user={udoc}
+                  link={false}
+                  size={96}
+                  frameClassName="hydro-user-profile__avatar-slot"
                   className="hydro-user-profile__avatar"
                 />
                 <Stack gap={6}>

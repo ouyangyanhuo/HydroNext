@@ -1,4 +1,4 @@
-import { Avatar, Badge, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Badge, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -10,7 +10,6 @@ import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
-import { getAvatarUrl } from '@/utils/avatar';
 import { formatErrorMessage } from '@/utils/error';
 import { formatUserName } from '@/utils/user-name';
 
@@ -173,9 +172,7 @@ function AddUserDialogContent({
                     className="border-b border-[var(--hydro-border)] last:border-b-0"
                   >
                     <Group gap="sm" wrap="nowrap" miw={0}>
-                      <Avatar src={user.avatarUrl || getAvatarUrl(user.avatar || '', 32)} size="sm" radius="xl">
-                        {user.uname?.[0]?.toUpperCase()}
-                      </Avatar>
+                      <UserAvatar user={user} link={false} size="sm" />
                       <div className="min-w-0">
                         <Text size="sm" fw={500} truncate>{formatUserLabel(user)}</Text>
                         <Text size="xs" c="dimmed">UID = {user._id}</Text>

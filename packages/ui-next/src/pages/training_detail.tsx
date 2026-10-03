@@ -1,5 +1,5 @@
 import {
-  Avatar, Badge, Card, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, Stack, Table, Text, TextInput, Title,
+  Badge, Card, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, Stack, Table, Text, TextInput, Title,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconChevronRight, IconSearch, IconUsers } from '@tabler/icons-react';
@@ -9,12 +9,12 @@ import { DeleteResourceButton } from '@/components/common/delete-resource-button
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
+import { UserAvatar } from '@/components/user/user-avatar';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData, useUserContext } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
-import { getAvatarUrl } from '@/utils/avatar';
 import { formatErrorMessage } from '@/utils/error';
 import { isTrainingEnrolled } from '@/utils/training';
 import { formatUserName } from '@/utils/user-name';
@@ -391,9 +391,9 @@ export default function TrainingDetailPage() {
                   </Badge>
                 </Group>
                 <Group gap="sm" wrap="nowrap">
-                  <Avatar
-                    src={getAvatarUrl(viewedUser.avatar || '', 40)}
-                    alt={formatUserName(viewedUser)}
+                  <UserAvatar
+                    user={viewedUser}
+                    link={false}
                     size={38}
                     radius="xl"
                   />
@@ -430,7 +430,7 @@ export default function TrainingDetailPage() {
                       })}
                       className="hydro-training-enrolled-user"
                     >
-                      <Avatar src={getAvatarUrl(enrolledUser.avatar || '', 36)} size={34} radius="xl" />
+                      <UserAvatar user={enrolledUser} link={false} size={34} />
                       <div className="min-w-0 flex-1">
                         <Text size="sm" fw={700} truncate>{formatUserName(enrolledUser) || `UID ${uid}`}</Text>
                         <Text size="xs" c="dimmed">UID {uid}</Text>
@@ -526,7 +526,7 @@ export default function TrainingDetailPage() {
                     })}
                     className="hydro-training-enrolled-user"
                   >
-                    <Avatar src={getAvatarUrl(enrolledUser.avatar || '', 36)} size={34} radius="xl" />
+                    <UserAvatar user={enrolledUser} link={false} size={34} />
                     <div className="min-w-0 flex-1">
                       <Text size="sm" fw={700} truncate>{formatUserName(enrolledUser) || `UID ${uid}`}</Text>
                       <Text size="xs" c="dimmed">UID {uid}</Text>
