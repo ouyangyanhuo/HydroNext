@@ -561,11 +561,8 @@ export default function ProblemDetailPage() {
   const canDownloadProblem = isAuthenticated && Boolean(args.canDownloadProblem ?? canReadProblemData);
   const submitUrl = buildUrl('problem_submit', { pid: submitPid }, tid ? { tid: String(tid) } : {});
   const codeLang = ui.codeLang || user.codeLang;
-  const codeTemplate = ui.codeTemplate ?? user.codeTemplate;
-  const templateCode = typeof codeTemplate === 'string'
-    ? codeTemplate
-    : codeTemplate?.[codeLang] || '';
-  const defaultCode = rdoc?.code || templateCode;
+  // Draft recovery and language-specific/personal templates are resolved in Scratchpad.
+  const defaultCode = rdoc?.code || '';
   const switchScratchpad = (open: boolean) => {
     if (open === scratchpadOpen) return;
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;

@@ -15,15 +15,22 @@ const dom = new JSDOM('<html><body></body></html>', { url: 'https://oj.example/d
 const previous = new Map<string, PropertyDescriptor | undefined>();
 for (const [key, value] of Object.entries({
     window: dom.window, document: dom.window.document, navigator: dom.window.navigator,
-    HTMLElement: dom.window.HTMLElement, Element: dom.window.Element, Node: dom.window.Node,
+    Document: dom.window.Document,
+    HTMLElement: dom.window.HTMLElement, Element: dom.window.Element, Node: dom.window.Node, ShadowRoot: dom.window.ShadowRoot,
     getComputedStyle: dom.window.getComputedStyle.bind(dom.window),
     requestAnimationFrame: (callback: () => void) => setTimeout(callback, 0), cancelAnimationFrame: clearTimeout,
+    ResizeObserver: class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+    },
     IS_REACT_ACT_ENVIRONMENT: true,
 })) {
     previous.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
     Object.defineProperty(globalThis, key, { value, writable: true, configurable: true });
 }
 dom.window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+dom.window.HTMLElement.prototype.scrollIntoView = () => {};
 after(() => {
     dom.window.close();
     for (const [key, descriptor] of previous) {
@@ -189,6 +196,7 @@ const t = (key: string) => key;
 let request: (url: string, options?: any) => Promise<any> = async () => ({ frames: [frame], page: 1, pageCount: 1, honorFrame: null });
 const { HonorFramePanel } = component('../src/components/user/honor-frame-panel.tsx', {
     './framed-avatar': { FramedAvatar },
+    './honor-frame-preview': { HonorFramePreview: ({ frame: decoration }: any) => h(FramedAvatar, { frame: decoration, size: 40 }) },
     '@/components/common/button': {
         Button: ({ children, disabled, loading, onClick }: any) => h('button', { disabled: disabled || loading, onClick }, children),
     },
@@ -310,10 +318,29 @@ test('management upload preserves failed drafts, posts normalized files and neve
     const paths: string[] = [];
     let resolve!: (value: any) => void;
     let reject!: (value: any) => void;
-    const { default: ManagePage } = component('../src/pages/manage_honor_frames.tsx', {
-        '@/components/common/button': { Button: ({ children, onClick, disabled, loading, type = 'button' }: any) => h('button', {
-            onClick, disabled: disabled || loading, type,
-        }, children) },
+    const { useHonorFrameMutation } = component('../src/hooks/use-honor-frame-mutation.ts', {
+        '@/context/router': { useNavigate: () => async (url: string) => { paths.push(url); } },
+        '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/a/manage/honor-frames' },
+        '@/hooks/use-i18n': { useI18n: () => ({ t }) },
+        '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
+        '@/utils/honor-frame-api': {
+            requestHonorFrame: async (url: string, options: any) => {
+                sent.push([url, options]);
+                return new Promise((ok, fail) => {
+                    resolve = ok;
+                    reject = fail;
+                });
+            },
+        },
+    });
+    const { default: ManagePage } = component('../src/pages/manage_honor_frame_upload.tsx', {
+        '@/hooks/use-honor-frame-mutation': { useHonorFrameMutation },
+        '@/components/common/button': {
+            UnstyledButton: ({ children, ...props }: any) => h('button', { ...props, type: 'button' }, children),
+            Button: ({ children, onClick, disabled, loading, type = 'button' }: any) => h('button', {
+                onClick, disabled: disabled || loading, type,
+            }, children),
+        },
         '@/components/common/confirm-dialog': { ConfirmDialog: () => null },
         '@/components/common/form-dialog': { FormDialog },
         '@/components/common/page-header': { PageHeader: ({ children }: any) => h('header', null, children) },
@@ -342,20 +369,19 @@ test('management upload preserves failed drafts, posts normalized files and neve
     });
     const view = await mount(h(ManagePage));
     try {
-        const open = Array.from(view.host.querySelectorAll('button')).find((button) => button.textContent === 'Upload frame')!;
-        await act(async () => open.click());
-        const input = document.querySelector<HTMLInputElement>('[role="dialog"] input:not([type="file"]):not([readonly])')!;
+        const input = document.querySelector<HTMLInputElement>('input:not([type="file"]):not([readonly])')!;
         await act(async () => {
             Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!.call(input, 'Champion');
             input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
-            const chooser = document.querySelector('input[type="file"]')!;
-            Object.defineProperty(chooser, 'files', {
-                configurable: true,
-                value: [new dom.window.File(['png'], 'source.png', { type: 'image/png' })],
-            });
-            chooser.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+            for (const chooser of document.querySelectorAll('input[type="file"]')) {
+                Object.defineProperty(chooser, 'files', {
+                    configurable: true,
+                    value: [new dom.window.File(['png'], 'source.png', { type: 'image/png' })],
+                });
+                chooser.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+            }
         });
-        const form = document.querySelector('[role="dialog"] form')!;
+        const form = document.querySelector('form')!;
         await act(async () => {
             form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
             form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
@@ -363,14 +389,112 @@ test('management upload preserves failed drafts, posts normalized files and neve
         assert.equal(sent.length, 1);
         assert.equal(sent[0][0], '/d/a/manage/honor-frames');
         assert.equal(sent[0][1].body.get('name'), 'Champion');
-        assert.equal(sent[0][1].body.get('file').name, 'honor-frame.png');
+        assert.equal(sent[0][1].body.get('square').name, 'honor-frame.png');
         await act(async () => reject(new Error('Upload rejected')));
         assert.equal(input.value, 'Champion');
-        assert.ok(document.querySelector('[role="dialog"]'));
+        assert.equal(sent[0][1].body.get('circle').name, 'honor-frame.png');
         assert.equal(notices.at(-1).message, 'Upload rejected');
         await act(async () => form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
         assert.equal(sent.length, 2);
         await act(async () => resolve({ ok: true }));
         assert.equal(paths.length, 1);
+    } finally { await view.close(); }
+});
+
+test('paired frame assets follow the avatar shape at an exact 512:384 ratio', async () => {
+    const pair = { ...frame, artworkVersion: 2, circleImageUrl: '/circle.png', squareImageUrl: '/square.png' };
+    const view = await mount(h(FramedAvatar, { frame: pair, size: 96, shape: 'circle' }));
+    try {
+        assert.equal(view.host.querySelector('.hydro-avatar-frame__decoration')?.getAttribute('src'), '/circle.png');
+        assert.match(view.host.querySelector('.hydro-avatar-frame')?.getAttribute('style') || '', /16px/);
+        await view.render(h(FramedAvatar, { frame: pair, size: 96, shape: 'square' }));
+        assert.equal(view.host.querySelector('.hydro-avatar-frame__decoration')?.getAttribute('src'), '/square.png');
+    } finally { await view.close(); }
+});
+
+test('grant dialog searches within the current domain and submits one frame with multiple users', async () => {
+    const requests: string[] = [];
+    const awards: any[] = [];
+    let closed = 0;
+    const { Select, MultiSelect } = require('@mantine/core');
+    const { HonorFrameGrantDialog } = component('../src/components/user/honor-frame-grant-dialog.tsx', {
+        '@/components/common/form-dialog': { FormDialog },
+        '@/components/common/select': { LongSelect: Select, TagMultiSelect: MultiSelect },
+        '@/hooks/use-build-url': { useBuildUrl: () => (_name: string, _params: any, query: any) =>
+            `/d/a/manage/honor-frames/search?${new URLSearchParams(query)}` },
+        '@/hooks/use-i18n': { useI18n: () => ({ t }) },
+        '@/utils/honor-frame-api': { requestHonorFrame: async (url: string) => {
+            requests.push(url);
+            return { options: url.includes('kind=frames') ? [{ value: 'frame-id', label: 'Champion' }]
+                : [{ value: '42', label: 'Ada (#42)' }, { value: '43', label: 'Bob (#43)' }] };
+        } },
+    });
+    const view = await mount(h(HonorFrameGrantDialog, {
+        opened: true, onClose: () => closed++, busy: false,
+        onGrant: async (frameId: string, uids: number[]) => { awards.push([frameId, uids]); return true; },
+    }));
+    try {
+        await act(async () => new Promise((resolve) => setTimeout(resolve, 300)));
+        const inputs = document.querySelectorAll<HTMLInputElement>('[role="dialog"] input[role="combobox"]');
+        await act(async () => inputs[0].click());
+        const option = (label: string) => Array.from(document.querySelectorAll<HTMLElement>('[role="option"]'))
+            .find((node) => node.textContent?.includes(label))!;
+        await act(async () => option('Champion').click());
+        await act(async () => inputs[1].click());
+        await act(async () => option('Ada').click());
+        await act(async () => inputs[1].click());
+        await act(async () => option('Bob').click());
+        await act(async () => document.querySelector('[role="dialog"] form')!
+            .dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
+        assert.equal(JSON.stringify(awards), JSON.stringify([['frame-id', [42, 43]]]));
+        assert.equal(closed, 1);
+        assert.ok(requests.length >= 2 && requests.every((url) => url.startsWith('/d/a/')));
+    } finally { await view.close(); }
+});
+
+test('management cards rename inline and confirm status changes without stale name writes', async () => {
+    const writes: any[] = [];
+    const buttons = component('../src/components/common/button.tsx', {});
+    const { ConfirmDialog } = component('../src/components/common/confirm-dialog.tsx', {
+        '@/components/common/button': buttons,
+        '@/hooks/use-i18n': { useI18n: () => ({ t }) },
+    });
+    const { default: ManagePage } = component('../src/pages/manage_honor_frames.tsx', {
+        '@/components/common/button': buttons,
+        '@/components/common/confirm-dialog': { ConfirmDialog },
+        '@/components/common/page-header': { PageHeader: ({ children }: any) => h('header', null, children) },
+        '@/components/common/paginator': { Paginator: () => null },
+        '@/components/link': { Link: ({ children }: any) => h('a', null, children) },
+        '@/components/user/honor-frame-grant-dialog': { HonorFrameGrantDialog: () => null },
+        '@/components/user/honor-frame-preview': { HonorFramePreview: () => null },
+        '@/context/page-data': { usePageData: () => ({ args: { frames: [{ ...frame, active: true }] } }) },
+        '@/context/router': { useNavigate: () => async () => {} },
+        '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/a/manage/honor-frames' },
+        '@/hooks/use-current-user': { useCurrentUser: () => user },
+        '@/hooks/use-honor-frame-mutation': { useHonorFrameMutation: () => ({ busy: false, run: async (body: any) => {
+            writes.push(body);
+            return true;
+        } }) },
+        '@/hooks/use-i18n': { useI18n: () => ({ t }) },
+        '@/hooks/use-permission': { PRIV: { PRIV_EDIT_SYSTEM: 1 }, useHasPriv: () => true },
+    });
+    const view = await mount(h(ManagePage));
+    try {
+        const status = view.host.querySelector<HTMLButtonElement>('button[aria-label="winner: Unpublish"]')
+            || view.host.querySelector<HTMLButtonElement>('button[aria-label="Winner: Unpublish"]')!;
+        await act(async () => status.click());
+        assert.equal(writes.length, 0);
+        const confirm = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button'))
+            .find((button) => button.textContent === 'Confirm')!;
+        await act(async () => confirm.click());
+        assert.equal(JSON.stringify(writes[0]), JSON.stringify({ operation: 'status', id: 'winner', active: false }));
+        await act(async () => view.host.querySelector<HTMLButtonElement>('[title="Click to rename"]')!.click());
+        const input = view.host.querySelector<HTMLInputElement>('input[aria-label="Frame name"]')!;
+        await act(async () => {
+            Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!.call(input, 'Renamed');
+            input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        });
+        await act(async () => input.closest('form')!.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
+        assert.equal(JSON.stringify(writes[1]), JSON.stringify({ operation: 'rename', id: 'winner', name: 'Renamed' }));
     } finally { await view.close(); }
 });

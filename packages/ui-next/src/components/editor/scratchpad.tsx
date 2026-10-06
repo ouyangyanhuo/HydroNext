@@ -105,7 +105,7 @@ export function Scratchpad({
   });
   const [code, setCode] = useState(() => {
     const cached = localStorage.getItem(cacheKey);
-    return cached ?? defaultCode;
+    return cached ?? (defaultCode || getCodeTemplate(lang, user.codeTemplate) || '');
   });
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -139,7 +139,7 @@ export function Scratchpad({
     const type = args.pdoc?.config?.type;
     return !type || type === 'default' || type === 'remote_judge';
   }, [lang, langs, args.pdoc?.config?.type]);
-  const selectedCodeTemplate = getCodeTemplate(lang);
+  const selectedCodeTemplate = getCodeTemplate(lang, user.codeTemplate);
 
   const updateEditorConfig = useCallback((patch: EditorConfig) => {
     setEditorConfig((current) => {

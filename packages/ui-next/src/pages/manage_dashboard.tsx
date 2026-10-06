@@ -2,7 +2,6 @@ import { Badge, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/cor
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
-import { HonorFramePanel } from '@/components/user/honor-frame-panel';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 
@@ -51,7 +50,6 @@ export default function ManageDashboardPage() {
           </Card>
         ))}
       </SimpleGrid>
-      <HonorFramePanel administration />
     </Stack>
   );
 }

@@ -1,5 +1,34 @@
 __flag: 🇬🇧
+"Apply this action to {count} selected users?": "Apply this action to {count} selected users?"
+"Choose one artwork per shape.": "Choose one artwork per shape."
+"Circular": "Circular"
+"Circular artwork": "Circular artwork"
+"Click to rename": "Click to rename"
+"Disabled": "Disabled"
+"Drop artwork here or click to choose": "Drop artwork here or click to choose"
+"Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.": "Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it."
+"Frame artwork must be 512 × 512 px.": "Frame artwork must be 512 × 512 px."
+"Frame owners": "Frame owners"
+"One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.": "One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white."
+"Only published frames can be awarded. Awards are global across all domains.": "Only published frames can be awarded. Awards are global across all domains."
+"Owned honor frames": "Owned honor frames"
+"Owners": "Owners"
+"Recipients": "Recipients"
+"Rounded square": "Rounded square"
+"Rounded square artwork": "Rounded square artwork"
+"Search by username or user ID": "Search by username or user ID"
+"Search by username or user ID. Up to 50 users at a time.": "Search by username or user ID. Up to 50 users at a time."
+"Select a frame and at least one user.": "Select a frame and at least one user."
+"Select current page": "Select current page"
+"Some users changed during this operation. Refresh and retry.": "Some users changed during this operation. Refresh and retry."
+"The central avatar area must be transparent.": "The central avatar area must be transparent."
+"Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).": "Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64)."
+"Transparent center: diameter 384 px, centered at (256, 256).": "Transparent center: diameter 384 px, centered at (256, 256)."
+"Upload both rounded square and circular artwork.": "Upload both rounded square and circular artwork."
+"Uploaded frames start disabled. Publish them from the library.": "Uploaded frames start disabled. Publish them from the library."
+"Use two 512 × 512 px images with a transparent 384 px center.": "Use two 512 × 512 px images with a transparent 384 px center."
 __id: en
+'Saved. Please refresh this page.': 'Saved. Please refresh this page.'
 'Discard changes': 'Discard changes'
 'Discard your unsaved changes?': 'Discard your unsaved changes?'
 'Failed to load file': 'Failed to load file'

@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 import { Context } from '../context';
 import { NotFoundError, UserNotFoundError, ValidationError } from '../error';
 import { MAX_FRAME_BYTES, normalizeHonorFrameImage } from '../lib/honor-frame-image';
-import { equipHonorFrame, grantHonorFrame, revokeHonorFrame } from '../lib/honor-frame-user';
+import { equipHonorFrame, grantHonorFrame, manageHonorFrameOwners, revokeHonorFrame } from '../lib/honor-frame-user';
 import { PRIV } from '../model/builtin';
 import { coll, framePath, publicFrame, resolveFrames } from '../model/honor-frame';
 import * as oplog from '../model/oplog';
@@ -43,24 +43,59 @@ export class ManageHonorFramesHandler extends Handler {
     async postUpload(domainId: string, name: string) {
         const title = name.trim();
         if (!title || title.length > 80) throw new ValidationError('name');
-        const file = this.request.files.file;
-        if (!file || file.size > MAX_FRAME_BYTES) throw new ValidationError('file');
+        const { square, circle } = this.request.files;
+        if (!square || !circle || square.size > MAX_FRAME_BYTES || circle.size > MAX_FRAME_BYTES) throw new ValidationError('file');
         await this.limitRate('honor_frame_upload', 60, 10);
-        let image: Buffer;
-        try { image = normalizeHonorFrameImage(await readFile(file.filepath)); } catch {
-            throw new ValidationError('file', null, 'Expected a transparent square PNG, 64–1024 px, up to 2 MiB.');
+        let images: Buffer[];
+        try {
+            images = await Promise.all([square, circle].map(async (file, i) =>
+                normalizeHonorFrameImage(await readFile(file.filepath), i ? 'circle' : 'square')));
+        } catch {
+            throw new ValidationError('file', null, 'Use two 512 × 512 px images with a transparent 384 px center.');
         }
         const _id = new ObjectId();
-        const path = framePath(_id.toHexString());
-        await storage.put(path, image, this.user._id);
+        const paths = ['square', 'circle'].map((shape) => framePath(_id.toHexString(), shape));
         try {
-            await coll.insertOne({ _id, name: title, active: false, createdAt: new Date(), createdBy: this.user._id });
+            await storage.put(paths[0], images[0], this.user._id);
+            await storage.put(paths[1], images[1], this.user._id);
+            await coll.insertOne({ _id, name: title, active: false, artworkVersion: 2, createdAt: new Date(), createdBy: this.user._id });
         } catch (error) {
-            await storage.del([path], this.user._id);
+            await storage.del(paths, this.user._id);
             throw error;
         }
         await oplog.log(this, 'honorFrame.upload', { frameId: _id.toHexString(), name: title });
         this.response.body = { ok: true };
+    }
+
+    @param('id', Types.ObjectId)
+    @param('name', Types.String)
+    async postRename(domainId: string, id: ObjectId, name: string) {
+        const title = name.trim();
+        if (!title || title.length > 80) throw new ValidationError('name');
+        const result = await coll.updateOne({ _id: id }, { $set: { name: title } });
+        if (!result.matchedCount) throw new NotFoundError(id.toHexString());
+        deleteUserCache(true);
+        await oplog.log(this, 'honorFrame.rename', { frameId: id.toHexString(), name: title });
+        this.response.body = { ok: true };
+    }
+
+    @param('id', Types.ObjectId)
+    @param('active', Types.Boolean)
+    async postStatus(domainId: string, id: ObjectId, active: boolean) {
+        const result = await coll.updateOne({ _id: id }, { $set: { active } });
+        if (!result.matchedCount) throw new NotFoundError(id.toHexString());
+        deleteUserCache(true);
+        await oplog.log(this, 'honorFrame.status', { frameId: id.toHexString(), active });
+        this.response.body = { ok: true };
+    }
+
+    @param('id', Types.ObjectId)
+    @param('uids', Types.NumericArray)
+    @param('action', Types.Range(['grant', 'revoke', 'equip', 'unequip']))
+    async postOwners(domainId: string, id: ObjectId, uids: number[], action: 'grant' | 'revoke' | 'equip' | 'unequip') {
+        const result = await manageHonorFrameOwners(id.toHexString(), uids, action);
+        await oplog.log(this, `honorFrame.${action}`, { frameId: id.toHexString(), uids, ...result });
+        this.response.body = { ok: true, ...result };
     }
 
     @param('id', Types.ObjectId)
@@ -110,6 +145,7 @@ export class HomeHonorFramesHandler extends Handler {
         page = Math.min(page, pageCount);
         const docs = await coll.find(query).sort({ _id: -1 }).skip((page - 1) * 12).limit(12).toArray();
         const equipped = doc?.honorFrameId;
+        this.response.template = 'home_honor_frames.html';
         this.response.body = {
             frames: docs.map(publicFrame), count, page, pageCount,
             honorFrame: equipped ? (await resolveFrames([equipped]))[equipped] || null : null,
@@ -129,18 +165,102 @@ export class HonorFrameImageHandler extends Handler {
     notUsage = true;
 
     @param('id', Types.ObjectId)
-    async get(domainId: string, id: ObjectId) {
+    @param('shape', Types.Range(['circle', 'square']), true)
+    async get(domainId: string, id: ObjectId, shape?: 'circle' | 'square') {
         const frame = await coll.findOne({ _id: id });
-        if (!frame || (!frame.active && !this.user.hasPriv(PRIV.PRIV_EDIT_SYSTEM))) throw new NotFoundError(id.toHexString());
-        this.response.body = await storage.get(framePath(id.toHexString()));
+        if (!frame || (!frame.active && !this.user.hasPriv(PRIV.PRIV_EDIT_SYSTEM)
+            && !await user.coll.findOne({ honorFrameIds: id.toHexString() }, { projection: { _id: 1 } }))) {
+            throw new NotFoundError(id.toHexString());
+        }
+        this.response.body = await storage.get(framePath(id.toHexString(), frame.artworkVersion === 2 ? shape || 'square' : undefined));
         this.response.type = 'image/png';
         this.response.addHeader('X-Content-Type-Options', 'nosniff');
         this.response.addHeader('Cache-Control', 'private, max-age=300');
     }
 }
 
+export class UploadHonorFrameHandler extends Handler {
+    noCheckPermView = true;
+
+    async prepare() { this.checkPriv(PRIV.PRIV_EDIT_SYSTEM); }
+    async get() {
+        this.response.template = 'manage_honor_frame_upload.html';
+        this.response.body = {};
+    }
+}
+
+function userSearch(q: string) {
+    const text = q.trim().slice(0, 80);
+    return text ? { $or: [{ uname: { $regex: escapeRegExp(text), $options: 'i' } },
+        ...(Number.isSafeInteger(Number(text)) && Number(text) > 0 ? [{ _id: Number(text) }] : [])] } : {};
+}
+
+export class HonorFrameSearchHandler extends Handler {
+    noCheckPermView = true;
+
+    async prepare() { this.checkPriv(PRIV.PRIV_EDIT_SYSTEM); }
+    @param('q', Types.String, true)
+    @param('kind', Types.Range(['users', 'frames']))
+    async get(domainId: string, q = '', kind: 'users' | 'frames' = 'frames') {
+        if (kind === 'frames') {
+            const docs = await coll.find({ active: true, name: { $regex: escapeRegExp(q.trim().slice(0, 80)), $options: 'i' } })
+                .sort({ _id: -1 }).limit(50).toArray();
+            this.response.body = { options: docs.map((doc) => ({ value: doc._id.toHexString(), label: doc.name })) };
+        } else {
+            const docs = await user.coll.find({ $and: [{ _id: { $gt: 0 } }, userSearch(q)] })
+                .project({ _id: 1, uname: 1 }).sort({ _id: 1 }).limit(50).toArray();
+            this.response.body = { options: docs.map((doc) => ({ value: String(doc._id), label: `${doc.uname} (#${doc._id})` })) };
+        }
+    }
+}
+
+export class HonorFrameOwnersHandler extends Handler {
+    noCheckPermView = true;
+
+    async prepare() { this.checkPriv(PRIV.PRIV_EDIT_SYSTEM); }
+    @param('id', Types.ObjectId)
+    @param('page', Types.PositiveInt, true)
+    @param('q', Types.String, true)
+    async get(domainId: string, id: ObjectId, page = 1, q = '') {
+        const frame = await coll.findOne({ _id: id });
+        if (!frame) throw new NotFoundError(id.toHexString());
+        const query = { honorFrameIds: id.toHexString(), ...userSearch(q) };
+        const count = await user.coll.countDocuments(query);
+        const pageCount = Math.max(1, Math.ceil(count / 25));
+        page = Math.min(page, pageCount);
+        const owners = await user.coll.find(query).project({ _id: 1, uname: 1, avatar: 1, honorFrameId: 1 })
+            .sort({ _id: 1 }).skip((page - 1) * 25).limit(25).toArray();
+        this.response.template = 'manage_honor_frame_owners.html';
+        this.response.body = {
+            frame: { ...publicFrame(frame), active: frame.active }, page, pageCount, count, q,
+            owners: owners.map(({ honorFrameId, ...doc }) => ({ ...doc, equipped: honorFrameId === id.toHexString() && frame.active })),
+        };
+    }
+}
+
+export class UserHonorFramesHandler extends Handler {
+    @param('uid', Types.PositiveInt)
+    @param('page', Types.PositiveInt, true)
+    async get(domainId: string, uid: number, page = 1) {
+        const target = await user.coll.findOne({ _id: uid }, { projection: { honorFrameIds: 1 } });
+        if (!target) throw new UserNotFoundError(uid);
+        const ids = (target.honorFrameIds || []).filter((id) => /^[a-f0-9]{24}$/.test(id)).map((id) => new ObjectId(id));
+        const query = { _id: { $in: ids } };
+        const count = await coll.countDocuments(query);
+        const pageCount = Math.max(1, Math.ceil(count / 12));
+        page = Math.min(page, pageCount);
+        const docs = await coll.find(query).sort({ _id: -1 }).skip((page - 1) * 12).limit(12).toArray();
+        this.response.body = { frames: docs.map((doc) => ({ ...publicFrame(doc), active: doc.active })), page, pageCount, count };
+    }
+}
+
 export async function apply(ctx: Context) {
     ctx.Route('manage_honor_frames', '/manage/honor-frames', ManageHonorFramesHandler, PRIV.PRIV_EDIT_SYSTEM);
+    ctx.Route('manage_honor_frame_upload', '/manage/honor-frames/upload', UploadHonorFrameHandler, PRIV.PRIV_EDIT_SYSTEM);
+    ctx.Route('manage_honor_frame_search', '/manage/honor-frames/search', HonorFrameSearchHandler, PRIV.PRIV_EDIT_SYSTEM);
+    ctx.Route('manage_honor_frame_owners', '/manage/honor-frames/:id/owners', HonorFrameOwnersHandler, PRIV.PRIV_EDIT_SYSTEM);
     ctx.Route('home_honor_frames', '/home/honor-frames', HomeHonorFramesHandler, PRIV.PRIV_USER_PROFILE);
     ctx.Route('honor_frame_image', '/honor-frame/:id.png', HonorFrameImageHandler);
+    ctx.Route('honor_frame_shape_image', '/honor-frame/:id/:shape.png', HonorFrameImageHandler);
+    ctx.Route('user_honor_frames', '/user/:uid/honor-frames', UserHonorFramesHandler);
 }

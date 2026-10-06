@@ -34,3 +34,23 @@ export async function equipHonorFrame(uid: number, id: string) {
     if (!doc) throw new ValidationError('honorFrame');
     deleteUserCache(doc);
 }
+
+export async function manageHonorFrameOwners(id: string, input: number[], action: 'grant' | 'revoke' | 'equip' | 'unequip') {
+    if (!Array.isArray(input) || !input.length || input.length > 50
+        || input.some((uid) => !Number.isSafeInteger(uid) || uid <= 0)) throw new ValidationError('uids');
+    const uids = [...new Set(input)];
+    const frame = await frames.findOne({ _id: new ObjectId(id) });
+    if (!frame || (['grant', 'equip'].includes(action) && !frame.active)) throw new ValidationError('honorFrame');
+    const query = { _id: { $in: uids }, ...(action === 'grant' ? {} : { honorFrameIds: id }) };
+    if (await user.coll.countDocuments(query) !== uids.length) throw new ValidationError('uids');
+    const update = action === 'grant' ? { $addToSet: { honorFrameIds: id } }
+        : action === 'equip' ? { $set: { honorFrameId: id } }
+            : [{ $set: {
+                ...(action === 'revoke' ? { honorFrameIds: { $setDifference: [{ $ifNull: ['$honorFrameIds', []] }, [id]] } } : {}),
+                honorFrameId: { $cond: [{ $eq: ['$honorFrameId', id] }, '', { $ifNull: ['$honorFrameId', ''] }] },
+            } }];
+    // Ownership stays in the write predicate: concurrent revocation cannot be undone.
+    const result = await user.coll.updateMany(query, update);
+    deleteUserCache(true);
+    return { matched: result.matchedCount, requested: uids.length };
+}

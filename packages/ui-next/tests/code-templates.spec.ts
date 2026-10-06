@@ -25,3 +25,12 @@ test('all C++ variants use the standard namespace', () => {
 test('does not guess a template for unsupported languages', () => {
     assert.equal(getCodeTemplate('py.py3'), undefined);
 });
+
+test('personal template takes priority, preserves whitespace, and empty values fall back to built-ins', () => {
+    const personal = '  // custom\nint main() {}\n';
+    assert.equal(getCodeTemplate('cc.cc20o2', personal), personal);
+    assert.equal(getCodeTemplate('py.py3', personal), personal);
+    for (const blank of ['', ' \n\t', null, {}, undefined]) {
+        assert.equal(getCodeTemplate('cc', blank), getCodeTemplate('cc'));
+    }
+});

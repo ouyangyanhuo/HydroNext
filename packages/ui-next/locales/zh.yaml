@@ -1,5 +1,34 @@
 __flag: 🇨🇳
+"Apply this action to {count} selected users?": "确定对选中的 {count} 位用户执行此操作吗？"
+"Choose one artwork per shape.": "每种形状请选择一份素材。"
+"Circular": "圆形"
+"Circular artwork": "圆形素材"
+"Click to rename": "点击名称重命名"
+"Disabled": "已停用"
+"Drop artwork here or click to choose": "拖拽素材到此处，或点击选择"
+"Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.": "启用会替换当前佩戴的头像框。停用仅取消佩戴，收回会移除拥有资格。"
+"Frame artwork must be 512 × 512 px.": "头像框素材必须为 512 × 512px。"
+"Frame owners": "拥有该头像框的用户"
+"One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.": "一个名称对应两种形状。画布 512 × 512px，中心头像 384px，四周装饰区各 64px。中心须透明，不要填充白色。"
+"Only published frames can be awarded. Awards are global across all domains.": "只能授予已发布的头像框，拥有资格在所有域中通用。"
+"Owned honor frames": "拥有的头像框"
+"Owners": "拥有者"
+"Recipients": "授予用户"
+"Rounded square": "圆角方形"
+"Rounded square artwork": "圆角方形素材"
+"Search by username or user ID": "通过用户名或用户 ID 搜索"
+"Search by username or user ID. Up to 50 users at a time.": "可通过用户名或用户 ID 搜索，每次最多选择 50 位用户。"
+"Select a frame and at least one user.": "请选择一个头像框和至少一位用户。"
+"Select current page": "选择本页用户"
+"Some users changed during this operation. Refresh and retry.": "部分用户的拥有资格已变更，请刷新后重试。"
+"The central avatar area must be transparent.": "中心头像区域必须透明。"
+"Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).": "中心透明区域：384 × 384px，圆角半径 64px，左上角坐标 (64, 64)。"
+"Transparent center: diameter 384 px, centered at (256, 256).": "中心透明区域：直径 384px，圆心坐标 (256, 256)。"
+"Upload both rounded square and circular artwork.": "请同时上传圆角方形和圆形两份素材。"
+"Uploaded frames start disabled. Publish them from the library.": "上传后默认为已停用，可在头像框管理页面发布。"
+"Use two 512 × 512 px images with a transparent 384 px center.": "请上传两份 512 × 512px 素材，中心须留出 384px 的透明头像区域。"
 __id: zh
+'Saved. Please refresh this page.': '已保存，请刷新此页面。'
 'Discard changes': '放弃修改'
 'Discard your unsaved changes?': '是否放弃尚未保存的修改？'
 'Failed to load file': '文件加载失败'

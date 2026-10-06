@@ -5,6 +5,7 @@ import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
+import { OwnedHonorFrames } from '@/components/user/owned-honor-frames';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -34,6 +35,7 @@ export default function UserDetailPage() {
   const currentUser = useSessionStore((s) => s.user);
   const [tab, setTab] = useState<string | null>(() => {
     const query = new URLSearchParams(window.location.search);
+    if (query.get('tab') === 'frames') return 'frames';
     return query.get('tab') === 'accepted' || query.has('page') ? 'accepted' : 'bio';
   });
 
@@ -69,6 +71,7 @@ export default function UserDetailPage() {
                   user={udoc}
                   link={false}
                   size={96}
+                  shape="circle"
                   frameClassName="hydro-user-profile__avatar-slot"
                   className="hydro-user-profile__avatar"
                 />
@@ -179,6 +182,7 @@ export default function UserDetailPage() {
           <Tabs.List className="hydro-user-profile__tablist">
             <Tabs.Tab value="bio">{t('Bio')}</Tabs.Tab>
             <Tabs.Tab value="accepted">{t('Accepted Problems')}</Tabs.Tab>
+            <Tabs.Tab value="frames">{t('Owned honor frames')}</Tabs.Tab>
           </Tabs.List>
 
           <Tabs.Panel value="bio" pt="md">
@@ -224,6 +228,9 @@ export default function UserDetailPage() {
             ) : (
               <Text c="dimmed" ta="center" py="xl">{t('No accepted problems')}</Text>
             )}
+          </Tabs.Panel>
+          <Tabs.Panel value="frames" pt="md">
+            {tab === 'frames' && <OwnedHonorFrames key={udoc._id} uid={udoc._id} avatar={udoc.avatar} />}
           </Tabs.Panel>
         </Tabs>
 

@@ -31,6 +31,58 @@ function png(width = 64, height = width, alpha = 0) {
     return PNG.sync.write(image);
 }
 
+test('paired artwork uses fixed geometry and protects the transparent avatar opening', () => {
+    for (const shape of ['circle', 'square'] as const) {
+        assert.equal(PNG.sync.read(normalizeHonorFrameImage(png(512), shape)).width, 512);
+        assert.throws(() => normalizeHonorFrameImage(png(256), shape), /512/);
+        const blocked = PNG.sync.read(png(512));
+        blocked.data[(256 * 512 + 256) * 4 + 3] = 255;
+        assert.throws(() => normalizeHonorFrameImage(PNG.sync.write(blocked), shape), /transparent/);
+    }
+    const corner = PNG.sync.read(png(512));
+    corner.data[(80 * 512 + 80) * 4 + 3] = 255;
+    assert.doesNotThrow(() => normalizeHonorFrameImage(PNG.sync.write(corner), 'circle'));
+    assert.doesNotThrow(() => normalizeHonorFrameImage(PNG.sync.write(corner), 'square'));
+    const interior = PNG.sync.read(png(512));
+    interior.data[(80 * 512 + 200) * 4 + 3] = 255;
+    assert.throws(() => normalizeHonorFrameImage(PNG.sync.write(interior), 'square'), /transparent/);
+});
+
+test('bulk ownership operations are bounded, global, conditional and leave other equipped frames alone', async () => {
+    const writes: any[] = [];
+    let count = 2;
+    let active = true;
+    let invalidations = 0;
+    const module = load('../src/lib/honor-frame-user.ts', {
+        '../error': { ValidationError: Error },
+        '../model/honor-frame': { coll: { findOne: async () => ({ active }) } },
+        '../model/user': { __esModule: true, default: { coll: {
+            countDocuments: async () => count,
+            updateMany: async (query: any, update: any) => { writes.push([query, update]); return { matchedCount: count }; },
+        } }, deleteUserCache: () => invalidations++ },
+    });
+    await Promise.all([[], [0], [-1], [1.1], Array.from({ length: 51 }, (_, i) => i + 1)]
+        .map((invalid) => assert.rejects(module.manageHonorFrameOwners(id, invalid, 'equip'))));
+    assert.equal(writes.length, 0);
+    await module.manageHonorFrameOwners(id, [1, 2, 2], 'grant');
+    assert.equal(JSON.stringify(writes[0][0]), JSON.stringify({ _id: { $in: [1, 2] } }));
+    await module.manageHonorFrameOwners(id, [1, 2], 'equip');
+    assert.equal(writes[1][0].honorFrameIds, id);
+    assert.equal(writes[1][1].$set.honorFrameId, id);
+    await module.manageHonorFrameOwners(id, [1, 2], 'unequip');
+    assert.equal(writes[2][1][0].$set.honorFrameIds, undefined);
+    assert.equal(JSON.stringify(writes[2][1][0].$set.honorFrameId.$cond[0]), JSON.stringify({ $eq: ['$honorFrameId', id] }));
+    await module.manageHonorFrameOwners(id, [1, 2], 'revoke');
+    assert.ok(writes[3][1][0].$set.honorFrameIds.$setDifference);
+    active = false;
+    await assert.rejects(module.manageHonorFrameOwners(id, [1, 2], 'equip'));
+    await assert.rejects(module.manageHonorFrameOwners(id, [1, 2], 'grant'));
+    count = 1;
+    await assert.rejects(module.manageHonorFrameOwners(id, [1, 2], 'revoke'));
+    assert.equal(writes.length, 4);
+    assert.equal(invalidations, 4);
+});
+
 test('frame artwork is decoded, normalized and checked for transparency', () => {
     const output = normalizeHonorFrameImage(png());
     const image = PNG.sync.read(output);
@@ -182,16 +234,24 @@ test('management requires global privilege, images hide unpublished frames, and 
         '../model/honor-frame': { coll: { findOne: async () => ({ active: false }) } },
         '../model/oplog': {}, '../model/storage': {},
         '../model/user': { __esModule: true, default: { getById: async () => ({ honorFrame: null }) } },
-        '../service/server': { Handler: class {}, param: () => () => {}, Types: {} },
+        '../service/server': { Handler: class {}, param: () => () => {}, Types: { Range: () => undefined } },
     });
     await module.apply({ Route: (...route: any[]) => routes.push(route) });
     assert.equal(routes.find((route) => route[0] === 'manage_honor_frames')[3], 1);
+    for (const name of ['manage_honor_frame_upload', 'manage_honor_frame_search', 'manage_honor_frame_owners']) {
+        assert.equal(routes.find((route) => route[0] === name)[3], 1);
+    }
     const admin = new module.ManageHonorFramesHandler();
     admin.checkPriv = (priv: number) => {
         assert.equal(priv, 1);
         throw new Error('denied');
     };
     await assert.rejects(admin.prepare(), /denied/);
+    await Promise.all(['UploadHonorFrameHandler', 'HonorFrameSearchHandler', 'HonorFrameOwnersHandler'].map(async (name) => {
+        const handler = new module[name]();
+        handler.checkPriv = admin.checkPriv;
+        await assert.rejects(handler.prepare(), /denied/);
+    }));
     const image = new module.HonorFrameImageHandler();
     image.user = { hasPriv: () => false };
     await assert.rejects(image.get('domain', new ObjectId(id)));
@@ -210,13 +270,13 @@ test('upload creates an unpublished normalized asset and cleans storage if catal
     const inserted: any[] = [];
     let failInsert = false;
     const module = load('../src/handler/honor-frame.ts', {
-        'fs/promises': { readFile: async () => png() },
+        'fs/promises': { readFile: async () => png(512) },
         '../context': {}, '../error': { ValidationError: Error },
         '../lib/honor-frame-image': { normalizeHonorFrameImage, MAX_FRAME_BYTES: 2 * 1024 * 1024 },
         '../lib/honor-frame-user': {}, '../model/builtin': { PRIV: {} },
         '../model/honor-frame': {
             coll: { insertOne: async (doc: any) => { if (failInsert) throw new Error('DB unavailable'); inserted.push(doc); } },
-            framePath: (value: string) => `honor-frame/${value}.png`,
+            framePath: (value: string, shape: string) => `honor-frame/${value}-${shape}.png`,
         },
         '../model/oplog': { log: async () => {} },
         '../model/storage': {
@@ -224,25 +284,28 @@ test('upload creates an unpublished normalized asset and cleans storage if catal
             del: async (paths: string[]) => { deleted.push(...paths); },
         },
         '../model/user': {},
-        '../service/server': { Handler: class {}, param: () => () => {}, Types: {} },
+        '../service/server': { Handler: class {}, param: () => () => {}, Types: { Range: () => undefined } },
     });
     const handler = new module.ManageHonorFramesHandler();
     handler.user = { _id: 1 };
-    handler.request = { files: { file: { filepath: '/upload', size: 1024 } } };
+    handler.request = { files: { square: { filepath: '/square', size: 1024 }, circle: { filepath: '/circle', size: 1024 } } };
     handler.response = {};
     handler.limitRate = async () => {};
     await handler.postUpload('domain-a', ' Champion ');
     assert.equal(inserted[0].name, 'Champion');
     assert.equal(inserted[0].active, false);
     assert.equal(inserted[0].createdBy, 1);
-    assert.match(stored[0][0], /^honor-frame\/[a-f0-9]{24}\.png$/);
-    assert.equal(PNG.sync.read(stored[0][1]).width, 64);
+    assert.match(stored[0][0], /^honor-frame\/[a-f0-9]{24}-square\.png$/);
+    assert.equal(inserted[0].artworkVersion, 2);
+    assert.match(stored[1][0], /-circle\.png$/);
+    assert.equal(PNG.sync.read(stored[0][1]).width, 512);
     failInsert = true;
     await assert.rejects(handler.postUpload('domain-b', 'Second'), /DB unavailable/);
-    assert.equal(deleted[0], stored[1][0]);
-    handler.request.files.file.size = 3 * 1024 * 1024;
+    assert.equal(deleted[0], stored[2][0]);
+    assert.equal(deleted[1], stored[3][0]);
+    handler.request.files.square.size = 3 * 1024 * 1024;
     await assert.rejects(handler.postUpload('domain-a', 'Too large'));
-    assert.equal(stored.length, 2);
+    assert.equal(stored.length, 4);
 });
 
 test('wardrobe pagination reads only the authenticated users active awards and caps pages at twelve', async () => {
@@ -266,7 +329,7 @@ test('wardrobe pagination reads only the authenticated users active awards and c
             assert.equal(query._id, 42);
             return { honorFrameIds: [id], honorFrameId: '' };
         } } },
-        '../service/server': { Handler: class {}, param: () => () => {}, Types: {} },
+        '../service/server': { Handler: class {}, param: () => () => {}, Types: { Range: () => undefined } },
     });
     const handler = new module.HomeHonorFramesHandler();
     handler.user = { _id: 42 };

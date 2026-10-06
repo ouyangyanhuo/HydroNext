@@ -3248,6 +3248,21 @@ a {
   isolation: isolate;
 }
 
+.hydro-frame-card { transition: border-color 160ms ease, box-shadow 160ms ease; }
+.hydro-frame-card:hover, .hydro-frame-card:focus-within { border-color: var(--hydro-primary); box-shadow: var(--hydro-shadow-sm); }
+.hydro-frame-card__view { opacity: 0; transition: opacity 160ms ease; }
+.hydro-frame-card:hover .hydro-frame-card__view, .hydro-frame-card:focus-within .hydro-frame-card__view { opacity: 1; }
+.hydro-frame-card__name { width: 100%; margin-top: 24px; padding: 8px; border-radius: 8px; }
+.hydro-frame-card__name:hover { background: var(--hydro-surface-muted); }
+.hydro-frame-upload { width: 100%; min-height: 260px; padding: 24px; border: 1px dashed var(--hydro-border); border-radius: 16px; background: var(--hydro-surface-muted); }
+.hydro-frame-upload:hover, .hydro-frame-upload[data-dragging] { border-color: var(--hydro-primary); }
+.hydro-frame-upload__guide { display: grid; place-items: center; width: 128px; height: 128px; color: var(--hydro-text-muted); border: 2px dashed var(--hydro-border); }
+.hydro-frame-upload__guide--square { border-radius: 16.6667%; }
+.hydro-frame-upload__guide--circle { border-radius: 50%; }
+.hydro-frame-owner-row { padding: 12px; border-radius: 10px; background: var(--hydro-surface-muted); }
+@media (hover: none) { .hydro-frame-card__view { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .hydro-frame-card, .hydro-frame-card__view { transition: none; } }
+
 .hydro-avatar-frame__decoration {
   position: absolute;
   inset: 0;

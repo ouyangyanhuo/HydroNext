@@ -44,7 +44,8 @@ function resolveTemplateLanguage(language: string): TemplateLanguage | undefined
   return undefined;
 }
 
-export function getCodeTemplate(language: string) {
+export function getCodeTemplate(language: string, personalTemplate?: unknown) {
+  if (typeof personalTemplate === 'string' && personalTemplate.trim()) return personalTemplate;
   const templateLanguage = resolveTemplateLanguage(language);
   return templateLanguage ? CODE_TEMPLATES[templateLanguage] : undefined;
 }

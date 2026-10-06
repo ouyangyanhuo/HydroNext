@@ -12,6 +12,7 @@ import { getAvatarUrl } from '@/utils/avatar';
 import type { HonorFrame } from '@/utils/honor-frame';
 import { requestHonorFrame } from '@/utils/honor-frame-api';
 import { FramedAvatar } from './framed-avatar';
+import { HonorFramePreview } from './honor-frame-preview';
 
 function HonorFrameWardrobe() {
   const { t } = useI18n();
@@ -28,7 +29,7 @@ function HonorFrameWardrobe() {
   useEffect(() => () => mutation.current?.abort(), []);
   useEffect(() => {
     const controller = new AbortController();
-    void requestHonorFrame(`${url}?page=${page}`, { signal: controller.signal }, t('Operation failed')).then((result) => {
+    void requestHonorFrame(`${url}?page=${page}&noTemplate=true`, { signal: controller.signal }, t('Operation failed')).then((result) => {
       if (controller.signal.aborted) return;
       setData(result);
       setPage(result.page);
@@ -66,7 +67,7 @@ function HonorFrameWardrobe() {
   return (
     <Stack gap="md">
       <Group gap="lg">
-        <FramedAvatar src={getAvatarUrl(user.avatar || '', 96)} alt={user.uname} size={80} radius="xl" frame={user.honorFrame} />
+        <FramedAvatar src={getAvatarUrl(user.avatar || '', 96)} alt={user.uname} size={80} shape="circle" frame={user.honorFrame} />
         <Stack gap={4} className="min-w-0 flex-1">
           <Text fw={600}>{user.honorFrame?.name || t('No honor frame equipped')}</Text>
           <Text size="sm" c="dimmed">{t('Honor frames belong to your global account and remain the same in every domain.')}</Text>
@@ -88,11 +89,11 @@ function HonorFrameWardrobe() {
       </Stack> : (
         <>
           {!data?.frames.length && <Text size="sm" c="dimmed">{t('No available honor frames. Frames are awarded by system administrators.')}</Text>}
-          <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="sm">
+          <SimpleGrid cols={{ base: 1, sm: 2, xl: 3 }} spacing="md">
             {data?.frames.map((frame) => (
               <Card key={frame.id} withBorder p="sm" className="hydro-panel">
                 <Stack align="center" gap="sm">
-                  <FramedAvatar src={getAvatarUrl(user.avatar || '', 80)} alt={user.uname} frame={frame} size={56} radius="xl" />
+                  <HonorFramePreview frame={frame} avatar={user.avatar} size={40} />
                   <Text size="sm" fw={600} ta="center" lineClamp={2}>{frame.name}</Text>
                   <Button
                     size="xs"

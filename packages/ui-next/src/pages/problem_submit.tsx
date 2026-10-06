@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { LongSelect } from '@/components/common/select';
 import { CodeEditor } from '@/components/editor/code-editor';
+import { getCodeTemplate } from '@/components/editor/code-templates';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 
@@ -18,8 +20,9 @@ export default function ProblemSubmitPage() {
   const pdoc = args.pdoc || {};
   const langs = args.langs || {};
 
-  const [lang, setLang] = useState('');
-  const [code, setCode] = useState('');
+  const user = useCurrentUser();
+  const [lang, setLang] = useState(() => langs[user.codeLang] ? user.codeLang : Object.keys(langs)[0] || '');
+  const [code, setCode] = useState(() => getCodeTemplate(lang, user.codeTemplate) || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

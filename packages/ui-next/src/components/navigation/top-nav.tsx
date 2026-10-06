@@ -67,6 +67,11 @@ function UserMenu() {
           {t('My Domains')}
         </Menu.Item>
         {isSu && (
+          <Menu.Item component={Link} to="manage_honor_frames">
+            {t('Manage honor frames')}
+          </Menu.Item>
+        )}
+        {isSu && (
           <Menu.Item component={Link} to="manage_dashboard">
             {t('Manage')}
           </Menu.Item>
@@ -492,12 +497,18 @@ export function TopNav() {
                 >
                   {t('My Profile')}
                 </Button>
-                <Button component={Link} to="home_settings" variant="subtle" fullWidth justify="flex-start" onClick={close}>
+                <Button component={Link} to="home_settings" params={{ category: 'preference' }}
+                  variant="subtle" fullWidth justify="flex-start" onClick={close}>
                   {t('Settings')}
                 </Button>
                 <Button component={Link} to="home_domain" variant="subtle" fullWidth justify="flex-start" onClick={close}>
                   {t('My Domains')}
                 </Button>
+                {isSu && (
+                  <Button component={Link} to="manage_honor_frames" variant="subtle" fullWidth justify="flex-start" onClick={close}>
+                    {t('Manage honor frames')}
+                  </Button>
+                )}
                 {isSu && (
                   <Button component={Link} to="manage_dashboard" variant="subtle" fullWidth justify="flex-start" onClick={close}>
                     {t('Manage')}

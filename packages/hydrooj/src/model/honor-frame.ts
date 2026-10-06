@@ -8,12 +8,16 @@ export interface HonorFrameDoc {
     active: boolean;
     createdAt: Date;
     createdBy: number;
+    artworkVersion?: 2;
 }
 
 export interface PublicHonorFrame {
     id: string;
     name: string;
     imageUrl: string;
+    circleImageUrl?: string;
+    squareImageUrl?: string;
+    artworkVersion?: 2;
 }
 
 declare module '../service/db' {
@@ -21,9 +25,14 @@ declare module '../service/db' {
 }
 
 export const coll = db.collection('honor.frame');
-export const framePath = (id: string) => `honor-frame/${id}.png`;
+export const framePath = (id: string, shape?: string) => `honor-frame/${id}${shape ? `-${shape}` : ''}.png`;
 export const publicFrame = (frame: HonorFrameDoc): PublicHonorFrame => ({
     id: frame._id.toHexString(), name: frame.name, imageUrl: `/honor-frame/${frame._id.toHexString()}.png`,
+    ...(frame.artworkVersion === 2 ? {
+        artworkVersion: 2,
+        circleImageUrl: `/honor-frame/${frame._id.toHexString()}/circle.png`,
+        squareImageUrl: `/honor-frame/${frame._id.toHexString()}/square.png`,
+    } : {}),
 });
 
 export async function resolveFrames(ids: string[]): Promise<Record<string, PublicHonorFrame>> {
@@ -35,4 +44,5 @@ export async function resolveFrames(ids: string[]): Promise<Record<string, Publi
 
 export async function apply(ctx: Context) {
     await ctx.db.ensureIndexes(coll, { key: { active: 1, _id: -1 }, name: 'active_frames' });
+    await ctx.db.ensureIndexes(db.collection('user'), { key: { honorFrameIds: 1, _id: 1 }, name: 'honor_frame_owners', sparse: true });
 }

@@ -13,7 +13,7 @@ export async function requestHonorFrame(url: string, init: RequestInit = {}, fal
 }
 
 /** WebP is normalized in the browser; the server independently decodes PNG. */
-export async function prepareFrameArtwork(file: File): Promise<File> {
+export async function prepareFrameArtwork(file: File, paired = false): Promise<File> {
   if (!['image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
     throw new Error('Choose a PNG or WebP file no larger than 2 MiB.');
   }
@@ -23,6 +23,7 @@ export async function prepareFrameArtwork(file: File): Promise<File> {
     if (bitmap.width !== bitmap.height || bitmap.width < 64 || bitmap.width > 1024) {
       throw new Error('Frame artwork must be square, between 64 and 1024 pixels.');
     }
+    if (paired && bitmap.width !== 512) throw new Error('Frame artwork must be 512 × 512 px.');
     canvas.width = bitmap.width;
     canvas.height = bitmap.height;
     const context = canvas.getContext('2d');

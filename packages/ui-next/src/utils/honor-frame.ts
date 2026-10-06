@@ -3,12 +3,16 @@ export interface HonorFrame {
   id: string;
   name: string;
   imageUrl: string;
+  squareImageUrl?: string;
+  circleImageUrl?: string;
+  artworkVersion?: 2;
 }
 
 const AVATAR_SIZES: Record<string, number> = { xs: 16, sm: 26, md: 38, lg: 56, xl: 84 };
 
-export function avatarFrameInset(size: string | number = 'md') {
+export function avatarFrameInset(size: string | number = 'md', version?: number) {
   const pixels = typeof size === 'number' ? size : AVATAR_SIZES[size] ?? 40;
+  if (version === 2) return Number.isFinite(pixels) ? pixels / 6 : 40 / 6;
   return Math.min(10, Math.max(2, Number.isFinite(pixels) ? Math.round(pixels / 10) : 4));
 }
 
