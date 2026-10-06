@@ -75,6 +75,7 @@ async function mount(element: any) {
     };
 }
 const { FilePreviewModal } = component('../src/components/common/file-preview-modal.tsx', {
+    '@/components/common/pdf-viewer': { PdfViewer: () => null },
     '@/components/editor/code-editor': {
         CodeEditor: ({ value, readOnly, onChange }: any) => h('textarea', {
             value, readOnly, onInput: (event: any) => onChange(event.currentTarget.value),

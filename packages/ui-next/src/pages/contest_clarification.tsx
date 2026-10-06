@@ -1,6 +1,6 @@
 import { Badge, Card, Divider, Group, Paper, Stack, Text, Textarea, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
@@ -46,23 +46,28 @@ export default function ContestClarificationPage() {
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const pending = useRef(false);
+  const busy = loading || !!deleteLoading;
 
   const replyTarget = tcdocs.find((doc: any) => String(doc._id) === did);
 
   const chooseBroadcast = () => {
+    if (pending.current) return;
     setMode('broadcast');
     setDid('');
     setContent('');
   };
 
   const chooseReply = (doc: any) => {
+    if (pending.current) return;
     setMode('reply');
     setDid(String(doc._id));
     setContent('');
   };
 
   const submit = async () => {
-    if (!content.trim()) return;
+    if (pending.current || !content.trim()) return;
+    pending.current = true;
     setLoading(true);
     try {
       const res = await fetch(window.location.href, {
@@ -78,16 +83,21 @@ export default function ContestClarificationPage() {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Failed')));
       notifications.show({ title: t('Submitted'), message: '', color: 'green' });
-      chooseBroadcast();
-      navigate(window.location.pathname + window.location.search);
+      setMode('broadcast');
+      setDid('');
+      setContent('');
+      await navigate(window.location.pathname + window.location.search);
     } catch (err: any) {
       notifications.show({ title: err.message || t('Failed'), message: '', color: 'red' });
     } finally {
+      pending.current = false;
       setLoading(false);
     }
   };
 
   const deleteClarification = async (doc: any) => {
+    if (pending.current) return;
+    pending.current = true;
     setDeleteLoading(String(doc._id));
     try {
       const res = await fetch(window.location.href, {
@@ -98,12 +108,17 @@ export default function ContestClarificationPage() {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Failed')));
       notifications.show({ title: t('Deleted'), message: '', color: 'green' });
-      if (did === String(doc._id)) chooseBroadcast();
+      if (did === String(doc._id)) {
+        setMode('broadcast');
+        setDid('');
+        setContent('');
+      }
       setDeleteTarget(null);
-      navigate(window.location.pathname + window.location.search);
+      await navigate(window.location.pathname + window.location.search);
     } catch (err: any) {
       notifications.show({ title: err.message || t('Failed'), message: '', color: 'red' });
     } finally {
+      pending.current = false;
       setDeleteLoading('');
     }
   };
@@ -112,7 +127,7 @@ export default function ContestClarificationPage() {
     <Stack gap="lg">
       <PageHeader title={`${t('Contest Clarifications')} - ${tdoc.title}`}>
         <Group gap="xs">
-          <Button size="xs" onClick={chooseBroadcast}>{t('Send Broadcast Message')}</Button>
+          <Button size="xs" disabled={busy} onClick={chooseBroadcast}>{t('Send Broadcast Message')}</Button>
           <Button component={Link} to="contest_manage" params={{ tid }} size="xs" variant="subtle">{t('Contest Management')}</Button>
         </Group>
       </PageHeader>
@@ -137,7 +152,7 @@ export default function ContestClarificationPage() {
                         </div>
                         <Group gap="xs">
                           {doc.owner ? (
-                            <Button size="compact-xs" variant="light" onClick={() => chooseReply(doc)}>
+                            <Button size="compact-xs" variant="light" disabled={busy} onClick={() => chooseReply(doc)}>
                               {t('Reply')}
                             </Button>
                           ) : (
@@ -148,6 +163,7 @@ export default function ContestClarificationPage() {
                             color="red"
                             variant="subtle"
                             loading={deleteLoading === String(doc._id)}
+                            disabled={busy}
                             onClick={() => setDeleteTarget(doc)}
                           >
                             {t('Delete')}
@@ -185,6 +201,7 @@ export default function ContestClarificationPage() {
               <Stack gap="sm">
                 {mode === 'broadcast' && (
                   <LongSelect
+                    disabled={busy}
                     searchable={false}
                     label={t('Subject')}
                     value={subject}
@@ -196,10 +213,15 @@ export default function ContestClarificationPage() {
                     ]}
                   />
                 )}
-                <Textarea label={t('Content')} value={content} minRows={5} onChange={(event) => setContent(event.currentTarget.value)} />
+                <Textarea
+                  label={t('Content')}
+                  value={content}
+                  minRows={5}
+                  disabled={busy}
+                  onChange={(event) => { if (!pending.current) setContent(event.currentTarget.value); }} />
                 <Group justify="flex-end">
-                  {mode === 'reply' && <Button variant="subtle" onClick={chooseBroadcast}>{t('Cancel')}</Button>}
-                  <Button onClick={submit} loading={loading}>{t('Submit')}</Button>
+                  {mode === 'reply' && <Button variant="subtle" disabled={busy} onClick={chooseBroadcast}>{t('Cancel')}</Button>}
+                  <Button onClick={submit} loading={loading} disabled={busy}>{t('Submit')}</Button>
                 </Group>
               </Stack>
             </Card>

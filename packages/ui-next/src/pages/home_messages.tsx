@@ -42,7 +42,7 @@ function SendMessageDialog({
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
             args: { search: trimmed, limit: 10 },
-            projection: ['_id', 'uname', 'displayName', 'avatar', 'avatarUrl'],
+            projection: ['_id', 'uname', 'displayName', 'avatar', 'avatarUrl', 'honorFrame'],
           }),
           signal: controller.signal,
         });

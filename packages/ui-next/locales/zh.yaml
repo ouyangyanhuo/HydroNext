@@ -21,6 +21,40 @@ Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.: 支持
 __interface: yes
 __langname: 简体中文
 
+# Honor frame management
+Awarded: 已授予
+Enter a valid user ID.: 请输入有效的用户 ID。
+Equip frame: 佩戴
+Equipped: 已佩戴
+Frame artwork: 头像框素材
+Frame artwork must be square, between 64 and 1024 pixels.: 头像框必须为 64 至 1024 像素的正方形图片。
+Frame name: 头像框名称
+Frames are global. Upload as a draft, then publish before awarding to a user.: 头像框全站通用。上传后为未发布状态，发布后即可授予用户。
+Grant frame: 授予头像框
+Grant this frame to {user}?: 确定将此头像框授予 {user} 吗？
+Manage honor frames: 荣誉头像框管理
+Managing awards for: 正在管理以下用户的荣誉
+No available honor frames. Frames are awarded by system administrators.: 暂无可用的荣誉头像框。头像框由系统管理员授予。
+No honor frames found.: 暂无符合条件的头像框。
+Publish: 发布
+Publish this frame so it can be awarded?: 确定发布此头像框，以便授予用户吗？
+Published: 已发布
+Recipient user ID: 获颁用户 ID
+Retry: 重试
+Revoke frame: 撤销头像框
+Revoke this frame from {user}? It will also be unequipped.: 确定撤销 {user} 的此头像框吗？当前佩戴也会被取消。
+Saved: 已保存
+Search frames: 搜索头像框
+Select a user by ID to grant or revoke frames.: 输入并查询用户 ID 后，可以为该用户授予或撤销头像框。
+Transparent square PNG or WebP, 64–1024 px, up to 2 MiB. Leave the center clear.: 支持 64–1024 像素的透明正方形 PNG 或 WebP，最大 2 MiB。请为中间的头像区域留空。
+Unable to process frame artwork.: 无法处理头像框图片，请检查图片是否有效。
+Unequip frame: 取消佩戴
+Unpublish: 停用
+Unpublish this frame? It will stop displaying for all users.: 确定停用此头像框吗？所有用户都将停止展示它。
+Unpublished: 未发布
+Upload artwork, publish frames, and manage user awards across all domains.: 上传与发布头像框，并统一管理所有域中用户的获颁资格。
+Upload frame: 上传头像框
+
 # Code replay
 Replay could not be saved locally. Keep this editor open until submission.: 无法在本地保存回放，请保持编辑器打开，直到完成提交。
 Replay upload failed. Your recording is kept; please retry submission.: 回放上传失败，录制数据已保留，请重试提交。
@@ -820,6 +854,10 @@ Delete Category: 删除分类
 Confirm to delete this category?: 确定删除此分类吗？
 '{0} ranked users': '{0} 名参赛者参与排名'
 Change Email: 修改邮箱
+
+# File preview and upload
+Failed to load PDF: PDF 加载失败
+'{count} files uploaded. Upload stopped at {name}; remaining files were not uploaded.': '已上传 {count} 个文件。在 {name} 处停止，剩余文件尚未上传。'
 
 # Theme
 Theme color: 主题色

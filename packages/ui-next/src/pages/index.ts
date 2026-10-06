@@ -76,6 +76,7 @@ registerPage('home_domain_create', () => import('./domain_create'), { title: 'Cr
 registerPage('domain_join', () => import('./domain_join'), { title: 'Join Domain' });
 registerPage('domain_join_applications', () => import('./domain_join_applications'), { title: 'Join Applications' });
 registerPage('manage_dashboard', () => import('./manage_dashboard'), { title: 'Manage' });
+registerPage('manage_honor_frames', () => import('./manage_honor_frames'), { title: 'Manage honor frames' });
 registerPage('manage_setting', () => import('./manage_setting'), { title: 'System Settings' });
 registerPage('manage_config', () => import('./manage_config'), { title: 'Configuration' });
 registerPage('manage_script', () => import('./manage_script'), { title: 'Scripts' });

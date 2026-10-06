@@ -2,6 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { uploadForm, validateUploadFiles } from '@/utils/file-upload';
 import { useI18n } from './use-i18n';
 
+export interface PartialUploadResult {
+  results: any[];
+  uploaded: string[];
+  remaining: string[];
+  error: string;
+}
+
 interface UploadOptions {
   action: string;
   accept?: readonly string[];
@@ -11,11 +18,12 @@ interface UploadOptions {
   sequential?: boolean;
   onComplete?: (result: any) => void;
   onError?: (message: string) => void;
+  onPartialComplete?: (result: PartialUploadResult) => void;
 }
 
 export function useFileUpload({
   action, accept = [], multiple = false, maxSize = 100 * 1024 * 1024,
-  fields = {}, sequential = false, onComplete, onError,
+  fields = {}, sequential = false, onComplete, onError, onPartialComplete,
 }: UploadOptions) {
   const { t } = useI18n();
   const [uploading, setUploading] = useState(false);
@@ -46,9 +54,9 @@ export function useFileUpload({
     setUploading(true);
     setProgress(0);
     setError('');
+    const results: any[] = [];
     try {
       const batches = sequential ? files.map((file) => [file]) : [files];
-      const results: any[] = [];
       for (const [index, batch] of batches.entries()) {
         if (controller.signal.aborted) return;
         const body = new FormData();
@@ -70,6 +78,16 @@ export function useFileUpload({
       const message = err?.message || t('Upload failed');
       setError(message);
       onError?.(message);
+      // Earlier per-file requests have already committed; they cannot be rolled
+      // back by a later failure. Let lists reconcile without reporting success.
+      if (sequential && results.length && results.length < files.length) {
+        onPartialComplete?.({
+          results,
+          uploaded: files.slice(0, results.length).map((file) => file.name),
+          remaining: files.slice(results.length).map((file) => file.name),
+          error: message,
+        });
+      }
     } finally {
       request.current = null;
       if (mounted.current) {

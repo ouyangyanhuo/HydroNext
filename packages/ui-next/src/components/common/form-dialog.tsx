@@ -1,5 +1,5 @@
-import { Avatar, Group, Modal, NumberInput, Paper, PasswordInput, ScrollArea, Stack, Text, Textarea, TextInput } from '@mantine/core';
-import { useEffect, useRef, useState } from 'react';
+import { Avatar, Group, Modal, type ModalProps, NumberInput, Paper, PasswordInput, ScrollArea, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Button, UnstyledButton } from '@/components/common/button';
 import { LongSelect } from '@/components/common/select';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -161,6 +161,8 @@ export interface FormDialogProps {
   cancelLabel?: string;
   loading?: boolean;
   error?: string;
+  children?: ReactNode;
+  size?: ModalProps['size'];
 }
 
 function FormDialogContent({
@@ -173,6 +175,8 @@ function FormDialogContent({
   cancelLabel,
   loading = false,
   error,
+  children,
+  size = 'md',
 }: FormDialogProps) {
   const { t } = useI18n();
   const pending = useRef(false);
@@ -207,9 +211,9 @@ function FormDialogContent({
   return (
     <Modal
       opened={opened}
-      onClose={() => { if (!busy) onClose(); }}
+      onClose={() => { if (!busy && !pending.current) onClose(); }}
       title={title}
-      size="md"
+      size={size}
       closeOnClickOutside={!busy}
       closeOnEscape={!busy}
       closeButtonProps={{ disabled: busy }}
@@ -293,9 +297,10 @@ function FormDialogContent({
               />
             );
           })}
+          {children}
           {(error || submitError) && <Text size="xs" c="red" role="alert">{error || submitError}</Text>}
           <Group justify="flex-end" gap="xs">
-            <Button variant="default" size="xs" onClick={onClose} disabled={busy}>
+            <Button variant="default" size="xs" onClick={() => { if (!pending.current) onClose(); }} disabled={busy}>
               {cancelLabel ?? t('Cancel')}
             </Button>
             <Button type="submit" size="xs" disabled={!canSubmit} loading={busy}>

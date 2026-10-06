@@ -1,6 +1,7 @@
 import { Paper, Progress, Stack, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useRef, useState } from 'react';
-import { useFileUpload } from '@/hooks/use-file-upload';
+import { type PartialUploadResult, useFileUpload } from '@/hooks/use-file-upload';
 import { useI18n } from '@/hooks/use-i18n';
 
 interface FileDropzoneProps {
@@ -11,6 +12,7 @@ interface FileDropzoneProps {
   maxSize?: number;
   onComplete?: (result: any) => void;
   onError?: (error: string) => void;
+  onPartialComplete?: (result: PartialUploadResult) => void;
 }
 
 export function FileDropzone({ multiple = true, accept = [], ...options }: FileDropzoneProps) {
@@ -18,7 +20,24 @@ export function FileDropzone({ multiple = true, accept = [], ...options }: FileD
   const input = useRef<HTMLInputElement>(null);
   const depth = useRef(0);
   const [dragging, setDragging] = useState(false);
-  const { upload, uploading, progress, error } = useFileUpload({ ...options, multiple, accept, sequential: true });
+  const { upload, uploading, progress, error } = useFileUpload({
+    ...options,
+    multiple,
+    accept,
+    sequential: true,
+    onPartialComplete: (result) => {
+      // The notification survives SPA list refreshes, unlike the inline error.
+      notifications.show({
+        title: t('Upload failed'),
+        message: `${t('{count} files uploaded. Upload stopped at {name}; remaining files were not uploaded.', {
+          count: result.uploaded.length, name: result.remaining[0],
+        })} ${result.error}`,
+        color: 'orange',
+        autoClose: false,
+      });
+      options.onPartialComplete?.(result);
+    },
+  });
   const choose = () => { if (!uploading) input.current?.click(); };
 
   return (

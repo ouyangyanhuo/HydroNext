@@ -1,13 +1,13 @@
-import { Badge, Group, Modal, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Badge, Group, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import yaml from 'js-yaml';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
+import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
-import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 
@@ -35,58 +35,108 @@ function makeBalloonDraft(tdoc: any) {
 export default function ContestBalloonPage() {
   const { args } = usePageData();
   const { t } = useI18n();
-  const navigate = useNavigate();
-  const tdoc = args.tdoc || {};
-  const bdocs = args.bdocs || args.balloons || [];
-  const pdict = args.pdict || {};
-  const udict = args.udict || {};
+  const [data, setData] = useState(args);
+  const tdoc = data.tdoc || {};
+  const bdocs = data.bdocs || data.balloons || [];
+  const pdict = data.pdict || {};
+  const udict = data.udict || {};
   const tid = tdoc.docId || tdoc._id;
   const [opened, setOpened] = useState(false);
   const [draft, setDraft] = useState<Record<string, { color: string, name: string }>>(() => makeBalloonDraft(tdoc));
   const [loading, setLoading] = useState('');
+  const [refreshError, setRefreshError] = useState('');
+  const pending = useRef<AbortController | null>(null);
+
+  const refresh = useCallback(async (signal: AbortSignal) => {
+    const res = await fetch(window.location.href, { headers: { Accept: 'application/json' }, signal });
+    const next = await res.json();
+    if (!res.ok || next.error || !next.tdoc || !Array.isArray(next.bdocs)) {
+      throw new Error(formatErrorMessage(next.error, t('Failed')));
+    }
+    if (!signal.aborted) {
+      setData(next);
+      setRefreshError('');
+    }
+  }, [t]);
+
+  useEffect(() => () => pending.current?.abort(), []);
 
   useEffect(() => {
+    // Opening the editor also aborts an in-flight refresh. Drafts are never
+    // replaced by background navigation or a late refresh response.
+    if (opened || loading) return undefined;
+    let request: AbortController | null = null;
     const beginAt = new Date(tdoc.beginAt).getTime();
     const endAt = new Date(tdoc.endAt).getTime();
     const timer = window.setInterval(() => {
       const now = Date.now();
-      if (beginAt <= now && now <= endAt) navigate(window.location.pathname + window.location.search);
+      if (!(beginAt <= now) || !(now <= endAt) || request || pending.current) return;
+      const controller = new AbortController();
+      request = controller;
+      void refresh(controller.signal).catch((err) => {
+        if (!controller.signal.aborted) setRefreshError(formatErrorMessage(err, t('Failed')));
+      }).finally(() => { request = null; });
     }, 60000);
-    return () => window.clearInterval(timer);
-  }, [navigate, tdoc.beginAt, tdoc.endAt]);
+    return () => {
+      window.clearInterval(timer);
+      request?.abort();
+    };
+  }, [opened, loading, refresh, t, tdoc.beginAt, tdoc.endAt]);
 
   const post = async (payload: Record<string, any>, successMessage: string) => {
+    if (pending.current) return false;
+    const controller = new AbortController();
+    pending.current = controller;
     setLoading(payload.operation);
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Failed')));
+      const result = await res.json();
+      if (!res.ok || result.error) throw new Error(formatErrorMessage(result.error, t('Failed')));
+      if (controller.signal.aborted) return false;
       notifications.show({ title: successMessage, message: '', color: 'green' });
-      navigate(window.location.pathname + window.location.search);
+      // A failed refresh must not turn a successful write into a failed save.
+      try {
+        await refresh(controller.signal);
+      } catch (err: any) {
+        if (!controller.signal.aborted) setRefreshError(formatErrorMessage(err, t('Failed')));
+      }
+      return !controller.signal.aborted;
     } catch (err: any) {
-      notifications.show({ title: err.message || t('Failed'), message: '', color: 'red' });
+      if (!controller.signal.aborted) notifications.show({ title: err.message || t('Failed'), message: '', color: 'red' });
+      return false;
     } finally {
-      setLoading('');
+      pending.current = null;
+      if (!controller.signal.aborted) setLoading('');
     }
   };
 
   const saveColor = async () => {
-    await post({ operation: 'set_color', color: yaml.dump(draft) }, t('Successfully updated.'));
+    if (!await post({ operation: 'set_color', color: yaml.dump(draft) }, t('Successfully updated.'))) return;
+    setData((current) => ({ ...current, tdoc: { ...current.tdoc, balloon: draft } }));
     setOpened(false);
+  };
+
+  const updateDraft = (pid: number, field: 'color' | 'name', value: string) => {
+    setDraft((current) => ({
+      ...current,
+      [pid]: { ...(current[String(pid)] || { color: '#ffffff', name: '' }), [field]: value },
+    }));
   };
 
   return (
     <Stack gap="lg">
       <PageHeader title={`${t('Balloon Status')} - ${tdoc.title}`}>
         <Group gap="xs">
-          <Button size="xs" onClick={() => { setDraft(makeBalloonDraft(tdoc)); setOpened(true); }}>{t('Set Color')}</Button>
+          <Button size="xs" disabled={!!loading} onClick={() => { setDraft(makeBalloonDraft(tdoc)); setOpened(true); }}>{t('Set Color')}</Button>
           <Button component={Link} to="contest_manage" params={{ tid }} size="xs" variant="subtle">{t('Contest Management')}</Button>
         </Group>
       </PageHeader>
+      {refreshError && <Text size="sm" c="red" role="alert">{refreshError}</Text>}
 
       {!tdoc.balloon || Object.keys(tdoc.balloon).length === 0 ? (
         <Paper withBorder p="xl">
@@ -124,6 +174,7 @@ export default function ContestBalloonPage() {
                             size="compact-xs"
                             variant="light"
                             loading={loading === 'done'}
+                            disabled={!!loading}
                             onClick={() => post({ operation: 'done', balloon: bdoc._id }, t('Successfully updated.'))}
                           >
                             {t('Send')}
@@ -158,47 +209,50 @@ export default function ContestBalloonPage() {
         </Paper>
       )}
 
-      <Modal opened={opened} onClose={() => setOpened(false)} title={t('Set Color')} size="lg">
-        <Stack gap="md">
-          <Paper withBorder className="overflow-hidden">
-            <Table>
-              <Table.Thead>
-                <Table.Tr><Table.Th>{t('Problem')}</Table.Th><Table.Th>{t('Color')}</Table.Th><Table.Th>{t('Name')}</Table.Th></Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {(tdoc.pids || []).map((pid: number, index: number) => (
-                  <Table.Tr key={pid}>
-                    <Table.Td><Text size="sm" fw={700}>{alphabetic(index)}</Text></Table.Td>
-                    <Table.Td>
-                      <Group gap="xs" wrap="nowrap">
-                        <input
-                          type="color"
-                          value={draft[String(pid)]?.color || '#ffffff'}
-                          onChange={(event) => setDraft((current) => ({ ...current, [pid]: { ...(current[String(pid)] || { name: '' }), color: event.currentTarget.value } }))}
-                        />
-                        <TextInput
-                          value={draft[String(pid)]?.color || '#ffffff'}
-                          onChange={(event) => setDraft((current) => ({ ...current, [pid]: { ...(current[String(pid)] || { name: '' }), color: event.currentTarget.value } }))}
-                        />
-                      </Group>
-                    </Table.Td>
-                    <Table.Td>
-                      <TextInput
-                        value={draft[String(pid)]?.name || ''}
-                        onChange={(event) => setDraft((current) => ({ ...current, [pid]: { ...(current[String(pid)] || { color: '#ffffff' }), name: event.currentTarget.value } }))}
+      <FormDialog
+        opened={opened}
+        onClose={() => setOpened(false)}
+        title={t('Set Color')}
+        size="lg"
+        fields={[]}
+        onSubmit={saveColor}
+        confirmLabel={t('Save')}
+        loading={!!loading}
+      >
+        <Paper withBorder className="overflow-hidden">
+          <Table>
+            <Table.Thead>
+              <Table.Tr><Table.Th>{t('Problem')}</Table.Th><Table.Th>{t('Color')}</Table.Th><Table.Th>{t('Name')}</Table.Th></Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {(tdoc.pids || []).map((pid: number, index: number) => (
+                <Table.Tr key={pid}>
+                  <Table.Td><Text size="sm" fw={700}>{alphabetic(index)}</Text></Table.Td>
+                  <Table.Td>
+                    <Group gap="xs" wrap="nowrap">
+                      <input
+                        type="color"
+                        value={draft[String(pid)]?.color || '#ffffff'}
+                        onChange={(event) => updateDraft(pid, 'color', event.currentTarget.value)}
                       />
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          </Paper>
-          <Group justify="flex-end">
-            <Button variant="subtle" onClick={() => setOpened(false)}>{t('Cancel')}</Button>
-            <Button onClick={saveColor} loading={loading === 'set_color'}>{t('Save')}</Button>
-          </Group>
-        </Stack>
-      </Modal>
+                      <TextInput
+                        value={draft[String(pid)]?.color || '#ffffff'}
+                        onChange={(event) => updateDraft(pid, 'color', event.currentTarget.value)}
+                      />
+                    </Group>
+                  </Table.Td>
+                  <Table.Td>
+                    <TextInput
+                      value={draft[String(pid)]?.name || ''}
+                      onChange={(event) => updateDraft(pid, 'name', event.currentTarget.value)}
+                    />
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Paper>
+      </FormDialog>
     </Stack>
   );
 }

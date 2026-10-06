@@ -417,6 +417,7 @@ function FileSection({
                 action={filesBaseUrl}
                 fields={{ type }}
                 onComplete={onComplete}
+                onPartialComplete={onComplete}
               />
             </>
           )}

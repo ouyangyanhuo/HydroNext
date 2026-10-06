@@ -53,6 +53,7 @@ interface UserSearchItem {
   displayName?: string;
   avatar?: string;
   avatarUrl?: string;
+  honorFrame?: import('@/utils/honor-frame').HonorFrame | null;
 }
 
 function formatUserLabel(user: UserSearchItem) {
@@ -100,7 +101,7 @@ function AddUserDialogContent({
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
             args: { search: trimmed, limit: 10 },
-            projection: ['_id', 'uname', 'displayName', 'avatar', 'avatarUrl'],
+            projection: ['_id', 'uname', 'displayName', 'avatar', 'avatarUrl', 'honorFrame'],
           }),
           signal: controller.signal,
         });

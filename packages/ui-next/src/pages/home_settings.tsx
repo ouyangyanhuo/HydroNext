@@ -1,7 +1,7 @@
 import { Badge, Card, FileInput, Group, Radio, Stack, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconBuildingCommunity, IconSettings, IconUserCircle } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { SettingsForm } from '@/components/common/settings-form';
 import { Link } from '@/components/link';
@@ -10,6 +10,7 @@ import { HonorFramePanel } from '@/components/user/honor-frame-panel';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { useObjectUrl } from '@/hooks/use-object-url';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
 import { formatErrorMessage } from '@/utils/error';
@@ -54,16 +55,8 @@ export default function HomeSettingsPage() {
   const [avatarType, setAvatarType] = useState(() => initialAvatar.type);
   const [avatarValue, setAvatarValue] = useState(() => initialAvatar.value);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const avatarPreviewUrl = useMemo(
-    () => (avatarType === 'upload' && avatarFile
-      ? URL.createObjectURL(avatarFile)
-      : getAvatarPreviewUrl(avatarType, avatarValue)),
-    [avatarFile, avatarType, avatarValue],
-  );
-
-  useEffect(() => () => {
-    if (avatarPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(avatarPreviewUrl);
-  }, [avatarPreviewUrl]);
+  const uploadedAvatarUrl = useObjectUrl(avatarType === 'upload' ? avatarFile : null);
+  const avatarPreviewUrl = uploadedAvatarUrl || getAvatarPreviewUrl(avatarType, avatarValue);
 
   const handleSubmit = async (payload: Record<string, any>) => {
     setLoading(true);

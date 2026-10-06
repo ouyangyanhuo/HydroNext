@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
+import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
@@ -21,6 +22,7 @@ function formatSize(size?: number) {
 
 export default function TrainingFilesPage() {
   const { args } = usePageData();
+  const navigate = useNavigate();
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const tdoc = args.tdoc || {};
@@ -113,7 +115,8 @@ export default function TrainingFilesPage() {
             <Title order={3} size="h4" mb="md">{t('Upload File')}</Title>
             <FileDropzone
               action={window.location.href}
-              onComplete={() => window.location.reload()}
+              onComplete={() => navigate(window.location.href)}
+              onPartialComplete={() => navigate(window.location.href)}
               onError={setError}
             />
           </Card>

@@ -36,12 +36,13 @@ const { createRoot } = require('react-dom/client');
 const { MantineProvider } = require('@mantine/core');
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
-function component(path: string, mocks: Record<string, any>) {
+function component(path: string, mocks: Record<string, any>, globals: Record<string, any> = {}) {
     const code = transformSync(read(path), { loader: 'tsx', format: 'cjs', jsx: 'automatic' }).code;
     const module = { exports: {} as any };
     runInNewContext(code, {
-        module, exports: module.exports, window: dom.window, URL,
+        module, exports: module.exports, window: dom.window, URL, AbortController, FormData, File,
         require: (id: string) => mocks[id] ?? require(id),
+        ...globals,
     });
     return module.exports;
 }
@@ -182,59 +183,194 @@ test('form dialog handles async rejection, preserves input and blocks duplicate 
 });
 
 let isAdmin = false;
+let sessionUser: any = { ...user, honorFrame: null };
+const notices: any[] = [];
+const t = (key: string) => key;
+let request: (url: string, options?: any) => Promise<any> = async () => ({ frames: [frame], page: 1, pageCount: 1, honorFrame: null });
 const { HonorFramePanel } = component('../src/components/user/honor-frame-panel.tsx', {
     './framed-avatar': { FramedAvatar },
-    '@/components/common/button': { Button: ({ children, disabled }: any) => h('button', { disabled }, children) },
-    '@/hooks/use-current-user': { useCurrentUser: () => user },
-    '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+    '@/components/common/button': {
+        Button: ({ children, disabled, loading, onClick }: any) => h('button', { disabled: disabled || loading, onClick }, children),
+    },
+    '@/components/link': { Link: () => null },
+    '@/hooks/use-build-url': { useBuildUrl: () => () => `/d/${domain}/home/honor-frames` },
+    '@/hooks/use-current-user': { useCurrentUser: () => sessionUser },
+    '@/hooks/use-i18n': { useI18n: () => ({ t }) },
     '@/hooks/use-permission': { PRIV: { PRIV_EDIT_SYSTEM: 1 }, useHasPriv: () => isAdmin },
+    '@/stores/session': { useSessionStore: { setState: (update: any) => { sessionUser = update({ user: sessionUser }).user; } } },
+    '@/utils/honor-frame-api': { requestHonorFrame: (url: string, options: any) => request(url, options) },
+    '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
     '@/utils/avatar': { getAvatarUrl },
 });
 
-test('admin preview is hidden from ordinary users; personal equip action is explicitly unavailable', async () => {
+test('management is hidden from ordinary users and opens the real management entry for admins', async () => {
     const view = await mount(h(HonorFramePanel, { administration: true }));
     try {
         assert.equal(view.host.querySelector('button'), null);
         assert.equal(view.host.querySelector('input'), null);
-        await view.render(h(HonorFramePanel));
+        isAdmin = true;
+        await view.render(h(HonorFramePanel, { administration: true }));
+        assert.equal(view.host.querySelector('button')?.disabled, false);
+        assert.match(view.host.querySelector('button')!.textContent!, /Manage honor frames/);
+        assert.doesNotMatch(view.host.textContent!, /coming soon/);
+    } finally { await view.close(); isAdmin = false; }
+});
+
+test('wardrobe loads owned frames, serializes equip requests, updates the session and supports unequipping', async () => {
+    sessionUser = { ...user, honorFrame: null };
+    let resolve!: (result: any) => void;
+    let writes = 0;
+    request = async (_url, options) => {
+        if (options.method === 'POST') {
+            writes++;
+            return new Promise((done) => { resolve = done; });
+        }
+        return { frames: [frame], page: 1, pageCount: 1, honorFrame: null };
+    };
+    const view = await mount(h(HonorFramePanel));
+    try {
         assert.match(view.host.textContent!, /every domain/);
-        assert.equal(view.host.querySelector('button')?.disabled, true);
-        assert.match(view.host.querySelector('button')!.textContent!, /coming soon/);
+        const equip = Array.from(view.host.querySelectorAll('button')).find((button) => button.textContent === 'Equip frame')!;
+        await act(async () => {
+            equip.click();
+            equip.click();
+        });
+        assert.equal(writes, 1);
+        assert.equal(equip.disabled, true);
+        await act(async () => resolve({ honorFrame: frame }));
+        assert.equal(sessionUser.honorFrame.id, frame.id);
+        assert.ok(Array.from(view.host.querySelectorAll('button')).some((button) => button.textContent === 'Equipped' && button.disabled));
+        const unequip = Array.from(view.host.querySelectorAll('button')).find((button) => button.textContent === 'Unequip frame')!;
+        await act(async () => unequip.click());
+        await act(async () => resolve({ honorFrame: null }));
+        assert.equal(sessionUser.honorFrame, null);
+        assert.equal(writes, 2);
     } finally { await view.close(); }
 });
 
-test('admin preview rejects SVG, stays local, and revokes replaced and unmounted object URLs', async () => {
-    isAdmin = true;
-    const create = URL.createObjectURL;
-    const revoke = URL.revokeObjectURL;
-    const released: string[] = [];
-    let created = 0;
-    URL.createObjectURL = () => `blob:https://oj.example/preview-${++created}`;
-    URL.revokeObjectURL = (url) => released.push(url);
-    const view = await mount(h(HonorFramePanel, { administration: true }));
+test('failed equipping leaves the current frame intact and reports a notification', async () => {
+    request = async (_url, options) => {
+        if (options.method === 'POST') throw new Error('Award was revoked');
+        return { frames: [frame], page: 1, pageCount: 1, honorFrame: null };
+    };
+    const view = await mount(h(HonorFramePanel));
     try {
-        const input = view.host.querySelector('input[type="file"]')!;
-        const choose = async (type: string) => act(async () => {
-            Object.defineProperty(input, 'files', { configurable: true, value: [new dom.window.File(['test'], 'frame', { type })] });
-            input.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+        const equip = Array.from(view.host.querySelectorAll('button')).find((button) => button.textContent === 'Equip frame')!;
+        await act(async () => equip.click());
+        assert.equal(sessionUser.honorFrame, null);
+        assert.equal(equip.disabled, false);
+        assert.equal(notices.at(-1).message, 'Award was revoked');
+    } finally { await view.close(); }
+});
+
+test('closing the wardrobe cancels loading and cannot update the session from a late response', async () => {
+    let signal!: AbortSignal;
+    let resolve!: (result: any) => void;
+    request = async (_url, options) => {
+        signal = options.signal;
+        return new Promise((done) => { resolve = done; });
+    };
+    const view = await mount(h(HonorFramePanel));
+    await view.close();
+    assert.equal(signal.aborted, true);
+    await act(async () => resolve({ frames: [frame], page: 1, pageCount: 1, honorFrame: frame }));
+    assert.equal(sessionUser.honorFrame, null);
+});
+
+test('artwork conversion validates before decoding, caps dimensions, and releases bitmap and canvas resources', async () => {
+    let decoded = 0;
+    let closed = 0;
+    let width = 64;
+    const canvas = {
+        width: 0, height: 0, getContext: () => ({ drawImage() {} }),
+        toBlob: (callback: (blob: Blob) => void) => callback(new Blob(['png'], { type: 'image/png' })),
+    };
+    const { prepareFrameArtwork } = component('../src/utils/honor-frame-api.ts', { './error': { formatErrorMessage } }, {
+        createImageBitmap: async () => {
+            decoded++;
+            return { width, height: width, close: () => closed++ };
+        },
+        document: { createElement: () => canvas },
+    });
+    await assert.rejects(prepareFrameArtwork(new File(['svg'], 'a.svg', { type: 'image/svg+xml' })));
+    assert.equal(decoded, 0);
+    const output = await prepareFrameArtwork(new File(['webp'], 'a.webp', { type: 'image/webp' }));
+    assert.equal(output.type, 'image/png');
+    assert.equal(output.name, 'honor-frame.png');
+    assert.equal(closed, 1);
+    assert.equal(canvas.width, 0);
+    width = 4096;
+    await assert.rejects(prepareFrameArtwork(new File(['png'], 'a.png', { type: 'image/png' })), /square/);
+    assert.equal(closed, 2);
+    assert.equal(canvas.width, 0);
+});
+
+test('management upload preserves failed drafts, posts normalized files and never submits twice', async () => {
+    const sent: any[] = [];
+    const paths: string[] = [];
+    let resolve!: (value: any) => void;
+    let reject!: (value: any) => void;
+    const { default: ManagePage } = component('../src/pages/manage_honor_frames.tsx', {
+        '@/components/common/button': { Button: ({ children, onClick, disabled, loading, type = 'button' }: any) => h('button', {
+            onClick, disabled: disabled || loading, type,
+        }, children) },
+        '@/components/common/confirm-dialog': { ConfirmDialog: () => null },
+        '@/components/common/form-dialog': { FormDialog },
+        '@/components/common/page-header': { PageHeader: ({ children }: any) => h('header', null, children) },
+        '@/components/common/paginator': { Paginator: () => null },
+        '@/components/link': { Link: () => null },
+        '@/components/user/framed-avatar': { FramedAvatar },
+        '@/context/page-data': { usePageData: () => ({ args: { frames: [] } }) },
+        '@/context/router': { useNavigate: () => async (url: string) => { paths.push(url); } },
+        '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/a/manage/honor-frames' },
+        '@/hooks/use-current-user': { useCurrentUser: () => user },
+        '@/hooks/use-i18n': { useI18n: () => ({ t }) },
+        '@/hooks/use-object-url': { useObjectUrl: (file: File | null) => (file ? 'blob:preview' : '') },
+        '@/hooks/use-permission': { PRIV: { PRIV_EDIT_SYSTEM: 1 }, useHasPriv: () => true },
+        '@/utils/avatar': { getAvatarUrl },
+        '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
+        '@/utils/honor-frame-api': {
+            prepareFrameArtwork: async () => new File(['normalized'], 'honor-frame.png', { type: 'image/png' }),
+            requestHonorFrame: async (url: string, options: any) => {
+                sent.push([url, options]);
+                return new Promise((ok, fail) => {
+                    resolve = ok;
+                    reject = fail;
+                });
+            },
+        },
+    });
+    const view = await mount(h(ManagePage));
+    try {
+        const open = Array.from(view.host.querySelectorAll('button')).find((button) => button.textContent === 'Upload frame')!;
+        await act(async () => open.click());
+        const input = document.querySelector<HTMLInputElement>('[role="dialog"] input:not([type="file"]):not([readonly])')!;
+        await act(async () => {
+            Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!.call(input, 'Champion');
+            input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+            const chooser = document.querySelector('input[type="file"]')!;
+            Object.defineProperty(chooser, 'files', {
+                configurable: true,
+                value: [new dom.window.File(['png'], 'source.png', { type: 'image/png' })],
+            });
+            chooser.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
         });
-        await choose('image/svg+xml');
-        assert.equal(created, 0);
-        assert.match(view.host.textContent!, /Choose a PNG or WebP/);
-        await choose('image/png');
-        assert.equal(created, 1);
-        assert.equal(view.host.querySelector('.hydro-avatar-frame__decoration')?.getAttribute('src'), 'blob:https://oj.example/preview-1');
-        await choose('image/webp');
-        assert.equal(created, 2);
-        assert.deepEqual(released, ['blob:https://oj.example/preview-1']);
-        const publish = Array.from(view.host.querySelectorAll('button')).find((button) => button.textContent?.includes('Publish frame'));
-        assert.equal(publish?.disabled, true);
-        assert.doesNotMatch(read('../src/components/user/honor-frame-panel.tsx'), /fetch\(|localStorage|domainId/);
-    } finally {
-        await view.close();
-        URL.createObjectURL = create;
-        URL.revokeObjectURL = revoke;
-        isAdmin = false;
-    }
-    assert.deepEqual(released, ['blob:https://oj.example/preview-1', 'blob:https://oj.example/preview-2']);
+        const form = document.querySelector('[role="dialog"] form')!;
+        await act(async () => {
+            form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
+            form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
+        });
+        assert.equal(sent.length, 1);
+        assert.equal(sent[0][0], '/d/a/manage/honor-frames');
+        assert.equal(sent[0][1].body.get('name'), 'Champion');
+        assert.equal(sent[0][1].body.get('file').name, 'honor-frame.png');
+        await act(async () => reject(new Error('Upload rejected')));
+        assert.equal(input.value, 'Champion');
+        assert.ok(document.querySelector('[role="dialog"]'));
+        assert.equal(notices.at(-1).message, 'Upload rejected');
+        await act(async () => form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
+        assert.equal(sent.length, 2);
+        await act(async () => resolve({ ok: true }));
+        assert.equal(paths.length, 1);
+    } finally { await view.close(); }
 });

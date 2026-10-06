@@ -6,6 +6,7 @@ import { FileDropzone } from '@/components/common/file-dropzone';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { usePageData } from '@/context/page-data';
+import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
@@ -20,6 +21,7 @@ function formatSize(size: number) {
 
 export default function HomeFilesPage() {
   const { args } = usePageData();
+  const navigate = useNavigate();
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const user = useSessionStore((s) => s.user);
@@ -66,7 +68,8 @@ export default function HomeFilesPage() {
       {success && <Text c="green" size="sm">{success}</Text>}
       <FileDropzone
         action={window.location.href}
-        onComplete={() => window.location.reload()}
+        onComplete={() => navigate(window.location.href)}
+        onPartialComplete={() => navigate(window.location.href)}
         onError={setError}
       />
       {files.length === 0 ? (

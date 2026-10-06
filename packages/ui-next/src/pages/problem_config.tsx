@@ -542,6 +542,7 @@ export default function ProblemConfigPage() {
               action={buildUrl('problem_files', { pid })}
               fields={{ type: 'testdata' }}
               onComplete={() => navigate(window.location.href)}
+              onPartialComplete={() => navigate(window.location.href)}
             />
           </Card>
         </Stack>

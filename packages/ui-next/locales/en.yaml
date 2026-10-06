@@ -21,6 +21,40 @@ Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.: Transp
 __interface: yes
 __langname: English
 
+# Honor frame management
+Awarded: Awarded
+Enter a valid user ID.: Enter a valid user ID.
+Equip frame: Equip frame
+Equipped: Equipped
+Frame artwork: Frame artwork
+Frame artwork must be square, between 64 and 1024 pixels.: Frame artwork must be square, between 64 and 1024 pixels.
+Frame name: Frame name
+Frames are global. Upload as a draft, then publish before awarding to a user.: Frames are global. Upload as a draft, then publish before awarding to a user.
+Grant frame: Grant frame
+Grant this frame to {user}?: Grant this frame to {user}?
+Manage honor frames: Manage honor frames
+Managing awards for: Managing awards for
+No available honor frames. Frames are awarded by system administrators.: No available honor frames. Frames are awarded by system administrators.
+No honor frames found.: No honor frames found.
+Publish: Publish
+Publish this frame so it can be awarded?: Publish this frame so it can be awarded?
+Published: Published
+Recipient user ID: Recipient user ID
+Retry: Retry
+Revoke frame: Revoke frame
+Revoke this frame from {user}? It will also be unequipped.: Revoke this frame from {user}? It will also be unequipped.
+Saved: Saved
+Search frames: Search frames
+Select a user by ID to grant or revoke frames.: Select a user by ID to grant or revoke frames.
+Transparent square PNG or WebP, 64–1024 px, up to 2 MiB. Leave the center clear.: Transparent square PNG or WebP, 64–1024 px, up to 2 MiB. Leave the center clear.
+Unable to process frame artwork.: Unable to process frame artwork.
+Unequip frame: Unequip frame
+Unpublish: Unpublish
+Unpublish this frame? It will stop displaying for all users.: Unpublish this frame? It will stop displaying for all users.
+Unpublished: Unpublished
+Upload artwork, publish frames, and manage user awards across all domains.: Upload artwork, publish frames, and manage user awards across all domains.
+Upload frame: Upload frame
+
 # Code replay
 Replay could not be saved locally. Keep this editor open until submission.: Replay could not be saved locally. Keep this editor open until submission.
 Replay upload failed. Your recording is kept; please retry submission.: Replay upload failed. Your recording is kept; please retry submission.
@@ -667,6 +701,10 @@ Confirm to delete this category?: Confirm to delete this category?
 Forgot Password: Forgot Password
 Please contact the administrator: Please contact the administrator
 Change Email: Change Email
+
+# File preview and upload
+Failed to load PDF: Failed to load PDF
+'{count} files uploaded. Upload stopped at {name}; remaining files were not uploaded.': '{count} files uploaded. Upload stopped at {name}; remaining files were not uploaded.'
 
 # Theme
 Theme color: Theme color

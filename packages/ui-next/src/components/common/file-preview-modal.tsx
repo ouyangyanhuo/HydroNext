@@ -2,6 +2,7 @@ import { Group, Image, LoadingOverlay, Modal, ScrollArea, Stack, Text } from '@m
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
+import { PdfViewer } from '@/components/common/pdf-viewer';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
@@ -54,73 +55,6 @@ function isDocx(ext: string) {
 
 function isOldOffice(ext: string) {
   return ['doc', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext);
-}
-
-function PdfViewer({ url }: { url: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [pageCount, setPageCount] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    let loadingTask: { promise: Promise<any>, destroy: () => Promise<void> } | undefined;
-    const container = containerRef.current;
-    if (!container) return undefined;
-    container.innerHTML = '';
-
-    (async () => {
-      try {
-        const pdfjsLib = await import('pdfjs-dist');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-          'pdfjs-dist/build/pdf.worker.min.mjs',
-          import.meta.url,
-        ).toString();
-
-        loadingTask = pdfjsLib.getDocument({ url });
-        const pdf = await loadingTask.promise;
-        if (cancelled) return;
-        setPageCount(pdf.numPages);
-
-        for (let i = 1; i <= pdf.numPages; i++) {
-          if (cancelled) break;
-          const page = await pdf.getPage(i);
-          const scale = 1.5;
-          const viewport = page.getViewport({ scale });
-          const canvas = document.createElement('canvas');
-          canvas.style.display = 'block';
-          canvas.style.width = '100%';
-          canvas.style.height = 'auto';
-          canvas.style.marginBottom = '4px';
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          const ctx = canvas.getContext('2d')!;
-          await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
-          if (!cancelled) container.appendChild(canvas);
-        }
-      } catch (err: any) {
-        if (!cancelled) setError(err?.message || 'Failed to load PDF');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      void loadingTask?.destroy();
-    };
-  }, [url]);
-
-  return (
-    <div style={{ position: 'relative', minHeight: 200 }}>
-      <LoadingOverlay visible={loading} />
-      {pageCount > 0 && (
-        <Text size="xs" c="dimmed" mb="xs">{pageCount} {pageCount === 1 ? 'page' : 'pages'}</Text>
-      )}
-      {error && <Text size="sm" c="red">{error}</Text>}
-      <div ref={containerRef} className="overflow-auto rounded-md border border-[var(--hydro-border)]" style={{ maxHeight: '70vh' }} />
-    </div>
-  );
 }
 
 function DocxViewer({ url }: { url: string }) {

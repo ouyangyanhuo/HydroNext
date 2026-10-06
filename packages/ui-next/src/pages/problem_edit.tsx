@@ -438,6 +438,7 @@ export default function ProblemEditPage() {
                 action={`${domainPrefix}/p/${pid}/files`}
                 fields={{ type: 'additional_file' }}
                 onComplete={() => navigate(window.location.href)}
+                onPartialComplete={() => navigate(window.location.href)}
               />
             </Card>
           )}

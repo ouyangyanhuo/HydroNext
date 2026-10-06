@@ -1,7 +1,8 @@
-import { Checkbox, Group, Modal, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Checkbox, Group, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
+import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
@@ -32,8 +33,11 @@ export default function ContestUserPage() {
   const [uidsText, setUidsText] = useState('');
   const [unrank, setUnrank] = useState(false);
   const [loading, setLoading] = useState('');
+  const pending = useRef(false);
 
   const post = async (payload: Record<string, any>, successMessage: string) => {
+    if (pending.current) return false;
+    pending.current = true;
     setLoading(payload.operation);
     try {
       const res = await fetch(window.location.href, {
@@ -44,10 +48,13 @@ export default function ContestUserPage() {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Failed')));
       notifications.show({ title: successMessage, message: '', color: 'green' });
-      navigate(window.location.pathname + window.location.search);
+      await navigate(window.location.pathname + window.location.search);
+      return true;
     } catch (err: any) {
       notifications.show({ title: err.message || t('Failed'), message: '', color: 'red' });
+      return false;
     } finally {
+      pending.current = false;
       setLoading('');
     }
   };
@@ -58,7 +65,7 @@ export default function ContestUserPage() {
       notifications.show({ title: t('Users'), message: '', color: 'red' });
       return;
     }
-    await post({ operation: 'add_user', uids, unrank }, t('User added.'));
+    if (!await post({ operation: 'add_user', uids, unrank }, t('User added.'))) return;
     setOpened(false);
     setUidsText('');
     setUnrank(false);
@@ -68,7 +75,7 @@ export default function ContestUserPage() {
     <Stack gap="lg">
       <PageHeader title={`${t('Attendee Manage')} - ${tdoc.title}`}>
         <Group gap="xs">
-          <Button size="xs" onClick={() => setOpened(true)}>{t('Add User')}</Button>
+          <Button size="xs" disabled={!!loading} onClick={() => setOpened(true)}>{t('Add User')}</Button>
           <Button component={Link} to="contest_manage" params={{ tid }} size="xs" variant="subtle">{t('Contest Management')}</Button>
         </Group>
       </PageHeader>
@@ -104,11 +111,11 @@ export default function ContestUserPage() {
                   <Table.Td><Text size="xs">{tsdoc.unrank ? t('UnRank') : t('Rank')}</Text></Table.Td>
                   <Table.Td>
                     <Group gap="xs">
-                      <Button size="compact-xs" variant="subtle" loading={loading === 'rank'} onClick={() => post({ operation: 'rank', uid: tsdoc.uid }, t('Ranking status updated.'))}>
+                      <Button size="compact-xs" variant="subtle" disabled={!!loading} loading={loading === 'rank'} onClick={() => post({ operation: 'rank', uid: tsdoc.uid }, t('Ranking status updated.'))}>
                         {tsdoc.unrank ? t('Rank') : t('UnRank')}
                       </Button>
                       {canResume(tdoc, tsdoc) && (
-                        <Button size="compact-xs" variant="light" loading={loading === 'resume'} onClick={() => post({ operation: 'resume', uid: tsdoc.uid }, t('Contest resumed.'))}>
+                        <Button size="compact-xs" variant="light" disabled={!!loading} loading={loading === 'resume'} onClick={() => post({ operation: 'resume', uid: tsdoc.uid }, t('Contest resumed.'))}>
                           {t('Resume')}
                         </Button>
                       )}
@@ -121,22 +128,24 @@ export default function ContestUserPage() {
         </Table>
       </Paper>
 
-      <Modal opened={opened} onClose={() => setOpened(false)} title={t('Add User')}>
-        <Stack gap="md">
-          <TextInput
-            label={t('Users')}
-            description={t('Input user IDs separated by comma or space.')}
-            value={uidsText}
-            onChange={(event) => setUidsText(event.currentTarget.value)}
-            placeholder="1001, 1002"
-          />
-          <Checkbox label={t('UnRank')} checked={unrank} onChange={(event) => setUnrank(event.currentTarget.checked)} />
-          <Group justify="flex-end">
-            <Button variant="subtle" onClick={() => setOpened(false)}>{t('Cancel')}</Button>
-            <Button onClick={addUser} loading={loading === 'add_user'}>{t('Add User')}</Button>
-          </Group>
-        </Stack>
-      </Modal>
+      <FormDialog
+        opened={opened}
+        onClose={() => setOpened(false)}
+        title={t('Add User')}
+        fields={[]}
+        onSubmit={addUser}
+        confirmLabel={t('Add User')}
+        loading={!!loading}
+      >
+        <TextInput
+          label={t('Users')}
+          description={t('Input user IDs separated by comma or space.')}
+          value={uidsText}
+          onChange={(event) => setUidsText(event.currentTarget.value)}
+          placeholder="1001, 1002"
+        />
+        <Checkbox label={t('UnRank')} checked={unrank} onChange={(event) => setUnrank(event.currentTarget.checked)} />
+      </FormDialog>
     </Stack>
   );
 }
