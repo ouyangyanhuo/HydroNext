@@ -46,6 +46,7 @@ export default function HonorFrameOwnersPage() {
     <Card withBorder p="lg" className="hydro-content-card"><Group gap="xl">
       <HonorFramePreview frame={frame} size={48} />
       <Stack gap={6}><Text fw={700}>{frame.name}</Text><Text size="sm" c="dimmed">{t('Owners')}: {args.count || 0}</Text>
+        <Text size="sm" className="hydro-frame-description">{frame.description || t('No description yet.')}</Text>
         <Text size="xs" c="dimmed">{t('Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.')}</Text></Stack>
     </Group></Card>
     <form onSubmit={(event) => {

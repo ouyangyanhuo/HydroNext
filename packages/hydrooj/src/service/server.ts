@@ -64,7 +64,7 @@ export function requireSudo(target: any, funcName: string, obj: any) {
             method: this.request.method,
             referer: this.request.headers.referer,
             args: this.args,
-            redirect: this.request.originalPath,
+            redirect: this.request.originalPath + (this.request.querystring ? `?${this.request.querystring}` : ''),
         };
         this.response.redirect = this.url('user_sudo');
         return 'cleanup';

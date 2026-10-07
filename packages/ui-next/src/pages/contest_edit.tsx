@@ -100,6 +100,9 @@ function AsyncTagSelect({
   data,
   loading,
   withAvatar,
+  withPillsReorder,
+  description,
+  disabled,
   onSearch,
   onChange,
 }: {
@@ -110,6 +113,9 @@ function AsyncTagSelect({
   data: SearchOption[];
   loading: boolean;
   withAvatar?: boolean;
+  withPillsReorder?: boolean;
+  description?: string;
+  disabled?: boolean;
   onSearch: (query: string) => void;
   onChange: (value: string[]) => void;
 }) {
@@ -120,6 +126,9 @@ function AsyncTagSelect({
       placeholder={placeholder}
       data={data}
       value={value}
+      withPillsReorder={withPillsReorder}
+      description={description}
+      disabled={disabled}
       searchable
       clearable
       hidePickedOptions
@@ -192,6 +201,8 @@ export default function ContestEditPage() {
   const files = args.files || tdoc.files || [];
   const langs = languageOptions();
   const selectedProblems = splitValues(form.pids);
+  // Reordering changes the contest order, but not the set of labels to fetch.
+  const problemIdsKey = [...new Set(selectedProblems)].sort().join(',');
   const selectedMaintainers = splitValues(form.maintainer);
 
   const problemData = useMemo(
@@ -205,7 +216,7 @@ export default function ContestEditPage() {
 
   useEffect(() => {
     let disposed = false;
-    const ids = splitValues(form.pids).map((id) => Number(id)).filter((id) => Number.isSafeInteger(id));
+    const ids = splitValues(problemIdsKey).map((id) => Number(id)).filter((id) => Number.isSafeInteger(id));
     if (!domainId || !ids.length) return undefined;
     callApi(domainId, 'problems', { ids }, ['docId', 'pid', 'title'])
       .then((pdocs: any[]) => {
@@ -221,7 +232,7 @@ export default function ContestEditPage() {
       })
       .catch(() => undefined);
     return () => { disposed = true; };
-  }, [domainId, form.pids]);
+  }, [domainId, problemIdsKey]);
 
   useEffect(() => {
     let disposed = false;
@@ -379,14 +390,17 @@ export default function ContestEditPage() {
               <NumberInput label={t('Duration (hours)')} value={form.duration} min={0.25} step={0.5} onChange={(value) => setForm({ ...form, duration: Number(value) || 0 })} />
               <TextInput label={t('End Time')} value={endAt} readOnly />
               <AsyncTagSelect
-                className="sm:col-span-4"
+                className="sm:col-span-4 hydro-contest-problems"
                 label={t('Problems')}
+                description={t('Drag selected problems to reorder, or use Alt + Left/Right.')}
+                withPillsReorder
+                disabled={loading}
                 placeholder={t("Seperated with ','")}
                 value={selectedProblems}
                 data={problemData}
                 loading={problemSearching}
                 onSearch={searchProblems}
-                onChange={(value) => setForm({ ...form, pids: value.join(',') })}
+                onChange={(value) => setForm((current) => ({ ...current, pids: value.join(',') }))}
               />
             </SimpleGrid>
           </Card>

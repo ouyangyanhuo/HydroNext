@@ -2799,15 +2799,27 @@ a {
   padding: 0 24px 24px;
 }
 
+.hydro-user-profile__info-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
 .hydro-user-profile__identity {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
   min-width: 0;
 }
+
+.hydro-user-profile__identity-text { min-width: 0; padding-top: 16px; overflow-wrap: anywhere; }
+.hydro-user-profile__edit { margin-top: 16px; }
 
 .hydro-user-profile__avatar {
   width: 96px;
   height: 96px;
-  margin-top: -42px;
-  z-index: 99;
   flex: 0 0 auto;
   border: 4px solid var(--hydro-surface-raised);
   border-radius: 50%;
@@ -2817,15 +2829,19 @@ a {
 }
 
 .hydro-user-profile__facts {
-  row-gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-top: 22px;
 }
 
 .hydro-user-profile__facts > .mantine-Text-root {
-  min-width: 90px;
-  padding: 8px 10px;
+  min-width: 0;
+  padding: 10px 12px;
   border-radius: var(--hydro-radius-md);
-  background: color-mix(in srgb, var(--hydro-surface-muted) 56%, transparent);
-  line-height: 1.4;
+  background: var(--hydro-surface-muted);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .hydro-user-profile__stat {
@@ -2902,10 +2918,10 @@ a {
 
 @media (max-width: 700px) {
   .hydro-user-profile__info { padding: 0 16px 18px; }
-  .hydro-user-profile__info-layout { flex-direction: column; }
-  .hydro-user-profile__identity { align-items: flex-start; }
-  .hydro-user-profile__avatar { width: 78px; height: 78px; }
-  .hydro-user-profile__facts > .mantine-Text-root { min-width: calc(50% - 8px); }
+  .hydro-user-profile__info-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .hydro-user-profile__identity { gap: 12px; }
+  .hydro-user-profile__edit { justify-self: start; margin-top: 0; }
+  .hydro-user-profile__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 18px; }
   .hydro-security-session { flex-wrap: wrap; }
 }
 
@@ -3287,13 +3303,22 @@ a {
 }
 
 .hydro-user-profile__avatar-slot {
-  margin-top: -42px;
+  position: relative;
+  margin-top: -52px;
+  z-index: 1;
 }
 
 .hydro-user-profile__avatar-slot .hydro-user-profile__avatar {
   margin-top: 0;
   z-index: auto;
 }
+
+.hydro-frame-description { white-space: pre-wrap; overflow-wrap: anywhere; }
+.hydro-frame-card__description { width: 100%; margin-top: 4px; padding: 8px; border-radius: 8px; }
+.hydro-frame-card__description:hover { background: var(--hydro-surface-muted); }
+.hydro-frame-description-popover { background: var(--hydro-surface-raised); color: var(--hydro-text); border-color: var(--hydro-border); max-width: calc(100vw - 32px); }
+.hydro-frame-owned-card { transition: border-color 160ms ease; }
+.hydro-frame-owned-card:hover, .hydro-frame-owned-card:focus-visible { border-color: var(--hydro-primary); }
 
 .hydro-topbar-user-button {
   display: inline-flex;

@@ -10,8 +10,10 @@ export async function requestHonorFrame(url: string, init: RequestInit = {}, fal
   }
   if (!response.ok || !data || data.error) {
     const params = data?.error?.params;
-    if (['circle', 'square'].includes(params?.[0]) && typeof params?.[2] === 'string') {
-      throw Object.assign(new Error(params[2]), { frameShape: params[0] });
+    if (params?.length === 3 && typeof params[2] === 'string') {
+      throw Object.assign(new Error(params[2]), {
+        ...(['circle', 'square'].includes(params[0]) ? { frameShape: params[0] } : {}),
+      });
     }
     throw new Error(formatErrorMessage(data?.error, fallback));
   }

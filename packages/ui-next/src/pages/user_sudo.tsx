@@ -1,7 +1,7 @@
 import { Group, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconKey, IconLock } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { verifyWithWebAuthn } from '@/components/auth/authenticator';
 import { Button } from '@/components/common/button';
 import { usePageData } from '@/context/page-data';
@@ -10,6 +10,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
+import { completeSudoVerification } from '@/utils/sudo';
 
 export default function UserSudoPage() {
   const { args } = usePageData();
@@ -17,7 +18,8 @@ export default function UserSudoPage() {
   const navigate = useNavigate();
   const buildUrl = useBuildUrl();
   const user = useSessionStore((state) => state.user);
-  const redirect = args.redirect || buildUrl('homepage');
+  const redirect = args.redirect;
+  const pending = useRef(false);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [method, setMethod] = useState<'password' | 'tfa'>(() => (user?.tfa ? 'tfa' : 'password'));
@@ -25,6 +27,8 @@ export default function UserSudoPage() {
   const [authnLoading, setAuthnLoading] = useState(false);
 
   const submitVerification = async (payload: Record<string, any>) => {
+    if (pending.current) return;
+    pending.current = true;
     setLoading(true);
     try {
       const res = await fetch(window.location.href, {
@@ -34,9 +38,11 @@ export default function UserSudoPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (data.error) notifications.show({ title: formatErrorMessage(data.error, t('Failed')), message: '', color: 'red' });
-      else navigate(data.redirect || redirect);
-    } catch { notifications.show({ title: t('Network error'), message: '', color: 'red' }); } finally { setLoading(false); }
+      if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, 'Verification failed'));
+      await navigate(await completeSudoVerification(data, redirect, window.location.href));
+    } catch (err: any) {
+      notifications.show({ title: t('Operation failed'), message: t(err?.message || 'Network error'), color: 'red' });
+    } finally { pending.current = false; setLoading(false); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +51,7 @@ export default function UserSudoPage() {
   };
 
   const handleWebAuthn = async () => {
+    if (authnLoading || loading) return;
     setAuthnLoading(true);
     try {
       const authnChallenge = await verifyWithWebAuthn(t, '', buildUrl('user_webauthn'));
@@ -68,19 +75,21 @@ export default function UserSudoPage() {
                 variant="light"
                 leftSection={<IconKey size={16} />}
                 loading={authnLoading}
+                disabled={loading}
                 onClick={handleWebAuthn}
               >
                 {t('Use Authenticator')}
               </Button>
             )}
             {user?.tfa && (
-              <Button variant={method === 'tfa' ? 'filled' : 'light'} onClick={() => setMethod('tfa')}>
+              <Button variant={method === 'tfa' ? 'filled' : 'light'} disabled={loading || authnLoading} onClick={() => setMethod('tfa')}>
                 {t('Use TFA Code')}
               </Button>
             )}
             <Button
               variant={method === 'password' ? 'filled' : 'light'}
               leftSection={<IconLock size={16} />}
+              disabled={loading || authnLoading}
               onClick={() => setMethod('password')}
             >
               {t('Use Password')}
@@ -102,7 +111,7 @@ export default function UserSudoPage() {
             ) : (
               <PasswordInput label={t('Password')} value={password} onChange={(e) => setPassword(e.currentTarget.value)} required autoFocus />
             )}
-            <Button type="submit" fullWidth loading={loading}>{t('Confirm')}</Button>
+            <Button type="submit" fullWidth loading={loading} disabled={authnLoading}>{t('Confirm')}</Button>
           </Stack>
         </form>
       </Paper>

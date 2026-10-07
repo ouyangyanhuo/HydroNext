@@ -33,6 +33,7 @@ function UserMenu() {
   const user = useCurrentUser();
   const { t } = useI18n();
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
+  const isRoot = useHasPriv(PRIV.PRIV_ALL);
 
   return (
     <Menu shadow="md" width={220} position="bottom-end" classNames={{ dropdown: 'hydro-topbar-dropdown' }}>
@@ -59,9 +60,9 @@ function UserMenu() {
         <Menu.Item component={Link} to="home_security">
           {t('Security')}
         </Menu.Item>
-        <Menu.Item component={Link} to="home_files">
+        {isRoot && <Menu.Item component={Link} to="home_files">
           {t('My Files')}
-        </Menu.Item>
+        </Menu.Item>}
         <Menu.Divider />
         <Menu.Item component={Link} to="home_domain">
           {t('My Domains')}

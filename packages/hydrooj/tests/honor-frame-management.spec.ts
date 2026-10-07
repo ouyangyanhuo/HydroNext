@@ -5,11 +5,13 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
+import { PNG } from 'pngjs';
+import { normalizeHonorFrameImage } from '../src/lib/honor-frame-image.ts';
 
 const require = createRequire(import.meta.url);
 const id = new ObjectId('1234567890abcdef12345678');
 function fixture() {
-    const frame = { _id: id, name: 'Award', active: true, artworkVersion: 2, deleted: false };
+    const frame = { _id: id, name: 'Award', active: true, artworkVersion: 2, deleted: false, artworkRevision: undefined as string | undefined };
     const queries: any[] = [];
     const projections: any[] = [];
     const limits: number[] = [];
@@ -18,6 +20,15 @@ function fixture() {
     const events: string[] = [];
     let removed = false;
     let storageFails = false;
+    let writeFails = false;
+    let databaseFails = false;
+    let conflict = false;
+    const stored: string[] = [];
+    const uniqueness: any[][] = [];
+    const image = new PNG({ width: 512, height: 512 });
+    image.data.fill(0);
+    image.data[3] = 255;
+    const png = PNG.sync.write(image);
     let data: any[] = [{ _id: 2, uname: 'Student', avatar: '', honorFrameId: id.toHexString() }];
     let hasOwners = false;
     const cursor = {
@@ -38,14 +49,23 @@ function fixture() {
         },
     };
     const mocks = {
+        'fs/promises': { readFile: async () => png },
         '../context': {}, '../error': { NotFoundError: Error, UserNotFoundError: Error, ValidationError: Error },
-        '../lib/honor-frame-image': {}, '../lib/honor-frame-user': {},
+        '../lib/honor-frame-image': { normalizeHonorFrameImage, MAX_FRAME_BYTES: 2 * 1024 * 1024 }, '../lib/honor-frame-user': {},
+        '../lib/honor-frame-catalog': {
+            assertUniqueFrame: async (...args: any[]) => { uniqueness.push(args); },
+            frameNameKey: (value: string) => value.toLowerCase(), frameDuplicateError: (error: any) => error,
+            frameArtworkHash: () => 'new-hash', readArtwork: async (path: string) => { paths.push(path); return png; },
+        },
         '../model/builtin': { PRIV: { PRIV_EDIT_SYSTEM: 1 } },
         '../model/honor-frame': {
             coll: {
-                findOne: async () => removed ? null : frame, countDocuments: async () => 13,
+                findOne: async (query: any) => removed || (query.deleted?.$ne && frame.deleted) ? null : { ...frame },
+                countDocuments: async () => 13,
                 find: (query: any) => { queries.push(query); return cursor; },
                 updateOne: async (query: any, update: any) => {
+                    if (databaseFails) throw new Error('Database unavailable');
+                    if (conflict) return { matchedCount: 0 };
                     if (query.deleted?.$ne && frame.deleted) return { matchedCount: 0 };
                     events.push('frame');
                     updates.push(update);
@@ -54,11 +74,15 @@ function fixture() {
                 },
                 deleteOne: async () => { events.push('remove'); removed = true; },
             },
-            framePath: (value: string, shape?: string) => `${value}/${shape || 'legacy'}`,
-            publicFrame: (doc: any) => ({ id: doc._id.toHexString(), name: doc.name }),
+            framePath: (value: string, shape?: string, revision?: string) => `${value}/${revision ? `${revision}/` : ''}${shape || 'legacy'}`,
+            publicFrame: (doc: any) => ({ id: doc._id.toHexString(), name: doc.name, description: doc.description || '' }),
         },
         '../model/oplog': { log: async () => {} },
         '../model/storage': {
+            put: async (path: string) => {
+                stored.push(path);
+                if (writeFails && stored.length % 2 === 0) throw new Error('Artwork write failed');
+            },
             get: async (path: string) => { paths.push(path); return Buffer.from('png'); },
             del: async (values: string[]) => {
                 events.push('storage');
@@ -77,10 +101,15 @@ function fixture() {
     const handler = (name: string) => {
         const instance = new module.exports[name]();
         instance.response = { addHeader() {} };
-        instance.user = { hasPriv: () => false };
+        instance.user = { _id: 1, hasPriv: () => false };
+        instance.request = { files: {} };
+        instance.limitRate = async () => {};
         return instance;
     };
-    return { handler, queries, projections, limits, paths, updates, frame, events,
+    return { handler, queries, projections, limits, paths, updates, frame, events, stored, uniqueness,
+        setWriteFails: (value: boolean) => { writeFails = value; },
+        setDatabaseFails: (value: boolean) => { databaseFails = value; },
+        setConflict: (value: boolean) => { conflict = value; },
         setStorageFails: (value: boolean) => { storageFails = value; },
         setData: (value: any[]) => { data = value; }, setOwners: (value: boolean) => { hasOwners = value; } };
 }
@@ -90,8 +119,121 @@ test('rename and status update only the intended field, avoiding stale card over
     const handler = api.handler('ManageHonorFramesHandler');
     await handler.postRename('domain-a', id, ' Renamed ');
     await handler.postStatus('domain-b', id, false);
-    assert.equal(JSON.stringify(api.updates), JSON.stringify([{ $set: { name: 'Renamed' } }, { $set: { active: false } }]));
+    assert.equal(JSON.stringify(api.updates), JSON.stringify([{ $set: { name: 'Renamed', nameKey: 'renamed' } }, { $set: { active: false } }]));
     await assert.rejects(handler.postRename('domain-a', id, ' '));
+});
+
+test('frame descriptions can be maintained by the admin and reach the owners page without changing publication', async () => {
+    const api = fixture();
+    const handler = api.handler('ManageHonorFramesHandler');
+    await handler.postDescription('a', id, '  Awarded for completing the training.  ');
+    const owners = api.handler('HonorFrameOwnersHandler');
+    await owners.get('b', id);
+    assert.equal(owners.response.body.frame.description, 'Awarded for completing the training.');
+    assert.equal(api.frame.active, true);
+    assert.equal(api.frame.name, 'Award');
+    await assert.rejects(handler.postDescription('a', id, 'x'.repeat(2001)));
+    assert.equal(api.updates.length, 1);
+});
+
+test('edit form loads the global frame and metadata edits preserve ownership, status and artwork', async () => {
+    const api = fixture();
+    const page = api.handler('UploadHonorFrameHandler');
+    await page.get('another-domain', id);
+    assert.equal(page.response.body.frame.name, 'Award');
+    const handler = api.handler('ManageHonorFramesHandler');
+    await handler.postEdit('another-domain', id, ' Renamed ', ' Updated description ');
+    assert.equal(api.frame.name, 'Renamed');
+    assert.equal((api.frame as any).description, 'Updated description');
+    assert.equal(api.frame.active, true);
+    assert.equal(api.frame._id, id);
+    assert.equal(api.frame.artworkVersion, 2);
+    assert.equal(api.stored.length, 0);
+    assert.equal(api.queries.length, 0, 'ownership is not rewritten');
+    assert.equal(api.uniqueness[0][2], id);
+    await assert.rejects(handler.postEdit('a', id, '', ''));
+    await assert.rejects(handler.postEdit('a', id, 'Name', 'x'.repeat(2001)));
+});
+
+test('replacing one shape stages a complete new pair and image and deletion routes use its revision', async () => {
+    const api = fixture();
+    const handler = api.handler('ManageHonorFramesHandler');
+    handler.request.files = { square: { filepath: '/square.png', size: 1000 } };
+    await handler.postEdit('a', id, 'Award', 'New artwork');
+    const revision = api.frame.artworkRevision;
+    assert.match(revision!, /^[a-f0-9]{24}$/);
+    assert.deepEqual(api.stored, [`${id}/${revision}/square`, `${id}/${revision}/circle`]);
+    assert.deepEqual(api.paths, [`${id}/circle`, `${id}/square`, `${id}/circle`]);
+    assert.equal(api.uniqueness[0][1], 'new-hash');
+    assert.equal(api.uniqueness[0][2], id);
+    await api.handler('HonorFrameImageHandler').get('b', id, 'circle');
+    assert.equal(api.paths.at(-1), `${id}/${revision}/circle`);
+    await handler.postDelete('b', id);
+    assert.deepEqual(api.paths.slice(-2), [`${id}/${revision}/square`, `${id}/${revision}/circle`]);
+});
+
+test('failed storage, database writes and concurrent edits clean only staged files and preserve the live frame', async () => {
+    for (const failure of ['storage', 'database', 'concurrent']) {
+        const api = fixture();
+        const handler = api.handler('ManageHonorFramesHandler');
+        handler.request.files = {
+            square: { filepath: '/square.png', size: 1000 }, circle: { filepath: '/circle.png', size: 1000 },
+        };
+        if (failure === 'storage') api.setWriteFails(true);
+        if (failure === 'database') api.setDatabaseFails(true);
+        if (failure === 'concurrent') api.setConflict(true);
+        // eslint-disable-next-line no-await-in-loop
+        await assert.rejects(handler.postEdit('a', id, 'New name', 'New description'));
+        assert.equal(api.frame.name, 'Award');
+        assert.equal(api.frame.artworkRevision, undefined);
+        assert.deepEqual(api.paths, api.stored);
+        assert.ok(api.paths.every((path) => ![`${id}/square`, `${id}/circle`].includes(path)));
+    }
+});
+
+test('oversized artwork is rejected before storage and deleted frames cannot be edited or loaded', async () => {
+    const api = fixture();
+    const handler = api.handler('ManageHonorFramesHandler');
+    handler.request.files = { circle: { filepath: '/circle.png', size: 3 * 1024 * 1024 } };
+    await assert.rejects(handler.postEdit('a', id, 'Award', ''));
+    assert.equal(api.stored.length, 0);
+    api.frame.deleted = true;
+    await assert.rejects(handler.postEdit('a', id, 'Award', ''));
+    await assert.rejects(api.handler('UploadHonorFrameHandler').get('a', id));
+});
+
+test('updated artwork URLs vary by revision and legacy frame storage paths remain compatible', () => {
+    const module = { exports: {} as any };
+    const source = readFileSync(new URL('../src/model/honor-frame.ts', import.meta.url), 'utf8');
+    runInNewContext(transformSync(source, { loader: 'ts', format: 'cjs' }).code, {
+        module, exports: module.exports,
+        require: (name: string) => name === '../service/db' ? { collection: () => ({}) } : require(name),
+    });
+    const { publicFrame, framePath } = module.exports;
+    const frame = { _id: id, name: 'Award', artworkVersion: 2 };
+    const before = publicFrame(frame);
+    const after = publicFrame({ ...frame, artworkRevision: 'revision1' });
+    assert.equal(before.squareImageUrl, `/honor-frame/${id}/square.png`);
+    for (const key of ['squareImageUrl', 'circleImageUrl', 'imageUrl']) assert.equal(after[key], `${before[key]}?v=revision1`);
+    assert.equal(after.id, before.id);
+    assert.equal(framePath(id.toHexString()), `honor-frame/${id}.png`);
+    assert.equal(framePath(id.toHexString(), 'square'), `honor-frame/${id}-square.png`);
+    assert.equal(framePath(id.toHexString(), 'square', 'revision1'), `honor-frame/${id}-revision1-square.png`);
+});
+
+test('legacy artwork can keep its old format for metadata edits, but replacement requires a complete pair', async () => {
+    const api = fixture();
+    delete (api.frame as any).artworkVersion;
+    const handler = api.handler('ManageHonorFramesHandler');
+    await handler.postEdit('a', id, 'Legacy', 'Description only');
+    assert.equal(api.frame.artworkVersion, undefined);
+    handler.request.files = { square: { filepath: '/square.png', size: 1000 } };
+    await assert.rejects(handler.postEdit('a', id, 'Legacy', ''));
+    assert.equal(api.stored.length, 0);
+    handler.request.files.circle = { filepath: '/circle.png', size: 1000 };
+    await handler.postEdit('a', id, 'Legacy', 'Updated pair');
+    assert.equal(api.frame.artworkVersion, 2);
+    assert.equal(api.paths.at(-1), `${id}/legacy`);
 });
 
 test('frame search matches literal partial names and includes disabled frames with an explicit flag', async () => {

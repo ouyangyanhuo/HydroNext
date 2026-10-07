@@ -12,6 +12,10 @@ const require = createRequire(import.meta.url);
 const id = '1234567890abcdef12345678';
 const otherId = 'abcdef1234567890abcdef12';
 function load(path: string, mocks: Record<string, any>) {
+    mocks['../lib/honor-frame-catalog'] ||= {
+        assertUniqueFrame: async () => {}, frameNameKey: (name: string) => name.trim().toLowerCase(),
+        frameArtworkHash: () => 'hash', frameDuplicateError: (error: any) => error,
+    };
     const code = transformSync(readFileSync(new URL(path, import.meta.url), 'utf8'), {
         loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } },
     }).code;
@@ -74,11 +78,22 @@ test('bulk ownership operations are bounded, global, conditional and leave other
     let count = 2;
     let active = true;
     let invalidations = 0;
+    let checkingGrant = false;
     const module = load('../src/lib/honor-frame-user.ts', {
         '../error': { ValidationError: Error },
         '../model/honor-frame': { coll: { findOne: async () => ({ active }) } },
         '../model/user': { __esModule: true, default: { coll: {
-            countDocuments: async () => count,
+            countDocuments: async (query: any) => {
+                if (!query.honorFrameIds) {
+                    checkingGrant = true;
+                    return count;
+                }
+                if (checkingGrant) {
+                    checkingGrant = false;
+                    return 0;
+                }
+                return count;
+            },
             updateMany: async (query: any, update: any) => { writes.push([query, update]); return { matchedCount: count }; },
         } }, deleteUserCache: () => invalidations++ },
     });
@@ -86,7 +101,7 @@ test('bulk ownership operations are bounded, global, conditional and leave other
         .map((invalid) => assert.rejects(module.manageHonorFrameOwners(id, invalid, 'equip'))));
     assert.equal(writes.length, 0);
     await module.manageHonorFrameOwners(id, [1, 2, 2], 'grant');
-    assert.equal(JSON.stringify(writes[0][0]), JSON.stringify({ _id: { $in: [1, 2] } }));
+    assert.equal(JSON.stringify(writes[0][0]), JSON.stringify({ _id: { $in: [1, 2] }, honorFrameIds: { $ne: id } }));
     await module.manageHonorFrameOwners(id, [1, 2], 'equip');
     assert.equal(writes[1][0].honorFrameIds, id);
     assert.equal(writes[1][1].$set.honorFrameId, id);
@@ -116,6 +131,20 @@ test('frame artwork is decoded, normalized and checked for transparency', () => 
     assert.throws(() => normalizeHonorFrameImage(PNG.sync.write(empty)), /visible/);
 });
 
+test('a batch with an already awarded recipient is rejected before changing any user', async () => {
+    let writes = 0;
+    const module = load('../src/lib/honor-frame-user.ts', {
+        '../error': { ValidationError: Error },
+        '../model/honor-frame': { coll: { findOne: async () => ({ active: true }) } },
+        '../model/user': { __esModule: true, default: { coll: {
+            countDocuments: async (query: any) => query.honorFrameIds ? 1 : 2,
+            updateMany: async () => { writes++; },
+        } }, deleteUserCache() {} },
+    });
+    await assert.rejects(module.manageHonorFrameOwners(id, [42, 43], 'grant'));
+    assert.equal(writes, 0);
+});
+
 for (const action of ['grant', 'equip', 'bulk-grant', 'bulk-equip']) {
     test(`${action} repairs ownership when deletion races between validation and the user write`, async () => {
         let reads = 0;
@@ -125,7 +154,7 @@ for (const action of ['grant', 'equip', 'bulk-grant', 'bulk-equip']) {
             '../error': { ValidationError: Error, UserNotFoundError: Error },
             '../model/honor-frame': { coll: { findOne: async () => ++reads === 1 ? { active: true } : { active: false, deleted: true } } },
             '../model/user': { __esModule: true, default: { coll: {
-                countDocuments: async () => 1,
+                countDocuments: async (query: any) => action === 'bulk-grant' && query.honorFrameIds === id ? 0 : 1,
                 findOneAndUpdate: async (query: any, update: any) => { writes.push([query, update]); return { _id: 42 }; },
                 updateMany: async (query: any, update: any) => { writes.push([query, update]); return { matchedCount: 1 }; },
             } }, deleteUserCache: () => invalidations++ },
@@ -168,9 +197,12 @@ function fixture() {
     let invalidations = 0;
     const frames = { findOne: async (query: any) => (active && query._id.toHexString() === id ? { _id: new ObjectId(id), active } : null) };
     const coll = {
+        findOne: async (query: any) => query._id === doc._id ? doc : null,
         findOneAndUpdate: async (query: any, update: any) => {
             assert.ok(!('domainId' in query));
-            if (query._id !== doc._id || (query.honorFrameIds && !doc.honorFrameIds.includes(query.honorFrameIds))) return null;
+            if (query._id !== doc._id) return null;
+            if (typeof query.honorFrameIds === 'string' && !doc.honorFrameIds.includes(query.honorFrameIds)) return null;
+            if (query.honorFrameIds?.$ne && doc.honorFrameIds.includes(query.honorFrameIds.$ne)) return null;
             if (Array.isArray(update)) {
                 assert.ok(update[0].$set.honorFrameIds.$setDifference);
                 assert.ok(update[0].$set.honorFrameId.$cond);
@@ -191,11 +223,11 @@ function fixture() {
     return { ...operations, doc, frames, disable: () => { active = false; }, invalidations: () => invalidations };
 }
 
-test('awards are idempotent and only active, existing frames can be equipped', async () => {
+test('duplicate awards are rejected and only active, existing frames can be equipped', async () => {
     const api = fixture();
     await assert.rejects(api.equipHonorFrame(42, id));
     await api.grantHonorFrame(42, id);
-    await api.grantHonorFrame(42, id);
+    await assert.rejects(api.grantHonorFrame(42, id));
     assert.deepEqual(api.doc.honorFrameIds, [id]);
     await api.equipHonorFrame(42, id);
     assert.equal(api.doc.honorFrameId, id);
@@ -207,7 +239,7 @@ test('awards are idempotent and only active, existing frames can be equipped', a
     await assert.rejects(api.grantHonorFrame(42, id));
     await api.equipHonorFrame(42, '');
     assert.equal(api.doc.honorFrameId, '');
-    assert.equal(api.invalidations(), 4);
+    assert.equal(api.invalidations(), 3);
 });
 
 test('revocation and equipping cannot race to restore a revoked frame', async () => {

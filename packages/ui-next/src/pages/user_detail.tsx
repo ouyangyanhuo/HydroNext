@@ -65,8 +65,8 @@ export default function UserDetailPage() {
             <div className="hydro-user-profile__cover-overlay" />
           </div>
           <div className="hydro-user-profile__info">
-            <Group justify="space-between" align="flex-start" className="hydro-user-profile__info-layout">
-              <Group gap="lg" align="flex-start" className="hydro-user-profile__identity">
+            <div className="hydro-user-profile__info-layout">
+              <div className="hydro-user-profile__identity">
                 <UserAvatar
                   user={udoc}
                   link={false}
@@ -75,63 +75,61 @@ export default function UserDetailPage() {
                   frameClassName="hydro-user-profile__avatar-slot"
                   className="hydro-user-profile__avatar"
                 />
-                <Stack gap={6}>
+                <Stack gap={6} className="hydro-user-profile__identity-text">
                   <Group gap="sm" align="baseline">
                     <Title order={3}>{formatUserName(udoc)}</Title>
                     <Text size="xs" c="dimmed">UID {udoc._id}</Text>
                   </Group>
-                  <Group gap="md" wrap="wrap">
-                  </Group>
-                  <Group gap="md" className="hydro-user-profile__facts">
-                    <Text size="xs" c="dimmed" component="span">
-                      {t('Joined')}: <br /><TimeDisplay date={udoc.regat} format="absolute" size="xs" />
-                    </Text>
-                    {udoc.loginat && (
-                      <Text size="xs" c="dimmed" component="span">
-                        {t('Last login')}: <br /><TimeDisplay date={udoc.loginat} format="relative" size="xs" />
-                      </Text>
-                    )}
-                    {sdoc.updateAt && (
-                      <Text size="xs" c="dimmed" component="span">
-                        {t('Last active')}: <br /><TimeDisplay date={sdoc.updateAt} format="relative" size="xs" />
-                      </Text>
-                    )}
-                    {formatGender(udoc.gender, t) && (
-                      <Text size="xs" c="dimmed" component="span">
-                        {t('Gender')}: <br />{formatGender(udoc.gender, t)}
-                      </Text>
-                    )}
-                    {udoc.school && (
-                      <Text size="xs" c="dimmed" component="span">
-                        {t('School')}: <br />{udoc.school}
-                      </Text>
-                    )}
-                    {udoc.studentId && (
-                      <Text size="xs" c="dimmed" component="span">
-                        {t('Student ID')}: <br />{udoc.studentId}
-                      </Text>
-                    )}
-                    {udoc.qq && (
-                      <Text size="xs" c="dimmed" component="span">
-                        QQ: <br />{udoc.qq}
-                      </Text>
-                    )}
-                    {udoc.phone && (
-                      <Text size="xs" c="dimmed" component="span">
-                        {t('Phone')}: <br />{udoc.phone}
-                      </Text>
-                    )}
-                  </Group>
                 </Stack>
-              </Group>
-              <Group gap="sm">
-                {isSelf && (
-                  <Button component={Link} to="home_settings" params={{ category: 'account' }} size="xs" variant="light">
-                    {t('Edit Profile')}
-                  </Button>
-                )}
-              </Group>
-            </Group>
+              </div>
+              {isSelf && <Button
+                component={Link}
+                to="home_settings"
+                params={{ category: 'account' }}
+                size="sm"
+                variant="light"
+                className="hydro-user-profile__edit">{t('Edit Profile')}</Button>}
+            </div>
+            <div className="hydro-user-profile__facts">
+              <Text size="xs" c="dimmed" component="span">
+                {t('Joined')}: <br /><TimeDisplay date={udoc.regat} format="absolute" size="xs" />
+              </Text>
+              {udoc.loginat && (
+                <Text size="xs" c="dimmed" component="span">
+                  {t('Last login')}: <br /><TimeDisplay date={udoc.loginat} format="relative" size="xs" />
+                </Text>
+              )}
+              {sdoc.updateAt && (
+                <Text size="xs" c="dimmed" component="span">
+                  {t('Last active')}: <br /><TimeDisplay date={sdoc.updateAt} format="relative" size="xs" />
+                </Text>
+              )}
+              {formatGender(udoc.gender, t) && (
+                <Text size="xs" c="dimmed" component="span">
+                  {t('Gender')}: <br />{formatGender(udoc.gender, t)}
+                </Text>
+              )}
+              {udoc.school && (
+                <Text size="xs" c="dimmed" component="span">
+                  {t('School')}: <br />{udoc.school}
+                </Text>
+              )}
+              {udoc.studentId && (
+                <Text size="xs" c="dimmed" component="span">
+                  {t('Student ID')}: <br />{udoc.studentId}
+                </Text>
+              )}
+              {udoc.qq && (
+                <Text size="xs" c="dimmed" component="span">
+                  QQ: <br />{udoc.qq}
+                </Text>
+              )}
+              {udoc.phone && (
+                <Text size="xs" c="dimmed" component="span">
+                  {t('Phone')}: <br />{udoc.phone}
+                </Text>
+              )}
+            </div>
           </div>
         </Paper>
 

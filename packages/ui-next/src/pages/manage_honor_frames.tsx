@@ -1,8 +1,9 @@
-import { Card, Group, SimpleGrid, Stack, Text, TextInput, Tooltip } from '@mantine/core';
-import { IconCheck, IconEye, IconGift, IconTrash, IconUpload, IconX } from '@tabler/icons-react';
+import { Card, Group, SimpleGrid, Stack, Text, Textarea, TextInput, Tooltip } from '@mantine/core';
+import { IconCheck, IconEye, IconGift, IconPencil, IconTrash, IconUpload, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 import { ActionIcon, Button, UnstyledButton } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
+import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
@@ -31,6 +32,8 @@ export default function ManageHonorFramesPage() {
   const [name, setName] = useState('');
   const [action, setAction] = useState<ManagedFrame | null>(null);
   const [deleting, setDeleting] = useState<ManagedFrame | null>(null);
+  const [descriptionFrame, setDescriptionFrame] = useState<ManagedFrame | null>(null);
+  const [description, setDescription] = useState('');
   const [q, setQ] = useState(args.q || '');
   const frames: ManagedFrame[] = args.frames || [];
   if (!isAdmin) return <Text>{t('Access Denied')}</Text>;
@@ -69,6 +72,14 @@ export default function ManageHonorFramesPage() {
             {t(frame.active ? 'Published' : 'Disabled')}
           </Button>
           <Group gap={4} className="hydro-frame-card__view">
+            <Tooltip label={t('Edit frame')}>
+              <ActionIcon
+                component={Link}
+                href={buildUrl('manage_honor_frame_upload', {}, { id: frame.id })}
+                variant="subtle"
+                disabled={busy}
+                aria-label={`${t('Edit frame')}: ${frame.name}`}><IconPencil size={19} /></ActionIcon>
+            </Tooltip>
             <Tooltip label={t('Frame owners')}>
               <ActionIcon
                 component={Link}
@@ -113,6 +124,15 @@ export default function ManageHonorFramesPage() {
           onClick={() => { setEditing(frame.id); setName(frame.name); }}>
           <Text fw={650} ta="center" lineClamp={2}>{frame.name}</Text>
         </UnstyledButton>}
+        <UnstyledButton
+          className="hydro-frame-card__description"
+          aria-label={`${t('Edit description')}: ${frame.name}`}
+          disabled={busy}
+          onClick={() => { setDescriptionFrame(frame); setDescription(frame.description || ''); }}>
+          <Text size="sm" c="dimmed" ta="center" lineClamp={3} className="hydro-frame-description">
+            {frame.description || t('No description yet.')}
+          </Text>
+        </UnstyledButton>
       </Card>)}
     </SimpleGrid>
     <Paginator page={args.page || 1} totalPages={args.pageCount || 1} />
@@ -121,6 +141,25 @@ export default function ManageHonorFramesPage() {
       onClose={() => setGrantOpened(false)}
       busy={busy}
       onGrant={(id, uids) => run({ operation: 'owners', id, uids, action: 'grant' })} />
+    <FormDialog
+      opened={!!descriptionFrame}
+      onClose={() => setDescriptionFrame(null)}
+      title={t('Edit description')}
+      fields={[]}
+      loading={busy}
+      onSubmit={async () => {
+        if (descriptionFrame && await run({ operation: 'description', id: descriptionFrame.id, description })) setDescriptionFrame(null);
+      }}>
+      <Textarea
+        label={t('Frame description')}
+        value={description}
+        onChange={(event) => setDescription(event.currentTarget.value)}
+        maxLength={2000}
+        autosize
+        minRows={4}
+        maxRows={10}
+        disabled={busy} />
+    </FormDialog>
     <ConfirmDialog
       opened={!!deleting}
       onClose={() => setDeleting(null)}

@@ -105,6 +105,7 @@ class UserSudoHandler extends Handler {
     async get() {
         if (!this.session.sudoArgs?.method) throw new ForbiddenError();
         this.response.template = 'user_sudo.html';
+        this.response.body = { redirect: this.session.sudoArgs.redirect };
     }
 
     @param('password', Types.String, true)
@@ -127,7 +128,7 @@ class UserSudoHandler extends Handler {
         this.session.sudo = Date.now();
         if (this.session.sudoArgs.method.toLowerCase() !== 'get') {
             this.response.template = 'user_sudo_redirect.html';
-            this.response.body = this.session.sudoArgs;
+            this.response.body = { ...this.session.sudoArgs, args: { ...this.session.sudoArgs.args } };
         } else this.response.redirect = this.session.sudoArgs.redirect;
         this.session.sudoArgs.method = null;
     }

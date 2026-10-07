@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
-import { buildSync } from 'esbuild';
+import { buildSync, transformSync } from 'esbuild';
 import { after, test } from 'node:test';
 import { mergeSelectClasses, shortSelectDimension } from '../src/components/common/select-styles.ts';
 
@@ -19,6 +19,7 @@ const globals = {
     Document: dom.window.Document,
     navigator: dom.window.navigator,
     HTMLElement: dom.window.HTMLElement,
+    HTMLInputElement: dom.window.HTMLInputElement,
     Element: dom.window.Element,
     Node: dom.window.Node,
     ShadowRoot: dom.window.ShadowRoot,
@@ -194,6 +195,85 @@ test('multi select retains selections as pills and emits an array', async () => 
         assert.equal(view.host.querySelectorAll('.mantine-Pill-root').length, 2);
     } finally {
         await view.close();
+    }
+});
+
+test('contest problem drag order is saved in the current domain without reloading labels', async () => {
+    const pageModule = { exports: {} as any };
+    const args = { tdoc: { docId: 'contest1', title: 'Contest', pids: [1, 2, 3], maintainer: [9] } };
+    const requests: { url: string, body: any }[] = [];
+    let finishSave: (() => void) | undefined;
+    const core = require('@mantine/core');
+    const mocks: Record<string, any> = {
+        '@mantine/notifications': { notifications: { show() {} } },
+        '@/components/common/select': { LongSelect, TagMultiSelect },
+        '@/components/common/button': { Button: core.Button },
+        '@/components/common/data-table': { DataTable: () => null },
+        '@/components/common/page-header': { PageHeader: ({ children }: any) => h('header', {}, children) },
+        '@/components/editor/markdown-editor': { MarkdownEditor: () => null },
+        '@/components/user/framed-avatar': { FramedAvatar: () => null },
+        '@/context/page-data': { usePageData: () => ({ args }) },
+        '@/context/router': { useNavigate: () => () => {} },
+        '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/team/contest' },
+        '@/hooks/use-domain': { useDomainId: () => 'team' },
+        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/utils/error': { formatErrorMessage: () => 'Save failed' },
+        '@/utils/lang-display': { LANG_DISPLAY: { cpp: 'C++' }, getLangDisplay: (key: string) => key },
+        '@/utils/user-name': { formatUserName: (user: any) => user.uname },
+    };
+    const source = readFileSync(new URL('../src/pages/contest_edit.tsx', import.meta.url), 'utf8');
+    runInNewContext(transformSync(source, { loader: 'tsx', format: 'cjs', jsx: 'automatic' }).code, {
+        module: pageModule, exports: pageModule.exports, window: dom.window,
+        require: (name: string) => mocks[name] || require(name),
+        fetch: async (url: string, options: any) => {
+            requests.push({ url, body: JSON.parse(options.body) });
+            if (url.endsWith('/api/problems')) {
+                return { ok: true, json: async () => [1, 2, 3].map((id) => ({ docId: id, title: `Problem ${id}` })) };
+            }
+            if (url.endsWith('/api/users')) return { ok: true, json: async () => [{ _id: 9, uname: 'Maintainer' }] };
+            await new Promise<void>((resolve) => { finishSave = resolve; });
+            return { ok: true, headers: new Headers({ 'content-type': 'application/json' }), json: async () => ({}) };
+        },
+    });
+    dom.reconfigure({ url: 'https://oj.example/d/team/contest/contest1/edit' });
+    const view = await mount(pageModule.exports.default, {});
+    const pills = () => [...view.host.querySelectorAll('.hydro-contest-problems [data-mantine-pill-index]')] as HTMLElement[];
+    const labels = () => pills().map((pill) => pill.querySelector('.mantine-Pill-label')?.textContent);
+    const transfer = { effectAllowed: '', dropEffect: '', setData() {}, setDragImage() {} };
+    function drag(element: HTMLElement, type: string) {
+        const event = new dom.window.MouseEvent(type, { bubbles: true, cancelable: true, clientX: 90 });
+        Object.defineProperty(event, 'dataTransfer', { value: transfer });
+        element.dispatchEvent(event);
+    }
+    try {
+        assert.deepEqual(labels(), ['Problem 1', 'Problem 2', 'Problem 3']);
+        assert.equal(view.host.querySelectorAll('[draggable="true"]').length, 3, 'maintainers are not draggable');
+        const [first, , third] = pills();
+        third.getBoundingClientRect = () => ({ left: 0, width: 100 } as DOMRect);
+        await act(async () => {
+            drag(first, 'dragstart');
+            drag(third, 'dragover');
+            assert.equal(third.getAttribute('data-drag-over'), 'after');
+            drag(third, 'drop');
+        });
+        assert.deepEqual(labels(), ['Problem 2', 'Problem 3', 'Problem 1']);
+        assert.equal(requests.filter((request) => request.url.endsWith('/api/problems')).length, 1);
+        await act(async () => pills()[2].dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+            key: 'ArrowLeft', altKey: true, bubbles: true,
+        })));
+        assert.deepEqual(labels(), ['Problem 2', 'Problem 1', 'Problem 3']);
+        const update = [...view.host.querySelectorAll('button')].find((button) => button.textContent === 'Update');
+        assert.ok(update);
+        await act(async () => update.click());
+        const save = requests.find((request) => request.body.operation === 'update');
+        assert.equal(save?.url, 'https://oj.example/d/team/contest/contest1/edit');
+        assert.equal(save?.body.pids, '2,1,3');
+        assert.equal(view.host.querySelectorAll('.hydro-contest-problems [draggable="true"]').length, 0);
+        await act(async () => finishSave?.());
+    } finally {
+        await act(async () => finishSave?.());
+        await view.close();
+        dom.reconfigure({ url: 'http://localhost/' });
     }
 });
 

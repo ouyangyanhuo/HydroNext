@@ -1,4 +1,7 @@
 __flag: 🇬🇧
+"Already owned": "Already owned"
+"Already owned by: {users}. Remove these recipients before granting.": "Already owned by: {users}. Remove these recipients before granting."
+"An avatar frame with this name already exists.": "An avatar frame with this name already exists."
 "Apply this action to {count} selected users?": "Apply this action to {count} selected users?"
 "Avatar frame management": "Avatar frame management"
 "Choose one artwork per shape.": "Choose one artwork per shape."
@@ -7,30 +10,44 @@ __flag: 🇬🇧
 "Circular artwork overlaps the avatar area. Check the preview.": "Circular artwork overlaps the avatar area. Check the preview."
 "Delete frame": "Delete frame"
 "Delete {name}? It will be removed from all users and cannot be restored.": "Delete {name}? It will be removed from all users and cannot be restored."
+"Describe the honor and how this frame is awarded.": "Describe the honor and how this frame is awarded."
 "Disabled": "Disabled"
+'Drag selected problems to reorder, or use Alt + Left/Right.': 'Drag selected problems to reorder, or use Alt + Left/Right.'
 "Drop artwork here or click to choose": "Drop artwork here or click to choose"
+'Drop artwork here to replace, or click to choose': 'Drop artwork here to replace, or click to choose'
+"Edit description": "Edit description"
+'Edit frame': 'Edit frame'
 "Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.": "Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it."
 "Frame artwork must be 512 × 512 px.": "Frame artwork must be 512 × 512 px."
+"Frame description": "Frame description"
 "Frame must contain transparent and visible pixels": "Frame must contain transparent and visible pixels"
 "Frame owners": "Frame owners"
 "Invalid PNG artwork. Please export a new PNG or WebP image.": "Invalid PNG artwork. Please export a new PNG or WebP image."
+"Invalid authorization destination.": "Invalid authorization destination."
+"No description yet.": "No description yet."
 "One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.": "One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white."
 "Only published frames can be awarded. Awards are global across all domains.": "Only published frames can be awarded. Awards are global across all domains."
 "Owned honor frames": "Owned honor frames"
 "Owners": "Owners"
 "Recipients": "Recipients"
+'Replacing legacy artwork requires both shapes.': 'Replacing legacy artwork requires both shapes.'
 "Rounded square": "Rounded square"
 "Rounded square artwork": "Rounded square artwork"
 "Rounded square artwork overlaps the avatar area. Check the preview.": "Rounded square artwork overlaps the avatar area. Check the preview."
+'Saved, but old artwork cleanup failed.': 'Saved, but old artwork cleanup failed.'
 "Search by username or user ID": "Search by username or user ID"
 "Search by username or user ID. Up to 50 users at a time.": "Search by username or user ID. Up to 50 users at a time."
 "Select a frame and at least one user.": "Select a frame and at least one user."
 "Select current page": "Select current page"
 "Some users changed during this operation. Refresh and retry.": "Some users changed during this operation. Refresh and retry."
+"Some selected users already own this avatar frame.": "Some selected users already own this avatar frame."
 "The central avatar area must be transparent.": "The central avatar area must be transparent."
+"These avatar frame images have already been uploaded.": "These avatar frame images have already been uploaded."
+'This frame changed. Refresh and try again.': 'This frame changed. Refresh and try again.'
 "Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).": "Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64)."
 "Transparent center: diameter 384 px, centered at (256, 256).": "Transparent center: diameter 384 px, centered at (256, 256)."
 "Upload both rounded square and circular artwork.": "Upload both rounded square and circular artwork."
+'Unchanged artwork is kept. Editing preserves ownership and publication status.': 'Unchanged artwork is kept. Editing preserves ownership and publication status.'
 "Uploaded frames start disabled. Publish them from the library.": "Uploaded frames start disabled. Publish them from the library."
 "Use two 512 × 512 px images with a transparent 384 px center.": "Use two 512 × 512 px images with a transparent 384 px center."
 __id: en

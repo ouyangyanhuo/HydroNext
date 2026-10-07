@@ -1,4 +1,4 @@
-import { Badge, Card, Loader, Pagination, SimpleGrid, Stack, Text } from '@mantine/core';
+import { Badge, Card, HoverCard, Loader, Pagination, ScrollArea, SimpleGrid, Stack, Text } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -37,15 +37,29 @@ export function OwnedHonorFrames({ uid, avatar }: { uid: number, avatar?: string
   if (!data) return <Loader size="sm" />;
   return <Stack gap="lg">
     {!data.frames.length && <Text ta="center" c="dimmed" py="xl">{t('No honor frames found.')}</Text>}
-    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">{data.frames.map((frame) => <Card
+    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">{data.frames.map((frame) => <HoverCard
       key={frame.id}
-      withBorder
-      p="lg"
-      className="hydro-content-card">
-      <HonorFramePreview frame={frame} avatar={avatar} size={48} />
-      <Text ta="center" fw={600} mt="md">{frame.name}</Text>
-      {!frame.active && <Badge color="red" variant="light" mt="sm" mx="auto">{t('Disabled')}</Badge>}
-    </Card>)}</SimpleGrid>
+      width={320}
+      shadow="md"
+      withinPortal
+      openDelay={180}>
+      <HoverCard.Target><Card
+        withBorder
+        p="lg"
+        tabIndex={0}
+        aria-label={`${frame.name}: ${frame.description || t('No description yet.')}`}
+        className="hydro-content-card hydro-frame-owned-card">
+        <HonorFramePreview frame={frame} avatar={avatar} size={48} />
+        <Text ta="center" fw={600} mt="md">{frame.name}</Text>
+        {!frame.active && <Badge color="red" variant="light" mt="sm" mx="auto">{t('Disabled')}</Badge>}
+      </Card></HoverCard.Target>
+      <HoverCard.Dropdown className="hydro-frame-description-popover">
+        <Text fw={650} mb="xs">{frame.name}</Text>
+        <ScrollArea.Autosize mah={240} type="auto"><Text size="sm" className="hydro-frame-description">
+          {frame.description || t('No description yet.')}
+        </Text></ScrollArea.Autosize>
+      </HoverCard.Dropdown>
+    </HoverCard>)}</SimpleGrid>
     {data.pageCount > 1 && <Pagination size="sm" value={data.page} total={data.pageCount} onChange={setPage} />}
   </Stack>;
 }

@@ -31,6 +31,7 @@ for (const [key, value] of Object.entries({
 }
 dom.window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
 dom.window.HTMLElement.prototype.scrollIntoView = () => {};
+Object.defineProperty(dom.window.document, 'fonts', { value: { addEventListener() {}, removeEventListener() {} } });
 after(() => {
     dom.window.close();
     for (const [key, descriptor] of previous) {
@@ -192,7 +193,8 @@ test('form dialog handles async rejection, preserves input and blocks duplicate 
 let isAdmin = false;
 let sessionUser: any = { ...user, honorFrame: null };
 const notices: any[] = [];
-const t = (key: string) => key;
+const t = (key: string, params: Record<string, unknown> = {}) => Object.entries(params)
+    .reduce((message, [name, value]) => message.replaceAll(`{${name}}`, String(value)), key);
 let request: (url: string, options?: any) => Promise<any> = async () => ({ frames: [frame], page: 1, pageCount: 1, honorFrame: null });
 const { HonorFramePanel } = component('../src/components/user/honor-frame-panel.tsx', {
     './framed-avatar': { FramedAvatar },
@@ -417,6 +419,77 @@ test('management upload preserves failed drafts, posts normalized files and neve
     } finally { await view.close(); }
 });
 
+test('admin frame editing keeps existing previews and posts only replaced artwork with the original frame ID', async () => {
+    const sent: FormData[] = [];
+    const destinations: string[] = [];
+    let normalized = 0;
+    const existing = { ...frame, description: 'Original description', artworkVersion: 2,
+        circleImageUrl: '/circle.png?v=old', squareImageUrl: '/square.png?v=old' };
+    const { default: EditPage } = component('../src/pages/manage_honor_frame_upload.tsx', {
+        '@/context/page-data': { usePageData: () => ({ args: { frame: existing } }) },
+        '@/hooks/use-honor-frame-mutation': { useHonorFrameMutation: () => ({ busy: false,
+            run: async (body: FormData, destination: string) => {
+                sent.push(body);
+                destinations.push(destination);
+                return false;
+            } }) },
+        '@/components/common/button': {
+            UnstyledButton: ({ children, ...props }: any) => h('button', { ...props, type: 'button' }, children),
+            Button: ({ children, disabled, loading, type = 'button' }: any) => h('button', { disabled: disabled || loading, type }, children),
+        },
+        '@/components/common/page-header': { PageHeader: ({ title, children }: any) => h('header', null, title, children) },
+        '@/components/link': { Link: () => null },
+        '@/components/user/framed-avatar': { FramedAvatar },
+        '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/team/manage/honor-frames' },
+        '@/hooks/use-current-user': { useCurrentUser: () => user },
+        '@/hooks/use-i18n': { useI18n: () => ({ t }) },
+        '@/hooks/use-object-url': { useObjectUrl: (file: File | null) => file ? 'blob:new-artwork' : '' },
+        '@/hooks/use-permission': { PRIV: { PRIV_EDIT_SYSTEM: 1 }, useHasPriv: () => true },
+        '@/utils/avatar': { getAvatarUrl },
+        '@/utils/honor-frame-api': { prepareFrameArtwork: async () => {
+            normalized += 1;
+            return new File(['normalized'], 'replacement.png', { type: 'image/png' });
+        } },
+    });
+    const view = await mount(h(EditPage));
+    try {
+        assert.match(view.host.querySelector('header')?.textContent || '', /Edit frame/);
+        const decorations = () => [...view.host.querySelectorAll('.hydro-avatar-frame__decoration')].map((image) => image.getAttribute('src'));
+        assert.deepEqual(decorations(), ['/square.png?v=old', '/circle.png?v=old']);
+        const name = view.host.querySelector<HTMLInputElement>('input:not([type="file"])')!;
+        const description = view.host.querySelector<HTMLTextAreaElement>('textarea')!;
+        assert.equal(name.value, existing.name);
+        assert.equal(description.value, existing.description);
+        await act(async () => {
+            Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!.call(name, 'Updated award');
+            name.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+            Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value')!.set!.call(description, 'Updated description');
+            description.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        });
+        const form = view.host.querySelector('form')!;
+        await act(async () => form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
+        assert.equal(sent[0].get('operation'), 'edit');
+        assert.equal(sent[0].get('id'), existing.id);
+        assert.equal(sent[0].get('name'), 'Updated award');
+        assert.equal(sent[0].get('description'), 'Updated description');
+        assert.equal(sent[0].has('square'), false);
+        assert.equal(sent[0].has('circle'), false);
+        assert.equal(normalized, 0);
+        assert.equal(name.value, 'Updated award', 'failed saves keep the draft');
+        const chooser = view.host.querySelector<HTMLInputElement>('input[type="file"]')!;
+        await act(async () => {
+            Object.defineProperty(chooser, 'files', { value: [new dom.window.File(['png'], 'square.png', { type: 'image/png' })] });
+            chooser.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+        });
+        assert.deepEqual(decorations(), ['blob:new-artwork', '/circle.png?v=old']);
+        await act(async () => form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
+        assert.equal((sent[1].get('square') as File).name, 'replacement.png');
+        assert.equal(sent[1].has('circle'), false);
+        assert.equal(normalized, 1);
+        assert.deepEqual(destinations, ['/d/team/manage/honor-frames', '/d/team/manage/honor-frames']);
+    } finally { await view.close(); }
+});
+
 test('paired frame assets follow the avatar shape at an exact 512:384 ratio', async () => {
     const pair = { ...frame, artworkVersion: 2, circleImageUrl: '/circle.png', squareImageUrl: '/square.png' };
     const view = await mount(h(FramedAvatar, { frame: pair, size: 96, shape: 'circle' }));
@@ -432,6 +505,7 @@ test('grant dialog searches within the current domain and submits one frame with
     const requests: string[] = [];
     const awards: any[] = [];
     let closed = 0;
+    let owned = true;
     const selectStyles = component('../src/components/common/select-styles.ts', {});
     const selects = component('../src/components/common/select.tsx', { './select-styles': selectStyles });
     const { HonorFrameGrantDialog } = component('../src/components/user/honor-frame-grant-dialog.tsx', {
@@ -445,7 +519,7 @@ test('grant dialog searches within the current domain and submits one frame with
             const q = new URL(url, 'https://oj.example').searchParams.get('q');
             return { options: url.includes('kind=frames') ? q === '冠'
                 ? [{ value: 'frame-id', label: '冠军 Champion' }, { value: 'disabled-id', label: '旧冠军', disabled: true }] : []
-                : [{ value: '42', label: 'Ada (#42)' }, { value: '43', label: 'Bob (#43)' }] };
+                : [{ value: '42', label: 'Ada (#42)', owned: url.includes('uids=') && owned }, { value: '43', label: 'Bob (#43)' }] };
         } },
     });
     const view = await mount(h(HonorFrameGrantDialog, {
@@ -475,6 +549,12 @@ test('grant dialog searches within the current domain and submits one frame with
         await act(async () => option('Bob').click());
         await act(async () => document.querySelector('[role="dialog"] form')!
             .dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
+        assert.equal(awards.length, 0);
+        assert.equal(closed, 0);
+        assert.match(document.querySelector('[role="dialog"]')!.textContent!, /Already owned by.*Ada/);
+        owned = false;
+        await act(async () => document.querySelector('[role="dialog"] form')!
+            .dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
         assert.equal(JSON.stringify(awards), JSON.stringify([['frame-id', [42, 43]]]));
         assert.equal(closed, 1);
         assert.ok(requests.length >= 2 && requests.every((url) => url.startsWith('/d/a/')));
@@ -491,6 +571,7 @@ test('management cards rename inline and confirm status changes without stale na
     const { default: ManagePage } = component('../src/pages/manage_honor_frames.tsx', {
         '@/components/common/button': buttons,
         '@/components/common/confirm-dialog': { ConfirmDialog },
+        '@/components/common/form-dialog': { FormDialog },
         '@/components/common/page-header': { PageHeader: ({ children }: any) => h('header', null, children) },
         '@/components/common/paginator': { Paginator: () => null },
         '@/components/link': { Link: ({ children }: any) => h('a', null, children) },
@@ -532,5 +613,37 @@ test('management cards rename inline and confirm status changes without stale na
             .find((button) => button.textContent === 'Confirm')!;
         await act(async () => deletion.click());
         assert.equal(JSON.stringify(writes[2]), JSON.stringify({ operation: 'delete', id: 'winner' }));
+        await act(async () => view.host.querySelector<HTMLButtonElement>('[aria-label="Edit description: Winner"]')!.click());
+        const descriptionInput = document.querySelector<HTMLTextAreaElement>('[role="dialog"] textarea')!;
+        await act(async () => {
+            Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value')!.set!.call(descriptionInput, 'Champion award');
+            descriptionInput.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        });
+        await act(async () => descriptionInput.closest('form')!
+            .dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
+        assert.equal(JSON.stringify(writes[3]), JSON.stringify({ operation: 'description', id: 'winner', description: 'Champion award' }));
+    } finally { await view.close(); }
+});
+
+test('profile frame cards show their description on hover and treat user text as plain text', async () => {
+    const description = '<script>alert(1)</script>\nChampion of the autumn contest.';
+    const { OwnedHonorFrames } = component('../src/components/user/owned-honor-frames.tsx', {
+        '@/components/common/button': { Button: 'button' },
+        '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/a/user/42/honor-frames' },
+        '@/hooks/use-i18n': { useI18n: () => ({ t }) },
+        '@/utils/honor-frame-api': { requestHonorFrame: async () => ({
+            frames: [{ ...frame, active: true, description }], page: 1, pageCount: 1,
+        }) },
+        './honor-frame-preview': { HonorFramePreview: () => null },
+    });
+    const view = await mount(h(OwnedHonorFrames, { uid: 42 }));
+    try {
+        const card = view.host.querySelector('.hydro-frame-owned-card')!;
+        assert.ok(!document.querySelector('.hydro-frame-description-popover'));
+        await act(async () => card.dispatchEvent(new dom.window.MouseEvent('mouseover', { bubbles: true })));
+        await act(async () => new Promise((resolve) => setTimeout(resolve, 230)));
+        await act(async () => new Promise((resolve) => setTimeout(resolve, 40)));
+        assert.equal(document.querySelector('.hydro-frame-description-popover .hydro-frame-description')?.textContent, description);
+        assert.equal(document.querySelectorAll('script').length, 0);
     } finally { await view.close(); }
 });
