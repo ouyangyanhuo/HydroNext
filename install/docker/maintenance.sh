@@ -4,26 +4,25 @@ umask 077
 
 usage() {
     cat <<'USAGE'
-Usage: maintenance.sh (--manual|--scheduled) [options]
+用法：maintenance.sh (--manual|--scheduled) [选项]
+备份 data/、docker-compose.yml 和 oj-backend 容器实际使用的镜像，
+然后重新启动 Compose 容器。仅保留最近一次成功的备份。
 
-Back up the images used by existing Compose containers, restart those
-containers, and retain only the latest successful image backup.
+  --manual             手动执行
+  --scheduled          定时任务执行
+  --compose-file 文件  默认：./docker-compose.yml
+  --backup-dir 目录    默认：Compose 文件所在目录下的 backup-file/
+  --timeout 秒数       停止容器的超时时间（默认：60 秒）
+  --wait-timeout 秒数  等待服务启动的超时时间（默认：300 秒）
+  --help               显示帮助
 
-Options:
-  --compose-file FILE   Compose file (default: ./docker-compose.yml)
-  --backup-dir DIR      Backup directory (default: COMPOSE_DIR/image-backups)
-  --timeout SECONDS     Container shutdown timeout (default: 60)
-  --wait-timeout SEC    Readiness timeout after restart (default: 300)
-  --help               Show this help
-
-Scheduling is configured separately with cron, in the server's time zone.
-This does not deploy new images or back up databases/bind-mounted files.
+复制 data/ 时会停止所有 Compose 容器，包括 MongoDB。
+镜像使用 docker-oj-backend:backup-* 标签保存为未压缩的 tar 文件。
+导出完成后会删除 Docker 中的临时标签。
 USAGE
 }
-
 log() { printf '[%s] %s\n' "$(date '+%F %T %z')" "$*"; }
-fail() { log "ERROR: $*" >&2; exit 1; }
-
+fail() { log "错误：$*" >&2; exit 1; }
 mode=''
 compose_file='./docker-compose.yml'
 backup_dir=''
@@ -33,150 +32,120 @@ while (($#)); do
     case "$1" in
         --manual|--scheduled) mode="${1#--}"; shift ;;
         --compose-file|--backup-dir|--timeout|--wait-timeout)
-            (($# >= 2)) || fail "Missing value for $1"
+            (($# >= 2)) || fail "参数 $1 缺少值"
             case "$1" in
                 --compose-file) compose_file="$2" ;;
                 --backup-dir) backup_dir="$2" ;;
                 --timeout) shutdown_timeout="$2" ;;
                 --wait-timeout) wait_timeout="$2" ;;
             esac
-            shift 2
-            ;;
+            shift 2 ;;
         --help|-h) usage; exit 0 ;;
-        *) usage >&2; fail "Unknown argument: $1" ;;
+        *) fail "未知参数：$1" ;;
     esac
 done
-[[ -n "$mode" ]] || { usage >&2; exit 2; }
-[[ "$shutdown_timeout" =~ ^[1-9][0-9]*$ && "$wait_timeout" =~ ^[1-9][0-9]*$ ]] \
-    || fail 'Timeouts must be positive integers'
-for command in docker flock gzip realpath sha256sum mktemp; do
-    command -v "$command" >/dev/null || fail "Required command not found: $command"
+[[ -n "$mode" ]] || { usage; exit 2; }
+[[ "$shutdown_timeout" =~ ^[1-9][0-9]*$ && "$wait_timeout" =~ ^[1-9][0-9]*$ ]] || fail '超时时间必须为正整数'
+for tool in docker flock realpath mktemp cp sha256sum; do
+    command -v "$tool" >/dev/null || fail "缺少命令：$tool"
 done
-[[ -f "$compose_file" ]] || fail "Compose file not found: $compose_file"
+[[ -f "$compose_file" ]] || fail "找不到 Compose 文件：$compose_file"
 compose_file="$(realpath -- "$compose_file")"
 compose_dir="$(dirname -- "$compose_file")"
-backup_dir="$(realpath -m -- "${backup_dir:-$compose_dir/image-backups}")"
+backup_dir="$(realpath -m -- "${backup_dir:-$compose_dir/backup-file}")"
+[[ "$backup_dir" != '/' && "$compose_dir/" != "$backup_dir/"* ]] || fail '备份目录不能是项目目录或其上级目录'
+[[ "$backup_dir/" != "$compose_dir/data/"* ]] || fail '备份目录不能位于 data/ 内'
+[[ -d "$compose_dir/data" && ! -L "$compose_dir/data" ]] || fail 'Compose 文件所在目录下必须存在非符号链接的 data/ 目录'
 cd -- "$compose_dir"
-
-# The lock is tied to the Compose file, even when --backup-dir is different.
 exec 9>"${compose_file}.maintenance.lock"
-flock -n 9 || { log 'Another maintenance run is active; skipping'; exit 75; }
+flock -n 9 || { log '已有备份或恢复任务正在运行'; exit 75; }
+previous="$backup_dir.previous"
+[[ ! -e "$previous" ]] || fail "发现中断的备份：$previous；请先保留并检查该目录，再继续操作"
+if [[ -e "$backup_dir" ]]; then
+    [[ -d "$backup_dir" && -f "$backup_dir/.hydro-backup" ]] || fail "拒绝覆盖非本脚本管理的目录：$backup_dir"
+    [[ "$(cat "$backup_dir/.hydro-backup")" == 'hydro-backup-v2' ]] || fail '无法识别备份目录'
+fi
 compose=(docker compose -f "$compose_file")
-"${compose[@]}" version >/dev/null
 "${compose[@]}" config --quiet
-services_output="$("${compose[@]}" config --services)"
-[[ -n "$services_output" ]] || fail 'No Compose services found'
-mapfile -t services <<< "$services_output"
-containers=()
-declare -A seen_containers=()
-for service in "${services[@]}"; do
-    ids="$("${compose[@]}" ps --all --quiet "$service")"
-    while IFS= read -r container; do
-        [[ -n "$container" ]] || continue
-        if [[ -z "${seen_containers[$container]:-}" ]]; then
-            containers+=("$container")
-            seen_containers[$container]=1
-        fi
-    done <<< "$ids"
-done
-((${#containers[@]})) || fail 'No existing Compose containers; nothing to restart'
-
-mkdir -p -- "$backup_dir"
-project_hash="$(printf '%s' "$compose_file" | sha256sum)"
-project_hash="${project_hash:0:16}"
-repository="hydro-maintenance-$project_hash"
-work_dir="$(mktemp -d "$backup_dir/.work-XXXXXXXX")"
-run_id="$(date '+%Y%m%dT%H%M%S')-${work_dir##*/.work-}"
-snapshot="$backup_dir/snapshot-$run_id"
-tags=()
-published=false
+ids="$("${compose[@]}" ps --all --quiet oj-backend)"
+[[ -n "$ids" && "$ids" != *$'\n'* ]] || fail '必须存在且仅存在一个 oj-backend 容器'
+image_id="$(docker inspect --format '{{.Image}}' "$ids")"
+[[ "$image_id" =~ ^sha256:[0-9a-f]{64}$ ]] || fail '后端镜像 ID 无效'
+all_ids="$("${compose[@]}" ps --all --quiet)"
+[[ -n "$all_ids" ]] || fail '未找到 Compose 容器'
+mapfile -t containers <<< "$all_ids"
+mkdir -p -- "$(dirname -- "$backup_dir")"
+stage="$(mktemp -d "${backup_dir}.work-XXXXXXXX")"
+stamp="$(date '+%Y%m%d-%H%M%S')-$$"
+temporary_tag="docker-oj-backend:backup-$stamp"
+tag_created=false
+needs_start=false
+keep_stage=false
 cleanup() {
     local status=$?
     trap - EXIT
-    if [[ "$published" == false ]]; then
-        for tag in "${tags[@]}"; do
-            docker image rm --no-prune "$tag" >/dev/null 2>&1 || true
-        done
-        [[ ! -d "$work_dir" ]] || rm -rf -- "$work_dir"
+    set +e
+    if [[ "$tag_created" == true ]]; then
+        docker image rm --force --no-prune "$temporary_tag" || log "请手动删除临时标签：$temporary_tag"
     fi
-    if ((status != 0)); then
-        log 'Maintenance failed; previous backups have been retained' >&2
+    if [[ "$needs_start" == true ]]; then
+        log '备份失败，正在尝试重新启动容器'
+        "${compose[@]}" start --wait --wait-timeout "$wait_timeout" || log '容器启动失败，请执行 docker compose ps 检查状态'
     fi
+    if [[ -d "$stage" ]]; then
+        if [[ "$keep_stage" == true ]]; then
+            log "已完成的备份保留在：$stage"
+        else
+            rm -rf -- "$stage"
+        fi
+    fi
+    ((status == 0)) || log '备份失败，已保留之前的备份'
     exit "$status"
 }
 trap cleanup EXIT
-printf '%s\n' "$project_hash" > "$work_dir/project-id"
-printf 'container\tservice\timage_id\toriginal_reference\tbackup_tag\n' > "$work_dir/containers.tsv"
-declare -A image_tags=()
-log "Starting $mode maintenance for $compose_file"
+trap 'exit 130' INT
+trap 'exit 143' TERM
+if [[ "$mode" == manual ]]; then log '开始手动备份'; else log '开始定时备份'; fi
+docker image tag "$image_id" "$temporary_tag"
+tag_created=true
+docker image save --output "$stage/docker-oj-backend-$stamp.tar" "$temporary_tag"
+docker image rm --force --no-prune "$temporary_tag"
+tag_created=false
+
+# 必须停止数据库写入后再复制 MongoDB 文件。
+needs_start=true
+"${compose[@]}" stop --timeout "$shutdown_timeout"
 for container in "${containers[@]}"; do
-    info="$(docker inspect --format '{{.Image}}{{printf "\t"}}{{.Config.Image}}{{printf "\t"}}{{index .Config.Labels "com.docker.compose.service"}}' "$container")"
-    IFS=$'\t' read -r image_id original_reference service <<< "$info"
-    [[ "$image_id" =~ ^sha256:[0-9a-f]{64}$ ]] || fail "Invalid image ID for $container"
-    if [[ -z "${image_tags[$image_id]:-}" ]]; then
-        tag="$repository:$run_id-${#tags[@]}"
-        docker image tag "$image_id" "$tag"
-        tags+=("$tag")
-        image_tags[$image_id]="$tag"
-    fi
-    printf '%s\t%s\t%s\t%s\t%s\n' "$container" "$service" "$image_id" \
-        "$original_reference" "${image_tags[$image_id]}" >> "$work_dir/containers.tsv"
+    state="$(docker inspect --format '{{.State.Status}}' "$container")"
+    [[ "$state" == 'exited' || "$state" == 'created' ]] || fail "容器 $container 尚未停止（当前状态：$state）"
 done
-printf '%s\n' "${tags[@]}" > "$work_dir/image-tags.txt"
-log "Saving ${#tags[@]} image(s) before restart"
-docker image save "${tags[@]}" | gzip > "$work_dir/images.tar.gz"
-gzip -t "$work_dir/images.tar.gz"
-mv -- "$work_dir" "$snapshot"
-published=true
-log "Image backup completed: $snapshot"
+log '容器已停止，正在复制数据和配置'
+cp -a --reflink=auto -- "$compose_dir/data" "$stage/data"
+cp -a -- "$compose_file" "$stage/docker-compose.yml"
+for file in judge.yaml mount.yaml .env; do
+    [[ ! -f "$compose_dir/$file" ]] || cp -a -- "$compose_dir/$file" "$stage/$file"
+done
+printf 'hydro-backup-v2\n' > "$stage/.hydro-backup"
+keep_stage=true
+needs_start=false
+"${compose[@]}" start --wait --wait-timeout "$wait_timeout"
 
-# restart uses existing container images; it does not apply a new latest tag.
-"${compose[@]}" restart --no-deps --timeout "$shutdown_timeout" "${services[@]}"
-deadline=$((SECONDS + wait_timeout))
-while true; do
-    ready=true
-    for container in "${containers[@]}"; do
-        state="$(docker inspect --format '{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$container")"
-        case "$state" in
-            'running healthy'|'running none') ;;
-            *) ready=false ;;
-        esac
-    done
-    [[ "$ready" == false ]] || break
-    ((SECONDS < deadline)) || fail "Containers did not become ready within ${wait_timeout}s"
-    sleep 2
-done
-touch "$snapshot/success"
-log 'Containers are running; configured health checks have passed'
-
-# Only delete directories and tags created by this script for this Compose file.
-# Never prune the daemon or force-remove an image used by another container.
-for previous in "$backup_dir"/snapshot-*; do
-    [[ -d "$previous" && ! -L "$previous" && "$previous" != "$snapshot" ]] || continue
-    [[ -f "$previous/project-id" && -f "$previous/image-tags.txt" ]] || continue
-    [[ "$(cat "$previous/project-id")" == "$project_hash" ]] || continue
-    removable=true
-    while IFS= read -r tag; do
-        if [[ "$tag" != "$repository:"* || ! "$tag" =~ ^[a-zA-Z0-9._:-]+$ ]]; then
-            log "Invalid backup tag; retaining $previous" >&2
-            removable=false
-            break
-        fi
-        if ! existing_image="$(docker image ls --quiet --filter "reference=$tag")"; then
-            log "Could not query $tag; retaining $previous" >&2
-            removable=false
-            continue
-        fi
-        if [[ -n "$existing_image" ]]; then
-            if ! docker image rm --no-prune "$tag"; then
-                log "Could not remove $tag; retaining $previous" >&2
-                removable=false
-            fi
-        fi
-    done < "$previous/image-tags.txt"
-    if [[ "$removable" == true ]]; then
-        rm -rf -- "$previous"
-        log "Removed previous backup: $previous"
-    fi
-done
-log "Maintenance completed; latest backup: $snapshot/images.tar.gz"
+# 仅在原有服务重新就绪后，将完整备份放入正式备份目录。
+if [[ -d "$backup_dir" ]]; then mv -- "$backup_dir" "$previous"; fi
+if ! mv -- "$stage" "$backup_dir"; then
+    [[ ! -d "$previous" ]] || mv -- "$previous" "$backup_dir"
+    fail '无法将备份放入正式备份目录'
+fi
+[[ ! -d "$previous" ]] || rm -rf -- "$previous"
+# 仅清理属于当前 Compose 文件路径的旧版备份标签。
+legacy_hash="$(printf '%s' "$compose_file" | sha256sum)"
+legacy_repository="hydro-maintenance-${legacy_hash:0:16}"
+if legacy_tags="$(docker image ls --format '{{.Repository}}:{{.Tag}}' --filter "reference=$legacy_repository:*")"; then
+    while IFS= read -r legacy_tag; do
+        [[ "$legacy_tag" == "$legacy_repository:"* ]] || continue
+        docker image rm --force --no-prune "$legacy_tag" || log "无法删除旧版备份标签：$legacy_tag"
+    done <<< "$legacy_tags"
+else
+    log '无法查询旧版备份标签，请在 Docker 恢复可用后清理'
+fi
+log "备份完成：$backup_dir（数据、Compose 配置、后端镜像 tar 文件）"
