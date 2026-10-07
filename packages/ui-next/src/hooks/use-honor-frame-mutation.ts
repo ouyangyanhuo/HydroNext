@@ -33,6 +33,8 @@ export function useHonorFrameMutation() {
       if (controller.signal.aborted) return false;
       if (result.requested !== undefined && result.matched !== result.requested) {
         notifications.show({ title: t('Some users changed during this operation. Refresh and retry.'), message: '', color: 'orange' });
+      } else if (Array.isArray(result.warnings) && result.warnings.length) {
+        notifications.show({ title: t('Saved'), message: result.warnings.map((warning: string) => t(warning)).join('\n'), color: 'orange' });
       } else notifications.show({ title: t('Saved'), message: '', color: 'green' });
       try {
         await navigate(destination || window.location.pathname + window.location.search);
@@ -42,7 +44,8 @@ export function useHonorFrameMutation() {
       return true;
     } catch (err: any) {
       if (!controller.signal.aborted) {
-        notifications.show({ title: t('Operation failed'), message: t(err.message || 'Operation failed'), color: 'red' });
+        const prefix = err.frameShape ? `${t(err.frameShape === 'circle' ? 'Circular artwork' : 'Rounded square artwork')}: ` : '';
+        notifications.show({ title: t('Operation failed'), message: prefix + t(err.message || 'Operation failed'), color: 'red' });
       }
       return false;
     } finally {

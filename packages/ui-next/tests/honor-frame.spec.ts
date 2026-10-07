@@ -313,6 +313,22 @@ test('artwork conversion validates before decoding, caps dimensions, and release
     assert.equal(canvas.width, 0);
 });
 
+test('artwork upload errors retain the shape and translatable reason instead of a generic field error', async () => {
+    await Promise.all(['square', 'circle'].map(async (shape) => {
+        const { requestHonorFrame } = component('../src/utils/honor-frame-api.ts', { './error': { formatErrorMessage } }, {
+            fetch: async () => ({ ok: false, json: async () => ({ error: {
+                message: 'Field {0} validation failed. ({2})',
+                params: [shape, null, 'Frame artwork must be 512 × 512 px.'],
+            } }) }),
+        });
+        await assert.rejects(requestHonorFrame('/manage/honor-frames'), (error: any) => {
+            assert.equal(error.frameShape, shape);
+            assert.equal(error.message, 'Frame artwork must be 512 × 512 px.');
+            return true;
+        });
+    }));
+});
+
 test('management upload preserves failed drafts, posts normalized files and never submits twice', async () => {
     const sent: any[] = [];
     const paths: string[] = [];
@@ -416,16 +432,19 @@ test('grant dialog searches within the current domain and submits one frame with
     const requests: string[] = [];
     const awards: any[] = [];
     let closed = 0;
-    const { Select, MultiSelect } = require('@mantine/core');
+    const selectStyles = component('../src/components/common/select-styles.ts', {});
+    const selects = component('../src/components/common/select.tsx', { './select-styles': selectStyles });
     const { HonorFrameGrantDialog } = component('../src/components/user/honor-frame-grant-dialog.tsx', {
         '@/components/common/form-dialog': { FormDialog },
-        '@/components/common/select': { LongSelect: Select, TagMultiSelect: MultiSelect },
+        '@/components/common/select': selects,
         '@/hooks/use-build-url': { useBuildUrl: () => (_name: string, _params: any, query: any) =>
             `/d/a/manage/honor-frames/search?${new URLSearchParams(query)}` },
         '@/hooks/use-i18n': { useI18n: () => ({ t }) },
         '@/utils/honor-frame-api': { requestHonorFrame: async (url: string) => {
             requests.push(url);
-            return { options: url.includes('kind=frames') ? [{ value: 'frame-id', label: 'Champion' }]
+            const q = new URL(url, 'https://oj.example').searchParams.get('q');
+            return { options: url.includes('kind=frames') ? q === '冠'
+                ? [{ value: 'frame-id', label: '冠军 Champion' }, { value: 'disabled-id', label: '旧冠军', disabled: true }] : []
                 : [{ value: '42', label: 'Ada (#42)' }, { value: '43', label: 'Bob (#43)' }] };
         } },
     });
@@ -437,8 +456,18 @@ test('grant dialog searches within the current domain and submits one frame with
         await act(async () => new Promise((resolve) => setTimeout(resolve, 300)));
         const inputs = document.querySelectorAll<HTMLInputElement>('[role="dialog"] input[role="combobox"]');
         await act(async () => inputs[0].click());
+        assert.equal(inputs[0].readOnly, false);
+        await act(async () => {
+            Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!.call(inputs[0], '冠');
+            inputs[0].dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        });
+        await act(async () => new Promise((resolve) => setTimeout(resolve, 300)));
+        assert.equal(inputs[0].value, '冠');
+        assert.ok(requests.some((url) => new URL(url, 'https://oj.example').searchParams.get('q') === '冠'));
         const option = (label: string) => Array.from(document.querySelectorAll<HTMLElement>('[role="option"]'))
             .find((node) => node.textContent?.includes(label))!;
+        assert.ok(option('旧冠军').textContent?.includes('Disabled'));
+        assert.equal(option('旧冠军').getAttribute('data-combobox-disabled'), 'true');
         await act(async () => option('Champion').click());
         await act(async () => inputs[1].click());
         await act(async () => option('Ada').click());
@@ -488,7 +517,8 @@ test('management cards rename inline and confirm status changes without stale na
             .find((button) => button.textContent === 'Confirm')!;
         await act(async () => confirm.click());
         assert.equal(JSON.stringify(writes[0]), JSON.stringify({ operation: 'status', id: 'winner', active: false }));
-        await act(async () => view.host.querySelector<HTMLButtonElement>('[title="Click to rename"]')!.click());
+        assert.ok(!view.host.textContent?.includes('Click to rename'));
+        await act(async () => view.host.querySelector<HTMLButtonElement>('[aria-label="Rename: Winner"]')!.click());
         const input = view.host.querySelector<HTMLInputElement>('input[aria-label="Frame name"]')!;
         await act(async () => {
             Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!.call(input, 'Renamed');
@@ -496,5 +526,11 @@ test('management cards rename inline and confirm status changes without stale na
         });
         await act(async () => input.closest('form')!.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })));
         assert.equal(JSON.stringify(writes[1]), JSON.stringify({ operation: 'rename', id: 'winner', name: 'Renamed' }));
+        await act(async () => view.host.querySelector<HTMLButtonElement>('[aria-label="Delete frame: Winner"]')!.click());
+        assert.equal(writes.length, 2);
+        const deletion = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button'))
+            .find((button) => button.textContent === 'Confirm')!;
+        await act(async () => deletion.click());
+        assert.equal(JSON.stringify(writes[2]), JSON.stringify({ operation: 'delete', id: 'winner' }));
     } finally { await view.close(); }
 });

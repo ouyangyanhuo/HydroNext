@@ -8,7 +8,13 @@ export async function requestHonorFrame(url: string, init: RequestInit = {}, fal
   } catch {
     throw new Error(fallback);
   }
-  if (!response.ok || !data || data.error) throw new Error(formatErrorMessage(data?.error, fallback));
+  if (!response.ok || !data || data.error) {
+    const params = data?.error?.params;
+    if (['circle', 'square'].includes(params?.[0]) && typeof params?.[2] === 'string') {
+      throw Object.assign(new Error(params[2]), { frameShape: params[0] });
+    }
+    throw new Error(formatErrorMessage(data?.error, fallback));
+  }
   return data;
 }
 

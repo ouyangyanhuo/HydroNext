@@ -9,6 +9,7 @@ export interface HonorFrameDoc {
     createdAt: Date;
     createdBy: number;
     artworkVersion?: 2;
+    deleted?: boolean;
 }
 
 export interface PublicHonorFrame {

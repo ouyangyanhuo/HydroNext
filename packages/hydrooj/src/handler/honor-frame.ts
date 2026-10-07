@@ -23,7 +23,7 @@ export class ManageHonorFramesHandler extends Handler {
     @param('uid', Types.PositiveInt, true)
     @param('q', Types.String, true)
     async get(domainId: string, page = 1, uid?: number, q = '') {
-        const query = q.trim() ? { name: { $regex: escapeRegExp(q.trim().slice(0, 80)), $options: 'i' } } : {};
+        const query = { deleted: { $ne: true }, ...(q.trim() ? { name: { $regex: escapeRegExp(q.trim().slice(0, 80)), $options: 'i' } } : {}) };
         const count = await coll.countDocuments(query);
         const pageCount = Math.max(1, Math.ceil(count / 24));
         page = Math.min(page, pageCount);
@@ -44,15 +44,24 @@ export class ManageHonorFramesHandler extends Handler {
         const title = name.trim();
         if (!title || title.length > 80) throw new ValidationError('name');
         const { square, circle } = this.request.files;
-        if (!square || !circle || square.size > MAX_FRAME_BYTES || circle.size > MAX_FRAME_BYTES) throw new ValidationError('file');
-        await this.limitRate('honor_frame_upload', 60, 10);
-        let images: Buffer[];
-        try {
-            images = await Promise.all([square, circle].map(async (file, i) =>
-                normalizeHonorFrameImage(await readFile(file.filepath), i ? 'circle' : 'square')));
-        } catch {
-            throw new ValidationError('file', null, 'Use two 512 × 512 px images with a transparent 384 px center.');
+        for (const [shape, file] of Object.entries({ square, circle })) {
+            if (!file) throw new ValidationError(shape, null, 'Upload both rounded square and circular artwork.');
+            if (file.size > MAX_FRAME_BYTES) throw new ValidationError(shape, null, 'Choose a PNG or WebP file no larger than 2 MiB.');
         }
+        await this.limitRate('honor_frame_upload', 60, 10);
+        const warnings: string[] = [];
+        const images = await Promise.all([square, circle].map(async (file, i) => {
+            const shape = i ? 'circle' : 'square';
+            try {
+                return normalizeHonorFrameImage(await readFile(file.filepath), shape, (message) => warnings.push(message));
+            } catch (error) {
+                const message = error instanceof Error ? error.message : '';
+                const hint = message.includes('dimensions') || message.includes('512') ? 'Frame artwork must be 512 × 512 px.'
+                    : message.includes('transparent') ? 'Frame must contain transparent and visible pixels'
+                        : 'Invalid PNG artwork. Please export a new PNG or WebP image.';
+                throw new ValidationError(shape, null, hint);
+            }
+        }));
         const _id = new ObjectId();
         const paths = ['square', 'circle'].map((shape) => framePath(_id.toHexString(), shape));
         try {
@@ -64,6 +73,27 @@ export class ManageHonorFramesHandler extends Handler {
             throw error;
         }
         await oplog.log(this, 'honorFrame.upload', { frameId: _id.toHexString(), name: title });
+        this.response.body = { ok: true, warnings };
+    }
+
+    @param('id', Types.ObjectId)
+    async postDelete(domainId: string, id: ObjectId) {
+        const frame = await coll.findOne({ _id: id });
+        if (frame) {
+            // Hide and block re-publication first. A failed cleanup is retryable.
+            await coll.updateOne({ _id: id }, { $set: { active: false, deleted: true } });
+            deleteUserCache(true);
+            const value = id.toHexString();
+            await user.coll.updateMany({ $or: [{ honorFrameIds: value }, { honorFrameId: value }] }, [{ $set: {
+                honorFrameIds: { $setDifference: [{ $ifNull: ['$honorFrameIds', []] }, [value]] },
+                honorFrameId: { $cond: [{ $eq: ['$honorFrameId', value] }, '', { $ifNull: ['$honorFrameId', ''] }] },
+            } }]);
+            deleteUserCache(true);
+            await storage.del(frame.artworkVersion === 2
+                ? ['square', 'circle'].map((shape) => framePath(value, shape)) : [framePath(value)], this.user._id);
+            await coll.deleteOne({ _id: id, deleted: true });
+            await oplog.log(this, 'honorFrame.delete', { frameId: value, name: frame.name });
+        }
         this.response.body = { ok: true };
     }
 
@@ -72,7 +102,7 @@ export class ManageHonorFramesHandler extends Handler {
     async postRename(domainId: string, id: ObjectId, name: string) {
         const title = name.trim();
         if (!title || title.length > 80) throw new ValidationError('name');
-        const result = await coll.updateOne({ _id: id }, { $set: { name: title } });
+        const result = await coll.updateOne({ _id: id, deleted: { $ne: true } }, { $set: { name: title } });
         if (!result.matchedCount) throw new NotFoundError(id.toHexString());
         deleteUserCache(true);
         await oplog.log(this, 'honorFrame.rename', { frameId: id.toHexString(), name: title });
@@ -82,7 +112,7 @@ export class ManageHonorFramesHandler extends Handler {
     @param('id', Types.ObjectId)
     @param('active', Types.Boolean)
     async postStatus(domainId: string, id: ObjectId, active: boolean) {
-        const result = await coll.updateOne({ _id: id }, { $set: { active } });
+        const result = await coll.updateOne({ _id: id, deleted: { $ne: true } }, { $set: { active } });
         if (!result.matchedCount) throw new NotFoundError(id.toHexString());
         deleteUserCache(true);
         await oplog.log(this, 'honorFrame.status', { frameId: id.toHexString(), active });
@@ -104,7 +134,7 @@ export class ManageHonorFramesHandler extends Handler {
     async postUpdate(domainId: string, id: ObjectId, name: string, active: boolean) {
         const title = name.trim();
         if (!title || title.length > 80) throw new ValidationError('name');
-        const result = await coll.updateOne({ _id: id }, { $set: { name: title, active } });
+        const result = await coll.updateOne({ _id: id, deleted: { $ne: true } }, { $set: { name: title, active } });
         if (!result.matchedCount) throw new NotFoundError(id.toHexString());
         deleteUserCache(true);
         await oplog.log(this, 'honorFrame.update', { frameId: id.toHexString(), name: title, active });
@@ -168,7 +198,7 @@ export class HonorFrameImageHandler extends Handler {
     @param('shape', Types.Range(['circle', 'square']), true)
     async get(domainId: string, id: ObjectId, shape?: 'circle' | 'square') {
         const frame = await coll.findOne({ _id: id });
-        if (!frame || (!frame.active && !this.user.hasPriv(PRIV.PRIV_EDIT_SYSTEM)
+        if (!frame || frame.deleted || (!frame.active && !this.user.hasPriv(PRIV.PRIV_EDIT_SYSTEM)
             && !await user.coll.findOne({ honorFrameIds: id.toHexString() }, { projection: { _id: 1 } }))) {
             throw new NotFoundError(id.toHexString());
         }
@@ -203,9 +233,9 @@ export class HonorFrameSearchHandler extends Handler {
     @param('kind', Types.Range(['users', 'frames']))
     async get(domainId: string, q = '', kind: 'users' | 'frames' = 'frames') {
         if (kind === 'frames') {
-            const docs = await coll.find({ active: true, name: { $regex: escapeRegExp(q.trim().slice(0, 80)), $options: 'i' } })
+            const docs = await coll.find({ deleted: { $ne: true }, name: { $regex: escapeRegExp(q.trim().slice(0, 80)), $options: 'i' } })
                 .sort({ _id: -1 }).limit(50).toArray();
-            this.response.body = { options: docs.map((doc) => ({ value: doc._id.toHexString(), label: doc.name })) };
+            this.response.body = { options: docs.map((doc) => ({ value: doc._id.toHexString(), label: doc.name, disabled: !doc.active })) };
         } else {
             const docs = await user.coll.find({ $and: [{ _id: { $gt: 0 } }, userSearch(q)] })
                 .project({ _id: 1, uname: 1 }).sort({ _id: 1 }).limit(50).toArray();
@@ -223,7 +253,7 @@ export class HonorFrameOwnersHandler extends Handler {
     @param('q', Types.String, true)
     async get(domainId: string, id: ObjectId, page = 1, q = '') {
         const frame = await coll.findOne({ _id: id });
-        if (!frame) throw new NotFoundError(id.toHexString());
+        if (!frame || frame.deleted) throw new NotFoundError(id.toHexString());
         const query = { honorFrameIds: id.toHexString(), ...userSearch(q) };
         const count = await user.coll.countDocuments(query);
         const pageCount = Math.max(1, Math.ceil(count / 25));
@@ -245,7 +275,7 @@ export class UserHonorFramesHandler extends Handler {
         const target = await user.coll.findOne({ _id: uid }, { projection: { honorFrameIds: 1 } });
         if (!target) throw new UserNotFoundError(uid);
         const ids = (target.honorFrameIds || []).filter((id) => /^[a-f0-9]{24}$/.test(id)).map((id) => new ObjectId(id));
-        const query = { _id: { $in: ids } };
+        const query = { _id: { $in: ids }, deleted: { $ne: true } };
         const count = await coll.countDocuments(query);
         const pageCount = Math.max(1, Math.ceil(count / 12));
         page = Math.min(page, pageCount);

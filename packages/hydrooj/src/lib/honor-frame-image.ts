@@ -3,7 +3,7 @@ import { PNG } from 'pngjs';
 export const MAX_FRAME_BYTES = 2 * 1024 * 1024;
 
 /** Decode and re-encode, discarding all ancillary metadata and animation. */
-export function normalizeHonorFrameImage(input: Buffer, shape?: 'circle' | 'square'): Buffer {
+export function normalizeHonorFrameImage(input: Buffer, shape?: 'circle' | 'square', warn?: (message: string) => void): Buffer {
     if (!input.length || input.length > MAX_FRAME_BYTES
         || input.length < 33 || !input.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))
         || input.readUInt32BE(8) !== 13 || input.toString('ascii', 12, 16) !== 'IHDR') {
@@ -34,6 +34,7 @@ export function normalizeHonorFrameImage(input: Buffer, shape?: 'circle' | 'squa
     if (!ended) throw new Error('Missing PNG ending');
     const decoded = PNG.sync.read(input, { checkCRC: true });
     if (shape) {
+        let overlaps = false;
         // Pixel centers, with a 2px antialiasing allowance along the hole edge.
         for (let y = 64; y < 448; y++) {
             for (let x = 64; x < 448; x++) {
@@ -41,10 +42,15 @@ export function normalizeHonorFrameImage(input: Buffer, shape?: 'circle' | 'squa
                 const dy = Math.abs(y + 0.5 - 256);
                 const inside = shape === 'circle' ? dx * dx + dy * dy < 190 ** 2
                     : Math.max(dx - 128, 0) ** 2 + Math.max(dy - 128, 0) ** 2 < 62 ** 2;
-                if (inside && decoded.data[(y * 512 + x) * 4 + 3] !== 0) {
-                    throw new Error('The central avatar area must be transparent.');
-                }
+                // Near-transparent export noise is harmless. Center artwork is a
+                // design warning, not a security or file-format validation error.
+                if (inside && decoded.data[(y * 512 + x) * 4 + 3] > 8) overlaps = true;
             }
+        }
+        if (overlaps) {
+            warn?.(shape === 'circle'
+                ? 'Circular artwork overlaps the avatar area. Check the preview.'
+                : 'Rounded square artwork overlaps the avatar area. Check the preview.');
         }
     }
     let transparent = false;

@@ -31,21 +31,42 @@ function png(width = 64, height = width, alpha = 0) {
     return PNG.sync.write(image);
 }
 
-test('paired artwork uses fixed geometry and protects the transparent avatar opening', () => {
+test('paired artwork uses fixed geometry and warns about artwork inside the avatar opening', () => {
     for (const shape of ['circle', 'square'] as const) {
         assert.equal(PNG.sync.read(normalizeHonorFrameImage(png(512), shape)).width, 512);
         assert.throws(() => normalizeHonorFrameImage(png(256), shape), /512/);
         const blocked = PNG.sync.read(png(512));
         blocked.data[(256 * 512 + 256) * 4 + 3] = 255;
-        assert.throws(() => normalizeHonorFrameImage(PNG.sync.write(blocked), shape), /transparent/);
+        const warnings: string[] = [];
+        normalizeHonorFrameImage(PNG.sync.write(blocked), shape, (warning) => warnings.push(warning));
+        assert.equal(warnings.length, 1);
+        assert.match(warnings[0], /overlaps/);
     }
     const corner = PNG.sync.read(png(512));
     corner.data[(80 * 512 + 80) * 4 + 3] = 255;
-    assert.doesNotThrow(() => normalizeHonorFrameImage(PNG.sync.write(corner), 'circle'));
-    assert.doesNotThrow(() => normalizeHonorFrameImage(PNG.sync.write(corner), 'square'));
+    const warnings: string[] = [];
+    const warn = (warning: string) => warnings.push(warning);
+    normalizeHonorFrameImage(PNG.sync.write(corner), 'circle', warn);
+    normalizeHonorFrameImage(PNG.sync.write(corner), 'square', warn);
+    assert.equal(warnings.length, 0);
     const interior = PNG.sync.read(png(512));
-    interior.data[(80 * 512 + 200) * 4 + 3] = 255;
-    assert.throws(() => normalizeHonorFrameImage(PNG.sync.write(interior), 'square'), /transparent/);
+    interior.data[(80 * 512 + 140) * 4 + 3] = 255;
+    normalizeHonorFrameImage(PNG.sync.write(interior), 'circle', warn);
+    assert.equal(warnings.length, 0);
+    normalizeHonorFrameImage(PNG.sync.write(interior), 'square', warn);
+    assert.equal(warnings.length, 1);
+});
+
+test('nearly transparent export noise does not reject valid circular or rounded artwork', () => {
+    for (const shape of ['circle', 'square'] as const) {
+        const warnings: string[] = [];
+        normalizeHonorFrameImage(png(512, 512, 2), shape, (warning) => warnings.push(warning));
+        assert.equal(warnings.length, 0);
+        normalizeHonorFrameImage(png(512, 512, 8), shape, (warning) => warnings.push(warning));
+        assert.equal(warnings.length, 0);
+        normalizeHonorFrameImage(png(512, 512, 9), shape, (warning) => warnings.push(warning));
+        assert.equal(warnings.length, 1);
+    }
 });
 
 test('bulk ownership operations are bounded, global, conditional and leave other equipped frames alone', async () => {
@@ -94,6 +115,32 @@ test('frame artwork is decoded, normalized and checked for transparency', () => 
     empty.data.fill(0);
     assert.throws(() => normalizeHonorFrameImage(PNG.sync.write(empty)), /visible/);
 });
+
+for (const action of ['grant', 'equip', 'bulk-grant', 'bulk-equip']) {
+    test(`${action} repairs ownership when deletion races between validation and the user write`, async () => {
+        let reads = 0;
+        let invalidations = 0;
+        const writes: any[] = [];
+        const module = load('../src/lib/honor-frame-user.ts', {
+            '../error': { ValidationError: Error, UserNotFoundError: Error },
+            '../model/honor-frame': { coll: { findOne: async () => ++reads === 1 ? { active: true } : { active: false, deleted: true } } },
+            '../model/user': { __esModule: true, default: { coll: {
+                countDocuments: async () => 1,
+                findOneAndUpdate: async (query: any, update: any) => { writes.push([query, update]); return { _id: 42 }; },
+                updateMany: async (query: any, update: any) => { writes.push([query, update]); return { matchedCount: 1 }; },
+            } }, deleteUserCache: () => invalidations++ },
+        });
+        await assert.rejects(action.startsWith('bulk-') ? module.manageHonorFrameOwners(id, [42], action.slice(5))
+            : action === 'grant' ? module.grantHonorFrame(42, id) : module.equipHonorFrame(42, id), /honorFrame/);
+        assert.equal(writes.length, 2);
+        const [filter, cleanup] = writes[1];
+        assert.equal(filter.domainId, undefined);
+        assert.equal(JSON.stringify(filter._id.$in), '[42]');
+        assert.equal(cleanup[0].$set.honorFrameIds.$setDifference[1][0], id);
+        assert.equal(cleanup[0].$set.honorFrameId.$cond[0].$eq[1], id);
+        assert.equal(invalidations, 1);
+    });
+}
 
 test('spoofed, corrupt, oversized, nonsquare and decompression-bomb artwork is rejected', () => {
     for (const input of [Buffer.from('<svg onload="alert(1)"/>'), Buffer.alloc(2 * 1024 * 1024 + 1), png(32), png(64, 128)]) {

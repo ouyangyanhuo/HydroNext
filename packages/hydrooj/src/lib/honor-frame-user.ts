@@ -3,11 +3,25 @@ import { UserNotFoundError, ValidationError } from '../error';
 import { coll as frames } from '../model/honor-frame';
 import user, { deleteUserCache } from '../model/user';
 
+async function checkFrameAfterWrite(id: string, uids: number[]) {
+    const frame = await frames.findOne({ _id: new ObjectId(id) });
+    if (frame && !frame.deleted) return;
+    // A grant/equip that already passed its read can race with global deletion.
+    // Repair that late write without disturbing a different equipped frame.
+    await user.coll.updateMany({ _id: { $in: uids } }, [{ $set: {
+        honorFrameIds: { $setDifference: [{ $ifNull: ['$honorFrameIds', []] }, [id]] },
+        honorFrameId: { $cond: [{ $eq: ['$honorFrameId', id] }, '', { $ifNull: ['$honorFrameId', ''] }] },
+    } }]);
+    deleteUserCache(true);
+    throw new ValidationError('honorFrame');
+}
+
 export async function grantHonorFrame(uid: number, id: string) {
     if (!await frames.findOne({ _id: new ObjectId(id), active: true })) throw new ValidationError('honorFrame');
     const doc = await user.coll.findOneAndUpdate({ _id: uid },
         { $addToSet: { honorFrameIds: id } }, { returnDocument: 'after' });
     if (!doc) throw new UserNotFoundError(uid);
+    await checkFrameAfterWrite(id, [uid]);
     deleteUserCache(doc);
 }
 
@@ -32,6 +46,7 @@ export async function equipHonorFrame(uid: number, id: string) {
     const doc = await user.coll.findOneAndUpdate({ _id: uid, ...(id ? { honorFrameIds: id } : {}) },
         { $set: { honorFrameId: id } }, { returnDocument: 'after' });
     if (!doc) throw new ValidationError('honorFrame');
+    if (id) await checkFrameAfterWrite(id, [uid]);
     deleteUserCache(doc);
 }
 
@@ -40,7 +55,7 @@ export async function manageHonorFrameOwners(id: string, input: number[], action
         || input.some((uid) => !Number.isSafeInteger(uid) || uid <= 0)) throw new ValidationError('uids');
     const uids = [...new Set(input)];
     const frame = await frames.findOne({ _id: new ObjectId(id) });
-    if (!frame || (['grant', 'equip'].includes(action) && !frame.active)) throw new ValidationError('honorFrame');
+    if (!frame || frame.deleted || (['grant', 'equip'].includes(action) && !frame.active)) throw new ValidationError('honorFrame');
     const query = { _id: { $in: uids }, ...(action === 'grant' ? {} : { honorFrameIds: id }) };
     if (await user.coll.countDocuments(query) !== uids.length) throw new ValidationError('uids');
     const update = action === 'grant' ? { $addToSet: { honorFrameIds: id } }
@@ -51,6 +66,7 @@ export async function manageHonorFrameOwners(id: string, input: number[], action
             } }];
     // Ownership stays in the write predicate: concurrent revocation cannot be undone.
     const result = await user.coll.updateMany(query, update);
+    if (action === 'grant' || action === 'equip') await checkFrameAfterWrite(id, uids);
     deleteUserCache(true);
     return { matched: result.matchedCount, requested: uids.length };
 }

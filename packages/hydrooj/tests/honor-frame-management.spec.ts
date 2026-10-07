@@ -9,12 +9,15 @@ import { test } from 'node:test';
 const require = createRequire(import.meta.url);
 const id = new ObjectId('1234567890abcdef12345678');
 function fixture() {
-    const frame = { _id: id, name: 'Award', active: true, artworkVersion: 2 };
+    const frame = { _id: id, name: 'Award', active: true, artworkVersion: 2, deleted: false };
     const queries: any[] = [];
     const projections: any[] = [];
     const limits: number[] = [];
     const paths: string[] = [];
     const updates: any[] = [];
+    const events: string[] = [];
+    let removed = false;
+    let storageFails = false;
     let data: any[] = [{ _id: 2, uname: 'Student', avatar: '', honorFrameId: id.toHexString() }];
     let hasOwners = false;
     const cursor = {
@@ -28,6 +31,11 @@ function fixture() {
         findOne: async (query: any) => query.honorFrameIds
             ? hasOwners ? { _id: 2 } : null : { _id: 2, honorFrameIds: [id.toHexString()] },
         countDocuments: async () => 30,
+        updateMany: async (query: any, update: any) => {
+            events.push('users');
+            queries.push(query);
+            updates.push(update);
+        },
     };
     const mocks = {
         '../context': {}, '../error': { NotFoundError: Error, UserNotFoundError: Error, ValidationError: Error },
@@ -35,15 +43,29 @@ function fixture() {
         '../model/builtin': { PRIV: { PRIV_EDIT_SYSTEM: 1 } },
         '../model/honor-frame': {
             coll: {
-                findOne: async () => frame, countDocuments: async () => 13,
+                findOne: async () => removed ? null : frame, countDocuments: async () => 13,
                 find: (query: any) => { queries.push(query); return cursor; },
-                updateOne: async (query: any, update: any) => { updates.push(update); return { matchedCount: 1 }; },
+                updateOne: async (query: any, update: any) => {
+                    if (query.deleted?.$ne && frame.deleted) return { matchedCount: 0 };
+                    events.push('frame');
+                    updates.push(update);
+                    Object.assign(frame, update.$set);
+                    return { matchedCount: 1 };
+                },
+                deleteOne: async () => { events.push('remove'); removed = true; },
             },
             framePath: (value: string, shape?: string) => `${value}/${shape || 'legacy'}`,
             publicFrame: (doc: any) => ({ id: doc._id.toHexString(), name: doc.name }),
         },
         '../model/oplog': { log: async () => {} },
-        '../model/storage': { get: async (path: string) => { paths.push(path); return Buffer.from('png'); } },
+        '../model/storage': {
+            get: async (path: string) => { paths.push(path); return Buffer.from('png'); },
+            del: async (values: string[]) => {
+                events.push('storage');
+                if (storageFails) throw new Error('Storage unavailable');
+                paths.push(...values);
+            },
+        },
         '../model/user': { __esModule: true, default: { coll: userColl }, deleteUserCache() {} },
         '../service/server': { Handler: class {}, param: () => () => {}, Types: { Range: () => undefined } },
     };
@@ -58,7 +80,8 @@ function fixture() {
         instance.user = { hasPriv: () => false };
         return instance;
     };
-    return { handler, queries, projections, limits, paths, updates, frame,
+    return { handler, queries, projections, limits, paths, updates, frame, events,
+        setStorageFails: (value: boolean) => { storageFails = value; },
         setData: (value: any[]) => { data = value; }, setOwners: (value: boolean) => { hasOwners = value; } };
 }
 
@@ -69,6 +92,52 @@ test('rename and status update only the intended field, avoiding stale card over
     await handler.postStatus('domain-b', id, false);
     assert.equal(JSON.stringify(api.updates), JSON.stringify([{ $set: { name: 'Renamed' } }, { $set: { active: false } }]));
     await assert.rejects(handler.postRename('domain-a', id, ' '));
+});
+
+test('frame search matches literal partial names and includes disabled frames with an explicit flag', async () => {
+    const api = fixture();
+    api.setData([{ _id: id, name: '冠军.*', active: false }, { _id: id, name: '冠军奖', active: true }]);
+    const handler = api.handler('HonorFrameSearchHandler');
+    await handler.get('another-domain', ' 冠军.* ', 'frames');
+    assert.equal(api.queries[0].name.$regex, '冠军\\.\\*');
+    assert.equal(api.queries[0].name.$options, 'i');
+    assert.equal(api.queries[0].active, undefined);
+    assert.equal(api.queries[0].deleted.$ne, true);
+    assert.equal(api.limits[0], 50);
+    assert.equal(handler.response.body.options[0].disabled, true);
+    assert.equal(handler.response.body.options[1].disabled, false);
+});
+
+test('deletion blocks new awards, globally revokes ownership, removes both assets and is idempotent', async () => {
+    const api = fixture();
+    const handler = api.handler('ManageHonorFramesHandler');
+    await handler.postDelete('domain-a', id);
+    assert.deepEqual(api.events, ['frame', 'users', 'storage', 'remove']);
+    assert.equal(api.frame.active, false);
+    assert.equal(api.frame.deleted, true);
+    assert.equal(api.queries[0].domainId, undefined);
+    assert.equal(api.queries[0].$or[0].honorFrameIds, id.toHexString());
+    assert.equal(api.queries[0].$or[1].honorFrameId, id.toHexString());
+    assert.equal(api.updates[1][0].$set.honorFrameIds.$setDifference[1][0], id.toHexString());
+    assert.equal(api.updates[1][0].$set.honorFrameId.$cond[0].$eq[1], id.toHexString());
+    assert.deepEqual(api.paths, [`${id}/square`, `${id}/circle`]);
+    await handler.postDelete('domain-b', id);
+    assert.equal(api.events.length, 4);
+    assert.equal(handler.response.body.ok, true);
+});
+
+test('failed deletion stays unpublished, cannot be restored by stale writes, and cleanup can be retried', async () => {
+    const api = fixture();
+    api.frame.artworkVersion = 1;
+    api.setStorageFails(true);
+    const handler = api.handler('ManageHonorFramesHandler');
+    await assert.rejects(handler.postDelete('a', id), /Storage unavailable/);
+    await assert.rejects(handler.postStatus('b', id, true));
+    await assert.rejects(handler.postRename('b', id, 'Revived'));
+    await assert.rejects(api.handler('HonorFrameImageHandler').get('a', id, 'circle'));
+    api.setStorageFails(false);
+    await handler.postDelete('a', id);
+    assert.deepEqual(api.paths, [`${id}/legacy`]);
 });
 
 test('owner search is global, escaped, projected and paginated at 25', async () => {

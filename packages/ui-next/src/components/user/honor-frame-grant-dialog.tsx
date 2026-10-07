@@ -6,7 +6,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { requestHonorFrame } from '@/utils/honor-frame-api';
 
-interface Option { value: string, label: string }
+interface Option { value: string, label: string, disabled?: boolean }
 function useFrameSearch(kind: 'frames' | 'users', opened: boolean, selected: string[]) {
   const [search, setSearch] = useState('');
   const [options, setOptions] = useState<Option[]>([]);
@@ -63,7 +63,8 @@ export function HonorFrameGrantDialog({ opened, onClose, busy, onGrant }: {
     }}>
     <LongSelect
       label={t('Honor avatar frame')}
-      data={frames.options}
+      data={frames.options.map((option) => option.disabled
+        ? { ...option, label: `${option.label} (${t('Disabled')})` } : option)}
       value={id}
       onChange={setId}
       searchValue={frames.search}

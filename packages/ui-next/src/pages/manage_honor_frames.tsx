@@ -1,5 +1,5 @@
 import { Card, Group, SimpleGrid, Stack, Text, TextInput, Tooltip } from '@mantine/core';
-import { IconCheck, IconEye, IconGift, IconUpload, IconX } from '@tabler/icons-react';
+import { IconCheck, IconEye, IconGift, IconTrash, IconUpload, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 import { ActionIcon, Button, UnstyledButton } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
@@ -30,6 +30,7 @@ export default function ManageHonorFramesPage() {
   const [editing, setEditing] = useState('');
   const [name, setName] = useState('');
   const [action, setAction] = useState<ManagedFrame | null>(null);
+  const [deleting, setDeleting] = useState<ManagedFrame | null>(null);
   const [q, setQ] = useState(args.q || '');
   const frames: ManagedFrame[] = args.frames || [];
   if (!isAdmin) return <Text>{t('Access Denied')}</Text>;
@@ -67,15 +68,24 @@ export default function ManageHonorFramesPage() {
             aria-label={`${frame.name}: ${t(frame.active ? 'Unpublish' : 'Publish')}`}>
             {t(frame.active ? 'Published' : 'Disabled')}
           </Button>
-          <Tooltip label={t('Frame owners')}>
-            <ActionIcon
-              component={Link}
-              to="manage_honor_frame_owners"
-              params={{ id: frame.id }}
-              variant="subtle"
-              className="hydro-frame-card__view"
-              aria-label={t('Frame owners')}><IconEye size={19} /></ActionIcon>
-          </Tooltip>
+          <Group gap={4} className="hydro-frame-card__view">
+            <Tooltip label={t('Frame owners')}>
+              <ActionIcon
+                component={Link}
+                to="manage_honor_frame_owners"
+                params={{ id: frame.id }}
+                variant="subtle"
+                aria-label={t('Frame owners')}><IconEye size={19} /></ActionIcon>
+            </Tooltip>
+            <Tooltip label={t('Delete frame')}>
+              <ActionIcon
+                variant="subtle"
+                color="red"
+                disabled={busy}
+                aria-label={`${t('Delete frame')}: ${frame.name}`}
+                onClick={() => setDeleting(frame)}><IconTrash size={19} /></ActionIcon>
+            </Tooltip>
+          </Group>
         </Group>
         <HonorFramePreview frame={frame} avatar={user.avatar} />
         {editing === frame.id ? <form
@@ -99,10 +109,9 @@ export default function ManageHonorFramesPage() {
           </Group></form> : <UnstyledButton
           className="hydro-frame-card__name"
           disabled={busy}
-          title={t('Click to rename')}
+          aria-label={`${t('Rename')}: ${frame.name}`}
           onClick={() => { setEditing(frame.id); setName(frame.name); }}>
           <Text fw={650} ta="center" lineClamp={2}>{frame.name}</Text>
-          <Text size="xs" c="dimmed" ta="center">{t('Click to rename')}</Text>
         </UnstyledButton>}
       </Card>)}
     </SimpleGrid>
@@ -112,6 +121,16 @@ export default function ManageHonorFramesPage() {
       onClose={() => setGrantOpened(false)}
       busy={busy}
       onGrant={(id, uids) => run({ operation: 'owners', id, uids, action: 'grant' })} />
+    <ConfirmDialog
+      opened={!!deleting}
+      onClose={() => setDeleting(null)}
+      title={t('Delete frame')}
+      message={t('Delete {name}? It will be removed from all users and cannot be restored.', { name: deleting?.name || '' })}
+      loading={busy}
+      confirmColor="red"
+      onConfirm={async () => {
+        if (deleting && await run({ operation: 'delete', id: deleting.id })) setDeleting(null);
+      }} />
     <ConfirmDialog
       opened={!!action}
       onClose={() => setAction(null)}
