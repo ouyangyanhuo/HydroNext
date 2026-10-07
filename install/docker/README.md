@@ -21,6 +21,10 @@
 
 命令执行完成后运行 `docker ps -a`，当看到所有的容器的状态没有 `Exited (x) xxx` 就代表 OJ 已经启动成功。
 
+## 每日维护
+
+容器定时重启、镜像备份和手动执行方法见 [每日维护说明](maintenance.md)。
+
 ## 注意
 
 安装过程中，会默认注册一个 uid 为 2 的测评账号。用户名：`judge`，密码：`examplepassword`。**请务必及时修改密码**。修改该账号密码后，请修改 `judge/judge.yaml` 中的 `password`。否则可能会无法测评。
