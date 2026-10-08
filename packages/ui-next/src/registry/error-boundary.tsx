@@ -1,4 +1,6 @@
 import React from 'react';
+import { ChunkLoadErrorNotice } from '../components/feedback/chunk-load-error-notice';
+import { isChunkLoadError } from '../utils/chunk-load-error';
 
 interface SlotErrorBoundaryProps {
   slotName: string;
@@ -27,6 +29,7 @@ export class SlotErrorBoundary extends React.Component<SlotErrorBoundaryProps, S
 
   render(): React.ReactNode {
     if (!this.state.hasError) return this.props.children;
+    if (isChunkLoadError(this.state.error)) return <ChunkLoadErrorNotice />;
 
     const { slotName, label } = this.props;
     return (

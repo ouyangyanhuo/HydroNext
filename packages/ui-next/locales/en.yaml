@@ -35,12 +35,15 @@ __flag: 🇬🇧
 "Only published frames can be awarded. Awards are global across all domains.": "Only published frames can be awarded. Awards are global across all domains."
 "Owned honor frames": "Owned honor frames"
 "Owners": "Owners"
+'Page resources could not be loaded.': 'Page resources could not be loaded.'
 "Recipients": "Recipients"
+'Reload page': 'Reload page'
 'Replacing legacy artwork requires both shapes.': 'Replacing legacy artwork requires both shapes.'
 "Rounded square": "Rounded square"
 "Rounded square artwork": "Rounded square artwork"
 "Rounded square artwork overlaps the avatar area. Check the preview.": "Rounded square artwork overlaps the avatar area. Check the preview."
 'Runtime information unavailable.': 'Runtime information unavailable.'
+'Save unfinished work before reloading.': 'Save unfinished work before reloading.'
 'Saved, but old artwork cleanup failed.': 'Saved, but old artwork cleanup failed.'
 "Search by username or user ID": "Search by username or user ID"
 "Search by username or user ID. Up to 50 users at a time.": "Search by username or user ID. Up to 50 users at a time."
@@ -50,6 +53,7 @@ __flag: 🇬🇧
 "Some selected users already own this avatar frame.": "Some selected users already own this avatar frame."
 'Started at': 'Started at'
 "The central avatar area must be transparent.": "The central avatar area must be transparent."
+'The frontend may have been updated. Check your connection and reload this page.': 'The frontend may have been updated. Check your connection and reload this page.'
 "These avatar frame images have already been uploaded.": "These avatar frame images have already been uploaded."
 'This frame changed. Refresh and try again.': 'This frame changed. Refresh and try again.'
 "Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).": "Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64)."

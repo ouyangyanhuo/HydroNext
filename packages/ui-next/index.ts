@@ -226,6 +226,7 @@ export async function apply(ctx: Context) {
             asFallback: true,
             priority: 100,
             async render(name, args, context) {
+                context.handler.response.addHeader('Cache-Control', 'no-store');
                 const userLang = context.UserContext?.viewLang || context.handler.session?.viewLang;
                 const serialized = JSON.stringify({
                     HYDRO_INJECTED: true,
@@ -263,6 +264,9 @@ export async function apply(ctx: Context) {
             asFallback: true,
             priority: 100,
             async render(name, args, context) {
+                // HTML selects the current hashed entry. Never reuse an old
+                // document after deployment; hashed assets remain cacheable.
+                context.handler.response.addHeader('Cache-Control', 'no-store');
                 const indexHtml = path.join(__dirname, 'public', 'index.html');
                 if (!fs.existsSync(indexHtml)) return PENDING_HTML;
                 const html = fs.readFileSync(indexHtml, 'utf-8');
