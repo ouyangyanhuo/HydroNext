@@ -6,10 +6,11 @@ import Schema from 'schemastery';
 import {
     CannotDeleteSystemDomainError, CannotEditSuperAdminError, NotLaunchedByPM2Error, UserNotFoundError, ValidationError,
 } from '../error';
+import { getRuntimeInfo } from '../lib/runtime-info';
 import { Logger } from '../logger';
 import { PRIV, STATUS } from '../model/builtin';
-import domain from '../model/domain';
 import * as document from '../model/document';
+import domain from '../model/domain';
 import message from '../model/message';
 import * as oplog from '../model/oplog';
 import problem from '../model/problem';
@@ -86,6 +87,7 @@ class SystemCheckConnHandler extends ConnectionHandler {
 class SystemDashboardHandler extends SystemHandler {
     async get() {
         this.response.template = 'manage_dashboard.html';
+        this.response.body.runtime = await getRuntimeInfo();
     }
 
     async postRestart() {

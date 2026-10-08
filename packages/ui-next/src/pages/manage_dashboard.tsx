@@ -2,6 +2,8 @@ import { Badge, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/cor
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
+import { RuntimeStatusCard } from '@/components/manage/runtime-status-card';
+import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 
@@ -17,6 +19,7 @@ const entries = [
 ];
 
 export default function ManageDashboardPage() {
+  const { args } = usePageData();
   const { t } = useI18n();
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
 
@@ -32,6 +35,7 @@ export default function ManageDashboardPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('System Management')} />
+      <RuntimeStatusCard runtime={args.runtime} />
       <SimpleGrid cols={{ base: 1, md: 2, xl: 3 }} spacing="md">
         {entries.map((entry) => (
           <Card key={entry.to} withBorder p="lg" className="hydro-card">

@@ -2,12 +2,17 @@ __flag: 🇬🇧
 "Already owned": "Already owned"
 "Already owned by: {users}. Remove these recipients before granting.": "Already owned by: {users}. Remove these recipients before granting."
 "An avatar frame with this name already exists.": "An avatar frame with this name already exists."
+'Application runtime': 'Application runtime'
 "Apply this action to {count} selected users?": "Apply this action to {count} selected users?"
 "Avatar frame management": "Avatar frame management"
+'Based on container PID 1. Reloading the application does not reset this timer.': 'Based on container PID 1. Reloading the application does not reset this timer.'
 "Choose one artwork per shape.": "Choose one artwork per shape."
 "Circular": "Circular"
 "Circular artwork": "Circular artwork"
 "Circular artwork overlaps the avatar area. Check the preview.": "Circular artwork overlaps the avatar area. Check the preview."
+'Container runtime': 'Container runtime'
+'Container timing is unavailable; showing the application process instead.': 'Container timing is unavailable; showing the application process instead.'
+'Continuous uptime': 'Continuous uptime'
 "Delete frame": "Delete frame"
 "Delete {name}? It will be removed from all users and cannot be restored.": "Delete {name}? It will be removed from all users and cannot be restored."
 "Describe the honor and how this frame is awarded.": "Describe the honor and how this frame is awarded."
@@ -25,6 +30,7 @@ __flag: 🇬🇧
 "Invalid PNG artwork. Please export a new PNG or WebP image.": "Invalid PNG artwork. Please export a new PNG or WebP image."
 "Invalid authorization destination.": "Invalid authorization destination."
 "No description yet.": "No description yet."
+'Not running in a container; showing the application process.': 'Not running in a container; showing the application process.'
 "One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.": "One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white."
 "Only published frames can be awarded. Awards are global across all domains.": "Only published frames can be awarded. Awards are global across all domains."
 "Owned honor frames": "Owned honor frames"
@@ -34,6 +40,7 @@ __flag: 🇬🇧
 "Rounded square": "Rounded square"
 "Rounded square artwork": "Rounded square artwork"
 "Rounded square artwork overlaps the avatar area. Check the preview.": "Rounded square artwork overlaps the avatar area. Check the preview."
+'Runtime information unavailable.': 'Runtime information unavailable.'
 'Saved, but old artwork cleanup failed.': 'Saved, but old artwork cleanup failed.'
 "Search by username or user ID": "Search by username or user ID"
 "Search by username or user ID. Up to 50 users at a time.": "Search by username or user ID. Up to 50 users at a time."
@@ -41,6 +48,7 @@ __flag: 🇬🇧
 "Select current page": "Select current page"
 "Some users changed during this operation. Refresh and retry.": "Some users changed during this operation. Refresh and retry."
 "Some selected users already own this avatar frame.": "Some selected users already own this avatar frame."
+'Started at': 'Started at'
 "The central avatar area must be transparent.": "The central avatar area must be transparent."
 "These avatar frame images have already been uploaded.": "These avatar frame images have already been uploaded."
 'This frame changed. Refresh and try again.': 'This frame changed. Refresh and try again.'
@@ -51,6 +59,7 @@ __flag: 🇬🇧
 "Uploaded frames start disabled. Publish them from the library.": "Uploaded frames start disabled. Publish them from the library."
 "Use two 512 × 512 px images with a transparent 384 px center.": "Use two 512 × 512 px images with a transparent 384 px center."
 __id: en
+'{days}d {hours}h {minutes}m {seconds}s': '{days}d {hours}h {minutes}m {seconds}s'
 'Saved. Please refresh this page.': 'Saved. Please refresh this page.'
 'Discard changes': 'Discard changes'
 'Discard your unsaved changes?': 'Discard your unsaved changes?'
