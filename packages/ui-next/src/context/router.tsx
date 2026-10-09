@@ -89,6 +89,9 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
           const reqUrl = new URL(url, ep).href;
           const res = await fetch(reqUrl, {
             signal,
+            // This URL is also a document URL. Do not read or populate its HTTP
+            // cache with JSON, including when restoring browser history.
+            cache: 'no-store',
             headers: {
               Accept: 'application/json',
               'x-hydro-inject': [

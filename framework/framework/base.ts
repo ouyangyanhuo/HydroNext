@@ -102,10 +102,6 @@ export default (logger, xff, xhost) => async (ctx: KoaContext, next: Next) => {
             }
         }
         if (response.disposition) ctx.set('Content-Disposition', response.disposition);
-        if (response.etag) {
-            ctx.set('ETag', response.etag);
-            ctx.set('Cache-Control', 'public');
-        }
     } catch (err) {
         const error = errorMessage(err);
         response.status = error instanceof UserFacingError ? error.code : 500;
@@ -124,7 +120,21 @@ export default (logger, xff, xhost) => async (ctx: KoaContext, next: Next) => {
         }
     } finally {
         if (!request.websocket) {
-            if (response.etag && request.headers['if-none-match'] === response.etag) {
+            // A route can serve both a document and injected JSON page data.
+            // Keep their cache variants separate, including redirects and errors.
+            ctx.vary('Accept');
+            ctx.vary('X-Hydro-Inject');
+            const preventCaching = !!response.template || !!response.redirect || !!request.headers['x-hydro-inject'] || response.status >= 400;
+            if (preventCaching) {
+                // Page data contains user-specific state and must never replace
+                // the document in the browser's HTTP cache on history navigation.
+                ctx.set('Cache-Control', 'no-store');
+                ctx.remove('ETag');
+            } else if (response.etag) {
+                ctx.set('ETag', response.etag);
+                ctx.set('Cache-Control', 'public');
+            }
+            if (!preventCaching && response.etag && request.headers['if-none-match'] === response.etag) {
                 ctx.response.status = 304;
             } else if (response.redirect && !request.json) {
                 ctx.response.type = 'application/octet-stream';

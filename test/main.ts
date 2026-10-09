@@ -46,6 +46,23 @@ describe('App', () => {
         await agent.get('/api/user?args={"id":2}&projection=uname').expect(null);
     });
 
+    it('Page documents and SPA JSON at the same URL are uncacheable and vary by representation', async () => {
+        for (const route of ['/p?page=1', '/d/system/p?page=1']) {
+            for (const accept of ['text/html', 'application/json', 'text/html']) {
+                const request = agent.get(route).set('Accept', accept);
+                if (accept === 'application/json') request.set('x-hydro-inject', 'uicontext,usercontext,pagename');
+                // eslint-disable-next-line no-await-in-loop
+                const response = await request.expect(200);
+                assert.equal(response.headers['cache-control'], 'no-store');
+                assert.ok(response.headers['content-type'].startsWith(accept));
+                const vary = response.headers.vary.toLowerCase().split(/,\s*/);
+                assert.ok(vary.includes('accept'));
+                assert.ok(vary.includes('x-hydro-inject'));
+                if (accept === 'application/json') assert.ok(response.body.UiContext);
+            }
+        }
+    });
+
     it('List routes accept and return every explicit sorting mode', async () => {
         for (const route of ['/p', '/training']) {
             for (const sort of ['default', 'asc', 'desc', 'recent', 'oldest']) {
