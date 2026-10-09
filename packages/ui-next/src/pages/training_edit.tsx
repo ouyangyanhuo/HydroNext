@@ -1,51 +1,32 @@
 import { Group, NumberInput, Paper, SimpleGrid, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
-import { TagMultiSelect } from '@/components/common/select';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
+import { TrainingPlanEditor, type TrainingProblemOption } from '@/components/training/training-plan-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useDomainId } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
+import { parseTrainingPlan, validateTrainingPlan } from '@/utils/training-plan';
 
-const DEFAULT_DAG = JSON.stringify([
-  {
-    _id: 1,
-    title: '基础训练',
-    requireNids: [],
-    pids: [],
-  },
-], null, 2);
 const EMPTY_MARKDOWN = '<!-- empty -->';
-
-interface ProblemOption {
-  value: string;
-  label: string;
-  description?: string;
-}
-
-function normalizeProblemId(id: string) {
-  return Number.isSafeInteger(+id) ? +id : id;
-}
 
 function extractPids(dagText: string) {
   try {
-    const dag = JSON.parse(dagText);
-    if (!Array.isArray(dag)) return [];
-    return dag.flatMap((node) => Array.isArray(node?.pids) ? node.pids.map((pid: any) => String(pid)) : []);
+    return [...new Set(parseTrainingPlan(dagText).flatMap((node) => node.pids.map(String)))];
   } catch {
     return [];
   }
 }
 
-function mergeOptions(...groups: ProblemOption[][]) {
+function mergeOptions(...groups: TrainingProblemOption[][]) {
   const seen = new Set<string>();
-  const result: ProblemOption[] = [];
+  const result: TrainingProblemOption[] = [];
   for (const group of groups) {
     for (const item of group) {
       if (seen.has(item.value)) continue;
@@ -56,13 +37,12 @@ function mergeOptions(...groups: ProblemOption[][]) {
   return result;
 }
 
-function buildDagFromProblems(title: string, pids: string[]) {
-  return JSON.stringify([{
-    _id: 1,
-    title: title || '基础训练',
-    requireNids: [],
-    pids: pids.map(normalizeProblemId),
-  }], null, 2);
+function problemOption(pdoc: any): TrainingProblemOption {
+  return {
+    value: String(pdoc.docId),
+    label: `${pdoc.pid ? `${pdoc.pid} ` : ''}${pdoc.title || `ID ${pdoc.docId}`}`,
+    description: `ID = ${pdoc.docId}`,
+  };
 }
 
 export default function TrainingEditPage() {
@@ -73,7 +53,7 @@ export default function TrainingEditPage() {
   const domainId = useDomainId();
   const tdoc = args.tdoc || {};
   const isNew = !tdoc.docId;
-  const initialDag = args.dag || (tdoc.dag ? JSON.stringify(tdoc.dag, null, 2) : DEFAULT_DAG);
+  const initialDag = args.dag || JSON.stringify(tdoc.dag || [{ _id: 1, title: `${t('Section')} 1`, requireNids: [], pids: [] }], null, 2);
   const [form, setForm] = useState({
     title: tdoc.title || '',
     content: tdoc.content || '',
@@ -81,71 +61,79 @@ export default function TrainingEditPage() {
     pin: Number(tdoc.pin || 0),
     dag: initialDag,
   });
-  const [selectedProblems, setSelectedProblems] = useState<string[]>(() => extractPids(initialDag));
-  const [problemOptions, setProblemOptions] = useState<ProblemOption[]>(() => extractPids(initialDag).map((pid) => ({ value: pid, label: `ID ${pid}` })));
+  const [problemOptions, setProblemOptions] = useState<TrainingProblemOption[]>(() => (
+    Object.values(args.pdict || {}).filter((pdoc: any) => pdoc?.docId !== undefined).map(problemOption)
+  ));
   const [problemSearching, setProblemSearching] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const problemSearchSeq = useRef(0);
+  const problemSearchController = useRef<AbortController | null>(null);
+  const selectedProblemIds = useMemo(() => extractPids(form.dag).sort(), [form.dag]);
+  const problemIdsKey = selectedProblemIds.join(',');
 
-  const problemData = useMemo(
-    () => mergeOptions(selectedProblems.map((pid) => ({
-      value: pid,
-      label: problemOptions.find((item) => item.value === pid)?.label || `ID ${pid}`,
-    })), problemOptions),
-    [problemOptions, selectedProblems],
-  );
+  // Hydrate IDs introduced in the advanced JSON editor; backend-provided labels cover saved plans immediately.
+  useEffect(() => {
+    const ids = problemIdsKey.split(',').filter(Boolean).map(Number).filter((id) => Number.isSafeInteger(id) && id > 0);
+    if (!domainId || !ids.length) return undefined;
+    const controller = new AbortController();
+    fetch(`/d/${encodeURIComponent(domainId)}/api/problems`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ args: { ids }, projection: ['docId', 'pid', 'title'] }),
+      signal: controller.signal,
+    }).then(async (res) => {
+      const data = await res.json();
+      if (controller.signal.aborted || !res.ok || !Array.isArray(data)) return;
+      setProblemOptions((current) => mergeOptions(data.map(problemOption), current));
+    }).catch(() => { /* Keep supplied labels if metadata is temporarily unavailable. */ });
+    return () => controller.abort();
+  }, [domainId, problemIdsKey]);
+
+  useEffect(() => () => {
+    problemSearchSeq.current++;
+    problemSearchController.current?.abort();
+  }, []);
 
   const searchProblems = async (query: string) => {
     if (!domainId) return;
     const seq = ++problemSearchSeq.current;
+    problemSearchController.current?.abort();
+    const controller = new AbortController();
+    problemSearchController.current = controller;
     setProblemSearching(true);
     try {
-      const res = await fetch(buildUrl('problem_main', { domainId }, { q: query, quick: 'true', sort: query ? 'default' : 'recent' }), { headers: { Accept: 'application/json' } });
+      const res = await fetch(buildUrl('problem_main', { domainId }, { q: query, quick: 'true', sort: query ? 'default' : 'recent' }), {
+        headers: { Accept: 'application/json' }, signal: controller.signal,
+      });
       const data = await res.json();
-      if (seq !== problemSearchSeq.current) return;
+      if (controller.signal.aborted || seq !== problemSearchSeq.current) return;
+      if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Problem search failed')));
       const pdocs = Array.isArray(data.pdocs) ? data.pdocs : [];
       setProblemOptions((current) => mergeOptions(
-        pdocs.map((pdoc: any) => ({
-          value: String(pdoc.docId),
-          label: `${pdoc.pid ? `${pdoc.pid} ` : ''}${pdoc.title || `ID ${pdoc.docId}`}`,
-          description: `ID = ${pdoc.docId}`,
-        })),
+        pdocs.map(problemOption),
         current,
       ));
     } catch {
-      notifications.show({ title: t('Problem search failed'), message: '', color: 'red' });
+      if (!controller.signal.aborted && seq === problemSearchSeq.current) {
+        notifications.show({ title: t('Problem search failed'), message: '', color: 'red' });
+      }
     } finally {
       if (seq === problemSearchSeq.current) setProblemSearching(false);
     }
   };
 
-  const updateSelectedProblems = (value: string[]) => {
-    setSelectedProblems(value);
-    setForm((current) => ({ ...current, dag: buildDagFromProblems(current.title, value) }));
-  };
-
-  const updateTitle = (title: string) => {
-    setForm((current) => ({
-      ...current,
-      title,
-      dag: selectedProblems.length ? buildDagFromProblems(title, selectedProblems) : current.dag,
-    }));
-  };
-
   const handleSubmit = async () => {
     setLoading(true); setError('');
     try {
-      const parsedDag = JSON.parse(form.dag);
-      const pids = Array.isArray(parsedDag)
-        ? parsedDag.flatMap((node: any) => Array.isArray(node?.pids) ? node.pids : [])
-        : [];
-      if (!pids.length) throw new Error(t('Please select at least one problem to perform this operation.'));
+      const plan = parseTrainingPlan(form.dag);
+      validateTrainingPlan(plan);
       const res = await fetch(window.location.href, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           ...form,
+          dag: JSON.stringify(plan),
           content: form.content.trim() || EMPTY_MARKDOWN,
           description: form.description.trim() || EMPTY_MARKDOWN,
         }),
@@ -162,7 +150,7 @@ export default function TrainingEditPage() {
         else navigate(isNew ? buildUrl('training_main') : buildUrl('training_detail', { tid: tdoc.docId }));
       }
     } catch (err: any) {
-      const msg = err instanceof SyntaxError ? t('Invalid JSON') : (err?.message || t('Network error'));
+      const msg = err instanceof SyntaxError ? t('Invalid JSON') : t(err?.message || 'Network error');
       setError(msg);
       notifications.show({ title: msg, message: '', color: 'red' });
     } finally { setLoading(false); }
@@ -179,7 +167,16 @@ export default function TrainingEditPage() {
       <Paper withBorder p="lg">
         <Stack gap="md">
           <SimpleGrid cols={{ base: 1, sm: 4 }} spacing="md">
-            <TextInput className="sm:col-span-3" label={t('Title')} value={form.title} onChange={(e) => updateTitle(e.currentTarget.value)} required />
+            <TextInput
+              className="sm:col-span-3"
+              label={t('Title')}
+              value={form.title}
+              onChange={(e) => {
+                const title = e.currentTarget.value;
+                setForm((current) => ({ ...current, title }));
+              }}
+              required
+            />
             <NumberInput label={t('Pin')} value={form.pin} min={0} onChange={(value) => setForm({ ...form, pin: Number(value) || 0 })} />
           </SimpleGrid>
           <Textarea
@@ -198,40 +195,27 @@ export default function TrainingEditPage() {
               minRows={8}
             />
           </div>
-          <TagMultiSelect
-            label={t('Problems')}
-            description={t('Select problems to generate a basic training plan. You can still edit the JSON plan below.')}
-            data={problemData}
-            value={selectedProblems}
-            searchable
-            clearable
-            hidePickedOptions
-            nothingFoundMessage={t('No results')}
-            rightSection={problemSearching ? <Text size="xs" c="dimmed">...</Text> : null}
-            onSearchChange={searchProblems}
-            onChange={updateSelectedProblems}
-            renderOption={({ option }) => {
-              const item = option as ProblemOption;
-              return (
-                <div className="min-w-0">
-                  <Text size="sm" fw={600} truncate>{item.label}</Text>
-                  {item.description && <Text size="xs" c="dimmed" truncate>{item.description}</Text>}
-                </div>
-              );
-            }}
-          />
-          <Textarea
-            label={t('Plan')}
+          <TrainingPlanEditor
             value={form.dag}
-            onChange={(e) => {
-              const dag = e.currentTarget.value;
-              setForm({ ...form, dag });
-              setSelectedProblems(extractPids(dag));
-            }}
-            minRows={16}
-            autosize
-            styles={{ input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '13px' } }}
+            onChange={(dag) => setForm((current) => ({ ...current, dag }))}
+            options={problemOptions}
+            searching={problemSearching}
+            onSearch={searchProblems}
+            disabled={loading}
           />
+          <details>
+            <summary className="cursor-pointer text-sm font-semibold text-[var(--hydro-text-muted)]">{t('Advanced JSON plan')}</summary>
+            <Textarea
+              mt="md"
+              label={t('Plan')}
+              value={form.dag}
+              onChange={(e) => setForm({ ...form, dag: e.currentTarget.value })}
+              disabled={loading}
+              minRows={12}
+              autosize
+              styles={{ input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '13px' } }}
+            />
+          </details>
           <Group justify="flex-end"><Button onClick={handleSubmit} loading={loading}>{t('Save')}</Button></Group>
         </Stack>
       </Paper>

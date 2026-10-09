@@ -8,6 +8,7 @@ import { runInNewContext } from 'node:vm';
 import { buildSync, transformSync } from 'esbuild';
 import { after, test } from 'node:test';
 import { mergeSelectClasses, shortSelectDimension } from '../src/components/common/select-styles.ts';
+import * as trainingPlan from '../src/utils/training-plan.ts';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -39,6 +40,7 @@ for (const [key, value] of Object.entries(globals)) {
 }
 dom.window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
 dom.window.HTMLElement.prototype.scrollIntoView = () => {};
+Object.defineProperty(dom.window.document, 'fonts', { value: { addEventListener() {}, removeEventListener() {} } });
 after(() => {
     dom.window.close();
     for (const [key, descriptor] of previous) {
@@ -123,7 +125,14 @@ async function mount(Component: any, props: any, theme = 'light') {
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
-    await act(async () => root.render(h(MantineProvider, { forceColorScheme: theme }, h(Component, props))));
+    try {
+        await act(async () => root.render(h(MantineProvider, { forceColorScheme: theme }, h(Component, props))));
+    } catch (error) {
+        await act(async () => root.unmount());
+        host.remove();
+        if (error instanceof AggregateError) throw new Error(error.errors.map((item) => item.stack || item).join('\n'));
+        throw error;
+    }
     return {
         host,
         async close() {
@@ -273,6 +282,109 @@ test('contest problem drag order is saved in the current domain without reloadin
     } finally {
         await act(async () => finishSave?.());
         await view.close();
+        dom.reconfigure({ url: 'http://localhost/' });
+    }
+});
+
+test('training chapters retain titles and prerequisites while dragging problems, editing IDs and saving', async () => {
+    const core = require('@mantine/core');
+    const source = (path: string) => transformSync(readFileSync(new URL(path, import.meta.url), 'utf8'), {
+        loader: 'tsx', format: 'cjs', jsx: 'automatic',
+    }).code;
+    const common: Record<string, any> = {
+        '@/components/common/select': { TagMultiSelect },
+        '@/components/common/button': { Button: core.Button, ActionIcon: core.ActionIcon },
+        '@/components/common/confirm-dialog': { ConfirmDialog: () => null },
+        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/utils/training-plan': trainingPlan,
+    };
+    const editorModule = { exports: {} as any };
+    runInNewContext(source('../src/components/training/training-plan-editor.tsx'), {
+        module: editorModule, exports: editorModule.exports, require: (name: string) => common[name] || require(name),
+    });
+    const nodes = [
+        { _id: 1, title: 'Basics', requireNids: [], pids: [1, 2] },
+        { _id: 5, title: 'Advanced', requireNids: [1], pids: [3] },
+    ];
+    const args = {
+        tdoc: { docId: 'training1', title: 'Training', content: 'Intro', description: 'Details', dag: nodes },
+        pdict: Object.fromEntries([1, 2, 3].map((id) => [id, { docId: id, pid: `J000${id}`, title: `Problem ${id}` }])),
+    };
+    const requests: { url: string, body: any }[] = [];
+    const pageModule = { exports: {} as any };
+    const mocks: Record<string, any> = {
+        ...common,
+        '@/components/training/training-plan-editor': editorModule.exports,
+        '@mantine/notifications': { notifications: { show() {} } },
+        '@/components/common/page-header': { PageHeader: ({ children }: any) => h('header', {}, children) },
+        '@/components/editor/markdown-editor': { MarkdownEditor: () => null },
+        '@/context/page-data': { usePageData: () => ({ args }) },
+        '@/context/router': { useNavigate: () => () => {} },
+        '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/team/training' },
+        '@/hooks/use-domain': { useDomainId: () => 'team' },
+        '@/utils/error': { formatErrorMessage: () => 'Failed' },
+    };
+    runInNewContext(source('../src/pages/training_edit.tsx'), {
+        module: pageModule, exports: pageModule.exports, window: dom.window, AbortController,
+        require: (name: string) => mocks[name] || require(name),
+        fetch: async (url: string, options: any) => {
+            requests.push({ url, body: JSON.parse(options.body) });
+            if (url.endsWith('/api/problems')) return { ok: false, json: async () => ({ error: 'Offline metadata' }) };
+            return { ok: true, json: async () => ({ tid: 'training1' }) };
+        },
+    });
+    dom.reconfigure({ url: 'https://oj.example/d/team/training/training1/edit' });
+    const view = await mount(pageModule.exports.default, {});
+    const section = () => view.host.querySelector('[data-training-chapter="1"]')!;
+    const pills = () => [...section().querySelectorAll('[data-mantine-pill-index]')] as HTMLElement[];
+    const transfer = { effectAllowed: '', dropEffect: '', setData() {}, setDragImage() {} };
+    const drag = (element: HTMLElement, type: string) => {
+        const event = new dom.window.MouseEvent(type, { bubbles: true, cancelable: true, clientX: 90 });
+        Object.defineProperty(event, 'dataTransfer', { value: transfer });
+        element.dispatchEvent(event);
+    };
+    const inputValue = async (input: HTMLInputElement, value: string) => act(async () => {
+        input.focus();
+        Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+        input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+    });
+    try {
+        assert.deepEqual(pills().map((pill) => pill.querySelector('.mantine-Pill-label')?.textContent), ['J0001 Problem 1', 'J0002 Problem 2']);
+        assert.equal(section().querySelectorAll('[draggable="true"]').length, 2);
+        const [first, second] = pills();
+        second.getBoundingClientRect = () => ({ left: 0, width: 100 } as DOMRect);
+        await act(async () => {
+            drag(first, 'dragstart');
+            drag(second, 'dragover');
+            drag(second, 'drop');
+        });
+        assert.equal(pills()[0].querySelector('.mantine-Pill-label')?.textContent, 'J0002 Problem 2');
+        assert.equal(requests.filter((request) => request.url.endsWith('/api/problems')).length, 1);
+        const titleLabel = [...view.host.querySelectorAll('label')].find((label) => label.textContent?.startsWith('Title'))!;
+        await inputValue(view.host.querySelector(`#${titleLabel.htmlFor}`) as HTMLInputElement, 'Renamed training');
+        const idInput = section().querySelector('.mantine-NumberInput-input') as HTMLInputElement;
+        await inputValue(idInput, '7');
+        await act(async () => idInput.blur());
+        assert.ok(view.host.querySelector('[data-training-chapter="7"]'));
+        const save = [...view.host.querySelectorAll('button')].find((button) => button.textContent === 'Save')!;
+        await act(async () => save.click());
+        const submitted = requests.find((request) => request.url.endsWith('/training/training1/edit'))!;
+        assert.ok(submitted);
+        assert.equal(submitted.body.title, 'Renamed training');
+        assert.deepEqual(JSON.parse(submitted.body.dag), [
+            { ...nodes[0], _id: 7, pids: [2, 1] }, { ...nodes[1], requireNids: [7] },
+        ]);
+        args.tdoc.dag = JSON.parse(submitted.body.dag);
+    } finally {
+        await view.close();
+    }
+    const reopened = await mount(pageModule.exports.default, {});
+    try {
+        const labels = [...reopened.host.querySelectorAll('[data-training-chapter="7"] .mantine-Pill-label')].map((pill) => pill.textContent);
+        assert.deepEqual(labels, ['J0002 Problem 2', 'J0001 Problem 1']);
+        assert.match(reopened.host.textContent || '', /Basics/);
+    } finally {
+        await reopened.close();
         dom.reconfigure({ url: 'http://localhost/' });
     }
 });

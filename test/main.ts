@@ -109,6 +109,80 @@ describe('App', () => {
         assert.equal(args.udocs[0]._id, 2);
     });
 
+    it('Contest announcements remain domain-scoped and require active-contest administration', async () => {
+        const { contest, domain } = global.Hydro.model;
+        const announcements = require('../packages/hydrooj/src/model/contest-announcement');
+        const domainId = 'contest-announcement-test';
+        await domain.add(domainId, 2, 'Announcement test', '');
+        const now = Date.now();
+        const tid = await contest.add(domainId, 'Announcement test', '', 2, 'acm', new Date(now - 60_000), new Date(now + 3_600_000));
+        const route = `/d/${domainId}/contest/${tid}/management`;
+        try {
+            await contest.attend(domainId, tid, 2);
+            const manage = await agent.get(route).set('Accept', 'application/json').expect(200);
+            assert.equal(getPageArgs(manage).canSendAnnouncement, true);
+            const result = await agent.post(route).set('Accept', 'application/json')
+                .send({ operation: 'announcement', content: 'Important notice' }).expect(200);
+            assert.equal(result.body.recipients, 1);
+            const pending = await announcements.pending(2);
+            assert.equal(pending.length, 1);
+            assert.equal(pending[0].domainId, domainId);
+            assert.equal(pending[0].content, 'Important notice');
+            assert.equal(pending[0].recipients, undefined);
+            assert.equal((await announcements.pending(1)).length, 0);
+            await announcements.acknowledge(2, result.body.id);
+            assert.equal((await announcements.pending(2)).length, 0);
+            await agent.post(`/contest/${tid}/management`).set('Accept', 'application/json')
+                .send({ operation: 'announcement', content: 'Wrong domain' }).expect(404);
+            await agent.post(`/contest/${tid}/management`).set('Accept', 'application/json')
+                .send({ operation: 'announcement', domainId, content: 'Domain override' }).expect(403);
+            await contest.edit(domainId, tid, { beginAt: new Date(now + 60_000) });
+            await agent.post(route).set('Accept', 'application/json')
+                .send({ operation: 'announcement', content: 'Too early' }).expect(403);
+            await contest.edit(domainId, tid, { beginAt: new Date(now - 60_000) });
+            await domain.setUserRole(domainId, 2, 'default');
+            await agent.post(route).set('Accept', 'application/json')
+                .send({ operation: 'announcement', content: 'Not an administrator' }).expect(403);
+        } finally {
+            await contest.del(domainId, tid);
+            await domain.del(domainId);
+        }
+    });
+
+    it('Training editing restores PID titles and persists per-chapter problem order', async () => {
+        const { domain, problem, training } = global.Hydro.model;
+        const domainId = 'training-editor-test';
+        await domain.add(domainId, 2, 'Training editor test', '');
+        const p1 = await problem.add(domainId, 'J0001', 'First problem', 'Statement', 2);
+        const p2 = await problem.add(domainId, 'J0002', 'Second problem', 'Statement', 2);
+        const tid = await training.add(domainId, 'Training editor test', 'Intro', 2, [
+            { _id: 1, title: 'Basics', requireNids: [], pids: [p1, p2] },
+            { _id: 2, title: 'Advanced', requireNids: [1], pids: [p2] },
+        ], 'Description');
+        const route = `/d/${domainId}/training/${tid}/edit`;
+        try {
+            const first = getPageArgs(await agent.get(route).set('Accept', 'application/json').expect(200));
+            assert.equal(first.pdict[p1].title, 'First problem');
+            assert.equal(first.pdict[p2].pid, 'J0002');
+            const dag = [
+                { _id: 7, title: 'Basics', requireNids: [], pids: [p2, p1] },
+                { _id: 2, title: 'Advanced', requireNids: [7], pids: [p2] },
+            ];
+            await agent.post(route).set('Accept', 'application/json').send({
+                title: 'Renamed training', content: 'Intro', description: 'Description', pin: 0, dag: JSON.stringify(dag),
+            }).expect(200);
+            const reopened = getPageArgs(await agent.get(route).set('Accept', 'application/json').expect(200));
+            assert.deepEqual(JSON.parse(reopened.dag), dag);
+            assert.equal(reopened.tdoc.title, 'Renamed training');
+            assert.equal(reopened.pdict[p1].title, 'First problem');
+            await agent.get(`/training/${tid}/edit?domainId=${domainId}`).set('Accept', 'application/json').expect(403);
+        } finally {
+            await training.del(domainId, tid);
+            await Promise.all([problem.del(domainId, p1), problem.del(domainId, p2)]);
+            await domain.del(domainId);
+        }
+    });
+
     // TODO add more tests
 
     const results: Record<string, autocannon.Result> = {};

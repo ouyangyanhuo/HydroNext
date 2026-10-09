@@ -15,6 +15,7 @@ export type Disposable = () => void;
 export type VoidReturn = Promise<any> | any;
 
 export interface EventMap {
+    'contest/announcement': (recipients: number[]) => VoidReturn;
     'app/listen': () => void;
     'app/started': () => void;
     'app/ready': () => VoidReturn;

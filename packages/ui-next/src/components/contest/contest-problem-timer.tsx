@@ -1,9 +1,11 @@
 import { Portal } from '@mantine/core';
-import { IconTrophy } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { IconGripVertical, IconTrophy } from '@tabler/icons-react';
+import { useCallback, useEffect, useState } from 'react';
+import { ButtonBase } from '@/components/common/button';
 import { Link } from '@/components/link';
 import { useI18n } from '@/hooks/use-i18n';
 import { createProblemTimeTracker, formatContestClock } from '@/utils/contest-problem-time';
+import { bindFloatingDrag, CONTEST_TIMER_POSITION_KEY } from '@/utils/floating-position';
 
 function readElapsed(key: string) {
   try {
@@ -23,6 +25,11 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt }: 
 }) {
   const { t } = useI18n();
   const [clock, setClock] = useState(() => ({ now: Date.now(), elapsed: readElapsed(storageKey) }));
+  const floatingRef = useCallback((element: HTMLDivElement | null) => {
+    if (!element) return undefined;
+    const handle = element.querySelector<HTMLElement>('[data-timer-drag-handle]');
+    return handle ? bindFloatingDrag(element, handle, CONTEST_TIMER_POSITION_KEY) : undefined;
+  }, []);
 
   useEffect(() => {
     const tracker = createProblemTimeTracker({
@@ -82,7 +89,16 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt }: 
 
   return (
     <Portal>
-      <div className="hydro-contest-problem-timer" role="group" aria-label={`${t('Contest')}: ${title}`}>
+      <div ref={floatingRef} className="hydro-contest-problem-timer" role="group" aria-label={`${t('Contest')}: ${title}`}>
+        <ButtonBase
+          type="button"
+          data-timer-drag-handle
+          className="hydro-contest-problem-timer__drag"
+          title={t('Drag timer; use arrow keys to move, or Home to reset.')}
+          aria-label={t('Drag timer; use arrow keys to move, or Home to reset.')}
+        >
+          <IconGripVertical size={18} aria-hidden="true" />
+        </ButtonBase>
         <Link
           to="contest_detail"
           params={{ tid }}

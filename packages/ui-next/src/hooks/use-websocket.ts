@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useSessionStore } from '@/stores/session';
 
 interface WebSocketOptions {
@@ -62,6 +62,11 @@ export function useWebSocket({
       };
 
       ws.onmessage = (event) => {
+        if (event.data === 'ping') {
+          ws.send('pong');
+          return;
+        }
+        if (event.data === 'pong') return;
         try {
           const data = JSON.parse(event.data);
           handlersRef.current.onMessage?.(data);
@@ -109,7 +114,15 @@ export function useWebSocket({
     return () => {
       shouldReconnect.current = false;
       clearTimeout(reconnectTimer.current);
-      wsRef.current?.close();
+      const socket = wsRef.current;
+      wsRef.current = null;
+      if (socket) {
+        socket.onopen = null;
+        socket.onmessage = null;
+        socket.onclose = null;
+        socket.onerror = null;
+        socket.close();
+      }
     };
   }, [connect, enabled, autoReconnect]);
 

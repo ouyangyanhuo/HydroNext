@@ -3,7 +3,7 @@ import { escapeRegExp, pick } from 'lodash';
 import { Filter, ObjectId } from 'mongodb';
 import { sortFiles } from '@hydrooj/utils/lib/utils';
 import {
-    FileLimitExceededError, FileUploadError, ProblemNotFoundError, ValidationError,
+    FileLimitExceededError, FileUploadError, PermissionError, ProblemNotFoundError, ValidationError,
 } from '../error';
 import { Tdoc, TrainingDoc, TrainingStatusDoc } from '../interface';
 import { LIST_SORT_MODES, type ListSortMode, TRAINING_LIST_SORT } from '../lib/list-sort';
@@ -346,11 +346,12 @@ class TrainingDetailHandler extends Handler {
     }
 }
 
-class TrainingEditHandler extends Handler {
+export class TrainingEditHandler extends Handler {
     tdoc: TrainingDoc;
 
     @param('tid', Types.ObjectId, true)
     async prepare(domainId: string, tid: ObjectId) {
+        if (domainId !== this.domain._id) throw new PermissionError(PERM.PERM_EDIT_TRAINING);
         if (tid) {
             this.tdoc = await training.get(domainId, tid);
             if (!this.user.own(this.tdoc)) this.checkPerm(PERM.PERM_EDIT_TRAINING);
@@ -364,6 +365,10 @@ class TrainingEditHandler extends Handler {
         if (this.tdoc) {
             this.response.body.tdoc = this.tdoc;
             this.response.body.dag = JSON.stringify(this.tdoc.dag, null, 2);
+            this.response.body.pdict = await problem.getList(
+                this.domain._id, training.getPids(this.tdoc.dag), this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN),
+                false, ['docId', 'pid', 'title'], true,
+            );
         }
     }
 

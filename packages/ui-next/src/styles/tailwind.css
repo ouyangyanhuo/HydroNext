@@ -1850,7 +1850,7 @@ a {
   bottom: max(16px, env(safe-area-inset-bottom));
   z-index: 150;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: 20px 34px minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
   align-items: center;
   width: max-content;
@@ -1871,6 +1871,36 @@ a {
   border-radius: 50%;
   color: var(--hydro-primary);
   background: var(--hydro-primary-soft);
+}
+
+.hydro-contest-problem-timer__drag {
+  display: grid;
+  width: 20px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: var(--hydro-text-muted);
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.hydro-contest-problem-timer__drag:hover,
+.hydro-contest-problem-timer__drag:focus-visible {
+  color: var(--hydro-primary);
+  background: var(--hydro-primary-soft);
+}
+
+.hydro-contest-problem-timer[data-dragging='true'] .hydro-contest-problem-timer__drag {
+  cursor: grabbing;
+}
+
+.hydro-contest-problem-timer__drag:focus-visible {
+  outline: 2px solid var(--hydro-primary);
+  outline-offset: 2px;
 }
 
 .hydro-contest-problem-timer__contest:focus-visible {
