@@ -1,4 +1,12 @@
 __flag: 🇨🇳
+'{0} characters': '{0} 个字符'
+'Foreground problem time; saved to the contest scoreboard.': '题目页面处于前台的用时，已保存到比赛排行榜。'
+'Loaded code template': '加载代码模板'
+'Pasted code': '粘贴代码'
+'Recorded actions': '操作记录'
+'Submitted self-test': '提交自测'
+'Submitted solution': '提交代码'
+'Total problem time': '总写题用时'
 'Add at least one chapter.': '请至少添加一个章节。'
 'Add chapter': '添加章节'
 'Advanced JSON plan': '高级 JSON 编辑'

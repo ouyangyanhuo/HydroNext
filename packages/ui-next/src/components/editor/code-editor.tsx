@@ -86,6 +86,7 @@ interface CodeEditorProps {
   value: string;
   onChange?: (value: string) => void;
   onContentChange?: (event: any, editor: any, previousValue: string) => void;
+  onPaste?: (characters: number) => void;
   onMount?: (editor: any, monaco: typeof import('monaco-editor')) => void;
   language?: string;
   readOnly?: boolean;
@@ -128,6 +129,7 @@ export function CodeEditor({
   value,
   onChange,
   onContentChange,
+  onPaste,
   onMount,
   language = 'plaintext',
   readOnly = false,
@@ -143,6 +145,7 @@ export function CodeEditor({
   const monacoRef = useRef<typeof import('monaco-editor') | null>(null);
   const onChangeRef = useRef(onChange);
   const onContentChangeRef = useRef(onContentChange);
+  const onPasteRef = useRef(onPaste);
   const onMountRef = useRef(onMount);
   const optionsRef = useRef({ value, language, readOnly, minimap, fontSize, tabSize, wordWrap, theme });
   const [loading, setLoading] = useState(true);
@@ -150,8 +153,9 @@ export function CodeEditor({
   useEffect(() => {
     onChangeRef.current = onChange;
     onContentChangeRef.current = onContentChange;
+    onPasteRef.current = onPaste;
     onMountRef.current = onMount;
-  }, [onChange, onContentChange, onMount]);
+  }, [onChange, onContentChange, onMount, onPaste]);
 
   useEffect(() => {
     optionsRef.current = { value, language, readOnly, minimap, fontSize, tabSize, wordWrap, theme };
@@ -190,6 +194,10 @@ export function CodeEditor({
         });
       }
       onMountRef.current?.(editor, monaco);
+      editor.onDidPaste((event: any) => {
+        const text = editor.getModel()?.getValueInRange(event.range) || '';
+        onPasteRef.current?.(Array.from(text).length);
+      });
 
       setLoading(false);
     });

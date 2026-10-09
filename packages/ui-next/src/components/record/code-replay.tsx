@@ -1,13 +1,13 @@
 import './code-replay.css';
 
-import { buildReplayStates, type ReplayEvent, type ReplaySnapshot } from '@hydrooj/code-replay/replay';
+import { buildReplayStates, eventTime, type ReplayAction, type ReplayEvent, type ReplaySnapshot } from '@hydrooj/code-replay/replay';
 import {
   advanceReplayTime, buildThinkingRanges, replayIndexAtTime, THINKING_THRESHOLD_MS, thinkingRangeAt,
 } from '@hydrooj/code-replay/timeline';
 import { Badge, Group, Paper, Slider, Stack, Switch, Text, Tooltip } from '@mantine/core';
 import { IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconPlayerSkipBack, IconPlayerSkipForward, IconRotateClockwise } from '@tabler/icons-react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { ActionIcon, Button } from '@/components/common/button';
+import { ActionIcon, Button, ButtonBase } from '@/components/common/button';
 import { ShortSelect } from '@/components/common/select';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { useI18n } from '@/hooks/use-i18n';
@@ -31,6 +31,9 @@ const EMPTY_EVENTS: ReplayEvent[] = [];
 const EMPTY_SNAPSHOTS: ReplaySnapshot[] = [];
 // Advancing the clock during a pause must not re-render the Monaco editor.
 const ReplayEditor = memo(CodeEditor);
+const ACTION_LABELS: Record<ReplayAction, string> = {
+  template: 'Loaded code template', paste: 'Pasted code', self_test: 'Submitted self-test', submit: 'Submitted solution',
+};
 
 function formatReplayTime(ms: number) {
   const seconds = Math.floor(ms / 1000);
@@ -51,10 +54,13 @@ export function CodeReplay({
   const initialCode = replay?.initialCode ?? initialCodeProp;
   const finalCode = replay?.finalCode ?? finalCodeProp;
   const replayLanguage = replay?.lang || language;
-  const { states, times, duration } = useMemo(
+  const { states, times, duration, events: orderedEvents } = useMemo(
     () => buildReplayStates(events, snapshots, initialCode, finalCode),
     [events, snapshots, initialCode, finalCode],
   );
+  const actions = useMemo(() => orderedEvents.flatMap((event, index) => (
+    event.action ? [{ event, index: index + 1 }] : []
+  )), [orderedEvents]);
   const thinkingRanges = useMemo(() => buildThinkingRanges(times, duration), [times, duration]);
   const thinkingDuration = useMemo(
     () => thinkingRanges.reduce((total, range) => total + range.end - range.start, 0),
@@ -224,6 +230,16 @@ export function CodeReplay({
                 thumb: { borderColor: 'var(--mantine-primary-color-filled)' },
               }}
             />
+            {duration > 0 && actions.map(({ event, index }) => (
+              <Tooltip key={event.seq ?? index} label={`${formatReplayTime(eventTime(event))} · ${t(ACTION_LABELS[event.action!])}`} withArrow>
+                <ButtonBase
+                  className="hydro-code-replay__marker"
+                  style={{ left: `${eventTime(event) / duration * 100}%` }}
+                  aria-label={`${t(ACTION_LABELS[event.action!])} · ${formatReplayTime(eventTime(event))}`}
+                  onClick={() => seek(times[index], index)}
+                />
+              </Tooltip>
+            ))}
           </div>
 
           <div className="hydro-code-replay__statusbar">
@@ -257,6 +273,30 @@ export function CodeReplay({
               {t('Events')} <span>{cursor.index} / {maxIndex}</span>
             </Text>
           </div>
+          {actions.length > 0 && (
+            <div className="hydro-code-replay__actions" aria-label={t('Recorded actions')}>
+              {actions.map(({ event, index }) => (
+                <ButtonBase
+                  key={event.seq ?? index}
+                  className="hydro-code-replay__action"
+                  data-current={cursor.index === index || undefined}
+                  onClick={() => seek(times[index], index)}
+                >
+                  <span className="hydro-code-replay__action-time">{formatReplayTime(eventTime(event))}</span>
+                  <span>{t(ACTION_LABELS[event.action!])}</span>
+                  {event.lang && <span className="hydro-code-replay__action-detail">{event.lang}</span>}
+                  {event.action === 'paste' && event.characters !== undefined && (
+                    <span className="hydro-code-replay__action-detail">{t('{0} characters', event.characters)}</span>
+                  )}
+                  {event.timestamp !== undefined && Number.isFinite(new Date(event.timestamp).getTime()) && (
+                    <time className="hydro-code-replay__action-wall-time" dateTime={new Date(event.timestamp).toISOString()}>
+                      {new Date(event.timestamp).toLocaleTimeString()}
+                    </time>
+                  )}
+                </ButtonBase>
+              ))}
+            </div>
+          )}
         </div>
         <div className="hydro-code-replay__editor">
           <ReplayEditor value={states[cursor.index] || ''} readOnly language={replayLanguage} height="100%" />

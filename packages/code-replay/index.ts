@@ -5,6 +5,7 @@ import {
     RecordNotFoundError, Types, UserModel, ValidationError,
 } from 'hydrooj';
 import { continuousPrefix } from './continuous';
+import { REPLAY_ACTIONS, type ReplayAction } from './replay';
 
 interface ReplayChange {
     rangeOffset: number;
@@ -19,6 +20,9 @@ interface ReplayEvent {
     changes: ReplayChange[];
     selections?: unknown[];
     lang?: string;
+    action?: ReplayAction;
+    characters?: number;
+    timestamp?: number;
 }
 
 interface ReplaySnapshot {
@@ -104,13 +108,20 @@ function normalizeEvent(event: any): ReplayEvent | null {
         && change.rangeOffset >= 0
         && change.rangeLength >= 0
     ));
-    if (!normalizedChanges.length) return null;
+    if (normalizedChanges.length !== changes.length) return null;
+    if (event.action !== undefined && !REPLAY_ACTIONS.includes(event.action)) return null;
+    if (!normalizedChanges.length && !event.action) return null;
+    if (!Number.isFinite(Number(event.t ?? 0)) || Number(event.t ?? 0) < 0) return null;
     const normalized: ReplayEvent = {
         seq: Number.isSafeInteger(event.seq) && event.seq > 0 ? event.seq : undefined,
         t: Math.max(0, Number(event.t) || 0),
         changes: normalizedChanges,
         selections: event.selections instanceof Array ? event.selections : undefined,
         lang: typeof event.lang === 'string' ? event.lang : undefined,
+        ...(event.action ? { action: event.action } : {}),
+        ...(Number.isSafeInteger(event.characters) && event.characters >= 0 && event.characters <= MAX_CODE_SIZE
+            ? { characters: event.characters } : {}),
+        ...(Number.isSafeInteger(event.timestamp) && event.timestamp >= 0 && event.timestamp <= 8.64e15 ? { timestamp: event.timestamp } : {}),
     };
     if (JSON.stringify(normalized).length > MAX_EVENT_SIZE) return null;
     return normalized;

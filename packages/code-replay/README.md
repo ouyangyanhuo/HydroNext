@@ -30,11 +30,16 @@ session ID without its event history.
 
 ### Continuous recordings in ui-next (protocol v2)
 
-- A self-test does not upload, bind, or reset the recording. After a successful
-  formal submission with a linked replay, ui-next starts the next segment from
+- A self-test does not upload, bind, or reset the recording. Its action stays in
+  the current segment until the next formal submission.
+- After a successful formal submission with a linked replay, ui-next starts the next segment from
   that submission's code. Each replay shows only edits since the previous formal
   submission, not the entire history. Edits made during upload are carried into
   the next segment with rebased sequence numbers and timestamps.
+- Loading a template, pasting code, requesting a self-test, and formally submitting
+  add ordered action events alongside edits. Actions carry elapsed and wall-clock
+  timestamps; paste actions also carry the character count. They do not modify code.
+  ui-next shows action markers and a clickable action log below the timeline.
 - IndexedDB stores new deltas and their metadata atomically, scoped by user,
   domain, problem, contest, and browser tab. The editor restores this state
   before accepting input; unavailable storage produces a warning rather than
@@ -111,5 +116,7 @@ Unsubmitted sessions expire after seven days. Sessions bound to a submission rec
 7. Return to the same editor, edit, self-test, edit again and submit. The second
    replay starts with the first submitted code and shows both sets of new edits;
    the first replay remains unchanged. Refreshing restores the current segment.
+8. Load a template, paste allowed content, and run a self-test before submitting.
+   Check the operation log, timestamps, paste character count, and click-to-seek.
 
 The plugin uses Hydro route generation for its capture and replay URLs, including `/d/:domainId/` path-domain deployments.

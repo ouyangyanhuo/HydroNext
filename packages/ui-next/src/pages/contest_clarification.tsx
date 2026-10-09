@@ -216,9 +216,12 @@ export default function ContestClarificationPage() {
                 <Textarea
                   label={t('Content')}
                   value={content}
-                  minRows={5}
+                  autosize
+                  minRows={8}
+                  maxRows={18}
                   disabled={busy}
-                  onChange={(event) => { if (!pending.current) setContent(event.currentTarget.value); }} />
+                  onChange={(event) => { if (!pending.current) setContent(event.currentTarget.value); }}
+                />
                 <Group justify="flex-end">
                   {mode === 'reply' && <Button variant="subtle" disabled={busy} onClick={chooseBroadcast}>{t('Cancel')}</Button>}
                   <Button onClick={submit} loading={loading} disabled={busy}>{t('Submit')}</Button>

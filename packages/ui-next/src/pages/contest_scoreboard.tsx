@@ -13,6 +13,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { useDeadlinePassed } from '@/hooks/use-time';
+import { formatContestClock } from '@/utils/contest-problem-time';
 import { formatErrorMessage } from '@/utils/error';
 import { formatUserName } from '@/utils/user-name';
 
@@ -278,7 +279,14 @@ export default function ContestScoreboardPage() {
                               </Link>
                             </Group>
                           ) : (
-                            <CellValue cell={cell} canViewRecord={canViewRecord} />
+                            <Stack gap={3} align="center">
+                              <CellValue cell={cell} canViewRecord={canViewRecord} />
+                              {column.type === 'problem' && cell.problemTime !== undefined && (
+                                <Text size="xs" c="dimmed" title={t('Time on this problem')} className="whitespace-nowrap tabular-nums">
+                                  {t('Time on this problem')} {formatContestClock(cell.problemTime)}
+                                </Text>
+                              )}
+                            </Stack>
                           )}
                         </Table.Td>
                       );

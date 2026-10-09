@@ -41,16 +41,21 @@ test('editor uses updated readOnly, language and value when Monaco finishes load
         module, exports: module.exports, require, document, localStorage, __loadMonaco: () => monacoReady,
     });
     const root = createRoot(document.getElementById('root'));
-    const model = { language: '' };
+    let pasted: any;
+    const pasteCounts: number[] = [];
+    const model = { language: '', getValueInRange: () => '🙂abc' };
     const options: any = {};
     const editor = {
         value: '', getValue() { return this.value; }, setValue(value: string) { this.value = value; },
         updateOptions(next: any) { Object.assign(options, next); }, getModel: () => model, dispose() {},
+        onDidPaste(callback: any) { pasted = callback; },
     };
     const render = (props: any) => root.render(h(MantineProvider, {}, h(module.exports.CodeEditor, props)));
     try {
         await act(async () => render({ value: '', language: 'c', readOnly: true }));
-        await act(async () => render({ value: 'int main() {}', language: 'cc', readOnly: false, fontSize: 16 }));
+        await act(async () => render({
+            value: 'int main() {}', language: 'cc', readOnly: false, fontSize: 16, onPaste: (count: number) => pasteCounts.push(count),
+        }));
         await act(async () => release({ editor: {
             create: (_element: any, initial: any) => {
                 Object.assign(options, initial);
@@ -63,6 +68,8 @@ test('editor uses updated readOnly, language and value when Monaco finishes load
         assert.equal(options.fontSize, 16);
         assert.equal(editor.getValue(), 'int main() {}');
         assert.equal(model.language, 'cpp');
+        pasted({ range: {} });
+        assert.deepEqual(pasteCounts, [4]);
         // Deliberately read-only source viewers must continue to honor their prop.
         await act(async () => render({ value: 'locked', language: 'c', readOnly: true }));
         assert.equal(options.readOnly, true);

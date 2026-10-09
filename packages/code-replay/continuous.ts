@@ -1,4 +1,4 @@
-import { applyEvent, type ReplayEvent } from './replay';
+import { applyEvent, REPLAY_ACTIONS, type ReplayEvent } from './replay';
 
 /** Validate and freeze a prefix without trusting snapshots to fill missing edits. */
 export function continuousPrefix(events: ReplayEvent[], endSeq: number, initialCode: string, finalCode: string) {
@@ -17,8 +17,9 @@ export function continuousPrefix(events: ReplayEvent[], endSeq: number, initialC
     let time = 0;
     for (let seq = 1; seq <= endSeq; seq++) {
         const event = bySequence.get(seq);
-        if (!event || !Number.isFinite(event.t) || event.t! < time || !event.changes?.length) throw new Error('Invalid replay event');
-        for (const change of event.changes) {
+        if (!event || !Number.isFinite(event.t) || event.t! < time
+            || (!event.changes?.length && !REPLAY_ACTIONS.includes(event.action!))) throw new Error('Invalid replay event');
+        for (const change of event.changes || []) {
             if (!Number.isSafeInteger(change.rangeOffset) || !Number.isSafeInteger(change.rangeLength)
                 || change.rangeOffset < 0 || change.rangeLength < 0 || change.rangeOffset + change.rangeLength > code.length) {
                 throw new Error('Invalid replay range');

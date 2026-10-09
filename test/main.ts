@@ -166,6 +166,31 @@ describe('App', () => {
         }
     });
 
+    it('Contest scoreboard preserves domain-scoped problem times in page data and CSV exports', async () => {
+        const { contest, domain, problem } = global.Hydro.model;
+        const domainId = 'contest-time-test';
+        await domain.add(domainId, 2, 'Contest time test', '');
+        const p1 = await problem.add(domainId, 'P1', 'First', '', 2);
+        const now = Date.now();
+        const tid = await contest.add(domainId, 'Contest time test', '', 2, 'acm', new Date(now - 60_000), new Date(now + 3_600_000), [p1]);
+        try {
+            await contest.attend(domainId, tid, 2);
+            await contest.setStatus(domainId, tid, 2, { totalProblemTime: 15_000, problemTimes: { [p1]: 15_000 } });
+            const route = `/d/${domainId}/contest/${tid}/scoreboard`;
+            const args = getPageArgs(await agent.get(route).set('Accept', 'application/json').expect(200));
+            const index = args.rows[0].findIndex((cell) => cell.value === 'Total problem time' || cell.value === '总写题用时');
+            assert.ok(index >= 0);
+            assert.equal(args.rows[1][index].value, '00:00:15');
+            assert.equal(args.rows[1].find((cell) => cell.type === 'record').problemTime, 15_000);
+            const exported = await agent.get(`${route}/csv`).expect(200);
+            assert.ok(exported.text.includes('00:00:15'));
+            await agent.get(`/contest/${tid}/scoreboard`).set('Accept', 'application/json').expect(404);
+        } finally {
+            await contest.del(domainId, tid);
+            await domain.del(domainId);
+        }
+    });
+
     it('Training editing restores PID titles and persists per-chapter problem order', async () => {
         const { domain, problem, training } = global.Hydro.model;
         const domainId = 'training-editor-test';

@@ -535,6 +535,8 @@ export default function ProblemDetailPage() {
       key={timerKey}
       storageKey={timerKey}
       tid={String(tid)}
+      pid={Number(pdoc.docId)}
+      recordTime={Boolean(args.tsdoc?.attend && args.mode === 'contest')}
       title={extractLocalizedContent(args.tdoc.title, sessionLanguage)}
       beginAt={contestBeginAt}
       endAt={contestDeadline}

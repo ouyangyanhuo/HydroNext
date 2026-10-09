@@ -3,6 +3,7 @@ import { IconGripVertical, IconTrophy } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { ButtonBase } from '@/components/common/button';
 import { Link } from '@/components/link';
+import { useContestActivity } from '@/hooks/use-contest-activity';
 import { useI18n } from '@/hooks/use-i18n';
 import { createProblemTimeTracker, formatContestClock } from '@/utils/contest-problem-time';
 import { bindFloatingDrag, CONTEST_TIMER_POSITION_KEY } from '@/utils/floating-position';
@@ -16,15 +17,18 @@ function readElapsed(key: string) {
   }
 }
 
-export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt }: {
+export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt, pid, recordTime = false }: {
   storageKey: string;
   tid: string;
   title: string;
   beginAt: number;
   endAt: number;
+  pid: number;
+  recordTime?: boolean;
 }) {
   const { t } = useI18n();
   const [clock, setClock] = useState(() => ({ now: Date.now(), elapsed: readElapsed(storageKey) }));
+  const activity = useContestActivity(tid, pid, recordTime);
   const floatingRef = useCallback((element: HTMLDivElement | null) => {
     if (!element) return undefined;
     const handle = element.querySelector<HTMLElement>('[data-timer-drag-handle]');
@@ -86,6 +90,9 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt }: 
   const ended = clock.now >= endAt;
   const remaining = Math.max(0, (upcoming ? beginAt : endAt) - clock.now);
   const urgent = !upcoming && !ended && remaining <= 5 * 60_000;
+  const elapsed = activity
+    ? activity.elapsed + (activity.active ? Math.max(0, Math.min(clock.now, endAt) - Math.max(activity.at, beginAt)) : 0)
+    : clock.elapsed;
 
   return (
     <Portal>
@@ -116,10 +123,13 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt }: 
             {formatContestClock(Math.ceil(remaining / 1000) * 1000)}
           </span>
         </div>
-        <div className="hydro-contest-problem-timer__metric" title={t('Visible time on this problem; saved in this tab.')}>
+        <div
+          className="hydro-contest-problem-timer__metric"
+          title={t(recordTime ? 'Foreground problem time; saved to the contest scoreboard.' : 'Visible time on this problem; saved in this tab.')}
+        >
           <span className="hydro-contest-problem-timer__label">{t('Time on this problem')}</span>
           <span className="hydro-contest-problem-timer__value" role="timer" aria-live="off">
-            {formatContestClock(clock.elapsed)}
+            {formatContestClock(elapsed)}
           </span>
         </div>
       </div>

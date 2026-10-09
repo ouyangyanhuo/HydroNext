@@ -1,4 +1,12 @@
 __flag: 🇬🇧
+'{0} characters': '{0} characters'
+'Foreground problem time; saved to the contest scoreboard.': 'Foreground problem time; saved to the contest scoreboard.'
+'Loaded code template': 'Loaded code template'
+'Pasted code': 'Pasted code'
+'Recorded actions': 'Recorded actions'
+'Submitted self-test': 'Submitted self-test'
+'Submitted solution': 'Submitted solution'
+'Total problem time': 'Total problem time'
 'Add at least one chapter.': 'Add at least one chapter.'
 'Add chapter': 'Add chapter'
 'Advanced JSON plan': 'Advanced JSON plan'

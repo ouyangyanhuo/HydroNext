@@ -824,6 +824,7 @@ This type of files are not allowed to be uploaded.: 不允许上传这种文件�
 Time (Seconds): 耗时 (秒)
 Time Cost: 耗时
 Time Extension: 延期
+'Time on this problem': 本题用时
 Time: 时间
 timeago_locale: zh_CN
 Timezone: 时区
@@ -835,6 +836,7 @@ Toggle Records Panel: 切换评测记录面板
 Total Score: 总分数
 Total Time (Seconds): 总耗时 (秒)
 Total Time: 总耗时
+'Total problem time': 总写题用时
 Total: 总计
 Training requirement is not satisfied.: 不满足训练条件。
 training_create: 创建训练

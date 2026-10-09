@@ -16,11 +16,35 @@ function loadModule(path: string) {
     return module.exports;
 }
 const {
-    continueRecording, newRecording, recordCode, recordingCheckpoint, uploadRecordingCheckpoint,
+    continueRecording, newRecording, recordAction, recordCode, recordingCheckpoint, uploadRecordingCheckpoint,
 } = loadModule('../src/components/editor/replay-recording.ts');
 const { continuousPrefix } = loadModule('../../code-replay/continuous.ts');
 const { buildReplayStates } = loadModule('../../code-replay/replay.ts');
 const plain = (value: any) => JSON.parse(JSON.stringify(value));
+
+test('template, paste, self-test and submit actions share the ordered incremental timeline without changing code', () => {
+    const recording = newRecording('', 1000);
+    recordAction(recording, 'template', 'cc', undefined, 1100);
+    recordCode(recording, 'abc', 'cc', undefined, 1100);
+    const first = recordingCheckpoint(recording, 1200);
+    const next = continueRecording(recording, first);
+    recordCode(next, 'abcd', 'cc', undefined, 1300);
+    recordAction(next, 'paste', 'cc', 1, 1300);
+    recordAction(next, 'self_test', 'cc', undefined, 1400);
+    recordCode(next, 'acd', 'cc', undefined, 1500);
+    recordAction(next, 'submit', 'cc', undefined, 1600);
+    const checkpoint = recordingCheckpoint(next, 1700);
+    const validated = continuousPrefix(checkpoint.events, checkpoint.endSeq, checkpoint.initialCode, checkpoint.finalCode);
+    assert.equal(checkpoint.endSeq, 5);
+    assert.equal(checkpoint.initialCode, 'abc');
+    assert.deepEqual(plain(validated.map((event: any) => event.action).filter(Boolean)), ['paste', 'self_test', 'submit']);
+    assert.deepEqual(plain(buildReplayStates(validated, [], 'abc', 'acd').states), ['abc', 'abcd', 'abcd', 'abcd', 'acd', 'acd']);
+    assert.deepEqual(plain(validated.filter((event: any) => event.action).map((event: any) => [event.t, event.timestamp])), [
+        [100, 1300], [200, 1400], [400, 1600],
+    ]);
+    assert.throws(() => continuousPrefix([{ seq: 1, t: 0, changes: [], action: 'unknown' }], 1, '', ''), /Invalid/);
+    assert.throws(() => continuousPrefix([{ seq: 1, t: 0, changes: [] }], 1, '', ''), /Invalid/);
+});
 
 test('formal submissions advance the baseline while self-tests preserve every edit in the next segment', () => {
     const recording = newRecording('', 1000);

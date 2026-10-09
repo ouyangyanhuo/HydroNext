@@ -236,6 +236,7 @@ export interface RecordStatDoc {
 }
 
 export interface ScoreboardNode {
+    problemTime?: number;
     type: 'string' | 'rank' | 'user' | 'email' | 'record' | 'records' | 'problem' | 'solved' | 'time' | 'total_score';
     value: string; // 显示分数
     raw?: any;
@@ -467,6 +468,11 @@ export interface ContestStatusDoc extends StatusDocBase, ContestStat {
     startAt?: Date;
     endAt?: Date; // 灵活时间模式的结束时间，或者是提前结束比赛的时间
     rev?: number;
+    /** Foreground problem-page time in milliseconds; independent of ranking penalties. */
+    problemTimes?: Record<number, number>;
+    totalProblemTime?: number;
+    problemActivityRev?: number;
+    problemActivity?: { token: string, pid: number, at: number } | null;
 }
 
 export interface TrainingStatusDoc extends StatusDocBase, Record<string, any> {

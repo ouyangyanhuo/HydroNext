@@ -14,11 +14,13 @@ import {
     ScoreboardRow, SubtaskResult, Tdoc,
 } from '../interface';
 import avatar from '../lib/avatar';
+import { appendContestActivityTimes } from '../lib/contest-activity';
 import bus from '../service/bus';
 import db from '../service/db';
 import type { Handler } from '../service/server';
 import { Optional } from '../typeutils';
 import { PERM, STATUS, STATUS_SHORT_TEXTS } from './builtin';
+import { getTimes } from './contest-activity';
 import * as document from './document';
 import MessageModel from './message';
 import problem, { ProblemModel } from './problem';
@@ -1032,6 +1034,9 @@ export async function getScoreboard(
         config, this.translate.bind(this),
         tdoc, pdict, tsdocsCursor,
     );
+    if (tdoc.rule !== 'homework') {
+        appendContestActivityTimes(rows, await getTimes(domainId, tid), tdoc.pids, config.isExport, this.translate.bind(this));
+    }
     await bus.parallel('contest/scoreboard', tdoc, rows, udict, pdict);
     return [tdoc, rows, udict, pdict];
 }

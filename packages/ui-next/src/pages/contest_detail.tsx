@@ -289,7 +289,14 @@ function ClarificationList({ tdoc, pdict, tcdocs, udict, tsdoc }: { tdoc: any, p
               ...(tdoc.pids || []).map((pid: number, index: number) => ({ value: String(pid), label: `${alphabetic(index)}. ${pdict[pid]?.title || pid}` })),
             ]}
           />
-          <Textarea label={t('Content')} minRows={4} value={content} onChange={(event) => setContent(event.currentTarget.value)} />
+          <Textarea
+            label={t('Content')}
+            autosize
+            minRows={8}
+            maxRows={18}
+            value={content}
+            onChange={(event) => setContent(event.currentTarget.value)}
+          />
           <Group justify="flex-end"><Button onClick={submit} loading={loading}>{t('Submit')}</Button></Group>
         </Stack>
       )}

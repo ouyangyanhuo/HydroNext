@@ -84,7 +84,7 @@ async function fixture(access = async (_handler: any, _record: any) => ({ canVie
         ValidationError: Error, param: () => () => {},
     };
     runInNewContext(built.outputFiles[0].text, {
-        module, exports: module.exports, global: { Hydro: { model: {} } },
+        module, exports: module.exports, global: { Hydro: { model: {} } }, Array,
         require: (name: string) => (name === 'hydrooj' ? hydro : require(name)),
     });
     await module.exports.apply({
@@ -99,6 +99,29 @@ const sourceId = 'a'.repeat(48);
 const base = { pid: '1', initialCode: '', lang: 'cc' };
 const first = { seq: 1, t: 100, changes: [{ rangeOffset: 0, rangeLength: 0, text: 'abc' }] };
 const second = { seq: 2, t: 200, changes: [{ rangeOffset: 1, rangeLength: 1, text: 'd' }] };
+
+test('session API preserves action metadata and rejects unsupported or malformed actions', async () => {
+    const { model, routes, sessions } = await fixture();
+    const handler = new (routes.get('code_replay_session'))();
+    const action = { seq: 1, t: 100, changes: [], action: 'self_test', timestamp: 1000, lang: 'cc' };
+    Object.assign(handler, {
+        user: { _id: 1 }, response: {}, limitRate() {},
+        args: { replayVersion: 2, action: 'append', events: [action] },
+    });
+    await handler.post('team', sourceId, '1', undefined, 'cc', 'abc');
+    const checkpoint = await model.checkpoint(1, 'team', sourceId, { ...base, finalCode: 'abc', endSeq: 1, endTime: 100 });
+    const frozen = await model.getEvents(checkpoint, sessions.docs.get(checkpoint));
+    // Inspect the source stream directly as well as its verified checkpoint.
+    const data = await model.getEvents(sourceId);
+    assert.equal(data.events[0].action, 'self_test');
+    assert.equal(data.events[0].timestamp, 1000);
+    assert.equal(frozen.events[0].action, 'self_test');
+    assert.ok(checkpoint);
+    handler.args.events = [{ ...action, seq: 2, action: 'unknown' }];
+    await assert.rejects(handler.post('team', sourceId, '1', undefined, 'cc', 'abc'));
+    handler.args.events = [{ ...action, seq: 2, changes: [{ rangeOffset: -1, rangeLength: 0, text: 'x' }] }];
+    await assert.rejects(handler.post('team', sourceId, '1', undefined, 'cc', 'abc'));
+});
 
 test('multiple checkpoints share immutable deltas and retries do not duplicate batches', async () => {
     const { model, chunks, sessions, records } = await fixture();

@@ -1,7 +1,12 @@
+export const REPLAY_ACTIONS = ['template', 'paste', 'self_test', 'submit'] as const;
+export type ReplayAction = typeof REPLAY_ACTIONS[number];
+
 export interface ReplayEvent {
     seq?: number;
     t?: number;
     timestamp?: number;
+    action?: ReplayAction;
+    characters?: number;
     lang?: string;
     selections?: unknown[];
     changes?: { rangeOffset: number, rangeLength: number, text: string, range?: unknown }[];

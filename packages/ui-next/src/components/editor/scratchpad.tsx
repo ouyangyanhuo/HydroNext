@@ -1,5 +1,6 @@
 import 'allotment/dist/style.css';
 
+import type { ReplayAction } from '@hydrooj/code-replay/replay';
 import { Badge, Center, Divider, Drawer, Group, Loader, NumberInput, Paper, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -24,7 +25,9 @@ import {
   saveStoredEditorConfig,
 } from './code-editor';
 import { getCodeTemplate } from './code-templates';
-import { continueRecording, recordCode, recordingCheckpoint, type ReplayRecording, uploadRecordingCheckpoint } from './replay-recording';
+import {
+  continueRecording, recordAction, recordCode, recordingCheckpoint, type ReplayRecording, uploadRecordingCheckpoint,
+} from './replay-recording';
 import { memoryRecording, persistRecording, replaceRecording, replayDraftKey, restoreRecording } from './replay-storage';
 import { resolveSubmissionContext } from './submission-context';
 
@@ -83,6 +86,7 @@ export function Scratchpad({
   const ui = useUiContext();
   const { args } = usePageData();
   const user = useUserContext();
+  const userId = user?._id;
   const langOptions = useMemo(() => Object.entries(langs).map(([id, info]: [string, any]) => ({
     value: id,
     label: info.display || info.name || id,
@@ -90,12 +94,12 @@ export function Scratchpad({
   const submissionContext = resolveSubmissionContext({ pdoc: args.pdoc, tdoc: args.tdoc }, window.location.search, pid);
   const contestId = submissionContext.tid || '';
   const cacheKey = useMemo(
-    () => getScratchpadCacheKey(user?._id, ui.domainId, pid, contestId),
-    [contestId, pid, ui.domainId, user?._id],
+    () => getScratchpadCacheKey(userId, ui.domainId, pid, contestId),
+    [contestId, pid, ui.domainId, userId],
   );
   const replayStorageKey = useMemo(
-    () => replayDraftKey(`code-replay/${user?._id || 'guest'}/${ui.domainId || ''}/${pid}${contestId ? `@${contestId}` : ''}`),
-    [contestId, pid, ui.domainId, user?._id],
+    () => replayDraftKey(`code-replay/${userId || 'guest'}/${ui.domainId || ''}/${pid}${contestId ? `@${contestId}` : ''}`),
+    [contestId, pid, ui.domainId, userId],
   );
   const [lang, setLang] = useState(() => {
     const cachedLang = getStoredString(`${cacheKey}#lang`, defaultLang);
@@ -206,7 +210,7 @@ export function Scratchpad({
   useEffect(() => {
     let cancelled = false;
     replayRef.current = null;
-    if (!resolvedReplayUrl || !user?._id) {
+    if (!resolvedReplayUrl || !userId) {
       return undefined;
     }
     const initialize = async () => {
@@ -228,7 +232,14 @@ export function Scratchpad({
     return () => { cancelled = true; };
     // Code and language are initial values here; subsequent edits are captured below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [replayStorageKey, resolvedReplayUrl, user?._id, saveReplay, warnReplayStorage]);
+  }, [replayStorageKey, resolvedReplayUrl, userId, saveReplay, warnReplayStorage]);
+
+  const captureAction = useCallback((action: ReplayAction, characters?: number) => {
+    const recording = replayRef.current;
+    if (!recording) return;
+    recordAction(recording, action, lang, characters);
+    saveReplay(recording);
+  }, [lang, saveReplay]);
 
   const loadCodeTemplate = useCallback(() => {
     if (!selectedCodeTemplate) {
@@ -239,10 +250,11 @@ export function Scratchpad({
       });
       return;
     }
+    captureAction('template');
     setCode(selectedCodeTemplate);
     setError('');
     notifications.show({ title: t('Code template loaded'), message: '', color: 'green' });
-  }, [selectedCodeTemplate, t]);
+  }, [captureAction, selectedCodeTemplate, t]);
 
   const captureChange = useCallback((event: any, editor: any, previousValue: string) => {
     const recording = replayRef.current;
@@ -255,7 +267,7 @@ export function Scratchpad({
   }, [lang, saveReplay]);
 
   const flushReplay = useCallback(async (finalCode: string) => {
-    if (!resolvedReplayUrl || !user?._id) return null;
+    if (!resolvedReplayUrl || !userId) return null;
     const recording = replayRef.current;
     if (!recording) throw new Error('Replay is not ready');
     recordCode(recording, finalCode, lang);
@@ -279,7 +291,7 @@ export function Scratchpad({
       console.warn('Failed to upload code replay:', err);
       throw new Error(t('Replay upload failed. Your recording is kept; please retry submission.'));
     }
-  }, [lang, submissionContext.pid, submissionContext.tid, replayStorageKey, resolvedReplayUrl, t, user?._id, warnReplayStorage]);
+  }, [lang, submissionContext.pid, submissionContext.tid, replayStorageKey, resolvedReplayUrl, t, userId, warnReplayStorage]);
 
   const postJudge = useCallback(async (pretest: boolean) => {
     if (!replayReady || judgePending.current) return;
@@ -306,6 +318,8 @@ export function Scratchpad({
     else setSubmitResult(null);
 
     try {
+      if (replayRef.current) recordCode(replayRef.current, code, lang);
+      captureAction(pretest ? 'self_test' : 'submit');
       if (!pretest && onSubmit) {
         const res = await onSubmit(lang, code);
         setSubmitResult(res);
@@ -350,7 +364,7 @@ export function Scratchpad({
       else setSubmitting(false);
     }
   }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, flushReplay,
-    resolvedSubmitUrl, input, navigate, replayReady, replayStorageKey, warnReplayStorage]);
+    resolvedSubmitUrl, input, navigate, replayReady, replayStorageKey, warnReplayStorage, captureAction]);
 
   const pretestCooldown = Math.max(0, Math.ceil((cooldownUntil.pretest - clock) / 1000));
   const submitCooldown = Math.max(0, Math.ceil((cooldownUntil.submit - clock) / 1000));
@@ -528,6 +542,7 @@ export function Scratchpad({
                       value={code}
                       onChange={setCode}
                       onContentChange={captureChange}
+                      onPaste={(characters) => captureAction('paste', characters)}
                       readOnly={!replayReady}
                       language={lang}
                       height="100%"

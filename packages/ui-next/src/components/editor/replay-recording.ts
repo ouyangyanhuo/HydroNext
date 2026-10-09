@@ -1,4 +1,4 @@
-import { captureReplayChanges, type ReplayEvent } from '@hydrooj/code-replay/replay';
+import { captureReplayChanges, type ReplayAction, type ReplayEvent } from '@hydrooj/code-replay/replay';
 
 export interface ReplayRecording {
   version: 2;
@@ -33,9 +33,17 @@ export function recordCode(recording: ReplayRecording, code: string, lang: strin
   if (recording.currentCode === code) return false;
   const deltas = captureReplayChanges(recording.currentCode, code, changes ?? difference(recording.currentCode, code));
   recording.lastTime = Math.max(recording.lastTime, now - recording.startedAt, 0);
-  recording.events.push({ seq: ++recording.sequence, t: recording.lastTime, changes: deltas, lang });
+  recording.events.push({ seq: ++recording.sequence, t: recording.lastTime, timestamp: now, changes: deltas, lang });
   recording.currentCode = code;
   return true;
+}
+
+export function recordAction(recording: ReplayRecording, action: ReplayAction, lang: string, characters?: number, now = Date.now()) {
+  recording.lastTime = Math.max(recording.lastTime, now - recording.startedAt, 0);
+  recording.events.push({
+    seq: ++recording.sequence, t: recording.lastTime, timestamp: now, changes: [], action, lang,
+    ...(characters === undefined ? {} : { characters }),
+  });
 }
 
 /** Copies the event list so edits while requests are in flight belong to the next submission. */
