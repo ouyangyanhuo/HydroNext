@@ -41,6 +41,7 @@ import { extractLocalizedContent } from '@/utils/i18n-content';
 import { formatUserName } from '@/utils/user-name';
 import { attachCodeCopyButtons } from './code-copy';
 import { markdownXssPlugin } from './markdown-xss';
+import { tableCompatibilityPlugin } from './table-compat';
 
 hljs.registerLanguage('cpp', cpp);
 hljs.registerLanguage('c', c);
@@ -319,6 +320,7 @@ const md = new MarkdownIt({
   html: true,
 });
 
+md.use(tableCompatibilityPlugin);
 md.use(markPlugin);
 md.use(imageSizePlugin);
 md.use(katexPlugin);
