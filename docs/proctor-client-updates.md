@@ -65,56 +65,39 @@
 | 字段 | 当前客户端行为 |
 | --- | --- |
 | `version` | 必填，数字分段比较；远端较新才热更新 |
-| `minClientVersion` | 尚未执行限制，仅展示配置；不能用它保证旧客户端被禁止 |
-| `releaseDate` / `description` / `changelog` | 元数据，当前更新器不显示这些内容 |
-| `hotUpdate.asarUrl` | 下载并替换整个 `resources/app.asar` |
-| `hotUpdate.fallbackUrl` | 仅在主 URL 为空时选用；主 URL 下载失败后不会尝试它 |
-| `hotUpdate.size` / `sha256` | 由 OJ 生成，但当前客户端不校验 |
-| `config.url` | 尝试下载 JSON，即使应用版本没更新；校验 `exam.targetUrl` 后写入用户配置目录 |
-| `config.fallbackUrl` / `config.version` | 当前更新器未使用 |
-| `fullUpdate.*` | 当前更新器未使用，作为人工下载安装地址 |
+| `minClientVersion` | 客户端执行限制并缓存；低于最低版本时拒绝生成提交证明；OJ 握手仍执行精确指定版本 |
+| `releaseDate` / `description` / `changelog` | 元数据；本次更新提示不完整展示更新说明 |
+| `hotUpdate.asarUrl` | 当前 OJ 无独立发布签名，客户端拒绝自动执行/替换 ASAR |
+| `hotUpdate.fallbackUrl` | 包下载模块主地址失败后真实尝试备用地址 |
+| `hotUpdate.size` / `sha256` | 下载模块验证字节数和 SHA-256 后才保存，不能代替独立发布签名 |
+| `config.url` | 下载有大小限制的 JSON；以编译白名单验证后缓存，下次启动读取 |
+| `config.fallbackUrl` | 主地址失败后尝试；远端配置不能修改编译公钥/扩大 origin 或开启 root 调试 |
+| `config.version` | 当前不按配置版本排序，使用已发布清单中的配置 |
+| `fullUpdate.*` | Windows x64 显示完整包下载地址；Mac 不显示 Windows EXE |
 
 发布最低版本与 **监考设置中的指定客户端版本**是两件独立的事。本功能不会自动修改指定版本，避免突然使进行中的比赛会话失效。
 
-## 客户端接入配置（不修改客户端代码）
+## 客户端构建与接入
 
-在客户端构建所携带的 `config/exam-config.json` 内，将以下两个字段都改为自建 OJ 的清单 URL，避免 OJ 网络中断后意外回退到其他项目的发行版本：
+客户端代码已修改，构建时通过 `PROCTOR_VERSION_URL` 注入清单地址，通过 `PROCTOR_UPDATE_ORIGINS` 注入更新站点白名单（JSON 数组）。也可提前编辑 `config/exam-config.json` 的 `updater.versionUrl`、`fallbackVersionUrl` 和 `allowedOrigins`。应使用自建 OJ 地址，避免意外回退到其他项目的发行版本。完整参数见 [客户端 README](../exam-proctor-client/README.md)。
 
-```json
-{
-  "updater": {
-    "enabled": true,
-    "checkOnStartup": true,
-    "timeoutMs": 4000,
-    "versionUrl": "https://oj.example.com/client-updates/version.json",
-    "fallbackVersionUrl": "https://oj.example.com/client-updates/version.json"
-  }
-}
-```
+考试访问 origin 与更新 origin 分别配置。清单、包、备用地址以及重定向后的 origin 都必须在更新白名单；仅 HTTPS，localhost 可用 HTTP。重定向受限制并支持安全的相对地址。远端配置只能在构建信任边界内改变策略，不能轮换公钥、扩大地址白名单或启用 root 调试。
 
-如果提供远端配置 JSON，它也应包含上述更新地址，避免下一次启动重新使用旧地址。客户端在检查更新前已读取本地配置，因此远端同步的配置通常在下一次启动生效；请由客户端验证实际加载时机。
+存在未完成或待补传日志时跳过更新检查，避免考试版本或环境突然改变。最低版本在成功读取清单后缓存；离线沿用已缓存限制，无法获取新清单时仍由 OJ 精确版本和签名提交验证控制。发布最低版本不会修改 OJ 指定版本。
 
-现有代码只支持单一 ASAR/Windows 包链接，不会按 OS/架构选择包。不要在这个清单中混合不兼容的平台发行文件。
+## ASAR 与更新安全
 
-## 需要在客户端修正的事项
+`release:hot` 现已使用明确临时 staging 目录，根目录包含 package.json、正确的 app/main/index.js 和编译信任配置，版本取 `PROCTOR_CLIENT_VERSION`。不再只把 app/ 内容当成整个 Electron app.asar，也不打包根目录私钥、.env 或旧构建包。它输出独立版本文件及大小/SHA-256 元数据，供 OJ 包库接收和管理员检查。
 
-本次仅修改 OJ，没有修改 `exam-proctor-client/`。
+下载模块流式检查大小/哈希，实际回退备用地址，限制重定向和 JSON/包上限。但现有 OJ 没有独立发布签名字段，HTTPS 和清单内哈希不能证明包发布者；因此客户端**不会自动执行或替换 ASAR**，也不以“开发模式模拟更新”宣称安装成功。未来自动 ASAR 协议需双方实现独立更新签名、原子替换、外部回滚和启动验证。可选的独立签名校验辅助函数不表示 OJ 已支持该协议。
 
-### 必须修正热更新打包范围
+完整包更新由客户端显示下载提示，管理员提供签名的安装包。Mac 需签名、公证并分发完整包，直接替换签名 bundle 中的 ASAR 会破坏签名；完整包还能同时升级 Electron。
 
-`scripts/build-hot-update.js` 当前使用 `asar.createPackage(appDir, ...)`，只打包 `app/` 的内容。更新器却替换整个 Electron `app.asar`，从而丢失根目录 `package.json` 和正确目录层级。
+## Windows 与 Mac 发布
 
-应从完整 Electron 应用输出或明确的临时 staging 目录生成 ASAR：根目录包含 `package.json`，保留 `app/main/index.js` 等路径，并包括应用运行所需的生产依赖。确保 `package.json.main` 指向存在的文件，`package.json.version` 为发布版本。切勿直接打包整个仓库，把私钥、开发环境文件、构建缓存或旧更新包打进去。
+GitHub Actions 已配置 Windows x64、macOS x64、macOS arm64 三种发行 Artifact，并支持动态版本、公钥和地址。证书与公证 Secrets 见客户端 README。工作流不自动发布到 OJ；管理员仍需上传和发布经过平台验收的包。
 
-OJ 可接受缺少入口信息的 ASAR 为草稿，以便显示具体问题，但禁止发布。必须对正式 Electron 环境测试更新后启动、版本读取及依赖完整性，不能仅使用开发模式的模拟更新成功作为验收。
-
-### 更新安全
-
-当前客户端既不验证清单签名，也不验证 ASAR 的 SHA-256；**清单里存在哈希并不代表客户端已验证更新真实性**。HTTPS 与 OJ 管理员授权能保护发布渠道，但不能替代客户端校验。
-
-客户端应在写入和执行前验证包大小、哈希及独立更新签名；签名公钥作为可信构建配置，私钥只在发布系统中。认证公钥/日志加密公钥不能当作同一个更新签名协议直接使用。本次不虚构一个客户端尚未实现的签名字段。
-
-还应实现：主地址失败后真实回退、最低版本限制及离线策略、相对重定向安全处理、安装包更新流程、更新失败回滚与启动验证。当前客户端获取不到所有清单时会进入离线模式，不是强制禁止使用旧版本；需要由监考握手的版本检查保障禁止提交。
+**当前 OJ 更新后台只接受 Windows 安装/便携包和单一链接，不支持 Mac 包类型或平台/架构映射。** 本次没有扩展后台上传管理。客户端会读取将来的 `fullUpdate.platforms.<win32|darwin>.<x64|arm64>` 对应安装地址，但现有后台不会生成该字段；Mac 目前使用人工分发。不要把 Mac 包上传为 Windows installerUrl，或在一个旧格式清单中混用不同平台文件。
 
 ## 验证建议
 

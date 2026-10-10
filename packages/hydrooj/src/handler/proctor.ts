@@ -4,11 +4,12 @@ import { escapeRegExp } from 'lodash';
 import { ObjectId } from 'mongodb';
 import { Context } from '../context';
 import { ForbiddenError, NotFoundError, ValidationError } from '../error';
-import { proctorOrigin } from '../lib/proctor';
+import { PROCTOR_PROTOCOL, proctorOrigin, signedPayload } from '../lib/proctor';
 import { hashFile, validateEncryptedLog } from '../lib/proctor-log';
 import { PERM, PRIV } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as oplog from '../model/oplog';
+import * as problem from '../model/problem';
 import * as proctor from '../model/proctor';
 import storage from '../model/storage';
 import system from '../model/system';
@@ -276,7 +277,45 @@ export class ContestProctorHandler extends ContestDetailBaseHandler {
     }
 }
 
+// Signed login context for the native client. Renderer state and usernames must
+// never authorize turning off machine restrictions. Root requires PRIV_ALL.
+export class ProctorIdentityHandler extends Handler {
+    @param('clientNonce', Types.String)
+    @param('tid', Types.ObjectId, true)
+    @param('problem', Types.Name, true)
+    async post(domainId: string, clientNonce: string, tid?: ObjectId, routePid = '') {
+        checkOrigin(this.request);
+        this.response.addHeader('Cache-Control', 'no-store');
+        await this.limitRate('proctor_identity', 60, 120);
+        if (domainId !== this.domain._id || !/^[A-Za-z0-9_-]{43}$/.test(clientNonce)) throw new ForbiddenError();
+        const config = await proctor.getConfig();
+        const keys = await proctor.getKeys(config.keyId);
+        const root = this.user._id > 0 && this.user.hasPriv(PRIV.PRIV_ALL);
+        let pid = 0;
+        let proctorEnabled = false;
+        if (tid && this.user._id) {
+            this.checkPriv(PRIV.PRIV_USER_PROFILE);
+            this.checkPerm(PERM.PERM_VIEW_CONTEST);
+            const tdoc = await contest.get(domainId, tid);
+            const status = await contest.getStatus(domainId, tid, this.user._id);
+            if (!tdoc || (!status?.attend && !root)) throw new ForbiddenError('Attend the contest before starting proctoring.');
+            proctorEnabled = !!tdoc.proctorEnabled;
+            if (routePid) {
+                const pdoc = await problem.get(domainId, routePid);
+                if (!pdoc || !tdoc.pids.includes(pdoc.docId)) throw new ForbiddenError('Problem is outside the contest.');
+                pid = pdoc.docId;
+            }
+        }
+        const origin = proctorOrigin(`${this.context.protocol}://${this.request.host}`, this.request.host, system.get('server.url'));
+        const payload = { protocol: PROCTOR_PROTOCOL, action: 'identity', keyId: keys.keyId, origin,
+            clientNonce, uid: this.user._id || 0, domainId: this.domain._id, root,
+            tid: tid?.toHexString() || '', routePid, pid, proctorEnabled, expiresAt: new Date(Date.now() + 60000).toISOString() };
+        this.response.body = { payload, signature: signedPayload(payload, keys.signingPrivateKey) };
+    }
+}
+
 export function apply(ctx: Context) {
+    ctx.Route('proctor_identity', '/proctor/identity', ProctorIdentityHandler);
     ctx.Route('manage_proctor', '/manage/proctor', ManageProctorHandler);
     ctx.Route('manage_proctor_logs', '/manage/proctor/logs', ManageProctorLogsHandler);
     ctx.Route('contest_proctor', '/contest/:tid/proctor', ContestProctorHandler, PERM.PERM_VIEW_CONTEST);

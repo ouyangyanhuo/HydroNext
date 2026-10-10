@@ -115,6 +115,27 @@ describe('App', () => {
         try {
             await contest.attend(domainId, tid, 2);
             const route = `/d/${domainId}/contest/${tid}/proctor`;
+            const proctor = require('../packages/hydrooj/src/model/proctor');
+            const { verifyPayload } = require('../packages/hydrooj/src/lib/proctor');
+            const keys = await proctor.generateKeys();
+            const identity = await agent.post(`/d/${domainId}/proctor/identity`).set('Accept', 'application/json')
+                .send({ clientNonce: 'n'.repeat(43), tid: tid.toHexString() }).expect(200);
+            assert.ok(verifyPayload(identity.body.payload, identity.body.signature, keys.signingPublicKey));
+            assert.equal(identity.body.payload.uid, 2);
+            const loggedIn = await global.Hydro.model.user.getById(domainId, 2);
+            const { PRIV } = require('../packages/hydrooj/src/model/builtin');
+            assert.equal(identity.body.payload.root, loggedIn.hasPriv(PRIV.PRIV_ALL));
+            assert.equal(identity.body.payload.domainId, domainId);
+            assert.equal(identity.body.payload.tid, tid.toHexString());
+            assert.equal(identity.body.payload.proctorEnabled, true);
+            assert.equal(identity.headers['cache-control'], 'no-store');
+            await agent.post(`/d/${domainId}/proctor/identity`).set('Accept', 'application/json')
+                .send({ clientNonce: 'bad' }).expect(403);
+            const guest = await supertest.agent(require('hydrooj').httpServer).post('/proctor/identity')
+                .set('Accept', 'application/json').send({ clientNonce: 'g'.repeat(43) }).expect(200);
+            assert.ok(verifyPayload(guest.body.payload, guest.body.signature, keys.signingPublicKey));
+            assert.equal(guest.body.payload.uid, 0);
+            assert.equal(guest.body.payload.root, false);
             const status = await agent.get(route).set('Accept', 'application/json').expect(200);
             assert.equal(status.body.state, 'not_started');
             assert.equal(status.body.logUploaded, false);

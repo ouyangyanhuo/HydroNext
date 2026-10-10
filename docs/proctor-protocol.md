@@ -2,10 +2,10 @@
 
 ## 范围与安全边界
 
-本文对应 OJ 服务端实现，客户端代码未修改。当前 `exam-proctor-client` 还不能直接使用本协议。
+本文对应 OJ 服务端和 exam-proctor-client 的当前实现。构建、跨平台打包和调试配置见 [客户端 README](../exam-proctor-client/README.md)。
 
 - 生产环境必须使用 HTTPS；反向代理必须正确传递并仅信任受控代理的协议/Host 信息。不得开放跨源 CORS。
-- 所有客户端接口使用已登录的 Hydro 会话 Cookie，要求用户拥有当前域比赛查看权限且已报名。
+- 比赛监考接口使用已登录的 Hydro 会话 Cookie，要求用户拥有当前域比赛查看权限且已报名；身份接口可返回访客上下文。
 - 客户端主进程自动生成独立 Ed25519 设备密钥，用于握手和请求签名。无需管理员注册、注册码或人工登记名册；设备公钥随握手传入，并与本场考试的会话绑定。
 - 服务端使用 Ed25519 签名私钥；对应公钥通过可信安装包预置在客户端。日志使用独立 RSA-3072/OAEP-SHA256 密钥，不与签名密钥混用。
 - 令牌是 256 位随机不透明值，数据库只保存其 SHA-256；每个请求还要用客户端私钥签名，不能仅携带令牌。
@@ -43,6 +43,30 @@
 `operation` 放在 JSON 请求体中，上传时放在 multipart 字段中。必须发送 `Accept: application/json`。日期使用 ISO 8601 UTC，签名时间戳使用 Unix **毫秒**，域 ID 使用服务端返回的规范域 ID（大小写不能自行改写）。
 
 签名/摘要规范化规则：UTF-8 JSON，所有对象键按 JavaScript `Object.keys(...).sort()` 排序，递归处理对象，数组保持原顺序，无空白；字符串用标准 JSON 转义。禁止 undefined、NaN、Infinity。ObjectId 统一为 24 位小写字符串。SHA-256 输出小写 64 位十六进制；签名及随机数使用无 padding 的 base64url。
+
+## 0. 可验签的登录上下文
+
+客户端不能使用页面中的用户名、UiContext 或自报管理员标志决定是否解除保护。新增 `POST /proctor/identity`，域内为 `POST /d/<domainId>/proctor/identity`，沿用 Electron 的 OJ 登录 Cookie 和 JSON 请求头：
+
+```json
+{ "clientNonce": "32字节随机数base64url", "tid": "可选比赛ObjectId", "problem": "可选题目显示PID" }
+```
+
+服务端返回 `{payload,signature}`，signature 使用现有认证 Ed25519 私钥对规范化 payload 签名：
+
+```json
+{
+  "protocol": "hydro-proctor/1", "action": "identity", "keyId": "32位keyId",
+  "origin": "https://oj.example.com", "clientNonce": "原始随机数",
+  "uid": 7, "domainId": "exam", "root": false,
+  "tid": "无比赛时为空字符串，否则原始比赛ID", "routePid": "原始显示PID或空字符串",
+  "pid": 100, "proctorEnabled": true, "expiresAt": "60秒后ISO时间"
+}
+```
+
+无题目时 pid=0；未登录 uid=0，不能建立考试会话。传入比赛时，已登录用户必须有比赛查看权限并报名，系统 root 可读取上下文；传入题目还要求该题属于比赛。`root` 仅在 已登录且拥有 `PRIV_ALL` 超级管理员权限 时为 true，不能由用户名决定。无题目/比赛时 routePid/tid 也明确返回空字符串。此接口限速且 no-store。
+
+客户端验证完整签名、nonce、origin、keyId、tid、routePid、过期时间和 UID/root 类型。它将显示 PID 映射到服务端签名的数字 pid，避免提交证明被用于其它题目。root 调试还须由构建 config 的 `debug.allowRoot` 允许；只有已验证的 root 才解除应用网络及 Windows 防火墙限制。普通账号、验签失败或切换账号撤销调试。调试不会豁免后续提交认证。
 
 ## 1. 挑战与双向握手
 

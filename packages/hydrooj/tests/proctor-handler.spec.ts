@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { generateKeyPairSync } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { Readable } from 'node:stream';
@@ -6,7 +7,7 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
-import { proctorOrigin } from '../src/lib/proctor.ts';
+import { PROCTOR_PROTOCOL, proctorOrigin, signedPayload, verifyPayload } from '../src/lib/proctor.ts';
 
 const require = createRequire(import.meta.url);
 const { ZipReader, Uint8ArrayReader, TextWriter } = require('@zip.js/zip.js');
@@ -18,9 +19,11 @@ function fixture(options: any = {}) {
     class Handler {
         args: any = {}; response: any = { headers: {}, addHeader(name: string, value: string) { this.headers[name] = value; } };
         request: any = { headers: {}, path: '/d/exam/contest/x/proctor', ip: '203.0.113.7', host: 'oj.example' };
-        context: any = { originalPath: this.request.path, origin: 'https://oj.example' };
+        context: any = { originalPath: this.request.path, origin: 'https://oj.example', protocol: 'https' };
         domain = { _id: 'exam', name: 'Exam Domain' };
-        user = { _id: 7, uname: 'alice' };
+        user = { _id: options.uid ?? 7, uname: options.uname || 'alice',
+            hasPriv: (priv: number) => !options.noPrivilege && (priv !== 3 || !!options.superAdmin) };
+
         tdoc = { proctorEnabled: true, docId: tid, title: 'Contest', endAt: new Date(Date.now() + 100000) };
         tsdoc = { attend: 1 };
         checkPriv() { if (options.noPrivilege) throw new Error('denied'); }
@@ -30,7 +33,8 @@ function fixture(options: any = {}) {
     }
     const model = {
         getConfig: async () => ({ maxLogMiB: 64, uploadGraceDays: 30, keyId: 'a'.repeat(32) }),
-        getKeys: async () => ({ keyId: 'a'.repeat(32), signingPrivateKey: 'auth-private', encryptionPrivateKey: 'log-private',
+        getKeys: async () => ({ keyId: 'a'.repeat(32),
+            signingPrivateKey: options.signingPrivateKey || 'auth-private', encryptionPrivateKey: 'log-private',
             signingPublicKey: 'auth-public', encryptionPublicKey: 'log-public' }),
         publicKeys: (keys: any) => ({ keyId: keys.keyId, signingPublicKey: keys.signingPublicKey, encryptionPublicKey: keys.encryptionPublicKey }),
         handshake: async (...args: any[]) => { calls.push(['handshake', ...args]); return { token: 'token' }; },
@@ -60,7 +64,7 @@ function fixture(options: any = {}) {
     };
     const mocks: any = {
         '../error': { ForbiddenError: Error, NotFoundError: Error, ValidationError: Error },
-        '../model/builtin': { PRIV: { PRIV_EDIT_SYSTEM: 1, PRIV_USER_PROFILE: 2 }, PERM: { PERM_VIEW_CONTEST: 1 } },
+        '../model/builtin': { PRIV: { PRIV_EDIT_SYSTEM: 1, PRIV_USER_PROFILE: 2, PRIV_ALL: 3 }, PERM: { PERM_VIEW_CONTEST: 1 } },
         '../service/server': { Handler, param: () => () => {}, requireSudo: (_: any, __: any, descriptor: any) => {
             const original = descriptor.value;
             descriptor.value = function sudo(...args: any[]) {
@@ -70,9 +74,12 @@ function fixture(options: any = {}) {
         }, Types: {} },
         './contest': { ContestDetailBaseHandler: Handler },
         '../model/proctor': model,
-        '../lib/proctor': { proctorOrigin },
+        '../lib/proctor': { PROCTOR_PROTOCOL, proctorOrigin, signedPayload },
         '../model/system': { __esModule: true, default: { get: () => '' } },
-        '../model/contest': { setStatus: async (_: any, __: any, ___: any, status: any) => calls.push(['status', status]) },
+        '../model/problem': { get: async () => ({ docId: options.problemId || 100 }) },
+        '../model/contest': { get: async () => ({ pids: [100], proctorEnabled: true }),
+            getStatus: async () => ({ attend: !options.notEnrolled }),
+            setStatus: async (domainId: string, contestId: ObjectId, uid: number, status: any) => calls.push(['status', status]) },
         '../model/oplog': { log: async (...args: any[]) => calls.push(['audit', ...args.slice(1)]) },
         '../model/storage': { __esModule: true, default: {
             put: async () => { if (options.storageFailure) throw new Error('storage unavailable'); calls.push('put-file'); },
@@ -80,7 +87,8 @@ function fixture(options: any = {}) {
             exists: async () => !options.fileMissing,
             get: async (path: string) => Readable.from([Buffer.from(path)]),
         } },
-        '../lib/proctor-log': { hashFile: async () => 'hash', validateEncryptedLog: async () => { if (options.badEncryption) throw new Error('invalid'); } },
+        '../lib/proctor-log': { hashFile: async () => 'hash',
+            validateEncryptedLog: async () => { if (options.badEncryption) throw new Error('invalid'); } },
     };
     const module = { exports: {} as any };
     const code = transformSync(readFileSync(new URL('../src/handler/proctor.ts', import.meta.url), 'utf8'),
@@ -242,4 +250,38 @@ test('handshake and refresh record the server-observed IP, not a client-supplied
     assert.equal(f.calls.find((call) => call[0] === 'handshake')[4], '203.0.113.7');
     await f.handler.postRefresh();
     assert.equal(f.calls.find((call) => call[0] === 'refresh')[2], '203.0.113.7');
+});
+
+const identityKeys = generateKeyPairSync('ed25519');
+const identityPrivateKey = identityKeys.privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
+const identityPublicKey = identityKeys.publicKey.export({ type: 'spki', format: 'pem' }).toString();
+test('native identity signs fresh scoped login; only super-admin privileges enable root debug', async () => {
+    const accounts = [{ uid: 2, superAdmin: true }, { uid: 7, uname: 'root' }, { uid: 1 }, { uid: 0 },
+        { uid: 2, superAdmin: true, noPrivilege: true }];
+    await Promise.all(accounts.map(async (options) => {
+        const f = fixture({ ...options, signingPrivateKey: identityPrivateKey });
+        const handler = new f.exports.ProctorIdentityHandler();
+        await handler.post('exam', 'n'.repeat(43));
+        const { payload, signature } = handler.response.body;
+        assert.ok(verifyPayload(payload, signature, identityPublicKey));
+        assert.equal(payload.root, !!options.superAdmin && !options.noPrivilege);
+        assert.equal(payload.uid, options.uid);
+        assert.equal(payload.clientNonce, 'n'.repeat(43));
+        assert.equal(payload.origin, 'https://oj.example');
+        assert.equal(payload.tid, '');
+        assert.equal(handler.response.headers['Cache-Control'], 'no-store');
+    }));
+});
+test('native identity binds contest membership and display PID to numeric PID, rejects invalid scope', async () => {
+    const f = fixture({ signingPrivateKey: identityPrivateKey });
+    const handler = new f.exports.ProctorIdentityHandler();
+    await handler.post('exam', 'n'.repeat(43), tid, 'P100');
+    assert.equal(handler.response.body.payload.pid, 100);
+    assert.equal(handler.response.body.payload.routePid, 'P100');
+    assert.equal(handler.response.body.payload.tid, tid.toHexString());
+    assert.equal(handler.response.body.payload.proctorEnabled, true);
+    await assert.rejects(handler.post('other', 'n'.repeat(43)));
+    await assert.rejects(handler.post('exam', 'bad'));
+    await assert.rejects(new (fixture({ notEnrolled: true }).exports.ProctorIdentityHandler)().post('exam', 'n'.repeat(43), tid));
+    await assert.rejects(new (fixture({ problemId: 101 }).exports.ProctorIdentityHandler)().post('exam', 'n'.repeat(43), tid, 'P101'));
 });
