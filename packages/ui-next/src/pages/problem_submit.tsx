@@ -1,4 +1,5 @@
 import { Badge, Card, Group, Stack, Text, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { LongSelect } from '@/components/common/select';
@@ -9,7 +10,7 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
-import { formatErrorMessage } from '@/utils/error';
+import { proctorError, proctorSubmissionHeaders } from '@/utils/proctor';
 
 export default function ProblemSubmitPage() {
   const { args } = usePageData();
@@ -45,15 +46,19 @@ export default function ProblemSubmitPage() {
     setError('');
 
     try {
+      const proctorHeaders = await proctorSubmissionHeaders(!!args.tdoc?.proctorEnabled, window.location.href,
+        { pid: Number(pdoc.docId), lang, code, pretest: false, input: [], fileHash: '' });
       const res = await fetch(window.location.href, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...proctorHeaders },
         body: JSON.stringify({ lang, code }),
       });
 
       const data = await res.json();
       if (data.error) {
-        setError(formatErrorMessage(data.error, t('Submission failed')));
+        const message = t(proctorError(data.error, 'Submission failed'));
+        setError(message);
+        notifications.show({ message, color: 'red' });
       } else if (data.redirect) {
         navigate(data.redirect);
       } else if (data.rid) {
@@ -63,8 +68,10 @@ export default function ProblemSubmitPage() {
       } else {
         navigate(window.location.pathname.replace('/submit', ''));
       }
-    } catch {
-      setError('Network error');
+    } catch (err: any) {
+      const message = t(err?.message || 'Network error');
+      setError(message);
+      notifications.show({ message, color: 'red' });
     } finally {
       setLoading(false);
     }

@@ -105,6 +105,65 @@ describe('App', () => {
         await agent.get('/api/user?args={"id":2}&projection=uname').expect({ uname: 'root' });
     });
 
+    it('Proctor APIs preserve contest/domain enrollment and do not expose server secrets', async () => {
+        const { contest, domain } = global.Hydro.model;
+        const domainId = 'proctor-route-test';
+        await domain.add(domainId, 2, 'Proctor route test', '');
+        const now = Date.now();
+        const tid = await contest.add(domainId, 'Proctor route test', '', 2, 'acm', new Date(now - 60000),
+            new Date(now + 3600000), [], false, { proctorEnabled: true });
+        try {
+            await contest.attend(domainId, tid, 2);
+            const route = `/d/${domainId}/contest/${tid}/proctor`;
+            const status = await agent.get(route).set('Accept', 'application/json').expect(200);
+            assert.equal(status.body.state, 'not_started');
+            assert.equal(status.body.logUploaded, false);
+            assert.equal(status.headers['cache-control'], 'no-store');
+            assert.equal(status.body.token, undefined);
+            assert.equal(status.body.privateKey, undefined);
+            const settings = await agent.get('/manage/proctor?pageSize=50').set('Accept', 'application/json').expect(200);
+            assert.equal(settings.body.pageSize, 50);
+            assert.ok(Array.isArray(settings.body.logs));
+            assert.equal(settings.body.devices, undefined);
+            assert.equal(settings.body.keys?.signingPrivateKey, undefined);
+            assert.equal(settings.body.keys?.encryptionPrivateKey, undefined);
+            assert.equal(settings.headers['cache-control'], 'no-store');
+            await agent.get('/manage/proctor/logs?pageSize=500').set('Accept', 'application/json').expect(400);
+            await agent.post(route).set('Accept', 'application/json').send({ operation: 'challenge', version: 'wrong' }).expect(403);
+            await agent.get(`/d/system/contest/${tid}/proctor`).set('Accept', 'application/json').expect(404);
+            await supertest.agent(require('hydrooj').httpServer).get('/manage/proctor/logs').set('Accept', 'application/json').expect(403);
+        } finally {
+            await contest.del(domainId, tid);
+            await domain.del(domainId);
+        }
+    });
+
+    it('Client updates are global, private before publication and use an exact public JSON manifest', async () => {
+        const updates = require('../packages/hydrooj/src/model/client-update');
+        const guest = supertest.agent(require('hydrooj').httpServer);
+        await guest.get('/manage/client-updates').set('Accept', 'application/json').expect(403);
+        await guest.post('/manage/client-updates').set('Accept', 'application/json')
+            .send({ operation: 'delete', id: '0123456789abcdef01234567', revision: 0 }).expect(403);
+        await guest.get('/client-updates/version.json').set('Accept', 'application/json').expect(404);
+        const settings = await agent.get('/d/system/manage/client-updates').set('Accept', 'application/json').expect(200);
+        assert.equal(settings.headers['cache-control'], 'no-store');
+        assert.ok(Array.isArray(settings.body.assets));
+        assert.ok(settings.body.assets.length <= 25);
+        const manifest = { version: '1.2.3', releaseDate: '2026-10-10T00:00:00.000Z', description: 'test', changelog: [] };
+        try {
+            await updates.settings.updateOne({ _id: 'settings' }, { $set: { manifest } });
+            for (const route of ['/client-updates/version.json', '/d/system/client-updates/version.json']) {
+                // eslint-disable-next-line no-await-in-loop
+                const response = await guest.get(route).set('x-hydro-inject', 'uicontext,usercontext').expect(200);
+                assert.deepEqual(response.body, manifest);
+                assert.ok(response.headers['content-type'].includes('application/json'));
+                assert.equal(response.headers['cache-control'], 'no-store');
+            }
+        } finally {
+            await updates.settings.deleteOne({ _id: 'settings' });
+        }
+    });
+
     it('Solved ranking includes domain members with zero solved problems', async () => {
         const res = await agent.get('/ranking').expect(200);
         const args = getPageArgs(res);

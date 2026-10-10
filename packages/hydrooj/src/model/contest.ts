@@ -15,6 +15,7 @@ import {
 } from '../interface';
 import avatar from '../lib/avatar';
 import { appendContestActivityTimes } from '../lib/contest-activity';
+import { proctorRankingFilter } from '../lib/proctor';
 import bus from '../service/bus';
 import db from '../service/db';
 import type { Handler } from '../service/server';
@@ -966,7 +967,9 @@ export function getMulti(
 export async function getAndListStatus(domainId: string, tid: ObjectId): Promise<[Tdoc, any[]]> {
     // TODO(iceboy): projection, pagination.
     const tdoc = await get(domainId, tid);
-    const tsdocs = await document.getMultiStatus(domainId, document.TYPE_CONTEST, { docId: tid })
+    const tsdocs = await document.getMultiStatus(domainId, document.TYPE_CONTEST, {
+        docId: tid, ...proctorRankingFilter(tdoc.proctorEnabled, isDone(tdoc), tdoc.duration),
+    })
         .sort(RULES[tdoc.rule].statusSort).toArray();
     return [tdoc, tsdocs];
 }
@@ -1028,7 +1031,9 @@ export async function getScoreboard(
 ): Promise<[Tdoc, ScoreboardRow[], BaseUserDict, ProblemDict]> {
     const tdoc = await get(domainId, tid);
     if (!canShowScoreboard.call(this, tdoc)) throw new ContestScoreboardHiddenError(tid);
-    const tsdocsCursor = getMultiStatus(domainId, { docId: tid }).sort(RULES[tdoc.rule].statusSort);
+    const tsdocsCursor = getMultiStatus(domainId, {
+        docId: tid, ...proctorRankingFilter(tdoc.proctorEnabled, isDone(tdoc), tdoc.duration),
+    }).sort(RULES[tdoc.rule].statusSort);
     const pdict = await problem.getList(domainId, tdoc.pids, true, true, problem.PROJECTION_CONTEST_DETAIL);
     const [rows, udict] = await RULES[tdoc.rule].scoreboard(
         config, this.translate.bind(this),

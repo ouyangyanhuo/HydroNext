@@ -6,6 +6,7 @@ import Schema from 'schemastery';
 import { Counter } from '@hydrooj/utils';
 import { Tdoc, Udoc } from '../interface';
 import difficultyAlgorithm from '../lib/difficulty';
+import { proctorRankingFilter } from '../lib/proctor';
 import rating from '../lib/rating';
 import { PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
@@ -64,6 +65,7 @@ export const RpTypes: Record<string, RpDef> = {
                 const query = {
                     docId: tdoc.docId,
                     journal: { $ne: null },
+                    ...proctorRankingFilter(tdoc.proctorEnabled, true),
                 };
                 if (!await contest.countStatus(tdoc.domainId, query)) continue;
                 const cursor = contest.getMultiStatus(tdoc.domainId, query).sort(contest.RULES[tdoc.rule].statusSort);

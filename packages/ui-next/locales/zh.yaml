@@ -976,6 +976,157 @@ Sans-serif: 扁平
 Serif: 仿生
 Your Status: 你的状态
 
+# Proctoring
+"Active": "有效"
+"Allow token refresh": "允许刷新会话令牌"
+"Authentication keys": "认证密钥"
+"Authentication private key": "认证私钥"
+"Authentication public key (Ed25519)": "认证公钥（Ed25519）"
+"Authorization required.": "需要重新授权。"
+"Changing the required version or rotating keys invalidates current session tokens.": "修改指定版本或轮换密钥会使当前会话令牌失效。"
+"Deleting logs invalidates the corresponding contest results until logs are uploaded again. Continue?": "删除日志会使相应比赛成绩失效，重新上传后才能恢复。是否继续？"
+"Enable contest proctoring": "启用比赛监考"
+"Enable proctor service": "启用监考服务"
+"Encrypted final logs.": "加密的最终监考日志"
+"Existing sessions will become invalid. Continue?": "现有会话将失效，是否继续？"
+"Final log uploaded": "最终日志已上传"
+"Final proctor log cannot be replaced.": "不能将最终监考日志替换为另一份文件。"
+"Finish proctoring in the client and upload the encrypted final log. Failed uploads may be retried within the configured window.": "请在客户端结束监考并上传加密的最终日志。上传失败可在规定期限内补传。"
+"Generate authentication keys": "生成认证密钥"
+"Generate authentication keys first.": "请先生成认证密钥。"
+"Generate both key pairs and inject both public keys when building the client. No manual client enrollment is required.": "一次生成认证和日志加密两组密钥，在构建客户端时注入两组公钥，无需人工注册客户端。"
+"Hack submissions are unavailable in proctored contests.": "监考比赛暂不支持 Hack 提交。"
+"Invalid encrypted proctor log.": "监考日志的加密格式或完整性校验失败。"
+"Invalid proctor handshake.": "监考握手验证失败。"
+"Invalid proctor request origin.": "监考请求来源不合法。"
+"Invalid proctor request proof.": "监考请求签名验证失败。"
+"Late upload window (days)": "允许补传期限（天）"
+"Log decryption private key": "日志解密私钥"
+"Log download failed.": "日志下载失败。"
+"Log encryption public key (RSA-OAEP)": "日志加密公钥（RSA-OAEP）"
+"Manage authentication keys, session policy and encrypted logs.": "管理认证密钥、会话策略与加密日志。"
+"Maximum log size (MiB)": "单个日志大小上限（MiB）"
+"No proctor logs yet.": "暂无监考日志。"
+"Private keys": "私钥"
+"Private keys are server-only. Do not put them in build variables, repositories or chat messages. Closing this dialog clears the display.": "私钥仅供服务端使用，不得放入构建变量、代码仓库或聊天消息。关闭弹窗后将清除展示内容。"
+"Proctor authentication required.": "需要完成监考客户端认证。"
+"Proctor challenge has already been used.": "该监考挑战已被使用。"
+"Proctor client version mismatch.": "监考客户端版本不符合系统要求。"
+"Proctor environment mismatch.": "监考环境指纹或设备不一致。"
+"Proctor is not configured.": "监考服务尚未正确配置或未启用。"
+"Proctor log is busy. Please retry.": "该日志正在处理，请稍后重试。"
+"Proctor log operation timed out. Please retry.": "日志处理超时，请重试。"
+"Proctor logs": "监考日志"
+"Proctor policy cannot change after the contest starts.": "比赛开始后不能修改监考开关。"
+"Proctor request has already been used.": "监考请求已被使用，请生成新的请求签名。"
+"Proctor requires HTTPS. Configure the public server URL and trusted proxy.": "监考需要 HTTPS，请配置公开服务地址及可信反向代理。"
+"Proctor session expired or client version mismatch.": "监考会话已过期或客户端版本不符合要求。"
+"Proctor session has already been refreshed.": "该会话令牌已刷新，请使用新令牌。"
+"Proctor session is already finished.": "监考已结束，不能继续提交。"
+"Proctor session is outside the permitted time window.": "不在允许的监考或日志补传时间内。"
+"Proctor session refresh is disabled.": "系统已关闭会话令牌刷新。"
+"Proctor settings": "监考设置"
+"Proctor submission lease expired. Please retry.": "监考提交锁已过期，请重试。"
+"Proctored contest": "监考比赛"
+"Public keys are build-time trust anchors, not secrets. Never include either private key in the client.": "公钥是构建时注入的信任依据，不是秘密。不要将任何一组私钥放入客户端。"
+"Required client version": "指定客户端版本"
+"Requires a compatible proctor client. Final logs are required for valid results.": "需使用版本符合要求的监考客户端，最终日志成功上传后成绩才有效。"
+"Results invalid: log pending": "成绩无效：等待上传日志"
+"Results provisional: final log required": "临时成绩：待最终日志确认"
+"Revoked": "已撤销"
+"Rotate authentication keys": "轮换认证密钥"
+"Search filename, user, domain or contest": "搜索文件名、用户名、域或比赛"
+"Session policy": "会话令牌策略"
+"Token lifetime (seconds)": "令牌有效期（秒）"
+"Upload time": "上传时间"
+"Use an up-to-date proctor client to submit.": "请使用版本符合要求的监考客户端提交。"
+"View private keys": "查看私钥"
+"Wait for pending submissions before finishing proctoring.": "请等待在途提交完成后再结束监考。"
+
+# 客户端更新管理
+'25 packages per page': '每页 25 个更新包'
+'ASAR fallback URL': 'ASAR 备用地址'
+'ASAR must contain a root package.json and a valid entry point.': 'ASAR 必须包含根目录 package.json 以及有效启动入口，请修正客户端打包范围。'
+'Authorization may require reselecting the file. Uploaded files are private until published; historical packages can be deleted.': '二次授权后可能需要重新选择文件。上传包在发布前不可公开下载，历史包可以删除。'
+'Authorization may require reselecting the file. Uploaded files are private until published; published package URLs remain available.': '二次授权后可能需要重新选择文件。上传包在发布前不可公开下载，已发布包的地址持续有效。'
+'Changelog': '更新说明'
+'Choose an uploaded package': '选择已上传的包'
+'Choose at least one update package.': '请至少选择一个更新包。'
+'Choose or drop one update file': '选择或拖拽一个更新文件'
+'Client update URLs': '客户端更新地址'
+'Clients will read this release at the next update check. Confirm the version, public URLs and package contents before publishing. Continue?': '客户端在下次检查更新时将读取此版本。请确认版本、公开地址及包内容无误，是否继续发布？'
+'Configuration fallback URL': '配置备用地址'
+'Delete package': '删除更新包'
+'Deleting this historical package invalidates its download URL and clears related draft selections. Continue?': '删除后该历史包的服务端下载链接将失效，相关草稿选项也会清除。是否继续？'
+'Download JSON': '下载 JSON'
+'Draft': '草稿'
+'Draft JSON preview': '草稿 JSON 预览'
+'Draft saved': '草稿已保存'
+'Hot update ASAR': 'ASAR 热更新包'
+'Increment the version before replacing the ASAR package.': '替换 ASAR 包前请先提高发布版本号。'
+'Informational in the current client.': '当前客户端仅将此字段作为元数据。'
+'Invalid ASAR archive.': 'ASAR 文件损坏或格式不正确。'
+'Invalid changelog.': '更新说明格式不正确或超过长度限制。'
+'Invalid update configuration.': '更新配置格式不正确。'
+'Invalid update description.': '版本描述格式不正确或超过长度限制。'
+'Invalid update package.': '更新包格式或选择不正确。'
+'JSON up to 256 KiB; requires exam.targetUrl.': 'JSON 最大 256 KiB，必须包含 exam.targetUrl。'
+'Last published': '最近发布时间'
+'Manifest URL': '更新清单地址'
+'Minimum client version': '最低客户端版本'
+'Minimum version cannot exceed the release version.': '最低版本不能高于发布版本。'
+'No update packages yet.': '暂无更新包。'
+'Not published': '未发布'
+'One change per line.': '每行填写一条更新说明。'
+'Package': '更新包'
+'Package URL': '包下载地址'
+'Package deleted': '更新包已删除'
+'Package type': '包类型'
+'Package version': '包版本'
+'Package version must match the release version.': '更新包版本必须与发布版本一致。'
+'Packages up to 240 MiB. ASAR must include package.json and the application entry point.': '包最大 240 MiB。ASAR 必须包含根目录 package.json 和有效启动入口。'
+'Public OJ origin': 'OJ 公开源站'
+'Publish client versions, packages and update manifests.': '管理客户端版本、更新包与更新清单。'
+'Publish update': '发布更新'
+'Published JSON': '已发布的 JSON'
+'Published manifest URL': '已发布清单地址'
+'Publishing does not change the required version in proctor settings. ASAR replacements require a higher version.': '发布不会修改监考设置中的指定版本。替换 ASAR 必须提高版本号。'
+'Release configuration': '版本配置'
+'Release description': '版本描述'
+'Release version': '发布版本'
+'Release version cannot go backwards.': '发布版本不能低于当前已发布版本。'
+'Remote client configuration': '远端客户端配置'
+'Save draft': '保存草稿'
+'Search package filename or version': '搜索包文件名或版本'
+'The current client does not enforce minimum versions or verify SHA-256. Installer links are for manual downloads; fallback and signature support require client changes.': '当前客户端未执行最低版本限制或 SHA-256 校验。安装包链接供手动下载；失败回退及签名校验需要客户端配合实现。'
+'The manifest returns 404 until the first publication. Put this URL in the client build configuration.': '首次发布前清单返回 404。请将此地址写入客户端构建配置。'
+'The package is unavailable. File cleanup will be retried automatically.': '更新包已停止提供下载，存储文件清理将自动重试。'
+'This is an unpublished preview. The server validates it and sets releaseDate when publishing.': '当前内容为未发布预览。发布时由服务端验证，并生成 releaseDate。'
+'This package is used by the published release. Publish a replacement before deleting it.': '当前已发布版本正在使用该更新包，请先发布替代版本后再删除。'
+'Update file': '更新文件'
+'Update manifest JSON': '更新清单 JSON'
+'Update package file is missing or corrupted.': '更新包文件丢失或损坏，请重新上传。'
+'Update package file is missing.': '更新包文件丢失，请重新上传。'
+'Update package is too large or empty.': '更新包为空或超过大小限制。'
+'Update package library': '更新包库'
+'Update published': '更新已发布'
+'Update settings': '更新设置'
+'Update settings changed. Reload before saving.': '更新设置已被其他操作修改，请重新加载后保存。'
+'Upload a Windows executable package.': '请上传 Windows 可执行文件。'
+'Upload completed': '上传完成'
+'Upload is a draft. Publish to make it available to clients.': '上传成功，当前为草稿。发布后客户端才可下载。'
+'Upload update package': '上传更新包'
+'Use HTTPS without a path. Published URLs do not depend on the current domain.': '填写不带路径的 HTTPS 地址。发布链接不随当前域变化。'
+'Use a complete HTTPS URL.': '请填写完整 HTTPS 地址，本地开发可使用 localhost HTTP。'
+'Use a stable numeric version, for example 1.2.3.': '请使用稳定的数字版本，例如 1.2.3。'
+'Use the package library below to find older packages.': '可在下方更新包库搜索查找较早的包。'
+'Use this package': '选择此包'
+'Used by the published release': '当前已发布版本正在使用'
+'View draft': '查看草稿'
+'View published': '查看已发布版本'
+'Windows installer': 'Windows 安装包'
+'Windows portable package': 'Windows 便携包'
+
 # 比赛题目计时
 Contest starts in: 距离比赛开始
 Contest time remaining: 比赛剩余时间

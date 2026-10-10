@@ -24,12 +24,15 @@ import {
     ProblemDoc, ProblemSearchOptions, ProblemStatusDoc, RecordDoc, User,
 } from '../interface';
 import { LIST_SORT_MODES, type ListSortMode, PROBLEM_LIST_SORT } from '../lib/list-sort';
+import { submissionPayload } from '../lib/proctor';
+import { hashFile } from '../lib/proctor-log';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as discussion from '../model/discussion';
 import domain from '../model/domain';
 import * as oplog from '../model/oplog';
 import problem from '../model/problem';
+import * as proctor from '../model/proctor';
 import record from '../model/record';
 import * as setting from '../model/setting';
 import solution from '../model/solution';
@@ -517,63 +520,77 @@ export class ProblemSubmitHandler extends ProblemDetailHandler {
     @param('input', Types.ArrayOf(Types.String, true), true)
     @param('tid', Types.ObjectId, true)
     async post(domainId: string, lang: string, code: string, pretest = false, input: string[] = [], tid?: ObjectId) {
-        const config = this.pdoc.config;
-        if (typeof config === 'string' || config === null) throw new ProblemConfigError();
-        if (['submit_answer', 'objective'].includes(config.type)) {
-            lang = '_';
-        } else if ((config.langs && !config.langs.includes(lang)) || !setting.langs[lang] || setting.langs[lang].disabled) {
-            throw new ProblemNotAllowLanguageError();
+        let release: Awaited<ReturnType<typeof proctor.reserveSubmission>> | undefined;
+        if (tid && this.tdoc.proctorEnabled) {
+            const session = await proctor.authenticate({ uid: this.user._id, domainId, tid },
+                this.request.headers['x-proctor-token'] as string, this.request.headers['x-proctor-proof'] as string,
+                'submit', (this.context.originalPath || this.request.path).split('?')[0],
+                submissionPayload(this.pdoc.docId, lang, code || '', pretest, input,
+                    this.request.files?.file ? await hashFile(this.request.files.file.filepath) : ''));
+            release = await proctor.reserveSubmission(session);
         }
-        if (pretest) {
-            if (setting.langs[lang]?.pretest) lang = setting.langs[lang].pretest as string;
-            if (!['default', 'remote_judge'].includes(this.response.body.pdoc.config?.type)) {
-                throw new ProblemNotAllowPretestError('type');
+        try {
+            const config = this.pdoc.config;
+            if (typeof config === 'string' || config === null) throw new ProblemConfigError();
+            if (['submit_answer', 'objective'].includes(config.type)) {
+                lang = '_';
+            } else if ((config.langs && !config.langs.includes(lang)) || !setting.langs[lang] || setting.langs[lang].disabled) {
+                throw new ProblemNotAllowLanguageError();
             }
-            if (!input.length) throw new ValidationError('input');
-            input = input.map((i) => i || '');
-        }
-        await this.limitRate('add_record', 60, system.get('limit.submission_user'), '{{user}}');
-        await this.limitRate('add_record', 60, pretest ? system.get('limit.pretest') : system.get('limit.submission'));
-        const files: Record<string, string> = {};
-        const lengthLimit = system.get('limit.codelength') || 128 * 1024;
-        if (!code) {
-            const file = this.request.files?.file;
-            if (!file || file.size === 0) throw new ValidationError('code');
-            const sizeLimit = config.type === 'submit_answer' ? 128 * 1024 * 1024 : lengthLimit;
-            if (file.size > sizeLimit) throw new FileTooLargeError('file');
-            const shouldReadFile = () => {
-                if (config.type === 'objective') return true;
-                if (lang === '_') return false;
-                return file.size < lengthLimit && !file.filepath.endsWith('.zip') && !setting.langs[lang].isBinary;
-            };
-            if (shouldReadFile()) code = await readFile(file.filepath, 'utf-8');
-            else {
-                const id = nanoid();
-                await storage.put(`submission/${this.user._id}/${id}`, file.filepath, this.user._id);
-                files.code = `${this.user._id}/${id}#${file.originalFilename}`;
+            if (pretest) {
+                if (setting.langs[lang]?.pretest) lang = setting.langs[lang].pretest as string;
+                if (!['default', 'remote_judge'].includes(this.response.body.pdoc.config?.type)) {
+                    throw new ProblemNotAllowPretestError('type');
+                }
+                if (!input.length) throw new ValidationError('input');
+                input = input.map((i) => i || '');
             }
-        } else {
-            code = code.replace(/\r\n/g, '\n');
-            if (code.length > lengthLimit) throw new ValidationError('code');
-        }
-        const rid = await record.add(
-            domainId, this.pdoc.docId, this.user._id, lang, code, true,
-            pretest ? { input, type: 'pretest' } : { contest: tid, files, type: 'judge' },
-        );
-        this.submittedRecordId = rid;
-        if (!pretest) {
-            await Promise.all([
-                problem.inc(domainId, this.pdoc.docId, 'nSubmit', 1),
-                domain.incUserInDomain(domainId, this.user._id, 'nSubmit'),
-                tid && contest.updateStatus(domainId, tid, this.user._id, rid, this.pdoc.docId),
-            ]);
-        }
-        if (tid && !pretest && !contest.canShowSelfRecord.call(this, this.tdoc)) {
-            this.response.body = { tid };
-            this.response.redirect = this.url(this.tdoc.rule === 'homework' ? 'homework_detail' : 'contest_problemlist', { tid });
-        } else {
-            this.response.body = { rid };
-            this.response.redirect = this.url('record_detail', { rid });
+            await this.limitRate('add_record', 60, system.get('limit.submission_user'), '{{user}}');
+            await this.limitRate('add_record', 60, pretest ? system.get('limit.pretest') : system.get('limit.submission'));
+            const files: Record<string, string> = {};
+            const lengthLimit = system.get('limit.codelength') || 128 * 1024;
+            if (!code) {
+                const file = this.request.files?.file;
+                if (!file || file.size === 0) throw new ValidationError('code');
+                const sizeLimit = config.type === 'submit_answer' ? 128 * 1024 * 1024 : lengthLimit;
+                if (file.size > sizeLimit) throw new FileTooLargeError('file');
+                const shouldReadFile = () => {
+                    if (config.type === 'objective') return true;
+                    if (lang === '_') return false;
+                    return file.size < lengthLimit && !file.filepath.endsWith('.zip') && !setting.langs[lang].isBinary;
+                };
+                if (shouldReadFile()) code = await readFile(file.filepath, 'utf-8');
+                else {
+                    const id = nanoid();
+                    await storage.put(`submission/${this.user._id}/${id}`, file.filepath, this.user._id);
+                    files.code = `${this.user._id}/${id}#${file.originalFilename}`;
+                }
+            } else {
+                code = code.replace(/\r\n/g, '\n');
+                if (code.length > lengthLimit) throw new ValidationError('code');
+            }
+            await release?.assert();
+            const rid = await record.add(
+                domainId, this.pdoc.docId, this.user._id, lang, code, true,
+                pretest ? { input, type: 'pretest' } : { contest: tid, files, type: 'judge' },
+            );
+            this.submittedRecordId = rid;
+            if (!pretest) {
+                await Promise.all([
+                    problem.inc(domainId, this.pdoc.docId, 'nSubmit', 1),
+                    domain.incUserInDomain(domainId, this.user._id, 'nSubmit'),
+                    tid && contest.updateStatus(domainId, tid, this.user._id, rid, this.pdoc.docId),
+                ]);
+            }
+            if (tid && !pretest && !contest.canShowSelfRecord.call(this, this.tdoc)) {
+                this.response.body = { tid };
+                this.response.redirect = this.url(this.tdoc.rule === 'homework' ? 'homework_detail' : 'contest_problemlist', { tid });
+            } else {
+                this.response.body = { rid };
+                this.response.redirect = this.url('record_detail', { rid });
+            }
+        } finally {
+            await release?.();
         }
     }
 }
@@ -612,6 +629,9 @@ export class ProblemHackHandler extends ProblemDetailHandler {
     @param('autoOrganizeInput', Types.Boolean, true)
     @param('tid', Types.ObjectId, true)
     async post(domainId: string, input = '', autoOrganizeInput = false, tid?: ObjectId) {
+        // The current proctor protocol signs code submissions, not hack payloads.
+        // Fail closed instead of letting an addon bypass contest authentication.
+        if (tid && this.tdoc.proctorEnabled) throw new HackFailedError('Hack submissions are unavailable in proctored contests.');
         await this.limitRate('add_record', 60, system.get('limit.submission_user'), '{{user}}');
         await this.limitRate('add_record', 60, system.get('limit.submission'));
         const id = `${this.user._id}/${nanoid()}`;

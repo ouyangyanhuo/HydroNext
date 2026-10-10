@@ -17,6 +17,7 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useRecordSocket } from '@/hooks/use-record-socket';
+import { proctorError, proctorSubmissionHeaders } from '@/utils/proctor';
 import {
   CodeEditor,
   EDITOR_THEME_OPTIONS,
@@ -85,6 +86,8 @@ export function Scratchpad({
   const buildUrl = useBuildUrl();
   const ui = useUiContext();
   const { args } = usePageData();
+  const proctorEnabled = !!args.tdoc?.proctorEnabled;
+  const proctorPid = Number(args.pdoc?.docId || pid);
   const user = useUserContext();
   const userId = user?._id;
   const langOptions = useMemo(() => Object.entries(langs).map(([id, info]: [string, any]) => ({
@@ -325,9 +328,11 @@ export function Scratchpad({
         setSubmitResult(res);
       } else {
         const replay = pretest ? null : await flushReplay(code);
+        const proctorHeaders = await proctorSubmissionHeaders(proctorEnabled, resolvedSubmitUrl,
+          { pid: proctorPid, lang, code, pretest, input: pretest ? [input] : [], fileHash: '' });
         const res = await fetch(resolvedSubmitUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...proctorHeaders },
           body: JSON.stringify({
             lang,
             code,
@@ -337,7 +342,7 @@ export function Scratchpad({
           }),
         });
         const data = await res.json();
-        if (!res.ok || data.error) throw new Error(data.error?.message || t('Submission failed'));
+        if (!res.ok || data.error) throw new Error(proctorError(data.error, 'Submission failed'));
         else if (pretest) {
           setPretestResult(data);
           if (data.rid) setPretestRid(String(data.rid));
@@ -355,7 +360,7 @@ export function Scratchpad({
         }
       }
     } catch (err: any) {
-      const message = err?.message || t('Network error');
+      const message = t(err?.message || 'Network error');
       setError(message);
       notifications.show({ color: 'red', message });
     } finally {
@@ -364,7 +369,8 @@ export function Scratchpad({
       else setSubmitting(false);
     }
   }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, flushReplay,
-    resolvedSubmitUrl, input, navigate, replayReady, replayStorageKey, warnReplayStorage, captureAction]);
+    resolvedSubmitUrl, input, navigate, replayReady, replayStorageKey, warnReplayStorage, captureAction,
+    proctorPid, proctorEnabled]);
 
   const pretestCooldown = Math.max(0, Math.ceil((cooldownUntil.pretest - clock) / 1000));
   const submitCooldown = Math.max(0, Math.ceil((cooldownUntil.submit - clock) / 1000));

@@ -23,6 +23,7 @@ import * as document from '../model/document';
 import message from '../model/message';
 import * as oplog from '../model/oplog';
 import problem from '../model/problem';
+import { checkContestConfig } from '../model/proctor';
 import record from '../model/record';
 import ScheduleModel from '../model/schedule';
 import storage from '../model/storage';
@@ -105,7 +106,8 @@ export class ContestDetailBaseHandler extends Handler {
 
     tsdocAsPublic() {
         if (!this.tsdoc) return null;
-        return pick(this.tsdoc, ['attend', 'subscribe', 'startAt', ...(this.tdoc.duration || this.tsdoc.endAt ? ['endAt'] : [])]);
+        return pick(this.tsdoc, ['attend', 'subscribe', 'startAt', 'proctorEnded', 'proctorLogUploaded',
+            ...(this.tdoc.duration || this.tsdoc.endAt ? ['endAt'] : [])]);
     }
 
     @param('tid', Types.ObjectId, true)
@@ -403,6 +405,7 @@ export class ContestEditHandler extends Handler {
             beginAt,
             page_name: tid ? 'contest_edit' : 'contest_create',
             files: tid ? this.tdoc.files : [],
+            proctorPolicyLocked: !!tid && Date.now() >= this.tdoc.beginAt.getTime(),
             urlForFile: (filename: string) => this.url('contest_file_download', { tid, filename, type: 'public' }),
         };
     }
@@ -426,13 +429,15 @@ export class ContestEditHandler extends Handler {
     @param('allowPrint', Types.Boolean)
     @param('keepScoreboardHidden', Types.Boolean)
     @param('langs', Types.CommaSeperatedArray, true)
+    @param('proctorEnabled', Types.Boolean)
     async postUpdate(
         domainId: string, tid: ObjectId, beginAtDate: string, beginAtTime: string, duration: number,
         title: string, content: string, rule: string, _pids: string, rated = false,
         _code = '', autoHide = false, assign: string[] = [], lock: number = null,
         contestDuration: number = null, maintainer: number[] = [], allowViewCode = false, allowPrint = false,
-        keepScoreboardHidden = false, langs: string[] = [],
+        keepScoreboardHidden = false, langs: string[] = [], proctorEnabled = false,
     ) {
+        await checkContestConfig(this.tdoc, proctorEnabled);
         if (!Object.keys(contest.RULES).includes(rule) || contest.RULES[rule].hidden) throw new ValidationError('rule');
         if (autoHide) this.checkPerm(PERM.PERM_EDIT_PROBLEM);
         const pids = _pids.replace(/，/g, ',').split(',').map((i) => +i).filter((i) => i);
@@ -473,7 +478,7 @@ export class ContestEditHandler extends Handler {
             });
         }
         await contest.edit(domainId, tid, {
-            assign, _code, autoHide, lockAt, maintainer, allowViewCode, allowPrint, keepScoreboardHidden, langs,
+            assign, _code, autoHide, lockAt, maintainer, allowViewCode, allowPrint, keepScoreboardHidden, langs, proctorEnabled,
         });
         this.response.body = { tid };
         this.response.redirect = this.url('contest_detail', { tid });

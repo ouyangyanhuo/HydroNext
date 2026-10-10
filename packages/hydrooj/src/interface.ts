@@ -273,6 +273,7 @@ export interface Tdoc extends Document {
     allowViewCode?: boolean;
     allowPrint?: boolean;
     keepScoreboardHidden?: boolean;
+    proctorEnabled?: boolean;
 
     // For contest
     lockAt?: Date;
@@ -473,6 +474,8 @@ export interface ContestStatusDoc extends StatusDocBase, ContestStat {
     totalProblemTime?: number;
     problemActivityRev?: number;
     problemActivity?: { token: string, pid: number, at: number } | null;
+    proctorEnded?: boolean;
+    proctorLogUploaded?: boolean;
 }
 
 export interface TrainingStatusDoc extends StatusDocBase, Record<string, any> {

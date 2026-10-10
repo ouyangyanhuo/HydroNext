@@ -182,6 +182,7 @@ export default function ContestEditPage() {
     allowViewCode: tdoc.allowViewCode ?? true,
     allowPrint: tdoc.allowPrint ?? false,
     keepScoreboardHidden: tdoc.keepScoreboardHidden ?? false,
+    proctorEnabled: tdoc.proctorEnabled ?? false,
     lock: tdoc.lockAt && tdoc.endAt ? Math.round((new Date(tdoc.endAt).getTime() - new Date(tdoc.lockAt).getTime()) / 60000) : '',
     contestDuration: tdoc.duration || '',
   });
@@ -475,6 +476,12 @@ export default function ContestEditPage() {
                 <Checkbox label={t('Auto hide-and show')} checked={form.autoHide} onChange={(e) => setForm({ ...form, autoHide: e.currentTarget.checked })} />
                 <Checkbox label={t('Allow View Code')} checked={form.allowViewCode} onChange={(e) => setForm({ ...form, allowViewCode: e.currentTarget.checked })} />
                 <Checkbox label={t('Allow Print')} checked={form.allowPrint} onChange={(e) => setForm({ ...form, allowPrint: e.currentTarget.checked })} />
+                <Checkbox
+                  label={t('Enable contest proctoring')}
+                  description={t('Requires a compatible proctor client. Final logs are required for valid results.')}
+                  disabled={!!args.proctorPolicyLocked}
+                  checked={form.proctorEnabled}
+                  onChange={(e) => setForm({ ...form, proctorEnabled: e.currentTarget.checked })} />
                 {showHiddenScoreboard && (
                   <Checkbox label={t('Keep Scoreboard Hidden')} checked={form.keepScoreboardHidden} onChange={(e) => setForm({ ...form, keepScoreboardHidden: e.currentTarget.checked })} />
                 )}

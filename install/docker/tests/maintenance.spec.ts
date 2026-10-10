@@ -173,7 +173,7 @@ test('the next successful backup replaces the old tar and data in the same direc
     } finally { f.clean(); }
 });
 
-for (const failure of ['save', 'copy', 'start', 'stop-lies']) {
+for (const failure of ['save', 'copy', 'stop-lies']) {
     test(`${failure} failure retains the previous backup and removes temporary image tags`, () => {
         const f = fixture();
         try {
@@ -187,6 +187,40 @@ for (const failure of ['save', 'copy', 'start', 'stop-lies']) {
         } finally { f.clean(); }
     });
 }
+
+test('startup failure still publishes the new backup and repeated runs leave no work directories', () => {
+    const f = fixture();
+    try {
+        assert.equal(f.backup().status, 0);
+        for (const value of ['second day', 'third day']) {
+            writeFileSync(path.join(f.directory, 'data/mongo/value'), value);
+            const result = f.backup('start');
+            assert.notEqual(result.status, 0);
+            assert.match(result.stderr, /容器启动或健康检查失败/);
+            assert.equal(readFileSync(path.join(f.backupDir, 'data/mongo/value'), 'utf8'), value);
+            assert.equal(readdirSync(f.backupDir).filter((name) => name.endsWith('.tar')).length, 1);
+            assert.ok(!readdirSync(f.directory).some((name) => name.startsWith('backup-file.')));
+            assert.ok(!Object.keys(f.state().tags).some((tag) => tag.includes(':backup-')));
+        }
+    } finally { f.clean(); }
+});
+
+test('old marked work directories are removed only after a complete new backup is published', () => {
+    const f = fixture();
+    try {
+        const stale = `${f.backupDir}.work-old`;
+        const unrelated = `${f.backupDir}.work-unmanaged`;
+        mkdirSync(stale);
+        writeFileSync(path.join(stale, '.hydro-backup'), 'hydro-backup-v2\n');
+        writeFileSync(path.join(stale, 'retained-data'), 'previous backup');
+        mkdirSync(unrelated);
+        assert.notEqual(f.backup('copy').status, 0);
+        assert.ok(existsSync(stale));
+        assert.equal(f.backup().status, 0);
+        assert.ok(!existsSync(stale));
+        assert.ok(existsSync(unrelated));
+    } finally { f.clean(); }
+});
 
 test('missing backend fails before services stop', () => {
     const f = fixture();

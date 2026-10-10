@@ -81,6 +81,7 @@ temporary_tag="docker-oj-backend:backup-$stamp"
 tag_created=false
 needs_start=false
 keep_stage=false
+backup_published=false
 cleanup() {
     local status=$?
     trap - EXIT
@@ -99,7 +100,13 @@ cleanup() {
             rm -rf -- "$stage"
         fi
     fi
-    ((status == 0)) || log '备份失败，已保留之前的备份'
+    if ((status != 0)); then
+        if [[ "$backup_published" == true ]]; then
+            log "维护未完成，本次完整备份已保存至：$backup_dir；请检查上述错误和容器状态"
+        else
+            log '备份未替换成功，之前的备份（如有）已保留'
+        fi
+    fi
     exit "$status"
 }
 trap cleanup EXIT
@@ -127,16 +134,28 @@ for file in judge.yaml mount.yaml .env; do
 done
 printf 'hydro-backup-v2\n' > "$stage/.hydro-backup"
 keep_stage=true
-needs_start=false
-"${compose[@]}" start --wait --wait-timeout "$wait_timeout"
 
-# 仅在原有服务重新就绪后，将完整备份放入正式备份目录。
-if [[ -d "$backup_dir" ]]; then mv -- "$backup_dir" "$previous"; fi
-if ! mv -- "$stage" "$backup_dir"; then
-    [[ ! -d "$previous" ]] || mv -- "$previous" "$backup_dir"
+# 完整备份就绪后先替换目录，避免服务启动失败使新备份一直留在临时目录。
+# 使用 -T 防止目标目录存在时将源目录嵌套移入其中。
+if [[ -d "$backup_dir" ]]; then mv -T -- "$backup_dir" "$previous"; fi
+if ! mv -T -- "$stage" "$backup_dir"; then
+    [[ ! -d "$previous" ]] || mv -T -- "$previous" "$backup_dir"
     fail '无法将备份放入正式备份目录'
 fi
+backup_published=true
 [[ ! -d "$previous" ]] || rm -rf -- "$previous"
+log "备份已保存：$backup_dir"
+# 仅在新备份保存成功后清理旧版遗留的完整临时备份，跳过符号链接和无标记目录。
+for stale in "$backup_dir".work-*; do
+    [[ -d "$stale" && ! -L "$stale" && -f "$stale/.hydro-backup" ]] || continue
+    [[ "$(cat "$stale/.hydro-backup")" == 'hydro-backup-v2' ]] || continue
+    rm -rf -- "$stale"
+    log "已清理旧临时备份：$stale"
+done
+needs_start=false
+if ! "${compose[@]}" start --wait --wait-timeout "$wait_timeout"; then
+    fail '容器启动或健康检查失败，请执行 docker compose ps 和 docker compose logs 检查'
+fi
 # 仅清理属于当前 Compose 文件路径的旧版备份标签。
 legacy_hash="$(printf '%s' "$compose_file" | sha256sum)"
 legacy_repository="hydro-maintenance-${legacy_hash:0:16}"

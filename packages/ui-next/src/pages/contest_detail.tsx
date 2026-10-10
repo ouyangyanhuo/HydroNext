@@ -7,6 +7,7 @@ import { DeleteResourceButton } from '@/components/common/delete-resource-button
 import { LongSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
 import { ContestTimer } from '@/components/contest/contest-timer';
+import { ContestProctorNotice } from '@/components/contest/contest-proctor-notice';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -501,6 +502,7 @@ export default function ContestDetailPage() {
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 min-w-0">
+          {tdoc.proctorEnabled && <div className="mb-4"><ContestProctorNotice enabled status={tsdoc} /></div>}
           {tdoc.content && (
             <Card withBorder p="lg" mb="md" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-sm)]">
               <MarkdownRenderer content={tdoc.content} />
