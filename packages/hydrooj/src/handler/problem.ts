@@ -25,6 +25,7 @@ import {
 } from '../interface';
 import { LIST_SORT_MODES, type ListSortMode, PROBLEM_LIST_SORT } from '../lib/list-sort';
 import { submissionPayload } from '../lib/proctor';
+import { requireProctorAccess } from '../lib/proctor-access';
 import { hashFile } from '../lib/proctor-log';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
@@ -321,6 +322,9 @@ export class ProblemDetailHandler extends ContestDetailBaseHandler {
     @route('pid', Types.ProblemId, true)
     @query('tid', Types.ObjectId, true)
     async _prepare(domainId: string, pid: number | string, tid?: ObjectId) {
+        // Do not load or expose problem content before authenticating the client.
+        // POST submissions retain their independently signed, content-bound proof.
+        if (tid && this.request.method === 'get') await requireProctorAccess(this, this.tdoc, pid);
         this.pdoc = await problem.get(domainId, pid);
         if (!this.pdoc) throw new ProblemNotFoundError(domainId, pid);
         if (tid) {

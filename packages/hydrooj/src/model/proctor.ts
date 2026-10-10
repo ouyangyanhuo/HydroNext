@@ -208,7 +208,9 @@ export async function handshake(identity: Identity, challengeId: string, signatu
         version: doc.version, keyId: config.keyId, deviceInfo: doc.deviceInfo || {}, ip: ip.slice(0, 128) }, config);
 }
 
-export async function authenticate(identity: Identity, token: string, proof: string, action: string, path: string, payload: unknown) {
+export async function authenticate(
+    identity: Identity, token: string, proof: string, action: string, path: string, payload: unknown, method: 'POST' | 'GET' = 'POST',
+) {
     const config = await getConfig();
     if (!config.enabled || typeof token !== 'string' || token.length > 100) throw new ForbiddenError('Proctor authentication required.');
     const session = await sessions.findOne({ ...identity, _id: digest(token), revoked: false, expiresAt: { $gt: new Date() } });
@@ -221,7 +223,7 @@ export async function authenticate(identity: Identity, token: string, proof: str
     } catch {
         throw new ForbiddenError('Invalid proctor request proof.');
     }
-    if (!validProof(parsed.payload, { action, method: 'POST', path, tokenHash: session._id,
+    if (!validProof(parsed.payload, { action, method, path, tokenHash: session._id,
         fingerprint: session.fingerprint, version: session.version, payloadHash: digest(canonical(payload)) })
     || !verifyPayload(parsed.payload, parsed.signature, session.publicKey)) throw new ForbiddenError('Invalid proctor request proof.');
     try {
@@ -230,6 +232,13 @@ export async function authenticate(identity: Identity, token: string, proof: str
         if (error.code === 11000) throw new ForbiddenError('Proctor request has already been used.');
         throw error;
     }
+    return session;
+}
+
+export async function authenticateAccess(identity: Identity, token: string, proof: string, action: string, path: string, payload: unknown) {
+    const session = await authenticate(identity, token, proof, action, path, payload, 'GET');
+    const attempt = await attempts.findOne({ ...identity, _id: session.attemptId, state: 'open', fingerprint: session.fingerprint });
+    if (!attempt) throw new ForbiddenError('Proctor session is already finished.');
     return session;
 }
 

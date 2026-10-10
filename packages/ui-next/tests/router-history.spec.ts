@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
+import { proctorAccessHeaders } from '../src/utils/proctor.ts';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -40,6 +41,7 @@ function fixture(isInjected: boolean) {
             routeMapStore: { getSnapshot: () => ({ record_main: '/record', record_detail: '/record/:rid' }), set() {} },
         },
         './page-data': { useSetPageData: () => setData },
+        '../utils/proctor': { proctorAccessHeaders },
     };
     runInNewContext(code, {
         module, exports: module.exports, window: dom.window, history: dom.window.history,
@@ -108,6 +110,34 @@ test('initial page-data loading also bypasses any old document/JSON cache entry'
         assert.ok(new Headers(router.requests[0].options.headers).get('x-hydro-inject')?.includes('routemap'));
         assert.equal(router.getData().name, 'record_main');
     } finally {
+        await router.unmount();
+    }
+});
+
+test('contest problem navigation adds a fresh GET client proof without changing domain or tid', async () => {
+    const signed: any[] = [];
+    (dom.window as any).examAPI = { proctorHeaders: async (request: any) => {
+        signed.push(request);
+        return { 'x-proctor-token': 'token', 'x-proctor-proof': `proof-${signed.length}` };
+    } };
+    const router = fixture(true);
+    const tid = '1234567890abcdef12345678';
+    try {
+        await router.mount();
+        await act(async () => router.navigate(`/d/team/p/J0002?tid=${tid}`));
+        assert.equal(signed[0].action, 'problem_view');
+        assert.equal(signed[0].method, 'GET');
+        assert.equal(signed[0].path, '/d/team/p/J0002');
+        assert.equal(new Headers(router.requests[0].options.headers).get('x-proctor-proof'), 'proof-1');
+        await act(async () => dom.window.dispatchEvent(new dom.window.PageTransitionEvent('pageshow', { persisted: true })));
+        assert.equal(new Headers(router.requests[1].options.headers).get('x-proctor-proof'), 'proof-2');
+        assert.equal(router.getData().url, `/d/team/p/J0002?tid=${tid}`);
+        (dom.window as any).examAPI.proctorHeaders = async () => { throw new Error('Old client'); };
+        await act(async () => router.navigate(`/d/team/p/1?tid=${tid}`));
+        // Server decides whether the route is protected; no fabricated proof or client flag.
+        assert.equal(new Headers(router.requests[2].options.headers).get('x-proctor-token'), null);
+    } finally {
+        delete (dom.window as any).examAPI;
         await router.unmount();
     }
 });

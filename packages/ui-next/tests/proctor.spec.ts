@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { proctorError, proctorRequest, proctorSubmissionHeaders } from '../src/utils/proctor.ts';
+import { proctorAccessHeaders, proctorAccessRequest, proctorError, proctorRequest, proctorSubmissionHeaders } from '../src/utils/proctor.ts';
 
 const payload = { pid: 42, lang: 'cc.cc20', code: 'int main(){}', pretest: false, input: [], fileHash: '' };
 function withWindow(value: unknown, run: () => Promise<void>) {
@@ -15,6 +15,42 @@ function withWindow(value: unknown, run: () => Promise<void>) {
 test('ordinary contests keep existing submission behavior without requiring a client bridge', async () => {
     await withWindow({}, async () => {
         assert.deepEqual(await proctorSubmissionHeaders(false, '/p/42/submit', payload), {});
+    });
+});
+
+test('content reads bind the full domain path, contest and display PID; unrelated and cross-origin URLs are not signed', async () => {
+    const tid = '1234567890abcdef12345678';
+    const origin = 'https://oj.example';
+    assert.deepEqual(proctorAccessRequest(`/d/exam/p/J0002?tid=${tid}`, origin), {
+        action: 'problem_view', method: 'GET', path: '/d/exam/p/J0002', payload: { tid, pid: 'J0002' },
+    });
+    assert.equal(proctorAccessRequest(`/p/001?tid=${tid}`, origin)?.payload.pid, '1');
+    assert.deepEqual(proctorAccessRequest(`/d/exam/contest/${tid}/problems`, origin)?.payload, { tid });
+    assert.equal(proctorAccessRequest(`/p/J0002/file/statement.pdf?tid=${tid}`, origin)?.action, 'problem_view');
+    assert.equal(proctorAccessRequest(`/contest/${tid}/file/private/statement.pdf`, origin)?.action, 'contest_view');
+    for (const url of ['/p/1', '/p/1?tid=invalid', `/p/1?tid=${tid}&tid=${tid}`, `/contest/${tid}`, '/proctor/identity',
+        `/contest/${tid}/file/public/rules.pdf`, `https://evil.example/p/1?tid=${tid}`]) {
+        assert.equal(proctorAccessRequest(url, origin), null);
+    }
+});
+
+test('read bridge forwards only authentication headers and never signs untrusted origins', async () => {
+    const tid = '1234567890abcdef12345678';
+    const calls: any[] = [];
+    await withWindow({ location: { origin: 'https://oj.example' }, examAPI: { proctorHeaders: async (request: any) => {
+        calls.push(request);
+        return { 'x-proctor-token': 'token', 'x-proctor-proof': 'proof', authorization: 'not-forwarded' };
+    } } }, async () => {
+        assert.deepEqual(await proctorAccessHeaders(`/p/1?tid=${tid}`), { 'x-proctor-token': 'token', 'x-proctor-proof': 'proof' });
+        assert.deepEqual(await proctorAccessHeaders(`https://evil.example/p/1?tid=${tid}`), {});
+        assert.equal(calls.length, 1);
+        assert.equal(calls[0].method, 'GET');
+    });
+    await withWindow({ location: { origin: 'https://oj.example' } }, async () => {
+        assert.deepEqual(await proctorAccessHeaders(`/p/1?tid=${tid}`), {});
+    });
+    await withWindow({ location: { origin: 'https://oj.example' }, examAPI: { proctorHeaders: async () => ({ token: 'wrong' }) } }, async () => {
+        await assert.rejects(proctorAccessHeaders(`/p/1?tid=${tid}`), /Proctor authentication required/);
     });
 });
 

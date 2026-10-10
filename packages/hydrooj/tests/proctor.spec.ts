@@ -244,6 +244,30 @@ test('settings persist both switch states and numeric policies without trusting 
     await f.model.checkContestConfig(undefined, true);
 });
 
+test('problem reads require fresh GET proofs, matching version and an open contest attempt; POST proofs cannot substitute', async () => {
+    const f = fixture();
+    const { response } = await f.start();
+    const path = '/d/exam/p/J0002';
+    const payload = { tid: String(identity.tid), pid: 'J0002' };
+    const readProof = (overrides: any = {}) => proof(response.token, 'problem_view', payload, { path, method: 'GET', ...overrides });
+    const signed = readProof();
+    await f.model.authenticateAccess(identity, response.token, signed, 'problem_view', path, payload);
+    await assert.rejects(f.model.authenticateAccess(identity, response.token, signed, 'problem_view', path, payload), /already been used/);
+    await assert.rejects(f.model.authenticateAccess(identity, response.token, readProof({ method: 'POST' }), 'problem_view', path, payload));
+    await assert.rejects(f.model.authenticateAccess(identity, response.token, readProof(), 'problem_view', '/p/J0002', payload));
+    await assert.rejects(f.model.authenticateAccess(identity, response.token, readProof(), 'problem_view', path, { ...payload, pid: '1' }));
+    await assert.rejects(f.model.authenticateAccess({ ...identity, domainId: 'other' }, response.token, readProof(), 'problem_view', path, payload));
+    await assert.rejects(f.model.authenticate(identity, response.token, readProof(), 'problem_view', path, payload));
+    f.coll('proctor.config').rows[0].requiredVersion = '2.0.0';
+    await assert.rejects(f.model.authenticateAccess(identity, response.token, readProof(), 'problem_view', path, payload), /version mismatch/);
+    f.coll('proctor.config').rows[0].requiredVersion = '1.0.0';
+    f.coll('proctor.attempt').rows[0].state = 'closing';
+    await assert.rejects(f.model.authenticateAccess(identity, response.token, readProof(), 'problem_view', path, payload), /already finished/);
+    f.coll('proctor.attempt').rows[0].state = 'open';
+    f.coll('proctor.session').rows[0].expiresAt = new Date(Date.now() - 1);
+    await assert.rejects(f.model.authenticateAccess(identity, response.token, readProof(), 'problem_view', path, payload), /expired/);
+});
+
 test('contest configuration gives actionable reasons and keeps started contests and missing-key settings fail-closed', async () => {
     const f = fixture();
     const raw = { enabled: true, requiredVersion: '1.0.0', tokenTtlSeconds: 300,

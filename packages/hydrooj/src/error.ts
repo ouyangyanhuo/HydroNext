@@ -36,6 +36,8 @@ export const ContestNotAttendedError = Err('ContestNotAttendedError', ForbiddenE
 export const RequireProError = Err('RequireProError', ForbiddenError, 'RequireProError');
 export const ContestAlreadyAttendedError = Err('ContestAlreadyAttendedError', ForbiddenError, "You've already attended this contest.");
 export const ContestNotLiveError = Err('ContestNotLiveError', ForbiddenError, 'This contest is not live.');
+export const ProctorClientRequiredError = Err('ProctorClientRequiredError', ForbiddenError,
+    'Use an up-to-date proctor client to access contest problems.');
 export const ContestNotEndedError = Err('ContestNotEndedError', ForbiddenError, 'This contest is not ended.');
 export const ContestScoreboardHiddenError = Err('ContestScoreboardHiddenError', ForbiddenError, 'Contest scoreboard is not visible.');
 export const TrainingAlreadyEnrollError = Err('TrainingAlreadyEnrollError', ForbiddenError, "You've already enrolled this training.");

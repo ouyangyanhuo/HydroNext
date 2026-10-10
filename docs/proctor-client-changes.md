@@ -18,6 +18,19 @@
 
 公钥来自 OJ 同一次生成的认证与日志密钥；服务端私钥不能传入构建。公钥仍可从安装包提取。协议证明设备持有私钥并绑定请求，不能证明开源客户端二进制绝对未被修改。
 
+## 待同步：比赛题目读取认证
+
+OJ 已增加 GET 访问校验，当前客户端仍只接受 `submit`/`POST`，因此不能直接使用旧包进入开启监考的比赛题目。本次未改动客户端代码，需在客户端仓库完成以下改造后重新构建、分发并更新后台指定版本：
+
+1. `proctor-auth.js`：为 `proof` 增加明确的 method 参数，现有写操作继续固定 POST；新读取操作使用 GET，不要改变旧提交 payload。保持 ensure/握手验签、精确版本和单飞刷新。
+2. `proctor-controller.js`：增加独立的 `problem_view` 和 `contest_view` 白名单验证。验证目标同源、完整域路径、比赛、题目和 payload 字段，且日志 phase 和远端 attempt 均为 open。页面内导航时源文档可能还停留在比赛详情：需使用已认证的域/比赛与白名单目标构造目标上下文，再调用 identity 验证目标题目，不能直接依赖旧文档的题目 ID。显示 PID 与服务端已签名身份上下文保持一致；不得让 renderer 要求签任意 URL/任意 method。读取记录为 `PROBLEM_VIEW` 或 `CONTEST_VIEW`，不要记录成提交或自测。
+3. `preload.js`：沿用受限 `examAPI.proctorHeaders`，只新增上述读取动作；仍校验 sender/main frame/origin，不暴露令牌、私钥、泛用签名接口。
+4. 首次打开/刷新：可先进入 OJ 的无题目 403 页面，由身份接口和握手完成认证，再通过“验证客户端并继续”带 GET proof 重新读取。也可在 Electron 的 `onBeforeSendHeaders` 对严格白名单内的受保护 GET 注入 proof，保证原始 pathname 和每次独立 nonce。必须排除 identity/challenge/handshake、静态资源和外站，避免网络拦截递归或握手死锁。若请求已经带网页生成的 proof，应保留它，不要再次签名覆盖。
+5. 题目图片/PDF/文件附件是子资源请求，网页导航桥不能自动覆盖它们；需在主进程对上述受保护附件 GET 安全注入签名，不要把令牌放进 URL。跨域存储重定向必须删除两项监考头，只对同源 OJ 入口签名。
+6. 测试普通浏览器拒绝、错误版本、过期/撤销令牌、已结束监考、跨 UID/域/比赛/题目、POST/GET proof 混用、重放、JSON/noTemplate/PJAX、深链接刷新、浏览器返回和附件下载。普通比赛与后台管理流程不能被白名单误伤。
+
+详细 action/payload/path 规范见 [题目访问校验](./proctor-protocol.md#21-题目访问校验新增客户端需要同步适配)。
+
 ## root 调试的服务端补充
 
 新增 `POST /proctor/identity`，域内使用 `/d/<domainId>/proctor/identity`，详见协议文档。服务端对新鲜 nonce、当前 UID、系统 root 权限和比赛题目归属签名，客户端以构建认证公钥验证。

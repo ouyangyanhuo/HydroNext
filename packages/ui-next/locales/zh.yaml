@@ -1041,7 +1041,9 @@ Your Status: 你的状态
 "Session policy": "会话令牌策略"
 "Token lifetime (seconds)": "令牌有效期（秒）"
 "Upload time": "上传时间"
+"Use an up-to-date proctor client to access contest problems.": "此比赛启用了监考，请使用版本符合要求的监考客户端完成认证后查看题目。"
 "Use an up-to-date proctor client to submit.": "请使用版本符合要求的监考客户端提交。"
+"Verify client and continue": "验证客户端并继续"
 "View private keys": "查看私钥"
 "Wait for pending submissions before finishing proctoring.": "请等待在途提交完成后再结束监考。"
 

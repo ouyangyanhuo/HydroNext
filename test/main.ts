@@ -142,6 +142,16 @@ describe('App', () => {
             assert.equal(status.headers['cache-control'], 'no-store');
             assert.equal(status.body.token, undefined);
             assert.equal(status.body.privateKey, undefined);
+            for (const path of [`/d/${domainId}/p/999?tid=${tid}`, `/d/${domainId}/p/999?tid=${tid}&noTemplate=true&pjax=true`,
+                `/d/${domainId}/contest/${tid}/problems`]) {
+                // eslint-disable-next-line no-await-in-loop
+                const denied = await agent.get(path).set('Accept', 'application/json').expect(403);
+                assert.equal(denied.body.error.name, 'ProctorClientRequiredError');
+                assert.equal(denied.body.pdoc, undefined);
+                assert.equal(denied.body.pdict, undefined);
+                assert.equal(denied.headers['cache-control'], 'no-store');
+            }
+            assert.equal((await contest.getStatus(domainId, tid, 2)).startAt, undefined);
             const settings = await agent.get('/manage/proctor?pageSize=50').set('Accept', 'application/json').expect(200);
             assert.equal(settings.body.pageSize, 50);
             assert.ok(Array.isArray(settings.body.logs));

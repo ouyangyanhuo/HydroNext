@@ -3,6 +3,7 @@
 import { match } from 'path-to-regexp';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 import { endpoints, isInjected, routeMapStore } from '../globals';
+import { proctorAccessHeaders } from '../utils/proctor';
 import { useSetPageData } from './page-data';
 
 interface InternalState {
@@ -87,12 +88,19 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
             ? AbortSignal.any([controller.signal, AbortSignal.timeout(10000)])
             : controller.signal;
           const reqUrl = new URL(url, ep).href;
+          let accessHeaders: Record<string, string> = {};
+          try { accessHeaders = await proctorAccessHeaders(reqUrl); } catch {
+            // Old clients/ordinary contests may not support read proofs. Only
+            // the server can decide whether this route requires authentication.
+          }
+          if (!isCurrent()) return false;
           const res = await fetch(reqUrl, {
             signal,
             // This URL is also a document URL. Do not read or populate its HTTP
             // cache with JSON, including when restoring browser history.
             cache: 'no-store',
             headers: {
+              ...accessHeaders,
               Accept: 'application/json',
               'x-hydro-inject': [
                 'uicontext', 'usercontext', 'pagename',

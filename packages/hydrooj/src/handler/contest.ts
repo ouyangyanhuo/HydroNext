@@ -15,6 +15,7 @@ import {
     InvalidTokenError, MethodNotAllowedError, NotAssignedError, NotFoundError, PermissionError, ValidationError,
 } from '../error';
 import { ContestStatusDoc, FileInfo, ScoreboardConfig, Tdoc } from '../interface';
+import { requireProctorAccess } from '../lib/proctor-access';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as announcements from '../model/contest-announcement';
@@ -221,6 +222,7 @@ export class ContestPrintHandler extends ContestDetailBaseHandler {
     }
 
     async get() {
+        if (!this.user.own(this.tdoc) && !this.user.hasPerm(PERM.PERM_EDIT_CONTEST)) await requireProctorAccess(this, this.tdoc);
         this.response.body = { tdoc: this.tdoc };
         this.response.template = 'contest_print.html';
     }
@@ -305,6 +307,7 @@ export class ContestProblemListHandler extends ContestDetailBaseHandler {
     async get(domainId: string, tid: ObjectId) {
         if (contest.isNotStarted(this.tdoc)) throw new ContestNotLiveError(domainId, tid);
         if (!this.tsdoc?.attend && !contest.isDone(this.tdoc)) throw new ContestNotAttendedError(domainId, tid);
+        await requireProctorAccess(this, this.tdoc);
         const [pdict, udict, tcdocs] = await Promise.all([
             problem.getList(domainId, this.tdoc.pids, true, true, problem.PROJECTION_CONTEST_LIST),
             user.getList(domainId, [this.tdoc.owner, this.user._id]),
@@ -733,9 +736,10 @@ export class ContestFileDownloadHandler extends ContestDetailBaseHandler {
         if (type === 'private' && !this.user.own(this.tdoc) && !this.user.hasPerm(PERM.PERM_EDIT_CONTEST)) {
             if (!this.tsdoc?.attend) throw new ContestNotAttendedError(domainId, tid);
             if (!contest.isOngoing(this.tdoc) && !contest.isDone(this.tdoc)) throw new ContestNotLiveError(domainId, tid);
+            await requireProctorAccess(this, this.tdoc);
             if (!this.tsdoc.startAt) await contest.setStatus(domainId, tid, this.user._id, { startAt: new Date() });
         }
-        this.response.addHeader('Cache-Control', 'public');
+        this.response.addHeader('Cache-Control', type === 'private' && this.tdoc.proctorEnabled ? 'no-store' : 'public');
         const target = `contest/${domainId}/${tid}/${type}/${filename}`;
         const file = await storage.getMeta(target);
         await oplog.log(this, 'download.file.contest', {
