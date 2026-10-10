@@ -3,8 +3,8 @@ import { ObjectId } from 'mongodb';
 import { Context } from '../context';
 import { ForbiddenError, NotFoundError, ValidationError } from '../error';
 import {
-    activeUpdateAssets, buildUpdateManifest, compareUpdateVersions, defaultDraft, inspectUpdateFile, normalizeUpdateDraft,
-    UPDATE_KINDS, UpdateKind, updateUrl, updateUrlAssetId, updateVersion, verifyUpdateStream,
+    activeUpdateAssets, buildUpdateManifest, defaultDraft, inspectUpdateFile, normalizeUpdateDraft,
+    UPDATE_KINDS, UPDATE_URL_FIELDS, UpdateKind, updateUrl, updateUrlAssetId, updateVersion, verifyUpdateStream,
 } from '../lib/client-update';
 import { hashFile } from '../lib/proctor-log';
 import { PRIV } from '../model/builtin';
@@ -13,6 +13,14 @@ import * as oplog from '../model/oplog';
 import storage from '../model/storage';
 import system from '../model/system';
 import { Handler, param, requireSudo, Types } from '../service/server';
+
+function publishedOrigin(config: Awaited<ReturnType<typeof updates.getSettings>>, fallback = '') {
+    if (config.publishedOrigin) return config.publishedOrigin;
+    // Legacy manifests only had uploaded assets; do not confuse their origin with a newly edited draft.
+    const url = [config.manifest?.hotUpdate?.asarUrl, config.manifest?.config?.url,
+        config.manifest?.fullUpdate?.installerUrl, config.manifest?.fullUpdate?.portableUrl].find((value) => updateUrlAssetId(value));
+    return url ? new URL(url).origin : config.draft?.origin || fallback;
+}
 
 export class ManageClientUpdatesHandler extends Handler {
     noCheckPermView = true;
@@ -34,7 +42,7 @@ export class ManageClientUpdatesHandler extends Handler {
         const config = await updates.getSettings();
         let origin = '';
         try { origin = updateUrl(system.get('server.url') || this.context.origin, true); } catch { /* An administrator can supply the public origin. */ }
-        const draft = config.draft || { ...defaultDraft, origin };
+        const draft = { ...defaultDraft, origin, ...config.draft };
         q = q.trim().slice(0, 80);
         const search = { $regex: escapeRegExp(q), $options: 'i' };
         const filter = { _id: { $nin: (config.deletedAssets || []).map((id) => new ObjectId(id)) },
@@ -50,6 +58,7 @@ export class ManageClientUpdatesHandler extends Handler {
         this.response.template = 'manage_client_updates.html';
         this.response.body = { draft, revision: config.revision, manifest: config.manifest || null, publishedAssets: config.publishedAssets || [],
             activeAssets: activeUpdateAssets(config.manifest),
+            publishedOrigin: publishedOrigin(config, draft.origin),
             publishedAt: config.publishedAt || null, assets: publicRows, selectedAssets: selected.map(updates.publicAsset), count, page, pageCount, q };
     }
 
@@ -116,7 +125,7 @@ export class ManageClientUpdatesHandler extends Handler {
         if (!asset || current.deletedAssets?.includes(key)) throw new NotFoundError('package');
         const draft = { ...defaultDraft, ...current.draft };
         for (const kind of UPDATE_KINDS) if (draft[kind] === key) draft[kind] = '';
-        for (const field of ['asarFallbackUrl', 'configFallbackUrl'] as const) {
+        for (const field of [...Object.values(UPDATE_URL_FIELDS), 'asarFallbackUrl', 'configFallbackUrl'] as const) {
             if (updateUrlAssetId(draft[field]) === key) draft[field] = '';
         }
         // Publish and delete share the same compare-and-swap revision, including cleanup failures.
@@ -140,37 +149,47 @@ export class ManageClientUpdatesHandler extends Handler {
         }
         let draft: ReturnType<typeof normalizeUpdateDraft>;
         let manifest: Record<string, any>;
+        let publishedIds: string[] = [];
         const date = new Date();
         try {
             draft = normalizeUpdateDraft(this.args.draft);
             const ids = UPDATE_KINDS.map((kind) => draft[kind]).filter(Boolean);
-            if ([...ids, updateUrlAssetId(draft.asarFallbackUrl), updateUrlAssetId(draft.configFallbackUrl)]
+            const localReferences = [...UPDATE_KINDS.map((kind) => ({ kind, url: draft[UPDATE_URL_FIELDS[kind]] })),
+                { kind: 'asar', url: draft.asarFallbackUrl }, { kind: 'config', url: draft.configFallbackUrl }]
+                .filter(({ url }) => url && new URL(url).origin === draft.origin && updateUrlAssetId(url));
+            publishedIds = [...new Set([...ids, ...localReferences.map(({ url }) => updateUrlAssetId(url)!)])];
+            if (publishedIds
                 .some((id) => id && current.deletedAssets?.includes(id))) throw new Error('Invalid update package.');
-            const rows = ids.length ? await updates.assets.find({ _id: { $in: ids.map((id) => new ObjectId(id)) } }).toArray() : [];
+            const rows = publishedIds.length ? await updates.assets.find({ _id: { $in: publishedIds.map((id) => new ObjectId(id)) } }).toArray() : [];
             manifest = buildUpdateManifest(draft, rows.map(updates.publicAsset), date.toISOString());
+            for (const { kind, url } of localReferences) {
+                const row = rows.find((asset) => asset._id.toHexString() === updateUrlAssetId(url) && asset.kind === kind);
+                if (!row || new URL(url).pathname !== `/client-updates/packages/${row._id.toHexString()}/${encodeURIComponent(row.filename)}`
+                    || (kind !== 'config' && row.version !== draft.version)) throw new Error('Invalid update package.');
+                if (kind === 'asar' && manifest.hotUpdate
+                    && (row.size !== manifest.hotUpdate.size || row.sha256 !== manifest.hotUpdate.sha256)) {
+                    throw new Error('External ASAR URLs require a valid size (bytes) and SHA-256.');
+                }
+            }
             if (publish) {
                 await this.limitRate('client_update_publish', 60, 5);
-                if (!ids.length) throw new Error('Choose at least one update package.');
+                if (!UPDATE_KINDS.some((kind) => draft[kind] || draft[UPDATE_URL_FIELDS[kind]])) throw new Error('Choose at least one update package.');
                 if (rows.some((asset) => asset.bundleError)) throw new Error(rows.find((asset) => asset.bundleError).bundleError);
                 if ((await Promise.all(rows.map((asset) => storage.exists(asset.path)))).some((exists) => !exists)) throw new Error('Update package file is missing.');
                 await Promise.all(rows.map(async (asset) => verifyUpdateStream(await storage.get(asset.path), asset)));
-                if (current.manifest) {
-                    if (compareUpdateVersions(draft.version, current.manifest.version) < 0) throw new Error('Release version cannot go backwards.');
-                    if (draft.version === current.manifest.version && manifest.hotUpdate?.sha256
-                        && manifest.hotUpdate.sha256 !== current.manifest.hotUpdate?.sha256) throw new Error('Increment the version before replacing the ASAR package.');
-                }
             }
         } catch (error) { throw new ValidationError('draft', null, error.message); }
         const result = await updates.settings.updateOne({ _id: 'settings', revision: current.revision }, {
-            $set: { draft, ...(publish ? { manifest, publishedAt: date } : {}) }, $inc: { revision: 1 },
-            ...(publish ? { $addToSet: { publishedAssets: { $each: UPDATE_KINDS.map((kind) => draft[kind]).filter(Boolean) } } } : {}),
+            $set: { draft, ...(publish ? { manifest, publishedAt: date, publishedOrigin: draft.origin } : {}) }, $inc: { revision: 1 },
+            ...(publish ? { $addToSet: { publishedAssets: { $each: publishedIds } } } : {}),
         });
         if (!result.modifiedCount) throw new ValidationError('revision', null, 'Update settings changed. Reload before saving.');
-        await oplog.log(this, publish ? 'client-update.publish' : 'client-update.save', { version: draft.version });
+        await oplog.log(this, publish ? 'client-update.publish' : 'client-update.save', { version: draft.version, buildVersion: draft.buildVersion });
         this.response.body = { ok: true, revision: current.revision + 1, draft, preview: manifest,
             activeAssets: activeUpdateAssets(publish ? manifest : current.manifest),
             manifest: publish ? manifest : current.manifest || null, publishedAt: publish ? date : current.publishedAt || null,
-            publishedAssets: [...new Set([...(current.publishedAssets || []), ...(publish ? UPDATE_KINDS.map((kind) => draft[kind]).filter(Boolean) : [])])] };
+            publishedOrigin: publish ? draft.origin : publishedOrigin(current),
+            publishedAssets: [...new Set([...(current.publishedAssets || []), ...(publish ? publishedIds : [])])] };
     }
 }
 

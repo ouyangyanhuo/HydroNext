@@ -68,7 +68,7 @@ const Page = module.exports.default;
 const asset = { id: 'a'.repeat(24), kind: 'config', version: '1.0.0', filename: 'exam-config.json', size: 100, sha256: 'a'.repeat(64) };
 function pageData(page = 1) {
     return { page, pageCount: 2, count: 30, assets: [asset], selectedAssets: [], q: '', publishedAssets: [], revision: 0, manifest: null,
-        draft: { origin: 'https://oj.example', version: '1.0.0', minClientVersion: '1.0.0', description: '', changelog: [],
+        draft: { ...updates.defaultDraft, origin: 'https://oj.example', version: '1.0.0', minClientVersion: '1.0.0', buildVersion: '2026101001', description: '', changelog: [],
             asar: '', config: asset.id, installer: '', portable: '', asarFallbackUrl: '', configFallbackUrl: '' } };
 }
 async function mount(overrides: any = {}) {
@@ -137,6 +137,45 @@ test('publishing requires confirmation and displays localized validation failure
         assert.equal(calls[0].operation, 'publish');
         assert.equal(calls[0].revision, 0);
         assert.equal(notices[0].message, '版本不匹配');
+    } finally { await view.close(); }
+});
+
+test('URL entry and upload selection are exclusive, buildVersion stays a string, and the published URL remains on OJ', async () => {
+    const calls: any[] = [];
+    request = async (_, init) => {
+        const body = JSON.parse(init.body);
+        calls.push(body);
+        return { ok: true, json: async () => ({ ...pageData(), revision: calls.length, draft: body.draft,
+            manifest: updates.previewUpdate(body.draft, [asset], 'date'), publishedOrigin: 'https://oj.example', activeAssets: [] }) };
+    };
+    const view = await mount();
+    try {
+        await enter(view.host.querySelector('[data-field="Remote client configuration · Download URL"]')!, 'https://cdn.example/config.json');
+        assert.equal((view.host.querySelector('[data-field="Remote client configuration"]') as HTMLSelectElement).value, '');
+        await enter(view.host.querySelector('[data-field="Internal build version"]')!, '2026100901');
+        await enter(view.host.querySelector('[data-field="Release version"]')!, '0.1.0');
+        await act(async () => button(view.host, 'Publish update').click());
+        await act(async () => button(view.host, 'Confirm').click());
+        assert.equal(calls[0].draft.buildVersion, '2026100901');
+        assert.equal(calls[0].draft.version, '0.1.0');
+        assert.equal(calls[0].draft.config, '');
+        assert.equal(calls[0].draft.configUrl, 'https://cdn.example/config.json');
+        assert.equal((view.host.querySelector('[data-field="Published manifest URL"]') as HTMLInputElement).value,
+            'https://oj.example/client-updates/version.json');
+        await act(async () => {
+            const select = view.host.querySelector('[data-field="Remote client configuration"]') as HTMLSelectElement;
+            select.value = asset.id;
+            select.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+        });
+        assert.equal((view.host.querySelector('[data-field="Remote client configuration · Download URL"]') as HTMLInputElement).value, '');
+        await enter(view.host.querySelector('[data-field="Hot update ASAR · Download URL"]')!, 'https://cdn.example/app.asar');
+        assert.ok(view.host.querySelector('[data-field="ASAR size in bytes"]'));
+        assert.ok(view.host.querySelector('[data-field="ASAR SHA-256"]'));
+        await enter(view.host.querySelector('[data-field="ASAR size in bytes"]')!, '12345');
+        await enter(view.host.querySelector('[data-field="ASAR SHA-256"]')!, 'a'.repeat(64));
+        await act(async () => button(view.host, 'Save draft').click());
+        assert.equal(calls[1].draft.asarSize, 12345);
+        assert.equal(calls[1].draft.asarSha256, 'a'.repeat(64));
     } finally { await view.close(); }
 });
 

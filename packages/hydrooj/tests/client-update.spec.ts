@@ -6,13 +6,13 @@ import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import { test } from 'node:test';
 import {
-    activeUpdateAssets, buildUpdateManifest, compareUpdateVersions, defaultDraft, inspectUpdateFile, normalizeUpdateDraft,
-    updateAssetUrl, updateUrl, updateVersion, verifyUpdateStream,
+    activeUpdateAssets, buildUpdateManifest, compareUpdateBuildVersions, compareUpdateVersions, defaultDraft, inspectUpdateFile, normalizeUpdateDraft,
+    updateAssetUrl, updateBuildVersion, updateUrl, updateVersion, verifyUpdateStream,
 } from '../src/lib/client-update.ts';
 
 const id = '0123456789abcdef01234567';
 const draft = { ...defaultDraft, origin: 'https://oj.example', version: '1.2.3', minClientVersion: '1.0.0',
-    description: ' Stable ', changelog: ['Fix'], asar: id };
+    buildVersion: '2026101001', description: ' Stable ', changelog: ['Fix'], asar: id };
 const asset = { id, kind: 'asar' as const, version: '1.2.3', filename: 'app.asar', size: 25000, sha256: 'a'.repeat(64) };
 
 test('active package protection deduplicates primary and fallback references without trusting arbitrary URLs', () => {
@@ -37,6 +37,36 @@ test('version validation matches the numeric client comparison and rejects ambig
     assert.equal(compareUpdateVersions('1.0.0', '2.0.0'), -1);
     for (const value of ['v1.0.0', '1.0.0-beta', '1.0', '01.0.0', '1.0.0.0', '1.10000000.0', '', null]) {
         assert.throws(() => updateVersion(value));
+    }
+});
+
+test('buildVersion is a string with a real calendar date and independent numeric ordering', () => {
+    assert.equal(updateBuildVersion('2026101001'), '2026101001');
+    assert.equal(updateBuildVersion('2024022901'), '2024022901');
+    assert.equal(compareUpdateBuildVersions('2026101002', '2026101001'), 1);
+    assert.equal(compareUpdateBuildVersions('2026101001', '2026101001'), 0);
+    assert.equal(compareUpdateBuildVersions('2026100909', '2026101001'), -1);
+    for (const value of [2026101001, '', null, '202610101', '20261010001', '2026022901', '2026130101', '2026000101', '2026100001']) {
+        assert.throws(() => updateBuildVersion(value));
+    }
+    assert.equal(normalizeUpdateDraft({ ...draft, version: '0.1.0', minClientVersion: '2.0.0' }).version, '0.1.0');
+});
+
+test('external package URLs generate all client fields without server fetching and require ASAR integrity metadata', () => {
+    const remote = normalizeUpdateDraft({ ...draft, asar: '', asarUrl: 'https://cdn.example/app.asar',
+        installerUrl: 'https://cdn.example/setup.exe', portableUrl: 'https://cdn.example/portable.exe', configUrl: 'https://cdn.example/config.json',
+        asarSize: 123456, asarSha256: 'A'.repeat(64) });
+    const manifest = buildUpdateManifest(remote, [], 'date');
+    assert.equal(manifest.buildVersion, '2026101001');
+    assert.equal(manifest.hotUpdate.asarUrl, remote.asarUrl);
+    assert.equal(manifest.hotUpdate.size, 123456);
+    assert.equal(manifest.hotUpdate.sha256, 'a'.repeat(64));
+    assert.equal(manifest.fullUpdate.installerUrl, remote.installerUrl);
+    assert.equal(manifest.fullUpdate.portableUrl, remote.portableUrl);
+    assert.equal(manifest.config.url, remote.configUrl);
+    for (const extra of [{ asar: id }, { asarSize: '123' }, { asarSize: 0 }, { asarSize: 241 * 1024 * 1024 },
+        { asarSha256: 'bad' }, { installerUrl: 'http://remote.example/a.exe' }, { configUrl: 'file:///etc/passwd' }]) {
+        assert.throws(() => normalizeUpdateDraft({ ...remote, ...extra }));
     }
 });
 
@@ -81,7 +111,7 @@ test('installer, portable and configuration metadata can be combined without ove
 test('draft validation bounds text and selections and does not persist arbitrary submitted properties', () => {
     assert.equal('privateKey' in normalizeUpdateDraft({ ...draft, privateKey: 'secret' }), false);
     for (const extra of [{ changelog: 'text' }, { changelog: Array.from({ length: 101 }).fill('x') }, { description: 'x'.repeat(2001) },
-        { minClientVersion: '2.0.0' }, { asar: '../../file' }, { asarFallbackUrl: 'http://evil.example/app.asar' }]) {
+        { minClientVersion: 'bad' }, { asar: '../../file' }, { asarFallbackUrl: 'http://evil.example/app.asar' }]) {
         assert.throws(() => normalizeUpdateDraft({ ...draft, ...extra }));
     }
 });

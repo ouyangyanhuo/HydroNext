@@ -13,7 +13,7 @@ const id = new ObjectId('1234567890abcdef12345678');
 const asset = { _id: id, kind: 'asar', version: '1.2.3', filename: 'app.asar', size: 25000, sha256: 'a'.repeat(64), path: 'private/path', bundleError: '' };
 function fixture(options: any = {}) {
     const calls: any[] = [];
-    let config: any = { revision: 0, draft: { ...updateLib.defaultDraft, origin: 'https://oj.example', version: '1.2.3', asar: id.toHexString() },
+    let config: any = { revision: 0, draft: { ...updateLib.defaultDraft, origin: 'https://oj.example', version: '1.2.3', buildVersion: '2026101001', asar: id.toHexString() },
         ...(options.published ? { publishedAssets: [id.toHexString()], manifest: { version: '1.2.3', hotUpdate: { sha256: 'a'.repeat(64) } } } : {}),
         ...options.config };
     const rows = options.rows || [{ ...asset, ...options.asset }];
@@ -130,13 +130,74 @@ test('save is private, publish atomically enables manifest and package access, s
     await assert.rejects(fixture({ conflict: true }).admin.postPublish());
 });
 
-test('publication refuses invalid/missing packages, decreasing versions and same-version ASAR replacements', async () => {
+test('publication refuses invalid, missing or corrupted uploaded packages', async () => {
     await assert.rejects(fixture({ fileMissing: true }).admin.postPublish());
     await assert.rejects(fixture({ corruptedFile: true }).admin.postPublish());
     await assert.rejects(fixture({ asset: { bundleError: 'Invalid entry point' } }).admin.postPublish());
     await assert.rejects(fixture({ rows: [] }).admin.postPublish());
-    await assert.rejects(fixture({ config: { manifest: { version: '2.0.0' } } }).admin.postPublish());
-    await assert.rejects(fixture({ published: true, asset: { sha256: 'b'.repeat(64) } }).admin.postPublish());
+});
+
+test('all version fields can decrease and publication is not ordered by display version', async () => {
+    const f = fixture({ config: { manifest: { version: '9.0.0', minClientVersion: '8.0.0', buildVersion: '2026101101' } } });
+    await f.admin.postPublish();
+    assert.equal(f.state().manifest.version, '1.2.3');
+    assert.equal(f.state().manifest.minClientVersion, '1.0.0');
+    assert.equal(f.state().manifest.buildVersion, '2026101001');
+    await fixture({ published: true, asset: { sha256: 'b'.repeat(64) } }).admin.postPublish();
+});
+
+test('URL-only and mixed releases are publishable and manifest origin remains the OJ, not the download host', async () => {
+    const f = fixture({ rows: [] });
+    f.admin.args.draft = { ...f.admin.args.draft, asar: '', installerUrl: 'https://cdn.example/setup.exe' };
+    await f.admin.postPublish();
+    assert.equal(f.state().manifest.fullUpdate.installerUrl, 'https://cdn.example/setup.exe');
+    assert.equal(f.state().publishedOrigin, 'https://oj.example');
+    assert.equal(f.state().publishedAssets.length, 0);
+    const mixed = fixture();
+    mixed.admin.args.draft.portableUrl = 'https://cdn.example/portable.exe';
+    await mixed.admin.postPublish();
+    assert.ok(mixed.state().manifest.hotUpdate);
+    assert.ok(mixed.state().manifest.fullUpdate.portableUrl);
+    const empty = fixture();
+    empty.admin.args.draft.asar = '';
+    await assert.rejects(empty.admin.postPublish());
+});
+
+test('local package URLs verify actual assets and become public; deleted, missing and mismatched references are rejected', async () => {
+    const url = `https://oj.example/client-updates/packages/${id.toHexString()}/app.asar`;
+    const f = fixture();
+    f.admin.args.draft = { ...f.admin.args.draft, asar: '', asarUrl: url, asarSize: asset.size, asarSha256: asset.sha256 };
+    await f.admin.postPublish();
+    assert.ok(f.state().publishedAssets.includes(id.toHexString()));
+    await new f.exports.ClientUpdatePackageHandler().get(null, id, 'app.asar');
+    await assert.rejects(f.admin.postDelete(null, id));
+    for (const options of [{ rows: [] }, { fileMissing: true }, { corruptedFile: true }, { config: { deletedAssets: [id.toHexString()] } },
+        { asset: { filename: 'different.asar' } }, { asset: { kind: 'installer' } }, { asset: { sha256: 'b'.repeat(64) } }]) {
+        const bad = fixture(options);
+        bad.admin.args.draft = { ...f.admin.args.draft };
+        // eslint-disable-next-line no-await-in-loop
+        await assert.rejects(bad.admin.postPublish());
+    }
+});
+
+test('legacy drafts receive new defaults without rewriting the published manifest', async () => {
+    const f = fixture();
+    delete f.state().draft.buildVersion;
+    delete f.state().draft.installerUrl;
+    await f.admin.get(null);
+    assert.equal(f.admin.response.body.draft.buildVersion, '');
+    assert.equal(f.admin.response.body.draft.installerUrl, '');
+});
+
+test('editing legacy draft origins never changes the displayed published manifest origin', async () => {
+    const f = fixture({ config: { manifest: { version: '1.2.3', hotUpdate: {
+        asarUrl: `https://original.example/client-updates/packages/${id.toHexString()}/app.asar`,
+    } } } });
+    f.admin.args.draft.origin = 'https://new.example';
+    await f.admin.postSave();
+    assert.equal(f.admin.response.body.publishedOrigin, 'https://original.example');
+    await f.admin.get(null);
+    assert.equal(f.admin.response.body.publishedOrigin, 'https://original.example');
 });
 
 test('public manifest is an exact raw JSON response without UI injection and never cached', async () => {

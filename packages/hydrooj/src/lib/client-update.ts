@@ -3,17 +3,37 @@ import { open, readFile } from 'fs/promises';
 
 export const UPDATE_KINDS = ['asar', 'installer', 'portable', 'config'] as const;
 export type UpdateKind = typeof UPDATE_KINDS[number];
+export const UPDATE_URL_FIELDS = { asar: 'asarUrl', installer: 'installerUrl', portable: 'portableUrl', config: 'configUrl' } as const;
 export interface UpdateAsset {
     id: string; kind: UpdateKind; version: string; filename: string; size: number; sha256: string;
     bundleVersion?: string; bundleError?: string;
 }
 export interface UpdateDraft {
-    origin: string; version: string; minClientVersion: string; description: string; changelog: string[];
+    origin: string; version: string; minClientVersion: string; buildVersion: string; description: string; changelog: string[];
     asar: string; installer: string; portable: string; config: string;
+    asarUrl: string; installerUrl: string; portableUrl: string; configUrl: string; asarSize: number; asarSha256: string;
     asarFallbackUrl: string; configFallbackUrl: string;
 }
-export const defaultDraft: UpdateDraft = { origin: '', version: '1.0.0', minClientVersion: '1.0.0', description: '', changelog: [],
-    asar: '', installer: '', portable: '', config: '', asarFallbackUrl: '', configFallbackUrl: '' };
+export const defaultDraft: UpdateDraft = { origin: '', version: '1.0.0', minClientVersion: '1.0.0', buildVersion: '', description: '', changelog: [],
+    asar: '', installer: '', portable: '', config: '', asarUrl: '', installerUrl: '', portableUrl: '', configUrl: '',
+    asarSize: 0, asarSha256: '', asarFallbackUrl: '', configFallbackUrl: '' };
+
+export function updateBuildVersion(value: unknown): string {
+    const message = 'Use a 10-digit buildVersion in YYYYMMDDNN format, for example 2026101001.';
+    if (typeof value !== 'string' || !/^[1-9]\d{9}$/.test(value)) throw new Error(message);
+    const year = +value.slice(0, 4);
+    const month = +value.slice(4, 6);
+    const day = +value.slice(6, 8);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) throw new Error(message);
+    return value;
+}
+
+export function compareUpdateBuildVersions(a: string, b: string) {
+    const left = updateBuildVersion(a);
+    const right = updateBuildVersion(b);
+    return left === right ? 0 : left > right ? 1 : -1;
+}
 
 export function updateVersion(value: unknown): string {
     if (typeof value !== 'string' || !/^(?:0|[1-9]\d{0,6})\.(?:0|[1-9]\d{0,6})\.(?:0|[1-9]\d{0,6})$/.test(value)) {
@@ -45,8 +65,7 @@ export function updateUrl(value: unknown, originOnly = false): string {
 export function normalizeUpdateDraft(raw: any): UpdateDraft {
     if (!raw || typeof raw !== 'object') throw new Error('Invalid update configuration.');
     const result: UpdateDraft = { ...defaultDraft, origin: updateUrl(raw.origin, true),
-        version: updateVersion(raw.version), minClientVersion: updateVersion(raw.minClientVersion) };
-    if (compareUpdateVersions(result.minClientVersion, result.version) > 0) throw new Error('Minimum version cannot exceed the release version.');
+        version: updateVersion(raw.version), minClientVersion: updateVersion(raw.minClientVersion), buildVersion: updateBuildVersion(raw.buildVersion) };
     if (typeof raw.description !== 'string' || raw.description.length > 2000) throw new Error('Invalid update description.');
     if (!Array.isArray(raw.changelog) || raw.changelog.length > 100
         || raw.changelog.some((line: unknown) => typeof line !== 'string' || line.length > 1000)) throw new Error('Invalid changelog.');
@@ -56,6 +75,17 @@ export function normalizeUpdateDraft(raw: any): UpdateDraft {
         const id = raw[key] || '';
         if (typeof id !== 'string' || (id && !/^[a-f0-9]{24}$/.test(id))) throw new Error('Invalid update package.');
         result[key] = id;
+        const field = UPDATE_URL_FIELDS[key];
+        result[field] = raw[field] ? updateUrl(raw[field]) : '';
+        if (id && result[field]) throw new Error('Choose either an uploaded package or a download URL for each package type.');
+    }
+    if (result.asarUrl) {
+        if (!Number.isSafeInteger(raw.asarSize) || raw.asarSize < 1 || raw.asarSize > 240 * 1024 * 1024
+            || typeof raw.asarSha256 !== 'string' || !/^[a-fA-F0-9]{64}$/.test(raw.asarSha256)) {
+            throw new Error('External ASAR URLs require a valid size (bytes) and SHA-256.');
+        }
+        result.asarSize = raw.asarSize;
+        result.asarSha256 = raw.asarSha256.toLowerCase();
     }
     for (const key of ['asarFallbackUrl', 'configFallbackUrl'] as const) result[key] = raw[key] ? updateUrl(raw[key]) : '';
     return result;
@@ -80,18 +110,21 @@ export function activeUpdateAssets(manifest: Record<string, any> | undefined): s
 }
 
 export function buildUpdateManifest(draft: UpdateDraft, assets: UpdateAsset[], releaseDate: string) {
-    const manifest: Record<string, any> = { version: draft.version, minClientVersion: draft.minClientVersion,
+    const manifest: Record<string, any> = { version: draft.version, minClientVersion: draft.minClientVersion, buildVersion: draft.buildVersion,
         releaseDate, description: draft.description, changelog: draft.changelog };
     for (const kind of UPDATE_KINDS) {
-        if (!draft[kind]) continue;
+        const externalUrl = draft[UPDATE_URL_FIELDS[kind]];
+        if (!draft[kind] && !externalUrl) continue;
         const asset = assets.find((row) => row.id === draft[kind] && row.kind === kind);
-        if (!asset || (kind !== 'config' && asset.version !== draft.version)) throw new Error('Package version must match the release version.');
-        const url = updateAssetUrl(draft.origin, asset);
+        if (!externalUrl && (!asset || (kind !== 'config' && asset.version !== draft.version))) throw new Error('Package version must match the release version.');
+        const url = externalUrl || updateAssetUrl(draft.origin, asset);
+        const version = externalUrl ? draft.version : asset.version;
         if (kind === 'asar') {
-            manifest.hotUpdate = { version: asset.version, asarUrl: url,
-                fallbackUrl: draft.asarFallbackUrl, size: asset.size, sha256: asset.sha256 };
-        } else if (kind === 'config') manifest.config = { version: asset.version, url, fallbackUrl: draft.configFallbackUrl };
-        else manifest.fullUpdate = { ...manifest.fullUpdate, version: asset.version, [`${kind}Url`]: url };
+            manifest.hotUpdate = { version, asarUrl: url,
+                fallbackUrl: draft.asarFallbackUrl, size: externalUrl ? draft.asarSize : asset.size,
+                sha256: externalUrl ? draft.asarSha256 : asset.sha256 };
+        } else if (kind === 'config') manifest.config = { version, url, fallbackUrl: draft.configFallbackUrl };
+        else manifest.fullUpdate = { ...manifest.fullUpdate, version, [`${kind}Url`]: url };
     }
     return manifest;
 }

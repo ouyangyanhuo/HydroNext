@@ -14,6 +14,7 @@ interface Settings {
     manifest?: Record<string, any>;
     publishedAssets?: string[];
     publishedAt?: Date;
+    publishedOrigin?: string;
     deletedAssets?: string[];
     cleanupAssets?: string[];
 }

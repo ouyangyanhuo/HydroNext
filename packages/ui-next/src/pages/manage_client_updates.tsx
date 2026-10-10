@@ -10,7 +10,10 @@ import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
-import { downloadUpdateJson, packageUrl, previewUpdate, UPDATE_KINDS, type UpdateAsset, type UpdateDraft, type UpdateKind } from '@/utils/client-update';
+import {
+  defaultDraft, downloadUpdateJson, packageUrl, previewUpdate, UPDATE_KINDS, UPDATE_URL_FIELDS,
+  type UpdateAsset, type UpdateDraft, type UpdateKind,
+} from '@/utils/client-update';
 import { proctorError, proctorRequest } from '@/utils/proctor';
 
 const labels: Record<UpdateKind, string> = { asar: 'Hot update ASAR', installer: 'Windows installer', portable: 'Windows portable package', config: 'Remote client configuration' };
@@ -21,10 +24,11 @@ export default function ManageClientUpdatesPage() {
   const buildUrl = useBuildUrl();
   const allowed = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
   const endpoint = buildUrl('manage_client_updates');
-  const [draft, setDraft] = useState<UpdateDraft>(args.draft);
+  const [draft, setDraft] = useState<UpdateDraft>(() => ({ ...defaultDraft, ...args.draft }));
   const [revision, setRevision] = useState<number>(args.revision);
   const [manifest, setManifest] = useState<Record<string, any> | null>(args.manifest);
   const [publishedAt, setPublishedAt] = useState(args.publishedAt);
+  const [publishedOrigin, setPublishedOrigin] = useState(args.publishedOrigin || args.draft.origin);
   const [publishedAssets, setPublishedAssets] = useState<string[]>(args.publishedAssets || []);
   const [activeAssets, setActiveAssets] = useState<string[]>(args.activeAssets || []);
   const [deleting, setDeleting] = useState<UpdateAsset | null>(null);
@@ -77,12 +81,21 @@ export default function ManageClientUpdatesPage() {
     setDraft((current) => ({ ...current, [key]: value }));
     setShowPublished(false);
   };
+  const selectPackage = (key: UpdateKind, id: string) => {
+    setDraft((current) => ({ ...current, [key]: id, ...(id ? { [UPDATE_URL_FIELDS[key]]: '' } : {}) }));
+    setShowPublished(false);
+  };
+  const enterPackageUrl = (key: UpdateKind, url: string) => {
+    setDraft((current) => ({ ...current, [UPDATE_URL_FIELDS[key]]: url, ...(url ? { [key]: '' } : {}) }));
+    setShowPublished(false);
+  };
   const save = (publish: boolean) => run(async () => {
     const result = await proctorRequest(endpoint, { operation: publish ? 'publish' : 'save', draft, revision }, formatError);
     setDraft(result.draft);
     setRevision(result.revision);
     setManifest(result.manifest);
     setPublishedAt(result.publishedAt);
+    setPublishedOrigin(result.publishedOrigin || '');
     setPublishedAssets(result.publishedAssets);
     setActiveAssets(result.activeAssets || []);
     setShowPublished(publish);
@@ -106,7 +119,7 @@ export default function ManageClientUpdatesPage() {
     setDraft((current) => {
       const next = { ...current };
       for (const key of UPDATE_KINDS) if (next[key] === result.deletedId) next[key] = '';
-      for (const key of ['asarFallbackUrl', 'configFallbackUrl'] as const) {
+      for (const key of [...Object.values(UPDATE_URL_FIELDS), 'asarFallbackUrl', 'configFallbackUrl'] as const) {
         try {
           if (new URL(next[key]).pathname.includes(`/client-updates/packages/${result.deletedId}/`)) next[key] = '';
         } catch { /* Empty or in-progress URL input must not erase other unsaved settings. */ }
@@ -138,7 +151,7 @@ export default function ManageClientUpdatesPage() {
     const result = await response.json();
     if (!response.ok || result.error) throw new Error(formatError(result.error));
     setKnownAssets((current) => [result.asset, ...current]);
-    update(kind, result.asset.id);
+    selectPackage(kind, result.asset.id);
     setFile(null);
     notifications.show({ title: t('Upload completed'), message: result.asset.bundleError ? t(result.asset.bundleError) : t('Upload is a draft. Publish to make it available to clients.'),
       color: result.asset.bundleError ? 'orange' : 'green' });
@@ -153,9 +166,9 @@ export default function ManageClientUpdatesPage() {
   if (!allowed) return <Text>{t('Access Denied')}</Text>;
   return <Stack gap="lg">
     <PageHeader title={t('Update settings')}>
-      <Badge color={manifest ? 'green' : 'gray'} variant="light">{manifest ? `${t('Published')} ${manifest.version}` : t('Not published')}</Badge>
+      <Badge color={manifest ? 'green' : 'gray'} variant="light">{manifest ? `${t('Published')} ${manifest.version} · ${manifest.buildVersion || '—'}` : t('Not published')}</Badge>
     </PageHeader>
-    <Alert color="orange">{t('The current client does not enforce minimum versions or verify SHA-256. Installer links are for manual downloads; fallback and signature support require client changes.')}</Alert>
+    <Alert color="orange">{t('The client must support buildVersion comparison before using this manifest for update ordering. Publishing lower values is allowed; clients do not automatically downgrade.')}</Alert>
     <Grid><Grid.Col span={{ base: 12, lg: 8 }}><Card withBorder className="hydro-content-card" p="lg">
       <Stack gap="md">
         <Title order={3}>{t('Release configuration')}</Title>
@@ -171,12 +184,21 @@ export default function ManageClientUpdatesPage() {
           <TextInput label={t('Release version')} description="1.2.3" value={draft.version} disabled={busy} maxLength={23} onChange={(event) => update('version', event.currentTarget.value)} />
           <TextInput
             label={t('Minimum client version')}
-            description={t('Informational in the current client.')}
+            description={t('Minimum client compatibility version; independent of update ordering.')}
             value={draft.minClientVersion}
             disabled={busy}
             maxLength={23}
             onChange={(event) => update('minClientVersion', event.currentTarget.value)} />
         </Group>
+        <TextInput
+          label={t('Internal build version')}
+          description={t('buildVersion: YYYYMMDDNN, for example 2026101001. Used for update ordering, not the display version.')}
+          placeholder="2026101001"
+          value={draft.buildVersion}
+          disabled={busy}
+          maxLength={10}
+          inputMode="numeric"
+          onChange={(event) => update('buildVersion', event.currentTarget.value)} />
         <TextInput label={t('Release description')} value={draft.description} disabled={busy} maxLength={2000} onChange={(event) => update('description', event.currentTarget.value)} />
         <Textarea
           label={t('Changelog')}
@@ -186,20 +208,43 @@ export default function ManageClientUpdatesPage() {
           disabled={busy}
           onChange={(event) => update('changelog', event.currentTarget.value.split('\n'))} />
         <Grid>{UPDATE_KINDS.map((key) => <Grid.Col key={key} span={{ base: 12, sm: 6 }}>
-          <LongSelect
+          <Stack gap="xs"><LongSelect
             label={t(labels[key])}
             clearable
             disabled={busy}
             value={draft[key] || null}
             placeholder={t('Choose an uploaded package')}
             data={assets.filter((asset) => asset.kind === key).map((asset) => ({ value: asset.id, label: `${asset.version} · ${asset.filename} · ${asset.sha256.slice(0, 8)}` }))}
-            onChange={(value) => update(key, value || '')}
+            onChange={(value) => selectPackage(key, value || '')}
             nothingFoundMessage={t('Use the package library below to find older packages.')} />
+          <TextInput
+            label={`${t(labels[key])} · ${t('Download URL')}`}
+            description={t('Enter a URL or choose an uploaded package; only one source is used.')}
+            placeholder="https://cdn.example.com/package"
+            value={draft[UPDATE_URL_FIELDS[key]]}
+            disabled={busy}
+            maxLength={2048}
+            onChange={(event) => enterPackageUrl(key, event.currentTarget.value)} /></Stack>
         </Grid.Col>)}</Grid>
+        {!!draft.asarUrl && <Group grow align="flex-start">
+          <TextInput
+            label={t('ASAR size in bytes')}
+            value={draft.asarSize || ''}
+            inputMode="numeric"
+            disabled={busy}
+            maxLength={9}
+            onChange={(event) => update('asarSize', Number(event.currentTarget.value))} />
+          <TextInput
+            label="ASAR SHA-256"
+            value={draft.asarSha256}
+            disabled={busy}
+            maxLength={64}
+            onChange={(event) => update('asarSha256', event.currentTarget.value)} />
+        </Group>}
         <TextInput label={t('ASAR fallback URL')} value={draft.asarFallbackUrl} disabled={busy} onChange={(event) => update('asarFallbackUrl', event.currentTarget.value)} maxLength={2048} />
         <TextInput label={t('Configuration fallback URL')} value={draft.configFallbackUrl} disabled={busy} onChange={(event) => update('configFallbackUrl', event.currentTarget.value)} maxLength={2048} />
         {assets.filter((asset) => asset.bundleError && draft[asset.kind] === asset.id).map((asset) => <Alert color="red" key={asset.id}>{t(asset.bundleError!)}</Alert>)}
-        <Text size="sm" c="dimmed">{t('Publishing does not change the required version in proctor settings. ASAR replacements require a higher version.')}</Text>
+        <Text size="sm" c="dimmed">{t('All version values may be lowered when publishing. Use a new, higher buildVersion to distribute rollback code to newer clients. Proctor version requirements are unchanged.')}</Text>
         <Group justify="flex-end"><Button variant="default" loading={busy} onClick={() => void save(false)}>{t('Save draft')}</Button>
           <Button disabled={busy} onClick={() => setConfirm(true)}>{t('Publish update')}</Button></Group>
       </Stack>
@@ -244,7 +289,9 @@ export default function ManageClientUpdatesPage() {
         <TextInput label={t('Manifest URL')} description="updater.versionUrl / updater.fallbackVersionUrl" value={manifestUrl} readOnly />
         {publishedAt && <Text size="sm" c="dimmed">{t('Last published')}: {new Date(publishedAt).toLocaleString()}</Text>}
         <Text size="sm" c="dimmed">{t('The manifest returns 404 until the first publication. Put this URL in the client build configuration.')}</Text>
-        {manifest && <TextInput label={t('Published manifest URL')} value={`${new URL(manifest.hotUpdate?.asarUrl || manifest.config?.url || manifest.fullUpdate?.installerUrl || manifest.fullUpdate?.portableUrl).origin}/client-updates/version.json`} readOnly />}
+        {manifest && <TextInput label={t('Published manifest URL')} value={publishedOrigin ? `${publishedOrigin}/client-updates/version.json` : ''} readOnly />}
+        {manifest && [manifest.hotUpdate?.asarUrl, manifest.fullUpdate?.installerUrl, manifest.fullUpdate?.portableUrl, manifest.config?.url]
+          .filter(Boolean).map((url: string, index: number) => <TextInput key={`${index}:${url}`} label={`${t('Published package URL')} ${index + 1}`} value={url} readOnly />)}
       </Stack></Card>
     </Stack></Grid.Col></Grid>
     <Card withBorder className="hydro-content-card" p="lg"><Stack gap="md">
@@ -261,7 +308,7 @@ export default function ManageClientUpdatesPage() {
         <Table.Td><TextInput size="xs" readOnly value={packageUrl(draft.origin, asset)} aria-label={t('Package URL')} w={350} />
           <Text size="xs" c="dimmed" style={{ overflowWrap: 'anywhere', maxWidth: 350 }}>SHA-256: {asset.sha256}</Text></Table.Td>
         <Table.Td><Group gap="xs" wrap="nowrap">
-          <Button size="xs" variant="light" disabled={busy} onClick={() => { setKnownAssets((current) => [...current, asset]); update(asset.kind, asset.id); }}>{t('Use this package')}</Button>
+          <Button size="xs" variant="light" disabled={busy} onClick={() => { setKnownAssets((current) => [...current, asset]); selectPackage(asset.kind, asset.id); }}>{t('Use this package')}</Button>
           <Button
             size="xs"
             variant="light"
