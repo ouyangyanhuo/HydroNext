@@ -1,4 +1,4 @@
-import { formatErrorMessage } from './error';
+import { proctorError } from './proctor';
 
 function sudoTarget(value: unknown, currentUrl: string): string {
   if (typeof value !== 'string' || !value || value.includes('\\')) throw new Error('Invalid authorization destination.');
@@ -23,6 +23,6 @@ export async function completeSudoVerification(data: any, fallback: unknown, cur
   });
   if (response.redirected && response.ok) return sudoTarget(response.url, currentUrl);
   const json = (response.headers.get('content-type') || '').includes('json') ? await response.json() : {};
-  if (!response.ok || json.error) throw new Error(formatErrorMessage(json.error, 'Operation failed'));
+  if (!response.ok || json.error) throw new Error(proctorError(json.error, 'Operation failed'));
   return sudoTarget(json.url || json.redirect || data.referer || target, currentUrl);
 }

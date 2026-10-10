@@ -29,6 +29,10 @@ export default function ManageProctorPage() {
     setBusy(true);
     try {
       const result = await proctorRequest(buildUrl('manage_proctor'), body);
+      if (body.operation === 'save') {
+        if (result.ok !== true || typeof result.config?.enabled !== 'boolean') throw new Error('Operation failed');
+        setConfig(result.config);
+      }
       if (result.keys) {
         setPrivateKeys(null);
         setKeys(result.keys);
@@ -52,14 +56,48 @@ export default function ManageProctorPage() {
     <Card withBorder className="hydro-content-card" p="lg">
       <Stack gap="md">
         <Title order={3}>{t('Session policy')}</Title>
-        <Switch label={t('Enable proctor service')} checked={config.enabled} onChange={(event) => setConfig({ ...config, enabled: event.currentTarget.checked })} />
-        <TextInput label={t('Required client version')} value={config.requiredVersion} onChange={(event) => setConfig({ ...config, requiredVersion: event.currentTarget.value })} maxLength={64} />
+        <Switch
+          label={t('Enable proctor service')}
+          disabled={busy}
+          checked={config.enabled}
+          onChange={(event) => setConfig({ ...config, enabled: event.currentTarget.checked })} />
+        <TextInput
+          label={t('Required client version')}
+          disabled={busy}
+          value={config.requiredVersion}
+          onChange={(event) => setConfig({ ...config, requiredVersion: event.currentTarget.value })}
+          maxLength={64} />
         <Group align="flex-start" grow>
-          <NumberInput label={t('Token lifetime (seconds)')} min={60} max={1800} allowDecimal={false} value={config.tokenTtlSeconds} onChange={(value) => setConfig({ ...config, tokenTtlSeconds: value })} />
-          <NumberInput label={t('Late upload window (days)')} min={1} max={365} allowDecimal={false} value={config.uploadGraceDays} onChange={(value) => setConfig({ ...config, uploadGraceDays: value })} />
-          <NumberInput label={t('Maximum log size (MiB)')} min={1} max={256} allowDecimal={false} value={config.maxLogMiB} onChange={(value) => setConfig({ ...config, maxLogMiB: value })} />
+          <NumberInput
+            label={t('Token lifetime (seconds)')}
+            disabled={busy}
+            min={60}
+            max={1800}
+            allowDecimal={false}
+            value={config.tokenTtlSeconds}
+            onChange={(value) => setConfig({ ...config, tokenTtlSeconds: value })} />
+          <NumberInput
+            label={t('Late upload window (days)')}
+            disabled={busy}
+            min={1}
+            max={365}
+            allowDecimal={false}
+            value={config.uploadGraceDays}
+            onChange={(value) => setConfig({ ...config, uploadGraceDays: value })} />
+          <NumberInput
+            label={t('Maximum log size (MiB)')}
+            disabled={busy}
+            min={1}
+            max={256}
+            allowDecimal={false}
+            value={config.maxLogMiB}
+            onChange={(value) => setConfig({ ...config, maxLogMiB: value })} />
         </Group>
-        <Switch label={t('Allow token refresh')} checked={config.refreshEnabled} onChange={(event) => setConfig({ ...config, refreshEnabled: event.currentTarget.checked })} />
+        <Switch
+          label={t('Allow token refresh')}
+          disabled={busy}
+          checked={config.refreshEnabled}
+          onChange={(event) => setConfig({ ...config, refreshEnabled: event.currentTarget.checked })} />
         <Text size="sm" c="dimmed">{t('Changing the required version or rotating keys invalidates current session tokens.')}</Text>
         <Group justify="flex-end"><Button loading={busy} onClick={() => void run({ operation: 'save', ...config })}>{t('Save')}</Button></Group>
       </Stack>

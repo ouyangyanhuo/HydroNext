@@ -9,7 +9,7 @@ import { hashFile, validateEncryptedLog } from '../lib/proctor-log';
 import { PERM, PRIV } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as oplog from '../model/oplog';
-import * as problem from '../model/problem';
+import problem from '../model/problem';
 import * as proctor from '../model/proctor';
 import storage from '../model/storage';
 import system from '../model/system';
@@ -62,7 +62,7 @@ export class ManageProctorHandler extends Handler {
     async postSave() {
         await proctor.saveConfig(this.args);
         await oplog.log(this, 'proctor.settings', {});
-        this.response.body = { ok: true };
+        this.response.body = { ok: true, config: await proctor.getConfig() };
     }
 
     @requireSudo

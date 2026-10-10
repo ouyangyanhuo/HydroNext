@@ -16,6 +16,7 @@ const attemptId = new ObjectId();
 function fixture(options: any = {}) {
     const calls: any[] = [];
     const rows: any[] = options.rows || [];
+    let config = { maxLogMiB: 64, uploadGraceDays: 30, keyId: 'a'.repeat(32), enabled: false };
     class Handler {
         args: any = {}; response: any = { headers: {}, addHeader(name: string, value: string) { this.headers[name] = value; } };
         request: any = { headers: {}, path: '/d/exam/contest/x/proctor', ip: '203.0.113.7', host: 'oj.example' };
@@ -32,7 +33,12 @@ function fixture(options: any = {}) {
         binary(body: any, filename: string) { this.response.body = body; this.response.filename = filename; }
     }
     const model = {
-        getConfig: async () => ({ maxLogMiB: 64, uploadGraceDays: 30, keyId: 'a'.repeat(32) }),
+        getConfig: async () => ({ ...config }),
+        saveConfig: async (raw: any) => {
+            if (options.saveFailure) throw new Error('save failed');
+            config = { ...config, ...raw };
+            calls.push(['save', { ...raw }]);
+        },
         getKeys: async () => ({ keyId: 'a'.repeat(32),
             signingPrivateKey: options.signingPrivateKey || 'auth-private', encryptionPrivateKey: 'log-private',
             signingPublicKey: 'auth-public', encryptionPublicKey: 'log-public' }),
@@ -76,7 +82,7 @@ function fixture(options: any = {}) {
         '../model/proctor': model,
         '../lib/proctor': { PROCTOR_PROTOCOL, proctorOrigin, signedPayload },
         '../model/system': { __esModule: true, default: { get: () => '' } },
-        '../model/problem': { get: async () => ({ docId: options.problemId || 100 }) },
+        '../model/problem': { __esModule: true, default: { get: async () => ({ docId: options.problemId || 100 }) } },
         '../model/contest': { get: async () => ({ pids: [100], proctorEnabled: true }),
             getStatus: async () => ({ attend: !options.notEnrolled }),
             setStatus: async (domainId: string, contestId: ObjectId, uid: number, status: any) => calls.push(['status', status]) },
@@ -241,6 +247,27 @@ test('management APIs reject cross-site and malformed origins', async () => {
     await assert.rejects(h.prepare(), /origin/);
     h.request.headers.origin = 'https://oj.example';
     await h.prepare();
+});
+
+test('settings save requires sudo, acknowledges persisted configuration and never acknowledges failed writes', async () => {
+    const denied = fixture({ noSudo: true });
+    assert.throws(() => new denied.exports.ManageProctorHandler().postSave(), /sudo required/);
+    assert.ok(!denied.calls.some((call) => call[0] === 'save'));
+    const f = fixture();
+    const h = new f.exports.ManageProctorHandler();
+    h.args = { enabled: true, refreshEnabled: false };
+    await h.postSave();
+    assert.equal(h.response.body.ok, true);
+    assert.equal(h.response.body.config.enabled, true);
+    assert.equal(h.response.body.config.refreshEnabled, false);
+    assert.equal(h.response.body.config.keyId, 'a'.repeat(32));
+    await h.get('', 1, '', 25);
+    assert.equal(h.response.body.config.enabled, true);
+    const failed = fixture({ saveFailure: true });
+    const handler = new failed.exports.ManageProctorHandler();
+    await assert.rejects(handler.postSave(), /save failed/);
+    assert.equal(handler.response.body, undefined);
+    assert.ok(!failed.calls.some((call) => call[0] === 'audit'));
 });
 
 test('handshake and refresh record the server-observed IP, not a client-supplied IP', async () => {

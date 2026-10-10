@@ -83,7 +83,7 @@ class Collection {
     async countDocuments(query: any) { return this.rows.filter((row) => matches(row, query)).length; }
 }
 
-function fixture() {
+function fixture(options: { missingKeys?: boolean } = {}) {
     const collections = new Map<string, Collection>();
     const coll = (name: string) => {
         if (!collections.has(name)) collections.set(name, new Collection(name));
@@ -99,9 +99,12 @@ function fixture() {
         '../service/db': { __esModule: true, default: { collection: coll } },
         './contest': { setStatus: async (...args: any[]) => statuses.push(args) },
         'fs/promises': {
-            readFile: async (path: string) => files.get(path) || JSON.stringify(serverKeys),
+            readFile: async (path: string) => {
+                if (options.missingKeys) throw Object.assign(new Error('missing key file'), { code: 'ENOENT' });
+                return files.get(path) || JSON.stringify(serverKeys);
+            },
             mkdir: async (...args: any[]) => fileOps.push(['mkdir', ...args]),
-            writeFile: async (path: string, data: string, options: any) => { files.set(path, data); fileOps.push(['write', options]); },
+            writeFile: async (path: string, data: string, writeOptions: any) => { files.set(path, data); fileOps.push(['write', writeOptions]); },
         },
     };
     const module = { exports: {} as any };
@@ -219,6 +222,49 @@ test('one generation creates independent Ed25519 and RSA-3072 pairs, stores priv
     assert.equal(f.fileOps.find((op) => op[0] === 'mkdir')[2].mode, 0o700);
     assert.equal(f.fileOps.find((op) => op[0] === 'write')[1].mode, 0o600);
     assert.equal(f.fileOps.find((op) => op[0] === 'write')[1].flag, 'wx');
+});
+
+test('settings persist both switch states and numeric policies without trusting a client-supplied key ID', async () => {
+    const f = fixture();
+    const raw = { enabled: false, requiredVersion: ' 2.0.0 ', tokenTtlSeconds: 120,
+        refreshEnabled: false, uploadGraceDays: 7, maxLogMiB: 32, keyId: 'c'.repeat(32) };
+    await f.model.saveConfig(raw);
+    const saved = await f.model.getConfig();
+    assert.equal(saved.enabled, false);
+    assert.equal(saved.refreshEnabled, false);
+    assert.equal(saved.requiredVersion, '2.0.0');
+    assert.equal(saved.tokenTtlSeconds, 120);
+    assert.equal(saved.uploadGraceDays, 7);
+    assert.equal(saved.maxLogMiB, 32);
+    assert.equal(saved.keyId, serverKeys.keyId);
+    await f.model.saveConfig({ ...raw, enabled: true, refreshEnabled: true });
+    assert.equal((await f.model.getConfig()).enabled, true);
+    assert.equal((await f.model.getConfig()).refreshEnabled, true);
+    await f.model.checkContestConfig({ proctorEnabled: false, beginAt: new Date(Date.now() + 60000) }, true);
+    await f.model.checkContestConfig(undefined, true);
+});
+
+test('contest configuration gives actionable reasons and keeps started contests and missing-key settings fail-closed', async () => {
+    const f = fixture();
+    const raw = { enabled: true, requiredVersion: '1.0.0', tokenTtlSeconds: 300,
+        refreshEnabled: true, uploadGraceDays: 30, maxLogMiB: 64 };
+    const config = f.coll('proctor.config').rows[0];
+    config.enabled = false;
+    await assert.rejects(f.model.checkContestConfig(undefined, true),
+        /Enable the proctor service in system settings first/);
+    config.keyId = '';
+    await assert.rejects(f.model.saveConfig(raw), /Generate authentication keys first/);
+    assert.equal(config.enabled, false);
+    await assert.rejects(f.model.saveConfig({ ...raw, enabled: 'true' }), /enabled/);
+    await assert.rejects(f.model.saveConfig({ ...raw, tokenTtlSeconds: '300' }), /tokenTtlSeconds/);
+    const unavailable = fixture({ missingKeys: true });
+    unavailable.coll('proctor.config').rows[0].enabled = false;
+    await assert.rejects(unavailable.model.saveConfig(raw), /Check the server key storage/);
+    assert.equal((await unavailable.model.getConfig()).enabled, false);
+    const started = { proctorEnabled: false, beginAt: new Date(Date.now() - 1000) };
+    await assert.rejects(unavailable.model.checkContestConfig(started, true),
+        /Proctor policy cannot change after the contest starts/);
+    await assert.rejects(f.model.checkContestConfig(f.tdoc, false), /Proctor policy cannot change after the contest starts/);
 });
 
 test('automatic re-handshake preserves the original key and fingerprint binding and limits collected device data', async () => {

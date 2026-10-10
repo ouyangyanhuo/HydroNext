@@ -72,10 +72,14 @@ export async function getConfig(): Promise<Config> {
 }
 
 export async function getKeys(keyId: string) {
-    if (!/^[a-f0-9]{32}$/.test(keyId)) throw new ForbiddenError('Proctor is not configured.');
-    return JSON.parse(await readFile(join(keyDir(), `${keyId}.json`), 'utf8')) as {
-        keyId: string; signingPrivateKey: string; signingPublicKey: string; encryptionPrivateKey: string; encryptionPublicKey: string;
-    };
+    if (!/^[a-f0-9]{32}$/.test(keyId)) throw new ForbiddenError('Generate authentication keys first.');
+    try {
+        return JSON.parse(await readFile(join(keyDir(), `${keyId}.json`), 'utf8')) as {
+            keyId: string; signingPrivateKey: string; signingPublicKey: string; encryptionPrivateKey: string; encryptionPublicKey: string;
+        };
+    } catch {
+        throw new ForbiddenError('Proctor authentication keys are unavailable. Check the server key storage.');
+    }
 }
 
 export const publicKeys = (keys: Awaited<ReturnType<typeof getKeys>>) => ({
@@ -118,7 +122,7 @@ export async function checkContestConfig(tdoc: Tdoc | undefined, enabled: boolea
     }
     if (enabled) {
         const config = await getConfig();
-        if (!config.enabled) throw new ForbiddenError('Proctor is not configured.');
+        if (!config.enabled) throw new ForbiddenError('Enable the proctor service in system settings first.');
         await getKeys(config.keyId);
     }
 }

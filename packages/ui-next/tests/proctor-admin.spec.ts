@@ -163,3 +163,49 @@ test('log search, paging and page size use independent requests and preserve uns
         assert.equal(version.value, '2.0.0-unsaved');
     } finally { await view.close(); }
 });
+
+test('settings submit boolean switches and only acknowledge the configuration returned by a successful save', async () => {
+    const bodies: any[] = [];
+    notices.length = 0;
+    request = async (_url, init) => {
+        const body = JSON.parse(init.body);
+        bodies.push(body);
+        return { ok: true, json: async () => ({ ok: true, config: { ...body, requiredVersion: body.requiredVersion.trim() } }) };
+    };
+    const view = await mount();
+    try {
+        const enabled = Array.from(view.host.querySelectorAll('label')).find((label) => label.textContent === 'Enable proctor service')!
+            .querySelector('input')!;
+        await act(async () => enabled.click());
+        const version = Array.from(view.host.querySelectorAll('label')).find((label) => label.textContent === 'Required client version')!
+            .querySelector('input')!;
+        await enter(version, ' 2.0.0 ');
+        await act(async () => button(view.host, 'Save').click());
+        assert.equal(bodies.length, 1);
+        assert.equal(bodies[0].enabled, false);
+        assert.equal(bodies[0].refreshEnabled, true);
+        assert.equal(typeof bodies[0].tokenTtlSeconds, 'number');
+        assert.equal(version.value, '2.0.0');
+        assert.equal(notices.at(-1).title, 'Saved');
+        await act(async () => enabled.click());
+        await act(async () => button(view.host, 'Save').click());
+        assert.equal(bodies[1].enabled, true);
+        assert.equal(enabled.checked, true);
+    } finally { await view.close(); }
+});
+
+test('failed settings writes and missing save acknowledgements never display Saved', async () => {
+    notices.length = 0;
+    const view = await mount();
+    try {
+        request = async () => ({ ok: false, json: async () => ({ error: {
+            name: 'ForbiddenError', message: 'ForbiddenError', params: ['Generate authentication keys first.'],
+        } }) });
+        await act(async () => button(view.host, 'Save').click());
+        assert.equal(notices.at(-1).message, 'Generate authentication keys first.');
+        request = async () => ({ ok: true, json: async () => ({}) });
+        await act(async () => button(view.host, 'Save').click());
+        assert.equal(notices.at(-1).color, 'red');
+        assert.ok(!notices.some((notice) => notice.title === 'Saved'));
+    } finally { await view.close(); }
+});

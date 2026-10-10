@@ -31,13 +31,20 @@ export async function proctorRequest(url: string, body: Record<string, unknown>,
   const response = await fetch(url, { method: 'POST', cache: 'no-store', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify(body) });
   const data = await response.json();
-  if (data.redirect) {
-    const target = new URL(data.redirect, window.location.origin);
-    if (target.origin === window.location.origin) window.location.assign(target.href);
-    throw new Error('Authorization required.');
-  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Operation failed');
   if (!response.ok || data.error) {
     throw new Error(formatError(data.error));
+  }
+  // Hydro serializes response.redirect as `url`, including requireSudo responses.
+  const redirect = data.url || data.redirect;
+  if (redirect) {
+    if (typeof redirect !== 'string' || redirect.includes('\\')) throw new Error('Invalid authorization destination.');
+    const target = new URL(redirect, window.location.origin);
+    if (target.origin !== window.location.origin || !['https:', 'http:'].includes(target.protocol)) {
+      throw new Error('Invalid authorization destination.');
+    }
+    window.location.assign(target.href);
+    throw new Error('Authorization required.');
   }
   return data;
 }

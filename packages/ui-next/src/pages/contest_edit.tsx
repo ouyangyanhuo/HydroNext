@@ -13,9 +13,9 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useDomainId } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
-import { formatErrorMessage } from '@/utils/error';
 import type { HonorFrame } from '@/utils/honor-frame';
 import { getLangDisplay, LANG_DISPLAY } from '@/utils/lang-display';
+import { proctorError } from '@/utils/proctor';
 import { formatUserName } from '@/utils/user-name';
 
 interface SearchOption {
@@ -332,12 +332,12 @@ export default function ContestEditPage() {
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
       if (!res.ok || data.error) {
-        const msg = formatErrorMessage(data.error, t('Save failed'));
+        const msg = t(proctorError(data.error, 'Save failed'));
         setError(msg);
         notifications.show({ title: msg, message: '', color: 'red' });
       } else {
         notifications.show({ title: isNew ? t('Created successfully') : t('Saved'), message: '', color: 'green' });
-        if (data.redirect) navigate(data.redirect);
+        if (data.url || data.redirect) navigate(data.url || data.redirect);
         else if (data.tid) navigate(buildUrl('contest_detail', { tid: data.tid }));
         else navigate(isNew ? buildUrl('contest_main') : buildUrl('contest_detail', { tid: tdoc.docId }));
       }
@@ -478,7 +478,9 @@ export default function ContestEditPage() {
                 <Checkbox label={t('Allow Print')} checked={form.allowPrint} onChange={(e) => setForm({ ...form, allowPrint: e.currentTarget.checked })} />
                 <Checkbox
                   label={t('Enable contest proctoring')}
-                  description={t('Requires a compatible proctor client. Final logs are required for valid results.')}
+                  description={t(args.proctorPolicyLocked
+                    ? 'Proctor policy cannot change after the contest starts.'
+                    : 'Requires a compatible proctor client. Final logs are required for valid results.')}
                   disabled={!!args.proctorPolicyLocked}
                   checked={form.proctorEnabled}
                   onChange={(e) => setForm({ ...form, proctorEnabled: e.currentTarget.checked })} />

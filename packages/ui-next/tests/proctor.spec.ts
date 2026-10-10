@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { proctorError, proctorSubmissionHeaders } from '../src/utils/proctor.ts';
+import { proctorError, proctorRequest, proctorSubmissionHeaders } from '../src/utils/proctor.ts';
 
 const payload = { pid: 42, lang: 'cc.cc20', code: 'int main(){}', pretest: false, input: [], fileHash: '' };
 function withWindow(value: unknown, run: () => Promise<void>) {
@@ -43,7 +43,44 @@ test('client signing bridge receives canonical numeric PID, full domain path and
 });
 
 test('authentication errors preserve meaningful reasons and substitute other error parameters', () => {
-    assert.equal(proctorError({ name: 'ForbiddenError', message: 'Forbidden: {0}', params: ['Proctor client version mismatch.'] }),
+    assert.equal(proctorError({ name: 'ForbiddenError', message: 'ForbiddenError', params: ['Proctor client version mismatch.'] }),
         'Proctor client version mismatch.');
     assert.equal(proctorError({ name: 'PrivilegeError', message: 'Missing privilege {0}', params: [1] }), 'Missing privilege 1');
+});
+
+test('admin requests follow Hydro sudo url responses instead of reporting a successful save', async () => {
+    const original = globalThis.fetch;
+    const destinations: string[] = [];
+    try {
+        await withWindow({ location: { origin: 'https://oj.example', assign: (url: string) => destinations.push(url) } }, async () => {
+            for (const field of ['url', 'redirect']) {
+                globalThis.fetch = (async () => ({ ok: true, json: async () => ({ [field]: '/d/exam/user/sudo' }) })) as any;
+                // eslint-disable-next-line no-await-in-loop
+                await assert.rejects(proctorRequest('/d/exam/manage/proctor', { operation: 'save', enabled: true }), /Authorization required/);
+            }
+            assert.deepEqual(destinations, ['https://oj.example/d/exam/user/sudo', 'https://oj.example/d/exam/user/sudo']);
+            globalThis.fetch = (async () => ({ ok: true, json: async () => ({ ok: true, config: { enabled: true } }) })) as any;
+            assert.deepEqual(await proctorRequest('/manage/proctor', { operation: 'save' }), { ok: true, config: { enabled: true } });
+        });
+    } finally { globalThis.fetch = original; }
+});
+
+test('admin requests never follow unsafe authorization destinations or redirects in failed responses', async () => {
+    const original = globalThis.fetch;
+    let navigations = 0;
+    try {
+        await withWindow({ location: { origin: 'https://oj.example', assign: () => navigations++ } }, async () => {
+            const unsafe = ['https://evil.example/sudo', '//evil.example/sudo', 'javascript:alert(1)', '/\\evil.example/sudo', { path: '/sudo' }];
+            for (const url of unsafe) {
+                globalThis.fetch = (async () => ({ ok: true, json: async () => ({ url }) })) as any;
+                // eslint-disable-next-line no-await-in-loop
+                await assert.rejects(proctorRequest('/manage/proctor', {}), /Invalid authorization destination/);
+            }
+            globalThis.fetch = (async () => ({ ok: false, json: async () => ({ url: '/sudo', error: {
+                name: 'ForbiddenError', message: 'ForbiddenError', params: ['Generate authentication keys first.'],
+            } }) })) as any;
+            await assert.rejects(proctorRequest('/manage/proctor', {}), /Generate authentication keys first/);
+            assert.equal(navigations, 0);
+        });
+    } finally { globalThis.fetch = original; }
 });
