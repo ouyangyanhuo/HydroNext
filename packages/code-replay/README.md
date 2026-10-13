@@ -31,11 +31,13 @@ session ID without its event history.
 ### Continuous recordings in ui-next (protocol v2)
 
 - A self-test does not upload, bind, or reset the recording. Its action stays in
-  the current segment until the next formal submission.
-- After a successful formal submission with a linked replay, ui-next starts the next segment from
-  that submission's code. Each replay shows only edits since the previous formal
-  submission, not the entire history. Edits made during upload are carried into
-  the next segment with rebased sequence numbers and timestamps.
+  complete recording until the next formal submission.
+- Every formal submission in ui-next includes the full history from the beginning
+  of its current recording through that submission, not only the changes since
+  the previous submit. Successful submissions keep the original initial code,
+  source session, event sequence numbers and timestamps. In-flight edits remain
+  in the live recording for the next checkpoint; the old checkpoint stays frozen.
+  Even resubmitting unchanged code retains all earlier events.
 - Loading a template, pasting code, requesting a self-test, and formally submitting
   add ordered action events alongside edits. Actions carry elapsed and wall-clock
   timestamps; paste actions also carry the character count. They do not modify code.
@@ -65,8 +67,8 @@ session ID without its event history.
   contest record restrictions; existing participant exceptions remain in effect.
 - The submit handler keeps the created record ID internally. Replay binding uses
   that ID even when contest rules hide it from the response. Only a successful
-  binding returns `codeReplayCommitted: true`; ui-next advances its segment on
-  that acknowledgement, not on the presence of a public record ID.
+  binding returns `codeReplayCommitted: true`; ui-next persists the complete
+  recording on that acknowledgement, without discarding submitted events.
 - IndexedDB is authoritative for both code and replay history. Shared localStorage
   is only an initial fallback when no draft exists. Restoration completes before
   the editor mounts, so restoring code does not create synthetic edits.
@@ -114,9 +116,14 @@ Unsubmitted sessions expire after seven days. Sessions bound to a submission rec
 6. In ui-next, edit, run several self-tests, refresh, and formally submit. Check
    that edits from before the self-tests remain visible.
 7. Return to the same editor, edit, self-test, edit again and submit. The second
-   replay starts with the first submitted code and shows both sets of new edits;
-   the first replay remains unchanged. Refreshing restores the current segment.
+   replay includes both the original and new edits from the original starting
+   code; the first replay remains unchanged. Refreshing restores the full recording.
 8. Load a template, paste allowed content, and run a self-test before submitting.
    Check the operation log, timestamps, paste character count, and click-to-seek.
 
 The plugin uses Hydro route generation for its capture and replay URLs, including `/d/:domainId/` path-domain deployments.
+
+This change does not recover history discarded by an earlier incremental-recording
+version. A restored old draft keeps all events it still has and accumulates full
+history from there; older bound replays remain unchanged. Legacy ui-default capture
+continues to use its existing protocol.

@@ -111,10 +111,10 @@ class DomainModel {
         return coll.find(query);
     }
 
-    static async edit(domainId: string, $set: Partial<DomainDoc>) {
+    static async edit(domainId: string, $set: Partial<DomainDoc>, expected: Filter<DomainDoc> = {}) {
         domainId = domainId.toLowerCase();
         await bus.parallel('domain/before-update', domainId, $set);
-        const result = await coll.findOneAndUpdate({ lower: domainId }, { $set }, { returnDocument: 'after' });
+        const result = await coll.findOneAndUpdate({ ...expected, lower: domainId }, { $set }, { returnDocument: 'after' });
         if (result) {
             await bus.parallel('domain/update', domainId, $set, result);
             bus.broadcast('domain/delete-cache', domainId);

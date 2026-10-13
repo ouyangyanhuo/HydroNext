@@ -184,22 +184,25 @@ test('storage failure rejects and does not discard the active in-memory recordin
     assert.equal(fixture.stores.get('drafts')!.size, 0);
 });
 
-test('replacing a submitted segment persists the new baseline across remount and refresh', async () => {
+test('persisting after submission retains all earlier and in-flight edits across remount and refresh', async () => {
     const fixture = databaseFixture();
     const runtime = fixture.runtime();
-    const old = await runtime.restoreRecording('draft', '');
-    await runtime.persistRecording('draft', old);
-    const next = {
-        ...old, sessionId: 'next-segment', initialCode: 'abc', currentCode: 'abcd',
-        startedAt: 1000, sequence: 1, lastTime: 100,
-        events: [{ seq: 1, t: 100, changes: [{ rangeOffset: 3, rangeLength: 0, text: 'd' }] }],
-    };
-    await runtime.replaceRecording('draft', next);
-    assert.equal(await runtime.restoreRecording('draft', 'fallback'), next);
+    const recording = await runtime.restoreRecording('draft', '');
+    recording.events.push({ seq: 1, t: 100, changes: [{ rangeOffset: 0, rangeLength: 0, text: 'abc' }] });
+    recording.currentCode = 'abc';
+    recording.sequence = 1;
+    await runtime.persistRecording('draft', recording);
+    recording.events.push({ seq: 2, t: 200, changes: [{ rangeOffset: 3, rangeLength: 0, text: 'd' }] });
+    recording.currentCode = 'abcd';
+    recording.sequence = 2;
+    recording.lastTime = 200;
+    await runtime.replaceRecording('draft', recording);
+    assert.equal(await runtime.restoreRecording('draft', 'fallback'), recording);
     const restored = await fixture.runtime().restoreRecording('draft', 'fallback');
-    assert.equal(restored.sessionId, 'next-segment');
-    assert.equal(restored.initialCode, 'abc');
+    assert.equal(restored.sessionId, recording.sessionId);
+    assert.equal(restored.initialCode, '');
     assert.equal(restored.currentCode, 'abcd');
-    assert.equal(restored.sequence, 1);
-    assert.equal(restored.events[0].changes[0].rangeOffset, 3);
+    assert.equal(restored.sequence, 2);
+    assert.equal(restored.events[0].changes[0].text, 'abc');
+    assert.equal(restored.events[1].changes[0].rangeOffset, 3);
 });

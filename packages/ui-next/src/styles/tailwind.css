@@ -1282,6 +1282,40 @@ a {
   min-width: 0;
 }
 
+.hydro-training-category-order {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: min(55vh, 480px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.hydro-training-category-order__item {
+  padding: 8px 10px;
+  min-width: 0;
+  flex-shrink: 0;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-md);
+  background: color-mix(in srgb, var(--hydro-primary) 5%, var(--hydro-surface-raised));
+}
+
+.hydro-training-category-order__item[data-dragging='true'] {
+  border-color: var(--hydro-primary);
+  background: var(--hydro-primary-soft);
+}
+
+.hydro-training-category-order__handle {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.hydro-training-category-order__handle:active {
+  cursor: grabbing;
+}
+
 .hydro-training-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 286px;

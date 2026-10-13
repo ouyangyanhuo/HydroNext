@@ -22,7 +22,7 @@ const { continuousPrefix } = loadModule('../../code-replay/continuous.ts');
 const { buildReplayStates } = loadModule('../../code-replay/replay.ts');
 const plain = (value: any) => JSON.parse(JSON.stringify(value));
 
-test('template, paste, self-test and submit actions share the ordered incremental timeline without changing code', () => {
+test('every submission includes the full ordered template, paste and self-test history without changing code', () => {
     const recording = newRecording('', 1000);
     recordAction(recording, 'template', 'cc', undefined, 1100);
     recordCode(recording, 'abc', 'cc', undefined, 1100);
@@ -35,18 +35,18 @@ test('template, paste, self-test and submit actions share the ordered incrementa
     recordAction(next, 'submit', 'cc', undefined, 1600);
     const checkpoint = recordingCheckpoint(next, 1700);
     const validated = continuousPrefix(checkpoint.events, checkpoint.endSeq, checkpoint.initialCode, checkpoint.finalCode);
-    assert.equal(checkpoint.endSeq, 5);
-    assert.equal(checkpoint.initialCode, 'abc');
-    assert.deepEqual(plain(validated.map((event: any) => event.action).filter(Boolean)), ['paste', 'self_test', 'submit']);
-    assert.deepEqual(plain(buildReplayStates(validated, [], 'abc', 'acd').states), ['abc', 'abcd', 'abcd', 'abcd', 'acd', 'acd']);
+    assert.equal(checkpoint.endSeq, 7);
+    assert.equal(checkpoint.initialCode, '');
+    assert.deepEqual(plain(validated.map((event: any) => event.action).filter(Boolean)), ['template', 'paste', 'self_test', 'submit']);
+    assert.deepEqual(plain(buildReplayStates(validated, [], '', 'acd').states), ['', '', 'abc', 'abcd', 'abcd', 'abcd', 'acd', 'acd']);
     assert.deepEqual(plain(validated.filter((event: any) => event.action).map((event: any) => [event.t, event.timestamp])), [
-        [100, 1300], [200, 1400], [400, 1600],
+        [100, 1100], [300, 1300], [400, 1400], [600, 1600],
     ]);
     assert.throws(() => continuousPrefix([{ seq: 1, t: 0, changes: [], action: 'unknown' }], 1, '', ''), /Invalid/);
     assert.throws(() => continuousPrefix([{ seq: 1, t: 0, changes: [] }], 1, '', ''), /Invalid/);
 });
 
-test('formal submissions advance the baseline while self-tests preserve every edit in the next segment', () => {
+test('formal submissions and self-tests preserve the full timeline, while older checkpoints remain frozen', () => {
     const recording = newRecording('', 1000);
     recordCode(recording, 'abc', 'cc', undefined, 1100);
     const first = recordingCheckpoint(recording, 1150);
@@ -57,12 +57,12 @@ test('formal submissions advance the baseline while self-tests preserve every ed
     recordCode(next, 'ad', 'cc', undefined, 1400);
     const second = recordingCheckpoint(next, 1500);
     assert.equal(next.sessionId, sessionId);
-    assert.notEqual(next.sessionId, recording.sessionId);
+    assert.equal(next, recording);
     assert.equal(first.endSeq, 1);
-    assert.equal(second.endSeq, 2);
+    assert.equal(second.endSeq, 3);
     assert.deepEqual(plain(buildReplayStates(first.events, [], first.initialCode, first.finalCode).states), ['', 'abc']);
-    assert.deepEqual(plain(buildReplayStates(second.events, [], second.initialCode, second.finalCode).states), ['abc', 'adc', 'ad']);
-    assert.equal(continuousPrefix(second.events, second.endSeq, second.initialCode, second.finalCode).length, 2);
+    assert.deepEqual(plain(buildReplayStates(second.events, [], second.initialCode, second.finalCode).states), ['', 'abc', 'adc', 'ad']);
+    assert.equal(continuousPrefix(second.events, second.endSeq, second.initialCode, second.finalCode).length, 3);
     const source = readFileSync(new URL('../src/components/editor/scratchpad.tsx', import.meta.url), 'utf8');
     assert.match(source, /pretest \? null : await flushReplay\(code\)/);
     assert.match(source, /else if \(data\.codeReplayCommitted && replay && replayRef\.current === replay\.recording\)/);
@@ -71,31 +71,33 @@ test('formal submissions advance the baseline while self-tests preserve every ed
     assert.doesNotMatch(source, /resetReplaySession/);
 });
 
-test('advancing a successful submission preserves in-flight edits and rebases their time and sequence', () => {
+test('successful submission preserves all history and in-flight edits without rebasing time or sequence', () => {
     const recording = newRecording('', 1000);
     recordCode(recording, 'abc', 'cc', undefined, 1100);
     const checkpoint = recordingCheckpoint(recording, 1200);
     recordCode(recording, 'abcd', 'cc', undefined, 1300);
     recordCode(recording, 'acd', 'cc', undefined, 1400);
     const next = continueRecording(recording, checkpoint);
-    assert.equal(next.startedAt, 1200);
-    assert.equal(next.lastTime, 200);
-    assert.deepEqual(plain(next.events.map(({ seq, t }: any) => [seq, t])), [[1, 100], [2, 200]]);
-    assert.deepEqual(plain(buildReplayStates(next.events, [], next.initialCode, next.currentCode).states), ['abc', 'abcd', 'acd']);
+    assert.equal(next.startedAt, 1000);
+    assert.equal(next.lastTime, 400);
+    assert.deepEqual(plain(next.events.map(({ seq, t }: any) => [seq, t])), [[1, 100], [2, 300], [3, 400]]);
+    assert.deepEqual(plain(buildReplayStates(next.events, [], next.initialCode, next.currentCode).states), ['', 'abc', 'abcd', 'acd']);
     assert.equal(recording.events.length, 3);
     assert.equal(checkpoint.events.length, 1);
-    assert.throws(() => continueRecording(next, checkpoint), /does not belong/);
+    assert.throws(() => continueRecording(newRecording(''), checkpoint), /does not belong/);
 });
 
-test('repeated submissions without editing have an empty replay with the previous submitted code as baseline', () => {
+test('repeated submissions without editing still include all previously recorded edits', () => {
     const recording = newRecording('int main() {}', 1000);
+    recordCode(recording, 'int main() { return 0; }', 'cc', undefined, 1050);
     const first = recordingCheckpoint(recording, 1100);
     const next = continueRecording(recording, first);
     const second = recordingCheckpoint(next, 1200);
-    assert.equal(second.endSeq, 0);
-    assert.equal(second.initialCode, first.finalCode);
+    assert.equal(second.endSeq, 1);
+    assert.equal(second.initialCode, first.initialCode);
     assert.equal(second.finalCode, first.finalCode);
-    assert.equal(continuousPrefix(second.events, 0, second.initialCode, second.finalCode).length, 0);
+    assert.equal(continuousPrefix(second.events, 1, second.initialCode, second.finalCode).length, 1);
+    assert.deepEqual(plain(second.events), plain(first.events));
 });
 
 test('restored data keeps sequence/time and reconciles a cached-code change with one minimal delta', () => {

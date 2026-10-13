@@ -3,11 +3,14 @@ import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { CodeReplay } from '@/components/record/code-replay';
+import { UserAvatar } from '@/components/user/user-avatar';
+import { UserLink } from '@/components/user/user-link';
 import { usePageData, useUiContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { goBackOrFallback } from '@/utils/history-back';
+import { formatUserName } from '@/utils/user-name';
 
 function normalizeReplayDataUrl(url?: string) {
   const normalized = (url || `${window.location.pathname}/data`)
@@ -53,6 +56,9 @@ export default function CodeReplayPage() {
   const replay = data.replay || {};
   const rdoc = data.rdoc || args.rdoc || {};
   const pdoc = data.pdoc || args.pdoc || {};
+  const submitterUid = rdoc.uid ?? replay.uid;
+  const profile = Object.hasOwn(data, 'udoc') ? data.udoc : args.udoc;
+  const submitter = profile && String(profile._id) === String(submitterUid) ? profile : null;
 
   return (
     <Stack gap="lg">
@@ -62,6 +68,20 @@ export default function CodeReplayPage() {
           <Text size="sm" c="dimmed" mt={4} style={{ overflowWrap: 'anywhere' }}>
             {pdoc.pid || pdoc.docId ? `${pdoc.pid || pdoc.docId}. ${pdoc.title || ''}` : t('Replay editing process')}
           </Text>
+          {submitterUid != null && (
+            <Group gap="xs" mt="sm">
+              <Text size="xs" c="dimmed">{t('Submit By')}</Text>
+              {submitter ? (
+                <>
+                  <UserAvatar user={submitter} size={24} />
+                  <div className="min-w-0" style={{ overflowWrap: 'anywhere' }}>
+                    {submitter._id > 0 ? <UserLink user={submitter} /> : <Text size="sm">{formatUserName(submitter)}</Text>}
+                  </div>
+                  <Text size="xs" c="dimmed">UID {submitterUid}</Text>
+                </>
+              ) : <Text size="sm">UID {submitterUid}</Text>}
+            </Group>
+          )}
         </div>
         <Button
           onClick={() => goBackOrFallback(window.history, () => {

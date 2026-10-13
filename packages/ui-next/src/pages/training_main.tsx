@@ -2,9 +2,9 @@ import { Badge, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, 
 import { notifications } from '@mantine/notifications';
 import {
   IconArrowUpRight, IconBook2, IconChecklist, IconChevronRight, IconFolder, IconPencil, IconPlus, IconSearch,
-  IconTrash, IconUsers,
+  IconSortAscending, IconTrash, IconUsers,
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { EmptyState } from '@/components/common/empty-state';
@@ -13,10 +13,12 @@ import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { TagMultiSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
+import { TrainingCategoryOrder } from '@/components/training/training-category-order';
 import { usePageData, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
+import { useDomainId } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
 import { formatErrorMessage } from '@/utils/error';
@@ -172,13 +174,16 @@ function TrainingCategoryItem({ item, query, selected, canManage, onEdit, onDele
   );
 }
 
-export default function TrainingMainPage() {
+function TrainingMainContent() {
   const { args } = usePageData();
   const user = useUserContext();
   const { t } = useI18n();
   const navigate = useNavigate();
   const buildUrl = useBuildUrl();
   const isLoggedIn = useIsLoggedIn();
+  const domainId = useDomainId();
+  const activeDomain = useRef(domainId);
+  const sortingDomain = useRef(domainId);
   const storeCanCreateTraining = useHasPerm(PERM.PERM_CREATE_TRAINING);
   const canCreateTraining = Boolean(args.canCreateTraining ?? (
     hasPermValue(user.perm, PERM.PERM_CREATE_TRAINING) || storeCanCreateTraining
@@ -203,6 +208,11 @@ export default function TrainingMainPage() {
   const [categoryName, setCategoryName] = useState('');
   const [categoryTids, setCategoryTids] = useState<string[]>([]);
   const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categorySortOpened, setCategorySortOpened] = useState(false);
+  const [categorySortIds, setCategorySortIds] = useState<string[]>([]);
+  const [categorySortBase, setCategorySortBase] = useState<string[]>([]);
+  const [categorySortLoading, setCategorySortLoading] = useState(false);
+  const categorySortPending = useRef(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [deleteCategory, setDeleteCategory] = useState<any>(null);
   const [enrolledOpened, setEnrolledOpened] = useState(false);
@@ -222,6 +232,45 @@ export default function TrainingMainPage() {
   const visibleCategories = filteredCategories.slice((categoryPage - 1) * 12, categoryPage * 12);
 
   const hasSidebar = categories.length > 0 || isLoggedIn || canCreateTraining;
+  useEffect(() => {
+    activeDomain.current = domainId;
+    return () => { activeDomain.current = ''; };
+  }, [domainId]);
+
+  const openCategorySort = () => {
+    if (!canCreateTraining || categorySortPending.current) return;
+    const ids = categories.map((item: any) => String(item._id));
+    sortingDomain.current = domainId;
+    setCategorySortIds(ids);
+    setCategorySortBase(ids);
+    setCategorySortOpened(true);
+  };
+
+  const saveCategorySort = async () => {
+    if (!canCreateTraining || categorySortPending.current || sortingDomain.current !== domainId) return;
+    const requestDomain = domainId;
+    categorySortPending.current = true;
+    setCategorySortLoading(true);
+    try {
+      const res = await fetch(buildUrl('training_main'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ operation: 'sort_category', ids: categorySortIds, previousIds: categorySortBase }),
+      });
+      const data = await res.json();
+      if (activeDomain.current !== requestDomain) return;
+      if (!res.ok || data.error || data.ok !== true) throw new Error(formatErrorMessage(data.error, t('Save failed')));
+      notifications.show({ title: t('Saved'), message: '', color: 'green' });
+      window.location.reload();
+    } catch (error: any) {
+      if (activeDomain.current === requestDomain) {
+        notifications.show({ title: t('Save failed'), message: t(error.message || 'Save failed'), color: 'red' });
+      }
+    } finally {
+      categorySortPending.current = false;
+      setCategorySortLoading(false);
+    }
+  };
 
   const handleSearch = () => {
     const url = new URL(window.location.href);
@@ -395,9 +444,20 @@ export default function TrainingMainPage() {
               <Group justify="space-between" align="center" mb="md">
                 <Group gap="xs"><IconFolder size={18} /><Title order={3} size="h5">{t('Categories')}</Title></Group>
                 {canCreateTraining && (
-                  <Button size="compact-xs" variant="light" leftSection={<IconPlus size={13} />} onClick={() => openCategoryEditor()}>
-                    {t('Create')}
-                  </Button>
+                  <Group gap={6}>
+                    {categories.length > 1 && <ActionIcon
+                      size="sm"
+                      variant="light"
+                      onClick={openCategorySort}
+                      title={t('Sort Training Categories')}
+                      aria-label={t('Sort Training Categories')}
+                    >
+                      <IconSortAscending size={15} />
+                    </ActionIcon>}
+                    <Button size="compact-xs" variant="light" leftSection={<IconPlus size={13} />} onClick={() => openCategoryEditor()}>
+                      {t('Create')}
+                    </Button>
+                  </Group>
                 )}
               </Group>
               <Stack gap={6} className="hydro-training-category-list">
@@ -523,6 +583,30 @@ export default function TrainingMainPage() {
       </Modal>
 
       <Modal
+        opened={categorySortOpened && canCreateTraining}
+        onClose={() => { if (!categorySortPending.current) setCategorySortOpened(false); }}
+        title={t('Sort Training Categories')}
+        size="md"
+        closeOnClickOutside={!categorySortLoading}
+        closeOnEscape={!categorySortLoading}
+      >
+        <Stack gap="md">
+          <Text size="sm" c="dimmed">
+            {t('Drag category handles to reorder, or use Alt + Up/Down. Save to apply this order to everyone in this domain.')}
+          </Text>
+          <TrainingCategoryOrder categories={categories} ids={categorySortIds} onChange={setCategorySortIds} disabled={categorySortLoading} />
+          <Group justify="flex-end">
+            <Button variant="default" disabled={categorySortLoading} onClick={() => setCategorySortOpened(false)}>{t('Cancel')}</Button>
+            <Button
+              loading={categorySortLoading}
+              disabled={categorySortIds.every((id, index) => id === categorySortBase[index])}
+              onClick={() => void saveCategorySort()}
+            >{t('Save')}</Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
         opened={categoryOpened}
         onClose={closeCategoryEditor}
         title={t(editingCategory ? 'Edit Training Category' : 'Create Training Category')}
@@ -626,4 +710,9 @@ export default function TrainingMainPage() {
       />
     </main>
   );
+}
+
+export default function TrainingMainPage() {
+  const domainId = useDomainId();
+  return <TrainingMainContent key={domainId} />;
 }

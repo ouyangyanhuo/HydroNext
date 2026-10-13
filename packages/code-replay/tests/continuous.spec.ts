@@ -64,12 +64,13 @@ class Collection {
     }
 }
 
-async function fixture(access = async (_handler: any, _record: any) => ({ canViewCode: true })) {
+async function fixture(access = async (_handler: any, _record: any) => ({ canViewCode: true }), profile?: any) {
     const sessions = new Collection();
     const chunks = new Collection();
     const records = new Map<string, any>();
     const hooks = new Map<string, (...args: any[]) => any>();
     const routes = new Map<string, any>();
+    const userLookups: any[] = [];
     const module = { exports: {} as any };
     const hydro = {
         db: { collection: (name: string) => (name === 'code_replay' ? sessions : chunks) },
@@ -80,7 +81,10 @@ async function fixture(access = async (_handler: any, _record: any) => ({ canVie
         Handler: class {}, ObjectId, Types: {}, PRIV: {}, PERM: {}, STATUS: {},
         getRecordAccess: access, PermissionError: Error,
         ProblemModel: { PROJECTION_LIST: [], get: async () => ({ docId: 1 }) },
-        UserModel: { getById: async () => ({ _id: 1 }) },
+        UserModel: { getById: async (domainId: string, uid: number) => {
+            userLookups.push({ domainId, uid });
+            return profile === undefined ? { _id: uid } : profile;
+        } },
         ValidationError: Error, param: () => () => {},
     };
     runInNewContext(built.outputFiles[0].text, {
@@ -92,7 +96,7 @@ async function fixture(access = async (_handler: any, _record: any) => ({ canVie
         i18n: { load() {} },
         on: (name: string, handler: any) => hooks.set(name, handler),
     });
-    return { model: module.exports.CodeReplayModel, sessions, chunks, records, hooks, routes };
+    return { model: module.exports.CodeReplayModel, sessions, chunks, records, hooks, routes, userLookups };
 }
 
 const sourceId = 'a'.repeat(48);
@@ -139,6 +143,14 @@ test('multiple checkpoints share immutable deltas and retries do not duplicate b
     const checkpoint2 = await model.checkpoint(1, 'team', sourceId, { ...base, finalCode: 'adc', endSeq: 2, endTime: 250 });
     assert.equal((await model.getEvents(checkpoint1, old)).events.length, 1);
     assert.equal((await model.getEvents(checkpoint2, sessions.docs.get(checkpoint2))).events.length, 2);
+    const secondRid = new ObjectId();
+    records.set(String(secondRid), { domainId: 'team', uid: 1, pid: 1, lang: 'cc', code: 'adc' });
+    await model.bind(1, 'team', checkpoint2, secondRid, 1, 'cc', 'adc');
+    const secondReplay = await model.getByRid(secondRid);
+    assert.equal(secondReplay.initialCode, base.initialCode);
+    assert.equal((await model.getEvents(checkpoint2, secondReplay)).events[0].changes[0].text, 'abc');
+    assert.equal((await model.getEvents(checkpoint2, secondReplay)).events.length, 2);
+    assert.equal((await model.getEvents(checkpoint1, await model.getByRid(rid))).events.length, 1);
     assert.equal(chunks.docs.size, 2);
     // Even a subsequently uploaded conflicting event cannot modify frozen history.
     await model.appendContinuous(1, 'team', sourceId, { ...base, events: [{ ...first, t: 101 }] });
@@ -252,6 +264,28 @@ test('both replay endpoints enforce the shared record access decision', async ()
         await assert.rejects(handler.get('team', rid), /Hidden problem/);
     }));
     assert.equal(checks, 2);
+});
+
+test('replay data exposes only the submitting users public identity from the record domain, not the viewer', async () => {
+    const profile = { _id: 1, uname: 'student', displayName: 'Domain name', avatarUrl: '/avatar/student.png',
+        honorFrame: { id: 'frame', name: 'Honor', squareImageUrl: '/honor-frame/frame/square.png' },
+        mail: 'private@example.com', hash: 'secret', school: 'Private school' };
+    const { model, records, routes, userLookups } = await fixture(undefined, profile);
+    await model.appendContinuous(1, 'team', sourceId, { ...base, events: [first] });
+    const checkpoint = await model.checkpoint(1, 'team', sourceId, { ...base, finalCode: 'abc', endSeq: 1, endTime: 150 });
+    const rid = new ObjectId();
+    records.set(String(rid), { domainId: 'team', uid: 1, pid: 1, lang: 'cc', code: 'abc' });
+    await model.bind(1, 'team', checkpoint, rid, 1, 'cc', 'abc');
+    const handler = new (routes.get('code_replay_data'))();
+    handler.user = { _id: 2 };
+    handler.response = {};
+    await handler.get('team', rid);
+    assert.deepEqual(userLookups, [{ domainId: 'team', uid: 1 }]);
+    assert.equal(handler.response.body.udoc._id, 1);
+    assert.equal(handler.response.body.udoc.displayName, 'Domain name');
+    assert.equal(handler.response.body.udoc.avatarUrl, profile.avatarUrl);
+    assert.deepEqual(handler.response.body.udoc.honorFrame, profile.honorFrame);
+    assert.deepEqual(Object.keys(handler.response.body.udoc).sort(), ['_id', 'avatarUrl', 'displayName', 'honorFrame', 'uname']);
 });
 
 test('legacy replay sessions still append, bind, and load without a migration', async () => {

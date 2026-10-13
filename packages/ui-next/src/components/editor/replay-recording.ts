@@ -56,20 +56,15 @@ export function recordingCheckpoint(recording: ReplayRecording, now = Date.now()
   };
 }
 
-/** Advance only after a formal submission is accepted and its replay is linked. */
+/** Keep the complete timeline after a linked submission, including any in-flight edits. */
 export function continueRecording(recording: ReplayRecording, checkpoint: ReturnType<typeof recordingCheckpoint>) {
-  if (recording.sessionId !== checkpoint.sessionId || checkpoint.endSeq > recording.sequence) {
+  if (recording.sessionId !== checkpoint.sessionId || checkpoint.endSeq > recording.sequence
+    || recording.initialCode !== checkpoint.initialCode) {
     throw new Error('Replay checkpoint does not belong to the active recording');
   }
-  const next = newRecording(checkpoint.finalCode, recording.startedAt + checkpoint.endTime);
-  // Preserve edits made while upload/submission was in flight, including their selections.
-  next.events = recording.events.slice(checkpoint.endSeq).map((event, index) => ({
-    ...event, seq: index + 1, t: Math.max(0, (event.t ?? 0) - checkpoint.endTime),
-  }));
-  next.sequence = next.events.length;
-  next.currentCode = recording.currentCode;
-  next.lastTime = Math.max(0, recording.lastTime - checkpoint.endTime);
-  return next;
+  // The server binds an immutable prefix to each record, not the live source session.
+  // Retaining its identity also avoids rewriting/uploading previously stored deltas.
+  return recording;
 }
 
 export async function uploadRecordingCheckpoint(

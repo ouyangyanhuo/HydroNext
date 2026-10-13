@@ -7,6 +7,7 @@ import {
 } from '../error';
 import { Tdoc, TrainingDoc, TrainingStatusDoc } from '../interface';
 import { LIST_SORT_MODES, type ListSortMode, TRAINING_LIST_SORT } from '../lib/list-sort';
+import { orderTrainingCategories, validateTrainingCategoryOrder } from '../lib/training-category-order';
 import { canViewTrainingRecords, checkTrainingRecordAccess } from '../lib/training-record-access';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import domain from '../model/domain';
@@ -71,7 +72,9 @@ class TrainingMainHandler extends Handler {
         const query: Filter<TrainingDoc> = {};
         if (q) query.title = { $regex: new RegExp(escapeRegExp(q), 'i') };
         const ddoc = await domain.get(domainId);
-        const categories = Array.isArray(ddoc._trainingCategories) ? ddoc._trainingCategories : [];
+        const categories = orderTrainingCategories(
+            Array.isArray(ddoc._trainingCategories) ? ddoc._trainingCategories : [], ddoc._trainingCategoryOrder,
+        );
         const selectedCategory = categories.find((item) => item._id === category);
         if (selectedCategory) query.docId = { $in: selectedCategory.tids || [] };
         await this.ctx.parallel('training/list', query, this);
@@ -153,6 +156,25 @@ class TrainingMainHandler extends Handler {
             .filter((item) => item._id !== id);
         await domain.edit(domainId, { _trainingCategories: categories });
         this.back();
+    }
+
+    @param('ids', Types.ArrayOf(Types.String))
+    @param('previousIds', Types.ArrayOf(Types.String))
+    async postSortCategory(domainId: string, ids: string[], previousIds: string[]) {
+        this.checkPerm(PERM.PERM_CREATE_TRAINING);
+        const ddoc = await domain.get(domainId);
+        const categories = Array.isArray(ddoc._trainingCategories) ? ddoc._trainingCategories : [];
+        try {
+            validateTrainingCategoryOrder(categories, ddoc._trainingCategoryOrder, ids, previousIds);
+        } catch (error) { throw new ValidationError('ids', null, error.message); }
+        // Write only order metadata; never replace categories, memberships or names.
+        const result = await domain.edit(domainId, { _trainingCategoryOrder: ids }, {
+            _trainingCategories: ddoc._trainingCategories === undefined ? { $exists: false } : ddoc._trainingCategories,
+            _trainingCategoryOrder: ddoc._trainingCategoryOrder === undefined ? { $exists: false } : ddoc._trainingCategoryOrder,
+        });
+        if (!result) throw new ValidationError('ids', null, 'Training categories changed. Reload before sorting.');
+        await oplog.log(this, 'training.category.sort', { ids });
+        this.response.body = { ok: true, ids };
     }
 }
 

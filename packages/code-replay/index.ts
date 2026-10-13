@@ -496,6 +496,8 @@ class CodeReplayDataHandler extends Handler {
                 _id: udoc._id,
                 uname: udoc.uname,
                 displayName: udoc.displayName,
+                avatarUrl: udoc.avatarUrl,
+                honorFrame: udoc.honorFrame,
             },
         };
     }

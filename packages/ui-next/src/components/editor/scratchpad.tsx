@@ -352,7 +352,7 @@ export function Scratchpad({
           } else if (data.codeReplayCommitted && replay && replayRef.current === replay.recording) {
             const next = continueRecording(replay.recording, replay.checkpoint);
             replayRef.current = next;
-            // Persist the new baseline before navigating away; failure keeps it in memory.
+            // Keep all previous events and persist in-flight edits before navigating away.
             await replaceRecording(replayStorageKey, next).catch(warnReplayStorage);
           }
           if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }));

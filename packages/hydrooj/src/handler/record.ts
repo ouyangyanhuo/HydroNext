@@ -9,6 +9,7 @@ import {
 } from '../error';
 import { RecordDoc, Tdoc } from '../interface';
 import { getRecordAccess } from '../lib/record-access';
+import { resolveRecordUserIds } from '../lib/record-filter';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import problem, { ProblemDoc } from '../model/problem';
@@ -23,19 +24,6 @@ import {
 import { buildProjection, Time } from '../utils';
 import { ContestDetailBaseHandler } from './contest';
 import { postJudge } from './judge';
-
-async function resolveRecordUserIds(domainId: string, value: string) {
-    const keyword = value.trim();
-    if (!keyword) return [];
-    if (/^-?\d+$/.test(keyword)) {
-        const udoc = await user.getById(domainId, +keyword);
-        return udoc ? [udoc._id] : [];
-    }
-    const exact = await user.getByUname(domainId, keyword)
-        || (keyword.includes('@') ? await user.getByEmail(domainId, keyword) : null);
-    if (exact) return [exact._id];
-    return await user.getFuzzyIds(domainId, keyword);
-}
 
 async function resolveRecordProblemIds(
     domainId: string,
