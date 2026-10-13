@@ -1283,27 +1283,67 @@ a {
 }
 
 .hydro-training-category-order {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 6px;
   max-height: min(55vh, 480px);
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-width: thin;
 }
 
 .hydro-training-category-order__item {
+  position: relative;
   padding: 8px 10px;
   min-width: 0;
   flex-shrink: 0;
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-md);
   background: color-mix(in srgb, var(--hydro-primary) 5%, var(--hydro-surface-raised));
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.hydro-training-category-order[data-reordering='true'] .hydro-training-category-order__item {
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), border-color 160ms ease, background-color 160ms ease;
+  will-change: transform;
 }
 
 .hydro-training-category-order__item[data-dragging='true'] {
+  z-index: 2;
   border-color: var(--hydro-primary);
-  background: var(--hydro-primary-soft);
+  background: var(--hydro-surface-raised);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--hydro-primary) 22%, transparent);
+}
+
+.hydro-training-category-order[data-reordering='true'] .hydro-training-category-order__item[data-dragging='true'] {
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.hydro-training-category-order__marker {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 6px;
+  right: 6px;
+  z-index: 3;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--hydro-primary);
+  pointer-events: none;
+}
+
+.hydro-training-category-order__marker::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hydro-primary);
 }
 
 .hydro-training-category-order__handle {
@@ -1314,6 +1354,14 @@ a {
 
 .hydro-training-category-order__handle:active {
   cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-training-category-order .hydro-training-category-order__item,
+  .hydro-training-category-order[data-reordering='true'] .hydro-training-category-order__item,
+  .hydro-training-category-order[data-reordering='true'] .hydro-training-category-order__item[data-dragging='true'] {
+    transition: none;
+  }
 }
 
 .hydro-training-layout {

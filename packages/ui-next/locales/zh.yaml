@@ -950,10 +950,13 @@ No enrolled users.: 暂无已报名用户。
 Viewing progress for: 正在查看以下用户的训练进度
 Back to my progress: 返回我的训练进度
 Category Name: 分类名称
+Category moved to position {0}. Save to apply.: 分类已移动到第 {0} 位，保存后生效。
 Drag category handles to reorder, or use Alt + Up/Down. Save to apply this order to everyone in this domain.: 拖动分类左侧手柄排序，或使用 Alt + 上下方向键。保存后将应用于本域所有用户。
 Drag to reorder, or use Alt + Up/Down.: 拖动排序，或使用 Alt + 上下方向键。
+Dragging {0}. Release to place at position {1}.: 正在拖动「{0}」，松手放到第 {1} 位。
 Invalid training category order.: 训练分类排序无效，请刷新后重试。
 Reorder: 调整顺序
+Reordering cancelled.: 已取消本次移动，顺序未改变。
 Sort Training Categories: 训练分类排序
 Training categories changed. Reload before sorting.: 训练分类已被其他操作修改，请刷新后重新排序。
 Search categories...: 搜索分类...
