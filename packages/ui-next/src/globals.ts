@@ -83,6 +83,7 @@ export const endpointOrigins = new Set(endpoints.map((ep) => new URL(ep).origin)
 
 export const initialPage: PageData = {
   name: (injectionData.name as string) || inferRouteName(window.location.href, injectionData.route_map || {}),
+  template: (injectionData.template as string) || '',
   args: (injectionData.args as any) || {},
   url: (injectionData.url as string) || (window.location.pathname + window.location.search),
 };

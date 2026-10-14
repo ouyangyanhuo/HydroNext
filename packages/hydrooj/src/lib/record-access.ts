@@ -7,7 +7,9 @@ import type { Handler } from '../service/server';
 
 /** Shared by record details and replay endpoints; code privileges never bypass problem visibility. */
 export async function getRecordAccess(handler: Handler, rdoc: RecordDoc) {
-    const owner = rdoc.uid === handler.user._id;
+    const ownSubmission = rdoc.uid === handler.user._id;
+    const owner = ownSubmission || (rdoc.contest && !rdoc.contest.toString().startsWith('0'.repeat(23))
+        && await contest.isSameTeam(rdoc.domainId, rdoc.contest, rdoc.uid, handler.user._id));
     if (!owner && !handler.user.hasPerm(PERM.PERM_VIEW_RECORD)) throw new PermissionError(PERM.PERM_VIEW_RECORD);
     let tdoc: Tdoc = null;
     let canViewDetail = true;
@@ -21,10 +23,11 @@ export async function getRecordAccess(handler: Handler, rdoc: RecordDoc) {
             || (owner && contest.canShowSelfRecord.call(handler, tdoc, true));
         if (!canViewDetail && !owner) throw new PermissionError(rdoc._id);
     }
+    const teamVid = tdoc?.allowTeam ? await contest.getTeamVid(rdoc.domainId, tdoc.docId, handler.user._id) : null;
     const [pdoc, self, tsdoc] = await Promise.all([
         problem.get(rdoc.domainId, rdoc.pid, problem.PROJECTION_LIST.concat('config')),
         problem.getStatus(rdoc.domainId, rdoc.pid, handler.user._id),
-        tdoc ? contest.getStatus(rdoc.domainId, tdoc.docId, handler.user._id) : Promise.resolve(null),
+        tdoc ? contest.getStatus(rdoc.domainId, tdoc.docId, teamVid ?? handler.user._id) : Promise.resolve(null),
     ]);
     if ((!tdoc || !tsdoc?.attend) && pdoc && !problem.canViewBy(pdoc, handler.user)) {
         throw new PermissionError(PERM.PERM_VIEW_PROBLEM_HIDDEN);

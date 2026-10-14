@@ -7,7 +7,8 @@ import react from '@hydrooj/eslint-config';
 
 const config = react({
     ignores: [
-        '**/{public,files}/**/*.js',
+        '**/{public,files}/**',
+        '**/misc/.iconfont/**',
         '**/dist',
         '**/*.d.ts',
         '**/node_modules',

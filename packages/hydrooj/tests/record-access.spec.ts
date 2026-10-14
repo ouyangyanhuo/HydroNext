@@ -25,10 +25,14 @@ function fixture(options: any = {}) {
         '../error': { PermissionError: Error, ContestNotFoundError: Error },
         '../model/builtin': { PERM, PRIV: { PRIV_READ_RECORD_CODE: 'global' }, STATUS: { STATUS_ACCEPTED: 1 } },
         '../model/contest': {
-            get: async () => (options.deletedContest ? null : { docId: 'contest', allowViewCode: options.allowViewCode }),
+            get: async () => (options.deletedContest ? null : { docId: 'contest',
+                allowTeam: !!options.teammate,
+                allowViewCode: options.allowViewCode }),
             getStatus: async () => ({ attend: options.attend }),
             canShowRecord: () => !!options.showRecord, canShowSelfRecord: () => !!options.showSelf,
             isDone: () => !!options.done,
+            isSameTeam: async () => !!options.teammate,
+            getTeamVid: async () => options.teammate ? -1000 : null,
         },
         '../model/problem': {
             PROJECTION_LIST: [], get: async () => ({ docId: 1, hidden: options.hidden }),
@@ -75,4 +79,13 @@ test('nonowners still need record visibility and cannot read another users prete
     await assert.rejects(fixture({ permissions: [], global: true })(), /VIEW_RECORD/);
     await assert.rejects(fixture({ contest: `${'0'.repeat(23)}1`, global: true })(), /READ_RECORD_CODE/);
     await assert.rejects(fixture({ contest: 'contest', deletedContest: true })());
+});
+
+test('teammates share record and replay code access without bypassing contest visibility', async () => {
+    const access = await fixture({ teammate: true, contest: 'contest', attend: true, showSelf: true, permissions: [] })();
+    assert.equal(access.canViewCode, true);
+    assert.equal(access.canViewDetail, true);
+    await assert.rejects(fixture({ teammate: true, contest: 'contest', hidden: true, permissions: [] })(), /VIEW_PROBLEM_HIDDEN/);
+    await assert.rejects(fixture({ teammate: true, contest: `${'0'.repeat(23)}1`, permissions: [] })(), /VIEW_RECORD/);
+    await assert.rejects(fixture({ contest: 'other-contest', permissions: [] })(), /VIEW_RECORD/);
 });

@@ -79,13 +79,39 @@ export function submissionPayload(pid: number, lang: string, code = '', pretest 
     return { pid, lang, code, pretest, input, fileHash };
 }
 
-export function proctorRankingFilter(enabled: boolean, ended: boolean, durationHours = 0, now = Date.now()) {
+export function proctorRankingFilter(enabled: boolean, ended: boolean, durationHours = 0, now = Date.now(), allowTeam = false) {
     if (!enabled) return {};
     // Provisional scores may be shown while competing. Closing or ended attempts
     // require a successfully stored final log before becoming ranked results.
-    return ended ? { proctorLogUploaded: true }
+    const individual = ended ? { proctorLogUploaded: true }
         : { $or: [{ proctorLogUploaded: true }, { proctorEnded: { $ne: true }, $and: [
             { $or: [{ endAt: null }, { endAt: { $gt: new Date(now) } }] },
             ...(durationHours > 0 ? [{ $or: [{ startAt: null }, { startAt: { $gt: new Date(now - durationHours * 3600000) } }] }] : []),
         ] }] };
+    if (!allowTeam) return individual;
+    const memberState = { $arrayElemAt: [{ $map: {
+        input: { $filter: {
+            input: { $objectToArray: { $ifNull: ['$proctorMembers', {}] } },
+            as: 'entry', cond: { $eq: ['$$entry.k', { $toString: '$$member' }] },
+        } }, as: 'entry', in: '$$entry.v',
+    } }, 0] };
+    const membersMatch = (complete: boolean) => ({ $allElementsTrue: [{ $map: {
+        input: { $ifNull: ['$members', []] }, as: 'member', in: { $let: {
+            vars: { state: memberState },
+            in: complete ? { $eq: ['$$state.proctorLogUploaded', true] }
+                : { $or: [{ $eq: ['$$state.proctorLogUploaded', true] }, { $ne: ['$$state.proctorEnded', true] }] },
+        } },
+    } }] });
+    return { $or: [
+        { members: { $exists: false }, ...individual },
+        { 'members.0': { $exists: true }, ...(ended ? { $expr: membersMatch(true) } : {
+            $or: [
+                { $expr: membersMatch(true) },
+                { $expr: membersMatch(false), $and: [
+                    { $or: [{ endAt: null }, { endAt: { $gt: new Date(now) } }] },
+                    ...(durationHours > 0 ? [{ $or: [{ startAt: null }, { startAt: { $gt: new Date(now - durationHours * 3600000) } }] }] : []),
+                ] },
+            ],
+        }) },
+    ] };
 }

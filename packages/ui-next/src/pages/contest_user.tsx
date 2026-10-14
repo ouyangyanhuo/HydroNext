@@ -10,6 +10,7 @@ import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
+import { useDeadlinePassed } from '@/hooks/use-time';
 import { formatErrorMessage } from '@/utils/error';
 
 function canResume(tdoc: any, tsdoc: any) {
@@ -29,6 +30,8 @@ export default function ContestUserPage() {
   const udict = args.udict || {};
   const tsdocs = args.tsdocs || [];
   const tid = tdoc.docId || tdoc._id;
+  const contestStarted = useDeadlinePassed(tdoc.beginAt);
+  const canRemove = !!tdoc.beginAt && !contestStarted;
   const [opened, setOpened] = useState(false);
   const [uidsText, setUidsText] = useState('');
   const [unrank, setUnrank] = useState(false);
@@ -102,7 +105,7 @@ export default function ContestUserPage() {
                     <Group gap="xs" wrap="nowrap">
                       <UserAvatar user={udoc} link={false} size="xs" />
                       <Link to="user_detail" params={{ uid: tsdoc.uid }} className="no-underline hover:underline">
-                        <Text size="sm">{udoc.uname || tsdoc.uid}</Text>
+                        <Text size="sm">{tsdoc.displayName || udoc.uname || tsdoc.uid}</Text>
                       </Link>
                     </Group>
                   </Table.Td>
@@ -120,6 +123,14 @@ export default function ContestUserPage() {
                       >
                         {tsdoc.unrank ? t('Rank') : t('UnRank')}
                       </Button>
+                      {canRemove && tsdoc.attend && (
+                        <Button
+                          size="compact-xs"
+                          variant="light"
+                          color="red"
+                          disabled={!!loading}
+                          onClick={() => post({ operation: 'remove_user', uid: tsdoc.uid }, t('Saved'))}>{t('Remove')}</Button>
+                      )}
                       {canResume(tdoc, tsdoc) && (
                         <Button
                           size="compact-xs"

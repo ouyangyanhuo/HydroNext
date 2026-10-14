@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Center, Loader } from '@mantine/core';
 import themeList from 'monaco-themes/themes/themelist.json';
 import { useEffect, useRef, useState } from 'react';
@@ -64,18 +65,18 @@ async function getMonaco() {
     getWorker(_: any, label: string) {
       const lang = label.toLowerCase();
       if (['javascript', 'typescript'].includes(lang)) {
-        return import('monaco-editor/esm/vs/language/typescript/ts.worker?worker').then(({ default: Worker }) => new Worker());
+        return import('monaco-editor/languages/features/typescript/ts.worker.js?worker').then(({ default: Worker }) => new Worker());
       }
       if (['json'].includes(lang)) {
-        return import('monaco-editor/esm/vs/language/json/json.worker?worker').then(({ default: Worker }) => new Worker());
+        return import('monaco-editor/languages/features/json/json.worker.js?worker').then(({ default: Worker }) => new Worker());
       }
       if (['css', 'scss', 'less'].includes(lang)) {
-        return import('monaco-editor/esm/vs/language/css/css.worker?worker').then(({ default: Worker }) => new Worker());
+        return import('monaco-editor/languages/features/css/css.worker.js?worker').then(({ default: Worker }) => new Worker());
       }
       if (['html'].includes(lang)) {
-        return import('monaco-editor/esm/vs/language/html/html.worker?worker').then(({ default: Worker }) => new Worker());
+        return import('monaco-editor/languages/features/html/html.worker.js?worker').then(({ default: Worker }) => new Worker());
       }
-      return import('monaco-editor/esm/vs/editor/editor.worker?worker').then(({ default: Worker }) => new Worker());
+      return import('monaco-editor/editor/editor.worker.js?worker').then(({ default: Worker }) => new Worker());
     },
   };
   monacoInstance = m;

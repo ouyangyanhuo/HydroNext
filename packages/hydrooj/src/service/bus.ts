@@ -36,7 +36,6 @@ export interface EventMap {
     'database/config': () => VoidReturn;
 
     'system/setting': (args: Record<string, any>) => VoidReturn;
-    'system/setting-loaded': () => VoidReturn;
     'bus/broadcast': (event: keyof EventMap, payload: any, trace?: string) => VoidReturn;
     'monitor/update': (type: 'server' | 'judge', $set: any) => VoidReturn;
     'monitor/collect': (info: any) => VoidReturn;
@@ -99,6 +98,9 @@ export interface EventMap {
 
     'record/change': (rdoc: RecordDoc, $set?: any, $push?: any, body?: any) => void;
     'record/judge': (rdoc: RecordDoc, updated: boolean, pdoc?: ProblemDoc, updater?: any) => VoidReturn;
+
+    'auth/before-login': (ctx: Handler, udoc: User) => VoidReturn;
+    'auth/login': (ctx: Handler, udoc: User) => VoidReturn;
 }
 
 export function apply(ctx: Context) {

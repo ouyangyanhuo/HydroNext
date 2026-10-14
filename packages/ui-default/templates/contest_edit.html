@@ -174,6 +174,16 @@
               value:tdoc.allowPrint|default(false),
               row:false
             }) }}
+            {{ form.form_checkbox({
+              columns:4,
+              label:'Allow Team',
+              name:'allowTeam',
+              placeholder:_('Allow team participation'),
+              help_text:_('Once enabled, team participation cannot be disabled for this contest.'),
+              value:tdoc.allowTeam|default(false),
+              row:false,
+              disabled:tdoc.allowTeam|default(false)
+            }) }}
             <div style="display: none" class="contest-rule-settings contest-rule--oi contest-rule--strictioi">
             {{ form.form_checkbox({
               columns:4,
@@ -200,7 +210,7 @@
             <div style="display: none" class="contest-rule-settings contest-rule--oi contest-rule--ioi contest-rule--ledo contest-rule--strictioi">
             {{ form.form_text({
               columns:4,
-              label:'Flexable Duration',
+              label:'Flexible Duration',
               name:'contestDuration',
               placeholder:_('(leave blank if none)'),
               value:tdoc.duration|default(''),

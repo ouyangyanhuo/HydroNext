@@ -239,6 +239,7 @@ export default function ContestMainPage() {
           <Button size="xs" onClick={handleSearch} leftSection={<IconSearch size={14} stroke={1.8} />}>
             {t('Search')}
           </Button>
+          {user._id > 0 && <Button component={Link} to="contest_team" variant="light">{t('My Teams')}</Button>}
           {canCreateContest && (
             <Button
               component={Link}

@@ -21,6 +21,18 @@ function createInviteCode() {
     for (let i = 0; i < 8; i++) code += INVITE_CODE_ALPHABET[randomInt(INVITE_CODE_ALPHABET.length)];
     return code;
 }
+const cacheVersion = Symbol('domainCacheVersion');
+
+function setCache(key: string, ddoc: DomainDoc | null) {
+    if (ddoc) {
+        Object.defineProperty(ddoc, cacheVersion, {
+            value: Date.now(),
+            enumerable: false,
+            configurable: true,
+        });
+    }
+    cache.set(key, ddoc);
+}
 
 interface DomainUserArg {
     _id: number;
@@ -30,6 +42,7 @@ interface DomainUserArg {
 class DomainModel {
     static coll = coll;
     static collUser = collUser;
+    static getVersion = (ddoc) => ddoc ? ddoc[cacheVersion] : null;
 
     static JOIN_METHOD_NONE = 0;
     static JOIN_METHOD_ALL = 1;
@@ -85,7 +98,7 @@ class DomainModel {
         const result = await coll.findOne(query);
         if (result) {
             await bus.parallel('domain/get', result);
-            cache.set(key, result);
+            setCache(key, result);
         }
         return result;
     }
@@ -100,7 +113,7 @@ class DomainModel {
         const result = await coll.findOne(query);
         if (result) {
             await bus.parallel('domain/get', result);
-            cache.set(key, result);
+            setCache(key, result);
         } else {
             cache.set(key, null);
         }
@@ -159,11 +172,18 @@ class DomainModel {
             deleteUserCache(udoc);
             return res;
         }
+        if (!uid.length) return undefined;
         const affected = await UserModel.getMulti({ _id: { $in: uid } })
             .project<{ _id: number, mail: string, uname: string }>({ mail: 1, uname: 1 })
             .toArray();
         for (const udoc of affected) deleteUserCache(udoc);
-        return await collUser.updateMany({ domainId, uid: { $in: uid } }, update, { upsert: true });
+        return await collUser.bulkWrite([...new Set(uid)].map((id) => ({
+            updateOne: {
+                filter: { domainId, uid: id },
+                update,
+                upsert: true,
+            },
+        })));
     }
 
     static async setJoin(domainId: string, uid: MaybeArray<number>, join: boolean) {

@@ -1,9 +1,10 @@
-import { Card, Checkbox, Group, Pagination, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core';
+import { Card, Checkbox, Group, Pagination, Stack, Table, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
+import { ShortSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -159,7 +160,7 @@ export function ProctorLogsPanel({ args }: { args: any }) {
       {!logs.length && <Text ta="center" c="dimmed" py="xl">{t('No proctor logs yet.')}</Text>}
       <Group justify="space-between" className="hydro-paginator" wrap="wrap">
         <Group gap="xs" wrap="nowrap"><Text size="xs" c="dimmed">{t('Rows per page')}</Text>
-          <Select
+          <ShortSelect
             aria-label={t('Rows per page')}
             data={['25', '50']}
             value={String(data.pageSize || 25)}

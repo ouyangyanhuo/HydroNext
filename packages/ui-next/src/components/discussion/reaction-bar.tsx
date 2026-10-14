@@ -1,6 +1,6 @@
 import { Badge, Group, Tooltip } from '@mantine/core';
-import { useI18n } from '@/hooks/use-i18n';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
+import { useI18n } from '@/hooks/use-i18n';
 
 interface Reaction {
   id: string;
@@ -14,8 +14,8 @@ interface ReactionBarProps {
 }
 
 const EMOJI_MAP: Record<string, string> = {
-  '+1': '👍', '-1': '👎', 'heart': '❤️', 'smile': '😄',
-  'tada': '🎉', 'confused': '😕', 'eyes': '👀', 'rocket': '🚀',
+  '+1': '👍', '-1': '👎', heart: '❤️', smile: '😄',
+  tada: '🎉', confused: '😕', eyes: '👀', rocket: '🚀',
 };
 
 export function ReactionBar({ reactions, onReact }: ReactionBarProps) {

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Text, Group, Badge } from '@mantine/core';
+import { Badge, Group, Text } from '@mantine/core';
+import { useEffect, useState } from 'react';
 import { useI18n } from '@/hooks/use-i18n';
 
 interface ContestTimerProps {

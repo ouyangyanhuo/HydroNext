@@ -1,4 +1,15 @@
-import { Avatar, Group, Modal, type ModalProps, NumberInput, Paper, PasswordInput, ScrollArea, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Avatar,
+  Group,
+  Modal,
+  type ModalProps,
+  NumberInput,
+  Paper,
+  PasswordInput,
+  ScrollArea,
+  Stack,
+  Text,
+  Textarea,
+  TextInput } from '@mantine/core';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Button, UnstyledButton } from '@/components/common/button';
 import { LongSelect } from '@/components/common/select';
@@ -127,7 +138,8 @@ function DomainSelectField({
                 <UnstyledButton
                   key={domain._id}
                   p="sm"
-                  className="hover:bg-[var(--hydro-surface-muted)] border-b border-[var(--hydro-border)] last:border-b-0 transition-colors duration-150"
+                  className={'hover:bg-[var(--hydro-surface-muted)] border-b border-[var(--hydro-border)] '
+                    + 'last:border-b-0 transition-colors duration-150'}
                   onClick={() => selectDomain(domain)}
                 >
                   <Group gap="sm">

@@ -66,23 +66,27 @@ class DomainRankHandler extends Handler {
         const membershipMatch = rankingSort === 'rp'
             ? { domainId, join: true, rp: { $gt: 0 } }
             : { domainId, join: true };
-        const [result] = await document.collStatus.aggregate<{
+        const [result] = await domain.collUser.aggregate<{
             users: { _id: number, solved: number, rp: number }[];
             total: { count: number }[];
         }>([
-            { $match: { domainId, docType: document.TYPE_PROBLEM, status: STATUS.STATUS_ACCEPTED, uid: { $gt: 1 } } },
-            { $group: { _id: '$uid', solved: { $sum: 1 } } },
+            { $match: { ...membershipMatch, uid: { $gt: 1 } } },
             {
                 $lookup: {
-                    from: domain.collUser.collectionName,
-                    localField: '_id',
+                    from: document.collStatus.collectionName,
+                    localField: 'uid',
                     foreignField: 'uid',
-                    pipeline: [{ $match: membershipMatch }, { $project: { rp: 1 } }],
-                    as: 'membership',
+                    pipeline: [
+                        { $match: { domainId, docType: document.TYPE_PROBLEM, status: STATUS.STATUS_ACCEPTED } },
+                        { $count: 'count' },
+                    ],
+                    as: 'accepted',
                 },
             },
-            { $match: { 'membership.0': { $exists: true } } },
-            { $set: { rp: { $ifNull: [{ $arrayElemAt: ['$membership.rp', 0] }, 0] } } },
+            { $project: {
+                _id: '$uid', solved: { $ifNull: [{ $arrayElemAt: ['$accepted.count', 0] }, 0] },
+                rp: { $ifNull: ['$rp', 0] },
+            } },
             { $sort: rankingSort === 'rp' ? { rp: -1, solved: -1, _id: 1 } : { solved: -1, rp: -1, _id: 1 } },
             {
                 $facet: {
@@ -524,6 +528,10 @@ export const DomainApi = {
             if (!udoc.hasPerm(PERM.PERM_VIEW) && !udoc.hasPriv(PRIV.PRIV_VIEW_ALL_DOMAIN)) return null;
             return ddoc;
         },
+    ),
+    'domain.current': Query(
+        Schema.object({}),
+        async (handler) => ({ domain: handler.domain as DomainDoc }),
     ),
     groups: Query(
         Schema.object({

@@ -6,7 +6,7 @@ __langname: 简体中文
 '{0} {1} delete your discussion reply {2} in "{3}"({4}).': '{0} {1} 从讨论 {3}({4}) 删除了你的回复 {2}。'
 '{0} comments': '{0} 条评论'
 '{0} discussions': '{0} 条讨论'
-'{0} is a moderator of this domain.': '{}是这个域的管理者之一。'
+'{0} is a moderator of this domain.': '{0}是这个域的管理者之一。'
 '{0} limit exceeded (limit: {2} operations in {1} seconds).': '{0} 超过频率限制。限制：{1} 秒内最多 {2} 次操作。'
 '{0} problems': '{0} 道题'
 '{0} sections': '{0} 小节'
@@ -29,11 +29,12 @@ __langname: 简体中文
 'Current dataset: {0}': '当前测试数据: {0}'
 'Discussion: Terms Of Service': 讨论区服务条款
 'First Blood Notice\n{0} solved problem {1} ({2})': '题目一血提示\n{0} 解决了题目 {1} ({2})'
-'Format: category 1, sub category 1.1, sub category 1.2, ..., sub category 1.x, ..., category n, sub category n.1, sub category n.2, ..., sub category n.m, ...': 格式：分类1, 子分类1.1, 子分类1.2, ..., 子分类1.x, ..., 分类n, 子分类n.1, 子分类n.2, ..., 子分类n.m, ...
+'Format: category 1, sub category 1.1, sub category 1.2, ..., sub category 1.x, ..., category n, sub category n.1, sub category n.2, ..., sub category n.m, ...': 格式：分类 1, 子分类 1.1, 子分类 1.2, ..., 子分类 1.x, ..., 分类 n, 子分类 n.1, 子分类 n.2, ..., 子分类 n.m, ...
 'Format: one group per line, CSV: groupName,uid1,uid2,...': '格式：每行一个小组，CSV：组名,UID1,UID2,...'
 'Join {0}': '加入 {0}'
 'No': 否
 'Note: Problem title may not be hidden.': 注意：题目标题可能不会被隐藏。
+'On line {0}: Read {1}, expect {2}.': 第 {0} 行的答案错误，读取到 {1}，但期望 {2}。
 'Or upload a file:': 或者上传一个文件：
 'Original score: {0}': '原得分: {0}'
 'Role {1} already exists in domain {0}.': '域 {0} 中已存在角色 {1}。'
@@ -490,6 +491,40 @@ Materials: 材料
 Max files for user: 单用户最大文件数量
 Max files per problem: 单题最大文件数量
 Max files size per problem: 单题最大总文件大小
+Max members per contest team: 每个参赛队伍最大成员数
+Accept: 接受
+Reject: 拒绝
+Allow Team: 允许团队
+Allow team participation: 允许团队参赛
+Choose how you want to participate in this contest.: 选择你参加本次比赛的方式。
+Create a Team: 创建队伍
+'Create a team, invite teammates by their username, then choose "Team Participation" when attending an allow-team contest.': 创建队伍，按用户名邀请队友，之后在报名允许团队的比赛时选择“团队参赛”。
+How It Works: 使用说明
+Invitation code: 邀请码
+Invitation code is required.: 必须填写邀请码。
+Invitation sent: 邀请已发送
+Invite Member: 邀请成员
+Leave Team: 退出队伍
+Leave this team? You may lose access to team contests.: 确定退出该队伍吗？退出后你可能无法访问该队伍参加的比赛。
+Manage Teams: 管理队伍
+Members: 成员
+My Teams: 我的队伍
+Once enabled, team participation cannot be disabled for this contest.: 一旦启用，该比赛将无法关闭团队参赛。
+Pending Invites: 待处理邀请
+Personal Participation: 个人参赛
+Please select a team.: 请选择一个队伍。
+Rename: 重命名
+Revoke: 撤销
+Save: 保存
+Successfully attended: 报名成功
+Team: 队伍
+Team Participation: 团队参赛
+Team name: 队伍名称
+Team participation is not allowed for this contest.: 该比赛不允许团队参赛。
+Teams let multiple users participate in a contest together, sharing one set of submissions.: 队伍允许多名用户共同参加比赛，共享同一份提交记录。
+You are not in any team.: 你还没有加入任何队伍。
+You are not in any team yet. Create one from the panel on the right, or ask a teammate to invite you by your username.: 你还没有加入任何队伍。在右侧面板创建一个，或请队友按你的用户名邀请你。
+'You have {0} pending team invite(s)': '你有 {0} 个待处理的队伍邀请'
 Max pretest count per minute: 每分钟自测数量限制
 Max submission count per minute: 每分钟提交数量限制
 Max total file size for user: 单用户最大总文件大小
@@ -767,6 +802,7 @@ Sorry: 对不起
 Sort by: 排序
 Source type: 来源类型
 Split View: 分屏预览
+Standard answer longer than user output.: 答案比您的输出长。
 Star Topic: 收藏讨论
 Star: 收藏
 Starred Problems: 收藏的题目
@@ -812,6 +848,7 @@ theme: 主题
 There are no contests...: 没有比赛…
 There is no homework so far ╰(*°▽°*)╯: 目前还没有作业 ╰(*°▽°*)╯
 This contest is not live.: 比赛没有开始。
+This contest has already started.: 比赛已开始。
 This email was sent by {0} automatically, and please do not reply directly.: 这封邮件由 {0} 自动发送，请勿直接回复。
 This homework is not open and you cannot view problems.: 该作业还未到开放时间，您无法查看作业题目。
 This homework is not open.: 该作业还未开放递交。

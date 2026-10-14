@@ -2,13 +2,13 @@
 /* eslint-disable no-await-in-loop */
 import fs from 'fs';
 import saslPrep from '@mongodb-js/saslprep';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { Dictionary } from 'lodash';
 import moment from 'moment-timezone';
 import Schema from 'schemastery';
 import { LangConfig, parseLang } from '@hydrooj/common';
 import { findFileSync, randomstring } from '@hydrooj/utils';
-import { Context } from '../context';
+import { Context, Service } from '../context';
 import { Setting as _Setting } from '../interface';
 import { Logger } from '../logger';
 import * as builtin from './builtin';
@@ -264,7 +264,7 @@ AccountSetting(
     Setting('setting_info', 'studentId', '', 'text', 'Student ID', '', FLAG_PRIVATE),
     Setting('setting_info', 'phone', null, 'text', 'Phone', null, FLAG_PRIVATE),
     Setting('setting_storage', 'unreadMsg', 0, 'number', 'Unread Message Count', null, FLAG_DISABLED | FLAG_HIDDEN),
-    Setting('setting_storage', 'badge', '', 'text', 'badge info', null, FLAG_DISABLED | FLAG_HIDDEN),
+    Setting('setting_storage', 'badge', '', 'text', 'badge info', null, FLAG_DISABLED | FLAG_HIDDEN | FLAG_PUBLIC),
     Setting('setting_storage', 'banReason', '', 'text', 'ban reason', null, FLAG_DISABLED | FLAG_HIDDEN),
     Setting('setting_storage', 'pinnedDomains', [], 'json', 'pinned domains', null, FLAG_DISABLED | FLAG_HIDDEN),
 );
@@ -342,6 +342,7 @@ SystemSetting(
     Setting('setting_limits', 'limit.user_files_size', 128 * 1024 * 1024, 'number', 'limit.user_files_size', 'Max total file size for user'),
     Setting('setting_limits', 'limit.contest_files', 100, 'number', 'limit.contest_files', 'Max files for contest or training'),
     Setting('setting_limits', 'limit.contest_files_size', 128 * 1024 * 1024, 'number', 'limit.contest_files_size', 'Max total file size for contest or training'),
+    Setting('setting_limits', 'limit.team_members', 5, 'number', 'limit.team_members', 'Max members per contest team'),
     Setting('setting_limits', 'limit.submission', 60, 'number', 'limit.submission', 'Max submission count per minute'),
     Setting('setting_limits', 'limit.submission_user', 15, 'number', 'limit.submission_user', 'Max submission count per user per minute'),
     Setting('setting_limits', 'limit.pretest', 60, 'number', 'limit.pretest', 'Max pretest count per minute'),
@@ -374,42 +375,54 @@ SystemSetting(
 
 export const langs: Record<string, LangConfig> = {};
 
-export const inject = ['db'];
-export async function apply(ctx: Context) {
-    logger.info('Ensuring settings');
-    for (const lang in global.Hydro.locales) {
-        if (!global.Hydro.locales[lang].__interface) continue;
-        langRange[lang] = global.Hydro.locales[lang].__langname;
+export class SettingModelService extends Service {
+    static inject = ['db', 'model:system'];
+
+    constructor(ctx: Context) {
+        super(ctx, 'model:setting');
     }
-    const system = global.Hydro.model.system;
-    for (const setting of SYSTEM_SETTINGS) {
-        if (!setting.value) continue;
-        const current = await ctx.db.collection('system').findOne({ _id: setting.key });
-        if (!current || current.value == null || current.value === '') {
-            await system.set(setting.key, setting.value);
+
+    async [Service.init]() {
+        logger.info('Ensuring settings');
+        for (const lang in global.Hydro.locales) {
+            if (!global.Hydro.locales[lang].__interface) continue;
+            langRange[lang] = global.Hydro.locales[lang].__langname;
         }
+        const system = this.ctx['model:system'];
+        for (const setting of SYSTEM_SETTINGS) {
+            if (!setting.value) continue;
+            const current = await this.ctx.db.collection('system').findOne({ _id: setting.key });
+            if (!current || current.value == null || current.value === '') {
+                await system.set(setting.key, setting.value);
+            }
+        }
+        try {
+            Object.assign(langs, parseLang(system.get('hydrooj.langs')));
+            const range = {};
+            for (const key in langs) range[key] = langs[key].display;
+            LangSettingNode.range = range;
+            ServerLangSettingNode.range = range;
+        } catch (e) { /* Ignore */ }
+        return this.ctx.on('system/setting', (args) => {
+            if (!args.hydrooj?.langs) return;
+            Object.assign(langs, parseLang(args.hydrooj.langs));
+            const range = {};
+            for (const key in langs) range[key] = langs[key].display;
+            LangSettingNode.range = range;
+            ServerLangSettingNode.range = range;
+        });
     }
-    try {
-        Object.assign(langs, parseLang(system.get('hydrooj.langs')));
-        const range = {};
-        for (const key in langs) range[key] = langs[key].display;
-        LangSettingNode.range = range;
-        ServerLangSettingNode.range = range;
-    } catch (e) { /* Ignore */ }
-    ctx.on('system/setting', (args) => {
-        if (!args.hydrooj?.langs) return;
-        Object.assign(langs, parseLang(args.hydrooj.langs));
-        const range = {};
-        for (const key in langs) range[key] = langs[key].display;
-        LangSettingNode.range = range;
-        ServerLangSettingNode.range = range;
-    });
-    ctx.emit('system/setting-loaded');
+}
+
+export const inject = ['db'];
+export function apply(ctx: Context) {
+    ctx.plugin(SettingModelService);
 }
 
 global.Hydro.model.setting = {
     apply,
     inject,
+    SettingModelService,
 
     Setting,
     PreferenceSetting,

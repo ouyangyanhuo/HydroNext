@@ -76,13 +76,13 @@ function createRegistryStore() {
     return state.interceptors[name] ?? [];
   }
 
-  function setDefault(name: SlotName, comp: React.FC<any>) {
-    state.defaults[name] = comp;
+  function setDefault(name: SlotName, value: React.FC<any>) {
+    state.defaults[name] = value;
     bumpVersion(name);
   }
 
   function getDefault(name: SlotName): React.FC<any> | undefined {
-    return state.defaults[name];
+    return state.defaults[name] as React.FC<any> | undefined;
   }
 
   function setPageMetadata(name: string, metadata: PageMetadata) {

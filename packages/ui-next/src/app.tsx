@@ -8,8 +8,12 @@ import { SlotErrorBoundary } from './registry/error-boundary';
 import { store } from './registry/store';
 
 const PageRenderer = defineSlot('app:page-renderer', () => {
-  const { name } = usePageData();
-  const slotName: SlotName = `page:${name}`;
+  const { name, template, args } = usePageData();
+  const templateName = template?.replace(/\.html$/, '');
+  const pageName = args.error ? 'error'
+    : store.getDefault(`page:${name}`) ? name
+      : templateName && store.getDefault(`page:${templateName}`) ? templateName : name;
+  const slotName: SlotName = `page:${pageName}`;
 
   const [subscribe, getSnapshot] = useMemo(
     () => [

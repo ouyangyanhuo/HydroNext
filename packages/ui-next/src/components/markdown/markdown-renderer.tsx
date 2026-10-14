@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Box } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import hljs from 'highlight.js/lib/core';
@@ -295,10 +296,12 @@ function fileMediaPlugin(md: MarkdownIt) {
     if (service === 'bilibili') {
       const bvid = getBilibiliId(src);
       if (!bvid) return externalLink;
+      // eslint-disable-next-line max-len
       return `<div class="hydro-markdown-embed"><iframe src="https://player.bilibili.com/player.html?bvid=${bvid}&amp;autoplay=0" title="Bilibili video ${bvid}" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
     }
     if (service === 'pdf' || ext === 'pdf') {
       if (isFile) {
+        // eslint-disable-next-line max-len
         return `<div class="file-inline-viewer my-3 rounded-md border border-[var(--hydro-border)] overflow-hidden" data-file-src="${md.utils.escapeHtml(displayName)}" data-file-ext="pdf"><div class="flex items-center justify-center p-8 text-sm text-[var(--hydro-text-muted)]">${icon} Loading PDF...</div></div>`;
       }
       if (!validExternalUrl) return externalLink;
@@ -306,9 +309,11 @@ function fileMediaPlugin(md: MarkdownIt) {
     }
     if (['docx', 'doc', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext)) {
       if (!isFile) return externalLink;
+      // eslint-disable-next-line max-len
       return `<div class="file-inline-viewer my-3 rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] p-4" data-file-src="${md.utils.escapeHtml(displayName)}" data-file-ext="${md.utils.escapeHtml(ext)}"><div class="flex items-center gap-2 text-sm text-[var(--hydro-text-muted)]">${icon} Loading ${md.utils.escapeHtml(displayName)}...</div></div>`;
     }
     if (isFile) {
+      // eslint-disable-next-line max-len
       return `<a href="#" class="file-preview-link hydro-subtle-link inline-flex items-center gap-1 rounded border border-[var(--hydro-border)] bg-[var(--hydro-surface)] px-2 py-1 text-sm font-medium hover:bg-[var(--hydro-surface-muted)]" data-file-src="${md.utils.escapeHtml(displayName)}" data-file-ext="${md.utils.escapeHtml(ext)}">${icon} ${md.utils.escapeHtml(displayName)}</a>`;
     }
     return externalLink;

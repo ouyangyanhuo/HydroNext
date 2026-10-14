@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import assert from 'node:assert/strict';
 import { createPrivateKey, createPublicKey, generateKeyPairSync } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -207,22 +208,26 @@ test('refresh rotates tokens exactly once and honors the refresh policy', async 
     await assert.rejects(f.model.refresh(f.coll('proctor.session').rows.find((row) => !row.revoked)));
 });
 
-test('one generation creates independent Ed25519 and RSA-3072 pairs, stores private keys with restrictive permissions and returns only public keys', async () => {
-    const f = fixture();
-    const keys = await f.model.generateKeys();
-    const stored = JSON.parse([...f.files.values()][0]);
-    assert.equal(createPublicKey(keys.signingPublicKey).asymmetricKeyType, 'ed25519');
-    assert.equal(createPublicKey(keys.encryptionPublicKey).asymmetricKeyDetails?.modulusLength, 3072);
-    assert.equal(createPrivateKey(stored.encryptionPrivateKey).asymmetricKeyType, 'rsa');
-    assert.ok(cryptoHelpers.verifyPayload({ test: true }, cryptoHelpers.signedPayload({ test: true }, stored.signingPrivateKey), keys.signingPublicKey));
-    assert.equal(stored.keyId, keys.keyId);
-    assert.equal(f.coll('proctor.config').rows[0].keyId, keys.keyId);
-    assert.equal(keys.signingPrivateKey, undefined);
-    assert.equal(keys.encryptionPrivateKey, undefined);
-    assert.equal(f.fileOps.find((op) => op[0] === 'mkdir')[2].mode, 0o700);
-    assert.equal(f.fileOps.find((op) => op[0] === 'write')[1].mode, 0o600);
-    assert.equal(f.fileOps.find((op) => op[0] === 'write')[1].flag, 'wx');
-});
+test('one generation creates independent Ed25519 and RSA-3072 pairs, stores private keys with restrictive permissions and returns only public keys',
+    async () => {
+        const f = fixture();
+        const keys = await f.model.generateKeys();
+        const stored = JSON.parse([...f.files.values()][0]);
+        assert.equal(createPublicKey(keys.signingPublicKey).asymmetricKeyType, 'ed25519');
+        assert.equal(createPublicKey(keys.encryptionPublicKey).asymmetricKeyDetails?.modulusLength, 3072);
+        assert.equal(createPrivateKey(stored.encryptionPrivateKey).asymmetricKeyType, 'rsa');
+        assert.ok(cryptoHelpers.verifyPayload({ test: true },
+            cryptoHelpers.signedPayload({ test: true },
+                stored.signingPrivateKey),
+            keys.signingPublicKey));
+        assert.equal(stored.keyId, keys.keyId);
+        assert.equal(f.coll('proctor.config').rows[0].keyId, keys.keyId);
+        assert.equal(keys.signingPrivateKey, undefined);
+        assert.equal(keys.encryptionPrivateKey, undefined);
+        assert.equal(f.fileOps.find((op) => op[0] === 'mkdir')[2].mode, 0o700);
+        assert.equal(f.fileOps.find((op) => op[0] === 'write')[1].mode, 0o600);
+        assert.equal(f.fileOps.find((op) => op[0] === 'write')[1].flag, 'wx');
+    });
 
 test('settings persist both switch states and numeric policies without trusting a client-supplied key ID', async () => {
     const f = fixture();
@@ -299,9 +304,18 @@ test('automatic re-handshake preserves the original key and fingerprint binding 
     const c = await f.model.challenge(identity, f.tdoc, raw, 'https://oj.example');
     await assert.rejects(f.model.handshake(identity, c.payload.challengeId,
         cryptoHelpers.signedPayload(c.payload, other.privateKey.export({ type: 'pkcs8', format: 'pem' }).toString())));
-    const safe = await f.model.challenge(identity, f.tdoc, { ...f.raw, deviceInfo: { ...f.raw.deviceInfo, hostname: 'not-collected' } }, 'https://oj.example');
+    const safe = await f.model.challenge(identity,
+        f.tdoc,
+        { ...f.raw,
+            deviceInfo: { ...f.raw.deviceInfo,
+                hostname: 'not-collected' } },
+        'https://oj.example');
     assert.equal(safe.payload.deviceInfo.hostname, undefined);
-    const resumed = await f.model.handshake(identity, safe.payload.challengeId, cryptoHelpers.signedPayload(safe.payload, clientPrivate), '203.0.113.9');
+    const resumed = await f.model.handshake(identity,
+        safe.payload.challengeId,
+        cryptoHelpers.signedPayload(safe.payload,
+            clientPrivate),
+        '203.0.113.9');
     assert.equal(resumed.payload.attemptId, response.payload.attemptId);
     assert.equal(f.coll('proctor.session').rows.at(-1).ip, '203.0.113.9');
 });

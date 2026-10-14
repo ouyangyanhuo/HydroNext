@@ -250,7 +250,10 @@ export default function DomainUserPage() {
     .filter((role: any) => role._id !== 'guest')
     .map((role: any) => ({ value: role._id, label: role._id })), [roles]);
   const [selected, setSelected] = useState<number[]>([]);
-  const [roleDraft, setRoleDraft] = useState<Record<number, string>>(() => Object.fromEntries(users.map((user: any) => [user._id, user.role || 'default'])));
+  const [roleDraft,
+    setRoleDraft] = useState<Record<number,
+    string>>(() => Object.fromEntries(users.map((user: any) => [user._id,
+    user.role || 'default'])));
   const [bulkRole, setBulkRole] = useState(roleOptions[0]?.value || 'default');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState('');

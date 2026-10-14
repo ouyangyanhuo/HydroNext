@@ -93,9 +93,9 @@ export async function apply(ctx: Context) {
         await server.listen();
         await ctx.parallel('app/listen');
         logger.success('Server started');
-        process.send?.('ready');
         process.title = `HydroOJ (v${global.Hydro.version.hydrooj}, worker ${process.env.NODE_APP_INSTANCE}${process.env.DEV ? ', debug' : ''})`;
         await ctx.parallel('app/ready');
+        process.send?.('ready');
     });
     return { fail };
 }

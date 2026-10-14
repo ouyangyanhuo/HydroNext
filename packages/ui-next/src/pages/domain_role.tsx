@@ -71,7 +71,8 @@ export default function DomainRolePage() {
               <Table.Th w={48}>
                 <Checkbox
                   aria-label={t('Select All')}
-                  checked={roles.some((role: any) => !BUILTIN_ROLES.has(role._id)) && roles.filter((role: any) => !BUILTIN_ROLES.has(role._id)).every((role: any) => selected.includes(role._id))}
+                  checked={roles.some((role: any) => !BUILTIN_ROLES.has(role._id))
+                    && roles.filter((role: any) => !BUILTIN_ROLES.has(role._id)).every((role: any) => selected.includes(role._id))}
                   onChange={(e) => setSelected(e.currentTarget.checked
                     ? roles.filter((role: any) => !BUILTIN_ROLES.has(role._id)).map((role: any) => role._id)
                     : [])}

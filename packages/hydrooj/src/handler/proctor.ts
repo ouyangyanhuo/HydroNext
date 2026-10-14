@@ -297,7 +297,8 @@ export class ProctorIdentityHandler extends Handler {
             this.checkPriv(PRIV.PRIV_USER_PROFILE);
             this.checkPerm(PERM.PERM_VIEW_CONTEST);
             const tdoc = await contest.get(domainId, tid);
-            const status = await contest.getStatus(domainId, tid, this.user._id);
+            const teamVid = tdoc?.allowTeam ? await contest.getTeamVid(domainId, tid, this.user._id) : null;
+            const status = await contest.getStatus(domainId, tid, teamVid ?? this.user._id);
             if (!tdoc || (!status?.attend && !root)) throw new ForbiddenError('Attend the contest before starting proctoring.');
             proctorEnabled = !!tdoc.proctorEnabled;
             if (routePid) {

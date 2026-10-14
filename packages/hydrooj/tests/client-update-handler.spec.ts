@@ -10,10 +10,22 @@ import * as updateLib from '../src/lib/client-update.ts';
 
 const require = createRequire(import.meta.url);
 const id = new ObjectId('1234567890abcdef12345678');
-const asset = { _id: id, kind: 'asar', version: '1.2.3', filename: 'app.asar', size: 25000, sha256: 'a'.repeat(64), path: 'private/path', bundleError: '' };
+const asset = { _id: id,
+    kind: 'asar',
+    version: '1.2.3',
+    filename: 'app.asar',
+    size: 25000,
+    sha256: 'a'.repeat(64),
+    path: 'private/path',
+    bundleError: '' };
 function fixture(options: any = {}) {
     const calls: any[] = [];
-    let config: any = { revision: 0, draft: { ...updateLib.defaultDraft, origin: 'https://oj.example', version: '1.2.3', buildVersion: '2026101001', asar: id.toHexString() },
+    let config: any = { revision: 0,
+        draft: { ...updateLib.defaultDraft,
+            origin: 'https://oj.example',
+            version: '1.2.3',
+            buildVersion: '2026101001',
+            asar: id.toHexString() },
         ...(options.published ? { publishedAssets: [id.toHexString()], manifest: { version: '1.2.3', hotUpdate: { sha256: 'a'.repeat(64) } } } : {}),
         ...options.config };
     const rows = options.rows || [{ ...asset, ...options.asset }];

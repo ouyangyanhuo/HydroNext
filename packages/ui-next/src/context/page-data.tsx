@@ -8,6 +8,7 @@ import { type UiContext, type UserContext, useSessionStore } from '@/stores/sess
 
 export interface PageData {
   name: string;
+  template: string;
   args: {
     UserContext: Record<string, any>;
     UiContext: Record<string, any>;

@@ -183,6 +183,7 @@ export default function ContestEditPage() {
     allowPrint: tdoc.allowPrint ?? false,
     keepScoreboardHidden: tdoc.keepScoreboardHidden ?? false,
     proctorEnabled: tdoc.proctorEnabled ?? false,
+    allowTeam: tdoc.allowTeam ?? false,
     lock: tdoc.lockAt && tdoc.endAt ? Math.round((new Date(tdoc.endAt).getTime() - new Date(tdoc.lockAt).getTime()) / 60000) : '',
     contestDuration: tdoc.duration || '',
   });
@@ -551,6 +552,13 @@ export default function ContestEditPage() {
                 )}
               </SimpleGrid>
               <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                <Checkbox
+                  label={t('Allow team participation')}
+                  description={t('Once enabled, team participation cannot be disabled for this contest.')}
+                  checked={form.allowTeam}
+                  disabled={!!tdoc.allowTeam}
+                  onChange={(e) => setForm({ ...form, allowTeam: e.currentTarget.checked })}
+                />
                 <Checkbox label={t('Rated')} checked={form.rated} onChange={(e) => setForm({ ...form, rated: e.currentTarget.checked })} />
                 <Checkbox
                   label={t('Auto hide-and show')}

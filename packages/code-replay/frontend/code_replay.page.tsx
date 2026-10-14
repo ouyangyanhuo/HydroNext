@@ -66,6 +66,8 @@ function serializeSelections(editor: monacoTypes.editor.IStandaloneCodeEditor) {
   }));
 }
 
+let currentCapture: ScratchpadReplayCapture | null = null;
+
 class ScratchpadReplayCapture {
   sessionId = getSessionId();
   initialCode = '';
@@ -126,6 +128,8 @@ class ScratchpadReplayCapture {
     });
     this._beforeUnloadHandler = () => this.flushBeacon();
     window.addEventListener('beforeunload', this._beforeUnloadHandler);
+    // The patch function is hoisted; installation waits for a live editor.
+    // eslint-disable-next-line ts/no-use-before-define
     installSubmitPatch(this);
   }
 
@@ -241,7 +245,6 @@ class ScratchpadReplayCapture {
   }
 }
 
-let currentCapture: ScratchpadReplayCapture | null = null;
 let submitPatchInstalled = false;
 let originalPost: typeof request.post | null = null;
 let scratchpadWatchTimer: ReturnType<typeof setInterval> | null = null;
@@ -286,7 +289,7 @@ function installSubmitPatch(capture: ScratchpadReplayCapture) {
   };
 }
 
-function uninstallSubmitPatch() {
+export function uninstallSubmitPatch() {
   if (!submitPatchInstalled || !originalPost) return;
   request.post = originalPost;
   submitPatchInstalled = false;

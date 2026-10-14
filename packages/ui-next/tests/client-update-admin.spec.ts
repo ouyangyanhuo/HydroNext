@@ -42,19 +42,54 @@ let allowed = true;
 const notices: any[] = [];
 const mocks: any = {
     '@mantine/core': { Alert: box, Badge: box, Card: box, Grid, Group: box, Stack: box, Table, Text: box, Title: box, TextInput: field,
-        Textarea: ({ label, value, onChange, readOnly, 'aria-label': ariaLabel }: any) => h('textarea', { 'data-field': label || ariaLabel, value, onChange, readOnly }),
-        FileInput: ({ onChange, value }: any) => h('label', null, h('span', null, value?.name), h('input', { type: 'file', onChange: (e: any) => onChange(e.target.files[0]) })),
-        Pagination: ({ value, total, onChange, disabled }: any) => h('button', { disabled: disabled || value >= total, onClick: () => onChange(value + 1) }, 'Next page') },
+        Textarea: ({ label,
+            value,
+            onChange,
+            readOnly,
+            'aria-label': ariaLabel }: any) => h('textarea',
+            { 'data-field': label || ariaLabel,
+                value,
+                onChange,
+                readOnly }),
+        FileInput: ({ onChange,
+            value }: any) => h('label',
+            null,
+            h('span',
+                null,
+                value?.name),
+            h('input',
+                { type: 'file',
+                    onChange: (e: any) => onChange(e.target.files[0]) })),
+        Pagination: ({ value,
+            total,
+            onChange,
+            disabled }: any) => h('button',
+            { disabled: disabled || value >= total,
+                onClick: () => onChange(value + 1) },
+            'Next page') },
     '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
     '@tabler/icons-react': { IconDownload: box, IconUpload: box },
-    '@/components/common/button': { Button: ({ onClick, children, disabled, loading, type = 'button' }: any) => h('button', { onClick, disabled: disabled || loading, type }, children) },
-    '@/components/common/confirm-dialog': { ConfirmDialog: ({ opened, onConfirm }: any) => opened ? h('button', { onClick: onConfirm }, 'Confirm') : null },
+    '@/components/common/button': { Button: ({ onClick,
+        children,
+        disabled,
+        loading,
+        type = 'button' }: any) => h('button',
+        { onClick,
+            disabled: disabled || loading,
+            type },
+        children) },
+    '@/components/common/confirm-dialog': { ConfirmDialog: ({ opened,
+        onConfirm }: any) => opened ? h('button',
+        { onClick: onConfirm },
+        'Confirm') : null },
     '@/components/common/page-header': { PageHeader: ({ title, children }: any) => h('header', null, title, children) },
     '@/components/common/select': { LongSelect: ({ label, data, value, onChange }: any) => h('select', {
         'data-field': label, value: value || '', onChange: (event: any) => onChange(event.target.value),
     }, h('option', { value: '' }, 'None'), ...data.map((item: any) => h('option', { value: item.value, key: item.value }, item.label))) },
     '@/context/page-data': { usePageData: () => ({ args }) },
-    '@/hooks/use-build-url': { useBuildUrl: () => (_: any, __: any, query: any = {}) => `/d/exam/manage/client-updates?${new URLSearchParams(query)}` },
+    '@/hooks/use-build-url': { useBuildUrl: () => (_: any,
+        __: any,
+        query: any = {}) => `/d/exam/manage/client-updates?${new URLSearchParams(query)}` },
     '@/hooks/use-i18n': { useI18n: () => ({ t: (value: string) => value === 'Package version must match the release version.' ? '版本不匹配' : value }) },
     '@/hooks/use-permission': { PRIV: { PRIV_EDIT_SYSTEM: 1 }, useHasPriv: () => allowed },
     '@/utils/client-update': updates, '@/utils/proctor': proctor,
@@ -68,7 +103,13 @@ const Page = module.exports.default;
 const asset = { id: 'a'.repeat(24), kind: 'config', version: '1.0.0', filename: 'exam-config.json', size: 100, sha256: 'a'.repeat(64) };
 function pageData(page = 1) {
     return { page, pageCount: 2, count: 30, assets: [asset], selectedAssets: [], q: '', publishedAssets: [], revision: 0, manifest: null,
-        draft: { ...updates.defaultDraft, origin: 'https://oj.example', version: '1.0.0', minClientVersion: '1.0.0', buildVersion: '2026101001', description: '', changelog: [],
+        draft: { ...updates.defaultDraft,
+            origin: 'https://oj.example',
+            version: '1.0.0',
+            minClientVersion: '1.0.0',
+            buildVersion: '2026101001',
+            description: '',
+            changelog: [],
             asar: '', config: asset.id, installer: '', portable: '', asarFallbackUrl: '', configFallbackUrl: '' } };
 }
 async function mount(overrides: any = {}) {
@@ -127,7 +168,11 @@ test('publishing requires confirmation and displays localized validation failure
     const calls: any[] = [];
     request = async (_, init) => {
         calls.push(JSON.parse(init.body));
-        return { ok: false, json: async () => ({ error: { name: 'ValidationError', params: ['draft', null, 'Package version must match the release version.'] } }) };
+        return { ok: false,
+            json: async () => ({ error: { name: 'ValidationError',
+                params: ['draft',
+                    null,
+                    'Package version must match the release version.'] } }) };
     };
     const view = await mount();
     try {

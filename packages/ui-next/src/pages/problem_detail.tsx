@@ -98,7 +98,7 @@ async function downloadProblemZip(pdoc: any, title: string) {
   await addRemoteFiles('testdata', pdoc.data || [], 'testdata');
   await addRemoteFiles('additional_file', pdoc.additional_file || [], 'additional_file');
 
-  const blob = new Blob([zipSync(files)], { type: 'application/zip' });
+  const blob = new Blob([new Uint8Array(zipSync(files)).buffer], { type: 'application/zip' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

@@ -1,25 +1,18 @@
 import React, { lazy } from 'react';
 import Layout from '../components/layout';
 import { store } from './store';
-import type { PageMetadata } from './types';
-
-interface PageModule<P = any> {
-  default: React.ComponentType<P>;
-  Layout?: React.ComponentType<React.PropsWithChildren>;
-}
-
-type PageLoader<P = any> = () => Promise<PageModule<P>>;
+import type { PageLoader, PageMetadata, RegisterPageOptions } from './types';
 
 export function registerPage<P = any>(
   name: string,
   loader: PageLoader<P>,
-  metadata?: PageMetadata,
+  options: Partial<PageMetadata> & RegisterPageOptions = {},
 ) {
-  if (metadata) store.setPageMetadata(name, metadata);
+  if (options.title !== undefined) store.setPageMetadata(name, { title: options.title, nav: options.nav });
   store.setDefault(`page:${name}`, lazy(() =>
     loader().then((mod) => {
       const PageComp = mod.default;
-      const LayoutComp = mod.Layout || Layout;
+      const LayoutComp = mod.Layout || store.getDefault(`layout:${options.layout || 'default'}`) || Layout;
       return {
         default(props: React.PropsWithChildren<P>) {
           return (

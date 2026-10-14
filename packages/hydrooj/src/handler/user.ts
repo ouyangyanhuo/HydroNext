@@ -29,7 +29,10 @@ import {
 } from '../service/server';
 
 async function successfulAuth(this: Handler, udoc: User) {
-    if (udoc._id !== 0) await user.setById(udoc._id, { loginat: new Date(), loginip: this.request.ip });
+    if (udoc._id !== 0) {
+        await this.ctx.serial('auth/before-login', this, udoc);
+        await user.setById(udoc._id, { loginat: new Date(), loginip: this.request.ip });
+    }
     this.context.HydroContext.user = udoc;
     this.session.viewLang = '';
     this.session.uid = udoc._id;
@@ -38,7 +41,10 @@ async function successfulAuth(this: Handler, udoc: User) {
     this.session.scope = PERM.PERM_ALL.toString();
     this.session.oauthBind = null;
     this.session.recreate = true;
-    if (udoc._id !== 0) await oplog.log(this, 'user.loginSuccess', { uid: udoc._id });
+    if (udoc._id !== 0) {
+        await oplog.log(this, 'user.loginSuccess', { uid: udoc._id });
+        await this.ctx.serial('auth/login', this, udoc);
+    }
 }
 
 class UserLoginHandler extends Handler {
@@ -425,7 +431,7 @@ class OauthCallbackHandler extends Handler {
         if (this.session.oauthBind === args.type) {
             delete this.session.oauthBind;
             if (existing.some((id) => id && id !== this.user._id)) {
-                throw new BadRequestError('Already binded to another account');
+                throw new BadRequestError('Already bound to another account');
             }
             this.response.redirect = this.session.oauthRedirect || this.url('home_security');
             delete this.session.oauthRedirect;

@@ -3,7 +3,7 @@ import '../lib/index';
 
 import path from 'path';
 import fs from 'fs-extra';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { Context } from '../context';
 import { Logger } from '../logger';
 import { PRIV } from '../model/builtin';
@@ -27,7 +27,7 @@ const getLoader = (type: LoadTask, filename: string) => async function loader(pe
             const loadType = type.replace(/^(.)/, (t) => t.toUpperCase());
             try {
                 const m = unwrapExports(require(p));
-                if (m.apply) ctx.loader.reloadPlugin(p, name);
+                if (m.apply) await ctx.loader.reloadPlugin(p, name);
                 else logger.info(`${loadType} init: %s`, i);
             } catch (e) {
                 fail.push(i);
@@ -49,13 +49,15 @@ export const service = getLoader('service', 'service');
 export async function builtinModel(ctx: Context) {
     const modelDir = path.resolve(__dirname, '..', 'model');
     const models = await fs.readdir(modelDir);
+    const forks = [];
     for (const t of models.filter((i) => i.endsWith('.ts'))) {
         const q = path.resolve(modelDir, t);
         const module = require(q);
-        if ('apply' in module) ctx.loader.reloadPlugin(q, '');
+        if ('apply' in module) forks.push(await ctx.loader.reloadPlugin(q, ''));
         const exports = unwrapExports(module);
-        if (isClass(exports) && !(Symbol.for('hydro.initialize') in exports)) ctx.loader.reloadPlugin(q, '');
+        if (isClass(exports) && !(Symbol.for('hydro.initialize') in exports)) forks.push(await ctx.loader.reloadPlugin(q, ''));
     }
+    await Promise.all(forks.filter(Boolean).map((fork) => fork.await()));
 }
 
 export async function locale(pending: Record<string, string>, fail: string[]) {

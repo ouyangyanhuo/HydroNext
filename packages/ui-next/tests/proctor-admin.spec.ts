@@ -42,9 +42,21 @@ const mocks: Record<string, any> = {
     '@mantine/core': {
         Alert: box, Card: box, Code: box, Group: box, Stack: box, Text: box, Title: box, Table,
         TextInput: fieldControl,
-        NumberInput: ({ label, value, onChange }: any) => fieldControl({ label, value, onChange: (event: any) => onChange(Number(event.target.value)) }),
+        NumberInput: ({ label,
+            value,
+            onChange }: any) => fieldControl({ label,
+            value,
+            onChange: (event: any) => onChange(Number(event.target.value)) }),
         Textarea: ({ label, value, description }: any) => h('label', null, label, description, h('textarea', { value, readOnly: true })),
-        Checkbox: ({ checked, disabled, onChange, 'aria-label': name }: any) => h('input', { type: 'checkbox', checked, disabled, onChange, 'aria-label': name }),
+        Checkbox: ({ checked,
+            disabled,
+            onChange,
+            'aria-label': name }: any) => h('input',
+            { type: 'checkbox',
+                checked,
+                disabled,
+                onChange,
+                'aria-label': name }),
         Switch: ({ checked, onChange, label }: any) => h('label', null, label, h('input', { type: 'checkbox', checked, onChange })),
         Select: ({ data, value, disabled, onChange, 'aria-label': name }: any) => h('select', {
             value, disabled, 'aria-label': name, onChange: (event: any) => onChange(event.target.value),
@@ -77,8 +89,10 @@ function component(path: string) {
         fetch: (url: string, init: any) => request(url, init), require: (id: string) => mocks[id] ?? require(id) });
     return module.exports;
 }
+mocks['@/components/common/select'] = { ShortSelect: mocks['@mantine/core'].Select };
 mocks['./manage_proctor_logs'] = component('../src/pages/manage_proctor_logs.tsx');
 const Page = component('../src/pages/manage_proctor.tsx').default;
+
 function pageData(page = 1, pageSize = 25) {
     return { page, pageSize, pageCount: 3, count: 60, q: '', logs: [{ _id: `log-${page}`, filename: `final-${page}.hplog`,
         uploadedAt: '2026-10-10T12:00:00Z', size: 1024, domainName: 'Exam', domainId: 'exam', tid: 'contest', contestTitle: 'Contest' }] };
@@ -141,7 +155,8 @@ test('log search, paging and page size use independent requests and preserve uns
     };
     const view = await mount();
     try {
-        const version = Array.from(view.host.querySelectorAll('label')).find((label) => label.textContent === 'Required client version')!.querySelector('input')!;
+        const version = Array.from(view.host.querySelectorAll('label'))
+            .find((label) => label.textContent === 'Required client version')!.querySelector('input')!;
         await enter(version, '2.0.0-unsaved');
         const checkbox = view.host.querySelector('input[aria-label="Select all"]')! as HTMLInputElement;
         await act(async () => checkbox.click());

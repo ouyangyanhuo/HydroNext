@@ -83,14 +83,13 @@ describe('App', () => {
         assert.equal(args.acceptedPageCount, Math.max(1, Math.ceil(args.acceptedCount / 50)));
     });
 
-    it('Create User', async () => {
-        const redirect = await agent.post('/register')
-            .send({ mail: 'test@example.com' })
-            .expect(302)
-            .then((res) => res.headers.location);
-        await agent.post(redirect)
-            .send({ uname: Root.username, password: Root.password, verifyPassword: Root.password })
-            .expect(302);
+    it('Registration stays disabled; administrators can provision users', async () => {
+        await agent.get('/register').expect(405);
+        await agent.post('/register').send({ mail: 'test@example.com' }).expect(405);
+        const { user } = global.Hydro.model;
+        const { PRIV } = require('../packages/hydrooj/src/model/builtin');
+        await user.create('test@example.com', Root.username, Root.password, 2, '127.0.0.1', PRIV.PRIV_ALL);
+        await global.Hydro.model.domain.setJoin('system', 2, true);
     });
 
     it('Login', async () => {
@@ -103,6 +102,73 @@ describe('App', () => {
 
     it('API registered user', async () => {
         await agent.get('/api/user?args={"id":2}&projection=uname').expect({ uname: 'root' });
+    });
+
+    it('Team contests preserve individual records, replay permissions, timers and proctor evidence', async () => {
+        const { contest, domain, problem, user, record } = global.Hydro.model;
+        const { PRIV } = require('../packages/hydrooj/src/model/builtin');
+        const { getRecordAccess } = require('../packages/hydrooj/src/lib/record-access');
+        const activity = require('../packages/hydrooj/src/model/contest-activity');
+        const domainId = 'team-upgrade-test';
+        const member = await user.create('teammate@example.com', 'teammate', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
+        const outsider = await user.create('outsider@example.com', 'outsider', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
+        await domain.add(domainId, 2, 'Team upgrade test', '');
+        await Promise.all([domain.setJoin(domainId, member, true), domain.setJoin(domainId, outsider, true)]);
+        const pid = await problem.add(domainId, 'T1', 'Team problem', 'Statement', 2);
+        const now = Date.now();
+        const tid = await contest.add(domainId, 'Team contest', '', 2, 'acm', new Date(now + 60_000),
+            new Date(now + 3_600_000), [pid], false, { allowTeam: true });
+        const route = `/d/${domainId}/contest/${tid}`;
+        const teamRoute = `/d/${domainId}/contest/team`;
+        const memberAgent = supertest.agent(require('hydrooj').httpServer);
+        await memberAgent.post('/login').send({ uname: 'teammate', password: 'secret' }).expect(302);
+        try {
+            await agent.post(teamRoute).send({ operation: 'create', name: 'Upgrade team' }).expect(302);
+            const [team] = await user.getVusersByMember(2);
+            await agent.post(teamRoute).send({ operation: 'invite', vuid: team._id, uidOrName: 'teammate' }).expect(302);
+            await memberAgent.post(teamRoute).send({ operation: 'accept', vuid: team._id }).expect(302);
+            const view = getPageArgs(await agent.get(route).set('Accept', 'application/json').expect(200));
+            assert.ok(view.team_vdocs.some((doc) => doc._id === team._id));
+            await agent.post(route).send({ operation: 'attend', vuid: team._id }).expect(302);
+            assert.equal(await contest.getTeamVid(domainId, tid, member), team._id);
+            await memberAgent.post(route).send({ operation: 'attend' }).expect(403);
+            await agent.post(`${route}/user`).send({ operation: 'remove_user', uid: team._id }).expect(302);
+            assert.equal(await contest.getTeamVid(domainId, tid, member), null);
+            await agent.post(route).send({ operation: 'attend', vuid: team._id }).expect(302);
+            await contest.edit(domainId, tid, { beginAt: new Date(now - 60_000) });
+            await agent.post(`${route}/user`).send({ operation: 'remove_user', uid: team._id }).expect(403);
+            const rid = await record.add(domainId, pid, member, '_', 'team code', false, { contest: tid });
+            const rdoc = await record.get(domainId, rid);
+            const teammateUser = await user.getById(domainId, 2);
+            const teammateAccess = await getRecordAccess({ user: teammateUser }, rdoc);
+            assert.equal(teammateAccess.canViewCode, true);
+            assert.equal(teammateAccess.tsdoc.uid, team._id);
+            const outsiderUser = await user.getById(domainId, outsider);
+            await assert.rejects(getRecordAccess({ user: outsiderUser }, rdoc));
+            await memberAgent.get(`${route}/problems`).set('Accept', 'application/json').expect(200);
+            await Promise.all([
+                activity.heartbeat(domainId, await contest.get(domainId, tid), 2, 'root-tab', pid, true),
+                activity.heartbeat(domainId, await contest.get(domainId, tid), member, 'member-tab', pid, true),
+            ]);
+            assert.equal((await contest.getStatus(domainId, tid, 2)).problemActivity.token, 'root-tab');
+            assert.equal((await contest.getStatus(domainId, tid, member)).problemActivity.token, 'member-tab');
+            assert.equal((await activity.getTimes(domainId, tid)).length, 1);
+            await contest.edit(domainId, tid, { proctorEnabled: true });
+            await contest.setStatus(domainId, tid, member, { proctorEnded: true, proctorLogUploaded: false });
+            assert.equal((await contest.getAndListStatus(domainId, tid))[1].length, 0);
+            await contest.setStatus(domainId, tid, member, { proctorLogUploaded: true });
+            assert.equal((await contest.getAndListStatus(domainId, tid))[1].length, 1);
+            await contest.edit(domainId, tid, { endAt: new Date(now - 1) });
+            assert.equal((await contest.getAndListStatus(domainId, tid))[1].length, 0);
+            await contest.setStatus(domainId, tid, 2, { proctorEnded: true, proctorLogUploaded: true });
+            assert.equal((await contest.getAndListStatus(domainId, tid))[1].length, 1);
+            await contest.setStatus(domainId, tid, member, { proctorLogUploaded: false });
+            assert.equal((await contest.getAndListStatus(domainId, tid))[1].length, 0);
+        } finally {
+            await contest.del(domainId, tid);
+            await problem.del(domainId, pid);
+            await domain.del(domainId);
+        }
     });
 
     it('Proctor APIs preserve contest/domain enrollment and do not expose server secrets', async () => {
@@ -159,10 +225,13 @@ describe('App', () => {
             assert.equal(settings.body.keys?.signingPrivateKey, undefined);
             assert.equal(settings.body.keys?.encryptionPrivateKey, undefined);
             assert.equal(settings.headers['cache-control'], 'no-store');
-            await agent.get('/manage/proctor/logs?pageSize=500').set('Accept', 'application/json').expect(400);
+            await agent.get('/manage/proctor/logs?pageSize=500').set('Accept', 'application/json').expect(403);
             await agent.post(route).set('Accept', 'application/json').send({ operation: 'challenge', version: 'wrong' }).expect(403);
             await agent.get(`/d/system/contest/${tid}/proctor`).set('Accept', 'application/json').expect(404);
-            await supertest.agent(require('hydrooj').httpServer).get('/manage/proctor/logs').set('Accept', 'application/json').expect(403);
+            const denied = await supertest.agent(require('hydrooj').httpServer).get('/manage/proctor/logs').set('Accept',
+                'application/json').expect(200);
+            assert.match(denied.body.url, /\/login\?/);
+            assert.equal(denied.body.logs, undefined);
         } finally {
             await contest.del(domainId, tid);
             await domain.del(domainId);
@@ -172,9 +241,12 @@ describe('App', () => {
     it('Client updates are global, private before publication and use an exact public JSON manifest', async () => {
         const updates = require('../packages/hydrooj/src/model/client-update');
         const guest = supertest.agent(require('hydrooj').httpServer);
-        await guest.get('/manage/client-updates').set('Accept', 'application/json').expect(403);
+        const denied = await guest.get('/manage/client-updates').set('Accept', 'application/json').expect(200);
+        assert.match(denied.body.url, /\/login\?/);
+        assert.equal(denied.body.assets, undefined);
         await guest.post('/manage/client-updates').set('Accept', 'application/json')
-            .send({ operation: 'delete', id: '0123456789abcdef01234567', revision: 0 }).expect(403);
+            .send({ operation: 'delete', id: '0123456789abcdef01234567', revision: 0 }).expect(200)
+            .then((response) => assert.match(response.body.url, /\/login\?/));
         await guest.get('/client-updates/version.json').set('Accept', 'application/json').expect(404);
         const settings = await agent.get('/d/system/manage/client-updates').set('Accept', 'application/json').expect(200);
         assert.equal(settings.headers['cache-control'], 'no-store');
@@ -247,8 +319,12 @@ describe('App', () => {
             await agent.post(route).set('Accept', 'application/json')
                 .send({ operation: 'announcement', content: 'Too early' }).expect(403);
             await contest.edit(domainId, tid, { beginAt: new Date(now - 60_000) });
-            await domain.setUserRole(domainId, 2, 'default');
-            await agent.post(route).set('Accept', 'application/json')
+            const { user } = global.Hydro.model;
+            const uid = await user.create('announcement-outsider@example.com', 'announcement-outsider', 'secret');
+            await domain.setJoin(domainId, uid, true);
+            const nonadmin = supertest.agent(require('hydrooj').httpServer);
+            await nonadmin.post('/login').send({ uname: 'announcement-outsider', password: 'secret' }).expect(302);
+            await nonadmin.post(route).set('Accept', 'application/json')
                 .send({ operation: 'announcement', content: 'Not an administrator' }).expect(403);
         } finally {
             await contest.del(domainId, tid);
@@ -273,7 +349,7 @@ describe('App', () => {
             assert.equal(args.rows[1][index].value, '00:00:15');
             assert.equal(args.rows[1].find((cell) => cell.type === 'record').problemTime, 15_000);
             const exported = await agent.get(`${route}/csv`).expect(200);
-            assert.ok(exported.text.includes('00:00:15'));
+            assert.ok((exported.text || exported.body.toString('utf8')).includes('00:00:15'));
             await agent.get(`/contest/${tid}/scoreboard`).set('Accept', 'application/json').expect(404);
         } finally {
             await contest.del(domainId, tid);

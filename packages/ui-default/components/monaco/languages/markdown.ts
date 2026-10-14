@@ -1,6 +1,6 @@
 import keyword from 'emojis-keywords';
 import list from 'emojis-list';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor/editor';
 import qface from 'qface';
 import { api } from 'vj/utils';
 
@@ -77,7 +77,7 @@ monaco.languages.registerCompletionItemProvider('markdown', {
       endColumn: word.endColumn,
     };
     if (prefix === '@') {
-      const users = await api('users', { search: word.word }, ['_id', 'uname']);
+      const users = await api('users', { search: word.word }, ['_id', 'uname', 'avatarUrl', 'priv']);
       return {
         suggestions: users.map((i) => ({
           label: { label: `@${i.uname}`, description: `UID=${i._id}` },

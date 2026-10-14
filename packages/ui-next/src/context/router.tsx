@@ -154,6 +154,7 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
           }
           const body = await res.json();
           if (!isCurrent()) return false;
+          const template = res.headers.get('x-hydro-template') || '';
 
           if (body.url && typeof body.url === 'string') {
             window.location.href = body.url;
@@ -179,6 +180,7 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
             args: body,
             name: pageName,
             url: nextUrl.pathname + nextUrl.search,
+            template,
           }));
           dispatch({ type: 'FETCH_SUCCESS' });
           return true;

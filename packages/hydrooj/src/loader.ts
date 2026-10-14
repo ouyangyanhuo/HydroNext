@@ -7,7 +7,6 @@ import child from 'child_process';
 // eslint-disable-next-line import/no-duplicates
 import './utils';
 import cac from 'cac';
-import './ui';
 import { I18nService } from './lib/i18n';
 
 import { Logger } from './logger';
@@ -19,7 +18,6 @@ import { sleep, unwrapExports } from './utils';
 import { PRIV } from './model/builtin';
 import { getAddons } from './options';
 import { TimerService } from '@cordisjs/plugin-timer';
-import LoggerService from '@cordisjs/plugin-logger';
 import Schema from 'schemastery';
 import { isEqual } from 'lodash';
 
@@ -53,7 +51,7 @@ export class Loader extends Service {
     private schemaCache = new WeakMap<Schema<any>, Record<string, Schema<any>>>();
     // public warnings: Record<string, string> = Object.create(null);
 
-    static inject = ['setting', 'timer', 'i18n', 'logger'];
+    static inject = ['setting', 'timer', 'i18n'];
 
     constructor(ctx: Context) {
         super(ctx, 'loader');
@@ -164,27 +162,20 @@ export class Loader extends Service {
     }
 }
 
+app.logger.exporter({
+    levels: { default: process.env.DEV ? 3 : 2 },
+    export: ({ name, type, args }) => (new Logger(name)[type] as (...args: any[]) => void)(...args),
+});
 app.plugin(ApiMixin);
 app.plugin(TimerService);
-app.plugin(LoggerService, {
-    console: {
-        showDiff: false,
-        showTime: 'dd hh:mm:ss',
-        label: {
-            align: 'right',
-            width: 9,
-            margin: 1,
-        },
-        levels: { default: process.env.DEV ? 3 : 2 },
-    },
-});
 app.plugin(I18nService);
 app.plugin(Loader);
 
 async function preload() {
     global.app = await new Promise((resolve) => {
-        app.inject(['timer', 'i18n', 'logger', '$api'], (c) => {
-            c.inject({ domain: { required: false } }, resolve);
+        app.inject(['timer', 'i18n', '$api'], (c) => {
+            c.root.domain = undefined as any;
+            resolve(c);
         });
     });
     for (const a of [path.resolve(__dirname, '..'), ...getAddons()]) {
@@ -205,6 +196,7 @@ async function preload() {
 }
 
 export async function load() {
+    require('./ui');
     await preload();
     Error.stackTraceLimit = 50;
     try {

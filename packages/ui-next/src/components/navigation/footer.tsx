@@ -78,13 +78,26 @@ export function Footer() {
           <Group gap="lg">
             <FontMenu />
             <LanguageMenu />
-            <Anchor component={Link} to="wiki_about" size="sm" className="text-[var(--hydro-text-muted)] transition-colors duration-150 hover:text-[var(--hydro-primary)]">
+            <Anchor
+              component={Link}
+              to="wiki_about"
+              size="sm"
+              className="text-[var(--hydro-text-muted)] transition-colors duration-150 hover:text-[var(--hydro-primary)]">
               {t('About')}
             </Anchor>
-            <Anchor component={Link} to="wiki_help" size="sm" className="text-[var(--hydro-text-muted)] transition-colors duration-150 hover:text-[var(--hydro-primary)]">
+            <Anchor
+              component={Link}
+              to="wiki_help"
+              size="sm"
+              className="text-[var(--hydro-text-muted)] transition-colors duration-150 hover:text-[var(--hydro-primary)]">
               {t('Help')}
             </Anchor>
-            <Anchor href="https://github.com/ouyangyanhuo/HydroNext" target="_blank" rel="noopener" size="sm" className="text-[var(--hydro-text-muted)] transition-colors duration-150 hover:text-[var(--hydro-primary)]">
+            <Anchor
+              href="https://github.com/ouyangyanhuo/HydroNext"
+              target="_blank"
+              rel="noopener"
+              size="sm"
+              className="text-[var(--hydro-text-muted)] transition-colors duration-150 hover:text-[var(--hydro-primary)]">
               GitHub
             </Anchor>
           </Group>

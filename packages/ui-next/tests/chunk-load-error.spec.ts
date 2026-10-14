@@ -82,7 +82,7 @@ async function rendererFixture(dev = false) {
     }, { __dirname: '/ui-next', process: { env: dev ? { DEV: '1' } : {}, cwd: () => '/hydrooj' },
         global: { Hydro: { version: { hydrooj: 'test' } } } });
     await apply({
-        setting: { get: () => '' }, Route() {}, on() {}, debounce: () => () => {},
+        setting: { get: () => '' }, Route() {}, on() {}, inject() {}, debounce: () => () => {},
         server: { routeMap: { manage_dashboard: '/manage/dashboard' }, addCaptureRoute() {},
             registerRenderer: (_name: string, value: any) => { renderer = value; } },
     });

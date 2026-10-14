@@ -272,7 +272,7 @@ export default function ContestScoreboardPage() {
                   <Table.Tr key={uid || rowIndex} className={isStarred ? 'bg-[var(--hydro-primary-soft)]' : undefined}>
                     {row.map((cell, index) => {
                       const column = header[index] || {};
-                      const canViewRecord = Boolean(args.canViewRecord || uid === user?._id);
+                      const canViewRecord = Boolean(args.canViewRecord || uid === user?._id || udict[uid]?.teamMembers?.includes(user?._id));
                       return (
                         <Table.Td key={index} className={`col--${column.type || cell.type || 'string'}`}>
                           {cell.type === 'user' ? (
@@ -280,9 +280,20 @@ export default function ContestScoreboardPage() {
                               <Button size="compact-xs" variant={stars.includes(uid) ? 'filled' : 'subtle'} onClick={() => toggleStar(uid)}>
                                 {stars.includes(uid) ? '★' : '☆'}
                               </Button>
-                              <Link to="user_detail" params={{ uid }} className="no-underline hover:underline">
-                                <Text size="sm">{udict[uid] ? formatUserName(udict[uid]) : (cell.value || uid)}</Text>
-                              </Link>
+                              {udict[uid]?.teamMembers?.length ? (
+                                <Stack gap={2}>
+                                  <Text size="sm" fw={600}>{udict[uid].displayName || cell.value}</Text>
+                                  <Group gap="xs">{udict[uid].teamMembers.map((member: number) => (
+                                    <Link key={member} to="user_detail" params={{ uid: member }} className="text-xs no-underline hover:underline">
+                                      {udict[member] ? formatUserName(udict[member]) : member}
+                                    </Link>
+                                  ))}</Group>
+                                </Stack>
+                              ) : (
+                                <Link to="user_detail" params={{ uid }} className="no-underline hover:underline">
+                                  <Text size="sm">{udict[uid] ? formatUserName(udict[uid]) : (cell.value || uid)}</Text>
+                                </Link>
+                              )}
                             </Group>
                           ) : (
                             <Stack gap={3} align="center">

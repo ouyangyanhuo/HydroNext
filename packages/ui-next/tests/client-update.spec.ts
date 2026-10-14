@@ -7,7 +7,10 @@ import { packageUrl, previewUpdate } from '../src/utils/client-update.ts';
 test('client preview and authoritative server manifest agree on all four package types', () => {
     const kinds = ['asar', 'installer', 'portable', 'config'] as const;
     const assets = kinds.map((kind, index) => ({ id: String(index + 1).repeat(24), kind,
-        version: kind === 'config' ? '1.0.0' : '1.2.3', filename: kind === 'config' ? 'exam-config.json' : `${kind}.exe`, size: 100000, sha256: 'a'.repeat(64) }));
+        version: kind === 'config' ? '1.0.0' : '1.2.3',
+        filename: kind === 'config' ? 'exam-config.json' : `${kind}.exe`,
+        size: 100000,
+        sha256: 'a'.repeat(64) }));
     const draft = normalizeUpdateDraft({ ...defaultDraft, origin: 'https://oj.example/', version: '1.2.3', buildVersion: '2026101001',
         description: ' stable ', changelog: [' fix ', ''], ...Object.fromEntries(assets.map((asset) => [asset.kind, asset.id])) });
     assert.deepEqual(previewUpdate(draft, assets, 'date'), buildUpdateManifest(draft, assets, 'date'));

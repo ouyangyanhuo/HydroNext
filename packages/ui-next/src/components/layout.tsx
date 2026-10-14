@@ -1,5 +1,7 @@
 import { defineSlot } from '../registry';
 
-const Layout = defineSlot('app:layout', ({ children }: React.PropsWithChildren) => <>{children}</>);
+const Layout = defineSlot('layout:default', ({ children }: React.PropsWithChildren) => {
+  return <>{children}</>;
+});
 
 export default Layout;

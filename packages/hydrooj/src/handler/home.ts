@@ -1,7 +1,7 @@
 import path from 'path';
 import { generateRegistrationOptions, verifyRegistrationResponse } from '@simplewebauthn/server';
 import { isoBase64URL, isoUint8Array } from '@simplewebauthn/server/helpers';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { pick } from 'lodash';
 import { Binary, ObjectId } from 'mongodb';
 import { UAParser } from 'ua-parser-js';
@@ -397,9 +397,11 @@ function set(s: Setting, key: string, value: any) {
     if (value) {
         if (['json', 'yaml', 'markdown', 'textarea'].includes(s.type)) {
             if (!Types.Content[1](value)) throw new ValidationError(key);
+            return Types.Content[0](value);
         }
         if (s.type === 'text') {
             if (!Types.ShortString[1](value)) throw new ValidationError(key);
+            return Types.ShortString[0](value);
         }
     }
     if (s.subType === 'yaml') {

@@ -4,7 +4,22 @@
   {%- for tsdoc in tsdocs -%}
   <tr data-uid="{{ tsdoc.uid }}">
     <td class="col--uid">{{ tsdoc.uid }}</td>
-    <td class="col--user">{{ user.render_inline(udict[tsdoc.uid], badge=false) }}</td>
+    <td class="col--user">
+      {{ user.render_inline(udict[tsdoc.uid], badge=false) }}
+      {% if tsdoc.displayName or (tsdoc.members and tsdoc.members.length) %}
+        <br><small class="supplementary">
+          {% if tsdoc.members and tsdoc.members.length %}
+            {{ _('Team') }}: {{ tsdoc.displayName }} —
+            {% for uid in tsdoc.members %}
+              {%- if not loop.first -%}, {% endif -%}
+              {{ user.render_inline(udict[uid], avatar=false, badge=false) }}
+            {%- endfor -%}
+          {% else %}
+            {{ tsdoc.displayName }}
+          {% endif %}
+        </small>
+      {% endif %}
+    </td>
     <td class="col--start-time">{{ contest.render_time(tsdoc.startAt or tdoc.beginAt) }}</td>
     <td class="col--end-time">{{ contest.render_time(tsdoc.endAt or tdoc.endAt) }}</td>
     <td class="col--rank">{{ _('UnRank') if tsdoc.unrank else _('Rank') }}</td>
@@ -12,6 +27,9 @@
       <a name="edit_rank" data-uid="{{ tsdoc.uid }}">{{ _('Rank') if tsdoc.unrank else _('UnRank') }}</a>
       {% if tsdoc.endAt and tsdoc.endAt < tdoc.endAt and tdoc.endAt.getTime() > Date.now() and (not tdoc.duration or not tsdoc.startAt or tsdoc.startAt.getTime() + tdoc.duration * 3600000 > Date.now()) %}
       | <a name="resume_contest" data-uid="{{ tsdoc.uid }}">{{ _('Resume') }}</a>
+      {% endif %}
+      {% if tdoc.beginAt.getTime() > Date.now() %}
+      | <a name="cancel_registration" data-uid="{{ tsdoc.uid }}">{{ _('Cancel Registration') }}</a>
       {% endif %}
     </td>
   </tr>

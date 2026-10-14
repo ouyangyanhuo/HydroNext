@@ -50,6 +50,7 @@ registerPage('home_domain', () => import('./home_domain'), { title: 'My Domains'
 registerPage('contest_edit', () => import('./contest_edit'), { title: 'Edit Contest', nav: CONTESTS });
 registerPage('contest_manage', () => import('./contest_manage'), { title: 'Manage Contest', nav: CONTESTS });
 registerPage('contest_clarification', () => import('./contest_clarification'), { title: 'Clarifications', nav: CONTESTS });
+registerPage('contest_team', () => import('./contest_team'), { title: 'My Teams', nav: CONTESTS });
 registerPage('contest_user', () => import('./contest_user'), { title: 'Users', nav: CONTESTS });
 registerPage('contest_balloon', () => import('./contest_balloon'), { title: 'Balloons', nav: CONTESTS });
 registerPage('contest_print', () => import('./contest_print'), { title: 'Print', nav: CONTESTS });

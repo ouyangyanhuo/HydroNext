@@ -7,10 +7,13 @@ export function ContestProctorNotice({ enabled, status }: { enabled?: boolean, s
   return <Alert title={t('Proctored contest')}>
     <Stack gap="xs">
       <Text size="sm">{t('Use an up-to-date proctor client to submit.')}</Text>
-      <Text size="sm">{t('Finish proctoring in the client and upload the encrypted final log. Failed uploads may be retried within the configured window.')}</Text>
+      <Text
+        size="sm">
+        {t('Finish proctoring in the client and upload the encrypted final log. Failed uploads may be retried within the configured window.')}</Text>
       {status?.attend && <Group gap="xs">
         <Badge color={status.proctorLogUploaded ? 'green' : status.proctorEnded ? 'red' : 'orange'}>
-          {t(status.proctorLogUploaded ? 'Final log uploaded' : status.proctorEnded ? 'Results invalid: log pending' : 'Results provisional: final log required')}
+          {t(status.proctorLogUploaded ? 'Final log uploaded'
+            : status.proctorEnded ? 'Results invalid: log pending' : 'Results provisional: final log required')}
         </Badge>
       </Group>}
     </Stack>

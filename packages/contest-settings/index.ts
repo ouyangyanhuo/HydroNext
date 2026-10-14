@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import * as yaml from 'js-yaml';
 import { Context } from 'hydrooj';
-import yaml from 'js-yaml';
 
 export async function apply(ctx: Context) {
     const logger = ctx.logger('contest-settings');

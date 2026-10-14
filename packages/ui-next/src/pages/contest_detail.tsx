@@ -1,10 +1,10 @@
-import { Badge, Card, Divider, Group, Paper, Stack, Table, Text, Textarea, Title, Tooltip } from '@mantine/core';
+import { Badge, Card, Divider, Group, Paper, Stack, Table, Text, Textarea, TextInput, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { DeleteResourceButton } from '@/components/common/delete-resource-button';
-import { LongSelect } from '@/components/common/select';
+import { LongSelect, ShortSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
 import { ContestProctorNotice } from '@/components/contest/contest-proctor-notice';
 import { ContestTimer } from '@/components/contest/contest-timer';
@@ -431,6 +431,9 @@ export default function ContestDetailPage() {
   const tsdoc = args.tsdoc || {};
   const owner = args.owner_udoc || args.udict?.[tdoc.owner] || args.udoc;
   const files = args.files || [];
+  const [attendTeam, setAttendTeam] = useState('personal');
+  const [invitationCode, setInvitationCode] = useState('');
+  const [attending, setAttending] = useState(false);
   const pdict = args.pdict || {};
   const udict = args.udict || {};
   const canEdit = useHasPerm(PERM.PERM_EDIT_CONTEST) || args.canEdit;
@@ -442,24 +445,28 @@ export default function ContestDetailPage() {
   const contestNotStarted = Boolean(tdoc.beginAt) && !contestStarted;
 
   const handleAttend = async () => {
+    if (attending) return;
     if (contestEnded) {
       notifications.show({ title: t('Contest Closed'), message: '', color: 'red' });
       return;
     }
+    setAttending(true);
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ operation: 'attend' }),
+        body: JSON.stringify({ operation: 'attend', code: invitationCode, ...(attendTeam !== 'personal' ? { vuid: Number(attendTeam) } : {}) }),
       });
       const data = await res.json();
-      if (data.error) {
-        notifications.show({ title: data.error.message || t('Operation failed'), message: '', color: 'red' });
+      if (!res.ok || data.error) {
+        notifications.show({ title: data.error?.message || t('Operation failed'), message: '', color: 'red' });
       } else {
         navigate(window.location.href);
       }
     } catch (err) {
-      console.error('Failed to attend:', err);
+      notifications.show({ title: t('Operation failed'), message: String(err), color: 'red' });
+    } finally {
+      setAttending(false);
     }
   };
 
@@ -620,9 +627,30 @@ export default function ContestDetailPage() {
             <ContestInfoCard tdoc={tdoc} tsdoc={tsdoc} owner={owner} />
 
             {isLoggedIn && !tsdoc.attend && !contestEnded && (
-              <Button fullWidth onClick={handleAttend}>
-                {t('Register Contest')}
-              </Button>
+              <Stack gap="xs">
+                {tdoc.allowTeam && (
+                  <>
+                    <ShortSelect
+                      label={t('Team Participation')}
+                      value={attendTeam}
+                      onChange={(value) => setAttendTeam(value || 'personal')}
+                      data={[
+                        { value: 'personal', label: t('Personal Participation') },
+                        ...(args.team_vdocs || []).map((team: any) => ({ value: String(team._id), label: team.displayName })),
+                      ]}
+                    />
+                    <Button component={Link} to="contest_team" variant="subtle" size="xs">{t('Manage Teams')}</Button>
+                  </>
+                )}
+                {tdoc._code && (
+                  <TextInput
+                    label={t('Invitation code')}
+                    value={invitationCode}
+                    onChange={(event) => setInvitationCode(event.currentTarget.value)}
+                  />
+                )}
+                <Button fullWidth onClick={handleAttend} loading={attending}>{t('Register Contest')}</Button>
+              </Stack>
             )}
             {isLoggedIn && !tsdoc.attend && contestEnded && (
               <Button fullWidth disabled>

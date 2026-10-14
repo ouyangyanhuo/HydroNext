@@ -18,9 +18,18 @@ export const link = isSupported ? (text: string, url: string) => [
 const freemem = os.freemem();
 const smallMemory = (freemem < 1024 * 1024 * 1024);
 
-const nixInstall = (...packages: string[]) => (smallMemory
-    ? packages.map((t) => `nix-env -iA ${t.includes('.') ? t : `nixpkgs.${t}`}`).join(' && ')
-    : `nix-env -iA ${packages.map((t) => (t.includes('.') ? t : `nixpkgs.${t}`)).join(' ')}`);
+const useNixProfile = process.argv.includes('--use-nix-profile');
+
+const nixInstall = (...packages: string[]) => {
+    if (useNixProfile) {
+        return packages.map((t) => (t.startsWith('hydro.')
+            ? `nix profile install github:hydro-dev/nix-channel/master#${t.split('.')[1]} --override-input nixpkgs github:NixOS/nixpkgs/nixos-23.11`
+            : `nix profile install nixpkgs#${t}`)).join(' && ');
+    }
+    return smallMemory
+        ? packages.map((t) => `nix-env -iA ${t.includes('.') ? t : `nixpkgs.${t}`}`).join(' && ')
+        : `nix-env -iA ${packages.map((t) => (t.includes('.') ? t : `nixpkgs.${t}`)).join(' ')}`;
+};
 
 const warnings: [string, ...any[]][] = [];
 
@@ -42,10 +51,10 @@ const sleep = (t: number) => new Promise((r) => { setTimeout(r, t); });
 const shmFAQ = 'https://docs.hydro.ac/FAQ/#%E8%B0%83%E6%95%B4%E4%B8%B4%E6%97%B6%E7%9B%AE%E5%BD%95%E5%A4%A7%E5%B0%8F';
 const locales = {
     zh: {
-        'install.wait': '安装脚本将等待 %d 秒后自动继续安装，或按 Ctrl-C 退出。',
         'install.start': '开始运行 Hydro 安装工具',
-        'note.avx': `检测到您的 CPU 不支持 avx 指令集，这可能会影响系统运行速度。
-如果您正在使用 PVE/VirtualBox 等虚拟机平台，请尝试关机后将虚拟机的 CPU 类型设置为 Host，重启后再次运行该脚本。`,
+        'note.avx': `检测到您的 CPU 不支持 avx 指令集，mongod 可能无法正常运行，Hydro 可能无法正常使用。
+如果您正在使用 PVE/VirtualBox 等虚拟机平台，请关机后将虚拟机的 CPU 类型设置为 Host；否则可能需要更换支持 avx 指令集的 CPU。
+按回车键继续安装，或按 Ctrl-C 退出。`,
         'warn.avx': '检测到您的 CPU 不支持 avx 指令集，将使用 mongodb@v4.4',
         'error.rootRequired': '请先使用 sudo su 切换到 root 用户后再运行该工具。',
         'error.unsupportedArch': '不支持的架构 %s ,请尝试手动安装。',
@@ -82,13 +91,10 @@ const locales = {
         'install.warnings': '安装过程中产生了以下警告：',
     },
     en: {
-        'install.wait': `The installation script will wait for %d seconds before continuing.
-Press Ctrl-C to exit.`,
         'install.start': 'Starting Hydro installation tool',
-        'note.avx': `Your CPU does not support avx, this may affect system performance.
-If you are using a virtual machine platform such as PVE/VirtualBox,
-try shutting down and setting the CPU type of the virtual machine to Host,
-then restart and run the script again.`,
+        'note.avx': `Your CPU does not support the avx instruction set. mongod may fail to run and Hydro may not work properly.
+If you are using a virtual machine platform such as PVE/VirtualBox, shut down and set the virtual machine CPU type to Host; otherwise you may need a CPU that supports avx.
+Press Enter to continue, or Ctrl-C to exit.`,
         'warn.avx': 'Your CPU does not support avx, will use mongodb@v4.4',
         'error.rootRequired': 'Please run this tool as root user.',
         'error.unsupportedArch': 'Unsupported architecture %s, please try to install manually.',
@@ -166,7 +172,7 @@ for (const line of lines) {
 }
 let avx = true;
 const cpuInfoFile = readFileSync('/proc/cpuinfo', 'utf-8');
-if (!cpuInfoFile.includes('avx') && !installAsJudge) {
+if (!cpuInfoFile.includes('avx') && process.arch === 'x64' && !installAsJudge) {
     avx = false;
     log.warn('warn.avx');
     warnings.push(['warn.avx']);
@@ -368,10 +374,13 @@ const Steps = () => [
                 }
             },
             async () => {
-                if (!avx && !installAsJudge) {
-                    log.warn('note.avx');
-                    log.info('install.wait', 60);
-                    await sleep(60000);
+                if (avx || installAsJudge) return;
+                log.warn('note.avx');
+                const rl = createInterface(process.stdin, process.stdout);
+                try {
+                    await rl.question('');
+                } finally {
+                    rl.close();
                 }
             },
             async () => {

@@ -226,6 +226,7 @@ test('contest problem drag order is saved in the current domain without reloadin
         '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/team/contest' },
         '@/hooks/use-domain': { useDomainId: () => 'team' },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/utils/proctor': { proctorError: (error: any) => error.message },
         '@/utils/error': { formatErrorMessage: () => 'Save failed' },
         '@/utils/lang-display': { LANG_DISPLAY: { cpp: 'C++' }, getLangDisplay: (key: string) => key },
         '@/utils/user-name': { formatUserName: (user: any) => user.uname },

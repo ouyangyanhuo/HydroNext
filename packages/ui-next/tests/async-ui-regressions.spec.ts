@@ -21,6 +21,7 @@ for (const [key, value] of Object.entries({
     previous.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
     Object.defineProperty(globalThis, key, { value, configurable: true, writable: true });
 }
+Object.defineProperty(dom.window.document, 'fonts', { value: { addEventListener() {}, removeEventListener() {}, ready: Promise.resolve() } });
 dom.window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
 after(() => {
     dom.window.close();
@@ -42,6 +43,8 @@ const translate = (key: string, values: any = {}) => Object.entries(values).redu
     (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)), key,
 );
 const mocks: Record<string, any> = {
+    'js-yaml': { dump: (value: any) => require('js-yaml').dump(JSON.parse(JSON.stringify(value))) },
+    '@/hooks/use-time': { useDeadlinePassed: () => false },
     '@/hooks/use-i18n': { useI18n: () => ({ t: translate }) },
     './use-i18n': { useI18n: () => ({ t: translate }) },
     '@/hooks/use-build-url': { useBuildUrl: () => () => '/domain/search' },

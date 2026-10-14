@@ -65,7 +65,9 @@ export function updateUrl(value: unknown, originOnly = false): string {
 export function normalizeUpdateDraft(raw: any): UpdateDraft {
     if (!raw || typeof raw !== 'object') throw new Error('Invalid update configuration.');
     const result: UpdateDraft = { ...defaultDraft, origin: updateUrl(raw.origin, true),
-        version: updateVersion(raw.version), minClientVersion: updateVersion(raw.minClientVersion), buildVersion: updateBuildVersion(raw.buildVersion) };
+        version: updateVersion(raw.version),
+        minClientVersion: updateVersion(raw.minClientVersion),
+        buildVersion: updateBuildVersion(raw.buildVersion) };
     if (typeof raw.description !== 'string' || raw.description.length > 2000) throw new Error('Invalid update description.');
     if (!Array.isArray(raw.changelog) || raw.changelog.length > 100
         || raw.changelog.some((line: unknown) => typeof line !== 'string' || line.length > 1000)) throw new Error('Invalid changelog.');
@@ -116,7 +118,9 @@ export function buildUpdateManifest(draft: UpdateDraft, assets: UpdateAsset[], r
         const externalUrl = draft[UPDATE_URL_FIELDS[kind]];
         if (!draft[kind] && !externalUrl) continue;
         const asset = assets.find((row) => row.id === draft[kind] && row.kind === kind);
-        if (!externalUrl && (!asset || (kind !== 'config' && asset.version !== draft.version))) throw new Error('Package version must match the release version.');
+        if (!externalUrl
+            && (!asset || (kind !== 'config'
+                && asset.version !== draft.version))) throw new Error('Package version must match the release version.');
         const url = externalUrl || updateAssetUrl(draft.origin, asset);
         const version = externalUrl ? draft.version : asset.version;
         if (kind === 'asar') {

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Card, Checkbox, Group, PasswordInput, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';

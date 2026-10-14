@@ -1,4 +1,5 @@
 import { dump } from 'js-yaml';
+import { cloneDeepWith } from 'lodash';
 import superagent from 'superagent';
 import type { StatusUpdate } from '@hydrooj/utils/lib/sysinfo';
 import * as sysinfo from '@hydrooj/utils/lib/sysinfo';
@@ -55,12 +56,7 @@ export async function feedback(): Promise<[string, StatusUpdate]> {
         info.dbVersion = status.version;
     } catch (e) { }
     await bus.serial('monitor/collect', info);
-    const payload = dump(info, {
-        replacer: (key, value) => {
-            if (typeof value === 'function') return '';
-            return value;
-        },
-    });
+    const payload = dump(cloneDeepWith(info, (value) => typeof value === 'function' ? '' : undefined));
     if (process.env.CI) return [mid, $update];
     superagent.post(`${system.get('server.center')}/report`)
         .send({ installId, payload })
@@ -99,7 +95,7 @@ export async function updateJudge(args) {
 }
 
 export async function apply(ctx: Context) {
-    if (process.env.NODE_APP_INSTANCE !== '0') return;
+    if (process.env.NODE_APP_INSTANCE !== '0' || process.env.CI) return;
     const info = await sysinfo.get();
     coll.updateOne(
         { mid: info.mid, type: 'server' },

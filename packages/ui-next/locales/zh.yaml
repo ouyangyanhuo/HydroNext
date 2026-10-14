@@ -37,69 +37,69 @@ __flag: 🇨🇳
 'Send to all registered participants': '发送给所有已报名参赛者'
 'Sent to {count} participants.': '已发送给 {count} 位参赛者。'
 'Unread announcements': '条未读公告'
-"Already owned": "已拥有"
-"Already owned by: {users}. Remove these recipients before granting.": "以下用户已拥有此头像框：{users}。请移除这些用户后再授予。"
-"An avatar frame with this name already exists.": "已存在同名头像框，请使用其他名称。"
+'Already owned': '已拥有'
+'Already owned by: {users}. Remove these recipients before granting.': '以下用户已拥有此头像框：{users}。请移除这些用户后再授予。'
+'An avatar frame with this name already exists.': '已存在同名头像框，请使用其他名称。'
 'Application runtime': '应用运行时间'
-"Apply this action to {count} selected users?": "确定对选中的 {count} 位用户执行此操作吗？"
-"Avatar frame management": "头像框管理"
+'Apply this action to {count} selected users?': '确定对选中的 {count} 位用户执行此操作吗？'
+'Avatar frame management': '头像框管理'
 'Based on container PID 1. Reloading the application does not reset this timer.': '按容器主进程（PID 1）计算，重启应用不会重置此计时。'
-"Choose one artwork per shape.": "每种形状请选择一份素材。"
-"Circular": "圆形"
-"Circular artwork": "圆形素材"
-"Circular artwork overlaps the avatar area. Check the preview.": "圆形素材的装饰进入了头像区域，请检查预览效果。"
+'Choose one artwork per shape.': '每种形状请选择一份素材。'
+'Circular': '圆形'
+'Circular artwork': '圆形素材'
+'Circular artwork overlaps the avatar area. Check the preview.': '圆形素材的装饰进入了头像区域，请检查预览效果。'
 'Container runtime': '容器运行时间'
 'Container timing is unavailable; showing the application process instead.': '暂时无法读取容器运行时间，当前显示应用进程运行时间。'
 'Continuous uptime': '连续运行时长'
-"Delete frame": "删除头像框"
-"Delete {name}? It will be removed from all users and cannot be restored.": "确定删除「{name}」吗？所有用户将失去此头像框，此操作无法恢复。"
-"Describe the honor and how this frame is awarded.": "介绍此头像框代表的荣誉及获得条件。"
-"Disabled": "已停用"
+'Delete frame': '删除头像框'
+'Delete {name}? It will be removed from all users and cannot be restored.': '确定删除「{name}」吗？所有用户将失去此头像框，此操作无法恢复。'
+'Describe the honor and how this frame is awarded.': '介绍此头像框代表的荣誉及获得条件。'
+'Disabled': '已停用'
 'Drag selected problems to reorder, or use Alt + Left/Right.': '拖动已选题目可调整顺序，也可使用 Alt + 左右方向键。'
-"Drop artwork here or click to choose": "拖拽素材到此处，或点击选择"
+'Drop artwork here or click to choose': '拖拽素材到此处，或点击选择'
 'Drop artwork here to replace, or click to choose': '拖拽素材到此处替换，或点击选择'
-"Edit description": "编辑描述"
+'Edit description': '编辑描述'
 'Edit frame': '编辑头像框'
-"Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.": "启用会替换当前佩戴的头像框。停用仅取消佩戴，收回会移除拥有资格。"
-"Frame artwork must be 512 × 512 px.": "头像框素材必须为 512 × 512px。"
-"Frame description": "头像框描述"
-"Frame must contain transparent and visible pixels": "素材必须同时包含透明区域和可见装饰，不能完全不透明或全透明。"
-"Frame owners": "拥有该头像框的用户"
-"Invalid PNG artwork. Please export a new PNG or WebP image.": "图片格式或数据无效，请重新导出 PNG 或 WebP 素材。"
-"Invalid authorization destination.": "授权目标地址无效，请重新打开需要授权的页面。"
-"No description yet.": "暂无描述。"
+'Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.': '启用会替换当前佩戴的头像框。停用仅取消佩戴，收回会移除拥有资格。'
+'Frame artwork must be 512 × 512 px.': '头像框素材必须为 512 × 512px。'
+'Frame description': '头像框描述'
+'Frame must contain transparent and visible pixels': '素材必须同时包含透明区域和可见装饰，不能完全不透明或全透明。'
+'Frame owners': '拥有该头像框的用户'
+'Invalid PNG artwork. Please export a new PNG or WebP image.': '图片格式或数据无效，请重新导出 PNG 或 WebP 素材。'
+'Invalid authorization destination.': '授权目标地址无效，请重新打开需要授权的页面。'
+'No description yet.': '暂无描述。'
 'Not running in a container; showing the application process.': '当前不是容器环境，显示应用进程运行时间。'
-"One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.": "一个名称对应两种形状。画布 512 × 512px，中心头像 384px，四周装饰区各 64px。中心须透明，不要填充白色。"
-"Only published frames can be awarded. Awards are global across all domains.": "只能授予已发布的头像框，拥有资格在所有域中通用。"
-"Owned honor frames": "拥有的头像框"
-"Owners": "拥有者"
+'One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.': '一个名称对应两种形状。画布 512 × 512px，中心头像 384px，四周装饰区各 64px。中心须透明，不要填充白色。'
+'Only published frames can be awarded. Awards are global across all domains.': '只能授予已发布的头像框，拥有资格在所有域中通用。'
+'Owned honor frames': '拥有的头像框'
+'Owners': '拥有者'
 'Page resources could not be loaded.': '无法加载页面资源。'
-"Recipients": "授予用户"
+'Recipients': '授予用户'
 'Reload page': '重新加载页面'
 'Replacing legacy artwork requires both shapes.': '替换旧格式头像框素材时，请同时上传圆角方形和圆形两份素材。'
-"Rounded square": "圆角方形"
-"Rounded square artwork": "圆角方形素材"
-"Rounded square artwork overlaps the avatar area. Check the preview.": "圆角方形素材的装饰进入了头像区域，请检查预览效果。"
+'Rounded square': '圆角方形'
+'Rounded square artwork': '圆角方形素材'
+'Rounded square artwork overlaps the avatar area. Check the preview.': '圆角方形素材的装饰进入了头像区域，请检查预览效果。'
 'Runtime information unavailable.': '暂时无法获取运行信息。'
 'Save unfinished work before reloading.': '重新加载前，请先保存尚未提交的内容。'
 'Saved, but old artwork cleanup failed.': '已保存，但旧素材清理失败。'
-"Search by username or user ID": "通过用户名或用户 ID 搜索"
-"Search by username or user ID. Up to 50 users at a time.": "可通过用户名或用户 ID 搜索，每次最多选择 50 位用户。"
-"Select a frame and at least one user.": "请选择一个头像框和至少一位用户。"
-"Select current page": "选择本页用户"
-"Some users changed during this operation. Refresh and retry.": "部分用户的拥有资格已变更，请刷新后重试。"
-"Some selected users already own this avatar frame.": "部分已选用户已拥有此头像框，请检查名单后再授予。"
+'Search by username or user ID': '通过用户名或用户 ID 搜索'
+'Search by username or user ID. Up to 50 users at a time.': '可通过用户名或用户 ID 搜索，每次最多选择 50 位用户。'
+'Select a frame and at least one user.': '请选择一个头像框和至少一位用户。'
+'Select current page': '选择本页用户'
+'Some users changed during this operation. Refresh and retry.': '部分用户的拥有资格已变更，请刷新后重试。'
+'Some selected users already own this avatar frame.': '部分已选用户已拥有此头像框，请检查名单后再授予。'
 'Started at': '启动时间'
-"The central avatar area must be transparent.": "中心头像区域必须透明。"
+'The central avatar area must be transparent.': '中心头像区域必须透明。'
 'The frontend may have been updated. Check your connection and reload this page.': '前端资源可能已更新，请检查网络连接并重新加载当前页面。'
-"These avatar frame images have already been uploaded.": "此头像框的素材已上传，请直接使用已有头像框。"
+'These avatar frame images have already been uploaded.': '此头像框的素材已上传，请直接使用已有头像框。'
 'This frame changed. Refresh and try again.': '此头像框已发生变化，请刷新后重试。'
-"Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).": "中心透明区域：384 × 384px，圆角半径 64px，左上角坐标 (64, 64)。"
-"Transparent center: diameter 384 px, centered at (256, 256).": "中心透明区域：直径 384px，圆心坐标 (256, 256)。"
-"Upload both rounded square and circular artwork.": "请同时上传圆角方形和圆形两份素材。"
+'Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).': '中心透明区域：384 × 384px，圆角半径 64px，左上角坐标 (64, 64)。'
+'Transparent center: diameter 384 px, centered at (256, 256).': '中心透明区域：直径 384px，圆心坐标 (256, 256)。'
+'Upload both rounded square and circular artwork.': '请同时上传圆角方形和圆形两份素材。'
 'Unchanged artwork is kept. Editing preserves ownership and publication status.': '未替换的素材将保留。编辑不会改变拥有资格及发布状态。'
-"Uploaded frames start disabled. Publish them from the library.": "上传后默认为已停用，可在头像框管理页面发布。"
-"Use two 512 × 512 px images with a transparent 384 px center.": "请上传两份 512 × 512px 素材，中心须留出 384px 的透明头像区域。"
+'Uploaded frames start disabled. Publish them from the library.': '上传后默认为已停用，可在头像框管理页面发布。'
+'Use two 512 × 512 px images with a transparent 384 px center.': '请上传两份 512 × 512px 素材，中心须留出 384px 的透明头像区域。'
 __id: zh
 '{days}d {hours}h {minutes}m {seconds}s': '{days} 天 {hours} 时 {minutes} 分 {seconds} 秒'
 'Saved. Please refresh this page.': '已保存，请刷新此页面。'
@@ -986,75 +986,75 @@ Serif: 仿生
 Your Status: 你的状态
 
 # Proctoring
-"Active": "有效"
-"Allow token refresh": "允许刷新会话令牌"
-"Authentication keys": "认证密钥"
-"Authentication private key": "认证私钥"
-"Authentication public key (Ed25519)": "认证公钥（Ed25519）"
-"Authorization required.": "需要重新授权。"
-"Changing the required version or rotating keys invalidates current session tokens.": "修改指定版本或轮换密钥会使当前会话令牌失效。"
-"Deleting logs invalidates the corresponding contest results until logs are uploaded again. Continue?": "删除日志会使相应比赛成绩失效，重新上传后才能恢复。是否继续？"
-"Enable contest proctoring": "启用比赛监考"
-"Enable proctor service": "启用监考服务"
-"Enable the proctor service in system settings first.": "请先在系统管理的监考设置中启用监考服务。"
-"Encrypted final logs.": "加密的最终监考日志"
-"Existing sessions will become invalid. Continue?": "现有会话将失效，是否继续？"
-"Final log uploaded": "最终日志已上传"
-"Final proctor log cannot be replaced.": "不能将最终监考日志替换为另一份文件。"
-"Finish proctoring in the client and upload the encrypted final log. Failed uploads may be retried within the configured window.": "请在客户端结束监考并上传加密的最终日志。上传失败可在规定期限内补传。"
-"Generate authentication keys": "生成认证密钥"
-"Generate authentication keys first.": "请先生成认证密钥。"
-"Generate both key pairs and inject both public keys when building the client. No manual client enrollment is required.": "一次生成认证和日志加密两组密钥，在构建客户端时注入两组公钥，无需人工注册客户端。"
-"Hack submissions are unavailable in proctored contests.": "监考比赛暂不支持 Hack 提交。"
-"Invalid encrypted proctor log.": "监考日志的加密格式或完整性校验失败。"
-"Invalid proctor handshake.": "监考握手验证失败。"
-"Invalid proctor request origin.": "监考请求来源不合法。"
-"Invalid proctor request proof.": "监考请求签名验证失败。"
-"Late upload window (days)": "允许补传期限（天）"
-"Log decryption private key": "日志解密私钥"
-"Log download failed.": "日志下载失败。"
-"Log encryption public key (RSA-OAEP)": "日志加密公钥（RSA-OAEP）"
-"Manage authentication keys, session policy and encrypted logs.": "管理认证密钥、会话策略与加密日志。"
-"Maximum log size (MiB)": "单个日志大小上限（MiB）"
-"No proctor logs yet.": "暂无监考日志。"
-"Private keys": "私钥"
-"Private keys are server-only. Do not put them in build variables, repositories or chat messages. Closing this dialog clears the display.": "私钥仅供服务端使用，不得放入构建变量、代码仓库或聊天消息。关闭弹窗后将清除展示内容。"
-"Proctor authentication keys are unavailable. Check the server key storage.": "无法读取监考认证密钥，请检查服务端密钥存储目录及权限。"
-"Proctor authentication required.": "需要完成监考客户端认证。"
-"Proctor challenge has already been used.": "该监考挑战已被使用。"
-"Proctor client version mismatch.": "监考客户端版本不符合系统要求。"
-"Proctor environment mismatch.": "监考环境指纹或设备不一致。"
-"Proctor is not configured.": "监考服务尚未正确配置或未启用。"
-"Proctor log is busy. Please retry.": "该日志正在处理，请稍后重试。"
-"Proctor log operation timed out. Please retry.": "日志处理超时，请重试。"
-"Proctor logs": "监考日志"
-"Proctor policy cannot change after the contest starts.": "比赛开始后不能修改监考开关。"
-"Proctor request has already been used.": "监考请求已被使用，请生成新的请求签名。"
-"Proctor requires HTTPS. Configure the public server URL and trusted proxy.": "监考需要 HTTPS，请配置公开服务地址及可信反向代理。"
-"Proctor session expired or client version mismatch.": "监考会话已过期或客户端版本不符合要求。"
-"Proctor session has already been refreshed.": "该会话令牌已刷新，请使用新令牌。"
-"Proctor session is already finished.": "监考已结束，不能继续提交。"
-"Proctor session is outside the permitted time window.": "不在允许的监考或日志补传时间内。"
-"Proctor session refresh is disabled.": "系统已关闭会话令牌刷新。"
-"Proctor settings": "监考设置"
-"Proctor submission lease expired. Please retry.": "监考提交锁已过期，请重试。"
-"Proctored contest": "监考比赛"
-"Public keys are build-time trust anchors, not secrets. Never include either private key in the client.": "公钥是构建时注入的信任依据，不是秘密。不要将任何一组私钥放入客户端。"
-"Required client version": "指定客户端版本"
-"Requires a compatible proctor client. Final logs are required for valid results.": "需使用版本符合要求的监考客户端，最终日志成功上传后成绩才有效。"
-"Results invalid: log pending": "成绩无效：等待上传日志"
-"Results provisional: final log required": "临时成绩：待最终日志确认"
-"Revoked": "已撤销"
-"Rotate authentication keys": "轮换认证密钥"
-"Search filename, user, domain or contest": "搜索文件名、用户名、域或比赛"
-"Session policy": "会话令牌策略"
-"Token lifetime (seconds)": "令牌有效期（秒）"
-"Upload time": "上传时间"
-"Use an up-to-date proctor client to access contest problems.": "此比赛启用了监考，请使用版本符合要求的监考客户端完成认证后查看题目。"
-"Use an up-to-date proctor client to submit.": "请使用版本符合要求的监考客户端提交。"
-"Verify client and continue": "验证客户端并继续"
-"View private keys": "查看私钥"
-"Wait for pending submissions before finishing proctoring.": "请等待在途提交完成后再结束监考。"
+'Active': '有效'
+'Allow token refresh': '允许刷新会话令牌'
+'Authentication keys': '认证密钥'
+'Authentication private key': '认证私钥'
+'Authentication public key (Ed25519)': '认证公钥（Ed25519）'
+'Authorization required.': '需要重新授权。'
+'Changing the required version or rotating keys invalidates current session tokens.': '修改指定版本或轮换密钥会使当前会话令牌失效。'
+'Deleting logs invalidates the corresponding contest results until logs are uploaded again. Continue?': '删除日志会使相应比赛成绩失效，重新上传后才能恢复。是否继续？'
+'Enable contest proctoring': '启用比赛监考'
+'Enable proctor service': '启用监考服务'
+'Enable the proctor service in system settings first.': '请先在系统管理的监考设置中启用监考服务。'
+'Encrypted final logs.': '加密的最终监考日志'
+'Existing sessions will become invalid. Continue?': '现有会话将失效，是否继续？'
+'Final log uploaded': '最终日志已上传'
+'Final proctor log cannot be replaced.': '不能将最终监考日志替换为另一份文件。'
+'Finish proctoring in the client and upload the encrypted final log. Failed uploads may be retried within the configured window.': '请在客户端结束监考并上传加密的最终日志。上传失败可在规定期限内补传。'
+'Generate authentication keys': '生成认证密钥'
+'Generate authentication keys first.': '请先生成认证密钥。'
+'Generate both key pairs and inject both public keys when building the client. No manual client enrollment is required.': '一次生成认证和日志加密两组密钥，在构建客户端时注入两组公钥，无需人工注册客户端。'
+'Hack submissions are unavailable in proctored contests.': '监考比赛暂不支持 Hack 提交。'
+'Invalid encrypted proctor log.': '监考日志的加密格式或完整性校验失败。'
+'Invalid proctor handshake.': '监考握手验证失败。'
+'Invalid proctor request origin.': '监考请求来源不合法。'
+'Invalid proctor request proof.': '监考请求签名验证失败。'
+'Late upload window (days)': '允许补传期限（天）'
+'Log decryption private key': '日志解密私钥'
+'Log download failed.': '日志下载失败。'
+'Log encryption public key (RSA-OAEP)': '日志加密公钥（RSA-OAEP）'
+'Manage authentication keys, session policy and encrypted logs.': '管理认证密钥、会话策略与加密日志。'
+'Maximum log size (MiB)': '单个日志大小上限（MiB）'
+'No proctor logs yet.': '暂无监考日志。'
+'Private keys': '私钥'
+'Private keys are server-only. Do not put them in build variables, repositories or chat messages. Closing this dialog clears the display.': '私钥仅供服务端使用，不得放入构建变量、代码仓库或聊天消息。关闭弹窗后将清除展示内容。'
+'Proctor authentication keys are unavailable. Check the server key storage.': '无法读取监考认证密钥，请检查服务端密钥存储目录及权限。'
+'Proctor authentication required.': '需要完成监考客户端认证。'
+'Proctor challenge has already been used.': '该监考挑战已被使用。'
+'Proctor client version mismatch.': '监考客户端版本不符合系统要求。'
+'Proctor environment mismatch.': '监考环境指纹或设备不一致。'
+'Proctor is not configured.': '监考服务尚未正确配置或未启用。'
+'Proctor log is busy. Please retry.': '该日志正在处理，请稍后重试。'
+'Proctor log operation timed out. Please retry.': '日志处理超时，请重试。'
+'Proctor logs': '监考日志'
+'Proctor policy cannot change after the contest starts.': '比赛开始后不能修改监考开关。'
+'Proctor request has already been used.': '监考请求已被使用，请生成新的请求签名。'
+'Proctor requires HTTPS. Configure the public server URL and trusted proxy.': '监考需要 HTTPS，请配置公开服务地址及可信反向代理。'
+'Proctor session expired or client version mismatch.': '监考会话已过期或客户端版本不符合要求。'
+'Proctor session has already been refreshed.': '该会话令牌已刷新，请使用新令牌。'
+'Proctor session is already finished.': '监考已结束，不能继续提交。'
+'Proctor session is outside the permitted time window.': '不在允许的监考或日志补传时间内。'
+'Proctor session refresh is disabled.': '系统已关闭会话令牌刷新。'
+'Proctor settings': '监考设置'
+'Proctor submission lease expired. Please retry.': '监考提交锁已过期，请重试。'
+'Proctored contest': '监考比赛'
+'Public keys are build-time trust anchors, not secrets. Never include either private key in the client.': '公钥是构建时注入的信任依据，不是秘密。不要将任何一组私钥放入客户端。'
+'Required client version': '指定客户端版本'
+'Requires a compatible proctor client. Final logs are required for valid results.': '需使用版本符合要求的监考客户端，最终日志成功上传后成绩才有效。'
+'Results invalid: log pending': '成绩无效：等待上传日志'
+'Results provisional: final log required': '临时成绩：待最终日志确认'
+'Revoked': '已撤销'
+'Rotate authentication keys': '轮换认证密钥'
+'Search filename, user, domain or contest': '搜索文件名、用户名、域或比赛'
+'Session policy': '会话令牌策略'
+'Token lifetime (seconds)': '令牌有效期（秒）'
+'Upload time': '上传时间'
+'Use an up-to-date proctor client to access contest problems.': '此比赛启用了监考，请使用版本符合要求的监考客户端完成认证后查看题目。'
+'Use an up-to-date proctor client to submit.': '请使用版本符合要求的监考客户端提交。'
+'Verify client and continue': '验证客户端并继续'
+'View private keys': '查看私钥'
+'Wait for pending submissions before finishing proctoring.': '请等待在途提交完成后再结束监考。'
 
 # 客户端更新管理
 '25 packages per page': '每页 25 个更新包'

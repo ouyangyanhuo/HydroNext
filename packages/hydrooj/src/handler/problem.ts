@@ -69,6 +69,7 @@ const defaultSearch = async (domainId: string, q: string, options?: ProblemSearc
             pdoc = await problem.get(domainId, +q.substring(1), projection);
             if (pdoc) pdocs.unshift(pdoc);
         }
+        if (pdocs.length > (options.limit || system.get('pagination.problem'))) pdocs.pop();
     }
     return {
         hits: Array.from(new Set(pdocs.map((i) => `${i.domainId}/${i.docId}`))),
@@ -583,7 +584,7 @@ export class ProblemSubmitHandler extends ProblemDetailHandler {
                 await Promise.all([
                     problem.inc(domainId, this.pdoc.docId, 'nSubmit', 1),
                     domain.incUserInDomain(domainId, this.user._id, 'nSubmit'),
-                    tid && contest.updateStatus(domainId, tid, this.user._id, rid, this.pdoc.docId),
+                    tid && contest.updateStatus(domainId, tid, this.team ?? this.user._id, rid, this.pdoc.docId),
                 ]);
             }
             if (tid && !pretest && !contest.canShowSelfRecord.call(this, this.tdoc)) {
@@ -613,8 +614,13 @@ export class ProblemHackHandler extends ProblemDetailHandler {
             if (this.tdoc.rule !== 'codeforces') throw new HackFailedError('This contest is not hackable.');
             if (!contest.isOngoing(this.tdoc, this.tsdoc)) throw new ContestNotLiveError(this.tdoc.docId);
         }
-        if (this.rdoc.uid === this.user._id) throw new HackFailedError('You cannot hack your own submission');
-        if (this.psdoc?.status !== STATUS.STATUS_ACCEPTED) throw new HackFailedError('You must accept this problem before hacking.');
+        if (this.rdoc.uid === this.user._id
+            || (tid && await contest.isSameTeam(domainId, tid, this.rdoc.uid, this.user._id))) {
+            throw new HackFailedError('You cannot hack your own submission');
+        }
+        const accepted = this.psdoc?.status === STATUS.STATUS_ACCEPTED
+            || this.tsdoc?.detail?.[this.pdoc.docId]?.status === STATUS.STATUS_ACCEPTED;
+        if (!accepted) throw new HackFailedError('You must accept this problem before hacking.');
         if (this.rdoc.status !== STATUS.STATUS_ACCEPTED) throw new HackFailedError('You cannot hack a unsuccessful submission.');
     }
 

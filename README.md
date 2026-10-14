@@ -111,10 +111,35 @@ Hydro 用户群：1085853538
 <details>
 <summary><h2>更新日志（点击展开）</h2></summary
 
+## HydroNext / Hydro 5.0.7
+
+同步上游 `hydro-dev/Hydro` 提交 `52933cef`（2026-10-14），包含 5.0.7 版本号更新后的累计修复。保留 HydroNext 的 React 页面、主题、代码回放、监考、客户端更新、荣誉头像框、训练排序及 Docker 运维功能；公开注册仍保持关闭。
+
+- 新增队伍管理、邀请、团队报名、赛前移除参赛者和团队榜单；队友共享比赛提交与回放的访问权限，自测记录仍仅对本人开放。
+- 团队监考按个人保存会话和日志，榜单按全部成员的证据判定资格；个人做题计时独立记录，在团队榜单汇总。
+- 同步评测修复、安全随机数、默认基础记录权限、异常处理、域缓存、备份目录配置及 Monaco 0.57。
+- ui-next 插件支持模块分包、CSS 和二进制资源，新增 `registerLayout`，兼容既有页面元数据与页面模块的 `Layout`；已实现的 HydroNext 页面优先于模板回退。
+- 为保留现有表格兼容、Markdown 插件和主题行为，固定 Markdown-it 14.3.0 与 Mantine 9.4.1，其余依赖按上游升级。
+- 插件初始化应依赖 `model:setting`，上游已移除 `system/setting-loaded`。数据库索引准备完成后才发送服务就绪通知。
+- `yarn test:unit` 运行工作区回归测试，`yarn test` 同时运行单元与应用集成测试；构建使用 `yarn build`、`yarn build:ui` 和 `yarn build:ui-next`。
+
+## Hydro 5.0.5 / UI 4.58.5
+
+- elastic: 修复基于 ID 搜索
+- ui: 将代码存储移动至 indexeddb
+- core: 允许比赛开始前移除参赛者
+
+## Hydro 5.0.4 / UI 4.58.4
+
+- onsite-toolkit: 允许导入用户到指定域
+- core: cli: 添加交互模式
+- ui: 添加 domain 缓存
+- judge: 修复文件IO空输出检查
+- core: 默认关闭查看他人提交记录权限
+
 ## Hydro 5.0.2 / UI 4.58.2
 
 - judge: 支持 multi-pass 题型
-- core&ui: bug 与漏洞修复
 
 ## Hydro 5.0.0 / UI 4.58.0
 
@@ -130,7 +155,6 @@ Hydro 用户群：1085853538
 - judge: 支持配置叠加层
 - judge: 添加 pipe_proxy 选项
 - judge: 优化 \r 处理
-- 其他漏洞修复和交互优化
 
 ## Hydro 5.0.0-beta.18 / UI 4.58.0-beta.19
 
@@ -148,13 +172,11 @@ Hydro 用户群：1085853538
 - core: 支持多文件 patch
 - core: buildContent: 支持 background 字段
 - core: 排名：排除不在本域内的用户
-- core: 其他 bug 修复
 
 ## Hydro 5.0.0-beta.16 / UI 4.58.0-beta.17
 
 - core: 修复繁体中文 i18n 自动检测
 - scoreboard-xcpcio: 修复子域中自动重定向
-- core: 比赛导航优化
 - core&ui: 繁体中文翻译完善
 - core&ui: 支持搜索训练计划
 - core: 修复 judge 特定情况下的竞态
@@ -162,7 +184,6 @@ Hydro 用户群：1085853538
 - ui: 支持自动填写测试数据输入到在线 IDE
 - ui: 默认禁用提交列表页面统计数据
 - judge: 支持同时运行多组自测数据
-- ui: 细节优化
 
 ## Hydro 5.0.0-beta.15 / UI 4.58.0-beta.16
 

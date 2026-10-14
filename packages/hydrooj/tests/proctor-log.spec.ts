@@ -17,7 +17,10 @@ function encryptedFile(text: string) {
     cipher.setAAD(Buffer.from(`HYDRO-PROCTOR-LOG/1:${keyId}`));
     const ciphertext = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
     const header = { keyId, iv: iv.toString('base64url'), tag: cipher.getAuthTag().toString('base64url'),
-        wrappedKey: publicEncrypt({ key: keys.publicKey, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' }, key).toString('base64url') };
+        wrappedKey: publicEncrypt({ key: keys.publicKey,
+            padding: constants.RSA_PKCS1_OAEP_PADDING,
+            oaepHash: 'sha256' },
+        key).toString('base64url') };
     return Buffer.concat([Buffer.from(`HYDRO-PROCTOR-LOG/1\n${JSON.stringify(header)}\n`), ciphertext]);
 }
 

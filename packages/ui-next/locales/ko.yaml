@@ -90,7 +90,7 @@ A verification link will be sent to your email.: 인증 링크가 이메일로 �
 Send Verification Email: 인증 이메일 발송
 Passwords do not match: 비밀번호가 일치하지 않습니다
 Registration failed: 등록 실패
-"Too frequent operations of send_mail (limit: 1 operations in 60 seconds).": "이메일 발송이 너무 빈번합니다 (제한: 60초에 1회)."
+'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': '이메일 발송이 너무 빈번합니다 (제한: 60초에 1회).'
 Logging out...: 로그아웃 중...
 Account Deletion Pending: 계정 삭제 대기 중
 You do not have permission to import problems.: 문제를 가져올 권한이 없습니다.
@@ -135,7 +135,7 @@ Confirm deleting this training? Its files and status will be deleted as well.: �
 Download Selected: 선택 다운로드
 Remove Selected: 선택 삭제
 Rename Selected: 선택 이름 변경
-"Enter a new name for the file:": "파일의 새 이름을 입력하세요:"
+'Enter a new name for the file:': '파일의 새 이름을 입력하세요:'
 Batch replacement: 일괄 대체
 Original content: 원본 내용
 Replace with: 대체할 내용
@@ -207,7 +207,7 @@ Create Problem: 문제 만들기
 Edit Problem: 문제 편집
 Problem ID: 문제 ID
 Problem ID must start with a letter and contain only letters and numbers.: 문제 ID는 영문자로 시작해야 하며, 영문자와 숫자만 포함할 수 있습니다.
-Problem ID must start with a letter. Auto-corrected to {0}: "문제 ID는 영문자로 시작해야 합니다. 자동 수정: {0}"
+Problem ID must start with a letter. Auto-corrected to {0}: '문제 ID는 영문자로 시작해야 합니다. 자동 수정: {0}'
 Content (Markdown): 내용 (Markdown)
 Test Data: 테스트 데이터
 Upload Test Data: 테스트 데이터 업로드
@@ -366,7 +366,7 @@ Powered by: Powered by
 Paste limit exceeded: 붙여넣기 제한 초과
 'Pasting more than {0} characters is not allowed (currently {1}).': '{0}자를 초과하는 내용은 붙여넣을 수 없습니다(현재 {1}자).'
 File too large: 파일이 너무 큽니다
-"File too large: {name}": "파일이 너무 큽니다: {name}"
+'File too large: {name}': '파일이 너무 큽니다: {name}'
 Drag files here or click to upload: 여기에 파일을 드래그하거나 클릭하여 업로드
 Uploading...: 업로드 중...
 Nothing to preview: 미리보기 없음
@@ -447,7 +447,7 @@ Additional Files: 추가 파일
 Input, output, and config files used by the judge.: 채점에 사용되는 입력, 출력 및 설정 파일입니다.
 Public attachments shown with this problem.: 이 문제와 함께 공개되는 첨부 파일입니다.
 This is a copy of another problem.: 이것은 다른 문제의 복사본입니다.
-"This problem has no testdata.": "이 문제에는 테스트데이터가 없습니다."
+'This problem has no testdata.': '이 문제에는 테스트데이터가 없습니다.'
 Status Distribution: 상태 분포
 Submission Statistics: 제출 통계
 Submit By: 제출자
@@ -664,7 +664,7 @@ Contest starts in: 대회 시작까지
 Contest time remaining: 대회 남은 시간
 Time on this problem: 이 문제에 사용한 시간
 Visible time on this problem; saved in this tab.: 이 문제 페이지를 보고 있던 누적 시간입니다. 현재 탭에 저장됩니다.
-## Reused from existing Hydro Korean locale sources
+# # Reused from existing Hydro Korean locale sources
 (Not changed): 수정되지 않음
 Active Sessions: 활성 세션
 All Contests: 전체 대회
@@ -710,7 +710,7 @@ setting_session: 세션 설정
 setting_storage: 설정 저장
 setting_usage: 언어 설정
 
-## Reused by matching identical Chinese translations in Hydro locale sources
+# # Reused by matching identical Chinese translations in Hydro locale sources
 Auto: 자동
 Import User: 사용자 불러오기
 New Filename: 새 파일명

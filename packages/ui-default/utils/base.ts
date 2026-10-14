@@ -114,15 +114,17 @@ export const request = {
             reject(err);
           } else if (typeof jqXHR.responseJSON === 'object' && jqXHR.responseJSON.error) {
             const { error } = jqXHR.responseJSON;
+            let err: any;
             if (error.params) {
               const message = i18n(error.message, ...error.params);
-              const err = new Error(message === error.message && error.params.length
+              err = new Error(message === error.message && error.params.length
                 ? `${error.message}: ${error.params.join(' ')}`
-                : message) as any;
+                : message);
               err.rawMessage = error.message;
               err.params = error.params;
-              reject(err);
-            } else reject(new Error(jqXHR.responseJSON.error.message));
+            } else err = new Error(error.message);
+            if (jqXHR.status >= 400 && jqXHR.status < 500) err.isUserFacingError = true;
+            reject(err);
           } else if (errorThrown instanceof Error) {
             reject(errorThrown);
           } else {
@@ -188,9 +190,16 @@ let transition: ViewTransition | null = null;
 export async function withTransitionCallback(callback: () => (Promise<void> | void)) {
   if (!document.startViewTransition || document.visibilityState === 'hidden') return callback?.();
   transition?.skipTransition?.();
-  transition = document.startViewTransition(callback);
-  await transition.finished;
-  transition = null;
+  const currentTransition = document.startViewTransition(callback);
+  transition = currentTransition;
+  const ready = currentTransition.ready.catch((error) => {
+    if (!(error instanceof DOMException) || !['AbortError', 'InvalidStateError'].includes(error.name)) throw error;
+  });
+  try {
+    await Promise.all([ready, currentTransition.finished]);
+  } finally {
+    if (transition === currentTransition) transition = null;
+  }
   return null;
 }
 

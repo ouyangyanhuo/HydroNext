@@ -7,7 +7,7 @@ import {
     PermissionError, PretestRejudgeFailedError, ProblemConfigError,
     RecordNotFoundError,
 } from '../error';
-import { RecordDoc, Tdoc } from '../interface';
+import { ContestStatusDoc, RecordDoc, Tdoc } from '../interface';
 import { getRecordAccess } from '../lib/record-access';
 import { resolveRecordUserIds } from '../lib/record-filter';
 import { PERM, PRIV, STATUS } from '../model/builtin';
@@ -82,16 +82,20 @@ export class RecordListHandler extends ContestDetailBaseHandler {
         }
         const isSelfOnly = q.uid && typeof q.uid === 'object'
             && '$in' in q.uid && q.uid.$in.length === 1 && q.uid.$in[0] === this.user._id;
-        if (!isSelfOnly) this.checkPerm(PERM.PERM_VIEW_RECORD);
+        const requestedUids = q.uid && typeof q.uid === 'object' && '$in' in q.uid ? q.uid.$in : [];
+        const members = this.tsdoc?.members || [];
+        const teamMembers = tid && this.team && !all && !allDomain && (q.uid === undefined || isSelfOnly) ? members : null;
+        const isTeamOnly = !!this.team && requestedUids.length > 0 && requestedUids.every((uid) => members.includes(uid));
+        if (!isSelfOnly && !teamMembers?.length && !isTeamOnly) this.checkPerm(PERM.PERM_VIEW_RECORD);
         if (tid) {
             tdoc = await contest.get(domainId, tid);
             this.tdoc = tdoc;
             if (!tdoc) throw new ContestNotFoundError(domainId, pid);
             if (!contest.canShowScoreboard.call(this, tdoc, true)) throw new PermissionError(PERM.PERM_VIEW_CONTEST_HIDDEN_SCOREBOARD);
-            if (!contest[isSelfOnly ? 'canShowSelfRecord' : 'canShowRecord'].call(this, tdoc, true)) {
+            if (!contest[isSelfOnly || teamMembers?.length || isTeamOnly ? 'canShowSelfRecord' : 'canShowRecord'].call(this, tdoc, true)) {
                 throw new PermissionError(PERM.PERM_VIEW_CONTEST_HIDDEN_SCOREBOARD);
             }
-            if (!(await contest.getStatus(domainId, tid, this.user._id))?.attend) {
+            if (!this.team && !(await contest.getStatus(domainId, tid, this.user._id))?.attend) {
                 const name = tdoc.rule === 'homework'
                     ? "You haven't claimed this homework yet."
                     : "You haven't attended this contest yet.";
@@ -117,6 +121,7 @@ export class RecordListHandler extends ContestDetailBaseHandler {
             delete q.contest;
             q._id = { $gt: Time.getObjectID(new Date(Date.now() - 10 * Time.week)) };
         }
+        if (teamMembers && !all && !allDomain) q.uid = { $in: teamMembers };
         let cursor = record.getMulti(allDomain ? '' : domainId, q).sort('_id', -1);
         if (!full) cursor = cursor.project(buildProjection(record.PROJECTION_LIST));
         const limit = full ? 10 : [25, 50].includes(pageSize) ? pageSize : 50;
@@ -168,7 +173,7 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
     async prepare(domainId: string, rid: ObjectId) {
         this.rdoc = await record.get(domainId, rid);
         if (!this.rdoc) throw new RecordNotFoundError(rid);
-        if (this.rdoc.uid !== this.user._id) this.checkPerm(PERM.PERM_VIEW_RECORD);
+        if (!(await contest.isOwnOrTeammateRecord(domainId, this.rdoc, this.user._id))) this.checkPerm(PERM.PERM_VIEW_RECORD);
     }
 
     async download() {
@@ -271,6 +276,7 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
     status: number;
     pretest = false;
     tdoc: Tdoc;
+    teamMembers?: number[];
     applyProjection = false;
     noTemplate = false;
     watchedRids = new Set<string>();
@@ -307,7 +313,20 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
         }
         const isSelfOnly = this.uid === this.user._id
             || (this.uids?.size === 1 && this.uids.has(this.user._id));
-        if (!isSelfOnly) this.checkPerm(PERM.PERM_VIEW_RECORD);
+        let isTeamOnly = false;
+        if (this.tdoc?.allowTeam && !pretest && !all && !allDomain) {
+            const teamVid = await contest.getTeamVid(domainId, this.tdoc.docId, this.user._id);
+            if (teamVid) {
+                const tsdoc = await contest.getStatus(domainId, this.tdoc.docId, teamVid);
+                const members = tsdoc?.members || [];
+                isTeamOnly = !!this.uids?.size && [...this.uids].every((uid) => members.includes(uid));
+                if (!this.uids || isSelfOnly) {
+                    this.teamMembers = members;
+                    this.uids = undefined;
+                }
+            }
+        }
+        if (!isSelfOnly && !this.teamMembers?.length && !isTeamOnly) this.checkPerm(PERM.PERM_VIEW_RECORD);
         if (pid) {
             this.pids = new Set(await resolveRecordProblemIds(
                 domainId, pid, this.tdoc, this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN),
@@ -341,16 +360,18 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
     async onRecordChange(rdoc: RecordDoc) {
         if (!this.allDomain) {
             if (rdoc.domainId !== this.args.domainId) return;
-            if (!this.pretest && typeof rdoc.input === 'string') return;
+            if (!this.pretest && rdoc.contest?.toString() === '0'.repeat(24)) return;
             if (!this.all) {
                 if (!rdoc.contest && this.tid) return;
                 if (rdoc.contest && ![this.tid, '000000000000000000000000'].includes(rdoc.contest.toString())) return;
                 if (this.tid && rdoc.contest?.toString() !== '0'.repeat(24)) {
-                    if (rdoc.uid !== this.user._id && !contest.canShowRecord.call(this, this.tdoc, true)) return;
-                    if (rdoc.uid === this.user._id && !contest.canShowSelfRecord.call(this, this.tdoc, true)) return;
+                    const own = await contest.isOwnOrTeammateRecord(this.args.domainId, rdoc, this.user._id);
+                    if (!own && !contest.canShowRecord.call(this, this.tdoc, true)) return;
+                    if (own && !contest.canShowSelfRecord.call(this, this.tdoc, true)) return;
                 }
             }
         }
+        if (this.teamMembers && !this.teamMembers.includes(rdoc.uid)) return;
         if (this.pids && !this.pids.has(rdoc.pid)) return;
         if (typeof this.uid === 'number' && rdoc.uid !== this.uid) return;
         if (this.uids && !this.uids.has(rdoc.uid)) return;
@@ -400,6 +421,7 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
 export class RecordDetailConnectionHandler extends ConnectionHandler {
     pdoc: ProblemDoc;
     tdoc?: Tdoc;
+    tsdoc?: ContestStatusDoc;
     rid: string = '';
     disconnectTimeout: NodeJS.Timeout;
     throttleSend: any;
@@ -412,29 +434,30 @@ export class RecordDetailConnectionHandler extends ConnectionHandler {
     async prepare(domainId: string, rid: ObjectId, noTemplate = false) {
         const rdoc = await record.get(domainId, rid);
         if (!rdoc) return;
+        const isOwnOrTeammate = await contest.isOwnOrTeammateRecord(domainId, rdoc, this.user._id);
         if (rdoc.contest && ![record.RECORD_GENERATE, record.RECORD_PRETEST].some((i) => i.toHexString() === rdoc.contest.toHexString())) {
             this.tdoc = await contest.get(domainId, rdoc.contest);
             let canView = this.user.own(this.tdoc);
             canView ||= contest.canShowRecord.call(this, this.tdoc);
-            canView ||= this.user._id === rdoc.uid && contest.canShowSelfRecord.call(this, this.tdoc);
+            canView ||= isOwnOrTeammate && contest.canShowSelfRecord.call(this, this.tdoc);
             if (!canView) throw new PermissionError(PERM.PERM_VIEW_CONTEST_HIDDEN_SCOREBOARD);
             if (!this.user.own(this.tdoc) && !this.user.hasPerm(PERM.PERM_EDIT_CONTEST)) {
                 this.applyProjection = true;
             }
+            const teamVid = this.tdoc.allowTeam ? await contest.getTeamVid(domainId, this.tdoc.docId, this.user._id) : null;
+            this.tsdoc = await contest.getStatus(domainId, this.tdoc.docId, teamVid ?? this.user._id);
         }
         const [pdoc, self] = await Promise.all([
             problem.get(rdoc.domainId, rdoc.pid),
             problem.getStatus(domainId, rdoc.pid, this.user._id),
         ]);
 
-        this.canViewCode = rdoc.uid === this.user._id;
+        this.canViewCode = isOwnOrTeammate;
         this.canViewCode ||= this.user.hasPriv(PRIV.PRIV_READ_RECORD_CODE);
         this.canViewCode ||= this.user.hasPerm(PERM.PERM_READ_RECORD_CODE);
         this.canViewCode ||= this.user.hasPerm(PERM.PERM_READ_RECORD_CODE_ACCEPT) && self?.status === STATUS.STATUS_ACCEPTED;
 
-        if (!rdoc.contest || this.user._id !== rdoc.uid) {
-            if (!problem.canViewBy(pdoc, this.user)) throw new PermissionError(PERM.PERM_VIEW_PROBLEM_HIDDEN);
-        }
+        if (!this.tsdoc?.attend && pdoc && !problem.canViewBy(pdoc, this.user)) throw new PermissionError(PERM.PERM_VIEW_PROBLEM_HIDDEN);
 
         this.pdoc = pdoc;
         this.noTemplate = noTemplate;

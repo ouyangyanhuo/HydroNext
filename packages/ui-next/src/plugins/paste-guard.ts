@@ -2,8 +2,8 @@
 
 import { localeData } from '@/globals';
 import {
-  PERM, PRIV, hasPermValue, hasPrivValue,
-} from '@/hooks/use-permission';
+  hasPermValue, hasPrivValue,
+  PERM, PRIV } from '@/hooks/use-permission';
 import type { PluginDefinition } from '@/registry/plugin';
 import { useSessionStore } from '@/stores/session';
 import {

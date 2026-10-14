@@ -1,7 +1,7 @@
 import { parseMemoryMB, parseTimeMS, sortFiles } from '@hydrooj/utils/lib/common';
 import type { ProblemConfigFile, TestCaseConfig } from 'hydrooj/src/interface';
 import Ajv from 'ajv';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { cloneDeep } from 'lodash';
 import schema from '../../monaco/schema/problemconfig';
 
@@ -21,7 +21,7 @@ export default function reducer(state = {
     case 'CONFIG_LOAD_FULFILLED': {
       const c = { ...state, __loaded: true };
       try {
-        let data = yaml.load(action.payload.config) as any;
+        let data = yaml.load(action.payload.config || '{}') as any;
         if (typeof data !== 'object') data = { subtasks: [] };
         else data.subtasks ||= [];
         if (!validate(data)) {

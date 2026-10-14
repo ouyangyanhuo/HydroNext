@@ -20,7 +20,7 @@ export type {
   PageMetadata, PluginAPI, PluginDefinition, SlotName,
 } from './registry';
 export {
-  after, before, defineSlot, intercept, patch, replace, wrap,
+  after, before, defineSlot, intercept, patch, registerLayout, registerPage, replace, wrap,
 } from './registry';
 
 // Stores

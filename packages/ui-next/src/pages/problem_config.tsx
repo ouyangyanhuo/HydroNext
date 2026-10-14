@@ -1,6 +1,6 @@
 import { Badge, Card, Checkbox, Group, NumberInput, SimpleGrid, Stack, Switch, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { FileDropzone } from '@/components/common/file-dropzone';
@@ -44,7 +44,7 @@ function dumpConfig(config: Record<string, any>) {
     if (Array.isArray(value) && value.length === 0) return false;
     return true;
   }));
-  return yaml.dump(clean, { noArrayIndent: true });
+  return yaml.dump(clean, { seqNoIndent: true });
 }
 
 function normalizeFileValue(value: any) {

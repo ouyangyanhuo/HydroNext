@@ -118,7 +118,7 @@ export async function buildUI() {
   }
   for (const m of lazyModules) {
     const name = basename(m).split('.')[0];
-    const { outputFiles } = await build(`window.lazyModuleResolver['${name}'](require('${relative(tmp, m).replace(/\\/g, '\\\\')}'))`);
+    const { outputFiles } = await build(`window.lazyModuleResolver['${name}'](require('${(`./${relative(tmp, m)}`).replace(/\\/g, '\\\\')}'))`);
     const css = outputFiles.filter((i) => i.path.endsWith('.css')).map((i) => i.text).join('\n');
     for (const file of outputFiles) {
       if (file.path.endsWith('.css')) continue;
@@ -134,7 +134,7 @@ export async function buildUI() {
   const entry = await build([
     `window.lazyloadMetadata = ${JSON.stringify(hashes)};`,
     `window.LANGS=${JSON.stringify(SettingModel.langs)};`,
-    ...entryPoints.map((i) => `import '${relative(tmp, i).replace(/\\/g, '\\\\')}';`),
+    ...entryPoints.map((i) => `import ${JSON.stringify(resolve(i))};`),
   ].join('\n'));
   const pages = entry.outputFiles.filter((i) => i.path.endsWith('.js')).map((i) => i.text);
   const css = entry.outputFiles.filter((i) => i.path.endsWith('.css')).map((i) => i.text);
@@ -174,7 +174,7 @@ export async function apply(ctx: Context) {
     debouncedBuildUI();
   };
   ctx.on('system/setting', () => triggerHotUpdate());
-  ctx.on('system/setting-loaded', () => triggerHotUpdate());
+  ctx.inject(['model:setting'], () => triggerHotUpdate());
   ctx.on('app/watch/change', triggerHotUpdate);
   ctx.on('app/watch/unlink', triggerHotUpdate);
   ctx.on('app/i18n/update', debouncedBuildUI);

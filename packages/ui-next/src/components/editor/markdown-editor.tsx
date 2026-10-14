@@ -37,7 +37,11 @@ export function MarkdownEditor({
           minRows={minRows}
           maxRows={minRows + 8}
           placeholder={placeholder || t('Write your content in Markdown...')}
-          styles={{ input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '14px', minHeight: panelHeight, maxHeight: panelHeight, overflowY: 'auto' } }}
+          styles={{ input: { fontFamily: 'var(--hydro-font-mono)',
+            fontSize: '14px',
+            minHeight: panelHeight,
+            maxHeight: panelHeight,
+            overflowY: 'auto' } }}
         />
       </Tabs.Panel>
 

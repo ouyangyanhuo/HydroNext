@@ -1,7 +1,7 @@
 {
     "name": "@hydrooj/hydrojudge",
     "bin": "bin/hydrojudge.js",
-    "version": "4.0.4",
+    "version": "4.0.6",
     "main": "./src/index.ts",
     "author": "undefined <i@undefined.moe>",
     "repository": "https://github.com/hydro-dev/Hydro.git",
@@ -9,21 +9,21 @@
         "@hydrooj/common": "workspace:^",
         "@hydrooj/utils": "workspace:^",
         "@opentelemetry/api": "^1.9.1",
-        "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
-        "@opentelemetry/sdk-node": "^0.218.0",
-        "@zip.js/zip.js": "^2.8.26",
-        "cac": "^7.0.0",
-        "p-queue": "^9.3.0",
+        "@opentelemetry/exporter-trace-otlp-http": "^0.223.0",
+        "@opentelemetry/sdk-node": "^0.223.0",
+        "@zip.js/zip.js": "^2.23.0",
+        "cac": "^7.1.0",
+        "p-queue": "^9.3.5",
         "schemastery": "^3.18.0",
-        "semver": "^7.8.4",
-        "shell-quote": "^1.8.4",
-        "superagent": "^10.3.0",
-        "ws": "^8.21.0"
+        "semver": "^7.8.5",
+        "shell-quote": "^1.12.0",
+        "superagent": "^10.4.1",
+        "ws": "^8.22.0"
     },
     "preferUnplugged": true,
     "license": "AGPL-3.0-or-later",
     "devDependencies": {
         "@types/shell-quote": "^1.7.5",
-        "@types/ws": "^8.18.1"
+        "@types/ws": "^8.18.2"
     }
 }

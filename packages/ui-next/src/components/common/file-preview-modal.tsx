@@ -94,7 +94,10 @@ function DocxViewer({ url }: { url: string }) {
     <div style={{ position: 'relative', minHeight: 200 }}>
       <LoadingOverlay visible={loading} />
       {error && <Text size="sm" c="red">{error}</Text>}
-      <div ref={containerRef} className="overflow-auto rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] p-4" style={{ maxHeight: '70vh' }} />
+      <div
+        ref={containerRef}
+        className="overflow-auto rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] p-4"
+        style={{ maxHeight: '70vh' }} />
     </div>
   );
 }
@@ -108,7 +111,13 @@ export interface FilePreviewModalProps {
   onSave?: (filename: string, content: string) => Promise<void>;
 }
 
-function FilePreviewModalContent({ opened, onClose, file, fileUrl, canEdit = false, onSave }: Omit<FilePreviewModalProps, 'file'> & { file: NonNullable<FilePreviewModalProps['file']> }) {
+function FilePreviewModalContent({ opened,
+  onClose,
+  file,
+  fileUrl,
+  canEdit = false,
+  onSave }: Omit<FilePreviewModalProps,
+    'file'> & { file: NonNullable<FilePreviewModalProps['file']> }) {
   const { t } = useI18n();
   const [content, setContent] = useState('');
   const initialContent = useRef('');

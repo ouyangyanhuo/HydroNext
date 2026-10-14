@@ -41,7 +41,10 @@ export class ManageClientUpdatesHandler extends Handler {
     async get(_, page = 1, q = '') {
         const config = await updates.getSettings();
         let origin = '';
-        try { origin = updateUrl(system.get('server.url') || this.context.origin, true); } catch { /* An administrator can supply the public origin. */ }
+        try {
+            origin = updateUrl(system.get('server.url') || this.context.origin,
+                true);
+        } catch { /* An administrator can supply the public origin. */ }
         const draft = { ...defaultDraft, origin, ...config.draft };
         q = q.trim().slice(0, 80);
         const search = { $regex: escapeRegExp(q), $options: 'i' };
@@ -59,7 +62,13 @@ export class ManageClientUpdatesHandler extends Handler {
         this.response.body = { draft, revision: config.revision, manifest: config.manifest || null, publishedAssets: config.publishedAssets || [],
             activeAssets: activeUpdateAssets(config.manifest),
             publishedOrigin: publishedOrigin(config, draft.origin),
-            publishedAt: config.publishedAt || null, assets: publicRows, selectedAssets: selected.map(updates.publicAsset), count, page, pageCount, q };
+            publishedAt: config.publishedAt || null,
+            assets: publicRows,
+            selectedAssets: selected.map(updates.publicAsset),
+            count,
+            page,
+            pageCount,
+            q };
     }
 
     @requireSudo
@@ -173,9 +182,13 @@ export class ManageClientUpdatesHandler extends Handler {
             }
             if (publish) {
                 await this.limitRate('client_update_publish', 60, 5);
-                if (!UPDATE_KINDS.some((kind) => draft[kind] || draft[UPDATE_URL_FIELDS[kind]])) throw new Error('Choose at least one update package.');
+                if (!UPDATE_KINDS.some((kind) => draft[kind] || draft[UPDATE_URL_FIELDS[kind]])) {
+                    throw new Error('Choose at least one update package.');
+                }
                 if (rows.some((asset) => asset.bundleError)) throw new Error(rows.find((asset) => asset.bundleError).bundleError);
-                if ((await Promise.all(rows.map((asset) => storage.exists(asset.path)))).some((exists) => !exists)) throw new Error('Update package file is missing.');
+                if ((await Promise.all(rows.map((asset) => storage.exists(asset.path)))).some((exists) => !exists)) {
+                    throw new Error('Update package file is missing.');
+                }
                 await Promise.all(rows.map(async (asset) => verifyUpdateStream(await storage.get(asset.path), asset)));
             }
         } catch (error) { throw new ValidationError('draft', null, error.message); }

@@ -1,6 +1,6 @@
 import { Badge, Group, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { FormDialog } from '@/components/common/form-dialog';
