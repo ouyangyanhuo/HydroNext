@@ -19,8 +19,9 @@ interface RecordUpdate {
  * The backend broadcasts record/change events through /record-detail-conn.
  */
 export function useRecordSocket(rid: string | undefined) {
-  const [record, setRecord] = useState<RecordUpdate | null>(null);
   const domainId = useSessionStore((state) => state.ui.domainId);
+  const context = `${domainId}/${rid || ''}`;
+  const [update, setUpdate] = useState<{ context: string, record: RecordUpdate } | null>(null);
   const socketUrl = buildRecordSocketUrl(rid, domainId);
 
   const handleMessage = useCallback((data: any) => {
@@ -28,16 +29,17 @@ export function useRecordSocket(rid: string | undefined) {
     if (!payload) return;
     const payloadRid = payload._id || payload.rid;
     if (rid && payloadRid && String(payloadRid) !== String(rid)) return;
-    setRecord((prev) => ({ ...prev, ...payload }));
-  }, [rid]);
+    setUpdate((prev) => ({ context, record: { ...(prev?.context === context ? prev.record : {}), ...payload } }));
+  }, [context, rid]);
 
   useWebSocket({
     url: socketUrl,
     onMessage: handleMessage,
-    autoReconnect: false,
+    // A reconnect obtains the current snapshot; terminal 4001/Ended stays closed.
+    autoReconnect: true,
     reconnectInterval: 5000,
     enabled: !!rid,
   });
 
-  return record;
+  return update?.context === context ? update.record : null;
 }

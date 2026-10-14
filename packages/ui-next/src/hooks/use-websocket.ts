@@ -5,12 +5,19 @@ interface WebSocketOptions {
   url: string;
   onMessage?: (data: any) => void;
   onOpen?: (send: (data: any) => void) => void;
-  onClose?: () => void;
+  onClose?: (event?: CloseEvent) => void;
   onError?: (event: Event) => void;
   autoReconnect?: boolean;
   reconnectInterval?: number;
+  heartbeatTimeout?: number;
+  heartbeatProbeTimeout?: number;
+  connectionTimeout?: number;
   enabled?: boolean;
 }
+
+// Transport-level 1000 can also be a proxy/server restart; only explicit business/policy stops are terminal.
+const TERMINAL_CLOSE_CODES = new Set([1008, 4000, 4001]);
+const duration = (value: number, fallback: number) => Number.isFinite(value) && value > 0 ? value : fallback;
 
 export function useWebSocket({
   url,
@@ -20,13 +27,15 @@ export function useWebSocket({
   onError,
   autoReconnect = true,
   reconnectInterval = 3000,
+  heartbeatTimeout = 120_000,
+  heartbeatProbeTimeout = 10_000,
+  connectionTimeout = 30_000,
   enabled = true,
 }: WebSocketOptions) {
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const pendingMessages = useRef<any[]>([]);
-  const shouldReconnect = useRef(autoReconnect);
-  const connectRef = useRef<() => void>(() => {});
+  const canQueue = useRef(enabled);
+  const recoverRef = useRef<() => void>(() => {});
   const handlersRef = useRef({ onMessage, onOpen, onClose, onError });
   const ui = useSessionStore((s) => s.ui);
 
@@ -34,97 +43,209 @@ export function useWebSocket({
     handlersRef.current = { onMessage, onOpen, onClose, onError };
   }, [onClose, onError, onMessage, onOpen]);
 
-  const connect = useCallback(() => {
-    if (!enabled) return;
-    if (wsRef.current?.readyState === WebSocket.CONNECTING || wsRef.current?.readyState === WebSocket.OPEN) return;
-
+  useEffect(() => {
+    if (!enabled) return undefined;
+    canQueue.current = true;
     const wsPrefix = ui.ws_prefix || '/';
     const prefixUrl = new URL(wsPrefix, window.location.href);
-    prefixUrl.protocol = prefixUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    prefixUrl.protocol = ['https:', 'wss:'].includes(prefixUrl.protocol) ? 'wss:' : 'ws:';
     if (!prefixUrl.pathname.endsWith('/')) prefixUrl.pathname += '/';
     const fullUrl = url.startsWith('ws') ? url : new URL(url.replace(/^\/+/, ''), prefixUrl).toString();
-
-    const scheduleReconnect = () => {
-      if (!shouldReconnect.current) return;
-      clearTimeout(reconnectTimer.current);
-      reconnectTimer.current = setTimeout(() => connectRef.current(), reconnectInterval);
+    const idleTimeout = duration(heartbeatTimeout, 120_000);
+    const probeTimeout = duration(heartbeatProbeTimeout, 10_000);
+    const openTimeout = duration(connectionTimeout, 30_000);
+    const page = window.document;
+    let disposed = false;
+    let stopped = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    let watchdog: number | undefined;
+    let lastReceived = Date.now();
+    let connectingAt = lastReceived;
+    let lastCheck = lastReceived;
+    let probeAt: number | null = null;
+    let networkInterrupted = false;
+    let connect: () => void;
+    const current = (socket: WebSocket) => !disposed && wsRef.current === socket;
+    const retire = () => {
+      const socket = wsRef.current;
+      wsRef.current = null;
+      probeAt = null;
+      if (!socket) return;
+      // Abandon half-open sockets without waiting for their close event to arrive.
+      socket.onopen = null;
+      socket.onmessage = null;
+      socket.onclose = null;
+      socket.onerror = null;
+      socket.close();
     };
-
-    try {
-      const ws = new WebSocket(fullUrl);
-
-      ws.onopen = () => {
-        // console.log('[Hydro WS] Connected:', url);
-        for (const message of pendingMessages.current.splice(0)) {
-          ws.send(JSON.stringify(message));
-        }
-        handlersRef.current.onOpen?.((data) => ws.send(JSON.stringify(data)));
-      };
-
-      ws.onmessage = (event) => {
-        if (event.data === 'ping') {
-          ws.send('pong');
-          return;
-        }
-        if (event.data === 'pong') return;
-        try {
-          const data = JSON.parse(event.data);
-          handlersRef.current.onMessage?.(data);
-        } catch {
-          // Non-JSON message
-        }
-      };
-
-      ws.onclose = () => {
-        // console.log('[Hydro WS] Disconnected:', url);
-        if (wsRef.current === ws) wsRef.current = null;
-        handlersRef.current.onClose?.();
+    const scheduleReconnect = () => {
+      if (disposed || stopped || !autoReconnect || reconnectTimer !== undefined) return;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = undefined;
+        connect();
+      }, duration(reconnectInterval, 3000));
+    };
+    const fail = (event?: CloseEvent) => {
+      if (disposed || stopped) return;
+      stopped = !autoReconnect || Boolean(event && TERMINAL_CLOSE_CODES.has(event.code));
+      retire();
+      if (stopped) {
+        window.clearInterval(watchdog);
+        clearTimeout(reconnectTimer);
+        reconnectTimer = undefined;
+        canQueue.current = false;
+        pendingMessages.current = [];
+      }
+      try {
+        handlersRef.current.onClose?.(event);
+      } finally {
         scheduleReconnect();
-      };
-
-      ws.onerror = (err) => {
-        // console.warn('[Hydro WS] Error:', url);
-        handlersRef.current.onError?.(err);
-        ws.close();
-      };
-
-      wsRef.current = ws;
-    } catch (err) {
-      // console.warn('[Hydro WS] Failed to connect:', err);
-      scheduleReconnect();
-    }
-  }, [enabled, reconnectInterval, ui.ws_prefix, url]);
-
-  useEffect(() => {
-    connectRef.current = connect;
-  }, [connect]);
+      }
+    };
+    connect = () => {
+      if (disposed || stopped) return;
+      if (wsRef.current?.readyState === WebSocket.CONNECTING || wsRef.current?.readyState === WebSocket.OPEN) return;
+      connectingAt = Date.now();
+      try {
+        const ws = new WebSocket(fullUrl);
+        wsRef.current = ws;
+        ws.onopen = () => {
+          if (!current(ws)) return;
+          lastReceived = Date.now();
+          probeAt = null;
+          networkInterrupted = false;
+          const sendNow = (data: any) => {
+            if (!current(ws) || ws.readyState !== WebSocket.OPEN) return;
+            try {
+              ws.send(JSON.stringify(data));
+            } catch {
+              fail();
+            }
+          };
+          for (const message of pendingMessages.current.splice(0)) sendNow(message);
+          // Each business restores its subscriptions/current activity here.
+          if (current(ws)) handlersRef.current.onOpen?.(sendNow);
+        };
+        ws.onmessage = (event) => {
+          if (!current(ws)) return;
+          // Heartbeats and non-JSON frames are also evidence of a live connection.
+          lastReceived = Date.now();
+          probeAt = null;
+          if (event.data === 'ping') {
+            try {
+              ws.send('pong');
+            } catch {
+              fail();
+            }
+            return;
+          }
+          if (event.data === 'pong') return;
+          let data: any;
+          try {
+            data = JSON.parse(event.data);
+          } catch {
+            return;
+          }
+          handlersRef.current.onMessage?.(data);
+        };
+        ws.onclose = (event) => { if (current(ws)) fail(event); };
+        ws.onerror = (event) => {
+          if (!current(ws)) return;
+          try {
+            handlersRef.current.onError?.(event);
+          } finally {
+            fail();
+          }
+        };
+      } catch {
+        fail();
+      }
+    };
+    const probe = (socket: WebSocket, now: number) => {
+      probeAt = now;
+      try {
+        socket.send('ping');
+      } catch {
+        fail();
+      }
+    };
+    const check = (resumed = false) => {
+      if (disposed || stopped) return;
+      const now = Date.now();
+      if (now < lastCheck) {
+        // A system clock correction must not postpone detection for hours.
+        lastReceived = now;
+        connectingAt = now;
+        if (probeAt !== null) probeAt = now;
+      }
+      // A delayed timer after sleep must grant a new probe window, not immediately expire it.
+      const delayed = now - lastCheck > 30_000;
+      lastCheck = now;
+      const socket = wsRef.current;
+      if (!socket) {
+        if (resumed && autoReconnect) {
+          clearTimeout(reconnectTimer);
+          reconnectTimer = undefined;
+          connect();
+        }
+        return;
+      }
+      if (socket.readyState === WebSocket.CONNECTING) {
+        if (now - connectingAt >= openTimeout) fail();
+        return;
+      }
+      if (socket.readyState !== WebSocket.OPEN) {
+        fail();
+        return;
+      }
+      if (probeAt !== null) {
+        if (delayed) probe(socket, now);
+        else if (now - probeAt >= probeTimeout) fail();
+      } else if (now - lastReceived >= idleTimeout || (resumed && networkInterrupted)) {
+        probe(socket, now);
+      }
+      if (resumed) networkInterrupted = false;
+    };
+    const resume = () => check(true);
+    const visible = () => { if (page.visibilityState === 'visible') resume(); };
+    // Network status is only a hint; it is not proof that the OJ is reachable.
+    const offline = () => { networkInterrupted = true; };
+    recoverRef.current = fail;
+    window.addEventListener('online', resume);
+    window.addEventListener('offline', offline);
+    window.addEventListener('focus', resume);
+    window.addEventListener('pageshow', resume);
+    page.addEventListener('visibilitychange', visible);
+    watchdog = window.setInterval(() => check(), Math.max(1000, Math.min(10_000, probeTimeout)));
+    connect();
+    return () => {
+      disposed = true;
+      canQueue.current = false;
+      clearTimeout(reconnectTimer);
+      window.clearInterval(watchdog);
+      window.removeEventListener('online', resume);
+      window.removeEventListener('offline', offline);
+      window.removeEventListener('focus', resume);
+      window.removeEventListener('pageshow', resume);
+      page.removeEventListener('visibilitychange', visible);
+      recoverRef.current = () => {};
+      // Never carry queued operations into another connection context.
+      pendingMessages.current = [];
+      retire();
+    };
+  }, [enabled, autoReconnect, reconnectInterval, heartbeatTimeout, heartbeatProbeTimeout, connectionTimeout, ui.ws_prefix, url]);
 
   const send = useCallback((data: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(data));
+      try {
+        wsRef.current.send(JSON.stringify(data));
+      } catch {
+        recoverRef.current();
+      }
       return;
     }
-    pendingMessages.current.push(data);
+    if (canQueue.current) pendingMessages.current.push(data);
   }, []);
-
-  useEffect(() => {
-    if (!enabled) return undefined;
-    shouldReconnect.current = autoReconnect;
-    connect();
-    return () => {
-      shouldReconnect.current = false;
-      clearTimeout(reconnectTimer.current);
-      const socket = wsRef.current;
-      wsRef.current = null;
-      if (socket) {
-        socket.onopen = null;
-        socket.onmessage = null;
-        socket.onclose = null;
-        socket.onerror = null;
-        socket.close();
-      }
-    };
-  }, [connect, enabled, autoReconnect]);
 
   return { send, ws: wsRef };
 }

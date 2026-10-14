@@ -41,7 +41,7 @@ function WelcomeHero({ problemCount, contestCount }: { problemCount: number, con
     <section className="hydro-home-hero hydro-reveal" aria-labelledby="hydro-home-title">
       <div className="hydro-home-hero__copy">
         <Title id="hydro-home-title" order={1} className="hydro-home-title">
-          {isLoggedIn ? `${t('Welcome')}, ${formatUserName(user)}` : t('Welcome to HNTOU OJ')}
+          {isLoggedIn ? `${t('Welcome')}, ${formatUserName(user)}` : t('Welcome to HydroNext')}
         </Title>
         <Text className="hydro-home-lead">
           {isLoggedIn
