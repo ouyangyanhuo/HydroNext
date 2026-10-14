@@ -10,7 +10,14 @@ export default function UserDeletePendingPage() {
       <Paper p="xl" withBorder>
         <Stack align="center" gap="md">
           <Title order={2}>{t('Account Deletion Pending')}</Title>
-          <Text ta="center">{t('Your account deletion request has been received. It will be processed within 30 days. You can cancel the deletion by logging in again.')}</Text>
+          <Text
+            ta="center"
+          >
+            {t(
+              'Your account deletion request has been received. It will be processed within 30 days. '
+              + 'You can cancel the deletion by logging in again.',
+            )}
+          </Text>
           <Group>
             <Button component={Link} to="user_login" variant="light">{t('Login')}</Button>
             <Button component={Link} to="homepage">{t('Home')}</Button>

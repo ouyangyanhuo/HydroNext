@@ -6,8 +6,8 @@ import { Button } from '@/components/common/button';
 import { DeleteResourceButton } from '@/components/common/delete-resource-button';
 import { LongSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
-import { ContestTimer } from '@/components/contest/contest-timer';
 import { ContestProctorNotice } from '@/components/contest/contest-proctor-notice';
+import { ContestTimer } from '@/components/contest/contest-timer';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -121,10 +121,29 @@ function ContestProblemList({ tdoc, tsdoc, pdict, psdict, rdict, correction, sho
                   </Table.Td>
                   {hasCorrection ? (
                     <Table.Td>
-                      {correctionRecord?.status != null ? <RecordStatusBadge status={correctionRecord.status} size="xs" /> : <Text size="xs" c="dimmed">-</Text>}
+                      {correctionRecord?.status != null
+                        ? <RecordStatusBadge
+                          status={correctionRecord.status}
+                          size="xs"
+                        />
+                        : <Text
+                          size="xs"
+                          c="dimmed"
+                        >-</Text>}
                     </Table.Td>
                   ) : (
-                    <Table.Td>{submitAt ? <TimeDisplay date={submitAt} format="relative" size="xs" /> : <Text size="xs" c="dimmed">-</Text>}</Table.Td>
+                    <Table.Td>
+                      {submitAt
+                        ? <TimeDisplay
+                          date={submitAt}
+                          format="relative"
+                          size="xs"
+                        />
+                        : <Text
+                          size="xs"
+                          c="dimmed"
+                        >-</Text>}
+                    </Table.Td>
                   )}
                   {showScore && <Table.Td className="text-right"><Badge size="xs" variant="light">{score}</Badge></Table.Td>}
                   <Table.Td>
@@ -135,8 +154,18 @@ function ContestProblemList({ tdoc, tsdoc, pdict, psdict, rdict, correction, sho
                         </Link>
                         {pdoc.config && pdoc.config.type !== 'objective' && pdoc.config.type !== 'submit_answer' && (
                           <Group gap="xs" mt={4}>
-                            <Badge size="xs" variant="outline">{pdoc.config.timeMin === pdoc.config.timeMax ? pdoc.config.timeMax : `${pdoc.config.timeMin}~${pdoc.config.timeMax}`}ms</Badge>
-                            <Badge size="xs" variant="outline">{pdoc.config.memoryMin === pdoc.config.memoryMax ? pdoc.config.memoryMax : `${pdoc.config.memoryMin}~${pdoc.config.memoryMax}`}MiB</Badge>
+                            <Badge
+                              size="xs"
+                              variant="outline"
+                            >{pdoc.config.timeMin === pdoc.config.timeMax
+                                ? pdoc.config.timeMax
+                                : `${pdoc.config.timeMin}~${pdoc.config.timeMax}`}ms</Badge>
+                            <Badge
+                              size="xs"
+                              variant="outline"
+                            >{pdoc.config.memoryMin === pdoc.config.memoryMax
+                                ? pdoc.config.memoryMax
+                                : `${pdoc.config.memoryMin}~${pdoc.config.memoryMax}`}MiB</Badge>
                           </Group>
                         )}
                       </div>
@@ -162,7 +191,12 @@ function ContestProblemList({ tdoc, tsdoc, pdict, psdict, rdict, correction, sho
   );
 }
 
-function SubmissionList({ rdocs, pdict, udict, canViewRecord }: { rdocs: any[], pdict: Record<string, any>, udict: Record<string, any>, canViewRecord: boolean }) {
+function SubmissionList({ rdocs, pdict, udict, canViewRecord }: {
+  rdocs: any[];
+  pdict: Record<string, any>;
+  udict: Record<string, any>;
+  canViewRecord: boolean;
+}) {
   const { t } = useI18n();
   if (!canViewRecord) {
     return (
@@ -194,13 +228,32 @@ function SubmissionList({ rdocs, pdict, udict, canViewRecord }: { rdocs: any[], 
                 const udoc = udict[rdoc.uid] || {};
                 return (
                   <Table.Tr key={rdoc._id}>
-                    <Table.Td><Link to="record_detail" params={{ rid: rdoc._id }} className="no-underline"><RecordStatusBadge status={rdoc.status} size="xs" /></Link></Table.Td>
+                    <Table.Td>
+                      <Link
+                        to="record_detail"
+                        params={{ rid: rdoc._id }}
+                        className="no-underline"
+                      >
+                        <RecordStatusBadge
+                          status={rdoc.status}
+                          size="xs"
+                        />
+                      </Link>
+                    </Table.Td>
                     <Table.Td><Text size="xs">{pdoc.title || rdoc.pid}</Text></Table.Td>
                     <Table.Td><UserLink user={udoc} size="xs" /></Table.Td>
                     <Table.Td><Text size="xs">{rdoc.time != null ? `${rdoc.time}ms` : '-'}</Text></Table.Td>
                     <Table.Td><Text size="xs">{formatMemory(rdoc.memory)}</Text></Table.Td>
                     <Table.Td><Text size="xs">{rdoc.lang || '-'}</Text></Table.Td>
-                    <Table.Td>{getObjectIdDate(rdoc._id) ? <TimeDisplay date={getObjectIdDate(rdoc._id)!} format="relative" size="xs" /> : '-'}</Table.Td>
+                    <Table.Td>
+                      {getObjectIdDate(rdoc._id)
+                        ? <TimeDisplay
+                          date={getObjectIdDate(rdoc._id)!}
+                          format="relative"
+                          size="xs"
+                        />
+                        : '-'}
+                    </Table.Td>
                   </Table.Tr>
                 );
               })}
@@ -214,7 +267,13 @@ function SubmissionList({ rdocs, pdict, udict, canViewRecord }: { rdocs: any[], 
   );
 }
 
-function ClarificationList({ tdoc, pdict, tcdocs, udict, tsdoc }: { tdoc: any, pdict: Record<string, any>, tcdocs: any[], udict: Record<string, any>, tsdoc: any }) {
+function ClarificationList({ tdoc, pdict, tcdocs, udict, tsdoc }: {
+  tdoc: any;
+  pdict: Record<string, any>;
+  tcdocs: any[];
+  udict: Record<string, any>;
+  tsdoc: any;
+}) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [subject, setSubject] = useState('0');
@@ -287,7 +346,12 @@ function ClarificationList({ tdoc, pdict, tcdocs, udict, tsdoc }: { tdoc: any, p
             data={[
               { value: '0', label: t('General Issue') },
               { value: '-1', label: t('Technical Issue') },
-              ...(tdoc.pids || []).map((pid: number, index: number) => ({ value: String(pid), label: `${alphabetic(index)}. ${pdict[pid]?.title || pid}` })),
+              ...(tdoc.pids || []).map(
+                (pid: number, index: number) => ({
+                  value: String(pid),
+                  label: `${alphabetic(index)}. ${pdict[pid]?.title || pid}`,
+                }),
+              ),
             ]}
           />
           <Textarea
@@ -402,11 +466,24 @@ export default function ContestDetailPage() {
   if (name === 'contest_problemlist') {
     return (
       <Stack gap="lg">
-        <Card withBorder p="xl" className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]">
+        <Card
+          withBorder
+          p="xl"
+          className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]"
+        >
           <Group justify="space-between" align="flex-start" gap="lg">
             <div className="min-w-0 flex-1">
               <Group gap="xs" mb="sm">
-                <Button component={Link} to="contest_detail" params={{ tid }} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                <Button
+                  component={Link}
+                  to="contest_detail"
+                  params={{ tid }}
+                  variant="subtle"
+                  size="compact-xs"
+                  leftSection={<IconArrowLeft
+                    size={14}
+                  />}
+                >
                   {t('Back')}
                 </Button>
                 <Badge variant="light" color="hydroCopper">
@@ -459,7 +536,11 @@ export default function ContestDetailPage() {
                   <Text size="sm" fw={800} mb="xs">{t('Materials')}</Text>
                   <Stack gap="xs">
                     {tdoc.privateFiles.map((file: any) => (
-                      <Link key={file.name} href={buildUrl('contest_file_download', { tid, type: 'private', filename: file.name })} className="hydro-subtle-link">
+                      <Link
+                        key={file.name}
+                        href={buildUrl('contest_file_download', { tid, type: 'private', filename: file.name })}
+                        className="hydro-subtle-link"
+                      >
                         <Text size="xs">{file.name}</Text>
                       </Link>
                     ))}
@@ -479,7 +560,11 @@ export default function ContestDetailPage() {
 
   return (
     <Stack gap="lg">
-      <Card withBorder p="xl" className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]">
+      <Card
+        withBorder
+        p="xl"
+        className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]"
+      >
         <Group justify="space-between" align="flex-start" gap="lg">
           <div className="min-w-0 flex-1">
             <Group gap="xs" mb="sm">
@@ -514,7 +599,11 @@ export default function ContestDetailPage() {
               <Title order={4} mb="sm">{t('Files')}</Title>
               <Stack gap="xs">
                 {files.map((f: any) => (
-                  <Group key={f.name} justify="space-between" className="rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] px-3 py-2">
+                  <Group
+                    key={f.name}
+                    justify="space-between"
+                    className="rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] px-3 py-2"
+                  >
                     <Link href={buildUrl('contest_file_download', { tid, type: 'private', filename: f.name })} className="hydro-subtle-link">
                       <Text size="sm" fw="var(--hydro-weight-semibold)">{f.name}</Text>
                     </Link>
@@ -573,7 +662,12 @@ export default function ContestDetailPage() {
             )}
 
             {tsdoc.attend && (
-              <Button component={Link} href={buildUrl('record_main', {}, { tid: String(tid), uidOrName: String(user._id) })} variant="subtle" fullWidth>
+              <Button
+                component={Link}
+                href={buildUrl('record_main', {}, { tid: String(tid), uidOrName: String(user._id) })}
+                variant="subtle"
+                fullWidth
+              >
                 {t('My Submissions')}
               </Button>
             )}

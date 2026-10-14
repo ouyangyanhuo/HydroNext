@@ -441,10 +441,10 @@ Hide tags: 隱藏標籤
 Highlight discussions: 高亮討論
 Highlight: 高亮討論
 Hint: 提示
-Hint::icon::difficulty: HNTOU OJ 中題目的難度，根據遞交數、通過率以及每個遞交的遞交時間和評測結果，綜合計算得出，可能不準確。
+Hint::icon::difficulty: HydroNext 中題目的難度，根據遞交數、通過率以及每個遞交的遞交時間和評測結果，綜合計算得出，可能不準確。
 Hint::icon::switch_account: 作為超級管理員，您可以直接切換到其他人的賬戶。
 Hint::icon::testdata: <a href="https://hydro.js.org/docs/Hydro/user/testdata" target="_blank">請參照文件說明</a>
-Hint::page::main: 歡迎來到 HNTOU OJ！ 您可在右上角註冊或登入。此類提示僅會顯示一次。
+Hint::page::main: 歡迎來到 HydroNext！ 您可在右上角註冊或登入。此類提示僅會顯示一次。
 Hint::page::problem_detail: 這是題目詳情頁面。您可點選右側“進入線上程式設計模式"開始編寫您的程式碼。
 Hint::page::problem_files: 您可以將檔案或壓縮包拖拽至對應區域來上傳檔案。點選檔名線上編輯或按住 Ctrl 後點選檔名下載單個檔案。
 Hint::page::problem_main: 這是題目列表頁面。您可在頁面右側進行篩選或搜尋。
@@ -747,7 +747,7 @@ problem.stats.sort.date: 提交時間
 problem.stats.sort.length: 程式碼長度
 problem.stats.sort.memory: 記憶體佔用
 problem.stats.sort.time: 執行時間
-Problems created in polyhedron can be directly imported into any Hydro based online judge system.: Polyhedron 中的題目可以直接匯入任何基於 HNTOU OJ 的線上測評系統。
+Problems created in polyhedron can be directly imported into any Hydro based online judge system.: Polyhedron 中的題目可以直接匯入任何基於 HydroNext 的線上測評系統。
 Problems Sets: 題庫
 Problems: 題目
 Processing...: 處理中...
@@ -1084,7 +1084,7 @@ Visible to registered users: 對註冊使用者可見
 Visit: 檢視
 Vote problem solutions: 為題解投票
 Vote: 投票
-warn::admin:unsupportedbrowser: '身為超級管理員，您仍在使用過於老舊的瀏覽器。這些瀏覽器可能不支援 HNTOU OJ 管理面板的部分功能，我們強烈建議您升級到最新的 Chrome 瀏覽器。'
+warn::admin:unsupportedbrowser: '身為超級管理員，您仍在使用過於老舊的瀏覽器。這些瀏覽器可能不支援 HydroNext 管理面板的部分功能，我們強烈建議您升級到最新的 Chrome 瀏覽器。'
 We will check code similarity after this contest.: 我們會在賽後檢查程式碼相似度。
 WeChat Visibility: 微信可見性
 WeChat: 微信

@@ -208,7 +208,15 @@ export default function ProblemStatisticsPage() {
   return (
     <Stack gap="lg" className="hydro-problem-statistics">
       <PageHeader title={`${t('Statistics')}${problemName ? ` · ${problemName}` : ''}`}>
-        <Button component="a" href={buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId })} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button
+          component="a"
+          href={buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId })}
+          variant="subtle"
+          size="xs"
+          leftSection={<IconArrowLeft
+            size={14}
+          />}
+        >
           {t('Back')}
         </Button>
       </PageHeader>

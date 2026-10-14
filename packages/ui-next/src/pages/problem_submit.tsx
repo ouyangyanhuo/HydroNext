@@ -79,7 +79,11 @@ export default function ProblemSubmitPage() {
 
   return (
     <Stack gap="lg">
-      <Card withBorder p="xl" className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]">
+      <Card
+        withBorder
+        p="xl"
+        className="overflow-hidden border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-md)]"
+      >
         <Badge variant="light" color="hydroTeal" mb="sm">
           {t('Submit')}
         </Badge>

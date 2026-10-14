@@ -30,13 +30,13 @@ function formatSize(size?: number) {
   return `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
 
-const FALLBACK_STATEMENT_LANGS: Record<string, string> = {
-  zh: '简体中文',
-  zh_TW: '繁體中文',
-  en: 'English',
-  ja: '日本語',
-  ko: '한국어',
-};
+const FALLBACK_STATEMENT_LANGS: Record<string, string> = Object.fromEntries([
+  ['zh', '简体中文'],
+  ['zh_TW', '繁體中文'],
+  ['en', 'English'],
+  ['ja', '日本語'],
+  ['ko', '한국어'],
+]);
 
 function normalizeStatementLangs(statementLangs: any) {
   if (statementLangs && typeof statementLangs === 'object') {
@@ -286,7 +286,7 @@ export default function ProblemEditPage() {
   };
 
   const toggleTag = (tag: string) => {
-    const tags = form.tag.split(',').map((item) => item.trim()).filter(Boolean);
+    const tags: string[] = form.tag.split(',').map((item: string) => item.trim()).filter(Boolean);
     const next = tags.includes(tag) ? tags.filter((item) => item !== tag) : [...tags, tag];
     setForm({ ...form, tag: next.join(', ') });
   };
@@ -315,7 +315,15 @@ export default function ProblemEditPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={isNew ? t('Create Problem') : t('Edit Problem')}>
-        <Button component="a" href={isNew ? buildUrl('problem_main') : buildUrl('problem_detail', { pid })} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button
+          component="a"
+          href={isNew ? buildUrl('problem_main') : buildUrl('problem_detail', { pid })}
+          variant="subtle"
+          size="xs"
+          leftSection={<IconArrowLeft
+            size={14}
+          />}
+        >
           {t('Back')}
         </Button>
       </PageHeader>
@@ -332,8 +340,20 @@ export default function ProblemEditPage() {
                 onChange={(e) => setForm({ ...form, pid: e.currentTarget.value })}
                 onBlur={(e) => setForm({ ...form, pid: e.currentTarget.value.trim() })}
               />
-              <TextInput className="sm:col-span-2" label={t('Title')} value={form.title} onChange={(e) => setForm({ ...form, title: e.currentTarget.value })} required />
-              <NumberInput label={t('Difficulty')} value={form.difficulty} min={0} max={10} onChange={(value) => setForm({ ...form, difficulty: Number(value) || 0 })} />
+              <TextInput
+                className="sm:col-span-2"
+                label={t('Title')}
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.currentTarget.value })}
+                required
+              />
+              <NumberInput
+                label={t('Difficulty')}
+                value={form.difficulty}
+                min={0}
+                max={10}
+                onChange={(value) => setForm({ ...form, difficulty: Number(value) || 0 })}
+              />
             </SimpleGrid>
             <StatementEditor
               value={form.content}
@@ -341,7 +361,12 @@ export default function ProblemEditPage() {
               langs={statementLangs}
               initialLang={initialStatementLang}
             />
-            <TextInput label={t('Tags')} value={form.tag} onChange={(e) => setForm({ ...form, tag: e.currentTarget.value })} placeholder="tag1, tag2" />
+            <TextInput
+              label={t('Tags')}
+              value={form.tag}
+              onChange={(e) => setForm({ ...form, tag: e.currentTarget.value })}
+              placeholder="tag1, tag2"
+            />
             <Switch label={t('Hidden')} checked={form.hidden} onChange={(e) => setForm({ ...form, hidden: e.currentTarget.checked })} />
             <Group justify="flex-end" gap="xs">
               {!isNew && (
@@ -379,7 +404,9 @@ export default function ProblemEditPage() {
                       <ButtonBase
                         type="button"
                         onClick={() => toggleTag(category)}
-                        className={`w-full rounded-md border px-2 py-1.5 text-left text-sm font-bold transition-colors ${selected ? 'border-[var(--hydro-primary)] bg-[var(--hydro-primary-soft)] text-[var(--hydro-primary)]' : 'border-transparent hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]'}`}
+                        className={`w-full rounded-md border px-2 py-1.5 text-left text-sm font-bold transition-colors ${selected
+                          ? 'border-[var(--hydro-primary)] bg-[var(--hydro-primary-soft)] text-[var(--hydro-primary)]'
+                          : 'border-transparent hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)]'}`}
                       >
                         <Group justify="space-between" gap="xs" wrap="nowrap">
                           <Text size="sm" fw={700} truncate>{category}</Text>
@@ -388,7 +415,11 @@ export default function ProblemEditPage() {
                       </ButtonBase>
                       {hasChildren && (
                         <div
-                          className={`absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] p-3 shadow-[var(--hydro-shadow-lg)] transition-all duration-200 origin-right ${showCategory === category ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'}`}
+                          className={'absolute right-[calc(100%+4px)] top-0 z-30 w-[320px] rounded-md border border-[var(--hydro-border)] '
+                            + `bg-[var(--hydro-surface-raised)] p-3 shadow-[var(--hydro-shadow-lg)] transition-all duration-200 origin-right ${
+                              showCategory === category
+                                ? 'pointer-events-auto scale-100 opacity-100'
+                                : 'pointer-events-none scale-95 opacity-0'}`}
                           onMouseEnter={() => {
                             if (hoverTimer.current) {
                               clearTimeout(hoverTimer.current);

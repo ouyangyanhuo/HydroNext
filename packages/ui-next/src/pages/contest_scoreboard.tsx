@@ -88,7 +88,13 @@ function CellValue({ cell, canViewRecord }: { cell: any, canViewRecord: boolean 
   }
   if (cell.type === 'record') {
     const color = scoreColor(cell.score ?? cell.value);
-    return <span className={`scoreboard-record-value${color ? ` scoreboard-record-value--${color}` : ''}`}><ScoreboardValue value={cell.value || '-'} /></span>;
+    return <span
+      className={`scoreboard-record-value${color ? ` scoreboard-record-value--${color}` : ''}`}
+    >
+      <ScoreboardValue
+        value={cell.value || '-'}
+      />
+    </span>;
   }
   return <Text size="sm"><ScoreboardValue value={cell.value} /></Text>;
 }

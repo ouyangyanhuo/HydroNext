@@ -113,14 +113,14 @@ function contentLanguages(content: any) {
 }
 
 function langLabel(lang: string) {
-  const labels: Record<string, string> = {
-    zh: '中文',
-    zh_CN: '简体中文',
-    zh_TW: '繁體中文',
-    en: 'English',
-    ja: '日本語',
-    ko: '한국어',
-  };
+  const labels: Record<string, string> = Object.fromEntries([
+    ['zh', '中文'],
+    ['zh_CN', '简体中文'],
+    ['zh_TW', '繁體中文'],
+    ['en', 'English'],
+    ['ja', '日本語'],
+    ['ko', '한국어'],
+  ]);
   return labels[lang] || lang;
 }
 
@@ -213,7 +213,11 @@ function ProblemTags({ tags }: { tags?: string[] }) {
   );
 }
 
-function SidebarLinkButton({ href, children, variant = 'subtle' }: { href: string, children: React.ReactNode, variant?: 'filled' | 'light' | 'subtle' | 'default' }) {
+function SidebarLinkButton({ href, children, variant = 'subtle' }: {
+  href: string;
+  children: React.ReactNode;
+  variant?: 'filled' | 'light' | 'subtle' | 'default';
+}) {
   return (
     <Button component={Link} href={href} variant={variant} fullWidth size="sm" justify="flex-start">
       {children}
@@ -692,12 +696,22 @@ export default function ProblemDetailPage() {
               <Title order={4} mb="sm">{t('Related')}</Title>
               <Stack gap="xs">
                 {relatedContests.map((tdoc: any) => (
-                  <Link key={tdoc.docId || tdoc._id} to="contest_detail" params={{ tid: tdoc.docId || tdoc._id }} className="hydro-subtle-link text-sm font-semibold">
+                  <Link
+                    key={tdoc.docId || tdoc._id}
+                    to="contest_detail"
+                    params={{ tid: tdoc.docId || tdoc._id }}
+                    className="hydro-subtle-link text-sm font-semibold"
+                  >
                     {tdoc.title}
                   </Link>
                 ))}
                 {relatedHomework.map((tdoc: any) => (
-                  <Link key={tdoc.docId || tdoc._id} to="homework_detail" params={{ tid: tdoc.docId || tdoc._id }} className="hydro-subtle-link text-sm font-semibold">
+                  <Link
+                    key={tdoc.docId || tdoc._id}
+                    to="homework_detail"
+                    params={{ tid: tdoc.docId || tdoc._id }}
+                    className="hydro-subtle-link text-sm font-semibold"
+                  >
                     {tdoc.title}
                   </Link>
                 ))}

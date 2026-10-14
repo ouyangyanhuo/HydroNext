@@ -181,7 +181,14 @@ export default function ManageSystemDataPage() {
       key: 'lastModified',
       title: t('Last Modified'),
       width: 140,
-      render: (item: AdditionalFileItem) => (item.file?.lastModified ? <TimeDisplay date={item.file.lastModified} /> : <Text size="xs" c="dimmed">-</Text>),
+      render: (item: AdditionalFileItem) => (item.file?.lastModified
+        ? <TimeDisplay
+          date={item.file.lastModified}
+        />
+        : <Text
+          size="xs"
+          c="dimmed"
+        >-</Text>),
     },
     {
       key: 'action',

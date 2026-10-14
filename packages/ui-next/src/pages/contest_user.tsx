@@ -111,11 +111,23 @@ export default function ContestUserPage() {
                   <Table.Td><Text size="xs">{tsdoc.unrank ? t('UnRank') : t('Rank')}</Text></Table.Td>
                   <Table.Td>
                     <Group gap="xs">
-                      <Button size="compact-xs" variant="subtle" disabled={!!loading} loading={loading === 'rank'} onClick={() => post({ operation: 'rank', uid: tsdoc.uid }, t('Ranking status updated.'))}>
+                      <Button
+                        size="compact-xs"
+                        variant="subtle"
+                        disabled={!!loading}
+                        loading={loading === 'rank'}
+                        onClick={() => post({ operation: 'rank', uid: tsdoc.uid }, t('Ranking status updated.'))}
+                      >
                         {tsdoc.unrank ? t('Rank') : t('UnRank')}
                       </Button>
                       {canResume(tdoc, tsdoc) && (
-                        <Button size="compact-xs" variant="light" disabled={!!loading} loading={loading === 'resume'} onClick={() => post({ operation: 'resume', uid: tsdoc.uid }, t('Contest resumed.'))}>
+                        <Button
+                          size="compact-xs"
+                          variant="light"
+                          disabled={!!loading}
+                          loading={loading === 'resume'}
+                          onClick={() => post({ operation: 'resume', uid: tsdoc.uid }, t('Contest resumed.'))}
+                        >
                           {t('Resume')}
                         </Button>
                       )}

@@ -104,7 +104,13 @@ export default function ManageProctorPage() {
     </Card>
     <Card withBorder className="hydro-content-card" p="lg"><Stack gap="md">
       <Group justify="space-between"><Title order={3}>{t('Authentication keys')}</Title>
-        <Button variant="light" disabled={busy} onClick={() => setConfirm(true)}>{t(keys ? 'Rotate authentication keys' : 'Generate authentication keys')}</Button>
+        <Button
+          variant="light"
+          disabled={busy}
+          onClick={() => setConfirm(true)}
+        >
+          {t(keys ? 'Rotate authentication keys' : 'Generate authentication keys')}
+        </Button>
       </Group>
       {keys ? <>
         <Text size="sm">PROCTOR_KEY_ID: <Code>{keys.keyId}</Code></Text>
@@ -122,7 +128,14 @@ export default function ManageProctorPage() {
           readOnly
           autosize
           minRows={5} />
-        <Text size="sm" c="dimmed">{t('Public keys are build-time trust anchors, not secrets. Never include either private key in the client.')}</Text>
+        <Text
+          size="sm"
+          c="dimmed"
+        >
+          {t(
+            'Public keys are build-time trust anchors, not secrets. Never include either private key in the client.',
+          )}
+        </Text>
         <Group justify="flex-end"><Button
           variant="default"
           disabled={busy}
@@ -140,7 +153,14 @@ export default function ManageProctorPage() {
       onConfirm={() => void run({ operation: 'generate_keys' })} />
     {privateKeys && <Modal opened onClose={() => setPrivateKeys(null)} title={t('Private keys')} size="lg">
       <Stack gap="md">
-        <Alert color="red">{t('Private keys are server-only. Do not put them in build variables, repositories or chat messages. Closing this dialog clears the display.')}</Alert>
+        <Alert
+          color="red"
+        >
+          {t(
+            'Private keys are server-only. Do not put them in build variables, repositories or chat messages. '
+            + 'Closing this dialog clears the display.',
+          )}
+        </Alert>
         <Code>{privateKeys.keyId}</Code>
         <Textarea label={t('Authentication private key')} value={privateKeys.signingPrivateKey} readOnly minRows={4} />
         <Textarea label={t('Log decryption private key')} value={privateKeys.encryptionPrivateKey} readOnly minRows={7} />

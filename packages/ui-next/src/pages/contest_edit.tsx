@@ -64,7 +64,7 @@ function languageOptions() {
 }
 
 function splitValues(value: string | string[] | number[]) {
-  if (Array.isArray(value)) return value.map((item) => String(item)).filter(Boolean);
+  if (Array.isArray(value)) return value.map((item: string | number) => String(item)).filter(Boolean);
   return String(value || '').split(',').map((item) => item.trim()).filter(Boolean);
 }
 
@@ -188,14 +188,23 @@ export default function ContestEditPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [problemOptions, setProblemOptions] = useState<SearchOption[]>(() => splitValues(args.pids || (tdoc.pids || []).join(',')).map((id) => ({ value: id, label: `ID ${id}` })));
-  const [userOptions, setUserOptions] = useState<SearchOption[]>(() => splitValues((tdoc.maintainer || []).join(',')).map((id) => ({ value: id, label: `UID ${id}` })));
+  const [problemOptions, setProblemOptions] = useState<SearchOption[]>(
+    () => splitValues(args.pids || (tdoc.pids || []).join(',')).map(
+      (id) => ({ value: id, label: `ID ${id}` }),
+    ),
+  );
+  const [userOptions, setUserOptions] = useState<SearchOption[]>(
+    () => splitValues((tdoc.maintainer || []).join(',')).map((id) => ({ value: id, label: `UID ${id}` })),
+  );
   const [problemSearching, setProblemSearching] = useState(false);
   const [userSearching, setUserSearching] = useState(false);
   const problemSearchSeq = useRef(0);
   const userSearchSeq = useRef(0);
 
-  const endAt = useMemo(() => addHours(form.beginAtDate, form.beginAtTime, Number(form.duration)), [form.beginAtDate, form.beginAtTime, form.duration]);
+  const endAt = useMemo(
+    () => addHours(form.beginAtDate, form.beginAtTime, Number(form.duration)),
+    [form.beginAtDate, form.beginAtTime, form.duration],
+  );
   const showLock = ['acm', 'ioi'].includes(form.rule);
   const showFlexibleDuration = ['oi', 'ioi', 'ledo', 'strictioi'].includes(form.rule);
   const showHiddenScoreboard = ['oi', 'strictioi'].includes(form.rule);
@@ -207,11 +216,27 @@ export default function ContestEditPage() {
   const selectedMaintainers = splitValues(form.maintainer);
 
   const problemData = useMemo(
-    () => mergeOptions(selectedProblems.map((id) => ({ value: id, label: problemOptions.find((item) => item.value === id)?.label || `ID ${id}` })), problemOptions),
+    () => mergeOptions(
+      selectedProblems.map(
+        (id) => ({
+          value: id,
+          label: problemOptions.find((item) => item.value === id)?.label || `ID ${id}`,
+        }),
+      ),
+      problemOptions,
+    ),
     [problemOptions, selectedProblems],
   );
   const userData = useMemo(
-    () => mergeOptions(selectedMaintainers.map((id) => ({ value: id, label: userOptions.find((item) => item.value === id)?.label || `UID ${id}` })), userOptions),
+    () => mergeOptions(
+      selectedMaintainers.map(
+        (id) => ({
+          value: id,
+          label: userOptions.find((item) => item.value === id)?.label || `UID ${id}`,
+        }),
+      ),
+      userOptions,
+    ),
     [selectedMaintainers, userOptions],
   );
 
@@ -262,7 +287,14 @@ export default function ContestEditPage() {
     const seq = ++problemSearchSeq.current;
     setProblemSearching(true);
     try {
-      const res = await fetch(buildUrl('problem_main', { domainId }, { q: query, quick: 'true', sort: query ? 'default' : 'recent' }), { headers: { Accept: 'application/json' } });
+      const res = await fetch(
+        buildUrl(
+          'problem_main',
+          { domainId },
+          { q: query, quick: 'true', sort: query ? 'default' : 'recent' },
+        ),
+        { headers: { Accept: 'application/json' } },
+      );
       const data = await res.json();
       if (seq !== problemSearchSeq.current) return;
       const pdocs = Array.isArray(data.pdocs) ? data.pdocs : [];
@@ -352,7 +384,16 @@ export default function ContestEditPage() {
 
   const fileColumns = [
     { key: 'name', title: t('Filename'), render: (file: any) => <Text size="sm" fw="var(--hydro-weight-semibold)">{file.name}</Text> },
-    { key: 'size', title: t('Size'), width: 90, align: 'right' as const, render: (file: any) => <Text size="xs" c="dimmed">{formatSize(file.size)}</Text> },
+    {
+      key: 'size',
+      title: t('Size'),
+      width: 90,
+      align: 'right' as const,
+      render: (file: any) => <Text
+        size="xs"
+        c="dimmed"
+      >{formatSize(file.size)}</Text>,
+    },
   ];
 
   return (
@@ -386,9 +427,25 @@ export default function ContestEditPage() {
                 onChange={(e) => setForm({ ...form, title: e.currentTarget.value })}
                 required
               />
-              <TextInput label={t('Begin Date')} type="date" value={form.beginAtDate} onChange={(e) => setForm({ ...form, beginAtDate: e.currentTarget.value })} />
-              <TextInput label={t('Begin Time')} type="time" value={form.beginAtTime} onChange={(e) => setForm({ ...form, beginAtTime: e.currentTarget.value })} />
-              <NumberInput label={t('Duration (hours)')} value={form.duration} min={0.25} step={0.5} onChange={(value) => setForm({ ...form, duration: Number(value) || 0 })} />
+              <TextInput
+                label={t('Begin Date')}
+                type="date"
+                value={form.beginAtDate}
+                onChange={(e) => setForm({ ...form, beginAtDate: e.currentTarget.value })}
+              />
+              <TextInput
+                label={t('Begin Time')}
+                type="time"
+                value={form.beginAtTime}
+                onChange={(e) => setForm({ ...form, beginAtTime: e.currentTarget.value })}
+              />
+              <NumberInput
+                label={t('Duration (hours)')}
+                value={form.duration}
+                min={0.25}
+                step={0.5}
+                onChange={(value) => setForm({ ...form, duration: Number(value) || 0 })}
+              />
               <TextInput label={t('End Time')} value={endAt} readOnly />
               <AsyncTagSelect
                 className="sm:col-span-4 hydro-contest-problems"
@@ -442,10 +499,21 @@ export default function ContestEditPage() {
                   onChange={(value) => setForm({ ...form, permission: value || 'public' })}
                 />
                 {form.permission === 'assign' && (
-                  <TextInput className="sm:col-span-2" label={t('Assign')} value={form.assign} onChange={(e) => setForm({ ...form, assign: e.currentTarget.value })} placeholder={t('Group / UID')} />
+                  <TextInput
+                    className="sm:col-span-2"
+                    label={t('Assign')}
+                    value={form.assign}
+                    onChange={(e) => setForm({ ...form, assign: e.currentTarget.value })}
+                    placeholder={t('Group / UID')}
+                  />
                 )}
                 {form.permission === 'invite' && (
-                  <TextInput className="sm:col-span-2" label={t('Invitation Code')} value={form.code} onChange={(e) => setForm({ ...form, code: e.currentTarget.value })} />
+                  <TextInput
+                    className="sm:col-span-2"
+                    label={t('Invitation Code')}
+                    value={form.code}
+                    onChange={(e) => setForm({ ...form, code: e.currentTarget.value })}
+                  />
                 )}
               </SimpleGrid>
             </Stack>
@@ -460,22 +528,45 @@ export default function ContestEditPage() {
                 data={langs}
                 searchable
                 clearable
-                value={form.langs.split(',').map((item) => item.trim()).filter(Boolean)}
+                value={form.langs.split(',').map((item: string) => item.trim()).filter(Boolean)}
                 onChange={(value) => setForm({ ...form, langs: value.join(',') })}
               />
               <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
                 {showLock && (
-                  <NumberInput label={t('Lock (minutes)')} value={form.lock === '' ? undefined : Number(form.lock)} min={0} onChange={(value) => setForm({ ...form, lock: value === '' ? '' : Number(value) || '' })} />
+                  <NumberInput
+                    label={t('Lock (minutes)')}
+                    value={form.lock === '' ? undefined : Number(form.lock)}
+                    min={0}
+                    onChange={(value) => setForm({ ...form, lock: value === '' ? '' : Number(value) || '' })}
+                  />
                 )}
                 {showFlexibleDuration && (
-                  <NumberInput label={t('Flexable Duration')} value={form.contestDuration === '' ? undefined : Number(form.contestDuration)} min={0} step={0.5} onChange={(value) => setForm({ ...form, contestDuration: value === '' ? '' : Number(value) || '' })} />
+                  <NumberInput
+                    label={t('Flexable Duration')}
+                    value={form.contestDuration === '' ? undefined : Number(form.contestDuration)}
+                    min={0}
+                    step={0.5}
+                    onChange={(value) => setForm({ ...form, contestDuration: value === '' ? '' : Number(value) || '' })}
+                  />
                 )}
               </SimpleGrid>
               <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                 <Checkbox label={t('Rated')} checked={form.rated} onChange={(e) => setForm({ ...form, rated: e.currentTarget.checked })} />
-                <Checkbox label={t('Auto hide-and show')} checked={form.autoHide} onChange={(e) => setForm({ ...form, autoHide: e.currentTarget.checked })} />
-                <Checkbox label={t('Allow View Code')} checked={form.allowViewCode} onChange={(e) => setForm({ ...form, allowViewCode: e.currentTarget.checked })} />
-                <Checkbox label={t('Allow Print')} checked={form.allowPrint} onChange={(e) => setForm({ ...form, allowPrint: e.currentTarget.checked })} />
+                <Checkbox
+                  label={t('Auto hide-and show')}
+                  checked={form.autoHide}
+                  onChange={(e) => setForm({ ...form, autoHide: e.currentTarget.checked })}
+                />
+                <Checkbox
+                  label={t('Allow View Code')}
+                  checked={form.allowViewCode}
+                  onChange={(e) => setForm({ ...form, allowViewCode: e.currentTarget.checked })}
+                />
+                <Checkbox
+                  label={t('Allow Print')}
+                  checked={form.allowPrint}
+                  onChange={(e) => setForm({ ...form, allowPrint: e.currentTarget.checked })}
+                />
                 <Checkbox
                   label={t('Enable contest proctoring')}
                   description={t(args.proctorPolicyLocked
@@ -485,7 +576,11 @@ export default function ContestEditPage() {
                   checked={form.proctorEnabled}
                   onChange={(e) => setForm({ ...form, proctorEnabled: e.currentTarget.checked })} />
                 {showHiddenScoreboard && (
-                  <Checkbox label={t('Keep Scoreboard Hidden')} checked={form.keepScoreboardHidden} onChange={(e) => setForm({ ...form, keepScoreboardHidden: e.currentTarget.checked })} />
+                  <Checkbox
+                    label={t('Keep Scoreboard Hidden')}
+                    checked={form.keepScoreboardHidden}
+                    onChange={(e) => setForm({ ...form, keepScoreboardHidden: e.currentTarget.checked })}
+                  />
                 )}
               </SimpleGrid>
             </Stack>
@@ -502,9 +597,33 @@ export default function ContestEditPage() {
             <Title order={3} size="h4" mb="md">{t('Summary')}</Title>
             <Stack gap="xs">
               <Group justify="space-between"><Text size="xs" c="dimmed">{t('Rule')}</Text><Text size="xs" fw={700}>{form.rule}</Text></Group>
-              <Group justify="space-between"><Text size="xs" c="dimmed">{t('Begin Time')}</Text><Text size="xs" fw={700}>{form.beginAtDate} {form.beginAtTime}</Text></Group>
+              <Group
+                justify="space-between"
+              >
+                <Text
+                  size="xs"
+                  c="dimmed"
+                >{t('Begin Time')}</Text>
+                <Text
+                  size="xs"
+                  fw={700}
+                >{form.beginAtDate} {form.beginAtTime}</Text>
+              </Group>
               <Group justify="space-between"><Text size="xs" c="dimmed">{t('End Time')}</Text><Text size="xs" fw={700}>{endAt || '-'}</Text></Group>
-              <Group justify="space-between"><Text size="xs" c="dimmed">{t('Problems')}</Text><Text size="xs" fw={700}>{form.pids.split(',').filter((item) => item.trim()).length}</Text></Group>
+              <Group
+                justify="space-between"
+              >
+                <Text
+                  size="xs"
+                  c="dimmed"
+                >{t('Problems')}</Text>
+                <Text
+                  size="xs"
+                  fw={700}
+                >
+                  {form.pids.split(',').filter((item: string) => item.trim()).length}
+                </Text>
+              </Group>
             </Stack>
           </Card>
 

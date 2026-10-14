@@ -150,7 +150,15 @@ function RenameDialog({ opened, onClose, files, onRename }: RenameDialogProps) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--hydro-border)' }}>{t('Original filename(s)')}</th>
+                  <th
+                    style={{
+                      textAlign: 'left',
+                      padding: '4px 8px',
+                      borderBottom: '1px solid var(--hydro-border)',
+                    }}
+                  >
+                    {t('Original filename(s)')}
+                  </th>
                   <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--hydro-border)' }}>{t('New filename(s)')}</th>
                 </tr>
               </thead>
@@ -354,15 +362,60 @@ function FileSection({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr>
-                    {canEdit && <th style={{ width: 40, padding: '6px 8px', borderBottom: '2px solid var(--hydro-border-strong)', background: 'var(--hydro-surface-tint)' }} />}
-                    <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '2px solid var(--hydro-border-strong)', background: 'var(--hydro-surface-tint)', color: 'var(--hydro-text-muted)', fontWeight: 800, fontSize: 12, textTransform: 'uppercase' }}>{t('Filename')}</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', borderBottom: '2px solid var(--hydro-border-strong)', background: 'var(--hydro-surface-tint)', color: 'var(--hydro-text-muted)', fontWeight: 800, fontSize: 12, textTransform: 'uppercase', width: 100 }}>{t('Size')}</th>
-                    {canEdit && <th style={{ width: 80, padding: '6px 8px', borderBottom: '2px solid var(--hydro-border-strong)', background: 'var(--hydro-surface-tint)' }} />}
+                    {canEdit && <th
+                      style={{
+                        width: 40,
+                        padding: '6px 8px',
+                        borderBottom: '2px solid var(--hydro-border-strong)',
+                        background: 'var(--hydro-surface-tint)',
+                      }}
+                    />}
+                    <th
+                      style={{
+                        textAlign: 'left',
+                        padding: '6px 8px',
+                        borderBottom: '2px solid var(--hydro-border-strong)',
+                        background: 'var(--hydro-surface-tint)',
+                        color: 'var(--hydro-text-muted)',
+                        fontWeight: 800,
+                        fontSize: 12,
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {t('Filename')}
+                    </th>
+                    <th
+                      style={{
+                        textAlign: 'right',
+                        padding: '6px 8px',
+                        borderBottom: '2px solid var(--hydro-border-strong)',
+                        background: 'var(--hydro-surface-tint)',
+                        color: 'var(--hydro-text-muted)',
+                        fontWeight: 800,
+                        fontSize: 12,
+                        textTransform: 'uppercase',
+                        width: 100,
+                      }}
+                    >
+                      {t('Size')}
+                    </th>
+                    {canEdit && <th
+                      style={{
+                        width: 80,
+                        padding: '6px 8px',
+                        borderBottom: '2px solid var(--hydro-border-strong)',
+                        background: 'var(--hydro-surface-tint)',
+                      }}
+                    />}
                   </tr>
                 </thead>
                 <tbody>
                   {files.map((file) => (
-                    <tr key={file.name} style={{ transition: 'background var(--hydro-duration-fast) var(--hydro-ease-out)' }} className="hover:bg-[var(--hydro-surface-muted)]">
+                    <tr
+                      key={file.name}
+                      style={{ transition: 'background var(--hydro-duration-fast) var(--hydro-ease-out)' }}
+                      className="hover:bg-[var(--hydro-surface-muted)]"
+                    >
                       {canEdit && (
                         <td style={{ padding: '6px 8px', borderBottom: '1px solid var(--hydro-border)' }}>
                           <Checkbox checked={selected.has(file.name)} onChange={() => toggleSelect(file.name)} size="xs" />

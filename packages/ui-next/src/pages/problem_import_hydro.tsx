@@ -146,7 +146,10 @@ export default function ProblemImportHydroPage() {
           <Stack gap="md">
             <Title order={4}>{t('Upload zipfile')}</Title>
             <Text size="sm" c="dimmed">
-              {t('With this feature, you can import problems that you can view from a site to here. Their title, content, tags and categories will be imported.')}
+              {t(
+                'With this feature, you can import problems that you can view from a site to here. '
+                + 'Their title, content, tags and categories will be imported.',
+              )}
             </Text>
 
             <input
@@ -290,7 +293,10 @@ export default function ProblemImportHydroPage() {
           <Stack gap="md">
             <Title order={4}>{t('What is this?')}</Title>
             <Text size="sm" c="dimmed">
-              {t('With this feature, you can import problems that you can view from a site to here. Their title, content, tags and categories will be imported.')}
+              {t(
+                'With this feature, you can import problems that you can view from a site to here. '
+                + 'Their title, content, tags and categories will be imported.',
+              )}
             </Text>
             <Title order={5}>{t('About preferredPrefix option')}</Title>
             <Text size="sm" c="dimmed">

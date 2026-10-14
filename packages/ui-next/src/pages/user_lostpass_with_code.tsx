@@ -15,7 +15,7 @@ export default function UserLostpassWithCodePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       setError(t('Passwords do not match'));
@@ -47,7 +47,12 @@ export default function UserLostpassWithCodePage() {
         <form onSubmit={handleSubmit}>
           <Stack gap="md">
             <PasswordInput label={t('New Password')} value={password} onChange={(e) => setPassword(e.currentTarget.value)} required />
-            <PasswordInput label={t('Confirm Password')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.currentTarget.value)} required />
+            <PasswordInput
+              label={t('Confirm Password')}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.currentTarget.value)}
+              required
+            />
             <Button type="submit" fullWidth loading={loading}>{t('Reset Password')}</Button>
           </Stack>
         </form>

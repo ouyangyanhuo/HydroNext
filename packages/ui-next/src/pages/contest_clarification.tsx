@@ -209,7 +209,12 @@ export default function ContestClarificationPage() {
                     data={[
                       { value: '0', label: t('General Issue') },
                       { value: '-1', label: t('Technical Issue') },
-                      ...(tdoc.pids || []).map((pid: number, index: number) => ({ value: String(pid), label: `${alphabetic(index)}. ${pdict[pid]?.title || pid}` })),
+                      ...(tdoc.pids || []).map(
+                        (pid: number, index: number) => ({
+                          value: String(pid),
+                          label: `${alphabetic(index)}. ${pdict[pid]?.title || pid}`,
+                        }),
+                      ),
                     ]}
                   />
                 )}
@@ -235,10 +240,50 @@ export default function ContestClarificationPage() {
           <Card withBorder p="md" className="hydro-panel">
             <Stack gap="xs">
               <Text size="sm" fw={800}>{t('Contest Management')}</Text>
-              <Button component={Link} to="contest_manage" params={{ tid }} variant="subtle" justify="flex-start" size="xs" fullWidth>{t('Overview')}</Button>
-              <Button component={Link} to="contest_user" params={{ tid }} variant="subtle" justify="flex-start" size="xs" fullWidth>{t('Participants')}</Button>
-              <Button component={Link} to="contest_balloon" params={{ tid }} variant="subtle" justify="flex-start" size="xs" fullWidth>{t('Balloons')}</Button>
-              <Button component={Link} to="contest_scoreboard" params={{ tid }} variant="subtle" justify="flex-start" size="xs" fullWidth>{t('Scoreboard')}</Button>
+              <Button
+                component={Link}
+                to="contest_manage"
+                params={{ tid }}
+                variant="subtle"
+                justify="flex-start"
+                size="xs"
+                fullWidth
+              >
+                {t('Overview')}
+              </Button>
+              <Button
+                component={Link}
+                to="contest_user"
+                params={{ tid }}
+                variant="subtle"
+                justify="flex-start"
+                size="xs"
+                fullWidth
+              >
+                {t('Participants')}
+              </Button>
+              <Button
+                component={Link}
+                to="contest_balloon"
+                params={{ tid }}
+                variant="subtle"
+                justify="flex-start"
+                size="xs"
+                fullWidth
+              >
+                {t('Balloons')}
+              </Button>
+              <Button
+                component={Link}
+                to="contest_scoreboard"
+                params={{ tid }}
+                variant="subtle"
+                justify="flex-start"
+                size="xs"
+                fullWidth
+              >
+                {t('Scoreboard')}
+              </Button>
             </Stack>
           </Card>
         </div>

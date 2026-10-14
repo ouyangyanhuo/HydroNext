@@ -440,7 +440,12 @@ export default function ProblemConfigPage() {
                       />
                     </SimpleGrid>
                   )}
-                  {type === 'objective' && <Text size="sm" c="dimmed">{t('Unsupported configure this type of problem. Please refer to the documentation.')}</Text>}
+                  {type === 'objective' && <Text
+                    size="sm"
+                    c="dimmed"
+                  >
+                    {t('Unsupported configure this type of problem. Please refer to the documentation.')}
+                  </Text>}
                 </Stack>
               </Tabs.Panel>
 
@@ -479,18 +484,59 @@ export default function ProblemConfigPage() {
                           </Button>
                         </Group>
                         <SimpleGrid cols={{ base: 1, sm: 4 }} spacing="sm">
-                          <NumberInput label="ID" value={Number(subtask.id || subtaskIndex + 1)} onChange={(value) => updateSubtask(subtaskIndex, { id: Number(value) || subtaskIndex + 1 })} />
-                          <LongSelect searchable={false} label={t('Type')} data={['sum', 'min', 'max']} value={subtask.type || 'sum'} onChange={(value) => updateSubtask(subtaskIndex, { type: value || 'sum' })} />
-                          <NumberInput label={t('Score')} value={Number(subtask.score || 0)} onChange={(value) => updateSubtask(subtaskIndex, { score: Number(value) || 0 })} />
-                          <TextInput label={t('Depend On')} value={(subtask.if || []).join(', ')} onChange={(e) => updateSubtask(subtaskIndex, { if: e.currentTarget.value.split(',').map((i) => i.trim()).filter(Boolean).map(Number) })} />
+                          <NumberInput
+                            label="ID"
+                            value={Number(subtask.id || subtaskIndex + 1)}
+                            onChange={(value) => updateSubtask(subtaskIndex, { id: Number(value) || subtaskIndex + 1 })}
+                          />
+                          <LongSelect
+                            searchable={false}
+                            label={t('Type')}
+                            data={['sum', 'min', 'max']}
+                            value={subtask.type || 'sum'}
+                            onChange={(value) => updateSubtask(subtaskIndex, { type: value || 'sum' })}
+                          />
+                          <NumberInput
+                            label={t('Score')}
+                            value={Number(subtask.score || 0)}
+                            onChange={(value) => updateSubtask(subtaskIndex, { score: Number(value) || 0 })}
+                          />
+                          <TextInput
+                            label={t('Depend On')}
+                            value={(subtask.if || []).join(', ')}
+                            onChange={(e) => updateSubtask(
+                              subtaskIndex,
+                              { if: e.currentTarget.value.split(',').map((i) => i.trim()).filter(Boolean).map(Number) },
+                            )}
+                          />
                         </SimpleGrid>
                         <Stack gap="xs">
                           {(subtask.cases || []).map((item: any, caseIndex: number) => (
                             <SimpleGrid key={caseIndex} cols={{ base: 1, sm: 5 }} spacing="xs">
-                              <LongSelect label={t('Input')} data={files} searchable value={item.input || null} onChange={(value) => updateCase(subtaskIndex, caseIndex, { input: value || '' })} />
-                              <LongSelect label={t('Output')} data={files} searchable value={item.output || null} onChange={(value) => updateCase(subtaskIndex, caseIndex, { output: value || '' })} />
-                              <TextInput label={t('Time Limit')} value={String(item.time || '')} onChange={(e) => updateCase(subtaskIndex, caseIndex, { time: e.currentTarget.value })} />
-                              <TextInput label={t('Memory Limit')} value={String(item.memory || '')} onChange={(e) => updateCase(subtaskIndex, caseIndex, { memory: e.currentTarget.value })} />
+                              <LongSelect
+                                label={t('Input')}
+                                data={files}
+                                searchable
+                                value={item.input || null}
+                                onChange={(value) => updateCase(subtaskIndex, caseIndex, { input: value || '' })}
+                              />
+                              <LongSelect
+                                label={t('Output')}
+                                data={files}
+                                searchable
+                                value={item.output || null}
+                                onChange={(value) => updateCase(subtaskIndex, caseIndex, { output: value || '' })}
+                              />
+                              <TextInput
+                                label={t('Time Limit')}
+                                value={String(item.time || '')}
+                                onChange={(e) => updateCase(subtaskIndex, caseIndex, { time: e.currentTarget.value })}
+                              />
+                              <TextInput
+                                label={t('Memory Limit')}
+                                value={String(item.memory || '')}
+                                onChange={(e) => updateCase(subtaskIndex, caseIndex, { memory: e.currentTarget.value })}
+                              />
                               <Button mt={24} variant="subtle" color="red" onClick={() => removeCase(subtaskIndex, caseIndex)}>{t('Delete')}</Button>
                             </SimpleGrid>
                           ))}

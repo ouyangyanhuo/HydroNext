@@ -12,16 +12,6 @@ import { PERM, useHasPerm } from '@/hooks/use-permission';
 import { formatErrorMessage } from '@/utils/error';
 import { formatUserName } from '@/utils/user-name';
 
-function escapePrintHtml(value: unknown) {
-  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  }[character] || character));
-}
-
 function printPlainTask(task: any, udoc: any) {
   const printWindow = window.open('', '_blank', 'width=800,height=600,popup=1');
   if (!printWindow) return;
@@ -31,15 +21,26 @@ function printPlainTask(task: any, udoc: any) {
     count += Math.ceil(line.length / 100) || 1;
     return count <= 300;
   }).join('\n');
-  printWindow.document.write(`<!doctype html><html><head><title>${escapePrintHtml(task.title)}</title><style>
+  const printDocument = printWindow.document;
+  printDocument.title = String(task.title ?? '');
+  const style = printDocument.createElement('style');
+  style.textContent = `
     body{font-family:monospace;margin:10px;font-size:14px;line-height:1.2}
     .header{border-bottom:1px solid #ccc;margin-bottom:8px}
     pre{white-space:pre-wrap}
-  </style></head><body>
-    <div class="header">[${escapePrintHtml(udoc ? formatUserName(udoc) : task.owner)}] ${escapePrintHtml(udoc?.school)}<br>Filename: ${escapePrintHtml(task.title)}</div>
-    <pre>${escapePrintHtml(content)}</pre>
-  </body></html>`);
-  printWindow.document.close();
+  `;
+  printDocument.head.append(style);
+  const header = printDocument.createElement('div');
+  header.className = 'header';
+  const owner = udoc ? formatUserName(udoc) : task.owner;
+  header.append(
+    printDocument.createTextNode(`[${String(owner ?? '')}] ${String(udoc?.school ?? '')}`),
+    printDocument.createElement('br'),
+    printDocument.createTextNode(`Filename: ${String(task.title ?? '')}`),
+  );
+  const pre = printDocument.createElement('pre');
+  pre.textContent = content;
+  printDocument.body.replaceChildren(header, pre);
   setTimeout(() => printWindow.print(), 300);
 }
 
@@ -187,7 +188,20 @@ export default function ContestPrintPage() {
                 )}
               </Table.Tr>
             )) : (
-              <Table.Tr><Table.Td colSpan={canEdit ? 5 : 4}><Text size="sm" c="dimmed" ta="center" py="md">{t('No pending print tasks.')}</Text></Table.Td></Table.Tr>
+              <Table.Tr>
+                <Table.Td
+                  colSpan={canEdit ? 5 : 4}
+                >
+                  <Text
+                    size="sm"
+                    c="dimmed"
+                    ta="center"
+                    py="md"
+                  >
+                    {t('No pending print tasks.')}
+                  </Text>
+                </Table.Td>
+              </Table.Tr>
             )}
           </Table.Tbody>
         </Table>

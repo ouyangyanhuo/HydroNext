@@ -15,14 +15,28 @@ export default function HomeworkEditPage() {
   const buildUrl = useBuildUrl();
   const tdoc = args.tdoc || {};
   const isNew = !tdoc.docId;
-  const [form, setForm] = useState({ title: tdoc.title || '', content: tdoc.content || '', beginAt: tdoc.beginAt ? new Date(tdoc.beginAt).toISOString().slice(0, 16) : '', endAt: tdoc.endAt ? new Date(tdoc.endAt).toISOString().slice(0, 16) : '' });
+  const [form, setForm] = useState(
+    {
+      title: tdoc.title || '',
+      content: tdoc.content || '',
+      beginAt: tdoc.beginAt ? new Date(tdoc.beginAt).toISOString().slice(0, 16) : '',
+      endAt: tdoc.endAt ? new Date(tdoc.endAt).toISOString().slice(0, 16) : '',
+    },
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch(window.location.href, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(form) });
+      const res = await fetch(
+        window.location.href,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(form),
+        },
+      );
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else navigate(isNew ? buildUrl('homework_main') : buildUrl('homework_detail', { tid: tdoc.docId }));
@@ -36,9 +50,25 @@ export default function HomeworkEditPage() {
       <Paper withBorder p="lg">
         <Stack gap="md">
           <TextInput label={t('Title')} value={form.title} onChange={(e) => setForm({ ...form, title: e.currentTarget.value })} required />
-          <TextInput label={t('Begin Time')} type="datetime-local" value={form.beginAt} onChange={(e) => setForm({ ...form, beginAt: e.currentTarget.value })} />
-          <TextInput label={t('End Time')} type="datetime-local" value={form.endAt} onChange={(e) => setForm({ ...form, endAt: e.currentTarget.value })} />
-          <Textarea label={t('Content (Markdown)')} value={form.content} onChange={(e) => setForm({ ...form, content: e.currentTarget.value })} minRows={6} autosize />
+          <TextInput
+            label={t('Begin Time')}
+            type="datetime-local"
+            value={form.beginAt}
+            onChange={(e) => setForm({ ...form, beginAt: e.currentTarget.value })}
+          />
+          <TextInput
+            label={t('End Time')}
+            type="datetime-local"
+            value={form.endAt}
+            onChange={(e) => setForm({ ...form, endAt: e.currentTarget.value })}
+          />
+          <Textarea
+            label={t('Content (Markdown)')}
+            value={form.content}
+            onChange={(e) => setForm({ ...form, content: e.currentTarget.value })}
+            minRows={6}
+            autosize
+          />
           <Group justify="flex-end"><Button onClick={handleSubmit} loading={loading}>{t('Save')}</Button></Group>
         </Stack>
       </Paper>

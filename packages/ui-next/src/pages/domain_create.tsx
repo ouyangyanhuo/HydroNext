@@ -14,7 +14,14 @@ export default function DomainCreatePage() {
   const handleSubmit = async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch(window.location.href, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(form) });
+      const res = await fetch(
+        window.location.href,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(form),
+        },
+      );
       const data = await res.json();
       if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else if (data.redirect) window.location.href = data.redirect;
@@ -29,7 +36,13 @@ export default function DomainCreatePage() {
       <Card withBorder p="lg" className="hydro-content-card">
         <Stack gap="md">
           <Card withBorder p="md" bg="var(--hydro-surface-muted)">
-            <Text size="sm" fw="var(--hydro-weight-semibold)" mb="xs">{t('A domain ID cannot be changed after creation. It is supposed to be:')}</Text>
+            <Text
+              size="sm"
+              fw="var(--hydro-weight-semibold)"
+              mb="xs"
+            >
+              {t('A domain ID cannot be changed after creation. It is supposed to be:')}
+            </Text>
             <List size="sm" c="dimmed" spacing={4}>
               <List.Item>{t('Unique')}</List.Item>
               <List.Item>{t('At least 4 characters')}</List.Item>
@@ -40,8 +53,19 @@ export default function DomainCreatePage() {
           </Card>
           <TextInput label={t('Domain ID')} value={form.id} onChange={(e) => setForm({ ...form, id: e.currentTarget.value })} required />
           <TextInput label={t('Name')} value={form.name} onChange={(e) => setForm({ ...form, name: e.currentTarget.value })} required />
-          <Textarea label={t('Bulletin')} value={form.bulletin} onChange={(e) => setForm({ ...form, bulletin: e.currentTarget.value })} minRows={8} required />
-          <TextInput label={t('Avatar')} value={form.avatar} onChange={(e) => setForm({ ...form, avatar: e.currentTarget.value })} placeholder="gravatar:user@example.com" />
+          <Textarea
+            label={t('Bulletin')}
+            value={form.bulletin}
+            onChange={(e) => setForm({ ...form, bulletin: e.currentTarget.value })}
+            minRows={8}
+            required
+          />
+          <TextInput
+            label={t('Avatar')}
+            value={form.avatar}
+            onChange={(e) => setForm({ ...form, avatar: e.currentTarget.value })}
+            placeholder="gravatar:user@example.com"
+          />
           <Group justify="flex-end">
             <Button variant="default" onClick={() => window.history.back()}>{t('Cancel')}</Button>
             <Button onClick={handleSubmit} loading={loading}>{t('Create')}</Button>

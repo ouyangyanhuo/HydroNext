@@ -54,7 +54,14 @@ export function ProctorLogsPanel({ args }: { args: any }) {
         setDeleting(false);
         await read(data.page || 1, data.q || '', data.pageSize || 25);
       } else {
-        const response = await fetch(url, { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify({ operation, ids }) });
+        const response = await fetch(
+          url,
+          {
+            method: 'POST',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operation, ids }),
+          },
+        );
         if (response.headers.get('content-type')?.includes('json')) {
           const responseData = await response.json();
           throw new Error(proctorError(responseData.error, 'Log download failed.'));
@@ -89,8 +96,24 @@ export function ProctorLogsPanel({ args }: { args: any }) {
         <Button type="submit" variant="light" loading={busy}>{t('Search')}</Button></Group>
       </form>
       <Group justify="space-between"><Text size="sm" c="dimmed">{t('Encrypted final logs.')} · {data.count || 0}</Text>
-        <Group gap="sm"><Button variant="light" loading={busy} disabled={!selected.length} onClick={() => void act('download', selected)}>{t('Download selected')}</Button>
-          <Button color="red" variant="light" disabled={busy || !selected.length} onClick={() => setDeleting(true)}>{t('Delete selected')}</Button></Group>
+        <Group
+          gap="sm"
+        ><Button
+            variant="light"
+            loading={busy}
+            disabled={!selected.length}
+            onClick={() => void act('download', selected)}
+          >
+            {t('Download selected')}
+          </Button>
+          <Button
+            color="red"
+            variant="light"
+            disabled={busy || !selected.length}
+            onClick={() => setDeleting(true)}
+          >
+            {t('Delete selected')}
+          </Button></Group>
       </Group>
       <Table.ScrollContainer minWidth={850}><Table highlightOnHover><Table.Thead><Table.Tr>
         <Table.Th><Checkbox
@@ -105,13 +128,33 @@ export function ProctorLogsPanel({ args }: { args: any }) {
           aria-label={`${t('Select')} ${log.filename}`}
           checked={selected.includes(log._id)}
           disabled={busy}
-          onChange={(event) => setSelected(event.currentTarget.checked ? [...selected, log._id] : selected.filter((id) => id !== log._id))} /></Table.Td>
+          onChange={(event) => setSelected(
+            event.currentTarget.checked ? [...selected, log._id] : selected.filter((id) => id !== log._id),
+          )} /></Table.Td>
         <Table.Td>{log.filename}</Table.Td><Table.Td>{log.username}</Table.Td><Table.Td>{new Date(log.uploadedAt).toLocaleString()}</Table.Td>
         <Table.Td>{log.domainName} <Text size="xs" c="dimmed">{log.domainId}</Text></Table.Td>
         <Table.Td><Link to="contest_detail" params={{ domainId: log.domainId, tid: log.tid }}>{log.contestTitle}</Link></Table.Td>
         <Table.Td>{(log.size / 1024 / 1024).toFixed(2)} MiB</Table.Td>
-        <Table.Td><Group gap="xs" wrap="nowrap"><Button size="xs" variant="light" disabled={busy} onClick={() => void act('download', [log._id])}>{t('Download')}</Button>
-          <Button size="xs" color="red" variant="subtle" disabled={busy} onClick={() => { setSelected([log._id]); setDeleting(true); }}>{t('Delete')}</Button></Group></Table.Td>
+        <Table.Td><Group
+          gap="xs"
+          wrap="nowrap"
+        ><Button
+            size="xs"
+            variant="light"
+            disabled={busy}
+            onClick={() => void act('download', [log._id])}
+          >
+            {t('Download')}
+          </Button>
+          <Button
+            size="xs"
+            color="red"
+            variant="subtle"
+            disabled={busy}
+            onClick={() => { setSelected([log._id]); setDeleting(true); }}
+          >
+            {t('Delete')}
+          </Button></Group></Table.Td>
       </Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer>
       {!logs.length && <Text ta="center" c="dimmed" py="xl">{t('No proctor logs yet.')}</Text>}
       <Group justify="space-between" className="hydro-paginator" wrap="wrap">

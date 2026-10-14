@@ -1,4 +1,3 @@
-import { formatErrorMessage } from '@/utils/error';
 import { Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
@@ -6,6 +5,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { SettingsForm } from '@/components/common/settings-form';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function ManageSettingPage() {
   const { args } = usePageData();
