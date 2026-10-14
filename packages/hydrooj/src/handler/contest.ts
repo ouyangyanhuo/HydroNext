@@ -12,7 +12,7 @@ import { Context, Service } from '../context';
 import {
     BadRequestError, ContestAlreadyAttendedError, ContestAlreadyStartedError, ContestNotAttendedError, ContestNotEndedError,
     ContestNotFoundError, ContestNotLiveError, ContestScoreboardHiddenError, FileLimitExceededError, FileUploadError,
-    InvalidTokenError, MethodNotAllowedError, NotAssignedError, NotFoundError, PermissionError, TeamMemberLimitError,
+    InvalidTokenError, MethodNotAllowedError, NotAssignedError, NotFoundError, PermissionError, TeamMembershipRequiredError,
     ValidationError,
 } from '../error';
 import { ContestStatusDoc, FileInfo, ScoreboardConfig, Tdoc } from '../interface';
@@ -1031,18 +1031,22 @@ class ContestTeamHandler extends Handler {
     }
 
     async get({ domainId }) {
-        const [mine, invites] = await Promise.all([
-            user.getVusersByMember(this.user._id),
-            user.getVusersByInvite(this.user._id),
-        ]);
-        const udict = await user.getList(domainId, [...mine, ...invites].flatMap((t) => [...t.members, ...(t.invite || [])]));
+        const teams = await user.getVusersByMember(this.user._id);
+        const mine = await Promise.all(teams.map(async (team) => {
+            const current = await user.getTeamInvitation(team._id, this.user._id);
+            return {
+                _id: current._id, uname: current.uname, displayName: current.displayName,
+                members: current.members, invitationCode: current._teamJoinCode,
+            };
+        }));
+        const udict = await user.getList(domainId, mine.flatMap((team) => team.members || []));
         this.response.template = 'contest_team.html';
-        this.response.body = { mine, invites, udict, page_name: 'contest_team' };
+        this.response.body = { mine, udict, page_name: 'contest_team' };
     }
 
     private async mustMember(vuid: number) {
         const v = await user.getVuserById(vuid);
-        if (!v?.members?.includes(this.user._id)) throw new PermissionError(PERM.PERM_ATTEND_CONTEST);
+        if (!v?.members?.includes(this.user._id)) throw new TeamMembershipRequiredError();
         return v;
     }
 
@@ -1050,10 +1054,11 @@ class ContestTeamHandler extends Handler {
     async postCreate(domainId: string, name: string) {
         const displayName = name.trim();
         if (!displayName) throw new ValidationError('name');
-        await user.createVuser(`team:${this.user._id}:${randomstring(6)}`, {
+        const vuid = await user.createVuser(`team:${this.user._id}:${randomstring(6)}`, {
             displayName,
             members: [this.user._id],
         });
+        await user.getTeamInvitation(vuid, this.user._id);
         this.back();
     }
 
@@ -1067,44 +1072,17 @@ class ContestTeamHandler extends Handler {
         this.back();
     }
 
-    @param('vuid', Types.Int)
-    @param('uid', Types.Int, true)
-    @param('uidOrName', Types.String, true)
-    async postInvite(domainId: string, vuid: number, uid?: number, uidOrName = '') {
-        if (uid === undefined && uidOrName) {
-            const member = await user.getById(domainId, +uidOrName) || await user.getByUname(domainId, uidOrName);
-            uid = member?._id;
-        }
-        await this.limitRate('contest_team_invite', 3600, 20);
-        if (!uid || uid <= 0 || !await user.getById(domainId, uid)) throw new ValidationError('uid');
-        const v = await this.mustMember(vuid);
-        if (v.members.includes(uid) || v.invite?.includes(uid)) throw new ValidationError('uid');
-        const teamMembersLimit = this.ctx.setting.get('limit.team_members');
-        if (v.members.length + (v.invite?.length || 0) >= teamMembersLimit) {
-            throw new TeamMemberLimitError(teamMembersLimit);
-        }
-        await user.updateVuserById(vuid, { $addToSet: { invite: uid } });
-        await message.send(this.user._id, uid,
-            `${this.user.uname} invites you to join team "${v.displayName}": ${this.url('contest_team')}`,
-            message.FLAG_RICHTEXT);
+    @param('code', Types.String)
+    async postJoin(domainId: string, code: string) {
+        await this.limitRate('contest_team_join', 3600, 30, this.user._id.toString());
+        await user.joinTeam(code, this.user._id, this.ctx.setting.get('limit.team_members'));
         this.back();
     }
 
     @param('vuid', Types.Int)
-    async postAccept(domainId: string, vuid: number) {
-        const v = await user.getVuserById(vuid);
-        if (!v?.invite?.includes(this.user._id)) throw new ValidationError('vuid');
-        const teamMembersLimit = this.ctx.setting.get('limit.team_members');
-        if (v.members.length >= teamMembersLimit) throw new TeamMemberLimitError(teamMembersLimit);
-        await user.updateVuserById(vuid, { $pull: { invite: this.user._id }, $addToSet: { members: this.user._id } });
-        this.back();
-    }
-
-    @param('vuid', Types.Int)
-    async postReject(domainId: string, vuid: number) {
-        const v = await user.getVuserById(vuid);
-        if (!v?.invite?.includes(this.user._id)) throw new ValidationError('vuid');
-        await user.updateVuserById(vuid, { $pull: { invite: this.user._id } });
+    async postResetCode(domainId: string, vuid: number) {
+        await this.limitRate('contest_team_reset_code', 3600, 20, this.user._id.toString());
+        await user.getTeamInvitation(vuid, this.user._id, true);
         this.back();
     }
 
@@ -1114,8 +1092,8 @@ class ContestTeamHandler extends Handler {
         const target = uid ?? this.user._id;
         if (target === this.user._id) {
             const v = await user.getVuserById(vuid);
-            if (!v?.members?.includes(this.user._id) && !v?.invite?.includes(this.user._id)) {
-                throw new PermissionError(PERM.PERM_ATTEND_CONTEST);
+            if (!v?.members?.includes(this.user._id)) {
+                throw new TeamMembershipRequiredError();
             }
         } else {
             await this.mustMember(vuid);

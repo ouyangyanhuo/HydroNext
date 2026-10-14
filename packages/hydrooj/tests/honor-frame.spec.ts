@@ -275,6 +275,7 @@ test('user serialization and list rendering use global frames despite conflictin
     const cursor = (data: any[]) => ({ project: () => ({ toArray: async () => structuredClone(data) }), toArray: async () => structuredClone(data) });
     const module = load('../src/model/user.ts', {
         '../error': {}, '../lib/avatar': {}, '../lib/hash.hydro': {}, './token': {},
+        '../lib/team-invitation': {},
         '../service/bus': { on() {}, parallel: async () => {}, broadcast: (...values: any[]) => broadcasts.push(values) },
         '../service/db': { collection: (name: string) => ({ find: () => cursor(name === 'user' ? [doc] : []) }) },
         '../utils': { ArgMethod: () => {}, buildProjection: () => ({}) },

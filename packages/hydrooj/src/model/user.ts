@@ -8,6 +8,7 @@ import {
 } from '../interface';
 import avatar from '../lib/avatar';
 import pwhash from '../lib/hash.hydro';
+import { ensureTeamInvitationCode, joinTeamByInvitationCode } from '../lib/team-invitation';
 import bus from '../service/bus';
 import db from '../service/db';
 import { Value } from '../typeutils';
@@ -442,8 +443,14 @@ class UserModel {
         return projection ? cursor.project<VUdoc>(projection).toArray() : cursor.toArray();
     }
 
-    static getVusersByInvite(uid: number) {
-        return collV.find({ invite: uid }).toArray();
+    static async getTeamInvitation(vuid: number, uid: number, reset = false) {
+        return await ensureTeamInvitationCode(collV, vuid, uid, reset);
+    }
+
+    static async joinTeam(code: string, uid: number, limit: number) {
+        const team = await joinTeamByInvitationCode(collV, code, uid, limit);
+        deleteUserCache(team);
+        return team;
     }
 
     static async updateVuserById(uid: number, update: any) {
@@ -594,6 +601,7 @@ export async function apply() {
             collV,
             { key: { unameLower: 1 }, name: 'uname', unique: true },
             { key: { mailLower: 1 }, name: 'mail', unique: true },
+            { key: { _teamJoinCode: 1 }, name: 'team_join_code', unique: true, sparse: true },
         ),
         db.ensureIndexes(
             collGroup,

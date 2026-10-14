@@ -34,13 +34,22 @@ const { createRoot } = require('react-dom/client');
 const mantine = require('@mantine/core');
 
 async function fixture(page: string, ui: any = {}, response: any = {}, args: any = {}, user: any = { _id: 0 }) {
+    dom.reconfigure({ url: page === 'contest_team' ? 'https://oj.example/d/team/contest/team' : 'https://oj.example/d/team/register' });
     const navigations: string[] = [];
     const notices: any[] = [];
     const calls: any[] = [];
+    const copied: string[] = [];
     const mocks = {
         '@mantine/core': mantine,
         '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
-        '@/components/common/button': { Button: mantine.Button },
+        '@/components/common/button': { Button: mantine.Button, ActionIcon: mantine.ActionIcon },
+        '@/components/common/page-header': { PageHeader: ({ children }: any) => h('header', null, children) },
+        '@/components/common/confirm-dialog': { ConfirmDialog: ({ opened, title, message, onConfirm, loading }: any) => opened
+            ? h('section', { 'data-confirm-dialog': true }, title, message,
+                h('button', { 'data-confirm': true, disabled: loading, onClick: onConfirm }, 'Confirm')) : null },
+        '@/components/user/user-avatar': { UserAvatar: () => h('span', null, 'Avatar') },
+        '@/components/user/user-link': { UserLink: ({ user: value }: any) => h('span', null, value.uname) },
+        '@/components/markdown/code-copy': { copyCodeText: async (value: string) => { copied.push(value); } },
         '@/components/auth/auth-panel': { AuthPanel: ({ children }: any) => h('main', null, children) },
         '@/components/link': {
             Link: forwardRef(({ children, to, ...props }: any, ref: any) => h('a', { ...props, href: `/${to}`, ref }, children)),
@@ -61,7 +70,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         loader: 'tsx', format: 'cjs', jsx: 'automatic',
     }).code;
     runInNewContext(code, {
-        module, exports: module.exports, window: dom.window, FormData: dom.window.FormData, URLSearchParams,
+        module, exports: module.exports, window: dom.window, document: dom.window.document, FormData: dom.window.FormData, URL, URLSearchParams,
         require: (id: string) => mocks[id] ?? require(id),
         fetch: async (url: string, init: any) => {
             calls.push({ url, init });
@@ -73,7 +82,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
     const root = createRoot(host);
     await act(async () => root.render(h(mantine.MantineProvider, null, h(module.exports.default))));
     return {
-        host, calls, navigations, notices,
+        host, calls, navigations, notices, copied,
         async input(index: number, value: string) {
             const input = host.querySelectorAll('input')[index];
             await act(async () => {
@@ -101,6 +110,60 @@ test('homepage guest registration is emphasized and follows the registration set
         assert.equal(closed.host.querySelector('a[href="/user_register"]'), null);
         assert.equal(closed.host.querySelector('a[href="/user_login"]')?.getAttribute('data-variant'), 'filled');
     } finally { await closed.close(); }
+});
+
+test('team page replaces pending invites with a case-insensitive invitation-code join form', async () => {
+    const f = await fixture('contest_team', {}, {}, { mine: [], invites: [{ _id: -1, displayName: 'Old invitation' }] }, { _id: 2 });
+    try {
+        assert.ok(f.host.textContent?.includes('Join a Team'));
+        assert.ok(!f.host.textContent?.includes('Old invitation'));
+        await f.input(0, 'abcdefgh');
+        assert.equal(f.host.querySelector('input')!.value, 'ABCDEFGH');
+        await f.submit();
+        assert.deepEqual(JSON.parse(f.calls[0].init.body), { operation: 'join', code: 'ABCDEFGH' });
+        assert.equal(f.calls[0].url, 'https://oj.example/d/team/contest/team');
+        assert.deepEqual(f.navigations, ['/d/team/contest/team']);
+        assert.equal(f.host.querySelector('input')!.value, '');
+    } finally { await f.close(); }
+});
+
+test('team cards offer code copy and require confirmation before a reset', async () => {
+    const f = await fixture('contest_team', {}, {}, {
+        mine: [{ _id: -1000, uname: 'team:2:test', displayName: 'Team', members: [2], invitationCode: 'ABCDEFGH' }],
+    }, { _id: 2 });
+    try {
+        assert.match(f.host.textContent!, /ABCDEFGH/);
+        const copy = [...f.host.querySelectorAll('button')].find((button) => button.textContent === 'Copy')!;
+        await act(async () => copy.click());
+        assert.deepEqual(f.copied, ['ABCDEFGH']);
+        await act(async () => f.host.querySelector<HTMLButtonElement>('[aria-label="Reset team invitation code"]')!.click());
+        assert.equal(f.calls.length, 0);
+        assert.match(f.host.textContent!, /old invitation code immediately/);
+        await act(async () => f.host.querySelector<HTMLButtonElement>('[data-confirm]')!.click());
+        assert.deepEqual(JSON.parse(f.calls[0].init.body), { operation: 'reset_code', vuid: -1000 });
+    } finally { await f.close(); }
+});
+
+test('rejected team code requests keep the code and display an error notification', async () => {
+    const f = await fixture('contest_team', {}, { error: { message: 'Invalid invitation code' } }, {}, { _id: 2 });
+    try {
+        await f.input(0, 'ABCDEFGH');
+        await f.submit();
+        assert.equal(f.notices[0].color, 'red');
+        assert.equal(f.host.querySelector('input')!.value, 'ABCDEFGH');
+        assert.equal(f.navigations.length, 0);
+    } finally { await f.close(); }
+});
+
+test('expired sessions follow the authentication redirect without displaying a false join success', async () => {
+    const f = await fixture('contest_team', {}, { url: '/d/team/login?redirect=team' }, {}, { _id: 2 });
+    try {
+        await f.input(0, 'ABCDEFGH');
+        await f.submit();
+        assert.deepEqual(f.navigations, ['/d/team/login?redirect=team']);
+        assert.equal(f.notices.length, 0);
+        assert.equal(f.host.querySelector('input')!.value, 'ABCDEFGH');
+    } finally { await f.close(); }
 });
 
 test('homepage never shows signup or login buttons to an authenticated user', async () => {

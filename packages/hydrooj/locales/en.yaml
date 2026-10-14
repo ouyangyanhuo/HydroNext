@@ -1,4 +1,14 @@
 __flag: 🇬🇧
+'After joining, select Team Participation when registering for a contest that allows teams.': 'After joining, select Team Participation when registering for a contest that allows teams.'
+'Create a team and share its invitation code. Teammates enter the code to join; no private messages are needed.': 'Create a team and share its invitation code. Teammates enter the code to join; no private messages are needed.'
+'Enter the 8-character team invitation code': 'Enter the 8-character team invitation code'
+'Join a Team': 'Join a Team'
+'Only team members can manage this team.': 'Only team members can manage this team.'
+'Reset team invitation code': 'Reset team invitation code'
+'Resetting invalidates the old invitation code immediately. Existing members are not affected.': 'Resetting invalidates the old invitation code immediately. Existing members are not affected.'
+'Team invitation code': 'Team invitation code'
+'Team is full (maximum {0} members).': 'Team is full (maximum {0} members).'
+'You are already a member of this team.': 'You are already a member of this team.'
 __id: en
 __interface: yes
 __langname: English

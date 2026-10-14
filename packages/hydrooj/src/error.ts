@@ -37,6 +37,8 @@ export const ContestNotAttendedError = Err('ContestNotAttendedError', ForbiddenE
 export const RequireProError = Err('RequireProError', ForbiddenError, 'RequireProError');
 export const ContestAlreadyAttendedError = Err('ContestAlreadyAttendedError', ForbiddenError, "You've already attended this contest.");
 export const TeamMemberLimitError = Err('TeamMemberLimitError', ForbiddenError, 'Team is full (maximum {0} members).');
+export const TeamAlreadyJoinedError = Err('TeamAlreadyJoinedError', ForbiddenError, 'You are already a member of this team.');
+export const TeamMembershipRequiredError = Err('TeamMembershipRequiredError', ForbiddenError, 'Only team members can manage this team.');
 export const ContestNotLiveError = Err('ContestNotLiveError', ForbiddenError, 'This contest is not live.');
 export const ProctorClientRequiredError = Err('ProctorClientRequiredError', ForbiddenError,
     'Use an up-to-date proctor client to access contest problems.');

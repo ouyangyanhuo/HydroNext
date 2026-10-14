@@ -1,4 +1,14 @@
 __flag: 🇹🇼
+'After joining, select Team Participation when registering for a contest that allows teams.': '加入隊伍後，可在允許組隊的比賽中選擇「組隊參賽」進行報名。'
+'Create a team and share its invitation code. Teammates enter the code to join; no private messages are needed.': '建立隊伍並分享邀請碼，隊員填寫邀請碼即可加入，無須透過私信邀請。'
+'Enter the 8-character team invitation code': '請輸入 8 位隊伍邀請碼'
+'Join a Team': '加入隊伍'
+'Only team members can manage this team.': '只有隊伍成員可以管理該隊伍。'
+'Reset team invitation code': '重設隊伍邀請碼'
+'Resetting invalidates the old invitation code immediately. Existing members are not affected.': '重設後舊邀請碼立即失效，現有成員不受影響。'
+'Team invitation code': '隊伍邀請碼'
+'Team is full (maximum {0} members).': '隊伍已滿（最多 {0} 名成員）。'
+'You are already a member of this team.': '您已經是該隊伍的成員。'
 __id: zh_TW
 'Allow public registration': '允許使用者自行註冊；關閉後僅管理員可建立或匯入使用者。'
 'Public registration is disabled. Please contact a system administrator.': '公開註冊已關閉，請聯絡系統管理員建立帳號。'

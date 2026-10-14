@@ -1,4 +1,14 @@
 __flag: 🇨🇳
+'After joining, select Team Participation when registering for a contest that allows teams.': '加入队伍后，可在允许组队的比赛中选择“组队参赛”进行报名。'
+'Create a team and share its invitation code. Teammates enter the code to join; no private messages are needed.': '创建队伍并分享邀请码，队员填写邀请码即可加入，无需通过私信邀请。'
+'Enter the 8-character team invitation code': '请输入 8 位队伍邀请码'
+'Join a Team': '加入队伍'
+'Only team members can manage this team.': '只有队伍成员可以管理该队伍。'
+'Reset team invitation code': '重置队伍邀请码'
+'Resetting invalidates the old invitation code immediately. Existing members are not affected.': '重置后旧邀请码立即失效，现有成员不受影响。'
+'Team invitation code': '队伍邀请码'
+'Team is full (maximum {0} members).': '队伍已满（最多 {0} 名成员）。'
+'You are already a member of this team.': '您已经是该队伍的成员。'
 __id: zh
 __interface: yes
 __langname: 简体中文

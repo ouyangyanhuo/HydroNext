@@ -146,8 +146,12 @@ describe('App', () => {
         try {
             await agent.post(teamRoute).send({ operation: 'create', name: 'Upgrade team' }).expect(302);
             const [team] = await user.getVusersByMember(2);
-            await agent.post(teamRoute).send({ operation: 'invite', vuid: team._id, uidOrName: 'teammate' }).expect(302);
-            await memberAgent.post(teamRoute).send({ operation: 'accept', vuid: team._id }).expect(302);
+            const teamPage = await agent.get(teamRoute).expect(200);
+            const teamCode = getPageArgs(teamPage).mine.find((doc) => doc._id === team._id).invitationCode;
+            assert.match(teamCode, /^[A-HJ-NP-Z2-9]{8}$/);
+            await memberAgent.post(teamRoute).send({ operation: 'join', code: teamCode.toLowerCase() }).expect(302);
+            await memberAgent.post(teamRoute).send({ operation: 'join', code: teamCode }).expect(403);
+            await agent.post(teamRoute).send({ operation: 'invite', vuid: team._id, uidOrName: 'teammate' }).expect(405);
             const view = getPageArgs(await agent.get(route).set('Accept', 'application/json').expect(200));
             assert.ok(view.team_vdocs.some((doc) => doc._id === team._id));
             await agent.post(route).send({ operation: 'attend', vuid: team._id }).expect(302);
@@ -188,6 +192,59 @@ describe('App', () => {
         } finally {
             await contest.del(domainId, tid);
             await problem.del(domainId, pid);
+            await domain.del(domainId);
+        }
+    });
+
+    it('Team codes migrate existing teams, revoke on reset and enforce atomic capacity without private messages', async () => {
+        const { domain, user } = global.Hydro.model;
+        const { collV } = require('../packages/hydrooj/src/model/user');
+        const { PRIV } = require('../packages/hydrooj/src/model/builtin');
+        const domainId = 'team-code-route-test';
+        await domain.add(domainId, 2, 'Team code test', '');
+        await domain.edit(domainId, { config: { limit$team_members: 2 } });
+        const first = await user.create('code-first@example.com', 'code-first', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
+        const second = await user.create('code-second@example.com', 'code-second', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
+        await Promise.all([domain.setUserRole(domainId, first, 'root'), domain.setUserRole(domainId, second, 'root')]);
+        await Promise.all([domain.setJoin(domainId, first, true), domain.setJoin(domainId, second, true)]);
+        const firstAgent = supertest.agent(require('hydrooj').httpServer);
+        const secondAgent = supertest.agent(require('hydrooj').httpServer);
+        await firstAgent.post('/login').send({ uname: 'code-first', password: 'secret' }).expect(302);
+        await secondAgent.post('/login').send({ uname: 'code-second', password: 'secret' }).expect(302);
+        const route = `/d/${domainId}/contest/team`;
+        const vuid = await user.createVuser('team:2:code-test', { displayName: 'Code team', members: [2], invite: [first] });
+        try {
+            const page = await agent.get(route).expect(200);
+            const team = getPageArgs(page).mine.find((doc) => doc._id === vuid);
+            const code = team.invitationCode;
+            assert.match(code, /^[A-HJ-NP-Z2-9]{8}$/);
+            assert.equal((await user.getVuserById(vuid)).invite, undefined);
+            const index = (await collV.indexes()).find((item) => item.name === 'team_join_code');
+            assert.equal(index.unique, true);
+            assert.equal(index.sparse, true);
+            const outsiderPage = await firstAgent.get(route).expect(200);
+            assert.equal(getPageArgs(outsiderPage).mine.length, 0);
+            assert.ok(!outsiderPage.text.includes(code));
+            await firstAgent.post(route).send({ operation: 'reset_code', vuid }).expect(403);
+            await agent.post(route).send({ operation: 'reset_code', vuid }).expect(302);
+            const reset = (await user.getVuserById(vuid))._teamJoinCode;
+            assert.notEqual(reset, code);
+            await firstAgent.post(route).send({ operation: 'join', code }).expect(403);
+            const results = await Promise.all([
+                firstAgent.post(route).send({ operation: 'join', code: reset.toLowerCase() }),
+                secondAgent.post(route).send({ operation: 'join', code: reset }),
+            ]);
+            assert.deepEqual(results.map((result) => result.status).sort(), [302, 403]);
+            assert.equal((await user.getVuserById(vuid)).members.length, 2);
+            const publicUser = await agent.get('/api/user').query({ args: JSON.stringify({ id: vuid }) }).expect(200);
+            assert.ok(!publicUser.text.includes(reset));
+            const guest = supertest.agent(require('hydrooj').httpServer);
+            const unauthorized = await guest.post('/d/system/contest/team').set('Accept', 'application/json')
+                .send({ operation: 'join', code: reset }).expect(200);
+            assert.ok(unauthorized.body.url.includes('/login'));
+            assert.equal((await user.getVuserById(vuid)).members.length, 2);
+        } finally {
+            await collV.deleteOne({ _id: vuid });
             await domain.del(domainId);
         }
     });

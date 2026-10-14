@@ -1,31 +1,10 @@
 import $ from 'jquery';
-import { ActionDialog, prompt } from 'vj/components/dialog';
+import { ActionDialog } from 'vj/components/dialog';
 import Notification from 'vj/components/notification';
 import { AutoloadPage } from 'vj/misc/Page';
 import { delay, i18n, request } from 'vj/utils';
 
 const contestPage = new AutoloadPage('contestPage', () => {
-  $('[data-contest-team-invite]').on('click', async (ev) => {
-    const vuid = $(ev.currentTarget).attr('data-vuid');
-    const res = await prompt(i18n('Invite Member'), {
-      user: {
-        type: 'userId',
-        label: i18n('Username / UID'),
-        required: true,
-        autofocus: true,
-      },
-    });
-    if (!res?.user) return;
-    request.post(location.pathname, { operation: 'invite', vuid, uid: res.user })
-      .then(() => {
-        Notification.success(i18n('Invitation sent'));
-        delay(1000).then(() => window.location.reload());
-      })
-      .catch((e) => {
-        Notification.error(e.message || e);
-      });
-  });
-
   $('[data-contest-team-rename]').on('click', function () {
     const $card = $(this).closest('[data-contest-team]');
     $card.find('[data-contest-team-rename-form]').removeClass('is-hidden')

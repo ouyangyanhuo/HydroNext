@@ -114,7 +114,7 @@ export interface VUdoc extends Record<string, any> {
     // for contest team
     displayName?: string;
     members?: number[];
-    invite?: number[];
+    _teamJoinCode?: string;
 }
 
 export interface GDoc {
