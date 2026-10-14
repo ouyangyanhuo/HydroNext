@@ -27,7 +27,7 @@
   height: min(var(--hydro-short-height, var(--input-height, 30px)), 48px);
   min-height: 24px !important;
   max-height: 48px !important;
-  font-weight: 600;
+  font-weight: var(--hydro-weight-semibold);
 }
 
 .hydro-select .hydro-select__input[readonly] {

@@ -193,7 +193,7 @@ function RecordMainContent({ args }: { args: any }) {
       width: 120,
       render: (r: any) => {
         const udoc = udict[r.uid];
-        return <Text size="xs" fw={600}>{udoc ? formatUserName(udoc) : r.uid}</Text>;
+        return <Text size="xs" fw="var(--hydro-weight-semibold)">{udoc ? formatUserName(udoc) : r.uid}</Text>;
       },
     },
     {
@@ -220,7 +220,7 @@ function RecordMainContent({ args }: { args: any }) {
       title: t('Language'),
       width: 100,
       render: (r: any) => (
-        <Text size="xs" c="dimmed" fw={600}>{languageLabels.get(r.lang) || r.lang || '-'}</Text>
+        <Text size="xs" c="dimmed" fw="var(--hydro-weight-semibold)">{languageLabels.get(r.lang) || r.lang || '-'}</Text>
       ),
     },
     {

@@ -29,7 +29,7 @@ export default function DomainCreatePage() {
       <Card withBorder p="lg" className="hydro-content-card">
         <Stack gap="md">
           <Card withBorder p="md" bg="var(--hydro-surface-muted)">
-            <Text size="sm" fw={600} mb="xs">{t('A domain ID cannot be changed after creation. It is supposed to be:')}</Text>
+            <Text size="sm" fw="var(--hydro-weight-semibold)" mb="xs">{t('A domain ID cannot be changed after creation. It is supposed to be:')}</Text>
             <List size="sm" c="dimmed" spacing={4}>
               <List.Item>{t('Unique')}</List.Item>
               <List.Item>{t('At least 4 characters')}</List.Item>

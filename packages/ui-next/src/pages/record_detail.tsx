@@ -333,7 +333,7 @@ export default function RecordDetailPage() {
           </div>
         </div>
         {isJudging && (
-          <Text c="blue" size="sm" mt="md" fw={600}>
+          <Text c="blue" size="sm" mt="md" fw="var(--hydro-weight-semibold)">
             {t('Judging...')}
           </Text>
         )}

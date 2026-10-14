@@ -71,7 +71,7 @@ export default function DomainDashboardPage() {
 
       <Card withBorder p="lg" className="hydro-content-card">
         <Stack gap="md">
-          <Text fw={600}>{t('Information')}</Text>
+          <Text fw="var(--hydro-weight-semibold)">{t('Information')}</Text>
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
             <Group gap="sm">
               <Avatar src={getAvatarUrl(ddoc.avatar)} size="md" radius="xl" />
@@ -82,7 +82,7 @@ export default function DomainDashboardPage() {
             </Group>
             <div>
               <Text size="xs" c="dimmed">{t('Name')}</Text>
-              <Text size="sm" fw={500}>{ddoc.name}</Text>
+              <Text size="sm" fw="var(--hydro-weight-medium)">{ddoc.name}</Text>
             </div>
             {owner && (
               <div>
@@ -107,7 +107,7 @@ export default function DomainDashboardPage() {
         <Card withBorder p="lg" className="hydro-content-card">
           <Group justify="space-between" align="center">
             <div>
-              <Text fw={600}>{t('Delete Domain')}</Text>
+              <Text fw="var(--hydro-weight-semibold)">{t('Delete Domain')}</Text>
               <Text size="sm" c="dimmed">{t('This operation cannot be undone.')}</Text>
             </div>
             <Button color="red" onClick={() => setDeleteOpened(true)}>

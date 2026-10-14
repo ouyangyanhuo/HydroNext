@@ -142,7 +142,7 @@ function AsyncTagSelect({
           <Group gap="sm" wrap="nowrap">
             {withAvatar && <FramedAvatar src={item.avatarUrl} alt={item.label} frame={item.honorFrame} size={30} radius="xl" />}
             <div className="min-w-0">
-              <Text size="sm" fw={600} truncate>{item.label}</Text>
+              <Text size="sm" fw="var(--hydro-weight-semibold)" truncate>{item.label}</Text>
               {item.description && <Text size="xs" c="dimmed" truncate>{item.description}</Text>}
             </div>
           </Group>
@@ -351,7 +351,7 @@ export default function ContestEditPage() {
   };
 
   const fileColumns = [
-    { key: 'name', title: t('Filename'), render: (file: any) => <Text size="sm" fw={600}>{file.name}</Text> },
+    { key: 'name', title: t('Filename'), render: (file: any) => <Text size="sm" fw="var(--hydro-weight-semibold)">{file.name}</Text> },
     { key: 'size', title: t('Size'), width: 90, align: 'right' as const, render: (file: any) => <Text size="xs" c="dimmed">{formatSize(file.size)}</Text> },
   ];
 

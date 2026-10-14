@@ -209,7 +209,7 @@ export default function UserDetailPage() {
                       underline="never"
                     >
                       <Paper withBorder p="sm" className="hydro-user-profile__problem">
-                        <Text size="sm" fw={500} truncate>{pdoc.title || pdoc.docId || pdoc._id}</Text>
+                        <Text size="sm" fw="var(--hydro-weight-medium)" truncate>{pdoc.title || pdoc.docId || pdoc._id}</Text>
                         {pdoc.pid && (
                           <Text size="xs" c="dimmed">{pdoc.pid}</Text>
                         )}

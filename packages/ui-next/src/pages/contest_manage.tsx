@@ -121,7 +121,7 @@ function FileSection({
                       href={buildUrl('contest_file_download', { tid, type, filename: file.name })}
                       className="hydro-subtle-link"
                     >
-                      <Text size="sm" fw={600}>{file.name}</Text>
+                      <Text size="sm" fw="var(--hydro-weight-semibold)">{file.name}</Text>
                     </Link>
                   </Table.Td>
                   <Table.Td><Text size="xs" c="dimmed">{formatSize(file.size)}</Text></Table.Td>

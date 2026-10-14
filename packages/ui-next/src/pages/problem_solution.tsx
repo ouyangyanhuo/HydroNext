@@ -264,7 +264,7 @@ function SolutionCard({
               <Stack gap={0}>
                 <Group gap={6} wrap="nowrap" align="center">
                   <Link to="user_detail" params={{ uid: udoc._id }} className="no-underline">
-                    <Text size="sm" fw={600} className="hover:underline">{formatUserName(udoc)}</Text>
+                    <Text size="sm" fw="var(--hydro-weight-semibold)" className="hover:underline">{formatUserName(udoc)}</Text>
                   </Link>
                   <UserBadges user={udoc} />
                 </Group>
@@ -338,7 +338,7 @@ function SolutionCard({
                       <Group gap="xs" wrap="nowrap">
                         <UserAvatar user={replyUser} size={20} />
                         <Link to="user_detail" params={{ uid: replyUser._id }} className="no-underline">
-                          <Text size="xs" fw={600} className="hover:underline">{formatUserName(replyUser)}</Text>
+                          <Text size="xs" fw="var(--hydro-weight-semibold)" className="hover:underline">{formatUserName(replyUser)}</Text>
                         </Link>
                         <UserBadges user={replyUser} />
                         <Text size="xs" c="dimmed">

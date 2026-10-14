@@ -48,7 +48,7 @@
 }
 
 .hydro-code-replay__clock {
-  font-weight: 600;
+  font-weight: var(--hydro-weight-semibold);
 }
 
 .hydro-code-replay__total {

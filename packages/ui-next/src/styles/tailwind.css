@@ -1,6 +1,12 @@
 @import 'tailwindcss';
 @import './tokens.css';
 @import './select.css';
+@import './typography.css';
+
+@theme inline {
+  --font-weight-medium: var(--hydro-weight-medium);
+  --font-weight-semibold: var(--hydro-weight-semibold);
+}
 
 @keyframes hydro-fade-in {
   from { opacity: 0; }
@@ -3641,7 +3647,7 @@ a {
 
 .mantine-Modal-title,
 .mantine-Drawer-title {
-  font-weight: 600;
+  font-weight: var(--hydro-weight-semibold);
   line-height: 1.5;
   overflow-wrap: anywhere;
 }

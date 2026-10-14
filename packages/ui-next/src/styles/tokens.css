@@ -42,6 +42,10 @@
   --hydro-font-serif: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, 'Source Serif 4', Georgia, serif;
   --hydro-font-family: var(--hydro-font-serif);
   --hydro-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --hydro-weight-regular: 400;
+  --hydro-weight-medium: 500;
+  --hydro-weight-semibold: 600;
+  --hydro-weight-bold: 700;
   --hydro-duration-fast: 120ms;
   --hydro-duration-normal: 200ms;
   --hydro-duration-slow: 320ms;
@@ -52,6 +56,8 @@
 
 [data-mantine-color-scheme='dark'] {
   color-scheme: dark;
+  --hydro-weight-medium: 460;
+  --hydro-weight-semibold: 560;
   --hydro-bg: #0b1114;
   --hydro-bg-soft: #10181b;
   --hydro-surface: #151f22;
@@ -90,6 +96,8 @@
 
 [data-hydro-theme='paper'] {
   color-scheme: light;
+  --hydro-weight-medium: 500;
+  --hydro-weight-semibold: 600;
   --hydro-bg: #efe8de;
   --hydro-bg-soft: #f2ece3;
   --hydro-surface: #efe8de;

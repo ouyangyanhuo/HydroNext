@@ -126,7 +126,7 @@ export default function HomeDomainPage() {
                         <Group gap="sm" wrap="nowrap">
                           <Avatar src={getAvatarUrl(d.avatar)} size="sm" radius="xl" />
                           <div>
-                            <Text fw={500} size="sm">{d.name}</Text>
+                            <Text fw="var(--hydro-weight-medium)" size="sm">{d.name}</Text>
                             <Text size="xs" c="dimmed">{d._id}</Text>
                           </div>
                         </Group>

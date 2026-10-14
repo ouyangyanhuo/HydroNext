@@ -45,7 +45,7 @@ function UserMenu() {
           aria-label={formatUserName(user)}
         >
           <UserAvatar user={user} size={32} link={false} />
-          <Text size="sm" fw={600} className="hydro-topbar-user-name" c="var(--hydro-text)">
+          <Text size="sm" fw="var(--hydro-weight-semibold)" className="hydro-topbar-user-name" c="var(--hydro-text)">
             {formatUserName(user)}
           </Text>
         </UnstyledButton>
@@ -319,7 +319,7 @@ function AccentColorPicker() {
       <Popover.Dropdown>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <Text size="xs" fw={600} className="text-[var(--hydro-text-muted)]">
+            <Text size="xs" fw="var(--hydro-weight-semibold)" className="text-[var(--hydro-text-muted)]">
               {t('Preset themes')}
             </Text>
             {accentColor !== DEFAULT_ACCENT && (
@@ -356,7 +356,7 @@ function AccentColorPicker() {
             })}
           </Group>
           <div className="border-t border-[var(--hydro-border)] pt-3">
-            <Text size="xs" fw={600} className="mb-2 text-[var(--hydro-text-muted)]">
+            <Text size="xs" fw="var(--hydro-weight-semibold)" className="mb-2 text-[var(--hydro-text-muted)]">
               {t('Custom color')}
             </Text>
             <ColorInput

@@ -67,7 +67,7 @@ function ArtworkInput({ shape, file, frame, onChange, disabled }: {
           src={getAvatarUrl(user.avatar || '', 240)}
           frame={preview ? { id: 'preview', name: '', imageUrl: preview, artworkVersion: 2 } : frame} />
           : <span className={`hydro-frame-upload__guide hydro-frame-upload__guide--${shape}`}><IconPhoto size={30} /></span>}
-        <Text size="sm" fw={600}>{file?.name || t(frame
+        <Text size="sm" fw="var(--hydro-weight-semibold)">{file?.name || t(frame
           ? 'Drop artwork here to replace, or click to choose' : 'Drop artwork here or click to choose')}</Text>
         <Text size="xs" c="dimmed">PNG / WebP · 512 × 512px · ≤ 2 MiB</Text>
       </Stack>

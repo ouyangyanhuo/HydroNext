@@ -374,12 +374,12 @@ function FileSection({
                             href={fileUrl}
                             onClick={(e) => { e.preventDefault(); setPreviewFile(file); }}
                             className="hydro-subtle-link"
-                            style={{ fontWeight: 600, fontSize: 13 }}
+                            style={{ fontWeight: 'var(--hydro-weight-semibold)', fontSize: 13 }}
                           >
                             {file.name}
                           </a>
                         ) : (
-                          <Text size="sm" fw={600}>{file.name}</Text>
+                          <Text size="sm" fw="var(--hydro-weight-semibold)">{file.name}</Text>
                         )}
                       </td>
                       <td style={{ textAlign: 'right', padding: '6px 8px', borderBottom: '1px solid var(--hydro-border)' }}>

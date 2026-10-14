@@ -188,7 +188,7 @@ export default function TrainingEditPage() {
             autosize
           />
           <div>
-            <Text size="sm" fw={500} mb={6}>{t('Description')}</Text>
+            <Text size="sm" fw="var(--hydro-weight-medium)" mb={6}>{t('Description')}</Text>
             <MarkdownEditor
               value={form.description}
               onChange={(description) => setForm({ ...form, description })}

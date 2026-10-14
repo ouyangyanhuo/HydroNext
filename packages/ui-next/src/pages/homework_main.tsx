@@ -40,7 +40,7 @@ export default function HomeworkMainPage() {
                       </Badge>
                     </Group>
                     <Link to="homework_detail" params={{ tid: tdoc.docId }} className="no-underline hover:underline">
-                      <Text fw={500}>{tdoc.title}</Text>
+                      <Text fw="var(--hydro-weight-medium)">{tdoc.title}</Text>
                     </Link>
                     <Text size="xs" c="dimmed" mt={4}>
                       {t('Due')}: <TimeDisplay date={dueAt} format="absolute" />

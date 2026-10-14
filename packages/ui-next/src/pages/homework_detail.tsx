@@ -76,7 +76,7 @@ export default function HomeworkDetailPage() {
               <Paper key={pid || i} withBorder p="md">
                 <Group justify="space-between">
                   <Link href={problemUrl} className="no-underline hover:underline">
-                    <Text fw={500}>{String.fromCharCode(65 + i)}. {pdoc.title || pid}</Text>
+                    <Text fw="var(--hydro-weight-medium)">{String.fromCharCode(65 + i)}. {pdoc.title || pid}</Text>
                   </Link>
                   {psdoc?.status !== undefined && <RecordStatusBadge status={psdoc.status} size="xs" />}
                 </Group>

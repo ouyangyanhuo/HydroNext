@@ -42,7 +42,7 @@ export function RuntimeStatusCard({ runtime }: { runtime: unknown }) {
         </Stack>
         <Stack gap={6}>
           <Group gap={6}><IconClock size={15} /><Text size="sm" c="dimmed">{t('Started at')}</Text></Group>
-          <Text component="time" dateTime={info.startedAt} fw={600}>
+          <Text component="time" dateTime={info.startedAt} fw="var(--hydro-weight-semibold)">
             {new Date(info.startedAt).toLocaleString(undefined, {
               year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
               hour12: false, timeZoneName: 'short',

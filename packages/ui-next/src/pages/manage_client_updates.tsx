@@ -303,7 +303,7 @@ export default function ManageClientUpdatesPage() {
       <Table.ScrollContainer minWidth={780}><Table highlightOnHover><Table.Thead><Table.Tr>
         {['Package', 'Version', 'Size', 'Package URL', 'Actions'].map((label) => <Table.Th key={label}>{t(label)}</Table.Th>)}
       </Table.Tr></Table.Thead><Table.Tbody>{(library.assets as UpdateAsset[]).map((asset) => <Table.Tr key={asset.id}>
-        <Table.Td><Text size="sm" fw={500}>{asset.filename}</Text><Badge size="xs" color={publishedAssets.includes(asset.id) ? 'green' : 'gray'} variant="light">{t(publishedAssets.includes(asset.id) ? 'Published' : 'Draft')}</Badge></Table.Td>
+        <Table.Td><Text size="sm" fw="var(--hydro-weight-medium)">{asset.filename}</Text><Badge size="xs" color={publishedAssets.includes(asset.id) ? 'green' : 'gray'} variant="light">{t(publishedAssets.includes(asset.id) ? 'Published' : 'Draft')}</Badge></Table.Td>
         <Table.Td>{asset.version}</Table.Td><Table.Td>{(asset.size / 1024 / 1024).toFixed(2)} MiB</Table.Td>
         <Table.Td><TextInput size="xs" readOnly value={packageUrl(draft.origin, asset)} aria-label={t('Package URL')} w={350} />
           <Text size="xs" c="dimmed" style={{ overflowWrap: 'anywhere', maxWidth: 350 }}>SHA-256: {asset.sha256}</Text></Table.Td>

@@ -29,7 +29,7 @@ const BASE_THEME_CONFIG = {
   },
   defaultRadius: 'md' as const,
   components: {
-    Button: { defaultProps: { size: 'sm', radius: 'md' } },
+    Button: { defaultProps: { size: 'sm', radius: 'md', fw: 'var(--hydro-weight-semibold)' } },
     Card: { defaultProps: { radius: 'lg' } },
     Paper: { defaultProps: { radius: 'lg' } },
     Badge: { defaultProps: { radius: 'sm' } },

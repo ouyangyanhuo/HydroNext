@@ -109,7 +109,7 @@ function SendMessageDialog({
                     <Group gap="sm">
                       <UserAvatar user={u} link={false} size="sm" />
                       <div>
-                        <Text size="sm" fw={500}>{formatUserName(u)}</Text>
+                        <Text size="sm" fw="var(--hydro-weight-medium)">{formatUserName(u)}</Text>
                         <Text size="xs" c="dimmed">UID {u._id}</Text>
                       </div>
                     </Group>
@@ -338,7 +338,7 @@ export default function HomeMessagesPage() {
                       <UserAvatar user={other} link={false} size={40} className="hydro-message-avatar" />
                       <div className="min-w-0 flex-1">
                         <Group justify="space-between">
-                          <Text size="sm" fw={500} truncate>{other.uname || otherId}</Text>
+                          <Text size="sm" fw="var(--hydro-weight-medium)" truncate>{other.uname || otherId}</Text>
                           {lastMsg && (
                             <Text size="xs" c="dimmed" className="shrink-0">
                               <TimeDisplay date={lastMsg.createAt || lastMsg._id} format="relative" size="xs" />
@@ -366,7 +366,7 @@ export default function HomeMessagesPage() {
             <Group gap="sm" p="sm" className="border-b border-[var(--hydro-border)] shrink-0">
               <UserAvatar user={target} link={false} size={36} className="hydro-message-avatar" />
               <div>
-                <Text size="sm" fw={600}>{target.uname || targetId}</Text>
+                <Text size="sm" fw="var(--hydro-weight-semibold)">{target.uname || targetId}</Text>
                 <Text size="xs" c="dimmed">UID {targetId}</Text>
               </div>
             </Group>

@@ -226,7 +226,7 @@ export default function HomeSecurityPage() {
             <Stack gap="sm">
               <Group justify="space-between" align="center" className="hydro-security-row">
                 <Stack gap={2}>
-                  <Text fw={600}>{t('Email Account')}</Text>
+                  <Text fw="var(--hydro-weight-semibold)">{t('Email Account')}</Text>
                   <Text c="dimmed" size="sm">{user?.mail || '-'}</Text>
                 </Stack>
                 <Button size="xs" variant="light" onClick={() => setShowChangeMail((value) => !value)}>
@@ -248,7 +248,7 @@ export default function HomeSecurityPage() {
                 return (
                   <Group key={relation.platform} justify="space-between" align="center" className="hydro-security-row">
                     <Stack gap={2}>
-                      <Text fw={600}>{method?.name || relation.platform}</Text>
+                      <Text fw="var(--hydro-weight-semibold)">{method?.name || relation.platform}</Text>
                       <Text c="dimmed" size="sm">{relation.id}</Text>
                     </Stack>
                     <Button
@@ -264,7 +264,7 @@ export default function HomeSecurityPage() {
               })}
               {loginMethods.filter((method: any) => !linkedPlatforms.has(method.id)).map((method: any) => (
                 <Group key={method.id} justify="space-between" align="center" className="hydro-security-row">
-                  <Text fw={600}>{method.name || method.id}</Text>
+                  <Text fw="var(--hydro-weight-semibold)">{method.name || method.id}</Text>
                   <Button
                     size="xs"
                     variant="light"
@@ -294,7 +294,7 @@ export default function HomeSecurityPage() {
             {user?.tfa && (
               <Group justify="space-between" align="center" className="hydro-security-row">
                 <Stack gap={2}>
-                  <Text fw={600}>{t('Two Factor Authentication')}</Text>
+                  <Text fw="var(--hydro-weight-semibold)">{t('Two Factor Authentication')}</Text>
                   <Text c="dimmed" size="sm">{t('Authenticator')}</Text>
                 </Stack>
                 <Button
@@ -313,7 +313,7 @@ export default function HomeSecurityPage() {
               return (
                 <Group key={id || index} justify="space-between" align="center" className="hydro-security-row">
                   <Stack gap={2}>
-                    <Text fw={600}>{authenticator.name || t('Authenticator')}</Text>
+                    <Text fw="var(--hydro-weight-semibold)">{authenticator.name || t('Authenticator')}</Text>
                     <Text c="dimmed" size="sm">
                       {authenticator.credentialDeviceType || '-'} / {authenticator.fmt || '-'}
                     </Text>
@@ -343,7 +343,7 @@ export default function HomeSecurityPage() {
               <Group key={session._id} justify="space-between" align="flex-start" wrap="nowrap" className="hydro-security-session">
                 <Stack gap={4}>
                   <Group gap="xs">
-                    <Text fw={600}>{session.updateUaInfo?.browser?.name || t('Unknown Browser')}</Text>
+                    <Text fw="var(--hydro-weight-semibold)">{session.updateUaInfo?.browser?.name || t('Unknown Browser')}</Text>
                     {session.isCurrent && <Badge size="sm" color="green">{t('Current')}</Badge>}
                   </Group>
                   <Text c="dimmed" size="sm">

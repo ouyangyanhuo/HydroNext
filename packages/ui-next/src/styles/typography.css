@@ -1,0 +1,26 @@
+/* Native line fitting keeps copied text and Markdown source completely unchanged.
+ * pretty reduces short final lines, but its precise behavior depends on the browser.
+ * Technical content keeps its existing whitespace, truncation and code typography.
+ */
+:where(
+  .hydro-markdown :is(p, li, blockquote),
+  p.mantine-Text-root,
+  .mantine-InputWrapper-description,
+  .hydro-training-item__description,
+  .hydro-doc-page__description,
+  .hydro-frame-description
+):not(:where(
+  pre, pre *, code, code *, kbd, kbd *, samp, samp *, table, table *,
+  .monaco-editor, .monaco-editor *, .katex, .katex *
+)) {
+  text-wrap: pretty;
+}
+
+:where(
+  .mantine-Title-root,
+  .hydro-markdown :is(h1, h2, h3, h4, h5, h6)
+):not(:where(
+  pre *, code *, table *, .monaco-editor *, .katex *
+)) {
+  text-wrap: balance;
+}

@@ -229,7 +229,7 @@ export function TrainingCategoryOrder({ categories, ids, onChange, disabled = fa
                 }}
               ><IconGripVertical size={18} /></ActionIcon>
               <Text size="xs" c="dimmed" w={22} aria-hidden="true">{index + 1}</Text>
-              <Text size="sm" fw={500} className="flex-1" truncate>{item.name}</Text>
+              <Text size="sm" fw="var(--hydro-weight-medium)" className="flex-1" truncate>{item.name}</Text>
               <Badge size="xs" variant="light">{item.tids?.length || 0}</Badge>
             </Group>
           );

@@ -516,7 +516,7 @@ export default function ContestDetailPage() {
                 {files.map((f: any) => (
                   <Group key={f.name} justify="space-between" className="rounded-md border border-[var(--hydro-border)] bg-[var(--hydro-surface)] px-3 py-2">
                     <Link href={buildUrl('contest_file_download', { tid, type: 'private', filename: f.name })} className="hydro-subtle-link">
-                      <Text size="sm" fw={600}>{f.name}</Text>
+                      <Text size="sm" fw="var(--hydro-weight-semibold)">{f.name}</Text>
                     </Link>
                     <Text size="xs" c="dimmed">{Math.round((f.size || 0) / 1024)}KB</Text>
                   </Group>

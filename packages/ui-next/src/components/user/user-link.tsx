@@ -17,7 +17,7 @@ export function UserLink({ user, size = 'sm' }: UserLinkProps) {
 
   return (
     <Link to="user_detail" params={{ uid: user._id }} className="no-underline">
-      <Text size={size} fw={500} className="hover:underline">
+      <Text size={size} fw="var(--hydro-weight-medium)" className="hover:underline">
         {formatUserName(user)}
       </Text>
     </Link>

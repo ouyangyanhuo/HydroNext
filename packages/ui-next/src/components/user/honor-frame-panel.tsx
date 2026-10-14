@@ -69,7 +69,7 @@ function HonorFrameWardrobe() {
       <Group gap="lg">
         <FramedAvatar src={getAvatarUrl(user.avatar || '', 96)} alt={user.uname} size={80} shape="circle" frame={user.honorFrame} />
         <Stack gap={4} className="min-w-0 flex-1">
-          <Text fw={600}>{user.honorFrame?.name || t('No honor frame equipped')}</Text>
+          <Text fw="var(--hydro-weight-semibold)">{user.honorFrame?.name || t('No honor frame equipped')}</Text>
           {user.honorFrame && <Text size="sm" className="hydro-frame-description">{user.honorFrame.description || t('No description yet.')}</Text>}
           <Text size="sm" c="dimmed">{t('Honor frames belong to your global account and remain the same in every domain.')}</Text>
         </Stack>
@@ -95,7 +95,7 @@ function HonorFrameWardrobe() {
               <Card key={frame.id} withBorder p="sm" className="hydro-panel">
                 <Stack align="center" gap="sm">
                   <HonorFramePreview frame={frame} avatar={user.avatar} size={40} />
-                  <Text size="sm" fw={600} ta="center" lineClamp={2}>{frame.name}</Text>
+                  <Text size="sm" fw="var(--hydro-weight-semibold)" ta="center" lineClamp={2}>{frame.name}</Text>
                   <Text size="sm" c="dimmed" ta="center" className="hydro-frame-description">{frame.description || t('No description yet.')}</Text>
                   <Button
                     size="xs"

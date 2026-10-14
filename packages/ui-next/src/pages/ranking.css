@@ -255,7 +255,7 @@
 .ranking-table-user {
   color: var(--hydro-primary-strong);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: var(--hydro-weight-semibold);
 }
 
 .ranking-table-user:hover { text-decoration: underline; }

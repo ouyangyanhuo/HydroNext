@@ -89,11 +89,11 @@ function DomainSelectField({
     const domainName = selectedDomain?.name || value;
     return (
       <div>
-        <Text size="sm" fw={500} mb={4}>{label}</Text>
+        <Text size="sm" fw="var(--hydro-weight-medium)" mb={4}>{label}</Text>
         <Group gap="sm">
           <Avatar src={selectedDomain?.avatar} size="sm" radius="xl">{domainName?.[0]?.toUpperCase()}</Avatar>
           <div>
-            <Text size="sm" fw={500}>{domainName}</Text>
+            <Text size="sm" fw="var(--hydro-weight-medium)">{domainName}</Text>
             <Text size="xs" c="dimmed">{domainId}</Text>
           </div>
           <Button size="compact-xs" variant="subtle" color="red" ml="auto" onClick={clearSelection}>
@@ -133,7 +133,7 @@ function DomainSelectField({
                   <Group gap="sm">
                     <Avatar src={domain.avatar} size="sm" radius="xl">{domain.name?.[0]?.toUpperCase()}</Avatar>
                     <div>
-                      <Text size="sm" fw={500}>{domain.name}</Text>
+                      <Text size="sm" fw="var(--hydro-weight-medium)">{domain.name}</Text>
                       <Text size="xs" c="dimmed">{domain._id}</Text>
                     </div>
                   </Group>

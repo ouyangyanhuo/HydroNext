@@ -175,7 +175,7 @@ function AddUserDialogContent({
                     <Group gap="sm" wrap="nowrap" miw={0}>
                       <UserAvatar user={user} link={false} size="sm" />
                       <div className="min-w-0">
-                        <Text size="sm" fw={500} truncate>{formatUserLabel(user)}</Text>
+                        <Text size="sm" fw="var(--hydro-weight-medium)" truncate>{formatUserLabel(user)}</Text>
                         <Text size="xs" c="dimmed">UID = {user._id}</Text>
                       </div>
                     </Group>
@@ -189,7 +189,7 @@ function AddUserDialogContent({
           </ScrollArea.Autosize>
         </Paper>
         <Stack gap="xs">
-          <Text size="sm" fw={600}>{t('Selected Users')}</Text>
+          <Text size="sm" fw="var(--hydro-weight-semibold)">{t('Selected Users')}</Text>
           {selectedUsers.length ? (
             <Group gap="xs">
               {selectedUsers.map((user) => (

@@ -161,7 +161,7 @@ export default function ManageSystemDataPage() {
       title: t('Problem'),
       render: (item: AdditionalFileItem) => (
         <Link to="problem_detail" params={{ domainId: item.domainId, pid: item.docId }} className="hydro-subtle-link">
-          <Text size="sm" fw={600}>{item.docId}. {item.title || '-'}</Text>
+          <Text size="sm" fw="var(--hydro-weight-semibold)">{item.docId}. {item.title || '-'}</Text>
         </Link>
       ),
     },

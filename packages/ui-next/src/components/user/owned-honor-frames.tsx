@@ -50,7 +50,7 @@ export function OwnedHonorFrames({ uid, avatar }: { uid: number, avatar?: string
         aria-label={`${frame.name}: ${frame.description || t('No description yet.')}`}
         className="hydro-content-card hydro-frame-owned-card">
         <HonorFramePreview frame={frame} avatar={avatar} size={48} />
-        <Text ta="center" fw={600} mt="md">{frame.name}</Text>
+        <Text ta="center" fw="var(--hydro-weight-semibold)" mt="md">{frame.name}</Text>
         {!frame.active && <Badge color="red" variant="light" mt="sm" mx="auto">{t('Disabled')}</Badge>}
       </Card></HoverCard.Target>
       <HoverCard.Dropdown className="hydro-frame-description-popover">

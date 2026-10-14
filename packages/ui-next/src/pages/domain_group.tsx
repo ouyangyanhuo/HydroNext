@@ -111,7 +111,7 @@ export default function DomainGroupPage() {
                     />
                   </Table.Td>
                   <Table.Td>
-                    <Text size="sm" fw={600}>{g.name}</Text>
+                    <Text size="sm" fw="var(--hydro-weight-semibold)">{g.name}</Text>
                     <Text size="xs" c="dimmed">{g.uids?.length || 0} {t('members')}</Text>
                   </Table.Td>
                   <Table.Td>
