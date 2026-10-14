@@ -6,17 +6,20 @@ import Schema from 'schemastery';
 import type { Context } from '../context';
 import {
     AuthOperationError, BadRequestError, BlacklistedError, BuiltinLoginError,
-    ForbiddenError, InvalidTokenError, NotFoundError,
-    RegistrationDisabledError, SystemError, UserFacingError,
+    ForbiddenError, InvalidTokenError, NotFoundError, PasswordResetUnavailableError,
+    RegistrationDisabledError, SystemError, UserAlreadyExistError, UserFacingError,
     UserNotFoundError, ValidationError, VerifyPasswordError,
 } from '../error';
-import { User } from '../interface';
+import { TokenDoc, User } from '../interface';
+import { isPasswordResetEnabled, isRegistrationEnabled } from '../lib/account-policy';
 import avatar from '../lib/avatar';
 import { sendMail } from '../lib/mail';
 import { paginateAcceptedProblems } from '../lib/user-profile-pagination';
 import { verifyTFA } from '../lib/verifyTFA';
+import BlackListModel from '../model/blacklist';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as ContestModel from '../model/contest';
+import domain from '../model/domain';
 import * as oplog from '../model/oplog';
 import problem, { ProblemDoc } from '../model/problem';
 import ScheduleModel from '../model/schedule';
@@ -27,6 +30,7 @@ import user, { deleteUserCache } from '../model/user';
 import {
     Handler, param, Query, Types,
 } from '../service/server';
+import { randomstring } from '../utils';
 
 async function successfulAuth(this: Handler, udoc: User) {
     if (udoc._id !== 0) {
@@ -242,15 +246,95 @@ export class UserRegisterHandler extends Handler {
     noCheckPermView = true;
 
     async prepare() {
-        throw new RegistrationDisabledError();
+        if (!isRegistrationEnabled((key) => system.get(key))) throw new RegistrationDisabledError();
+        if (!system.get('server.login')) throw new BuiltinLoginError();
+    }
+
+    async get() {
+        this.response.template = 'user_register.html';
+    }
+
+    @param('mail', Types.Email)
+    async post(domainId: string, mail: string) {
+        if (await user.getByEmail('system', mail)) throw new UserAlreadyExistError(mail);
+        const mailDomain = mail.split('@')[1].toLowerCase();
+        if (await BlackListModel.get(`mail::${mailDomain}`)) throw new BlacklistedError(mailDomain);
+        const verifyMail = system.get('smtp.verify') && system.get('smtp.user');
+        if (verifyMail && !isPasswordResetEnabled((key) => system.get(key))) throw new PasswordResetUnavailableError();
+        await Promise.all([
+            this.limitRate('send_mail', 60, 1, mail),
+            this.limitRate('send_mail', 3600, 30),
+            oplog.log(this, 'user.register', {}),
+        ]);
+        const [code] = await token.add(token.TYPE_REGISTRATION, system.get('session.unsaved_expire_seconds'), {
+            mail,
+            redirect: this.domain.registerRedirect,
+            identity: { provider: 'mail', platform: 'mail', id: mail },
+        });
+        if (verifyMail) {
+            const prefix = this.domain.host
+                ? `${Array.isArray(this.domain.host) ? this.domain.host[0] : this.domain.host}`
+                : system.get('server.url');
+            const html = await this.renderHTML('user_register_mail.html', {
+                path: this.url('user_register_with_code', { code }),
+                url_prefix: prefix.replace(/\/$/, ''),
+            });
+            await sendMail(mail, 'Sign Up', 'user_register_mail', html.toString());
+            this.response.template = 'user_register_mail_sent.html';
+            this.response.body = { mail, verificationEmailSent: true };
+        } else this.response.redirect = this.url('user_register_with_code', { code });
     }
 }
 
 class UserRegisterWithCodeHandler extends Handler {
     noCheckPermView = true;
+    tdoc: TokenDoc;
 
-    async prepare() {
-        throw new RegistrationDisabledError();
+    @param('code', Types.String)
+    async prepare(domainId: string, code: string) {
+        if (!isRegistrationEnabled((key) => system.get(key))) throw new RegistrationDisabledError();
+        this.tdoc = await token.get(code, token.TYPE_REGISTRATION);
+        if (!this.tdoc?.identity || !(new Date(this.tdoc.expireAt).getTime() > Date.now())) {
+            await this.limitRate('user_register_with_code', 60, 5);
+            throw new InvalidTokenError(token.TYPE_TEXTS[token.TYPE_REGISTRATION], code);
+        }
+        if (this.tdoc.identity.provider === 'mail' && !system.get('server.login')) throw new BuiltinLoginError();
+    }
+
+    async get() {
+        this.response.template = 'user_register_with_code.html';
+        this.response.body = {
+            mail: this.tdoc.mail,
+            username: this.tdoc.username || '',
+            lockUsername: !!this.ctx.oauth.providers[this.tdoc.identity.provider]?.lockUsername,
+        };
+    }
+
+    @param('password', Types.Password)
+    @param('verifyPassword', Types.Password)
+    @param('uname', Types.Username, true)
+    @param('code', Types.String)
+    async post(domainId: string, password: string, verifyPassword: string, uname = '', code: string) {
+        const provider = this.ctx.oauth.providers[this.tdoc.identity.provider];
+        if (!provider) throw new SystemError(`OAuth provider ${this.tdoc.identity.provider} not found`);
+        if (provider.lockUsername) uname = this.tdoc.username;
+        if (!Types.Username[1](uname)) throw new ValidationError('uname');
+        if (password !== verifyPassword) throw new VerifyPasswordError();
+        if (await user.getByUname('system', uname)) throw new UserAlreadyExistError(uname);
+        if (this.tdoc.mail && await user.getByEmail('system', this.tdoc.mail)) throw new UserAlreadyExistError(this.tdoc.mail);
+        // Consume once before creating an account, including concurrent requests.
+        if (!await token.del(code, token.TYPE_REGISTRATION)) throw new InvalidTokenError(token.TYPE_TEXTS[token.TYPE_REGISTRATION], code);
+        const uid = await user.create(this.tdoc.mail || `${randomstring(12)}@invalid.local`, uname, password, undefined, this.request.ip);
+        const [id, mailDomain] = (this.tdoc.mail || '').split('@');
+        const set = { ...this.tdoc.set };
+        if (mailDomain === 'qq.com' && /^\d+$/.test(id)) Object.assign(set, { avatar: `qq:${id}`, qq: id });
+        if (this.session.viewLang) set.viewLang = this.session.viewLang;
+        if (Object.keys(set).length) await user.setById(uid, set);
+        if (Object.keys(this.tdoc.setInDomain || {}).length) await domain.setUserInDomain(domainId, uid, this.tdoc.setInDomain);
+        const ids = Array.isArray(this.tdoc.identity.id) ? this.tdoc.identity.id : [this.tdoc.identity.id];
+        await Promise.all(ids.map((identityId) => this.ctx.oauth.set(this.tdoc.identity.platform, identityId, uid)));
+        await successfulAuth.call(this, await user.getById(domainId, uid));
+        this.response.redirect = this.tdoc.redirect || this.url('home_settings', { category: 'preference' });
     }
 }
 
@@ -263,7 +347,7 @@ class UserLostPassHandler extends Handler {
 
     @param('mail', Types.Email)
     async post(domainId: string, mail: string) {
-        if (!system.get('smtp.user')) throw new SystemError('Cannot send mail');
+        if (!isPasswordResetEnabled((key) => system.get(key))) throw new PasswordResetUnavailableError();
         const udoc = await user.getByEmail('system', mail);
         if (!udoc) throw new UserNotFoundError(mail);
         await Promise.all([
@@ -280,12 +364,13 @@ class UserLostPassHandler extends Handler {
             ? `${this.domain.host instanceof Array ? this.domain.host[0] : this.domain.host}`
             : system.get('server.url');
         const m = await this.renderHTML('user_lostpass_mail.html', {
-            url: `/lostpass/${tid}`,
+            url: this.url('user_lostpass_with_code', { code: tid }),
             url_prefix: prefix.endsWith('/') ? prefix.slice(0, -1) : prefix,
             uname: udoc.uname,
         });
         await sendMail(mail, 'Lost Password', 'user_lostpass_mail', m.toString());
         this.response.template = 'user_lostpass_mail_sent.html';
+        this.response.body = { mail, recoveryEmailSent: true };
     }
 }
 
@@ -294,7 +379,7 @@ class UserLostPassWithCodeHandler extends Handler {
 
     async get({ domainId, code }) {
         const tdoc = await token.get(code, token.TYPE_LOSTPASS);
-        if (!tdoc) throw new InvalidTokenError(token.TYPE_TEXTS[token.TYPE_LOSTPASS], code);
+        if (!tdoc || !(new Date(tdoc.expireAt).getTime() > Date.now())) throw new InvalidTokenError(token.TYPE_TEXTS[token.TYPE_LOSTPASS], code);
         const udoc = await user.getById(domainId, tdoc.uid);
         this.response.body = { uname: udoc.uname };
         this.response.template = 'user_lostpass_with_code.html';
@@ -305,11 +390,11 @@ class UserLostPassWithCodeHandler extends Handler {
     @param('verifyPassword', Types.Password)
     async post(domainId: string, code: string, password: string, verifyPassword: string) {
         const tdoc = await token.get(code, token.TYPE_LOSTPASS);
-        if (!tdoc) throw new InvalidTokenError(token.TYPE_TEXTS[token.TYPE_LOSTPASS], code);
+        if (!tdoc || !(new Date(tdoc.expireAt).getTime() > Date.now())) throw new InvalidTokenError(token.TYPE_TEXTS[token.TYPE_LOSTPASS], code);
         if (password !== verifyPassword) throw new VerifyPasswordError();
+        if (!await token.del(code, token.TYPE_LOSTPASS)) throw new InvalidTokenError(token.TYPE_TEXTS[token.TYPE_LOSTPASS], code);
         await user.setById(tdoc.uid, { authenticators: [], tfa: false });
         await user.setPassword(tdoc.uid, password);
-        await token.del(code, token.TYPE_LOSTPASS);
         this.response.redirect = this.url('homepage');
     }
 }
@@ -453,7 +538,32 @@ class OauthCallbackHandler extends Handler {
             delete this.session.oauthRedirect;
             return;
         }
-        throw new RegistrationDisabledError();
+        if (!isRegistrationEnabled((key) => system.get(key))) throw new RegistrationDisabledError();
+        if (!provider.canRegister) throw new ForbiddenError('No bound account found');
+        this.checkPriv(PRIV.PRIV_REGISTER_USER);
+        const mailDomain = (r.email || '').split('@')[1]?.toLowerCase();
+        if (mailDomain && await BlackListModel.get(`mail::${mailDomain}`)) throw new BlacklistedError(mailDomain);
+        let username = '';
+        for (const uname of r.uname || []) {
+            // eslint-disable-next-line no-await-in-loop
+            if (!await user.getByUname('system', uname)) {
+                username = uname;
+                break;
+            }
+        }
+        const set = { ...r.set };
+        if (r.bio) set.bio = r.bio;
+        if (r.viewLang) set.viewLang = r.viewLang;
+        if (r.avatar) set.avatar = r.avatar;
+        const [code] = await token.add(token.TYPE_REGISTRATION, system.get('session.unsaved_expire_seconds'), {
+            mail: r.email,
+            username,
+            redirect: this.domain.registerRedirect,
+            set,
+            setInDomain: r.setInDomain,
+            identity: { provider: args.type, platform: args.type, id: ids },
+        });
+        this.response.redirect = this.url('user_register_with_code', { code });
     }
 }
 

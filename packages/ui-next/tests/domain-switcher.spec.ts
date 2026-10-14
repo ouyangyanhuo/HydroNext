@@ -95,6 +95,9 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
     return {
         host, calls,
         setResponse(callback: typeof respond) { respond = callback; },
+        async setRegistrationEnabled(enabled: boolean) {
+            await act(async () => store.setState((state: any) => ({ ui: { ...state.ui, registrationEnabled: enabled } })));
+        },
         get changeMenu() { return onChange!; },
         async setUid(next: number) { await act(async () => store.setState({ user: { _id: next, uname: `user${next}`, priv: 0, avatar: '' } })); },
         async clickDomain() {
@@ -129,6 +132,22 @@ test('guest desktop navigation and mobile drawer hide domain entries while retai
         assert.equal(document.body.textContent?.includes('My Domains'), false);
         assert.equal(document.body.textContent?.includes('Switch Domain'), false);
         assert.equal(f.calls.length, 0);
+    } finally { await f.close(); }
+});
+
+test('desktop and mobile guest registration entries follow the system registration switch', async () => {
+    const f = await fixture(0, true);
+    try {
+        assert.equal(f.host.querySelector('a[href="/user_register"]')?.getAttribute('data-variant'), 'filled');
+        await f.setRegistrationEnabled(false);
+        assert.equal(f.host.querySelector('a[href="/user_register"]'), null);
+        const burger = f.host.querySelector<HTMLButtonElement>('.mantine-Burger-root')!;
+        await act(async () => burger.click());
+        assert.equal(document.body.querySelector('a[href="/user_register"]'), null);
+        await f.setRegistrationEnabled(true);
+        const registrationLinks = document.body.querySelectorAll('a[href="/user_register"]');
+        assert.ok(registrationLinks.length >= 2, 'both desktop and mobile registration buttons are present');
+        for (const link of registrationLinks) assert.equal(link.getAttribute('data-variant'), 'filled');
     } finally { await f.close(); }
 });
 

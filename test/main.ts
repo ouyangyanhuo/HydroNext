@@ -83,13 +83,34 @@ describe('App', () => {
         assert.equal(args.acceptedPageCount, Math.max(1, Math.ceil(args.acceptedCount / 50)));
     });
 
-    it('Registration stays disabled; administrators can provision users', async () => {
-        await agent.get('/register').expect(405);
-        await agent.post('/register').send({ mail: 'test@example.com' }).expect(405);
+    it('Registration defaults to enabled and the system switch protects both registration routes', async () => {
+        const { system } = global.Hydro.model;
+        const page = await agent.get('/register').expect(200);
+        assert.equal(getPageArgs(page).UiContext.registrationEnabled, true);
+        assert.equal(getPageArgs(page).UiContext.passwordResetEnabled, false);
+        await system.set('server.allowRegister', false);
+        try {
+            await agent.get('/register').expect(403);
+            await agent.post('/register').send({ mail: 'test@example.com' }).expect(403);
+            await agent.get('/register/nonexistent-token').expect(403);
+        } finally {
+            await system.set('server.allowRegister', true);
+        }
         const { user } = global.Hydro.model;
         const { PRIV } = require('../packages/hydrooj/src/model/builtin');
         await user.create('test@example.com', Root.username, Root.password, 2, '127.0.0.1', PRIV.PRIV_ALL);
         await global.Hydro.model.domain.setJoin('system', 2, true);
+    });
+
+    it('Public registration completes in its domain and default SMTP leaves recovery unavailable', async () => {
+        const guest = supertest.agent(require('hydrooj').httpServer);
+        const start = await guest.post('/d/system/register').set('Accept', 'application/json')
+            .send({ mail: 'signup@example.com' }).expect(200);
+        assert.ok(start.body.url.includes('/register/'));
+        await guest.post(start.body.url).send({ uname: 'signup-user', password: '123456', verifyPassword: '123456' }).expect(302);
+        const udoc = await global.Hydro.model.user.getByUname('system', 'signup-user');
+        assert.ok(udoc);
+        await agent.post('/lostpass').send({ mail: 'signup@example.com' }).expect(403);
     });
 
     it('Login', async () => {

@@ -1,6 +1,7 @@
 import { Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
+import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
@@ -8,15 +9,16 @@ import { formatErrorMessage } from '@/utils/error';
 
 export default function UserRegisterWithCodePage() {
   const { t } = useI18n();
+  const { args } = usePageData();
   const navigate = useNavigate();
   const buildUrl = useBuildUrl();
-  const [uname, setUname] = useState('');
+  const [uname, setUname] = useState(args.username || '');
   const [password, setPassword] = useState('');
   const [verifyPassword, setVerifyPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (password !== verifyPassword) {
       setError(t('Passwords do not match'));
@@ -42,10 +44,10 @@ export default function UserRegisterWithCodePage() {
       }
 
       const data = await res.json();
-      if (data.error) {
+      if (!res.ok || data.error) {
         setError(formatErrorMessage(data.error, t('Registration failed')));
       } else {
-        navigate(buildUrl('homepage'));
+        navigate(data.url || data.redirect || buildUrl('homepage'));
       }
     } catch {
       setError(t('Network error'));
@@ -66,6 +68,7 @@ export default function UserRegisterWithCodePage() {
               value={uname}
               onChange={(e) => setUname(e.currentTarget.value)}
               required
+              readOnly={args.lockUsername === true}
               autoFocus
             />
             <PasswordInput

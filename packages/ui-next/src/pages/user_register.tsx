@@ -1,17 +1,23 @@
 import { Anchor, Group, Stack, Text, TextInput } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { AuthPanel } from '@/components/auth/auth-panel';
 import { Button } from '@/components/common/button';
 import { Link } from '@/components/link';
+import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
+import { useSessionStore } from '@/stores/session';
+import { formatErrorMessage } from '@/utils/error';
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export default function UserRegisterPage() {
   const { t } = useI18n();
+  const navigate = useNavigate();
+  const enabled = useSessionStore((s) => s.ui.registrationEnabled !== false);
   const [mail, setMail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [sent, setSent] = useState(false);
   const [emailError, setEmailError] = useState('');
 
   const validateEmail = (value: string) => {
@@ -26,9 +32,9 @@ export default function UserRegisterPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!mail) return;
+    if (!enabled || loading || !mail) return;
 
     if (!EMAIL_REGEX.test(mail)) {
       setEmailError(t('Invalid email format'));
@@ -36,41 +42,54 @@ export default function UserRegisterPage() {
     }
 
     setLoading(true);
-    setError('');
 
     try {
       const formData = new FormData();
       formData.append('mail', mail);
       const res = await fetch(window.location.href, {
         method: 'POST',
+        headers: { Accept: 'application/json' },
         body: formData,
       });
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('json')) {
-        const data = await res.json();
-        if (data.error) {
-          setError(data.error.message || data.error || t('Registration failed'));
-        } else if (data.redirect) {
-          window.location.href = data.redirect;
-        }
-      } else if (res.redirected) {
-        window.location.href = res.url;
-      } else if (res.ok) {
-        window.location.reload();
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        notifications.show({ color: 'red', message: t(formatErrorMessage(data.error, 'Registration failed')) });
+      } else if (data.url || data.redirect) {
+        navigate(data.url || data.redirect);
+      } else if (data.verificationEmailSent) {
+        setSent(true);
+      } else {
+        notifications.show({ color: 'red', message: t('Registration failed') });
       }
     } catch {
-      setError(t('Network error'));
+      notifications.show({ color: 'red', message: t('Network error') });
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <AuthPanel title={t('Register')} eyebrow={t('Account')} description={t('Create an account to start solving problems.')}>
-      {error && (
-        <Text c="red" size="sm">{error}</Text>
-      )}
+  if (!enabled) {
+    return (
+      <AuthPanel title={t('Register')}>
+        <Text role="status" ta="center">{t('Public registration is disabled. Please contact a system administrator.')}</Text>
+        <Button component={Link} to="user_login" variant="light" fullWidth>{t('Back to Login')}</Button>
+      </AuthPanel>
+    );
+  }
 
+  if (sent) {
+    return (
+      <AuthPanel title={t('Verification Email Sent')}>
+        <Text role="status" ta="center">
+          {t('A verification link has been sent to your email. Please check your inbox to complete registration.')}
+        </Text>
+        <Button component={Link} to="user_login" variant="light" fullWidth>{t('Back to Login')}</Button>
+      </AuthPanel>
+    );
+  }
+
+  return (
+    <AuthPanel title={t('Register')} description={t('Create an account to start solving problems.')}>
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
           <TextInput

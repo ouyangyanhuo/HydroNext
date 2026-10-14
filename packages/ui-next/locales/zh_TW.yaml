@@ -1,5 +1,8 @@
 __flag: 🇹🇼
 __id: zh_TW
+'Allow public registration': '允許使用者自行註冊；關閉後僅管理員可建立或匯入使用者。'
+'Public registration is disabled. Please contact a system administrator.': '公開註冊已關閉，請聯絡系統管理員建立帳號。'
+'server.allowRegister': '開放註冊'
 'Discard changes': '放棄修改'
 'Discard your unsaved changes?': '是否放棄尚未儲存的修改？'
 'Failed to load file': '檔案載入失敗'

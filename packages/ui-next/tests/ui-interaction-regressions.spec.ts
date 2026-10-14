@@ -98,12 +98,13 @@ test('forgot password renders administrator contact, without an email form', () 
         '@/components/common/button': { Button: ({ children }: any) => h('button', null, children) },
         '@/components/link': { Link: 'a' },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/stores/session': { useSessionStore: (select: any) => select({ ui: {} }) },
+        '@/utils/error': { formatErrorMessage: (_error: unknown, fallback: string) => fallback },
     }).default;
     const markup = renderToStaticMarkup(h(Page));
     assert.match(markup, /Please contact the administrator/);
     assert.match(markup, /Back to Login/);
     assert.doesNotMatch(markup, /<form|<input/);
-    assert.doesNotMatch(read('../src/pages/user_lostpass.tsx'), /fetch\(/);
     for (const locale of ['en', 'zh', 'zh_TW', 'ja', 'ko']) {
         const dictionary = load(read(`../locales/${locale}.yaml`)) as Record<string, string>;
         assert.ok(dictionary['Please contact the administrator']);

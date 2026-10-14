@@ -2,6 +2,7 @@ import type { Next } from 'koa';
 import { cloneDeep, omit } from 'lodash';
 import type { KoaContext } from '@hydrooj/framework';
 import { randomPick, Time } from '@hydrooj/utils';
+import { getAccountCapabilities } from '../../lib/account-policy';
 import { PERM } from '../../model/builtin';
 import domain from '../../model/domain';
 import system from '../../model/system';
@@ -37,6 +38,7 @@ export default async (ctx: KoaContext, next: Next) => {
     UiContext.domainId = domainId;
     UiContext.domain = domainInfo;
     UiContext.serverName = system.get('server.name') || 'Hydro';
+    Object.assign(UiContext, getAccountCapabilities((key) => system.get(key)));
     UiContext.domainVersion = domain.getVersion(domainInfo);
     ctx.HydroContext.UiContext = UiContext;
     ctx.HydroContext.domain = domainInfo;

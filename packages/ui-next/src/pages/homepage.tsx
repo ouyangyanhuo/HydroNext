@@ -1,6 +1,6 @@
 import { Badge, Group, Stack, Text, Title } from '@mantine/core';
 import {
-  IconArrowUpRight, IconChevronRight, IconCode, IconLogin2, IconTrophy,
+  IconArrowUpRight, IconChevronRight, IconCode, IconLogin2, IconTrophy, IconUserPlus,
 } from '@tabler/icons-react';
 import { Button } from '@/components/common/button';
 import { TimeDisplay } from '@/components/common/time-display';
@@ -29,6 +29,7 @@ function SectionLink({ to, label }: { to: string, label: string }) {
 
 function WelcomeHero({ problemCount, contestCount }: { problemCount: number, contestCount: number }) {
   const user = useSessionStore((s) => s.user);
+  const registrationEnabled = useSessionStore((s) => s.ui.registrationEnabled !== false);
   const { t } = useI18n();
   const isLoggedIn = user._id > 0;
 
@@ -54,11 +55,24 @@ function WelcomeHero({ problemCount, contestCount }: { problemCount: number, con
               component={Link}
               to="user_login"
               size="md"
+              variant={registrationEnabled ? 'light' : 'filled'}
               leftSection={<IconLogin2 size={18} stroke={2} />}
               className="hydro-primary-action"
             >
               {t('Login')}
             </Button>
+            {registrationEnabled && (
+              <Button
+                component={Link}
+                to="user_register"
+                size="md"
+                variant="filled"
+                leftSection={<IconUserPlus size={18} stroke={2} />}
+                className="hydro-primary-action"
+              >
+                {t('Register')}
+              </Button>
+            )}
           </Group>
         )}
       </div>

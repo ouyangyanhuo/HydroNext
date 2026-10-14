@@ -1,4 +1,7 @@
 __flag: 🇬🇧
+'Allow public registration': 'Allow public registration'
+'Public registration is disabled. Please contact a system administrator.': 'Public registration is disabled. Please contact a system administrator.'
+'server.allowRegister': 'Allow public registration'
 '{0} characters': '{0} characters'
 'Foreground problem time; saved to the contest scoreboard.': 'Foreground problem time; saved to the contest scoreboard.'
 'Loaded code template': 'Loaded code template'

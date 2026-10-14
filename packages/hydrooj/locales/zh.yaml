@@ -76,6 +76,7 @@ All Submissions: 所有递交
 All Training Plans: 所有训练计划
 All: 全部
 Allow builtin-login: 启用内置登录
+Allow public registration: 允许用户自行注册；关闭后仅管理员可创建或导入用户。
 Allow users send messages: 允许用户使用私信
 Allow using gravatar:email qq:id github:name url:link format.: 允许使用 gravatar:email，qq:id，github:name，url:link 格式。
 Allowed langs: 域内允许使用的提交语言
@@ -504,6 +505,8 @@ Invitation code: 邀请码
 Invitation code is required.: 必须填写邀请码。
 Invitation sent: 邀请已发送
 Invite Member: 邀请成员
+Invited: 已邀请
+Leader: 队长
 Leave Team: 退出队伍
 Leave this team? You may lose access to team contests.: 确定退出该队伍吗？退出后你可能无法访问该队伍参加的比赛。
 Manage Teams: 管理队伍
@@ -632,6 +635,7 @@ Pin training plans: 置顶训练计划
 Plan: 计划
 Please attend contest to see the problems.: 请参加比赛来查看题目。
 Please claim the assignment to see the problems.: 认领作业后才可以查看作业内容。
+Please contact the administrator: 请与管理员联系
 Please select at least one role to perform this operation.: 请选择至少一个角色来进行操作。
 Please select at least one user to perform this operation.: 请选择至少一个用户来进行操作。
 preferredEditorType: 首选编辑模式
@@ -706,8 +710,10 @@ Related Discussions: 相关讨论
 Related: 相关
 Relax and try to remember your password.: 放松，尝试回忆您设置的密码。
 Remember me: 记住我
+Remove Member: 移除成员
 Remove Selected User: 将所选用户移出
 Remove this data: 移除这组数据
+Remove this member from the team?: 确定从队伍中移除此成员吗？
 Remove: 移除
 Repeat Password: 重复密码
 Replies per page: 每页展示的回复数量
@@ -764,6 +770,7 @@ Send Problem: 发送题目
 Send Verification Email: 发送验证邮件
 Send: 发送
 Service Status: 服务状态
+server.allowRegister: 开放注册
 Set Role: 设置角色
 Set Roles for Selected User: 设置所选用户的角色
 Set Roles for selected users: 为所选用户设置角色
@@ -981,6 +988,7 @@ Write Your Comment: 发表您的评论
 Write Your Solution: 发表您的题解
 WYSIWYG: 所见即所得
 Year: 年
+You: 你
 You are banned by the domain moderator.: 您被该域的管理员封禁。
 You are not allowed to join domain {0}. {1}: 您无法加入 {0}。{1}
 You can create your own training plans and share them with others.: 您可以创建您自己的训练计划并且与他人分享。

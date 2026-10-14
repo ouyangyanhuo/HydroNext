@@ -1,4 +1,7 @@
 __flag: 🇨🇳
+'Allow public registration': '允许用户自行注册；关闭后仅管理员可创建或导入用户。'
+'Public registration is disabled. Please contact a system administrator.': '公开注册已关闭，请联系系统管理员创建账号。'
+'server.allowRegister': '开放注册'
 '{0} characters': '{0} 个字符'
 'Foreground problem time; saved to the contest scoreboard.': '题目页面处于前台的用时，已保存到比赛排行榜。'
 'Loaded code template': '加载代码模板'
@@ -510,6 +513,11 @@ Please set the balloon color for each problem first.: 请先为每道题目设�
 Participants: 参赛者
 Register Contest: 报名参赛
 Registered: 已报名
+Leader: 队长
+You: 你
+Invited: 已邀请
+Remove Member: 移除成员
+Remove this member from the team?: 确定从队伍中移除此成员吗？
 Clarifications: 赛时答疑
 Overview: 总览
 Ask a Question: 提问

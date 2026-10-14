@@ -88,11 +88,13 @@ function UserMenu() {
 
 function GuestMenu() {
   const { t } = useI18n();
+  const registrationEnabled = useSessionStore((s) => s.ui.registrationEnabled !== false);
 
   return (
-    <Button component={Link} to="user_login" variant="subtle">
-      {t('Login')}
-    </Button>
+    <Group gap="xs">
+      <Button component={Link} to="user_login" variant="subtle">{t('Login')}</Button>
+      {registrationEnabled && <Button component={Link} to="user_register" variant="filled">{t('Register')}</Button>}
+    </Group>
   );
 }
 
@@ -389,6 +391,7 @@ export function TopNav() {
   const [opened, { toggle, close }] = useDisclosure(false);
   const isLoggedIn = useIsLoggedIn();
   const serverName = useSessionStore((s) => s.ui.serverName);
+  const registrationEnabled = useSessionStore((s) => s.ui.registrationEnabled !== false);
   const { name } = usePageData();
   const activeNav = getPageMetadata(name).nav;
   const { t } = useI18n();
@@ -526,9 +529,16 @@ export function TopNav() {
                 </Button>
               </>
             ) : (
-              <Button component={Link} to="user_login" variant="subtle" fullWidth justify="flex-start" onClick={close}>
-                {t('Login')}
-              </Button>
+              <>
+                <Button component={Link} to="user_login" variant="subtle" fullWidth justify="flex-start" onClick={close}>
+                  {t('Login')}
+                </Button>
+                {registrationEnabled && (
+                  <Button component={Link} to="user_register" variant="filled" fullWidth justify="flex-start" onClick={close}>
+                    {t('Register')}
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </Stack>

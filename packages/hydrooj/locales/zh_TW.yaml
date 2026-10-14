@@ -71,6 +71,7 @@ All Submissions: 所有遞交
 All Training Plans: 所有訓練計劃
 All: 全部
 Allow builtin-login: 啟用內建登入
+Allow public registration: 允許使用者自行註冊；關閉後僅管理員可建立或匯入使用者。
 Allow users send messages: 允許使用者使用私信
 Allow using gravatar:email qq:id github:name url:link format.: 允許使用 gravatar:email，qq:id，github:name，url:link 格式。
 Allowed langs: 域內允許使用的提交語言
@@ -501,6 +502,8 @@ Invitation code: 邀請碼
 Invitation code is required.: 必須填寫邀請碼。
 Invitation sent: 邀請已發送
 Invite Member: 邀請成員
+Invited: 已邀請
+Leader: 隊長
 Leave Team: 退出隊伍
 Leave this team? You may lose access to team contests.: 確定退出該隊伍嗎？退出後你可能無法存取該隊伍參加的比賽。
 Manage Teams: 管理隊伍
@@ -629,6 +632,7 @@ Pin training plans: 置頂訓練計劃
 Plan: 計劃
 Please attend contest to see the problems.: 請參加比賽來檢視題目。
 Please claim the assignment to see the problems.: 認領功課後方可檢視題目。
+Please contact the administrator: 請與管理員聯絡
 Please select at least one role to perform this operation.: 請選擇至少一個角色來進行操作。
 Please select at least one user to perform this operation.: 請選擇至少一個使用者來進行操作。
 preferredEditorType: 首選編輯模式
@@ -703,8 +707,10 @@ Related Discussions: 相關討論
 Related: 相關
 Relax and try to remember your password.: 放鬆，嘗試回憶您設定的密碼。
 Remember me: 記住我
+Remove Member: 移除成員
 Remove Selected User: 將所選使用者移出
 Remove this data: 移除這組資料
+Remove this member from the team?: 確定從隊伍中移除此成員嗎？
 Remove: 移除
 Repeat Password: 重複密碼
 Replies per page: 每頁展示的回覆數量
@@ -761,6 +767,7 @@ Send Problem: 傳送題目
 Send Verification Email: 傳送驗證郵件
 Send: 傳送
 Service Status: 服務狀態
+server.allowRegister: 開放註冊
 Set Role: 設定角色
 Set Roles for Selected User: 設定所選使用者的角色
 Set Roles for selected users: 為所選使用者設定角色
@@ -977,6 +984,7 @@ Write Your Comment: 發表您的評論
 Write Your Solution: 發表您的題解
 WYSIWYG: 所見即所得
 Year: 年
+You: 你
 You are banned by the domain moderator.: 您被該域的管理員封禁。
 You are not allowed to join domain {0}. {1}: 您無法加入 {0}。{1}
 You can create your own training plans and share them with others.: 您可以建立您自己的訓練計劃並且與他人分享。

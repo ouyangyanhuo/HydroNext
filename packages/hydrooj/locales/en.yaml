@@ -2,6 +2,8 @@ __flag: 🇬🇧
 __id: en
 __interface: yes
 __langname: English
+Allow public registration: Allow public registration
+server.allowRegister: Allow public registration
 Can be Extended For: Extension
 contest_create: Contest Create
 contest_detail_problem_submit: Submit Contest Problem

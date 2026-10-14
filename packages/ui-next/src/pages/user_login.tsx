@@ -11,10 +11,12 @@ import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { useSessionStore } from '@/stores/session';
 
 export default function UserLoginPage() {
   const { args } = usePageData();
   const { t } = useI18n();
+  const registrationEnabled = useSessionStore((s) => s.ui.registrationEnabled !== false);
   const navigate = useNavigate();
   const buildUrl = useBuildUrl();
   const [uname, setUname] = useState('');
@@ -104,7 +106,7 @@ export default function UserLoginPage() {
   };
 
   return (
-    <AuthPanel title={t('Login')} eyebrow={t('Account')} description={t('Sign in to continue to Hydro.')}>
+    <AuthPanel title={t('Login')} description={t('Sign in to continue to Hydro.')}>
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
           {redirect !== '/' && (
@@ -171,6 +173,11 @@ export default function UserLoginPage() {
       <Anchor component={Link} to="user_lostpass" size="sm">
         {t('Forgot Password?')}
       </Anchor>
+      {registrationEnabled && args.builtInLogin !== false && (
+        <Anchor component={Link} to="user_register" size="sm">
+          {t("Don't have an account? Register")}
+        </Anchor>
+      )}
 
       {(args.loginMethods || []).length > 0 && (
         <OAuthButtons methods={args.loginMethods} redirect={redirect} />

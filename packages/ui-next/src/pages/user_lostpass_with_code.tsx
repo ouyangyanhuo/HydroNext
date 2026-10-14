@@ -27,10 +27,10 @@ export default function UserLostpassWithCodePage() {
       const res = await fetch(window.location.href, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password, verifyPassword: confirmPassword }),
       });
       const data = await res.json();
-      if (data.error) setError(formatErrorMessage(data.error, t('Failed')));
+      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Failed')));
       else navigate(buildUrl('user_login'));
     } catch {
       setError(t('Network error'));

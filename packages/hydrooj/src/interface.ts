@@ -23,6 +23,7 @@ export interface System {
 }
 
 export interface SystemKeys {
+    'server.allowRegister': boolean;
     'smtp.user': string;
     'smtp.from': string;
     'smtp.pass': string;

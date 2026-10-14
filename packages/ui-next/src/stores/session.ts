@@ -24,6 +24,8 @@ export interface UiContext {
   domainId: string;
   domain: { name: string, avatar?: string, [key: string]: any };
   serverName: string;
+  registrationEnabled?: boolean;
+  passwordResetEnabled?: boolean;
   [key: string]: any;
 }
 
