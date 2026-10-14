@@ -455,7 +455,7 @@ export function TopNav() {
           <Group gap="sm" wrap="nowrap">
             <AccentColorPicker />
             <ThemeToggle />
-            <DomainSwitcher />
+            {isLoggedIn && <DomainSwitcher />}
             <div className="hidden md:block">
               {isLoggedIn ? <UserMenu /> : <GuestMenu />}
             </div>
