@@ -15,9 +15,15 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="hydro-app-surface relative isolate flex min-h-screen flex-col">
       <div className="hydro-ambient" aria-hidden="true">
-        <div className="hydro-ambient__origin">
-          <span className="hydro-ambient__wash" />
-          <span className="hydro-ambient__ripple" />
+        <div className="hydro-ambient__origin hydro-ambient__origin--primary">
+          <span className="hydro-ambient__wash hydro-ambient__wash--primary" />
+          <span className="hydro-ambient__ripple hydro-ambient__ripple--1" />
+          <span className="hydro-ambient__ripple hydro-ambient__ripple--2" />
+          <span className="hydro-ambient__standing" />
+        </div>
+        <div className="hydro-ambient__origin hydro-ambient__origin--secondary">
+          <span className="hydro-ambient__wash hydro-ambient__wash--secondary" />
+          <span className="hydro-ambient__ripple hydro-ambient__ripple--counter" />
         </div>
       </div>
       <header className="sticky top-0 z-50">

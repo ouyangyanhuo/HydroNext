@@ -30,15 +30,72 @@
   }
 }
 
-@keyframes hydro-ambient-ripple {
+@keyframes hydro-ambient-breathe-primary {
+  0% {
+    opacity: 0.52;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.68;
+    transform: translate(-48%, -52%) scale(1.08) rotate(5deg);
+  }
+  100% {
+    opacity: 0.52;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes hydro-ambient-breathe-secondary {
+  0% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.48;
+    transform: translate(-52%, -48%) scale(1.06) rotate(-4deg);
+  }
+  100% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes hydro-ambient-ripple-wave {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.3);
+    transform: translate(-50%, -50%) scale(0.28);
   }
-  28% { opacity: 0.3; }
+  22% {
+    opacity: 0.32;
+  }
+  75% {
+    opacity: 0.16;
+  }
   100% {
     opacity: 0;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+
+@keyframes hydro-ambient-standing-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  100% {
+    opacity: 0.12;
     transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes hydro-ambient-standing-breathe {
+  0%, 100% {
+    opacity: 0.12;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.20;
+    transform: translate(-50%, -50%) scale(1.03);
   }
 }
 
@@ -130,46 +187,109 @@ a {
 
 .hydro-ambient__origin {
   position: absolute;
-  top: clamp(110px, 16vh, 180px);
-  left: clamp(220px, 72vw, calc(100vw - 90px));
   width: 1px;
   height: 1px;
+}
+
+.hydro-ambient__origin--primary {
+  top: clamp(110px, 16vh, 180px);
+  left: clamp(220px, 72vw, calc(100vw - 90px));
+}
+
+.hydro-ambient__origin--secondary {
+  bottom: clamp(90px, 18vh, 240px);
+  left: clamp(60px, 14vw, 240px);
 }
 
 .hydro-ambient__wash {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: clamp(340px, 56vw, 680px);
-  aspect-ratio: 1.25;
   border-radius: 50%;
   opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.hydro-ambient__wash--primary {
+  width: clamp(360px, 58vw, 720px);
+  aspect-ratio: 1.25;
   background:
     radial-gradient(circle at 42% 44%, var(--hydro-ambient-primary), transparent 54%),
     radial-gradient(circle at 64% 58%, var(--hydro-ambient-secondary), transparent 62%);
-  filter: blur(10px);
-  transform: translate(-50%, -50%) scale(0.38);
-  animation: hydro-ambient-bloom 3.8s var(--hydro-ease-out) 120ms forwards;
+  transform: translate(-50%, -50%) scale(1);
+  animation:
+    hydro-ambient-bloom 3.2s var(--hydro-ease-out) 120ms forwards,
+    hydro-ambient-breathe-primary 10s ease-in-out 3.2s infinite;
+}
+
+.hydro-ambient__wash--secondary {
+  width: clamp(280px, 44vw, 560px);
+  aspect-ratio: 1.35;
+  background:
+    radial-gradient(circle at 48% 52%, var(--hydro-ambient-secondary), transparent 56%),
+    radial-gradient(circle at 35% 42%, var(--hydro-ambient-primary), transparent 64%);
+  transform: translate(-50%, -50%) scale(1);
+  animation:
+    hydro-ambient-bloom 3.6s var(--hydro-ease-out) 300ms forwards,
+    hydro-ambient-breathe-secondary 12s ease-in-out 3.6s infinite;
 }
 
 .hydro-ambient__ripple {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: clamp(190px, 34vw, 460px);
+  border-radius: 50%;
+  opacity: 0;
+  background:
+    radial-gradient(
+      circle,
+      transparent 42%,
+      var(--hydro-ripple-color) 58%,
+      transparent 76%
+    );
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.hydro-ambient__ripple--1 {
+  width: clamp(200px, 34vw, 460px);
+  aspect-ratio: 1;
+  animation: hydro-ambient-ripple-wave 5.4s var(--hydro-ease-out) 240ms forwards;
+}
+
+.hydro-ambient__ripple--2 {
+  width: clamp(270px, 46vw, 600px);
+  aspect-ratio: 1;
+  animation: hydro-ambient-ripple-wave 6.2s var(--hydro-ease-out) 1300ms forwards;
+}
+
+.hydro-ambient__ripple--counter {
+  width: clamp(170px, 30vw, 400px);
+  aspect-ratio: 1;
+  animation: hydro-ambient-ripple-wave 6.8s var(--hydro-ease-out) 1800ms forwards;
+}
+
+.hydro-ambient__standing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(220px, 38vw, 500px);
   aspect-ratio: 1;
   border-radius: 50%;
   opacity: 0;
   background:
     radial-gradient(
       circle,
-      transparent 44%,
-      var(--hydro-ripple-color) 60%,
-      transparent 78%
+      transparent 48%,
+      var(--hydro-ripple-color) 56%,
+      transparent 66%
     );
-  filter: blur(16px);
-  transform: translate(-50%, -50%) scale(0.3);
-  animation: hydro-ambient-ripple 4.8s var(--hydro-ease-out) 240ms forwards;
+  animation:
+    hydro-ambient-standing-in 3.2s var(--hydro-ease-out) 2s forwards,
+    hydro-ambient-standing-breathe 8s ease-in-out 5.2s infinite;
+  will-change: transform, opacity;
+  pointer-events: none;
 }
 
 .problem-workspace-transition .problem-workspace {
@@ -4004,7 +4124,8 @@ a {
 
 /* Keep motion compositor-friendly: one entrance per section, no per-row paint storm. */
 .hydro-ambient__wash,
-.hydro-ambient__ripple {
+.hydro-ambient__ripple,
+.hydro-ambient__standing {
   filter: none;
   contain: paint;
 }
@@ -4067,21 +4188,28 @@ a {
     --hydro-glass-blur-subtle: 6px;
   }
 
-  .hydro-ambient__origin {
+  .hydro-ambient__origin--primary {
     top: 130px;
     left: calc(100vw - 64px);
+  }
+
+  .hydro-ambient__origin--secondary {
+    bottom: 60px;
+    left: 24px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hydro-ambient__wash {
+  .hydro-ambient__wash--primary,
+  .hydro-ambient__wash--secondary {
     opacity: 0.42;
     transform: translate(-50%, -50%) scale(1);
-    animation: none;
+    animation: none !important;
   }
 
-  .hydro-ambient__ripple {
-    display: none;
+  .hydro-ambient__ripple,
+  .hydro-ambient__standing {
+    display: none !important;
   }
 }
 
