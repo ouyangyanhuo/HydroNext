@@ -21,7 +21,7 @@ let supportOptional = false;
 const statusMap: Map<SandboxStatus, number> = new Map([
     [SandboxStatus.TimeLimitExceeded, STATUS.STATUS_TIME_LIMIT_EXCEEDED],
     [SandboxStatus.MemoryLimitExceeded, STATUS.STATUS_MEMORY_LIMIT_EXCEEDED],
-    [SandboxStatus.OutputLimitExceeded, STATUS.STATUS_RUNTIME_ERROR],
+    [SandboxStatus.OutputLimitExceeded, STATUS.STATUS_OUTPUT_LIMIT_EXCEEDED],
     [SandboxStatus.Accepted, STATUS.STATUS_ACCEPTED],
     [SandboxStatus.NonzeroExitStatus, STATUS.STATUS_RUNTIME_ERROR],
     [SandboxStatus.InternalError, STATUS.STATUS_SYSTEM_ERROR],
@@ -124,7 +124,7 @@ function adaptResult(result: SandboxResult, params: Parameter): SandboxAdaptedRe
     const rate = getConfig('rate') as number;
     // FIXME: Signalled?
     const ret: SandboxAdaptedResult = {
-        status: statusMap.get(result.status) || STATUS.STATUS_ACCEPTED,
+        status: statusMap.get(result.status) ?? STATUS.STATUS_SYSTEM_ERROR,
         signalled: result.status === SandboxStatus.Signalled,
         time: result.time / 1000000 / rate,
         memory: result.memory / 1024,
@@ -150,6 +150,20 @@ function adaptResult(result: SandboxResult, params: Parameter): SandboxAdaptedRe
     ret.stderr = ret.files.stderr || result.error || '';
     if (result.error) ret.error = result.error;
     return ret;
+}
+
+function isStringRecord(value: unknown) {
+    return value == null || (typeof value === 'object' && !Array.isArray(value)
+        && Object.values(value).every((entry) => typeof entry === 'string'));
+}
+
+function isValidResult(result: SandboxResult) {
+    return result && statusMap.has(result.status)
+        && Number.isFinite(result.time) && result.time >= 0
+        && Number.isFinite(result.memory) && result.memory >= 0
+        && Number.isSafeInteger(result.exitStatus) && result.exitStatus >= 0
+        && (result.status !== SandboxStatus.Accepted || result.exitStatus === 0)
+        && isStringRecord(result.files) && isStringRecord(result.fileIds);
 }
 
 export async function runPiped(
@@ -179,12 +193,15 @@ export async function runPiped(
         if (argv.options.showSandbox) logger.debug('%d %s', id, JSON.stringify(body));
         res = await client.run(body, trace);
         if (argv.options.showSandbox) logger.debug('%d %s', id, JSON.stringify(res));
+        if (!Array.isArray(res) || res.length !== execute.length || !res.every(isValidResult)) {
+            throw new SystemError('Invalid sandbox response');
+        }
     } catch (e) {
         if (e instanceof FormatError || e instanceof SystemError) throw e;
         console.error(e);
         throw new SystemError('Sandbox Error', [e]);
     }
-    return res.map((r) => adaptResult(r, params)) as SandboxAdaptedResult[];
+    return res.map((r, index) => adaptResult(r, { ...execute[index], ...params })) as SandboxAdaptedResult[];
 }
 
 export async function get(fileId: string, dest?: string) {
@@ -228,10 +245,14 @@ export async function versionCheck(reportWarn: (str: string) => void, reportErro
         const config = await client.config();
         sandboxCgroup = config.runnerConfig?.cgroupType || 0;
         sandboxCgroupControllers = config.runnerConfig?.cgroupControllers || null;
-        fixSymlinkEscape = config.fixSymlinkEscape ?? false;
+        fixSymlinkEscape = config.fixSymlinkEscape === true;
     } catch (e) {
         if (e?.code === 'ECONNREFUSED') reportError('Failed to connect to sandbox, please check sandbox_host config and if your sandbox is running.');
         else reportError('Your sandbox version is tooooooo low! Please upgrade!');
+        return false;
+    }
+    if (!fixSymlinkEscape) {
+        reportError('Your sandbox version is vulnerable to symlink escape issue, please upgrade!');
         return false;
     }
     const { osinfo } = await sysinfo.get();
@@ -245,9 +266,6 @@ export async function versionCheck(reportWarn: (str: string) => void, reportErro
         if (!sandboxCgroupControllers.includes('memory') && gte(sandboxVersion, '1.8.6')) {
             reportWarn('The memory cgroup controller is not enabled. This could result in inaccurate memory usage measurements.');
         }
-    }
-    if (!fixSymlinkEscape) {
-        reportError('Your sandbox version is vulnerable to symlink escape issue, please upgrade!');
     }
     return true;
 }

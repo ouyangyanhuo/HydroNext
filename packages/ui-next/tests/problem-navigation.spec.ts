@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getProblemNavigationSource, resolveProblemNavigation } from '../src/utils/problem-navigation.ts';
+import {
+    getProblemNavigationQuery, getProblemNavigationSource, getRecordProblemQuery, getSubmissionRecordQuery, resolveProblemNavigation,
+} from '../src/utils/problem-navigation.ts';
 
 const tid = '1234567890abcdef12345678';
 const routes = { problem_main: '/p', problem_detail: '/p/:pid', training_detail: '/training/:tid', contest_problemlist: '/contest/:tid/problems' };
@@ -10,6 +12,29 @@ const buildUrl = (route: string, params: Record<string, string | number> = {}, q
     return `/d/team${path}${search ? `?${search}` : ''}`;
 };
 const queryOf = (href: string) => new URL(href, 'https://oj.example').searchParams;
+
+test('submit and record round trips preserve list, contest and training navigation without carrying arbitrary URLs', async () => {
+    for (const search of [
+        '?nav=list&page=3&q=category%3Agraph&sort=desc&lang=zh',
+        `?nav=training&training=${tid}&chapter=2&page=3&uid=9&viewRecords=false&category=basics&sort=asc`,
+        `?tid=${tid}&lang=en`,
+    ]) {
+        const problemQuery = getProblemNavigationQuery(search);
+        const submitUrl = buildUrl('problem_detail', { pid: 42 }, problemQuery);
+        const recordUrl = buildUrl('problem_detail', { pid: 42 }, getSubmissionRecordQuery(new URL(submitUrl, 'https://oj.example').search));
+        const restored = getRecordProblemQuery(new URL(recordUrl, 'https://oj.example').search);
+        assert.deepEqual(restored, problemQuery);
+        assert.ok(getProblemNavigationSource({ search: new URLSearchParams(restored).toString(), buildUrl }) || restored.tid);
+    }
+    assert.deepEqual(getSubmissionRecordQuery(''), {});
+    assert.deepEqual(getRecordProblemQuery(''), {});
+    assert.deepEqual(getProblemNavigationQuery('?nav=list&page=2&redirect=https://evil.example&domainId=other&operation=delete'), {
+        nav: 'list', page: '2',
+    });
+    assert.deepEqual(getRecordProblemQuery('?problemNav=https://evil.example'), {});
+    assert.deepEqual(getRecordProblemQuery(`?problemNav=${encodeURIComponent('nav=list&page=2')}`, { docId: tid }), { tid });
+    assert.deepEqual(getSubmissionRecordQuery('?nav=list&page=-1'), {});
+});
 
 test('list navigation follows server order across pages and preserves domain, filters, sort and language', async () => {
     const pages = [[{ docId: 8 }, { docId: 4 }], [{ docId: 2 }, { docId: 9 }]];

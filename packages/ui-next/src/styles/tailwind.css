@@ -2232,6 +2232,21 @@ a {
   text-decoration: underline;
 }
 
+.hydro-record-id-title {
+  color: var(--hydro-text);
+  font-family: var(--hydro-font-mono);
+  font-size: 1.15rem;
+  font-weight: 750;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 768px) {
+  .hydro-record-id-title {
+    font-size: 1.25rem;
+  }
+}
+
 .hydro-record-score {
   min-width: 56px;
   padding-inline: 10px;
@@ -3538,12 +3553,21 @@ a {
 
 .hydro-problem-statistics__metric {
   display: flex;
-  gap: 14px;
+  flex-direction: column;
   align-items: center;
-  min-height: 104px;
-  padding: 18px;
-  border-left: 3px solid var(--stat-color);
+  justify-content: center;
+  text-align: center;
+  min-height: 124px;
+  padding: 20px 16px;
+  border: 1px solid var(--hydro-border);
+  border-top: 3px solid var(--stat-color);
+  border-radius: var(--hydro-radius-lg);
   background-color: var(--hydro-surface-raised);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.hydro-problem-statistics__metric:hover {
+  border-color: color-mix(in srgb, var(--stat-color) 45%, var(--hydro-border));
 }
 
 .hydro-problem-statistics__metric[data-tone='success'] { --stat-color: var(--hydro-success); }
@@ -3551,42 +3575,341 @@ a {
 
 .hydro-problem-statistics__metric-icon {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   flex: 0 0 auto;
   place-items: center;
   border-radius: 12px;
   color: var(--stat-color);
   background-color: color-mix(in srgb, var(--stat-color) 12%, var(--hydro-surface-raised));
+  margin-bottom: 8px;
+}
+
+.hydro-problem-statistics__metric-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
 }
 
 .hydro-problem-statistics__metric-value {
   color: var(--hydro-text);
-  font-size: 1.5rem;
+  font-size: 1.65rem;
   font-weight: 850;
   font-variant-numeric: tabular-nums;
-  line-height: 1.05;
+  line-height: 1.1;
+  text-align: center;
 }
 
 .hydro-problem-statistics__metric-label {
   margin-top: 6px;
   color: var(--hydro-text-muted);
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   font-weight: 650;
+  text-align: center;
+}
+
+.hydro-problem-statistics__meta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: 12px 18px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background-color: var(--hydro-surface-raised);
+}
+
+.hydro-problem-statistics__meta-items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.hydro-problem-statistics__meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hydro-problem-statistics__meta-icon {
+  color: var(--hydro-text-muted);
+  flex-shrink: 0;
+}
+
+.hydro-problem-statistics__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.hydro-problem-statistics__tag-icon {
+  color: var(--hydro-text-muted);
+  flex-shrink: 0;
 }
 
 .hydro-problem-statistics__distribution,
+.hydro-problem-statistics__score-card,
 .hydro-problem-statistics__records {
   background-color: var(--hydro-surface-raised);
   background-image: none;
 }
 
-.hydro-problem-statistics__distribution .mantine-Progress-root {
+.hydro-problem-statistics__multi-progress {
+  overflow: hidden;
+  background-color: var(--hydro-bg-soft);
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 60%, transparent);
+}
+
+.hydro-problem-statistics__progress-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease;
+}
+
+.hydro-problem-statistics__progress-section:hover {
+  opacity: 0.88;
+}
+
+.hydro-problem-statistics__progress-label {
+  padding: 0 4px;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.hydro-problem-statistics__legend-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-top: 4px;
+}
+
+.hydro-problem-statistics__legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--hydro-border);
+  border-radius: 6px;
+  background-color: var(--hydro-bg-soft);
+  font-size: 0.74rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.hydro-problem-statistics__legend-chip:hover {
+  border-color: color-mix(in srgb, var(--hydro-border) 50%, var(--hydro-text-muted));
+}
+
+.hydro-problem-statistics__legend-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 999px;
+}
+
+.hydro-problem-statistics__legend-name {
+  color: var(--hydro-text);
+  font-weight: 750;
+}
+
+.hydro-problem-statistics__legend-val {
+  color: var(--hydro-text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.hydro-problem-statistics__legend-percent {
+  color: var(--hydro-text-muted);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.hydro-problem-statistics__score-bars-container {
+  width: 100%;
+  padding: 6px 4px 2px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.hydro-problem-statistics__score-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: max-content;
+  min-height: 110px;
+  margin: 0 auto;
+  gap: 10px;
+}
+
+.hydro-problem-statistics__score-col {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 24px;
+  max-width: 44px;
+  cursor: pointer;
+}
+
+.hydro-problem-statistics__score-count {
+  margin-bottom: 4px;
+  color: var(--hydro-text-muted);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.hydro-problem-statistics__score-col:hover .hydro-problem-statistics__score-count {
+  color: var(--hydro-text);
+  opacity: 1;
+}
+
+.hydro-problem-statistics__score-track {
+  display: flex;
+  align-items: flex-end;
+  width: 18px;
+  height: 72px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 60%, transparent);
+  border-radius: 4px;
   background-color: var(--hydro-bg-soft);
 }
 
-.hydro-problem-statistics__sorts .mantine-Select-root {
-  min-width: 120px;
+.hydro-problem-statistics__score-bar {
+  width: 100%;
+  min-height: 4px;
+  border-radius: 3px 3px 0 0;
+  transition: height 0.3s ease, filter 0.15s ease;
+}
+
+.hydro-problem-statistics__score-col:hover .hydro-problem-statistics__score-bar {
+  filter: brightness(1.18);
+}
+
+.hydro-problem-statistics__score-label {
+  margin-top: 6px;
+  color: var(--hydro-text);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
+.hydro-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.hydro-rank-badge__icon {
+  flex-shrink: 0;
+}
+
+.hydro-rank-badge--gold {
+  border: 1px solid color-mix(in srgb, #f59e0b 38%, transparent);
+  color: #f59e0b;
+  background-color: color-mix(in srgb, #f59e0b 14%, var(--hydro-surface-raised));
+  font-weight: 800;
+}
+
+.hydro-rank-badge--silver {
+  border: 1px solid color-mix(in srgb, #94a3b8 38%, transparent);
+  color: #94a3b8;
+  background-color: color-mix(in srgb, #94a3b8 14%, var(--hydro-surface-raised));
+  font-weight: 800;
+}
+
+.hydro-rank-badge--bronze {
+  border: 1px solid color-mix(in srgb, #d97706 38%, transparent);
+  color: #d97706;
+  background-color: color-mix(in srgb, #d97706 14%, var(--hydro-surface-raised));
+  font-weight: 800;
+}
+
+.hydro-rank-badge--normal {
+  padding: 2px 4px;
+  color: var(--hydro-text-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.hydro-usage-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  width: 100%;
+}
+
+.hydro-usage-cell__value {
+  color: var(--hydro-text);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.hydro-usage-cell__track {
+  width: 100%;
+  max-width: 80px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: var(--hydro-bg-soft);
+}
+
+.hydro-usage-cell__bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.hydro-usage-cell__bar--low {
+  background-color: var(--hydro-success, #22c55e);
+}
+
+.hydro-usage-cell__bar--medium {
+  background-color: #3b82f6;
+}
+
+.hydro-usage-cell__bar--high {
+  background-color: #f97316;
+}
+
+.hydro-usage-cell__bar--normal {
+  background-color: var(--hydro-primary, #6366f1);
+}
+
+.hydro-problem-statistics__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.hydro-problem-statistics__quick-modes {
+  font-weight: 600;
+}
+
+.hydro-problem-statistics__direction-btn {
+  flex-shrink: 0;
 }
 
 @media (max-width: 760px) {
@@ -3629,13 +3952,17 @@ a {
 
   .hydro-doc-section { scroll-margin-top: 70px; }
 
-  .hydro-problem-statistics__sorts {
+  .hydro-problem-statistics__controls {
     width: 100%;
   }
 
-  .hydro-problem-statistics__sorts .mantine-Select-root {
-    min-width: 0;
-    flex: 1;
+  .hydro-problem-statistics__quick-modes {
+    width: 100%;
+  }
+
+  .hydro-problem-statistics__meta-strip {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

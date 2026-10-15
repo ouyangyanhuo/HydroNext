@@ -10,6 +10,7 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
+import { getProblemNavigationQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
 import { proctorError, proctorSubmissionHeaders } from '@/utils/proctor';
 
 export default function ProblemSubmitPage() {
@@ -20,6 +21,7 @@ export default function ProblemSubmitPage() {
 
   const pdoc = args.pdoc || {};
   const langs = args.langs || {};
+  const navigationSearch = window.location.search;
 
   const user = useCurrentUser();
   const [lang, setLang] = useState(() => langs[user.codeLang] ? user.codeLang : Object.keys(langs)[0] || '');
@@ -59,14 +61,14 @@ export default function ProblemSubmitPage() {
         const message = t(proctorError(data.error, 'Submission failed'));
         setError(message);
         notifications.show({ message, color: 'red' });
+      } else if (data.rid) {
+        navigate(buildUrl('record_detail', { rid: data.rid }, getSubmissionRecordQuery(navigationSearch, args.tdoc)));
       } else if (data.redirect) {
         navigate(data.redirect);
-      } else if (data.rid) {
-        navigate(buildUrl('record_detail', { rid: data.rid }));
       } else if (data.tid) {
         navigate(buildUrl('contest_problemlist', { tid: data.tid }));
       } else {
-        navigate(window.location.pathname.replace('/submit', ''));
+        navigate(buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId }, getProblemNavigationQuery(navigationSearch, args.tdoc)));
       }
     } catch (err: any) {
       const message = t(err?.message || 'Network error');

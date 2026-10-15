@@ -40,7 +40,10 @@ services:
       start_interval: 5s
 
   oj-judge:
-    build: ./judge
+    image: docker-oj-judge:latest
+    build:
+      context: ../..
+      dockerfile: install/docker/judge/Dockerfile
     container_name: oj-judge
     restart: always
     privileged: true
@@ -49,5 +52,5 @@ services:
         condition: service_healthy
         restart: true
     volumes:
-      - ./judge/judge.yaml:/root/.hydro/judge.yaml
-      - ./judge/mount.yaml:/root/.hydro/mount.yaml
+      - ./judge/judge.yaml:/root/.hydro/judge.yaml:ro
+      - ./judge/mount.yaml:/root/.hydro/mount.yaml:ro

@@ -584,6 +584,15 @@ describe('App', () => {
             assert.deepEqual(JSON.parse(reopened.dag), dag);
             assert.equal(reopened.tdoc.title, 'Renamed training');
             assert.equal(reopened.pdict[p1].title, 'First problem');
+            const navigation = `nav=training&training=${tid}&chapter=7&page=3&sort=desc&redirect=https%3A%2F%2Fevil.example`;
+            const submit = await agent.get(`/d/${domainId}/p/${p1}/submit?${navigation}`).expect(302);
+            const restored = new URL(submit.headers.location, 'http://localhost');
+            assert.equal(restored.pathname, `/d/${domainId}/p/J0001`);
+            assert.equal(restored.searchParams.get('nav'), 'training');
+            assert.equal(restored.searchParams.get('chapter'), '7');
+            assert.equal(restored.searchParams.get('page'), '3');
+            assert.equal(restored.searchParams.get('sort'), 'desc');
+            assert.equal(restored.searchParams.has('redirect'), false);
             await agent.get(`/training/${tid}/edit?domainId=${domainId}`).set('Accept', 'application/json').expect(403);
         } finally {
             await training.del(domainId, tid);

@@ -32,6 +32,32 @@ function pickQuery(query: URLSearchParams, keys: string[]) {
   return Object.fromEntries(keys.filter((key) => query.has(key)).map((key) => [key, query.get(key)!]));
 }
 
+/** Carry navigation state, not arbitrary URLs or client-provided problem lists. */
+export function getProblemNavigationQuery(search: string, contest?: ProblemNavigationOptions['contest']): Record<string, string> {
+  const query = new URLSearchParams(search);
+  const lang = pickQuery(query, ['lang']);
+  const tid = contest?.docId || contest?._id || query.get('tid');
+  if (tid && /^[a-f\d]{24}$/i.test(String(tid))) return { ...lang, tid: String(tid) };
+  if (query.get('nav') === 'training' && /^[a-f\d]{24}$/i.test(query.get('training') || '') && /^[1-9]\d*$/.test(query.get('chapter') || '')) {
+    return { ...lang, ...pickQuery(query, ['nav', 'training', 'chapter', 'page', 'q', 'category', 'sort', 'uid', 'viewRecords']) };
+  }
+  const page = Number(query.get('page') || 1);
+  if (query.get('nav') === 'list' && Number.isSafeInteger(page) && page > 0) {
+    return { ...lang, ...pickQuery(query, ['nav', 'page', 'q', 'sort']) };
+  }
+  return lang;
+}
+
+/** Namespace problem state so it cannot collide with record-page query fields. */
+export function getSubmissionRecordQuery(search: string, contest?: ProblemNavigationOptions['contest']): Record<string, string> {
+  const context = new URLSearchParams(getProblemNavigationQuery(search, contest)).toString();
+  return context ? { problemNav: context } : {};
+}
+
+export function getRecordProblemQuery(search: string, contest?: ProblemNavigationOptions['contest']) {
+  return getProblemNavigationQuery(new URLSearchParams(search).get('problemNav') || '', contest);
+}
+
 export function getProblemNavigationSource({ contest, search, buildUrl }: Pick<ProblemNavigationOptions, 'contest' | 'search' | 'buildUrl'>) {
   const query = new URLSearchParams(search);
   const tid = contest?.docId || contest?._id;

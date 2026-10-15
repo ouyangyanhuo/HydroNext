@@ -731,6 +731,11 @@ Public attachments shown with this problem.: 隨題面公開展示的附件。
 This is a copy of another problem.: 這是另一道題目的副本。
 This problem has no testdata.: 目前沒有測試資料。
 Status Distribution: 狀態分佈
+Score Distribution: 得分分佈
+Fastest: 最快
+Min Memory: 最小記憶體
+Shortest: 最短程式碼
+Latest: 最新提交
 Submission Statistics: 提交統計
 Submit By: 提交者
 Submit At: 提交時間

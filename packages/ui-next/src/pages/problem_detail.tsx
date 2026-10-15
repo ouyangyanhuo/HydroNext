@@ -27,7 +27,7 @@ import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { getLangDisplay } from '@/utils/lang-display';
-import { getProblemNavigationSource } from '@/utils/problem-navigation';
+import { getProblemNavigationQuery, getProblemNavigationSource, getSubmissionRecordQuery } from '@/utils/problem-navigation';
 
 interface ProblemViewTransition {
   finished: Promise<void>;
@@ -418,8 +418,7 @@ function ProblemSidebar({
         <Paper withBorder p="md" className="hydro-panel">
           <Text size="xs" c="dimmed" mb="xs">{t('Latest Record')}</Text>
           <Link
-            to="record_detail"
-            params={{ rid: rdoc._id }}
+            href={buildUrl('record_detail', { rid: rdoc._id }, getSubmissionRecordQuery(window.location.search))}
             className="no-underline"
           >
             <Group gap="xs">
@@ -585,7 +584,7 @@ export default function ProblemDetailPage() {
   ));
   const canViewProblemFiles = isAuthenticated && Boolean(args.canViewProblemFiles ?? (canEditProblem || canReadProblemData));
   const canDownloadProblem = isAuthenticated && Boolean(args.canDownloadProblem ?? canReadProblemData);
-  const submitUrl = buildUrl('problem_submit', { pid: submitPid }, tid ? { tid: String(tid) } : {});
+  const submitUrl = buildUrl('problem_submit', { pid: submitPid }, getProblemNavigationQuery(window.location.search, args.tdoc));
   const codeLang = ui.codeLang || user.codeLang;
   // Draft recovery and language-specific/personal templates are resolved in Scratchpad.
   const defaultCode = rdoc?.code || '';

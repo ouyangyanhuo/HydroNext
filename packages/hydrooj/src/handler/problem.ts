@@ -575,8 +575,12 @@ export class ProblemSubmitHandler extends ProblemDetailHandler {
     async get() {
         const pid = this.pdoc.pid || this.pdoc.docId;
         const prefix = this.context.originalPath?.match(/^\/d\/[^/]+/)?.[0] || '';
-        const tid = this.args.tid;
-        this.response.redirect = tid ? `${prefix}/p/${pid}?tid=${tid}` : `${prefix}/p/${pid}`;
+        const source = new URLSearchParams(this.request.querystring);
+        const navigationQuery = new URLSearchParams();
+        for (const key of ['tid', 'nav', 'training', 'chapter', 'page', 'q', 'category', 'sort', 'uid', 'viewRecords', 'lang']) {
+            if (source.has(key)) navigationQuery.set(key, source.get(key));
+        }
+        this.response.redirect = `${prefix}/p/${encodeURIComponent(String(pid))}${navigationQuery.size ? `?${navigationQuery}` : ''}`;
     }
 
     @param('lang', Types.Name)

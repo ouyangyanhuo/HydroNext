@@ -17,6 +17,7 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useRecordSocket } from '@/hooks/use-record-socket';
+import { getSubmissionRecordQuery } from '@/utils/problem-navigation';
 import { proctorError, proctorSubmissionHeaders } from '@/utils/proctor';
 import {
   CodeEditor,
@@ -94,7 +95,8 @@ export function Scratchpad({
     value: id,
     label: info.display || info.name || id,
   })), [langs]);
-  const submissionContext = resolveSubmissionContext({ pdoc: args.pdoc, tdoc: args.tdoc }, window.location.search, pid);
+  const navigationSearch = window.location.search;
+  const submissionContext = resolveSubmissionContext({ pdoc: args.pdoc, tdoc: args.tdoc }, navigationSearch, pid);
   const contestId = submissionContext.tid || '';
   const cacheKey = useMemo(
     () => getScratchpadCacheKey(userId, ui.domainId, pid, contestId),
@@ -355,7 +357,7 @@ export function Scratchpad({
             // Keep all previous events and persist in-flight edits before navigating away.
             await replaceRecording(replayStorageKey, next).catch(warnReplayStorage);
           }
-          if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }));
+          if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }, getSubmissionRecordQuery(navigationSearch, args.tdoc)));
           else setSubmitResult(data);
         }
       }
@@ -370,7 +372,7 @@ export function Scratchpad({
     }
   }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, flushReplay,
     resolvedSubmitUrl, input, navigate, replayReady, replayStorageKey, warnReplayStorage, captureAction,
-    proctorPid, proctorEnabled]);
+    proctorPid, proctorEnabled, navigationSearch, args.tdoc]);
 
   const pretestCooldown = Math.max(0, Math.ceil((cooldownUntil.pretest - clock) / 1000));
   const submitCooldown = Math.max(0, Math.ceil((cooldownUntil.submit - clock) / 1000));
@@ -388,7 +390,11 @@ export function Scratchpad({
           {result.status !== undefined && <RecordStatusBadge status={result.status} size="xs" />}
           {result.score !== undefined && <Badge size="xs">{result.score}</Badge>}
           {result.rid && (
-            <Button variant="subtle" size="xs" onClick={() => navigate(buildUrl('record_detail', { rid: result.rid }))}>
+            <Button
+              variant="subtle"
+              size="xs"
+              onClick={() => navigate(buildUrl('record_detail', { rid: result.rid }, getSubmissionRecordQuery(navigationSearch, args.tdoc)))}
+            >
               {t('View Record')}
             </Button>
           )}

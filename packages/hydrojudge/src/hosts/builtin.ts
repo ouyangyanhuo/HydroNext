@@ -52,6 +52,9 @@ const session: Session = {
 };
 
 export async function apply(ctx: HydroContext) {
+    if (!await versionCheck((message) => logger.warn(message), (message) => logger.error(message))) {
+        throw new SystemError('Sandbox security check failed');
+    }
     ctx.inject(['check'], (c) => {
         c.check.addChecker('Judge', async (_ctx, log, warn, error) => {
             await versionCheck(warn, error);

@@ -874,6 +874,11 @@ Public attachments shown with this problem.: 随题面公开展示的附件。
 This is a copy of another problem.: 这是另一道题目的副本。
 This problem has no testdata.: 当前没有测试数据。
 Status Distribution: 状态分布
+Score Distribution: 得分分布
+Fastest: 最快
+Min Memory: 最小内存
+Shortest: 最短代码
+Latest: 最新提交
 Submission Statistics: 提交统计
 Submit By: 提交者
 Submit At: 提交时间

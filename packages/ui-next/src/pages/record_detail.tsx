@@ -1,4 +1,4 @@
-import { Badge, Card, Code, Group, Stack, Table, Text, Title } from '@mantine/core';
+import { Badge, Card, Code, Group, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
@@ -17,6 +17,7 @@ import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useRecordSocket } from '@/hooks/use-record-socket';
 import { formatErrorMessage } from '@/utils/error';
 import { extractLocalizedContent } from '@/utils/i18n-content';
+import { getRecordProblemQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
 
 function asArray(value: any) {
   if (!value) return [];
@@ -251,6 +252,9 @@ export default function RecordDetailPage() {
   const codeReplayUrl = buildReplayUrl(buildUrl, String(rdoc._id || ''), ui.codeReplayUrl);
   const problemTitle = extractLocalizedContent(pdoc.title, language);
   const contestTitle = extractLocalizedContent(tdoc?.title, language);
+  const problemQuery = getRecordProblemQuery(window.location.search, tdoc);
+  const problemUrl = buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId || rdoc.pid }, problemQuery);
+  const recordNavigationQuery = getSubmissionRecordQuery(new URLSearchParams(problemQuery).toString());
 
   const goBack = () => {
     if (window.history.length > 1) window.history.back();
@@ -308,11 +312,22 @@ export default function RecordDetailPage() {
         </Group>
         <Group justify="space-between" align="flex-start" gap="lg" wrap="wrap">
           <div className="min-w-0">
-            <Title order={1} className="text-3xl leading-tight text-[var(--hydro-text)] md:text-4xl">
-              #{recordId || '-'}
-            </Title>
-            <Text size="sm" c="dimmed" mt="xs" className="truncate">
-              {pdoc.pid || pdoc.docId ? `${pdoc.pid || pdoc.docId}. ${problemTitle || ''}` : t('Submission detail')}
+            <Tooltip label={String(rdoc._id || recordId)} withArrow openDelay={200}>
+              <Title order={2} className="hydro-record-id-title">
+                #{recordId || '-'}
+              </Title>
+            </Tooltip>
+            <Text size="sm" c="dimmed" mt={4} className="truncate">
+              {pdoc.pid || pdoc.docId ? (
+                <Link
+                  href={problemUrl}
+                  className="hydro-subtle-link text-[var(--hydro-text-muted)] hover:text-[var(--hydro-primary)]"
+                >
+                  {pdoc.pid || pdoc.docId}. {problemTitle || ''}
+                </Link>
+              ) : (
+                t('Submission detail')
+              )}
             </Text>
           </div>
           <Group gap="sm">
@@ -415,8 +430,7 @@ export default function RecordDetailPage() {
                 {pdoc && (
                   <InfoRow label={t('Problem')}>
                     <Link
-                      to="problem_detail"
-                      params={{ pid: pdoc.pid || pdoc.docId }}
+                      href={problemUrl}
                       className="block max-w-40 truncate text-xs no-underline hover:underline"
                     >
                       {pdoc.pid || pdoc.docId}. {problemTitle}
@@ -472,8 +486,7 @@ export default function RecordDetailPage() {
                 <Title order={3} size="h5" mb="sm">{t('History')}</Title>
                 <Stack gap={4}>
                   <Link
-                    to="record_detail"
-                    params={{ rid: rdoc._id }}
+                    href={buildUrl('record_detail', { rid: rdoc._id }, recordNavigationQuery)}
                     className={[
                       'rounded-md px-2 py-1 text-xs no-underline',
                       !rev
@@ -486,7 +499,7 @@ export default function RecordDetailPage() {
                   {Object.entries(allRevs).map(([rid, date]) => (
                     <a
                       key={rid}
-                      href={`?rev=${rid}`}
+                      href={buildUrl('record_detail', { rid: rdoc._id }, { ...recordNavigationQuery, rev: rid })}
                       className={[
                         'rounded-md px-2 py-1 text-xs no-underline',
                         String(rev) === rid
