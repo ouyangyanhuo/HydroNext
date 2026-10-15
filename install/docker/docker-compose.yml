@@ -8,7 +8,7 @@ services:
     volumes:
       - ./data/mongo:/data/db
     ports:
-      - "27018:27017"
+      - '27018:27017'
     healthcheck:
       test: mongosh --eval "db.adminCommand('ping')"
       interval: 10s
@@ -30,7 +30,7 @@ services:
       - ./data/file:/data/file
       - ./data/backend:/root/.hydro
     ports:
-      - "8282:8888" # In docker mode, change THIS port instead of port in system settings!
+      - '8282:8888' # In docker mode, change THIS port instead of port in system settings!
     healthcheck:
       test: curl --silent --fail http://localhost:8888/status >/dev/null || exit 1
       interval: 1m30s

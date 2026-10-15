@@ -1,4 +1,9 @@
 .git
+.agents
+.aws
+.cache
+.codex
+rawHydro
 node_modules
 **/node_modules
 install/docker/data
@@ -6,3 +11,4 @@ data
 coverage
 dist
 build/cache
+install/docker/judge/judge.yaml

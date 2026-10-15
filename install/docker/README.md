@@ -21,6 +21,17 @@
 
 命令执行完成后运行 `docker ps -a`，当看到所有的容器的状态没有 `Exited (x) xxx` 就代表 OJ 已经启动成功。
 
+## 更新评测机
+
+在 `install/docker` 目录执行 `docker compose build oj-judge`，会从当前仓库源码构建 `docker-oj-judge:latest`。
+评测器的生产依赖按 `yarn.lock` 安装，镜像固定使用 go-judge 1.13.3，并对沙箱二进制和仓库指定版本的 testlib 头文件校验 SHA-256。
+构建成功后，执行 `docker compose up -d --no-deps oj-judge` 应用更新；请在没有正在进行的评测时重建容器。
+
+沙箱 HTTP 接口只监听容器内的 `127.0.0.1:5050`，评测配置和挂载配置以只读方式提供。
+评测器在启动时必须确认沙箱具有符号链接逃逸防护；无法连接或未确认防护时会拒绝接单。
+沙箱响应缺少必要字段、返回未知状态或结果数量不匹配时，会终止本次评测并报告系统错误。
+此镜像支持 amd64 和 arm64；可核对 [go-judge 发行包](https://github.com/criyle/go-judge/releases/tag/v1.13.3)和校验值。
+
 ## 每日维护
 
 容器定时重启、数据与后端镜像备份，以及完整恢复或仅镜像恢复方法见 [每日维护说明](maintenance.md)。

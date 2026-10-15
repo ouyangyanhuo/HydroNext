@@ -196,6 +196,12 @@ export async function runPiped(
         if (!Array.isArray(res) || res.length !== execute.length || !res.every(isValidResult)) {
             throw new SystemError('Invalid sandbox response');
         }
+        const failure = res.find((result) => [SandboxStatus.InternalError, SandboxStatus.FileError].includes(result.status));
+        if (failure) {
+            const files = new Set(res.flatMap((result) => Object.values(result.fileIds || {})));
+            await Promise.allSettled([...files].map(del));
+            throw new SystemError('Sandbox execution failed: {0}', [failure.status]);
+        }
     } catch (e) {
         if (e instanceof FormatError || e instanceof SystemError) throw e;
         console.error(e);

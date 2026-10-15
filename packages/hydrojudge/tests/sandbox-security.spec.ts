@@ -13,8 +13,13 @@ const code = transformSync(source, { loader: 'ts', format: 'cjs' }).code;
 class SystemError extends Error {}
 class FormatError extends Error {}
 
+function result(extra = {}) {
+    return { status: SandboxStatus.Accepted, exitStatus: 0, time: 1000000, memory: 1024, files: {}, fileIds: {}, ...extra };
+}
+
 function sandbox({ config = { fixSymlinkEscape: true } as any, results = [result()] as any, unavailable = false } = {}) {
     const errors: string[] = [];
+    const deleted: string[] = [];
     const warnings: string[] = [];
     const settings = { rate: 1, memoryMax: '512m', stdio_size: '32m', env: '', processLimit: 32, parallelism: 2 };
     const mocks: Record<string, any> = {
@@ -33,7 +38,7 @@ function sandbox({ config = { fixSymlinkEscape: true } as any, results = [result
             },
             config: async () => config,
             run: async () => results,
-            deleteFile: async () => {},
+            deleteFile: async (id: string) => { deleted.push(id); },
         },
         './utils': { cmd: (command: string) => command.split(' '), parseMemoryMB: (value: string) => parseInt(value, 10) },
     };
@@ -43,14 +48,13 @@ function sandbox({ config = { fixSymlinkEscape: true } as any, results = [result
         require: (name: string) => mocks[name] ?? require(name),
     });
     return {
-        run: (execute = [{ execute: '/bin/true' }], params = {}) => module.exports.runPiped(execute, [], params),
+        run: (execute: { execute: string, time?: number, memory?: number }[] = [{ execute: '/bin/true' }], params = {}) => (
+            module.exports.runPiped(execute, [], params)
+        ),
         check: () => module.exports.versionCheck((message: string) => warnings.push(message), (message: string) => errors.push(message)),
         errors,
+        deleted,
     };
-}
-
-function result(extra = {}) {
-    return { status: SandboxStatus.Accepted, exitStatus: 0, time: 1000000, memory: 1024, files: {}, fileIds: {}, ...extra };
 }
 
 for (const flag of [false, undefined, null, 'true', 1]) {
@@ -92,6 +96,17 @@ test('sandbox output-limit status is preserved as OLE', async () => {
     assert.equal(output.status, STATUS.STATUS_OUTPUT_LIMIT_EXCEEDED);
 });
 
+for (const status of [SandboxStatus.InternalError, SandboxStatus.FileError]) {
+    test(`sandbox ${status} aborts the whole piped execution and releases cached files`, async () => {
+        const instance = sandbox({ results: [
+            result({ status, fileIds: { stdout: 'failed-output' } }),
+            result({ fileIds: { stdout: 'user-output', stderr: 'user-output' } }),
+        ] });
+        await assert.rejects(instance.run([{ execute: '/bin/true' }, { execute: '/bin/true' }]), SystemError);
+        assert.deepEqual(instance.deleted, ['failed-output', 'user-output']);
+    });
+}
+
 test('valid sandbox results retain their output and resource usage', async () => {
     const [output] = await sandbox({ results: [result({ files: { stdout: 'ok', stderr: '' } })] }).run();
     assert.equal(output.status, STATUS.STATUS_ACCEPTED);
@@ -99,4 +114,43 @@ test('valid sandbox results retain their output and resource usage', async () =>
     assert.equal(output.memory, 1);
     assert.equal(output.stdout, 'ok');
     await output[Symbol.asyncDispose]();
+});
+
+test('piped commands are checked against their individual resource limits', async () => {
+    const [time, memory] = await sandbox({ results: [result({ time: 11_000_000 }), result({ memory: 2 * 1024 * 1024 })] }).run([
+        { execute: '/bin/true', time: 10, memory: 512 },
+        { execute: '/bin/true', time: 1000, memory: 1 },
+    ]);
+    assert.equal(time.status, STATUS.STATUS_TIME_LIMIT_EXCEEDED);
+    assert.equal(memory.status, STATUS.STATUS_MEMORY_LIMIT_EXCEEDED);
+});
+
+test('shared limits override individual piped command limits consistently', async () => {
+    const [output] = await sandbox({ results: [result({ time: 11_000_000 })] }).run([
+        { execute: '/bin/true', time: 10 },
+    ], { time: 20 });
+    assert.equal(output.status, STATUS.STATUS_ACCEPTED);
+});
+
+test('builtin judge refuses to register consumers when the sandbox check fails', async () => {
+    const builtinSource = readFileSync(new URL('../src/hosts/builtin.ts', import.meta.url), 'utf8');
+    const builtinCode = transformSync(builtinSource, { loader: 'ts', format: 'cjs' }).code;
+    let injected = false;
+    const mocks: Record<string, any> = {
+        '@hydrooj/utils': {},
+        '@hydrooj/utils/lib/sysinfo': {},
+        hydrooj: {},
+        'hydrooj/src/model/setting': {},
+        '../config': { getConfig: () => 'full' },
+        '../error': { SystemError },
+        '../info': {},
+        '../log': { warn() {}, error() {} },
+        '../sandbox': { versionCheck: async () => false },
+        '../task': {},
+        '../tracing': {},
+    };
+    const module = { exports: {} as any };
+    runInNewContext(builtinCode, { module, exports: module.exports, require: (name: string) => mocks[name] ?? require(name) });
+    await assert.rejects(module.exports.apply({ inject: () => { injected = true; } }), SystemError);
+    assert.equal(injected, false);
 });

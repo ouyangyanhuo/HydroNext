@@ -364,6 +364,61 @@ test('object URLs are released for StrictMode replay, replacement, clearing, and
     assert.deepEqual([...created].sort(), [...revoked].sort());
 });
 
+test('submitting and returning through record problem links retains the source navigation', async () => {
+    const previousUrl = dom.window.location.href;
+    const search = '?nav=list&page=3&q=category%3Agraph&sort=desc';
+    dom.reconfigure({ url: `https://oj.example/d/team/p/P2/submit${search}` });
+    const navigationUtils = component('../src/utils/problem-navigation.ts', {}, { URLSearchParams });
+    const paths = { problem_detail: '/p/:pid', record_detail: '/record/:rid', problem_main: '/p', code_replay: '/record/:rid/replay' };
+    const buildUrl = (route: string, params: any = {}, query: any = {}) => {
+        const path = (paths[route] || `/${route}`).replace(/:(\w+)/g, (_, key) => params[key]);
+        const qs = new URLSearchParams(query).toString();
+        return `/d/team${path}${qs ? `?${qs}` : ''}`;
+    };
+    const overrides = {
+        '@/utils/problem-navigation': navigationUtils,
+        '@/hooks/use-build-url': { useBuildUrl: () => buildUrl },
+        '@/hooks/use-current-user': { useCurrentUser: () => ({ _id: 2, codeLang: 'cc' }) },
+        '@/hooks/use-record-socket': { useRecordSocket: () => null },
+        '@/hooks/use-permission': { PRIV: {}, useHasPriv: () => false },
+        '@/context/page-data': { usePageData: () => ({ args }), useUiContext: () => ({}) },
+        '@/components/editor/code-editor': { CodeEditor: () => null },
+        '@/components/editor/code-templates': { getCodeTemplate: () => 'int main() {}' },
+        '@/components/record/code-replay': { CodeReplay: () => null },
+        '@/components/record/record-status-badge': { RecordStatusBadge: () => null },
+        '@/components/record/status-map': component('../src/components/record/status-map.ts'),
+        '@/components/user/user-link': { UserLink: () => null },
+        '@/components/link': { Link: ({ href, children }: any) => h('a', { href }, children) },
+        '@/utils/i18n-content': { extractLocalizedContent: (value: string) => value },
+        '@/utils/proctor': { proctorSubmissionHeaders: async () => ({}), proctorError: () => 'Failed' },
+    };
+    const Submit = component('../src/pages/problem_submit.tsx', overrides).default;
+    const Record = component('../src/pages/record_detail.tsx', overrides, { URLSearchParams }).default;
+    args = { pdoc: { docId: 2, pid: 'P2', title: 'Current problem' }, langs: { cc: { display: 'C++' } } };
+    request = async () => ({ ok: true, json: async () => ({ rid: 'rid', redirect: '/record/rid' }) });
+    const view = await mount(h(Submit));
+    try {
+        await act(async () => button('Submit', view.host).click());
+        const recordUrl = navigated.at(-1)!;
+        assert.ok(recordUrl.startsWith('/d/team/record/rid?problemNav='));
+        dom.reconfigure({ url: `https://oj.example${recordUrl}` });
+        args = { ...args, rdoc: { _id: 'rid', uid: 2, pid: 2, status: 1 } };
+        await view.render(h(Record));
+        const links = [...view.host.querySelectorAll<HTMLAnchorElement>('a[href^="/d/team/p/P2"]')];
+        assert.equal(links.length, 2, 'both the heading and information-card problem links preserve navigation');
+        for (const link of links) assert.equal(link.search, search);
+        const neighbors = await navigationUtils.resolveProblemNavigation({
+            problem: args.pdoc, search: links[0].search, buildUrl,
+            load: async () => ({ pdocs: [{ docId: 1 }, args.pdoc, { docId: 3 }], ppcount: 3 }),
+        });
+        assert.equal(neighbors.previous.pid, 1);
+        assert.equal(neighbors.next.pid, 3);
+    } finally {
+        await view.close();
+        dom.reconfigure({ url: previousUrl });
+    }
+});
+
 test('problem navigation aborts outgoing requests and never displays stale neighbors after switching domains', async () => {
     const previousUrl = dom.window.location.href;
     dom.reconfigure({ url: 'https://oj.example/d/team/p/1?nav=list&page=1' });
