@@ -3,8 +3,8 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconCopy, IconCrown, IconEdit, IconInfoCircle, IconKey, IconLogout, IconPlus, IconRefresh, IconTrash,
-  IconTrophy, IconUserPlus, IconUsers,
+  IconArrowLeft, IconCopy, IconCrown, IconEdit, IconInfoCircle, IconKey, IconLogout, IconPlus, IconRefresh, IconTrash,
+  IconUserPlus, IconUsers,
 } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
@@ -97,8 +97,8 @@ export default function ContestTeamPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('My Teams')}>
-        <Button component={Link} to="contest_main" variant="subtle" leftSection={<IconTrophy size={16} />}>
-          {t('Contests')}
+        <Button component={Link} to="contest_main" variant="subtle" leftSection={<IconArrowLeft size={16} />}>
+          {t('Back')}
         </Button>
       </PageHeader>
       <Text c="dimmed" size="sm">{instructions}</Text>

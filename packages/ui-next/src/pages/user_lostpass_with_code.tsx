@@ -30,7 +30,7 @@ export default function UserLostpassWithCodePage() {
         body: JSON.stringify({ password, verifyPassword: confirmPassword }),
       });
       const data = await res.json();
-      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Failed')));
+      if (!res.ok || data.error) setError(formatErrorMessage(data.error, 'Failed', t));
       else navigate(buildUrl('user_login'));
     } catch {
       setError(t('Network error'));

@@ -27,7 +27,7 @@ export default function UserLostpassPage() {
       });
       const data = await response.json();
       if (!response.ok || data.error) {
-        notifications.show({ color: 'red', message: t(formatErrorMessage(data.error, 'Failed')) });
+        notifications.show({ color: 'red', message: formatErrorMessage(data.error, 'Failed', t) });
       } else {
         setSent(true);
       }

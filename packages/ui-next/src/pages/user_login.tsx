@@ -12,6 +12,7 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
+import { formatErrorMessage } from '@/utils/error';
 
 export default function UserLoginPage() {
   const { args } = usePageData();
@@ -53,14 +54,8 @@ export default function UserLoginPage() {
 
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (data.error) {
-        let msg = data.error.message || t('Login failed');
-        if (data.error.params) {
-          data.error.params.forEach((p: string, i: number) => {
-            msg = msg.replace(`{${i}}`, p);
-          });
-        }
-        notifications.show({ title: msg, message: '', color: 'red' });
+      if (!res.ok || data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, 'Login failed', t), message: '', color: 'red' });
       } else {
         navigate(redirect);
       }

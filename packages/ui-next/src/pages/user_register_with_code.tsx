@@ -45,7 +45,7 @@ export default function UserRegisterWithCodePage() {
 
       const data = await res.json();
       if (!res.ok || data.error) {
-        setError(formatErrorMessage(data.error, t('Registration failed')));
+        setError(formatErrorMessage(data.error, 'Registration failed', t));
       } else {
         navigate(data.url || data.redirect || buildUrl('homepage'));
       }

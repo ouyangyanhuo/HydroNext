@@ -38,7 +38,7 @@ export default function UserSudoPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, 'Verification failed'));
+      if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, 'Verification failed', t));
       await navigate(await completeSudoVerification(data, redirect, window.location.href));
     } catch (err: any) {
       notifications.show({ title: t('Operation failed'), message: t(err?.message || 'Network error'), color: 'red' });

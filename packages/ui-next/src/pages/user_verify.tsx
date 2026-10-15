@@ -24,9 +24,9 @@ export default function UserVerifyPage() {
         body: JSON.stringify({ code }),
       });
       const data = await res.json();
-      if (data.error) setError(formatErrorMessage(data.error, t('Verification failed')));
+      if (!res.ok || data.error) setError(formatErrorMessage(data.error, 'Verification failed', t));
       else navigate(buildUrl('homepage'));
-    } catch { setError('Network error'); } finally { setLoading(false); }
+    } catch { setError(t('Network error')); } finally { setLoading(false); }
   };
 
   return (

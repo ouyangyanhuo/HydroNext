@@ -53,7 +53,7 @@ export default function UserRegisterPage() {
       });
       const data = await res.json();
       if (!res.ok || data.error) {
-        notifications.show({ color: 'red', message: t(formatErrorMessage(data.error, 'Registration failed')) });
+        notifications.show({ color: 'red', message: formatErrorMessage(data.error, 'Registration failed', t) });
       } else if (data.url || data.redirect) {
         navigate(data.url || data.redirect);
       } else if (data.verificationEmailSent) {

@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
+import { formatErrorMessage } from '../src/utils/error.ts';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -33,7 +34,7 @@ const { act, createElement: h, forwardRef } = require('react');
 const { createRoot } = require('react-dom/client');
 const mantine = require('@mantine/core');
 
-async function fixture(page: string, ui: any = {}, response: any = {}, args: any = {}, user: any = { _id: 0 }) {
+async function fixture(page: string, ui: any = {}, response: any = {}, args: any = {}, user: any = { _id: 0 }, translations = {}) {
     dom.reconfigure({ url: page === 'contest_team' ? 'https://oj.example/d/team/contest/team' : 'https://oj.example/d/team/register' });
     const navigations: string[] = [];
     const notices: any[] = [];
@@ -51,15 +52,19 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         '@/components/user/user-link': { UserLink: ({ user: value }: any) => h('span', null, value.uname) },
         '@/components/markdown/code-copy': { copyCodeText: async (value: string) => { copied.push(value); } },
         '@/components/auth/auth-panel': { AuthPanel: ({ children }: any) => h('main', null, children) },
+        '@/components/auth/authenticator': {
+            getAuthenticatorMethods: async () => ({ tfa: false, authn: false }), verifyWithWebAuthn: async () => 'challenge',
+        },
+        '@/components/auth/oauth-buttons': { OAuthButtons: () => null },
         '@/components/link': {
             Link: forwardRef(({ children, to, ...props }: any, ref: any) => h('a', { ...props, href: `/${to}`, ref }, children)),
         },
-        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => translations[key] || key }) },
         '@/hooks/use-build-url': { useBuildUrl: () => (route: string) => `/d/team/${route}` },
         '@/context/router': { useNavigate: () => (url: string) => navigations.push(url) },
         '@/context/page-data': { usePageData: () => ({ args }) },
         '@/stores/session': { useSessionStore: (select: any) => select({ ui, user, language: 'en' }) },
-        '@/utils/error': { formatErrorMessage: (error: any, fallback: string) => error?.message || fallback },
+        '@/utils/error': { formatErrorMessage },
         '@/components/common/time-display': { TimeDisplay: () => null },
         '@/components/markdown/markdown-renderer': { MarkdownRenderer: () => null },
         '@/utils/i18n-content': { extractLocalizedContent: (content: string) => content },
@@ -74,7 +79,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         require: (id: string) => mocks[id] ?? require(id),
         fetch: async (url: string, init: any) => {
             calls.push({ url, init });
-            return { ok: !response.error, json: async () => response };
+            return { ok: !response.error, headers: { get: () => 'application/json' }, json: async () => response };
         },
     });
     const host = document.createElement('div');
@@ -98,6 +103,39 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         async close() { await act(async () => root.unmount()); host.remove(); },
     };
 }
+
+test('login shows a translated parameterized password error in its existing notification', async () => {
+    const f = await fixture('user_login', {}, {
+        error: { message: 'Invalid password for user {0}.', params: ['admin123'] },
+    }, {}, { _id: 0 }, { 'Invalid password for user {0}.': '用户 {0} 的密码错误。' });
+    try {
+        await f.input(0, 'admin123');
+        await f.input(1, 'wrong-password');
+        await f.submit();
+        assert.equal(f.notices[0].title, '用户 admin123 的密码错误。');
+        assert.equal(f.notices[0].color, 'red');
+        assert.equal(f.navigations.length, 0);
+    } finally { await f.close(); }
+});
+
+test('registration and recovery notifications translate templates without translating dynamic values', async () => {
+    for (const page of ['user_register', 'user_lostpass']) {
+        // eslint-disable-next-line no-await-in-loop
+        const f = await fixture(page, { passwordResetEnabled: true }, {
+            error: { message: 'User {0} not found.', params: ['student@example.com'] },
+        }, {}, { _id: 0 }, { 'User {0} not found.': '用户 {0} 不存在。' });
+        try {
+            // eslint-disable-next-line no-await-in-loop
+            await f.input(0, 'student@example.com');
+            // eslint-disable-next-line no-await-in-loop
+            await f.submit();
+            assert.equal(f.notices[0].message, '用户 student@example.com 不存在。');
+            assert.equal(f.notices[0].color, 'red');
+            assert.equal(f.navigations.length, 0);
+        // eslint-disable-next-line no-await-in-loop
+        } finally { await f.close(); }
+    }
+});
 
 test('homepage guest registration is emphasized and follows the registration setting', async () => {
     const f = await fixture('homepage');

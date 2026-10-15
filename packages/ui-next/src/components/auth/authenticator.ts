@@ -23,7 +23,7 @@ export async function getAuthenticatorMethods(
     headers: { Accept: 'application/json' },
   });
   const data = await readJson(response);
-  if (!response.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Failed')));
+  if (!response.ok || data.error) throw new Error(formatErrorMessage(data.error, 'Failed', t));
   return { authn: Boolean(data.authn), tfa: Boolean(data.tfa) };
 }
 
@@ -40,7 +40,7 @@ export async function verifyWithWebAuthn(t: Translate, uname = '', endpoint = '/
   });
   const optionsData = await readJson(optionsResponse);
   if (!optionsResponse.ok || optionsData.error) {
-    throw new Error(formatErrorMessage(optionsData.error, t('Failed to fetch registration data.')));
+    throw new Error(formatErrorMessage(optionsData.error, 'Failed to fetch registration data.', t));
   }
   if (!optionsData.authOptions?.challenge) throw new Error(t('Failed to fetch registration data.'));
 
@@ -52,7 +52,7 @@ export async function verifyWithWebAuthn(t: Translate, uname = '', endpoint = '/
   });
   const verifyData = await readJson(verifyResponse);
   if (!verifyResponse.ok || verifyData.error) {
-    throw new Error(formatErrorMessage(verifyData.error, t('Verification failed')));
+    throw new Error(formatErrorMessage(verifyData.error, 'Verification failed', t));
   }
   return optionsData.authOptions.challenge;
 }
