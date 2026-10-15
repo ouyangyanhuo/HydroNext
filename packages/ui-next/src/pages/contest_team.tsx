@@ -93,6 +93,7 @@ export default function ContestTeamPage() {
   };
 
   const instructions = t('Create a team and share its invitation code. Teammates enter the code to join; no private messages are needed.');
+  const postInstructions = t('After joining, select Team Participation when registering for a contest that allows teams.');
 
   return (
     <Stack gap="lg">
@@ -101,14 +102,9 @@ export default function ContestTeamPage() {
           {t('Back')}
         </Button>
       </PageHeader>
-      <Text c="dimmed" size="sm">{instructions}</Text>
       <Grid gap="lg">
         <Grid.Col span={{ base: 12, md: 8 }}>
           <Stack gap="md">
-            <Group gap="xs">
-              <Title order={3}>{t('My Teams')}</Title>
-              <Badge variant="light" size="md">{mine.length}</Badge>
-            </Group>
             {mine.length === 0 && (
               <Card withBorder p="xl" className="hydro-content-card" ta="center">
                 <Stack align="center" gap="sm" py="md">
@@ -282,7 +278,7 @@ export default function ContestTeamPage() {
               <Stack gap="sm">
                 <Group gap="xs"><IconInfoCircle size={18} /><Title order={4}>{t('How It Works')}</Title></Group>
                 <Text size="sm" c="dimmed">{instructions}</Text>
-                <Text size="sm" c="dimmed">{t('After joining, select Team Participation when registering for a contest that allows teams.')}</Text>
+                <Text size="sm" c="dimmed">{postInstructions}</Text>
               </Stack>
             </Card>
           </Stack>
