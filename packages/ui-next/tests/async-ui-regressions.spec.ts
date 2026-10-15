@@ -310,6 +310,66 @@ test('object URLs are released for StrictMode replay, replacement, clearing, and
     assert.deepEqual([...created].sort(), [...revoked].sort());
 });
 
+test('problem navigation aborts outgoing requests and never displays stale neighbors after switching domains', async () => {
+    const previousUrl = dom.window.location.href;
+    dom.reconfigure({ url: 'https://oj.example/d/team/p/1?nav=list&page=1' });
+    let domainId = 'team';
+    args = { pdoc: { docId: 1 } };
+    const pending: { response: ReturnType<typeof deferred>, signal: AbortSignal }[] = [];
+    request = async (_url, init) => {
+        const response = deferred();
+        pending.push({ response, signal: init.signal });
+        return response.promise;
+    };
+    const buildUrl = (route: string, params: any = {}) => `/d/${domainId}/${route === 'problem_main' ? 'p' : `p/${params.pid}`}`;
+    const { ProblemNavigation } = component('../src/components/common/problem-navigation.tsx', {
+        './button': mocks['@/components/common/button'],
+        '@/utils/problem-navigation': component('../src/utils/problem-navigation.ts', {}, { URLSearchParams }),
+        '@/utils/i18n-content': { extractLocalizedContent: (value: string) => value },
+        '@/stores/session': { useSessionStore: (select: any) => select({ language: 'en' }) },
+        '@/hooks/use-build-url': { useBuildUrl: () => buildUrl },
+        '@/context/page-data': {
+            usePageData: () => ({ args }), useUiContext: () => ({ domainId }), useUserContext: () => ({ _id: 2 }),
+        },
+    });
+    const view = await mount(h(ProblemNavigation));
+    try {
+        assert.doesNotMatch(view.host.textContent!, /No other problems/);
+        domainId = 'other';
+        args = { pdoc: { docId: 2 } };
+        await view.render(h(ProblemNavigation));
+        assert.equal(pending[0].signal.aborted, true);
+        await act(async () => pending[1].response.resolve({
+            ok: true, json: async () => ({ pdocs: [{ docId: 2 }, { docId: 4, title: 'New target' }], ppcount: 1 }),
+        }));
+        assert.match(view.host.textContent!, /New target/);
+        assert.doesNotMatch(view.host.textContent!, /Previous problem/);
+        assert.match(view.host.textContent!, /Next problem/);
+        await act(async () => pending[0].response.resolve({
+            ok: true, json: async () => ({ pdocs: [{ docId: 1 }, { docId: 3, title: 'Old target' }], ppcount: 1 }),
+        }));
+        assert.doesNotMatch(view.host.textContent!, /Old target/);
+        args = { pdoc: { docId: 4 } };
+        await view.render(h(ProblemNavigation));
+        await act(async () => pending[2].response.resolve({
+            ok: true, json: async () => ({ pdocs: [{ docId: 2 }, { docId: 4 }], ppcount: 1 }),
+        }));
+        assert.match(view.host.textContent!, /Previous problem/);
+        assert.doesNotMatch(view.host.textContent!, /Next problem/);
+        args = { pdoc: { docId: 5 } };
+        await view.render(h(ProblemNavigation));
+        await act(async () => pending[3].response.resolve({
+            ok: true, json: async () => ({ pdocs: [{ docId: 5 }], ppcount: 1 }),
+        }));
+        assert.match(view.host.textContent!, /No other problems/);
+        assert.doesNotMatch(view.host.textContent!, /Previous problem|Next problem/);
+    } finally {
+        await view.close();
+        dom.reconfigure({ url: previousUrl });
+    }
+    assert.ok(pending.every((entry) => entry.signal.aborted));
+});
+
 test('PDF preview renders one page at a time and cancels the outgoing page when switching', async () => {
     const loadedPages: number[] = [];
     const cleaned: number[] = [];

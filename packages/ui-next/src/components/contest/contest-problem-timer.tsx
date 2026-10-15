@@ -90,6 +90,7 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt, pi
   const ended = clock.now >= endAt;
   const remaining = Math.max(0, (upcoming ? beginAt : endAt) - clock.now);
   const urgent = !upcoming && !ended && remaining <= 5 * 60_000;
+  const timingUnsynced = recordTime && !activity?.synced;
   const elapsed = activity
     ? activity.elapsed + (activity.active ? Math.max(0, Math.min(clock.now, endAt) - Math.max(activity.at, beginAt)) : 0)
     : clock.elapsed;
@@ -125,11 +126,14 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt, pi
         </div>
         <div
           className="hydro-contest-problem-timer__metric"
-          title={t(recordTime ? 'Foreground problem time; saved to the contest scoreboard.' : 'Visible time on this problem; saved in this tab.')}
+          title={t(timingUnsynced ? 'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.'
+            : recordTime ? 'Foreground problem time; saved to the contest scoreboard.' : 'Visible time on this problem; saved in this tab.')}
         >
-          <span className="hydro-contest-problem-timer__label">{t('Time on this problem')}</span>
+          <span className="hydro-contest-problem-timer__label" style={timingUnsynced ? { color: 'var(--hydro-warning)' } : undefined}>
+            {t(timingUnsynced ? 'Timing not synced' : 'Time on this problem')}
+          </span>
           <span className="hydro-contest-problem-timer__value" role="timer" aria-live="off">
-            {formatContestClock(elapsed)}
+            {timingUnsynced ? '—' : formatContestClock(elapsed)}
           </span>
         </div>
       </div>

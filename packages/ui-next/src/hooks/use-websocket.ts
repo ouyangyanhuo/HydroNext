@@ -3,6 +3,8 @@ import { useSessionStore } from '@/stores/session';
 
 interface WebSocketOptions {
   url: string;
+  /** Explicit domain scope for domain-owned endpoints; preserves any deployment path prefix. */
+  domainId?: string;
   onMessage?: (data: any) => void;
   onOpen?: (send: (data: any) => void) => void;
   onClose?: (event?: CloseEvent) => void;
@@ -21,6 +23,7 @@ const duration = (value: number, fallback: number) => Number.isFinite(value) && 
 
 export function useWebSocket({
   url,
+  domainId,
   onMessage,
   onOpen,
   onClose,
@@ -50,6 +53,10 @@ export function useWebSocket({
     const prefixUrl = new URL(wsPrefix, window.location.href);
     prefixUrl.protocol = ['https:', 'wss:'].includes(prefixUrl.protocol) ? 'wss:' : 'ws:';
     if (!prefixUrl.pathname.endsWith('/')) prefixUrl.pathname += '/';
+    if (domainId) {
+      const basePath = prefixUrl.pathname.replace(/\/d\/[^/]+\/$/, '/');
+      prefixUrl.pathname = `${basePath}d/${encodeURIComponent(domainId)}/`;
+    }
     const fullUrl = url.startsWith('ws') ? url : new URL(url.replace(/^\/+/, ''), prefixUrl).toString();
     const idleTimeout = duration(heartbeatTimeout, 120_000);
     const probeTimeout = duration(heartbeatProbeTimeout, 10_000);
@@ -233,7 +240,7 @@ export function useWebSocket({
       pendingMessages.current = [];
       retire();
     };
-  }, [enabled, autoReconnect, reconnectInterval, heartbeatTimeout, heartbeatProbeTimeout, connectionTimeout, ui.ws_prefix, url]);
+  }, [enabled, autoReconnect, reconnectInterval, heartbeatTimeout, heartbeatProbeTimeout, connectionTimeout, ui.ws_prefix, url, domainId]);
 
   const send = useCallback((data: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

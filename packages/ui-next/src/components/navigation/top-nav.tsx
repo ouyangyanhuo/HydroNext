@@ -416,7 +416,7 @@ export function TopNav() {
 
   return (
     <>
-      <div className="hydro-top-nav border-b border-[var(--hydro-border)] bg-[var(--hydro-nav-bg)] backdrop-blur-xl">
+      <div className="hydro-top-nav">
         <div className="hydro-container flex h-16 items-center justify-between">
           <Group gap="lg" wrap="nowrap">
             <Link to="homepage" className="group flex min-w-0 items-center gap-3 no-underline">
@@ -449,7 +449,7 @@ export function TopNav() {
                 </Button>
               ))}
               <div
-                className="absolute bottom-0 h-[3px] rounded-full bg-[var(--hydro-primary)] transition-[left,width] duration-200 ease-out"
+                className="hydro-top-nav__indicator"
                 style={{ left: indicator.left, width: indicator.width }}
               />
             </div>

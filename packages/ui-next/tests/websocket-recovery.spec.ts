@@ -156,6 +156,24 @@ async function fixture(options: Record<string, any> = {}, record = false, strict
     };
 }
 
+test('explicit domain sockets preserve scope with root, pre-scoped and custom WebSocket prefixes', async () => {
+    const path = 'contest/1234567890abcdef12345678/activity-conn?pid=1';
+    const f = await fixture({ url: path, domainId: 'exam' });
+    try {
+        assert.equal(f.sockets[0].url, `wss://oj.example/d/exam/${path}`);
+        await f.render({ prefix: '/' });
+        assert.equal(f.sockets.at(-1)!.url, `wss://oj.example/d/exam/${path}`);
+        await f.render({ prefix: '/d/old/' });
+        assert.equal(f.sockets.at(-1)!.url, `wss://oj.example/d/exam/${path}`);
+        await f.render({ prefix: 'wss://socket.example/edge/' });
+        assert.equal(f.sockets.at(-1)!.url, `wss://socket.example/edge/d/exam/${path}`);
+        await f.render({ prefix: 'wss://socket.example/edge/d/old/' });
+        assert.equal(f.sockets.at(-1)!.url, `wss://socket.example/edge/d/exam/${path}`);
+        await f.render({ options: { domainId: 'system' } });
+        assert.equal(f.sockets.at(-1)!.url, `wss://socket.example/edge/d/system/${path}`);
+    } finally { await f.close(); }
+});
+
 test('all incoming frames refresh liveness, including ping, pong and non-JSON data', async () => {
     const f = await fixture();
     try {

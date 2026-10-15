@@ -7,6 +7,7 @@ import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';
+import { ProblemNavigation } from '@/components/common/problem-navigation';
 import { TimeDisplay } from '@/components/common/time-display';
 import { ContestProblemTimer } from '@/components/contest/contest-problem-timer';
 import { Scratchpad } from '@/components/editor/scratchpad';
@@ -26,6 +27,7 @@ import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { getLangDisplay } from '@/utils/lang-display';
+import { getProblemNavigationSource } from '@/utils/problem-navigation';
 
 interface ProblemViewTransition {
   finished: Promise<void>;
@@ -410,6 +412,8 @@ function ProblemSidebar({
         </Stack>
       </Paper>
 
+      <ProblemNavigation />
+
       {rdoc && (
         <Paper withBorder p="md" className="hydro-panel">
           <Text size="xs" c="dimmed" mb="xs">{t('Latest Record')}</Text>
@@ -471,7 +475,8 @@ export default function ProblemDetailPage() {
       .map((key) => [key, listSearch.get(key)] as const)
       .filter((entry): entry is [string, string] => Boolean(entry[1])),
   );
-  const problemListUrl = buildUrl('problem_main', {}, problemListQuery);
+  const problemListUrl = getProblemNavigationSource({ contest: args.tdoc, search: window.location.search, buildUrl })?.sourceUrl
+    || buildUrl('problem_main', {}, problemListQuery);
 
   const pdoc = args.pdoc || {};
   const psdoc = args.psdoc;

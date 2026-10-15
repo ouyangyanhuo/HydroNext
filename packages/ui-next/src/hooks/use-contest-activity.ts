@@ -1,22 +1,37 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSessionStore } from '@/stores/session';
 import { useWebSocket } from './use-websocket';
 
 export function useContestActivity(tid: string, pid: number, enabled: boolean) {
-  const context = `${tid}/${pid}`;
-  const [time, setTime] = useState<{ context: string, elapsed: number, at: number, active: boolean } | null>(null);
+  const domainId = useSessionStore((s) => s.ui.domainId);
+  const context = `${domainId}/${tid}/${pid}`;
+  const [time, setTime] = useState<{ context: string, elapsed: number, at: number, active: boolean, synced: boolean } | null>(null);
   const connected = useRef(false);
   const active = () => document.visibilityState === 'visible' && document.hasFocus();
+  const unsynced = () => {
+    const at = Date.now();
+    setTime((previous) => ({
+      context, elapsed: previous?.context === context ? previous.elapsed : 0, at, active: false, synced: false,
+    }));
+  };
   const { send } = useWebSocket({
     url: `contest/${encodeURIComponent(tid)}/activity-conn?pid=${pid}`,
+    domainId,
     enabled,
     onOpen: (sendNow) => {
       connected.current = true;
+      unsynced();
       sendNow({ active: active() });
     },
-    onClose: () => { connected.current = false; },
+    onClose: () => { connected.current = false; unsynced(); },
     onMessage: (data) => {
+      if (!data || typeof data !== 'object') return;
+      if (data?.error) {
+        unsynced();
+        return;
+      }
       if (Number.isFinite(data.elapsed) && data.elapsed >= 0) {
-        setTime({ context, elapsed: data.elapsed, at: Date.now(), active: active() });
+        setTime({ context, elapsed: data.elapsed, at: Date.now(), active: active(), synced: true });
       }
     },
   });
@@ -41,6 +56,6 @@ export function useContestActivity(tid: string, pid: number, enabled: boolean) {
       window.removeEventListener('pagehide', pause);
       window.removeEventListener('pageshow', update);
     };
-  }, [enabled, tid, pid, send]);
+  }, [enabled, domainId, tid, pid, send]);
   return enabled && time?.context === context ? time : null;
 }

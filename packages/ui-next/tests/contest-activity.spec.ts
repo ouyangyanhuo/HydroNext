@@ -32,15 +32,23 @@ test('foreground activity reports focus/visibility changes, resumes on reconnect
     const messages: any[] = [];
     const send = (payload: any) => messages.push(payload);
     let callbacks: any;
+    let domainId = 'team';
     const module = { exports: {} as any };
     const code = transformSync(readFileSync(new URL('../src/hooks/use-contest-activity.ts', import.meta.url), 'utf8'), {
         loader: 'ts', format: 'cjs',
     }).code;
     runInNewContext(code, {
         module, exports: module.exports, window: dom.window, document: dom.window.document,
-        require: (name: string) => name === './use-websocket' ? {
-            useWebSocket: (options: any) => { callbacks = options; return { send }; },
-        } : require(name),
+        require: (name: string) => {
+            if (name === './use-websocket') {
+                return { useWebSocket: (options: any) => {
+                    callbacks = options;
+                    return { send };
+                } };
+            }
+            if (name === '@/stores/session') return { useSessionStore: (select: any) => select({ ui: { domainId } }) };
+            return require(name);
+        },
     });
     let displayed: any;
     function Receiver({ enabled = true, pid = 1 }: any) {
@@ -51,9 +59,16 @@ test('foreground activity reports focus/visibility changes, resumes on reconnect
     try {
         await act(async () => root.render(h(Receiver)));
         assert.equal(callbacks.url, 'contest/contest-id/activity-conn?pid=1');
-        callbacks.onOpen(send);
+        assert.equal(callbacks.domainId, 'team');
+        await act(async () => callbacks.onOpen(send));
+        assert.equal(displayed.synced, false);
         assert.equal(messages.at(-1).active, true);
-        await act(async () => callbacks.onMessage({ elapsed: 10_000 }));
+        await act(async () => callbacks.onMessage({ ready: true, elapsed: 10_000 }));
+        assert.equal(messages.at(-1).active, true);
+        assert.equal(displayed.elapsed, 10_000);
+        assert.equal(displayed.synced, true);
+        await act(async () => callbacks.onMessage({ error: { name: 'ValidationError' } }));
+        assert.equal(displayed.synced, false);
         assert.equal(displayed.elapsed, 10_000);
         focused = false;
         dom.window.dispatchEvent(new dom.window.Event('blur'));
@@ -61,14 +76,22 @@ test('foreground activity reports focus/visibility changes, resumes on reconnect
         visible = false;
         dom.window.document.dispatchEvent(new dom.window.Event('visibilitychange'));
         assert.equal(messages.at(-1).active, false);
-        callbacks.onClose();
+        await act(async () => callbacks.onClose());
+        assert.equal(displayed.synced, false);
+        assert.equal(displayed.active, false);
         const count = messages.length;
         timers.get(1)!();
         assert.equal(messages.length, count);
         focused = true;
         visible = true;
-        callbacks.onOpen(send);
+        await act(async () => callbacks.onOpen(send));
         assert.equal(messages.at(-1).active, true);
+        await act(async () => callbacks.onMessage({ elapsed: 15_000 }));
+        assert.equal(displayed.synced, true);
+        domainId = 'other';
+        await act(async () => root.render(h(Receiver)));
+        assert.equal(callbacks.domainId, 'other');
+        assert.equal(displayed, null);
         await act(async () => root.render(h(Receiver, { enabled: false })));
         assert.equal(displayed, null);
         assert.equal(timers.size, 0);

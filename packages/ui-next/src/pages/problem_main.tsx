@@ -274,6 +274,7 @@ export default function ProblemMainPage() {
               page: String(page),
               ...(qs ? { q: qs } : {}),
               sort,
+              nav: 'list',
             })}
             className="hydro-subtle-link"
           >

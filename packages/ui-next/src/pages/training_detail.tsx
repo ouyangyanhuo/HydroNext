@@ -63,6 +63,7 @@ function TrainingProblemTable({
   invalid,
   viewRecords,
   viewedUid,
+  trainingId,
 }: {
   node: any;
   pdict: Record<string, any>;
@@ -73,10 +74,14 @@ function TrainingProblemTable({
   invalid: boolean;
   viewRecords: boolean;
   viewedUid?: number;
+  trainingId: string;
 }) {
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const pids = node.pids || [];
+  const sourceQuery = Object.fromEntries(
+    [...new URLSearchParams(window.location.search)].filter(([key]) => ['page', 'q', 'category', 'sort', 'uid', 'viewRecords'].includes(key)),
+  );
 
   return (
     <div className="overflow-x-auto">
@@ -124,8 +129,9 @@ function TrainingProblemTable({
                     </Link>
                   ) : (
                     <Link
-                      to="problem_detail"
-                      params={{ pid: pdoc.pid || pdoc.docId || pid }}
+                      href={buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId || pid }, {
+                        ...sourceQuery, nav: 'training', training: trainingId, chapter: String(node._id),
+                      })}
                       className="text-sm font-semibold no-underline hover:underline"
                     >
                       {pdoc.pid || pdoc.docId || String.fromCharCode(65 + index)}. {pdoc.title || pid}
@@ -334,6 +340,7 @@ export default function TrainingDetailPage() {
                   </div>
                 )}
                 <TrainingProblemTable
+                  trainingId={String(tdoc.docId || tdoc._id)}
                   node={node}
                   pdict={pdict}
                   psdict={psdict}
