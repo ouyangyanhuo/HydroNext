@@ -168,26 +168,26 @@
   --hydro-weight-semibold: 560;
 
   /* Surface Elevation */
-  --hydro-bg: #0b1114;
-  --hydro-bg-soft: #10181b;
-  --hydro-surface: #151f22;
-  --hydro-surface-raised: #1c272b;
-  --hydro-surface-muted: #243236;
-  --hydro-surface-tint: #102f2d;
+  --hydro-bg: #090d11;
+  --hydro-bg-soft: #0d1217;
+  --hydro-surface: #11161d;
+  --hydro-surface-raised: #151b23;
+  --hydro-surface-muted: #1c222b;
+  --hydro-surface-tint: #0f1d26;
 
   /* Content & Borders */
-  --hydro-text: #edf7f5;
-  --hydro-text-muted: #a1b4b0;
+  --hydro-text: #f0f4f8;
+  --hydro-text-muted: #8b99a8;
   --hydro-text-secondary: var(--hydro-text-muted);
-  --hydro-border: #2a3b40;
-  --hydro-border-strong: #506970;
+  --hydro-border: #212833;
+  --hydro-border-strong: #364152;
 
   /* Brand & Accents */
   --hydro-primary: #6bb3c7;
   --hydro-primary-strong: #8dcad9;
-  --hydro-primary-soft: #1a3038;
+  --hydro-primary-soft: #13242e;
   --hydro-accent: #e8a75e;
-  --hydro-accent-soft: #3a2d18;
+  --hydro-accent-soft: #2a1f14;
 
   /* Feedback */
   --hydro-success: #69db7c;
@@ -210,17 +210,17 @@
   --hydro-status-pending: var(--hydro-judge-tle);
 
   /* Shadows */
-  --hydro-shadow-sm: 0 1px 2px rgb(0 0 0 / 24%);
-  --hydro-shadow-md: 0 14px 34px rgb(0 0 0 / 28%);
-  --hydro-shadow-lg: 0 22px 60px rgb(0 0 0 / 34%);
+  --hydro-shadow-sm: 0 1px 2px rgb(0 0 0 / 28%);
+  --hydro-shadow-md: 0 14px 34px rgb(0 0 0 / 32%);
+  --hydro-shadow-lg: 0 22px 60px rgb(0 0 0 / 38%);
 
   /* Navigation & Translucent Materials */
-  --hydro-nav-bg: rgb(14 22 25 / 76%);
+  --hydro-nav-bg: rgb(9 13 17 / 80%);
   --hydro-glass-surface: var(--hydro-surface);
   --hydro-glass-surface-strong: var(--hydro-surface-raised);
   --hydro-glass-surface-muted: var(--hydro-surface-muted);
-  --hydro-glass-border: rgb(133 173 181 / 18%);
-  --hydro-glass-highlight: rgb(211 242 246 / 9%);
+  --hydro-glass-border: rgb(107 179 199 / 12%);
+  --hydro-glass-highlight: rgb(255 255 255 / 4%);
   --hydro-ambient-primary: color-mix(in srgb, var(--hydro-primary) 18%, transparent);
   --hydro-ambient-secondary: color-mix(in srgb, var(--hydro-accent) 10%, transparent);
   --hydro-ripple-color: color-mix(in srgb, var(--hydro-primary) 34%, transparent);
