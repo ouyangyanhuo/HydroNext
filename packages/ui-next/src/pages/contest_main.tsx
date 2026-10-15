@@ -1,9 +1,9 @@
 import { Badge, Group, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import {
-  IconArrowUpRight, IconCalendarEvent, IconClock, IconPlus, IconSearch, IconUsers,
+  IconArrowUpRight, IconCalendarEvent, IconClock, IconCornerDownLeft, IconPlus, IconSearch, IconUsers,
 } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
-import { Button } from '@/components/common/button';
+import { useEffect, useMemo, useState } from 'react';
+import { ActionIcon, Button } from '@/components/common/button';
 import { EmptyState } from '@/components/common/empty-state';
 import { Paginator } from '@/components/common/paginator';
 import { ShortSelect } from '@/components/common/select';
@@ -184,24 +184,30 @@ export default function ContestMainPage() {
         value: key,
         label: t(value?.TEXT || value?.text || key),
       }));
-    if (fromRules.length) return [{ value: ALL_FILTER, label: t('All') }, ...fromRules];
+    if (fromRules.length) return [{ value: ALL_FILTER, label: t('All Rules') }, ...fromRules];
     const fromDocs = Array.from(new Set(tdocs.map((tdoc: any) => tdoc.rule).filter(Boolean)))
       .map((value: any) => ({ value, label: String(value) }));
-    return [{ value: ALL_FILTER, label: t('All') }, ...fromDocs];
+    return [{ value: ALL_FILTER, label: t('All Rules') }, ...fromDocs];
   }, [rules, t, tdocs]);
   const listKey = `${page}:${q}:${currentGroup}:${currentRule}:${sortedTdocs[0]?.docId || 'empty'}`;
 
-  const handleSearch = () => {
+  const handleSearch = (customSearch = search, nextGroup = group, nextRule = rule) => {
     const url = new URL(window.location.href);
-    if (search) url.searchParams.set('q', search);
+    if (customSearch) url.searchParams.set('q', customSearch);
     else url.searchParams.delete('q');
-    if (group) url.searchParams.set('group', group);
+    if (nextGroup) url.searchParams.set('group', nextGroup);
     else url.searchParams.delete('group');
-    if (rule) url.searchParams.set('rule', rule);
+    if (nextRule) url.searchParams.set('rule', nextRule);
     else url.searchParams.delete('rule');
     url.searchParams.delete('page');
     navigate(url.pathname + url.search);
   };
+
+  useEffect(() => {
+    setSearch(q);
+    setGroup(currentGroup);
+    setRule(currentRule);
+  }, [q, currentGroup, currentRule]);
 
   return (
     <main className="hydro-contest-page">
@@ -219,27 +225,49 @@ export default function ContestMainPage() {
             onChange={(e) => setSearch(e.currentTarget.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             leftSection={<IconSearch size={15} stroke={1.8} />}
+            rightSection={(
+              <ActionIcon
+                size="xs"
+                variant="subtle"
+                color="gray"
+                onClick={() => handleSearch()}
+                aria-label={t('Search')}
+                title={t('Search')}
+              >
+                <IconCornerDownLeft size={13} stroke={1.8} />
+              </ActionIcon>
+            )}
+            rightSectionPointerEvents="auto"
             size="xs"
             className="hydro-contest-header-actions__search"
           />
           <ShortSelect
-            data={[{ value: ALL_FILTER, label: t('All') }, ...groups.map((value: string) => ({ value, label: value }))]}
+            data={[{ value: ALL_FILTER, label: t('All Categories') }, ...groups.map((value: string) => ({ value, label: value }))]}
             value={group || ALL_FILTER}
-            onChange={(value) => setGroup(value === ALL_FILTER ? '' : value || '')}
+            onChange={(value) => {
+              const next = value === ALL_FILTER ? '' : value || '';
+              setGroup(next);
+              handleSearch(search, next, rule);
+            }}
             size="xs"
             className="hydro-contest-header-actions__select"
           />
           <ShortSelect
             data={ruleOptions}
             value={rule || ALL_FILTER}
-            onChange={(value) => setRule(value === ALL_FILTER ? '' : value || '')}
+            onChange={(value) => {
+              const next = value === ALL_FILTER ? '' : value || '';
+              setRule(next);
+              handleSearch(search, group, next);
+            }}
             size="xs"
             className="hydro-contest-header-actions__select hydro-contest-header-actions__select--rule"
           />
-          <Button size="xs" onClick={handleSearch} leftSection={<IconSearch size={14} stroke={1.8} />}>
-            {t('Search')}
-          </Button>
-          {user._id > 0 && <Button component={Link} to="contest_team" variant="light">{t('My Teams')}</Button>}
+          {user._id > 0 && (
+            <Button component={Link} to="contest_team" size="xs" variant="light">
+              {t('My Teams')}
+            </Button>
+          )}
           {canCreateContest && (
             <Button
               component={Link}
