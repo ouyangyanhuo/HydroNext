@@ -4114,11 +4114,17 @@ a {
 }
 
 /* Match sticky headers to their dialog, with a clear gap before the content. */
-.mantine-Modal-header,
-.mantine-Drawer-header {
+.mantine-Modal-header {
   color: var(--hydro-text);
   border-bottom: 1px solid var(--hydro-border);
   padding-block: 16px;
+  gap: 16px;
+}
+
+.mantine-Drawer-header {
+  color: var(--hydro-text);
+  border-bottom: none;
+  padding-block: 16px 8px;
   gap: 16px;
 }
 
@@ -4129,9 +4135,21 @@ a {
   overflow-wrap: anywhere;
 }
 
-.mantine-Modal-body,
-.mantine-Drawer-body {
+.mantine-Modal-body {
   padding-top: 20px;
+}
+
+.mantine-Drawer-body {
+  padding-top: 14px;
+}
+
+.hydro-nav-drawer__header {
+  border-bottom: none !important;
+  padding-bottom: 6px !important;
+}
+
+.hydro-nav-drawer__body {
+  padding-top: 14px !important;
 }
 
 .mantine-Accordion-item,

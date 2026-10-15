@@ -55,10 +55,12 @@ const judgeCase = (c: NormalizedCase) => async (ctx: Context, ctxSubtask: Contex
             status = STATUS.STATUS_TIME_LIMIT_EXCEEDED;
         } else if (memory > c.memory * 1024) {
             status = STATUS.STATUS_MEMORY_LIMIT_EXCEEDED;
-        } else if (ctx.config.detail === 'full' && ((code && code !== 13/* Broken Pipe */) || (code === 13 && !resInteractor.code))) {
+        } else if ((code && code !== 13/* Broken Pipe */) || (code === 13 && !resInteractor.code)) {
             status = STATUS.STATUS_RUNTIME_ERROR;
-            if (code < 32 && signalled) message = signals[code];
-            else message = { message: `${message}Your program returned {0}.`, params: [code] };
+            if (ctx.config.detail === 'full') {
+                if (code < 32 && signalled) message = signals[code];
+                else message = { message: `${message}Your program returned {0}.`, params: [code] };
+            }
         } else {
             const result = parse(resInteractor.stderr, c.score, ctx.config.detail);
             status = result.status;

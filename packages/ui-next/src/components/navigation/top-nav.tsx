@@ -472,7 +472,16 @@ export function TopNav() {
         </div>
       </div>
 
-      <Drawer opened={opened} onClose={close} title={serverName || 'Hydro'} size="xs">
+      <Drawer
+        opened={opened}
+        onClose={close}
+        title={serverName || 'HydroNext'}
+        size="xs"
+        classNames={{
+          header: 'hydro-nav-drawer__header',
+          body: 'hydro-nav-drawer__body',
+        }}
+      >
         <Stack gap="xs">
           {visibleNavItems.map((item) => (
             <Button
