@@ -1,6 +1,6 @@
 import { Badge, Group, Stack, Text, Title } from '@mantine/core';
 import {
-  IconArrowUpRight, IconChevronDown, IconChevronRight, IconChevronUp, IconClock, IconCode,
+  IconArrowUpRight, IconChevronDown, IconChevronRight, IconClock, IconCode,
   IconLogin2, IconSpeakerphone, IconTrophy, IconUserPlus,
 } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
@@ -97,12 +97,25 @@ function Bulletin({ bulletin }: { bulletin: string }) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [fullHeight, setFullHeight] = useState<number>(196);
+  const innerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (contentRef.current) {
-      setIsOverflowing(contentRef.current.scrollHeight > 175);
-    }
+    const element = innerRef.current;
+    if (!element) return () => {};
+    const update = () => {
+      const height = element.scrollHeight;
+      setFullHeight(height);
+      setIsOverflowing(height > 142);
+    };
+    update();
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(update)
+      : null;
+    observer?.observe(element);
+    return () => {
+      observer?.disconnect();
+    };
   }, [bulletin]);
 
   if (!bulletin) return null;
@@ -122,7 +135,14 @@ function Bulletin({ bulletin }: { bulletin: string }) {
             size="compact-xs"
             className="hydro-bulletin__toggle"
             onClick={() => setExpanded(!expanded)}
-            rightSection={expanded ? <IconChevronUp size={13} stroke={2} /> : <IconChevronDown size={13} stroke={2} />}
+            rightSection={(
+              <IconChevronDown
+                size={13}
+                stroke={2}
+                className={`hydro-bulletin__toggle-icon ${expanded ? 'hydro-bulletin__toggle-icon--expanded' : ''}`}
+                aria-hidden="true"
+              />
+            )}
           >
             {expanded ? t('Show less') : t('Show more')}
           </Button>
@@ -130,10 +150,14 @@ function Bulletin({ bulletin }: { bulletin: string }) {
       </div>
       <div className="hydro-bulletin__body">
         <div
-          ref={contentRef}
-          className={`hydro-bulletin__content ${isOverflowing && !expanded ? 'hydro-bulletin__content--clamped' : ''}`}
+          className={`hydro-bulletin__content ${
+            isOverflowing ? (expanded ? 'hydro-bulletin__content--expanded' : 'hydro-bulletin__content--clamped') : ''
+          }`}
+          style={isOverflowing ? { maxHeight: expanded ? `${fullHeight}px` : '196px' } : undefined}
         >
-          <MarkdownRenderer content={bulletin} />
+          <div ref={innerRef} className="hydro-bulletin__inner">
+            <MarkdownRenderer content={bulletin} />
+          </div>
         </div>
       </div>
     </section>

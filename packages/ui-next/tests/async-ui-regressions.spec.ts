@@ -123,6 +123,60 @@ const ContestUser = component('../src/pages/contest_user.tsx').default;
 const ContestBalloon = component('../src/pages/contest_balloon.tsx').default;
 const ContestClarification = component('../src/pages/contest_clarification.tsx').default;
 
+test('problem bulk download is available to creators without edit permission and isolates selections by domain', async () => {
+    let domainId = 'team';
+    const ProblemMain = component('../src/pages/problem_main.tsx', {
+        '@/context/page-data': {
+            usePageData: () => ({ args }), useUserContext: () => ({ _id: 3 }), useUiContext: () => ({ domainId }),
+        },
+        '@/context/router': { useNavigate: () => navigate, useRouterState: () => ({ loading: false }) },
+        '@/hooks/use-build-url': { useBuildUrl: () => () => `/d/${domainId}/p` },
+        '@/hooks/use-permission': { PERM: {}, useHasPerm: () => false, hasPermValue: () => false },
+        '@/stores/session': { useSessionStore: { getState: () => ({ language: 'en' }) } },
+        '@/utils/i18n-content': { extractLocalizedContent: (value: string) => value },
+        '@/components/common/list-sort-select': { ListSortSelect: () => null },
+        '@/components/common/paginator': { Paginator: () => null },
+        '@/components/record/record-status-badge': { RecordStatusBadge: () => null },
+        '@/components/common/data-table': {
+            DataTable: ({ columns, data }: any) => h('div', null, ...data.map((p: any) => h(
+                'div', { key: p.docId }, columns.find((column: any) => column.key === 'select')?.render(p),
+            ))),
+        },
+        '@/components/common/button': { ...mocks['@/components/common/button'], ActionIcon: () => null },
+    }).default;
+    args = { canCreateProblem: true, canEditProblem: false, pdocs: [{ docId: 1 }, { docId: 2 }] };
+    const response = deferred();
+    let calls = 0;
+    request = async (url, init) => {
+        calls++;
+        assert.equal(url, '/d/team/p');
+        assert.deepEqual(JSON.parse(init.body), { operation: 'download', pids: [1] });
+        return response.promise;
+    };
+    const view = await mount(h(ProblemMain));
+    try {
+        await act(async () => (view.host.querySelector('[aria-label="1"]') as HTMLInputElement).click());
+        assert.ok(!view.host.textContent?.includes('Delete ('));
+        await act(async () => {
+            button('Download Selected (1)', view.host).click();
+            button('Download Selected (1)', view.host).click();
+        });
+        assert.equal(calls, 1);
+        assert.equal(button('Download Selected (1)', view.host).disabled, true);
+        await act(async () => response.resolve({ ...failure, headers: new Headers({ 'content-type': 'application/json' }) }));
+        assert.equal(notices.at(-1)?.message, 'Denied');
+        domainId = 'another';
+        await view.render(h(ProblemMain));
+        assert.ok(!view.host.textContent?.includes('Download Selected'));
+        assert.equal((view.host.querySelector('[aria-label="1"]') as HTMLInputElement).checked, false);
+        args = { ...args, canCreateProblem: false };
+        await view.render(h(ProblemMain));
+        assert.equal(view.host.querySelector('[aria-label="1"]'), null);
+    } finally {
+        await view.close();
+    }
+});
+
 test('attendee failures retain the dialog and draft; pending submissions are locked and retry succeeds', async () => {
     args = { tdoc: { title: 'Contest' } };
     const response = deferred();
@@ -334,6 +388,7 @@ test('problem navigation aborts outgoing requests and never displays stale neigh
     });
     const view = await mount(h(ProblemNavigation));
     try {
+        assert.doesNotMatch(view.host.textContent!, /Problem List/);
         assert.doesNotMatch(view.host.textContent!, /No other problems/);
         domainId = 'other';
         args = { pdoc: { docId: 2 } };

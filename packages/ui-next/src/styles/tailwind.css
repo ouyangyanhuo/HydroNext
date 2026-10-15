@@ -462,13 +462,27 @@ a {
   color: var(--hydro-text-muted);
   font-size: 0.86rem;
   line-height: 1.65;
+  transition: max-height 340ms cubic-bezier(0.16, 1, 0.3, 1),
+              mask-image 260ms ease,
+              -webkit-mask-image 260ms ease;
+}
+
+.hydro-bulletin__inner {
+  width: 100%;
+  min-width: 0;
 }
 
 .hydro-bulletin__content--clamped {
-  max-height: 175px;
+  max-height: 196px;
   overflow: hidden;
-  mask-image: linear-gradient(180deg, black calc(100% - 28px), transparent 100%);
-  -webkit-mask-image: linear-gradient(180deg, black calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(180deg, black 140px, transparent 196px);
+  -webkit-mask-image: linear-gradient(180deg, black 140px, transparent 196px);
+}
+
+.hydro-bulletin__content--expanded {
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, black 100%, black 100%);
+  -webkit-mask-image: linear-gradient(180deg, black 100%, black 100%);
 }
 
 .hydro-bulletin__toggle {
@@ -478,6 +492,24 @@ a {
   color: var(--hydro-primary-strong);
   font-size: 0.78rem;
   font-weight: 600;
+  transition: color var(--hydro-duration-fast) var(--hydro-ease-out),
+              background-color var(--hydro-duration-fast) var(--hydro-ease-out);
+}
+
+.hydro-bulletin__toggle-icon {
+  display: inline-flex;
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hydro-bulletin__toggle-icon--expanded {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-bulletin__content,
+  .hydro-bulletin__toggle-icon {
+    transition: none !important;
+  }
 }
 
 .hydro-bulletin__content > :first-child,

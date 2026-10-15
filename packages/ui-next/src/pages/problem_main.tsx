@@ -1,7 +1,7 @@
 import { Badge, Card, Checkbox, Group, HoverCard, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconCornerDownLeft, IconSearch } from '@tabler/icons-react';
-import { useState } from 'react';
+import { IconCornerDownLeft, IconDownload, IconSearch } from '@tabler/icons-react';
+import { useRef, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DataTable } from '@/components/common/data-table';
@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
-import { usePageData, useUserContext } from '@/context/page-data';
+import { usePageData, useUiContext, useUserContext } from '@/context/page-data';
 import { useNavigate, useRouterState } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
@@ -161,6 +161,7 @@ function ProblemSidebar({ categories, query, sort }: { categories: any, query: s
 export default function ProblemMainPage() {
   const { args } = usePageData();
   const user = useUserContext();
+  const { domainId } = useUiContext();
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const navigate = useNavigate();
@@ -173,6 +174,7 @@ export default function ProblemMainPage() {
   const canEdit = Boolean(args.canEditProblem ?? (
     hasPermValue(user.perm, PERM.PERM_EDIT_PROBLEM) || storeCanEdit
   ));
+  const canSelect = canCreate || canEdit;
 
   const pdocs = args.pdocs || [];
   const psdict = args.psdict || {};
@@ -184,18 +186,56 @@ export default function ProblemMainPage() {
   const listKey = `${page}:${qs}:${sort}:${pdocs[0]?.docId || 'empty'}`;
 
   const [search, setSearch] = useState(qs);
-  const [selected, setSelected] = useState<number[]>([]);
+  const selectionScope = JSON.stringify([domainId, user._id, page, qs, sort, pdocs.map((p: any) => p.docId)]);
+  const [selection, setSelection] = useState<{ scope: string, ids: number[] }>({ scope: selectionScope, ids: [] });
+  const selected = selection.scope === selectionScope ? selection.ids : [];
+  const setSelected = (next: number[] | ((prev: number[]) => number[])) => setSelection((prev) => ({
+    scope: selectionScope,
+    ids: typeof next === 'function' ? next(prev.scope === selectionScope ? prev.ids : []) : next,
+  }));
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const downloadPending = useRef(false);
 
   const allSelected = pdocs.length > 0 && pdocs.every((p: any) => selected.includes(p.docId));
 
   const toggleSelect = (docId: number, checked: boolean) => {
-    setSelected((prev) => checked ? [...prev, docId] : prev.filter((id) => id !== docId));
+    setSelected((prev) => checked ? [...new Set([...prev, docId])] : prev.filter((id) => id !== docId));
   };
 
   const toggleSelectAll = (checked: boolean) => {
     setSelected(checked ? pdocs.map((p: any) => p.docId) : []);
+  };
+
+  const handleDownload = async () => {
+    if (!canCreate || !selected.length || downloadPending.current) return;
+    downloadPending.current = true;
+    setDownloading(true);
+    try {
+      const res = await fetch(buildUrl('problem_main'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/zip, application/json' },
+        body: JSON.stringify({ operation: 'download', pids: selected }),
+      });
+      if (!res.ok || !res.headers.get('content-type')?.includes('application/zip')) {
+        const data = res.headers.get('content-type')?.includes('json') ? await res.json() : {};
+        throw new Error(formatErrorMessage(data.error, t('Download failed')));
+      }
+      const objectUrl = URL.createObjectURL(await res.blob());
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `problems-${domainId}.zip`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch (error: any) {
+      notifications.show({ title: t('Download failed'), message: error?.message || t('Network error'), color: 'red' });
+    } finally {
+      downloadPending.current = false;
+      setDownloading(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -237,7 +277,7 @@ export default function ProblemMainPage() {
   };
 
   const columns = [
-    ...(canEdit ? [{
+    ...(canSelect ? [{
       key: 'select',
       title: '',
       width: 40,
@@ -315,6 +355,18 @@ export default function ProblemMainPage() {
     <Stack gap="lg">
       <PageHeader title={t('Problems')}>
         <Group gap="xs" wrap="wrap" className="hydro-problem-toolbar">
+          {canCreate && selected.length > 0 && (
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<IconDownload size={15} />}
+              loading={downloading}
+              disabled={routeLoading}
+              onClick={() => void handleDownload()}
+            >
+              {t('Download Selected')} ({selected.length})
+            </Button>
+          )}
           {canEdit && selected.length > 0 && (
             <Button size="xs" color="red" variant="light" onClick={() => setDeleteDialogOpen(true)}>
               {t('Delete')} ({selected.length})
@@ -355,7 +407,7 @@ export default function ProblemMainPage() {
             className={`hydro-problem-list ${routeLoading ? 'hydro-problem-list--loading' : ''}`}
             aria-busy={routeLoading}
           >
-            {canEdit && pdocs.length > 0 && (
+            {canSelect && pdocs.length > 0 && (
               <Group gap="xs" mb="xs" className="hydro-problem-select-all">
                 <Checkbox
                   aria-label={t('Select All')}

@@ -1,4 +1,4 @@
-import { Badge, Card, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { Badge, Group, Modal, Paper, ScrollArea, Stack, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -485,6 +485,21 @@ export default function ProblemDetailPage() {
   const solutionCount = args.solutionCount;
   const relatedContests = args.ctdocs || [];
   const relatedHomework = args.htdocs || [];
+  const relatedCount = relatedContests.length + relatedHomework.length;
+  const relatedContext = `${ui.domainId}/${user._id}/${pdoc.docId}`;
+  const [relatedOpenFor, setRelatedOpenFor] = useState<string | null>(null);
+  const relatedOpened = relatedOpenFor === relatedContext;
+  const renderRelatedLink = (tdoc: any, to: 'contest_detail' | 'homework_detail', closeOnNavigate = false) => (
+    <Link
+      key={`${to}/${tdoc.docId || tdoc._id}`}
+      to={to}
+      params={{ tid: tdoc.docId || tdoc._id }}
+      className="hydro-subtle-link text-sm font-semibold break-words"
+      onClick={closeOnNavigate ? () => setRelatedOpenFor(null) : undefined}
+    >
+      {extractLocalizedContent(tdoc.title, sessionLanguage)}
+    </Link>
+  );
   const langs = useMemo(() => contentLanguages(pdoc.content), [pdoc.content]);
   const [selectedLang, setSelectedLang] = useState(() => {
     const queryLang = new URLSearchParams(window.location.search).get('lang');
@@ -695,54 +710,61 @@ export default function ProblemDetailPage() {
           <Paper withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]">
             {statement}
           </Paper>
-
-          {(relatedContests.length > 0 || relatedHomework.length > 0) && (
-            <Card withBorder p="lg" className="hydro-content-card">
-              <Title order={4} mb="sm">{t('Related')}</Title>
-              <Stack gap="xs">
-                {relatedContests.map((tdoc: any) => (
-                  <Link
-                    key={tdoc.docId || tdoc._id}
-                    to="contest_detail"
-                    params={{ tid: tdoc.docId || tdoc._id }}
-                    className="hydro-subtle-link text-sm font-semibold"
-                  >
-                    {tdoc.title}
-                  </Link>
-                ))}
-                {relatedHomework.map((tdoc: any) => (
-                  <Link
-                    key={tdoc.docId || tdoc._id}
-                    to="homework_detail"
-                    params={{ tid: tdoc.docId || tdoc._id }}
-                    className="hydro-subtle-link text-sm font-semibold"
-                  >
-                    {tdoc.title}
-                  </Link>
-                ))}
-              </Stack>
-            </Card>
-          )}
         </Stack>
       </div>
 
       <div className="w-full lg:w-64 shrink-0">
-        <ProblemSidebar
-          pdoc={pdoc}
-          psdoc={psdoc}
-          rdoc={rdoc}
-          scratchpadOpen={scratchpadOpen}
-          contestClosed={contestClosed}
-          canSubmitProblem={canSubmitProblem}
-          canEditProblem={canEditProblem}
-          canConfigureProblem={canConfigureProblem}
-          canRejudgeProblem={canRejudgeProblem}
-          canViewProblemSolution={canViewProblemSolution}
-          canViewProblemFiles={canViewProblemFiles}
-          canDownloadProblem={canDownloadProblem}
-          onToggleScratchpad={() => switchScratchpad(true)}
-        />
+        <Stack gap="md">
+          <ProblemSidebar
+            pdoc={pdoc}
+            psdoc={psdoc}
+            rdoc={rdoc}
+            scratchpadOpen={scratchpadOpen}
+            contestClosed={contestClosed}
+            canSubmitProblem={canSubmitProblem}
+            canEditProblem={canEditProblem}
+            canConfigureProblem={canConfigureProblem}
+            canRejudgeProblem={canRejudgeProblem}
+            canViewProblemSolution={canViewProblemSolution}
+            canViewProblemFiles={canViewProblemFiles}
+            canDownloadProblem={canDownloadProblem}
+            onToggleScratchpad={() => switchScratchpad(true)}
+          />
+          {relatedCount > 0 && (
+            <Paper withBorder p="md" className="hydro-panel">
+              <Title order={4} size="h5" mb="sm">{t('Related')}</Title>
+              <Stack gap="xs">
+                {relatedContests.slice(0, 5).map((tdoc: any) => renderRelatedLink(tdoc, 'contest_detail'))}
+                {relatedHomework.slice(0, Math.max(0, 5 - relatedContests.length)).map((tdoc: any) => renderRelatedLink(tdoc, 'homework_detail'))}
+                {relatedCount > 5 && (
+                  <Button
+                    size="xs"
+                    variant="light"
+                    fullWidth
+                    mt={4}
+                    aria-haspopup="dialog"
+                    aria-expanded={relatedOpened}
+                    onClick={() => setRelatedOpenFor(relatedContext)}
+                  >
+                    {t('Show more')}
+                  </Button>
+                )}
+              </Stack>
+            </Paper>
+          )}
+        </Stack>
       </div>
+
+      <Modal opened={relatedOpened} onClose={() => setRelatedOpenFor(null)} title={t('Related')} size="md" centered>
+        {relatedOpened && (
+          <ScrollArea.Autosize mah="60vh" offsetScrollbars>
+            <Stack gap="sm">
+              {relatedContests.map((tdoc: any) => renderRelatedLink(tdoc, 'contest_detail', true))}
+              {relatedHomework.map((tdoc: any) => renderRelatedLink(tdoc, 'homework_detail', true))}
+            </Stack>
+          </ScrollArea.Autosize>
+        )}
+      </Modal>
 
       <FilePreviewModal
         opened={!!previewFile}

@@ -125,6 +125,65 @@ describe('App', () => {
         await agent.get('/api/user?args={"id":2}&projection=uname').expect({ uname: 'root' });
     });
 
+    it('Bulk problem download uses the current domain, create permission and independent testdata access', async () => {
+        const { domain, problem, user } = global.Hydro.model;
+        const { PERM, PRIV } = require('../packages/hydrooj/src/model/builtin');
+        const { ZipReader, Uint8ArrayReader, TextWriter } = require('@zip.js/zip.js');
+        const domainId = 'problem-export-test';
+        const uid = await user.create('export@example.com', 'export-user', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
+        await domain.add(domainId, 2, 'Problem export test', '');
+        const view = PERM.PERM_VIEW | PERM.PERM_VIEW_PROBLEM;
+        await domain.setRoles(domainId, {
+            reader: view | PERM.PERM_READ_PROBLEM_DATA,
+            creator: view | PERM.PERM_CREATE_PROBLEM,
+            exporter: view | PERM.PERM_CREATE_PROBLEM | PERM.PERM_READ_PROBLEM_DATA,
+        });
+        await domain.setUserRole(domainId, uid, 'exporter', true);
+        const p1 = await problem.add(domainId, 'EXPORT1', 'First export', 'Plain statement', uid);
+        const p2 = await problem.add(domainId, 'EXPORT2', 'Second export', JSON.stringify({ zh: '中文题面', en: 'Statement' }), 2);
+        const hidden = await problem.add(domainId, 'HIDDEN', 'Hidden export', '', 2, [], { hidden: true });
+        const referenced = await problem.add(domainId, 'REFERENCE', 'Reference export', '', 2, [], { reference: { domainId: 'system', pid: 1 } });
+        const exporter = supertest.agent(require('hydrooj').httpServer);
+        await exporter.post('/login').send({ uname: 'export-user', password: 'secret' }).expect(302);
+        const route = `/d/${domainId}/p`;
+        try {
+            await problem.addTestdata(domainId, p1, 'config.yaml', Buffer.from('time: 1s\nmemory: 64m\n'), uid);
+            await problem.addTestdata(domainId, p1, '1.in', Buffer.from('1 2\n'), uid);
+            await problem.addAdditionalFile(domainId, p2, 'readme.txt', Buffer.from('Attachment'), 2);
+            const page = getPageArgs(await exporter.get(route).set('Accept', 'application/json').expect(200));
+            assert.equal(page.canCreateProblem, true);
+            assert.equal(page.canEditProblem, false);
+            const response = await exporter.post(route).send({ operation: 'download', pids: [p2, p1, p1] })
+                .buffer(true).parse((res, callback) => {
+                    const chunks = [];
+                    res.on('data', (chunk) => chunks.push(chunk));
+                    res.on('end', () => callback(null, Buffer.concat(chunks)));
+                    res.on('error', callback);
+                }).expect(200).expect('Content-Type', /application\/zip/);
+            const zip = new ZipReader(new Uint8ArrayReader(response.body));
+            const entries = await zip.getEntries();
+            assert.equal(entries.length, 8);
+            const read = async (name: string) => entries.find((entry) => entry.filename === name).getData(new TextWriter());
+            assert.equal(await read(`${p1}/problem.md`), 'Plain statement');
+            assert.equal(await read(`${p2}/problem_zh.md`), '中文题面');
+            assert.equal(await read(`${p1}/testdata/1.in`), '1 2\n');
+            assert.equal(await read(`${p2}/additional_file/readme.txt`), 'Attachment');
+            assert.match(await read(`${p2}/problem.yaml`), /pid: EXPORT2/);
+            await zip.close();
+            await exporter.post(route).send({ operation: 'download', pids: [p1, hidden] }).expect(404);
+            await exporter.post(route).send({ operation: 'download', pids: [referenced] }).expect(400);
+            await exporter.post(route).send({ operation: 'download', pids: [] }).expect(403);
+            await exporter.post(route).send({ operation: 'download', pids: [p1], domainId: 'system' }).expect(403);
+            await domain.setUserRole(domainId, uid, 'reader');
+            await exporter.post(route).send({ operation: 'download', pids: [p1] }).expect(403);
+            await domain.setUserRole(domainId, uid, 'creator');
+            await exporter.post(route).send({ operation: 'download', pids: [p2] }).expect(403);
+        } finally {
+            await Promise.all([p1, p2, hidden, referenced].map((pid) => problem.del(domainId, pid)));
+            await domain.del(domainId);
+        }
+    });
+
     it('Team contests preserve individual records, replay permissions, timers and proctor evidence', async () => {
         const { contest, domain, problem, user, record } = global.Hydro.model;
         const { PRIV } = require('../packages/hydrooj/src/model/builtin');

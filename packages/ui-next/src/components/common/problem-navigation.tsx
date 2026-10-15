@@ -56,7 +56,6 @@ export function ProblemNavigation() {
           <Text size="sm" fw="var(--hydro-weight-semibold)">{t('Problem navigation')}</Text>
           {!current && <Loader size="xs" aria-label={t('Loading...')} />}
         </Group>
-        {source && <Link href={source.sourceUrl} className="hydro-subtle-link text-xs">{t(source.source)}</Link>}
         {(['previous', 'next'] as const).map((direction) => {
           const target = data?.[direction];
           if (!target) return null;

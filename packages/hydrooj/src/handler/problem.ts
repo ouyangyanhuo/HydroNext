@@ -1,6 +1,6 @@
 import { createReadStream } from 'fs';
 import { PassThrough, Readable, Writable } from 'stream';
-import { Entry, ZipReader } from '@zip.js/zip.js';
+import { Entry, TextReader, ZipReader, ZipWriter } from '@zip.js/zip.js';
 import { readFile } from 'fs-extra';
 import yaml from 'js-yaml';
 import {
@@ -254,6 +254,66 @@ export class ProblemMainHandler extends Handler {
         }
         if (redirect) this.response.redirect = this.url('problem_detail', { domainId: target, pid: ids[0] });
         else this.response.body = ids;
+    }
+
+    @post('pids', Types.NumericArray)
+    async postDownload(domainId: string, pids: number[]) {
+        this.checkPerm(PERM.PERM_CREATE_PROBLEM);
+        if (domainId !== this.domain._id) throw new PermissionError(PERM.PERM_VIEW_PROBLEM);
+        if (!pids.length || pids.length > 100 || pids.some((pid) => !Number.isSafeInteger(pid) || pid <= 0)) {
+            throw new ValidationError('pids');
+        }
+        pids = [...new Set(pids)];
+        const pdict = await problem.getList(domainId, pids, this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN),
+            true, problem.PROJECTION_PUBLIC.filter((field) => field !== 'config'), true);
+        // Authorize the entire selection before sending any archive bytes.
+        for (const pid of pids) {
+            const pdoc = pdict[pid];
+            if (pdoc.reference) throw new ProblemIsReferencedError('download testdata');
+            if (!this.user.own(pdoc) && !this.user.hasPriv(PRIV.PRIV_READ_PROBLEM_DATA)) {
+                this.checkPerm(PERM.PERM_READ_PROBLEM_DATA);
+            }
+            for (const file of [...(pdoc.data || []), ...(pdoc.additional_file || [])]) {
+                if (!file.name || sanitize(file.name) !== file.name) throw new ValidationError('filename');
+            }
+        }
+        await oplog.log(this, 'download.problem.export', { domainId, pids });
+        const output = new PassThrough();
+        const controller = new AbortController();
+        output.once('close', () => controller.abort());
+        const zip = new ZipWriter(Writable.toWeb(output) as WritableStream, { signal: controller.signal });
+        this.binary(output, `problems-${sanitize(domainId)}.zip`);
+        this.response.type = 'application/zip';
+        void (async () => {
+            for (const pid of pids) {
+                const pdoc = pdict[pid];
+                // eslint-disable-next-line no-await-in-loop
+                await zip.add(`${pid}/problem.yaml`, new TextReader(yaml.dump(pick(pdoc, [
+                    'pid', 'owner', 'title', 'tag', 'nSubmit', 'nAccept', 'difficulty',
+                ]))));
+                let content: unknown;
+                try { content = JSON.parse(pdoc.content); } catch { /* Plain Markdown. */ }
+                if (content && typeof content === 'object' && !Array.isArray(content)) {
+                    for (const [lang, value] of Object.entries(content)) {
+                        if (!/^[\w-]+$/.test(lang)) throw new ValidationError('language');
+                        // eslint-disable-next-line no-await-in-loop
+                        await zip.add(`${pid}/problem_${lang}.md`, new TextReader(typeof value === 'string' ? value : JSON.stringify(value)));
+                    }
+                } else {
+                    // eslint-disable-next-line no-await-in-loop
+                    await zip.add(`${pid}/problem.md`, new TextReader(pdoc.content || ''));
+                }
+                for (const [type, files] of [['testdata', pdoc.data], ['additional_file', pdoc.additional_file]] as const) {
+                    for (const file of files || []) {
+                        // eslint-disable-next-line no-await-in-loop
+                        const stream = await storage.get(`problem/${domainId}/${pid}/${type}/${file.name}`);
+                        // eslint-disable-next-line no-await-in-loop
+                        await zip.add(`${pid}/${type}/${file.name}`, Readable.toWeb(stream) as ReadableStream);
+                    }
+                }
+            }
+            await zip.close();
+        })().catch((error) => output.destroy(error));
     }
 
     @param('pids', Types.NumericArray)
