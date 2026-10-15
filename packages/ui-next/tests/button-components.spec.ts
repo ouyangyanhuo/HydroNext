@@ -120,6 +120,40 @@ test('interaction stylesheet has hover/press/focus states but no control sizing 
     assert.equal(reducedMotion, true);
 });
 
+test('light topbar neutral hover backgrounds never override filled button or icon colors', async () => {
+    const css = postcss.parse(readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8'));
+    const neutralHoverSelectors: string[] = [];
+    const noGradientSelectors: string[] = [];
+    css.walkRules((rule) => {
+        rule.walkDecls((declaration) => {
+            if (!rule.selector.includes('.hydro-top-nav')) return;
+            if (declaration.prop === 'background-color' && declaration.important && rule.selector.includes(':hover')) {
+                neutralHoverSelectors.push(rule.selector.replaceAll(':hover', ''));
+            }
+            if (declaration.prop === 'background-image' && declaration.value === 'none') noGradientSelectors.push(rule.selector);
+        });
+    });
+    const view = await mount(h('nav', { className: 'hydro-top-nav' },
+        h(Button, { component: 'a', href: '/register', variant: 'filled' }, 'Register'),
+        h(Button, { variant: 'subtle' }, 'Login'),
+        h(ActionIcon, { variant: 'filled', 'aria-label': 'Filled action' }, h('svg')),
+        h(ActionIcon, { variant: 'subtle', 'aria-label': 'Theme' }, h('svg')),
+        h(UnstyledButton, null, 'Profile')));
+    try {
+        assert.equal(document.documentElement.getAttribute('data-mantine-color-scheme'), 'light');
+        for (const element of view.host.querySelectorAll('[data-variant="filled"]')) {
+            assert.equal(neutralHoverSelectors.some((selector) => element.matches(selector)), false);
+            assert.ok(noGradientSelectors.some((selector) => element.matches(selector)));
+        }
+        for (const label of ['Login', 'Profile']) {
+            const element = [...view.host.querySelectorAll('button')].find((button) => button.textContent === label)!;
+            assert.ok(neutralHoverSelectors.some((selector) => element.matches(selector)));
+        }
+        const theme = view.host.querySelector('[aria-label="Theme"]')!;
+        assert.ok(neutralHoverSelectors.some((selector) => theme.matches(selector)));
+    } finally { await view.close(); }
+});
+
 test('all app-authored buttons use the common wrappers', () => {
     const root = fileURLToPath(new URL('../src/', import.meta.url));
     function visit(dir: string) {

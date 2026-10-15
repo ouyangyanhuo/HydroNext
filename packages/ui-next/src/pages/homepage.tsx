@@ -51,16 +51,6 @@ function WelcomeHero({ problemCount, contestCount }: { problemCount: number, con
         </Text>
         {!isLoggedIn && (
           <Group mt="lg" gap="sm">
-            <Button
-              component={Link}
-              to="user_login"
-              size="md"
-              variant={registrationEnabled ? 'light' : 'filled'}
-              leftSection={<IconLogin2 size={18} stroke={2} />}
-              className="hydro-primary-action"
-            >
-              {t('Login')}
-            </Button>
             {registrationEnabled && (
               <Button
                 component={Link}
@@ -73,6 +63,16 @@ function WelcomeHero({ problemCount, contestCount }: { problemCount: number, con
                 {t('Register')}
               </Button>
             )}
+            <Button
+              component={Link}
+              to="user_login"
+              size="md"
+              variant={registrationEnabled ? 'light' : 'filled'}
+              leftSection={<IconLogin2 size={18} stroke={2} />}
+              className="hydro-primary-action"
+            >
+              {t('Login')}
+            </Button>
           </Group>
         )}
       </div>

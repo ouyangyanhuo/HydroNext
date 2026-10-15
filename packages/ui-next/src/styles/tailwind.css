@@ -3463,7 +3463,7 @@ a {
   .mantine-Button-root,
   .mantine-ActionIcon-root,
   .mantine-UnstyledButton-root
-):hover,
+):not([data-variant='filled']):hover,
 [data-mantine-color-scheme='light'] .hydro-topbar-dropdown .mantine-Menu-item:hover {
   background-color: var(--hydro-surface-muted) !important;
   background-image: none !important;

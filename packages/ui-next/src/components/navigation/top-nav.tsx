@@ -423,7 +423,7 @@ export function TopNav() {
               <img src={logoUrl} alt="" className="h-11 w-11 shrink-0 object-contain" />
               <span className="hidden min-w-0 sm:block">
                 <span className="block truncate text-base font-black leading-tight text-[var(--hydro-text)]">
-                  {serverName || 'Hydro'}
+                  {serverName || 'HydroNext'}
                 </span>
                 <span className="block text-[11px] font-semibold uppercase text-[var(--hydro-text-muted)]">
                   {t('Online Judge')}
