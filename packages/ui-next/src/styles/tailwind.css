@@ -126,6 +126,42 @@ html {
   color-scheme: dark;
 }
 
+/* Custom Scrollbars */
+html,
+body,
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hydro-scrollbar-thumb) var(--hydro-scrollbar-track);
+}
+
+::-webkit-scrollbar {
+  width: var(--hydro-scrollbar-width);
+  height: var(--hydro-scrollbar-width);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--hydro-scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--hydro-scrollbar-thumb);
+  border-radius: var(--hydro-radius-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--hydro-scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--hydro-scrollbar-thumb-active);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 body {
   min-width: 320px;
   margin: 0;

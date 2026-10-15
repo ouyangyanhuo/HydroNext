@@ -92,7 +92,7 @@ function GuestMenu() {
 
   return (
     <Group gap="xs">
-      <Button component={Link} to="user_login" variant="subtle">{t('Login')}</Button>
+      <Button component={Link} to="user_login" variant={registrationEnabled ? 'subtle' : 'filled'}>{t('Login')}</Button>
       {registrationEnabled && <Button component={Link} to="user_register" variant="filled">{t('Register')}</Button>}
     </Group>
   );
@@ -530,7 +530,14 @@ export function TopNav() {
               </>
             ) : (
               <>
-                <Button component={Link} to="user_login" variant="subtle" fullWidth justify="flex-start" onClick={close}>
+                <Button
+                  component={Link}
+                  to="user_login"
+                  variant={registrationEnabled ? 'subtle' : 'filled'}
+                  fullWidth
+                  justify="flex-start"
+                  onClick={close}
+                >
                   {t('Login')}
                 </Button>
                 {registrationEnabled && (

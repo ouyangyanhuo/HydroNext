@@ -139,6 +139,13 @@
   --hydro-ambient-secondary: color-mix(in srgb, var(--hydro-accent) 10%, transparent);
   --hydro-ripple-color: color-mix(in srgb, var(--hydro-primary) 30%, transparent);
 
+  /* Scrollbar */
+  --hydro-scrollbar-width: 8px;
+  --hydro-scrollbar-thumb: color-mix(in srgb, var(--hydro-text-muted) 32%, transparent);
+  --hydro-scrollbar-thumb-hover: color-mix(in srgb, var(--hydro-primary) 65%, transparent);
+  --hydro-scrollbar-thumb-active: var(--hydro-primary);
+  --hydro-scrollbar-track: transparent;
+
   /* Typography & Timing */
   --hydro-font-serif: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, 'Source Serif 4', Georgia, serif;
   --hydro-font-family: var(--hydro-font-serif);
@@ -217,6 +224,12 @@
   --hydro-ambient-primary: color-mix(in srgb, var(--hydro-primary) 18%, transparent);
   --hydro-ambient-secondary: color-mix(in srgb, var(--hydro-accent) 10%, transparent);
   --hydro-ripple-color: color-mix(in srgb, var(--hydro-primary) 34%, transparent);
+
+  /* Scrollbar */
+  --hydro-scrollbar-thumb: color-mix(in srgb, var(--hydro-text-muted) 30%, transparent);
+  --hydro-scrollbar-thumb-hover: color-mix(in srgb, var(--hydro-primary) 70%, transparent);
+  --hydro-scrollbar-thumb-active: var(--hydro-primary-strong);
+  --hydro-scrollbar-track: transparent;
 }
 
 [data-hydro-theme='paper'] {
@@ -281,6 +294,12 @@
   --hydro-ambient-primary: color-mix(in srgb, var(--hydro-primary) 13%, transparent);
   --hydro-ambient-secondary: color-mix(in srgb, var(--hydro-accent) 9%, transparent);
   --hydro-ripple-color: color-mix(in srgb, var(--hydro-primary) 28%, transparent);
+
+  /* Scrollbar */
+  --hydro-scrollbar-thumb: color-mix(in srgb, var(--hydro-text-muted) 35%, transparent);
+  --hydro-scrollbar-thumb-hover: color-mix(in srgb, var(--hydro-primary) 65%, transparent);
+  --hydro-scrollbar-thumb-active: var(--hydro-primary);
+  --hydro-scrollbar-track: transparent;
 }
 
 ::view-transition-old(root),

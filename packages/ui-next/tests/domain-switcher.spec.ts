@@ -139,15 +139,21 @@ test('desktop and mobile guest registration entries follow the system registrati
     const f = await fixture(0, true);
     try {
         assert.equal(f.host.querySelector('a[href="/user_register"]')?.getAttribute('data-variant'), 'filled');
+        assert.equal(f.host.querySelector('a[href="/user_login"]')?.getAttribute('data-variant'), 'subtle');
         await f.setRegistrationEnabled(false);
         assert.equal(f.host.querySelector('a[href="/user_register"]'), null);
+        assert.equal(f.host.querySelector('a[href="/user_login"]')?.getAttribute('data-variant'), 'filled');
         const burger = f.host.querySelector<HTMLButtonElement>('.mantine-Burger-root')!;
         await act(async () => burger.click());
         assert.equal(document.body.querySelector('a[href="/user_register"]'), null);
+        const loginLinks = document.body.querySelectorAll('a[href="/user_login"]');
+        assert.ok(loginLinks.length >= 2, 'both desktop and mobile login buttons are present');
+        for (const link of loginLinks) assert.equal(link.getAttribute('data-variant'), 'filled');
         await f.setRegistrationEnabled(true);
         const registrationLinks = document.body.querySelectorAll('a[href="/user_register"]');
         assert.ok(registrationLinks.length >= 2, 'both desktop and mobile registration buttons are present');
         for (const link of registrationLinks) assert.equal(link.getAttribute('data-variant'), 'filled');
+        for (const link of document.body.querySelectorAll('a[href="/user_login"]')) assert.equal(link.getAttribute('data-variant'), 'subtle');
     } finally { await f.close(); }
 });
 
