@@ -1,4 +1,4 @@
-import { Alert, Anchor, Checkbox, PasswordInput, Stack, TextInput } from '@mantine/core';
+import { Alert, Anchor, Checkbox, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconKey, IconLock } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -170,14 +170,16 @@ export default function UserLoginPage() {
         </Stack>
       </form>
 
-      <Anchor component={Link} to="user_lostpass" size="sm">
-        {t('Forgot Password?')}
-      </Anchor>
-      {registrationEnabled && args.builtInLogin !== false && (
-        <Anchor component={Link} to="user_register" size="sm">
-          {t("Don't have an account? Register")}
+      <Group justify="space-between" align="center">
+        <Anchor component={Link} to="user_lostpass" size="sm">
+          {t('Forgot Password?')}
         </Anchor>
-      )}
+        {registrationEnabled && args.builtInLogin !== false && (
+          <Anchor component={Link} to="user_register" size="sm">
+            {t("Don't have an account? Register")}
+          </Anchor>
+        )}
+      </Group>
 
       {(args.loginMethods || []).length > 0 && (
         <OAuthButtons methods={args.loginMethods} redirect={redirect} />
