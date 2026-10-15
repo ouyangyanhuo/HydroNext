@@ -13,25 +13,25 @@
             <div class="team-card__title"><h3>{{ v.displayName }}</h3><small>(ID {{ v._id }})</small></div>
             <div class="team-card__meta">
               <span class="team-card__count">{{ v.members.length }} {{ _('Members') }}</span>
-              <button type="button" class="button small" data-contest-team-rename>{{ _('Rename') }}</button>
+              {% if v.canManage %}<button type="button" class="button small" data-contest-team-rename>{{ _('Rename') }}</button>{% endif %}
             </div>
           </div>
-          <form class="team-card__rename is-hidden" method="post" action="{{ url('contest_team') }}" data-contest-team-rename-form>
+          {% if v.canManage %}<form class="team-card__rename is-hidden" method="post" action="{{ url('contest_team') }}" data-contest-team-rename-form>
             <input type="hidden" name="operation" value="rename">
             <input type="hidden" name="vuid" value="{{ v._id }}">
             <input type="text" class="textbox" name="name" value="{{ v.displayName }}" required>
             <button type="submit" class="primary button small">{{ _('Save') }}</button>
             <button type="button" class="button small" data-contest-team-rename-cancel>{{ _('Cancel') }}</button>
-          </form>
+          </form>{% endif %}
           <div class="team-card__section">
             <label>{{ _('Team invitation code') }}
               <input type="text" class="textbox" value="{{ v.invitationCode }}" readonly>
             </label>
-            <form method="post" action="{{ url('contest_team') }}" onsubmit='return confirm({{ _("Resetting invalidates the old invitation code immediately. Existing members are not affected.")|json|safe }});'>
+            {% if v.canManage %}<form method="post" action="{{ url('contest_team') }}" onsubmit='return confirm({{ _("Resetting invalidates the old invitation code immediately. Existing members are not affected.")|json|safe }});'>
               <input type="hidden" name="operation" value="reset_code">
               <input type="hidden" name="vuid" value="{{ v._id }}">
               <button type="submit" class="button small">{{ _('Reset team invitation code') }}</button>
-            </form>
+            </form>{% endif %}
           </div>
           <div class="team-card__section">
             <p class="team-card__label">{{ _('Members') }}</p>
@@ -39,7 +39,7 @@
               {% for m in v.members %}
               <li class="team-card__row">
                 <span class="team-card__user">{{ user.render_inline(udict[m], badge=false) }}</span>
-                {% if m != UserContext._id %}
+                {% if v.canManage and m != v.captainId %}
                 <form method="post" action="{{ url('contest_team') }}" onsubmit='return confirm({{ _("Remove this member from the team?")|json|safe }});'>
                   <input type="hidden" name="operation" value="leave">
                   <input type="hidden" name="vuid" value="{{ v._id }}">
@@ -51,11 +51,11 @@
               {% endfor %}
             </ul>
           </div>
-          <form method="post" action="{{ url('contest_team') }}" onsubmit='return confirm({{ _("Leave this team? You may lose access to team contests.")|json|safe }});'>
+          {% if v.canLeave %}<form method="post" action="{{ url('contest_team') }}" onsubmit='return confirm({{ _("Leave this team? You may lose access to team contests.")|json|safe }});'>
             <input type="hidden" name="operation" value="leave">
             <input type="hidden" name="vuid" value="{{ v._id }}">
             <button type="submit" class="button small">{{ _('Leave Team') }}</button>
-          </form>
+          </form>{% else %}<p>{{ _('The captain must remove other members before leaving the team.') }}</p>{% endif %}
         </div>
         {% endfor %}
       </div>

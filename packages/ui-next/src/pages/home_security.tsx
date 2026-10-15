@@ -1,6 +1,8 @@
 import { Alert, Badge, Card, Divider, Group, Modal, PasswordInput, Radio, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconDeviceMobile, IconDevices, IconKey, IconLink, IconLock, IconPlus, IconUsb } from '@tabler/icons-react';
+import {
+  IconAlertTriangle, IconCheck, IconDeviceMobile, IconDevices, IconKey, IconLink, IconLock, IconPlus, IconUsb,
+} from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
@@ -198,10 +200,20 @@ export default function HomeSecurityPage() {
         <PageHeader title={t('Security')} />
       </div>
       <Stack gap="lg">
-        {success && <Alert color="green" variant="light">{success}</Alert>}
+        {success && (
+          <Alert color="green" icon={<IconCheck size={18} />}>
+            {success}
+          </Alert>
+        )}
 
         {user?.mail?.endsWith('.local') && (
-          <Alert color="yellow" variant="light">{t("You haven't set an email.")}</Alert>
+          <Alert
+            color="yellow"
+            icon={<IconAlertTriangle size={18} />}
+            title={t('Warning')}
+          >
+            {t("You haven't set an email.")}
+          </Alert>
         )}
 
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
@@ -459,7 +471,9 @@ export default function HomeSecurityPage() {
           )}
 
           {!webauthnAvailable && authenticatorType !== 'tfa' ? (
-            <Alert color="yellow">{t('Your browser does not support WebAuthn or you are not in secure context.')}</Alert>
+            <Alert color="yellow" icon={<IconAlertTriangle size={18} />}>
+              {t('Your browser does not support WebAuthn or you are not in secure context.')}
+            </Alert>
           ) : null}
           <Group justify="flex-end">
             <Button variant="subtle" onClick={() => setAuthenticatorOpened(false)}>{t('Cancel')}</Button>

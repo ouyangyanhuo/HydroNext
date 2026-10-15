@@ -3609,14 +3609,75 @@ a {
 }
 
 .mantine-Alert-root {
-  border-color: color-mix(in srgb, var(--hydro-border) 68%, var(--hydro-glass-border));
-  background-color:
-    color-mix(in srgb, var(--alert-bg, var(--hydro-glass-surface-strong)) 72%, transparent);
-  background-image:
-    linear-gradient(135deg, var(--hydro-glass-highlight), transparent 46%);
-  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
-  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(112%);
-  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(112%);
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--hydro-radius-md);
+  border: 1px solid color-mix(in srgb, var(--alert-color, var(--hydro-border)) 24%, var(--hydro-border));
+  background-color: color-mix(in srgb, var(--alert-color, var(--hydro-primary)) 7%, var(--hydro-surface));
+  box-shadow: var(--hydro-shadow-sm);
+  padding: 13px 16px;
+  transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
+              background-color var(--hydro-duration-normal) var(--hydro-ease-out);
+}
+
+.mantine-Alert-root::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3.5px;
+  background-color: var(--alert-color, var(--hydro-primary));
+  opacity: 0.9;
+}
+
+[data-mantine-color-scheme='dark'] .mantine-Alert-root {
+  border-color: color-mix(in srgb, var(--alert-color, var(--hydro-border)) 32%, var(--hydro-border));
+  background-color: color-mix(in srgb, var(--alert-color, var(--hydro-primary)) 12%, var(--hydro-surface));
+  box-shadow: 0 2px 8px rgb(0 0 0 / 22%);
+}
+
+[data-hydro-theme='paper'] .mantine-Alert-root {
+  border-color: color-mix(in srgb, var(--alert-color, var(--hydro-border)) 36%, var(--hydro-border));
+  background-color: color-mix(in srgb, var(--alert-color, var(--hydro-primary)) 7%, var(--hydro-surface));
+}
+
+.mantine-Alert-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mantine-Alert-icon {
+  margin-right: 0;
+  margin-top: 1px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--alert-color, var(--hydro-primary));
+}
+
+.mantine-Alert-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.mantine-Alert-title {
+  margin-bottom: 4px;
+  font-weight: var(--hydro-weight-semibold);
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+  color: var(--alert-color, var(--hydro-text));
+}
+
+.mantine-Alert-message {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--hydro-text);
 }
 
 /* Interactive overlays must stay fully opaque over dense page content. */
@@ -3627,8 +3688,7 @@ a {
 .mantine-Popover-dropdown,
 .mantine-Menu-dropdown,
 .mantine-Combobox-dropdown,
-.mantine-Notification-root,
-.mantine-Alert-root {
+.mantine-Notification-root {
   opacity: 1 !important;
   background-color: var(--hydro-surface-raised) !important;
   background-image: none !important;
@@ -3655,10 +3715,6 @@ a {
 .mantine-Modal-body,
 .mantine-Drawer-body {
   padding-top: 20px;
-}
-
-.mantine-Alert-title {
-  margin-bottom: 10px;
 }
 
 .mantine-Accordion-item,

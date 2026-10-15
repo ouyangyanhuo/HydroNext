@@ -236,6 +236,17 @@ describe('App', () => {
             ]);
             assert.deepEqual(results.map((result) => result.status).sort(), [302, 403]);
             assert.equal((await user.getVuserById(vuid)).members.length, 2);
+            const memberAgent = results[0].status === 302 ? firstAgent : secondAgent;
+            const memberId = results[0].status === 302 ? first : second;
+            const memberPage = getPageArgs(await memberAgent.get(route).expect(200)).mine.find((doc) => doc._id === vuid);
+            assert.equal(memberPage.captainId, 2);
+            assert.equal(memberPage.canManage, false);
+            assert.equal(memberPage.canLeave, true);
+            await memberAgent.post(route).send({ operation: 'leave', vuid, uid: 2 }).expect(403);
+            await memberAgent.post(route).send({ operation: 'rename', vuid, name: 'Hijacked' }).expect(403);
+            await memberAgent.post(route).send({ operation: 'reset_code', vuid }).expect(403);
+            await agent.post(route).send({ operation: 'leave', vuid }).expect(403);
+            assert.deepEqual((await user.getVuserById(vuid)).members, [2, memberId]);
             const publicUser = await agent.get('/api/user').query({ args: JSON.stringify({ id: vuid }) }).expect(200);
             assert.ok(!publicUser.text.includes(reset));
             const guest = supertest.agent(require('hydrooj').httpServer);
@@ -243,6 +254,18 @@ describe('App', () => {
                 .send({ operation: 'join', code: reset }).expect(200);
             assert.ok(unauthorized.body.url.includes('/login'));
             assert.equal((await user.getVuserById(vuid)).members.length, 2);
+            await memberAgent.post(route).send({ operation: 'leave', vuid }).expect(302);
+            assert.deepEqual((await user.getVuserById(vuid)).members, [2]);
+            await memberAgent.post(route).send({ operation: 'join', code: reset }).expect(302);
+            await agent.post(route).send({ operation: 'rename', vuid, name: 'Captain renamed' }).expect(302);
+            assert.equal((await user.getVuserById(vuid)).displayName, 'Captain renamed');
+            await agent.post(route).send({ operation: 'leave', vuid, uid: memberId }).expect(302);
+            assert.deepEqual((await user.getVuserById(vuid)).members, [2]);
+            await agent.post(route).send({ operation: 'leave', vuid }).expect(302);
+            const closed = await user.getVuserById(vuid);
+            assert.deepEqual(closed.members, []);
+            assert.equal(closed._teamJoinCode, undefined);
+            await memberAgent.post(route).send({ operation: 'join', code: reset }).expect(403);
         } finally {
             await collV.deleteOne({ _id: vuid });
             await domain.del(domainId);

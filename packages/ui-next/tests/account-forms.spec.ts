@@ -167,7 +167,7 @@ test('team page replaces pending invites with a case-insensitive invitation-code
 
 test('team cards offer code copy and require confirmation before a reset', async () => {
     const f = await fixture('contest_team', {}, {}, {
-        mine: [{ _id: -1000, uname: 'team:2:test', displayName: 'Team', members: [2], invitationCode: 'ABCDEFGH' }],
+        mine: [{ _id: -1000, displayName: 'Team', captainId: 2, canManage: true, canLeave: true, members: [2], invitationCode: 'ABCDEFGH' }],
     }, { _id: 2 });
     try {
         assert.match(f.host.textContent!, /ABCDEFGH/);
@@ -180,6 +180,16 @@ test('team cards offer code copy and require confirmation before a reset', async
         await act(async () => f.host.querySelector<HTMLButtonElement>('[data-confirm]')!.click());
         assert.deepEqual(JSON.parse(f.calls[0].init.body), { operation: 'reset_code', vuid: -1000 });
     } finally { await f.close(); }
+    const member = await fixture('contest_team', {}, {}, {
+        mine: [{ _id: -1000, displayName: 'Team', captainId: 2, canManage: false, canLeave: true, members: [2, 3], invitationCode: 'ABCDEFGH' }],
+    }, { _id: 3 });
+    try {
+        assert.equal(member.host.querySelector('[aria-label="Reset team invitation code"]'), null);
+        assert.equal(member.host.querySelector('[aria-label="Remove Member"]'), null);
+        assert.ok(![...member.host.querySelectorAll('button')].some((button) => button.textContent === 'Rename'));
+        assert.ok([...member.host.querySelectorAll('button')].some((button) => button.textContent === 'Leave Team' && !button.disabled));
+        assert.match(member.host.textContent!, /ABCDEFGH/);
+    } finally { await member.close(); }
 });
 
 test('rejected team code requests keep the code and display an error notification', async () => {

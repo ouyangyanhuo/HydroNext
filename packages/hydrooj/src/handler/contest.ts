@@ -12,11 +12,12 @@ import { Context, Service } from '../context';
 import {
     BadRequestError, ContestAlreadyAttendedError, ContestAlreadyStartedError, ContestNotAttendedError, ContestNotEndedError,
     ContestNotFoundError, ContestNotLiveError, ContestScoreboardHiddenError, FileLimitExceededError, FileUploadError,
-    InvalidTokenError, MethodNotAllowedError, NotAssignedError, NotFoundError, PermissionError, TeamMembershipRequiredError,
+    InvalidTokenError, MethodNotAllowedError, NotAssignedError, NotFoundError, PermissionError,
     ValidationError,
 } from '../error';
 import { ContestStatusDoc, FileInfo, ScoreboardConfig, Tdoc } from '../interface';
 import { requireProctorAccess } from '../lib/proctor-access';
+import { teamCaptainId } from '../lib/team-permissions';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as announcements from '../model/contest-announcement';
@@ -1033,21 +1034,21 @@ class ContestTeamHandler extends Handler {
     async get({ domainId }) {
         const teams = await user.getVusersByMember(this.user._id);
         const mine = await Promise.all(teams.map(async (team) => {
-            const current = await user.getTeamInvitation(team._id, this.user._id);
+            const captainId = teamCaptainId(team);
+            const hasCaptain = captainId > 0 && team.members?.includes(captainId);
+            // Keep damaged legacy teams visible without granting authority or an unusable invitation code.
+            const current = hasCaptain ? await user.getTeamInvitation(team._id, this.user._id) : team;
             return {
                 _id: current._id, uname: current.uname, displayName: current.displayName,
-                members: current.members, invitationCode: current._teamJoinCode,
+                members: current.members, invitationCode: hasCaptain ? current._teamJoinCode : undefined,
+                captainId,
+                canManage: captainId === this.user._id,
+                canLeave: captainId !== this.user._id || current.members.length === 1,
             };
         }));
         const udict = await user.getList(domainId, mine.flatMap((team) => team.members || []));
         this.response.template = 'contest_team.html';
         this.response.body = { mine, udict, page_name: 'contest_team' };
-    }
-
-    private async mustMember(vuid: number) {
-        const v = await user.getVuserById(vuid);
-        if (!v?.members?.includes(this.user._id)) throw new TeamMembershipRequiredError();
-        return v;
     }
 
     @param('name', Types.String)
@@ -1057,6 +1058,7 @@ class ContestTeamHandler extends Handler {
         const vuid = await user.createVuser(`team:${this.user._id}:${randomstring(6)}`, {
             displayName,
             members: [this.user._id],
+            captainId: this.user._id,
         });
         await user.getTeamInvitation(vuid, this.user._id);
         this.back();
@@ -1065,10 +1067,7 @@ class ContestTeamHandler extends Handler {
     @param('vuid', Types.Int)
     @param('name', Types.String)
     async postRename(domainId: string, vuid: number, name: string) {
-        await this.mustMember(vuid);
-        const displayName = name.trim();
-        if (!displayName) throw new ValidationError('name');
-        await user.updateVuserById(vuid, { $set: { displayName } });
+        await user.renameTeam(vuid, this.user._id, name);
         this.back();
     }
 
@@ -1089,16 +1088,7 @@ class ContestTeamHandler extends Handler {
     @param('vuid', Types.Int)
     @param('uid', Types.Int, true)
     async postLeave(domainId: string, vuid: number, uid?: number) {
-        const target = uid ?? this.user._id;
-        if (target === this.user._id) {
-            const v = await user.getVuserById(vuid);
-            if (!v?.members?.includes(this.user._id)) {
-                throw new TeamMembershipRequiredError();
-            }
-        } else {
-            await this.mustMember(vuid);
-        }
-        await user.updateVuserById(vuid, { $pull: { members: target, invite: target } });
+        await user.leaveTeam(vuid, this.user._id, uid ?? this.user._id);
         this.back();
     }
 }

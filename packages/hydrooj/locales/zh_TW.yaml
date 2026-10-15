@@ -1,4 +1,6 @@
 __flag: 🇹🇼
+'Only the team captain can perform this operation.': '只有隊長可以執行此操作。'
+'The captain must remove other members before leaving the team.': '隊長須先移除其他隊員，才能退出隊伍。'
 'After joining, select Team Participation when registering for a contest that allows teams.': '加入隊伍後，可在允許組隊的比賽中選擇「組隊參賽」進行報名。'
 'Create a team and share its invitation code. Teammates enter the code to join; no private messages are needed.': '建立隊伍並分享邀請碼，隊員填寫邀請碼即可加入，無須透過私信邀請。'
 'Enter the 8-character team invitation code': '請輸入 8 位隊伍邀請碼'

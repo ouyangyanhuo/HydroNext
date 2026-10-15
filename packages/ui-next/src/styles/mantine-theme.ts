@@ -36,6 +36,7 @@ const BASE_THEME_CONFIG = {
     TextInput: { defaultProps: { size: 'sm' } },
     Select: { defaultProps: { size: 'sm' } },
     Textarea: { defaultProps: { size: 'sm' } },
+    Alert: { defaultProps: { radius: 'md', variant: 'light' } },
   },
 };
 

@@ -8,7 +8,7 @@ import { test } from 'node:test';
 const require = createRequire(import.meta.url);
 const errors = Object.fromEntries([
     'InvalidJoinInvitationCodeError', 'PermissionError', 'SystemError', 'TeamAlreadyJoinedError', 'TeamMemberLimitError',
-    'TeamMembershipRequiredError', 'ValidationError',
+    'TeamMembershipRequiredError', 'TeamCaptainRequiredError', 'TeamCaptainLeaveError', 'ValidationError',
 ].map((name) => [name, class extends Error { constructor(...args: unknown[]) { super(`${name}:${args.join(',')}`); } }]));
 function load(path: string, mocks: Record<string, any>) {
     const module = { exports: {} as any };
@@ -21,18 +21,26 @@ function load(path: string, mocks: Record<string, any>) {
     });
     return module.exports;
 }
-const api = load('../src/lib/team-invitation.ts', { '../error': errors, '../model/builtin': { PERM: { PERM_ATTEND_CONTEST: 1 } } });
+const permissions = load('../src/lib/team-permissions.ts', { '../error': errors });
+const api = load('../src/lib/team-invitation.ts', {
+    '../error': errors, '../model/builtin': { PERM: { PERM_ATTEND_CONTEST: 1 } }, './team-permissions': permissions,
+});
 const clone = (value: any) => value ? structuredClone(value) : null;
 
 function collection(initial: any[]) {
-    const rows = clone(initial);
+    const rows = clone(initial).map((row: any) => ({ captainId: row.members?.[0], ...row }));
     const writes: any[] = [];
     const match = (row: any, filter: any) => Object.entries(filter).every(([key, value]: [string, any]) => {
-        if (key === 'members') return typeof value === 'number' ? row.members.includes(value) : !row.members.includes(value.$ne);
+        if (key === 'members') {
+            if (typeof value === 'number') return row.members.includes(value);
+            if (Array.isArray(value)) return JSON.stringify(value) === JSON.stringify(row.members);
+            return (!value.$all || value.$all.every((uid: number) => row.members.includes(uid))) && !row.members.includes(value.$ne);
+        }
         if (key === '$expr') {
             assert.equal(JSON.stringify(value.$lt[0]), '{"$size":{"$ifNull":["$members",[]]}}');
             return row.members.length < value.$lt[1];
         }
+        if (typeof value === 'object' && value && '$exists' in value) return (row[key] !== undefined) === value.$exists;
         return value === null ? row[key] == null : row[key] === value;
     });
     return {
@@ -43,6 +51,12 @@ function collection(initial: any[]) {
             assert.equal(options.returnDocument, 'after');
             const row = rows.find((item) => match(item, filter));
             if (!row) return null;
+            if (Array.isArray(update)) {
+                const target = update[0].$set.members.$filter.cond.$ne[1];
+                row.members = row.members.filter((uid: number) => uid !== target);
+                for (const key of update[1]?.$unset || []) delete row[key];
+                return clone(row);
+            }
             const code = update.$set?._teamJoinCode;
             if (code && rows.some((other) => other._id !== row._id && other._teamJoinCode === code)) {
                 throw Object.assign(new Error('duplicate code'), { code: 11000 });
@@ -66,20 +80,23 @@ test('team codes use cryptographic randomness, eight unambiguous characters and 
 });
 
 test('legacy teams receive a stable code and retire pending private-message invitations', async () => {
-    const store = collection([{ _id: -1000, members: [2], invite: [3] }]);
+    const store = collection([{ _id: -1000, uname: 'team:2:legacy', captainId: undefined, members: [2], invite: [3] }]);
     const team = await api.ensureTeamInvitationCode(store, -1000, 2, false, () => 'ABCDEFGH');
     assert.equal(team._teamJoinCode, 'ABCDEFGH');
+    assert.equal(team.captainId, 2);
     assert.equal(team.invite, undefined);
     const again = await api.ensureTeamInvitationCode(store, -1000, 2);
     assert.equal(again._teamJoinCode, team._teamJoinCode);
     assert.equal(store.writes.length, 1);
 });
 
-test('team codes are only readable/resettable by current members and reset leaves members intact', async () => {
+test('members can read team codes but only the captain may reset them', async () => {
     const store = collection([{ _id: -1000, members: [2, 3], _teamJoinCode: 'ABCDEFGH' }]);
     await assert.rejects(api.ensureTeamInvitationCode(store, -1000, 4), /TeamMembershipRequiredError/);
     await assert.rejects(api.ensureTeamInvitationCode(store, -1000, 4, true), /TeamMembershipRequiredError/);
-    const updated = await api.ensureTeamInvitationCode(store, -1000, 3, true, () => 'JKLMNPQR');
+    assert.equal((await api.ensureTeamInvitationCode(store, -1000, 3))._teamJoinCode, 'ABCDEFGH');
+    await assert.rejects(api.ensureTeamInvitationCode(store, -1000, 3, true), /TeamCaptainRequiredError/);
+    const updated = await api.ensureTeamInvitationCode(store, -1000, 2, true, () => 'JKLMNPQR');
     assert.equal(updated._teamJoinCode, 'JKLMNPQR');
     assert.deepEqual(updated.members, [2, 3]);
     await assert.rejects(api.joinTeamByInvitationCode(store, 'ABCDEFGH', 4, 5), /InvalidJoinInvitationCodeError/);
@@ -151,6 +168,7 @@ async function handlerFixture(uid = 2) {
             Handler: class {}, param: () => () => {}, post: () => () => {}, Types: { Range: () => [], ArrayOf: () => [] },
         },
         '@hydrooj/utils/lib/utils': {},
+        '../lib/team-permissions': permissions,
         '../model/builtin': { PERM: { PERM_ATTEND_CONTEST: 1 }, PRIV: { PRIV_USER_PROFILE: 4 }, STATUS: {} },
         '../model/user': model, '../model/message': { send: () => assert.fail('team joining must not send private messages') },
     });
@@ -181,6 +199,16 @@ test('team page requires a normal account and exposes codes only for that accoun
     const outsider = await handlerFixture(3);
     await outsider.handler.get({ domainId: 'team-domain' });
     assert.equal(outsider.handler.response.body.mine.length, 0);
+    // A previously removed creator must not promote the remaining member or break their teams page.
+    outsider.store.rows[0].members = [3];
+    delete outsider.store.rows[0].captainId;
+    await outsider.handler.get({ domainId: 'team-domain' });
+    const orphaned = outsider.handler.response.body.mine[0];
+    assert.equal(orphaned.captainId, 2);
+    assert.equal(orphaned.canManage, false);
+    assert.equal(orphaned.canLeave, true);
+    assert.equal(orphaned.invitationCode, undefined);
+    await assert.rejects(permissions.renameTeamByCaptain(outsider.store, -1000, 3, 'Takeover'), /TeamCaptainRequiredError/);
 });
 
 test('legacy invitation operations are removed and code joins are rate-limited per account', async () => {
@@ -191,6 +219,8 @@ test('legacy invitation operations are removed and code joins are rate-limited p
     assert.deepEqual(f.store.rows[0].members, [2, 3]);
     assert.equal(f.calls[0][1], 'contest_team_join');
     assert.equal(f.calls[0][4], '3');
+    await assert.rejects(f.handler.postResetCode('team-domain', -1000), /TeamCaptainRequiredError/);
+    f.handler.user._id = 2;
     await f.handler.postResetCode('team-domain', -1000);
     assert.notEqual(f.store.rows[0]._teamJoinCode, 'ABCDEFGH');
 });

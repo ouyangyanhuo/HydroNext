@@ -9,6 +9,7 @@ import {
 import avatar from '../lib/avatar';
 import pwhash from '../lib/hash.hydro';
 import { ensureTeamInvitationCode, joinTeamByInvitationCode } from '../lib/team-invitation';
+import { leaveOrRemoveTeamMember, renameTeamByCaptain } from '../lib/team-permissions';
 import bus from '../service/bus';
 import db from '../service/db';
 import { Value } from '../typeutils';
@@ -449,6 +450,18 @@ class UserModel {
 
     static async joinTeam(code: string, uid: number, limit: number) {
         const team = await joinTeamByInvitationCode(collV, code, uid, limit);
+        deleteUserCache(team);
+        return team;
+    }
+
+    static async renameTeam(vuid: number, uid: number, name: string) {
+        const team = await renameTeamByCaptain(collV, vuid, uid, name);
+        deleteUserCache(team);
+        return team;
+    }
+
+    static async leaveTeam(vuid: number, uid: number, target = uid) {
+        const team = await leaveOrRemoveTeamMember(collV, vuid, uid, target);
         deleteUserCache(team);
         return team;
     }

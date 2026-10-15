@@ -1,6 +1,6 @@
 import { Alert, Badge, Card, FileInput, Grid, Group, Pagination, Stack, Table, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconDownload, IconUpload } from '@tabler/icons-react';
+import { IconAlertCircle, IconAlertTriangle, IconDownload, IconUpload } from '@tabler/icons-react';
 import { useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
@@ -190,6 +190,8 @@ export default function ManageClientUpdatesPage() {
     </PageHeader>
     <Alert
       color="orange"
+      icon={<IconAlertTriangle size={20} />}
+      title={t('Information')}
     >
       {t(
         'The client must support buildVersion comparison before using this manifest for update ordering. '
@@ -301,10 +303,15 @@ export default function ManageClientUpdatesPage() {
           maxLength={2048}
         />
         {assets.filter((asset) => asset.bundleError && draft[asset.kind] === asset.id).map(
-          (asset) => <Alert
-            color="red"
-            key={asset.id}
-          >{t(asset.bundleError!)}</Alert>,
+          (asset) => (
+            <Alert
+              key={asset.id}
+              color="red"
+              icon={<IconAlertCircle size={18} />}
+            >
+              {t(asset.bundleError!)}
+            </Alert>
+          ),
         )}
         <Text
           size="sm"

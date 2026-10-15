@@ -1,11 +1,12 @@
 import { randomInt } from 'node:crypto';
 import type { Collection } from 'mongodb';
 import {
-    InvalidJoinInvitationCodeError, PermissionError, SystemError, TeamAlreadyJoinedError, TeamMemberLimitError,
+    InvalidJoinInvitationCodeError, PermissionError, SystemError, TeamAlreadyJoinedError, TeamCaptainRequiredError, TeamMemberLimitError,
     TeamMembershipRequiredError, ValidationError,
 } from '../error';
 import type { VUdoc } from '../interface';
 import { PERM } from '../model/builtin';
+import { requireTeamCaptain, teamCaptainGuard, teamCaptainId } from './team-permissions';
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CODE_PATTERN = /^[A-HJ-NP-Z2-9]{8}$/;
@@ -29,7 +30,10 @@ export async function ensureTeamInvitationCode(
         // eslint-disable-next-line no-await-in-loop
         const team = await collection.findOne({ _id: vuid, members: uid });
         if (!team) throw new TeamMembershipRequiredError();
+        if (reset) requireTeamCaptain(team, uid);
         if (!reset && CODE_PATTERN.test(team._teamJoinCode || '')) return team;
+        const captainId = teamCaptainId(team);
+        if (!captainId || !team.members.includes(captainId)) throw new TeamCaptainRequiredError();
         const code = generate();
         if (code === team._teamJoinCode) continue;
         try {
@@ -37,8 +41,9 @@ export async function ensureTeamInvitationCode(
             // eslint-disable-next-line no-await-in-loop
             const updated = await collection.findOneAndUpdate({
                 _id: vuid, members: uid,
+                ...teamCaptainGuard(team),
                 _teamJoinCode: team._teamJoinCode ?? null,
-            }, { $set: { _teamJoinCode: code }, $unset: { invite: '' } }, { returnDocument: 'after' });
+            }, { $set: { _teamJoinCode: code, captainId }, $unset: { invite: '' } }, { returnDocument: 'after' });
             if (updated) return updated;
         } catch (error) {
             if (error?.code !== 11000) throw error;
@@ -52,10 +57,16 @@ export async function joinTeamByInvitationCode(collection: Collection<VUdoc>, va
     const code = normalizeTeamInvitationCode(value);
     const maxMembers = limit ?? 5;
     if (!Number.isSafeInteger(maxMembers) || maxMembers <= 0) throw new ValidationError('limit.team_members');
+    const current = await collection.findOne({ _teamJoinCode: code });
+    if (!current) throw new InvalidJoinInvitationCodeError();
+    const captainId = teamCaptainId(current);
+    if (!captainId || !current.members?.includes(captainId)) throw new TeamCaptainRequiredError();
     // Code validity, membership and the capacity check are part of the same atomic write.
     const updated = await collection.findOneAndUpdate({
         _teamJoinCode: code,
-        members: { $ne: uid },
+        _id: current._id,
+        ...teamCaptainGuard(current),
+        members: { $all: [captainId], $ne: uid },
         $expr: { $lt: [{ $size: { $ifNull: ['$members', []] } }, maxMembers] },
     }, { $addToSet: { members: uid }, $unset: { invite: '' } }, { returnDocument: 'after' });
     if (updated) return updated;

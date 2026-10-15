@@ -1,5 +1,6 @@
 import { Alert, Card, Code, Group, Modal, NumberInput, Stack, Switch, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconAlertTriangle, IconInfoCircle } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
@@ -52,7 +53,13 @@ export default function ManageProctorPage() {
   if (!allowed) return <Text>{t('Access Denied')}</Text>;
   return <Stack gap="lg">
     <PageHeader title={t('Proctor settings')} />
-    <Alert>{t('Generate both key pairs and inject both public keys when building the client. No manual client enrollment is required.')}</Alert>
+    <Alert
+      color="blue"
+      icon={<IconInfoCircle size={18} />}
+      title={t('Information')}
+    >
+      {t('Generate both key pairs and inject both public keys when building the client. No manual client enrollment is required.')}
+    </Alert>
     <Card withBorder className="hydro-content-card" p="lg">
       <Stack gap="md">
         <Title order={3}>{t('Session policy')}</Title>
@@ -155,6 +162,8 @@ export default function ManageProctorPage() {
       <Stack gap="md">
         <Alert
           color="red"
+          icon={<IconAlertTriangle size={18} />}
+          title={t('Warning')}
         >
           {t(
             'Private keys are server-only. Do not put them in build variables, repositories or chat messages. '

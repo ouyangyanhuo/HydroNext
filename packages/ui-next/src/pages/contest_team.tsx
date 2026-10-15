@@ -23,11 +23,6 @@ import { formatErrorMessage } from '@/utils/error';
 interface RenameModalState { vuid: number, name: string }
 interface RemoveMemberState { vuid: number, uid: number, uname: string }
 
-function getTeamCreatorId(team: any): number {
-  const match = typeof team?.uname === 'string' ? team.uname.match(/^team:(\d+):/) : null;
-  return match ? Number(match[1]) : team?.members?.[0] || 0;
-}
-
 export default function ContestTeamPage() {
   const { args } = usePageData();
   const { t } = useI18n();
@@ -115,7 +110,9 @@ export default function ContestTeamPage() {
               </Card>
             )}
             {mine.map((team: any) => {
-              const creatorId = getTeamCreatorId(team);
+              const captainId = team.captainId;
+              const canManage = team.canManage === true && captainId === currentUser._id;
+              const canLeave = team.canLeave !== false;
               const members = team.members || [];
               return (
                 <Card key={team._id} withBorder p="lg" className="hydro-content-card">
@@ -132,21 +129,25 @@ export default function ContestTeamPage() {
                         </Stack>
                       </Group>
                       <Group gap="xs">
-                        <Button
+                        {canManage && <Button
                           size="xs"
                           variant="light"
                           disabled={loading}
                           leftSection={<IconEdit size={14} />}
                           onClick={() => setRenameModal({ vuid: team._id, name: team.displayName })}
-                        >{t('Rename')}</Button>
-                        <Button
-                          size="xs"
-                          variant="subtle"
-                          color="red"
-                          disabled={loading}
-                          leftSection={<IconLogout size={14} />}
-                          onClick={() => setLeaving(team._id)}
-                        >{t('Leave Team')}</Button>
+                        >{t('Rename')}</Button>}
+                        <Tooltip disabled={canLeave} label={t('The captain must remove other members before leaving the team.')}>
+                          <span>
+                            <Button
+                              size="xs"
+                              variant="subtle"
+                              color="red"
+                              disabled={loading || !canLeave}
+                              leftSection={<IconLogout size={14} />}
+                              onClick={() => setLeaving(team._id)}
+                            >{t('Leave Team')}</Button>
+                          </span>
+                        </Tooltip>
                       </Group>
                     </Group>
                     <Paper withBorder p="sm" radius="md" bg="var(--hydro-surface-muted)">
@@ -165,14 +166,14 @@ export default function ContestTeamPage() {
                             disabled={!team.invitationCode}
                             onClick={() => copyInvitation(team.invitationCode)}
                           >{t('Copy')}</Button>
-                          <Tooltip label={t('Reset team invitation code')}>
+                          {canManage && <Tooltip label={t('Reset team invitation code')}>
                             <ActionIcon
                               variant="subtle"
                               disabled={loading}
                               aria-label={t('Reset team invitation code')}
                               onClick={() => setResetting(team._id)}
                             ><IconRefresh size={16} /></ActionIcon>
-                          </Tooltip>
+                          </Tooltip>}
                         </Group>
                       </Group>
                     </Paper>
@@ -191,7 +192,7 @@ export default function ContestTeamPage() {
                                   <Stack gap={2} style={{ minWidth: 0 }}>
                                     <UserLink user={u} size="sm" />
                                     <Group gap={4}>
-                                      {uid === creatorId && (
+                                      {uid === captainId && (
                                         <Badge size="xs" color="yellow" variant="light" leftSection={<IconCrown size={10} />}>
                                           {t('Leader')}
                                         </Badge>
@@ -200,7 +201,7 @@ export default function ContestTeamPage() {
                                     </Group>
                                   </Stack>
                                 </Group>
-                                {!isSelf && (
+                                {canManage && !isSelf && uid !== captainId && (
                                   <Tooltip label={t('Remove this member from the team?')}>
                                     <ActionIcon
                                       size="sm"
