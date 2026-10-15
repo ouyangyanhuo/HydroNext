@@ -1,33 +1,132 @@
 :root {
   color-scheme: light;
+
+  /* Primitive Tokens: Color Palettes */
+  --hydro-color-slate-50: #f8fafc;
+  --hydro-color-slate-100: #f1f5f9;
+  --hydro-color-slate-200: #e2e8f0;
+  --hydro-color-slate-300: #cbd5e1;
+  --hydro-color-slate-400: #94a3b8;
+  --hydro-color-slate-500: #64748b;
+  --hydro-color-slate-600: #475569;
+  --hydro-color-slate-700: #334155;
+  --hydro-color-slate-800: #1e293b;
+  --hydro-color-slate-900: #0f172a;
+  --hydro-color-slate-950: #020617;
+
+  --hydro-color-zinc-50: #fafafa;
+  --hydro-color-zinc-100: #f4f4f5;
+  --hydro-color-zinc-200: #e4e4e7;
+  --hydro-color-zinc-300: #d4d4d8;
+  --hydro-color-zinc-400: #a1a1aa;
+  --hydro-color-zinc-500: #71717a;
+  --hydro-color-zinc-600: #52525b;
+  --hydro-color-zinc-700: #3f3f46;
+  --hydro-color-zinc-800: #27272a;
+  --hydro-color-zinc-900: #18181b;
+  --hydro-color-zinc-950: #09090b;
+
+  --hydro-color-teal-50: #f0fdfa;
+  --hydro-color-teal-100: #ccfbf1;
+  --hydro-color-teal-200: #99f6e4;
+  --hydro-color-teal-300: #5eead4;
+  --hydro-color-teal-400: #2dd4bf;
+  --hydro-color-teal-500: #14b8a6;
+  --hydro-color-teal-600: #0d9488;
+  --hydro-color-teal-700: #0f766e;
+  --hydro-color-teal-800: #115e59;
+  --hydro-color-teal-900: #134e4a;
+
+  --hydro-color-copper-50: #fef3e8;
+  --hydro-color-copper-100: #fce4c8;
+  --hydro-color-copper-200: #f7c691;
+  --hydro-color-copper-300: #f0a556;
+  --hydro-color-copper-400: #e88a2a;
+  --hydro-color-copper-500: #d4863a;
+  --hydro-color-copper-600: #b06a25;
+  --hydro-color-copper-700: #8f531c;
+  --hydro-color-copper-800: #744115;
+  --hydro-color-copper-900: #5e3611;
+
+  --hydro-color-green-500: #2f9e44;
+  --hydro-color-green-400: #40c057;
+  --hydro-color-green-300: #51cf66;
+  --hydro-color-red-500: #d64545;
+  --hydro-color-red-400: #fa5252;
+  --hydro-color-red-300: #ff6b6b;
+  --hydro-color-amber-500: #e9a100;
+  --hydro-color-amber-400: #fab005;
+  --hydro-color-amber-300: #ffd43b;
+  --hydro-color-blue-500: #339af0;
+  --hydro-color-blue-400: #4dabf7;
+  --hydro-color-purple-500: #845ef7;
+  --hydro-color-purple-400: #9775fa;
+
+  /* Semantic Tokens: Surface Elevation */
   --hydro-bg: #eef3f6;
   --hydro-bg-soft: #f7fafb;
   --hydro-surface: #ffffff;
   --hydro-surface-raised: #ffffff;
   --hydro-surface-muted: #edf2f4;
   --hydro-surface-tint: #e8f5f2;
+
+  /* Semantic Tokens: Content & Borders */
   --hydro-text: #172024;
   --hydro-text-muted: #66757c;
   --hydro-text-secondary: var(--hydro-text-muted);
   --hydro-border: #d9e2e5;
   --hydro-border-strong: #bdcbd0;
+
+  /* Semantic Tokens: Brand & Accents */
   --hydro-primary: #3f879c;
   --hydro-primary-strong: #2d6a7e;
   --hydro-primary-soft: #e2f0f4;
   --hydro-accent: #d4863a;
   --hydro-accent-soft: #fef3e8;
-  --hydro-success: #2f9e44;
-  --hydro-warning: #e9a100;
-  --hydro-danger: #d64545;
-  --hydro-status-accepted: #40c057;
-  --hydro-status-wrong: #fa5252;
-  --hydro-status-pending: #fab005;
-  --hydro-radius-sm: 4px;
-  --hydro-radius-md: 6px;
-  --hydro-radius-lg: 8px;
+
+  /* Semantic Tokens: Feedback */
+  --hydro-success: var(--hydro-color-green-500);
+  --hydro-warning: var(--hydro-color-amber-500);
+  --hydro-danger: var(--hydro-color-red-500);
+
+  /* Semantic Tokens: Judge Status */
+  --hydro-judge-ac: #2f9e44;
+  --hydro-judge-ac-soft: color-mix(in srgb, var(--hydro-judge-ac) 12%, transparent);
+  --hydro-judge-wa: #d64545;
+  --hydro-judge-wa-soft: color-mix(in srgb, var(--hydro-judge-wa) 12%, transparent);
+  --hydro-judge-tle: #e9a100;
+  --hydro-judge-tle-soft: color-mix(in srgb, var(--hydro-judge-tle) 12%, transparent);
+  --hydro-judge-pending: #339af0;
+  --hydro-judge-pending-soft: color-mix(in srgb, var(--hydro-judge-pending) 12%, transparent);
+
+  /* Judge status compatibility aliases */
+  --hydro-status-accepted: var(--hydro-judge-ac);
+  --hydro-status-wrong: var(--hydro-judge-wa);
+  --hydro-status-pending: var(--hydro-judge-tle);
+
+  /* Component Tokens: Radius Hierarchy */
+  --hydro-radius-xs: 4px;
+  --hydro-radius-sm: 6px;
+  --hydro-radius-md: 8px;
+  --hydro-radius-lg: 12px;
+  --hydro-radius-xl: 16px;
+  --hydro-radius-full: 9999px;
+
+  /* Component Tokens: Semantic Component Aliases */
+  --hydro-card-radius: var(--hydro-radius-lg);
+  --hydro-card-bg: var(--hydro-surface);
+  --hydro-modal-radius: var(--hydro-radius-lg);
+  --hydro-modal-bg: var(--hydro-surface-raised);
+  --hydro-button-radius: var(--hydro-radius-md);
+  --hydro-input-radius: var(--hydro-radius-md);
+  --hydro-badge-radius: var(--hydro-radius-sm);
+
+  /* Shadows */
   --hydro-shadow-sm: 0 1px 2px rgb(18 32 38 / 8%);
   --hydro-shadow-md: 0 12px 30px rgb(18 32 38 / 10%);
   --hydro-shadow-lg: 0 22px 55px rgb(18 32 38 / 14%);
+
+  /* Navigation & Translucent Materials */
   --hydro-nav-bg: rgb(255 255 255 / 76%);
   --hydro-glass-surface: rgb(255 255 255 / 66%);
   --hydro-glass-surface-strong: rgb(255 255 255 / 78%);
@@ -39,6 +138,8 @@
   --hydro-ambient-primary: color-mix(in srgb, var(--hydro-primary) 15%, transparent);
   --hydro-ambient-secondary: color-mix(in srgb, var(--hydro-accent) 10%, transparent);
   --hydro-ripple-color: color-mix(in srgb, var(--hydro-primary) 30%, transparent);
+
+  /* Typography & Timing */
   --hydro-font-serif: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, 'Source Serif 4', Georgia, serif;
   --hydro-font-family: var(--hydro-font-serif);
   --hydro-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
@@ -58,31 +159,55 @@
   color-scheme: dark;
   --hydro-weight-medium: 460;
   --hydro-weight-semibold: 560;
+
+  /* Surface Elevation */
   --hydro-bg: #0b1114;
   --hydro-bg-soft: #10181b;
   --hydro-surface: #151f22;
-  --hydro-surface-raised: #1b272b;
+  --hydro-surface-raised: #1c272b;
   --hydro-surface-muted: #243236;
   --hydro-surface-tint: #102f2d;
+
+  /* Content & Borders */
   --hydro-text: #edf7f5;
   --hydro-text-muted: #a1b4b0;
   --hydro-text-secondary: var(--hydro-text-muted);
   --hydro-border: #2a3b40;
   --hydro-border-strong: #506970;
+
+  /* Brand & Accents */
   --hydro-primary: #6bb3c7;
   --hydro-primary-strong: #8dcad9;
   --hydro-primary-soft: #1a3038;
   --hydro-accent: #e8a75e;
   --hydro-accent-soft: #3a2d18;
+
+  /* Feedback */
   --hydro-success: #69db7c;
   --hydro-warning: #ffd166;
   --hydro-danger: #ff7b7b;
-  --hydro-status-accepted: #51cf66;
-  --hydro-status-wrong: #ff6b6b;
-  --hydro-status-pending: #ffd43b;
+
+  /* Judge Semantics */
+  --hydro-judge-ac: #51cf66;
+  --hydro-judge-ac-soft: color-mix(in srgb, var(--hydro-judge-ac) 16%, transparent);
+  --hydro-judge-wa: #ff6b6b;
+  --hydro-judge-wa-soft: color-mix(in srgb, var(--hydro-judge-wa) 16%, transparent);
+  --hydro-judge-tle: #ffd43b;
+  --hydro-judge-tle-soft: color-mix(in srgb, var(--hydro-judge-tle) 16%, transparent);
+  --hydro-judge-pending: #4dabf7;
+  --hydro-judge-pending-soft: color-mix(in srgb, var(--hydro-judge-pending) 16%, transparent);
+
+  /* Judge status compatibility aliases */
+  --hydro-status-accepted: var(--hydro-judge-ac);
+  --hydro-status-wrong: var(--hydro-judge-wa);
+  --hydro-status-pending: var(--hydro-judge-tle);
+
+  /* Shadows */
   --hydro-shadow-sm: 0 1px 2px rgb(0 0 0 / 24%);
   --hydro-shadow-md: 0 14px 34px rgb(0 0 0 / 28%);
   --hydro-shadow-lg: 0 22px 60px rgb(0 0 0 / 34%);
+
+  /* Navigation & Translucent Materials */
   --hydro-nav-bg: rgb(14 22 25 / 76%);
   --hydro-glass-surface: var(--hydro-surface);
   --hydro-glass-surface-strong: var(--hydro-surface-raised);
@@ -98,31 +223,55 @@
   color-scheme: light;
   --hydro-weight-medium: 500;
   --hydro-weight-semibold: 600;
+
+  /* Surface Elevation */
   --hydro-bg: #efe8de;
   --hydro-bg-soft: #f2ece3;
-  --hydro-surface: #efe8de;
-  --hydro-surface-raised: #f0eadf;
+  --hydro-surface: #f4ede3;
+  --hydro-surface-raised: #faf4eb;
   --hydro-surface-muted: #e6ddd1;
   --hydro-surface-tint: #ebe3d7;
+
+  /* Content & Borders */
   --hydro-text: #2c2418;
   --hydro-text-muted: #7a6e5e;
   --hydro-text-secondary: var(--hydro-text-muted);
   --hydro-border: #d8cfc2;
   --hydro-border-strong: #c4b9a9;
+
+  /* Brand & Accents */
   --hydro-primary: #8b6f47;
   --hydro-primary-strong: #6d5635;
   --hydro-primary-soft: #ebe3d7;
   --hydro-accent: #b8860b;
   --hydro-accent-soft: #f0e6cc;
+
+  /* Feedback */
   --hydro-success: #5a8a3c;
   --hydro-warning: #c49000;
   --hydro-danger: #b54545;
-  --hydro-status-accepted: #5a8a3c;
-  --hydro-status-wrong: #c44040;
-  --hydro-status-pending: #c49000;
+
+  /* Judge Semantics */
+  --hydro-judge-ac: #5a8a3c;
+  --hydro-judge-ac-soft: color-mix(in srgb, var(--hydro-judge-ac) 14%, transparent);
+  --hydro-judge-wa: #c44040;
+  --hydro-judge-wa-soft: color-mix(in srgb, var(--hydro-judge-wa) 14%, transparent);
+  --hydro-judge-tle: #c49000;
+  --hydro-judge-tle-soft: color-mix(in srgb, var(--hydro-judge-tle) 14%, transparent);
+  --hydro-judge-pending: #4263eb;
+  --hydro-judge-pending-soft: color-mix(in srgb, var(--hydro-judge-pending) 14%, transparent);
+
+  /* Judge status compatibility aliases */
+  --hydro-status-accepted: var(--hydro-judge-ac);
+  --hydro-status-wrong: var(--hydro-judge-wa);
+  --hydro-status-pending: var(--hydro-judge-tle);
+
+  /* Shadows */
   --hydro-shadow-sm: 0 1px 2px rgb(60 50 30 / 6%);
   --hydro-shadow-md: 0 12px 30px rgb(60 50 30 / 8%);
   --hydro-shadow-lg: 0 22px 55px rgb(60 50 30 / 12%);
+
+  /* Navigation & Translucent Materials */
   --hydro-nav-bg: rgb(239 232 222 / 78%);
   --hydro-glass-surface: rgb(244 238 229 / 64%);
   --hydro-glass-surface-strong: rgb(246 240 232 / 76%);

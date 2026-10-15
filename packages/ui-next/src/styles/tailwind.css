@@ -210,7 +210,7 @@ a {
 .hydro-panel {
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-lg);
-  background: var(--hydro-surface-raised);
+  background: var(--hydro-surface);
   box-shadow: var(--hydro-shadow-sm);
   transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
               box-shadow var(--hydro-duration-normal) var(--hydro-ease-out);
@@ -219,7 +219,7 @@ a {
 .hydro-card {
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-lg);
-  background: var(--hydro-surface-raised);
+  background: var(--hydro-surface);
   box-shadow: var(--hydro-shadow-sm);
   transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
               box-shadow var(--hydro-duration-normal) var(--hydro-ease-out);
@@ -232,7 +232,7 @@ a {
 
 /* Homepage: an open product surface with clear data hierarchy. */
 .hydro-home {
-  --home-panel-radius: 14px;
+  --home-panel-radius: var(--hydro-radius-lg);
   gap: 20px;
 }
 
@@ -385,7 +385,7 @@ a {
   min-height: 48px;
   padding: 12px 18px;
   border: 1px solid var(--hydro-border);
-  border-radius: 10px;
+  border-radius: var(--hydro-radius-lg);
   background: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
 }
 
@@ -427,8 +427,8 @@ a {
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--hydro-border);
-  border-radius: var(--home-panel-radius);
-  background: var(--hydro-surface-raised);
+  border-radius: var(--hydro-radius-lg);
+  background: var(--hydro-surface);
   box-shadow: var(--hydro-shadow-sm);
 }
 
@@ -2517,7 +2517,7 @@ a {
 .hydro-content-card {
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-lg);
-  background: var(--hydro-surface-raised);
+  background: var(--hydro-surface);
   box-shadow: var(--hydro-shadow-sm);
   transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
               box-shadow var(--hydro-duration-normal) var(--hydro-ease-out);
@@ -3836,7 +3836,10 @@ a {
   .hydro-empty-state,
   .hydro-auth-card,
   .mantine-Card-root,
-  .mantine-Paper-root,
+  .mantine-Paper-root {
+    background-color: var(--hydro-surface);
+  }
+
   .mantine-Modal-content,
   .mantine-Drawer-content,
   .mantine-Popover-dropdown,

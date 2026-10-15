@@ -125,6 +125,11 @@ test('dashboard restricts runtime to admins and clock ticks do not rerender navi
     });
     const view = await mount(h(Dashboard));
     try {
+        assert.deepEqual([...view.host.querySelectorAll('.hydro-card h3')].map((heading) => heading.textContent), [
+            'User Management', 'User Privileges', 'System Data',
+            'System Settings', 'Proctor settings', 'Update settings',
+            'Service Status', 'Scripts', 'Configuration',
+        ]);
         const renders = pageRenders;
         monotonicNow += 1000;
         await act(async () => { for (const tick of timers.values()) tick(); });

@@ -13,6 +13,7 @@ const previous = new Map<string, PropertyDescriptor | undefined>();
 for (const [key, value] of Object.entries({
     window: dom.window, document: dom.window.document, navigator: dom.window.navigator,
     HTMLElement: dom.window.HTMLElement, Element: dom.window.Element, Node: dom.window.Node,
+    HTMLAnchorElement: dom.window.HTMLAnchorElement,
     getComputedStyle: dom.window.getComputedStyle.bind(dom.window), IS_REACT_ACT_ENVIRONMENT: true,
     requestAnimationFrame: (callback: () => void) => setTimeout(callback, 0), cancelAnimationFrame: clearTimeout,
     ResizeObserver: class { observe() {} unobserve() {} disconnect() {} },
@@ -35,7 +36,8 @@ const { createRoot } = require('react-dom/client');
 const mantine = require('@mantine/core');
 
 async function fixture(page: string, ui: any = {}, response: any = {}, args: any = {}, user: any = { _id: 0 }, translations = {}) {
-    dom.reconfigure({ url: page === 'contest_team' ? 'https://oj.example/d/team/contest/team' : 'https://oj.example/d/team/register' });
+    const path = page === 'contest_team' ? 'contest/team' : page === 'contest_detail' ? 'contest/123' : 'register';
+    dom.reconfigure({ url: `https://oj.example/d/team/${path}` });
     const navigations: string[] = [];
     const notices: any[] = [];
     const calls: any[] = [];
@@ -44,6 +46,15 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         '@mantine/core': mantine,
         '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
         '@/components/common/button': { Button: mantine.Button, ActionIcon: mantine.ActionIcon },
+        '@/components/common/delete-resource-button': { DeleteResourceButton: () => null },
+        '@/components/common/select': {
+            LongSelect: ({ data, value, onChange, disabled, label }: any) => h('select', {
+                value, disabled, 'aria-label': label, onChange: (event: any) => onChange(event.target.value),
+            }, data.flatMap((item: any) => item.items || [item]).map((item: any) => h('option', { key: item.value, value: item.value }, item.label))),
+        },
+        '@/components/contest/contest-proctor-notice': { ContestProctorNotice: () => null },
+        '@/components/contest/contest-timer': { ContestTimer: () => null },
+        '@/components/record/record-status-badge': { RecordStatusBadge: () => null },
         '@/components/common/page-header': { PageHeader: ({ children }: any) => h('header', null, children) },
         '@/components/common/confirm-dialog': { ConfirmDialog: ({ opened, title, message, onConfirm, loading }: any) => opened
             ? h('section', { 'data-confirm-dialog': true }, title, message,
@@ -61,6 +72,9 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => translations[key] || key }) },
         '@/hooks/use-build-url': { useBuildUrl: () => (route: string) => `/d/team/${route}` },
+        '@/hooks/use-current-user': { useCurrentUser: () => user, useIsLoggedIn: () => user._id > 0 },
+        '@/hooks/use-permission': { PERM: {}, useHasPerm: () => false },
+        '@/hooks/use-time': { useDeadlinePassed: (date: string) => new Date(date).getTime() <= Date.now() },
         '@/context/router': { useNavigate: () => (url: string) => navigations.push(url) },
         '@/context/page-data': { usePageData: () => ({ args }) },
         '@/stores/session': { useSessionStore: (select: any) => select({ ui, user, language: 'en' }) },
@@ -148,6 +162,47 @@ test('homepage guest registration is emphasized and follows the registration set
         assert.equal(closed.host.querySelector('a[href="/user_register"]'), null);
         assert.equal(closed.host.querySelector('a[href="/user_login"]')?.getAttribute('data-variant'), 'filled');
     } finally { await closed.close(); }
+});
+
+test('team-enabled contest registration asks before posting and keeps personal-only registration direct', async () => {
+    const contest = { _id: '123', title: 'Contest', rule: 'acm', endAt: new Date(Date.now() + 3600000).toISOString() };
+    const f = await fixture('contest_detail', {}, {}, {
+        tdoc: { ...contest, allowTeam: true, _code: 'secret', content: '\n<!-- empty -->\n' },
+        team_vdocs: [{ _id: -1000, displayName: 'My team' }],
+    }, { _id: 2 });
+    const click = async (text: string) => act(async () => {
+        [...document.querySelectorAll('button')].find((button) => button.textContent === text)!.click();
+    });
+    try {
+        assert.ok(f.host.textContent?.includes('No contest introduction yet.'));
+        assert.equal(f.host.querySelector('select'), null);
+        assert.ok(!f.host.textContent?.includes('Manage Teams'));
+        await f.input(0, 'secret');
+        await click('Register Contest');
+        assert.equal(f.calls.length, 0);
+        assert.ok(document.querySelector('[role="dialog"]'));
+        await click('Cancel');
+        assert.equal(f.calls.length, 0);
+        await click('Register Contest');
+        await click('Confirm');
+        assert.deepEqual(JSON.parse(f.calls[0].init.body), { operation: 'attend', code: 'secret' });
+        await click('Register Contest');
+        await act(async () => {
+            const select = document.querySelector('select')!;
+            select.value = '-1000';
+            select.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+        });
+        await click('Confirm');
+        assert.deepEqual(JSON.parse(f.calls[1].init.body), { operation: 'attend', code: 'secret', vuid: -1000 });
+        assert.equal(f.calls[1].url, 'https://oj.example/d/team/contest/123');
+    } finally { await f.close(); }
+    const personal = await fixture('contest_detail', {}, {}, { tdoc: { ...contest, content: ' \n\t ' } }, { _id: 2 });
+    try {
+        assert.ok(personal.host.textContent?.includes('No contest introduction yet.'));
+        await click('Register Contest');
+        assert.deepEqual(JSON.parse(personal.calls[0].init.body), { operation: 'attend', code: '' });
+        assert.equal(document.querySelector('[role="dialog"]'), null);
+    } finally { await personal.close(); }
 });
 
 test('team page replaces pending invites with a case-insensitive invitation-code join form', async () => {

@@ -1,10 +1,10 @@
-import { Badge, Card, Divider, Group, Paper, Stack, Table, Text, Textarea, TextInput, Title, Tooltip } from '@mantine/core';
+import { Badge, Card, Divider, Group, Modal, Paper, Stack, Table, Text, Textarea, TextInput, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft } from '@tabler/icons-react';
-import { useState } from 'react';
+import { IconArrowLeft, IconFileDescription } from '@tabler/icons-react';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { DeleteResourceButton } from '@/components/common/delete-resource-button';
-import { LongSelect, ShortSelect } from '@/components/common/select';
+import { LongSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
 import { ContestProctorNotice } from '@/components/contest/contest-proctor-notice';
 import { ContestTimer } from '@/components/contest/contest-timer';
@@ -428,12 +428,16 @@ export default function ContestDetailPage() {
   const buildUrl = useBuildUrl();
 
   const tdoc = args.tdoc || {};
+  const introduction = typeof tdoc.content === 'string' ? tdoc.content.trim() : '';
+  const hasIntroduction = !!introduction && !/^<!--\s*empty\s*-->$/.test(introduction);
   const tsdoc = args.tsdoc || {};
   const owner = args.owner_udoc || args.udict?.[tdoc.owner] || args.udoc;
   const files = args.files || [];
   const [attendTeam, setAttendTeam] = useState('personal');
+  const [attendDialogOpen, setAttendDialogOpen] = useState(false);
   const [invitationCode, setInvitationCode] = useState('');
   const [attending, setAttending] = useState(false);
+  const attendPending = useRef(false);
   const pdict = args.pdict || {};
   const udict = args.udict || {};
   const canEdit = useHasPerm(PERM.PERM_EDIT_CONTEST) || args.canEdit;
@@ -444,28 +448,37 @@ export default function ContestDetailPage() {
   const contestEnded = useDeadlinePassed(tdoc.endAt);
   const contestNotStarted = Boolean(tdoc.beginAt) && !contestStarted;
 
-  const handleAttend = async () => {
-    if (attending) return;
+  const handleAttend = async (selection = 'personal') => {
+    if (attendPending.current || !isLoggedIn || tsdoc.attend) return;
     if (contestEnded) {
       notifications.show({ title: t('Contest Closed'), message: '', color: 'red' });
       return;
     }
+    const selectedTeam = selection !== 'personal' && tdoc.allowTeam
+      ? (args.team_vdocs || []).find((team: any) => String(team._id) === selection) : undefined;
+    if (selection !== 'personal' && !selectedTeam) {
+      notifications.show({ title: t('Operation failed'), message: t('Please select a team.'), color: 'red' });
+      return;
+    }
+    attendPending.current = true;
     setAttending(true);
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ operation: 'attend', code: invitationCode, ...(attendTeam !== 'personal' ? { vuid: Number(attendTeam) } : {}) }),
+        body: JSON.stringify({ operation: 'attend', code: invitationCode, ...(selectedTeam ? { vuid: Number(selectedTeam._id) } : {}) }),
       });
       const data = await res.json();
       if (!res.ok || data.error) {
-        notifications.show({ title: data.error?.message || t('Operation failed'), message: '', color: 'red' });
+        notifications.show({ title: formatErrorMessage(data.error, t('Operation failed'), t), message: '', color: 'red' });
       } else {
-        navigate(window.location.href);
+        setAttendDialogOpen(false);
+        await navigate(window.location.href);
       }
     } catch (err) {
       notifications.show({ title: t('Operation failed'), message: String(err), color: 'red' });
     } finally {
+      attendPending.current = false;
       setAttending(false);
     }
   };
@@ -595,11 +608,16 @@ export default function ContestDetailPage() {
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 min-w-0">
           {tdoc.proctorEnabled && <div className="mb-4"><ContestProctorNotice enabled status={tsdoc} /></div>}
-          {tdoc.content && (
-            <Card withBorder p="lg" mb="md" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-sm)]">
+          <Card withBorder p="lg" mb="md" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-sm)]">
+            {hasIntroduction ? (
               <MarkdownRenderer content={tdoc.content} />
-            </Card>
-          )}
+            ) : (
+              <Stack align="center" justify="center" gap="sm" mih={180}>
+                <IconFileDescription size={32} stroke={1.4} color="var(--hydro-text-muted)" aria-hidden />
+                <Text size="sm" c="dimmed" ta="center">{t('No contest introduction yet.')}</Text>
+              </Stack>
+            )}
+          </Card>
 
           {files.length > 0 && (
             <Card withBorder p="lg" mt="md" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-sm)]">
@@ -628,20 +646,6 @@ export default function ContestDetailPage() {
 
             {isLoggedIn && !tsdoc.attend && !contestEnded && (
               <Stack gap="xs">
-                {tdoc.allowTeam && (
-                  <>
-                    <ShortSelect
-                      label={t('Team Participation')}
-                      value={attendTeam}
-                      onChange={(value) => setAttendTeam(value || 'personal')}
-                      data={[
-                        { value: 'personal', label: t('Personal Participation') },
-                        ...(args.team_vdocs || []).map((team: any) => ({ value: String(team._id), label: team.displayName })),
-                      ]}
-                    />
-                    <Button component={Link} to="contest_team" variant="subtle" size="xs">{t('Manage Teams')}</Button>
-                  </>
-                )}
                 {tdoc._code && (
                   <TextInput
                     label={t('Invitation code')}
@@ -649,7 +653,19 @@ export default function ContestDetailPage() {
                     onChange={(event) => setInvitationCode(event.currentTarget.value)}
                   />
                 )}
-                <Button fullWidth onClick={handleAttend} loading={attending}>{t('Register Contest')}</Button>
+                <Button
+                  fullWidth
+                  onClick={() => {
+                    if (attendPending.current) return;
+                    if (tdoc.allowTeam) {
+                      setAttendTeam('personal');
+                      setAttendDialogOpen(true);
+                    } else {
+                      void handleAttend();
+                    }
+                  }}
+                  loading={attending}
+                >{t('Register Contest')}</Button>
               </Stack>
             )}
             {isLoggedIn && !tsdoc.attend && contestEnded && (
@@ -711,6 +727,39 @@ export default function ContestDetailPage() {
           </Stack>
         </div>
       </div>
+      <Modal
+        opened={attendDialogOpen && !!tdoc.allowTeam && isLoggedIn && !tsdoc.attend && !contestEnded}
+        onClose={() => { if (!attendPending.current) setAttendDialogOpen(false); }}
+        title={t('Register Contest')}
+        size="sm"
+        centered
+        closeOnClickOutside={!attending}
+        closeOnEscape={!attending}
+        closeButtonProps={{ disabled: attending }}
+      >
+        <Stack gap="md">
+          <LongSelect
+            label={t('Choose how you want to participate in this contest.')}
+            value={attendTeam}
+            onChange={(value) => setAttendTeam(value || 'personal')}
+            allowDeselect={false}
+            disabled={attending}
+            data={[
+              { value: 'personal', label: t('Personal Participation') },
+              ...args.team_vdocs?.length ? [{
+                group: t('Team Participation'),
+                items: args.team_vdocs.map((team: any) => ({ value: String(team._id), label: team.displayName })),
+              }] : [],
+            ]}
+          />
+          {!args.team_vdocs?.length && <Text size="sm" c="dimmed">{t('You are not in any team.')}</Text>}
+          <Button component={Link} to="contest_team" variant="subtle" size="xs" disabled={attending}>{t('Manage Teams')}</Button>
+          <Group justify="flex-end" gap="xs">
+            <Button variant="default" disabled={attending} onClick={() => setAttendDialogOpen(false)}>{t('Cancel')}</Button>
+            <Button loading={attending} onClick={() => void handleAttend(attendTeam)}>{t('Confirm')}</Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
   );
 }

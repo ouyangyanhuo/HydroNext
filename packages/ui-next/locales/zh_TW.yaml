@@ -12,6 +12,7 @@ __flag: 🇹🇼
 'Team invitation code': '隊伍邀請碼'
 'Team is full (maximum {0} members).': '隊伍已滿（最多 {0} 名成員）。'
 'You are already a member of this team.': '您已經是該隊伍的成員。'
+'You are not in any team yet.': '你還沒有加入任何隊伍。'
 __id: zh_TW
 'Allow public registration': '允許使用者自行註冊；關閉後僅管理員可建立或匯入使用者。'
 'Public registration is disabled. Please contact a system administrator.': '公開註冊已關閉，請聯絡系統管理員建立帳號。'
@@ -222,6 +223,7 @@ just now: 剛剛
 Error: 錯誤
 Success: 成功
 Warning: 警告
+No contest introduction yet.: 暫無比賽介紹
 No data: 暫無資料
 No results: 暫無結果
 Settings: 設定
