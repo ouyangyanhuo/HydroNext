@@ -22,6 +22,7 @@ import * as ContestModel from '../model/contest';
 import domain from '../model/domain';
 import * as oplog from '../model/oplog';
 import problem, { ProblemDoc } from '../model/problem';
+import record from '../model/record';
 import ScheduleModel from '../model/schedule';
 import SolutionModel from '../model/solution';
 import system from '../model/system';
@@ -405,9 +406,10 @@ class UserDetailHandler extends Handler {
     async get(domainId: string, uid: number, page = 1) {
         if (uid === 0) throw new UserNotFoundError(0);
         const isSelfProfile = this.user._id === uid;
-        const [udoc, sdoc] = await Promise.all([
+        const [udoc, sdoc, contributions] = await Promise.all([
             user.getById(domainId, uid),
             token.getMostRecentSessionByUid(uid, ['createAt', 'updateAt']),
+            record.getUserContributions(uid),
         ]);
         if (!udoc) throw new UserNotFoundError(uid);
         const pdocs: ProblemDoc[] = [];
@@ -456,6 +458,7 @@ class UserDetailHandler extends Handler {
                 rp: udoc.rp || 0,
             },
             sdoc,
+            contributions,
             pdocs,
             tags: accepted.tags,
             acceptedPage: accepted.page,

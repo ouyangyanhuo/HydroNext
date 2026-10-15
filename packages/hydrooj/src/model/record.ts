@@ -4,10 +4,11 @@ import {
     Filter, FindOptions, MatchKeysAndValues,
     ObjectId, OnlyFieldsOfType, PushOperator, UpdateFilter,
 } from 'mongodb';
-import { ProblemConfigFile, STATUS_TEXTS } from '@hydrooj/common';
+import { ProblemConfigFile, STATUS_TEXTS, type UserContributionDay } from '@hydrooj/common';
 import { Context } from '../context';
 import { ProblemNotFoundError } from '../error';
 import { JudgeMeta, RecordDoc } from '../interface';
+import { buildUserContributions, CONTRIBUTION_TIME_ZONE } from '../lib/user-contributions';
 import db from '../service/db';
 import { MaybeArray, NumberKeys } from '../typeutils';
 import { ArgMethod, buildProjection, Time } from '../utils';
@@ -188,6 +189,29 @@ export default class RecordModel {
         return RecordModel.coll.find(query, options);
     }
 
+    static async getUserContributions(uid: number) {
+        // Count the earliest accepted submission per domain/problem. Submission
+        // time stays stable when a record is rejudged; judgeAt does not.
+        const days = await RecordModel.coll.aggregate<UserContributionDay>([
+            {
+                $match: {
+                    uid,
+                    status: STATUS.STATUS_ACCEPTED,
+                    contest: { $nin: [RecordModel.RECORD_PRETEST, RecordModel.RECORD_GENERATE] },
+                },
+            },
+            { $group: { _id: { domainId: '$domainId', pid: '$pid' }, firstRecord: { $min: '$_id' } } },
+            {
+                $group: {
+                    _id: { $dateToString: { date: { $toDate: '$firstRecord' }, format: '%Y-%m-%d', timezone: CONTRIBUTION_TIME_ZONE } },
+                    count: { $sum: 1 },
+                },
+            },
+            { $project: { _id: 0, date: '$_id', count: 1 } },
+        ]).toArray();
+        return buildUserContributions(days);
+    }
+
     static getMultiStat(domainId: string, query: any, sortBy: any = { _id: -1 }) {
         return RecordModel.collStat.find({ domainId, ...query }).sort(sortBy);
     }
@@ -331,6 +355,7 @@ export async function apply(ctx: Context) {
             { key: { domainId: 1, contest: 1, pid: 1, _id: -1 }, name: 'withProblem' },
             { key: { domainId: 1, contest: 1, pid: 1, uid: 1, _id: -1 }, name: 'withUserAndProblem' },
             { key: { domainId: 1, contest: 1, status: 1, _id: -1 }, name: 'withStatus' },
+            { key: { uid: 1, status: 1, _id: 1 }, name: 'userContributions' },
         ),
         db.ensureIndexes(
             RecordModel.collStat,

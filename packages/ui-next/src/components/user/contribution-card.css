@@ -1,0 +1,61 @@
+.hydro-contributions {
+  --contribution-0: var(--hydro-surface-muted);
+  --contribution-1: #c6e8cf;
+  --contribution-2: #85cea0;
+  --contribution-3: #42a873;
+  --contribution-4: #21764b;
+  min-width: 0;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-contributions {
+  --contribution-1: #193e2b;
+  --contribution-2: #236441;
+  --contribution-3: #329760;
+  --contribution-4: #62c78a;
+}
+
+.hydro-contributions__year { flex-shrink: 0; }
+.hydro-contributions__metrics { padding-block: 2px 16px; border-bottom: 1px solid var(--hydro-border); }
+.hydro-contributions__metric { min-width: 0; }
+.hydro-contributions__value { font-size: 26px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.hydro-contributions__scroll { overflow-x: auto; padding-bottom: 5px; }
+.hydro-contributions__calendar {
+  display: grid;
+  grid-template-columns: 28px repeat(var(--contribution-weeks), minmax(0, 1fr));
+  grid-template-rows: 20px repeat(7, auto);
+  gap: 4px;
+  min-width: 720px;
+  padding: 3px;
+}
+
+.hydro-contributions__month,
+.hydro-contributions__weekday { color: var(--mantine-color-dimmed); font-size: 10px; line-height: 1; align-self: center; }
+.hydro-contributions__month { align-self: start; white-space: nowrap; }
+.hydro-contributions__day,
+.hydro-contributions__swatch {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 45%, transparent);
+  border-radius: 3px;
+  background: var(--contribution-cell, var(--contribution-0));
+}
+
+.hydro-contributions [data-level='1'] { --contribution-cell: var(--contribution-1); }
+.hydro-contributions [data-level='2'] { --contribution-cell: var(--contribution-2); }
+.hydro-contributions [data-level='3'] { --contribution-cell: var(--contribution-3); }
+.hydro-contributions [data-level='4'] { --contribution-cell: var(--contribution-4); }
+.hydro-contributions__day { cursor: pointer; }
+.hydro-contributions__day:disabled { opacity: 0.35; cursor: default; }
+.hydro-contributions__day:focus-visible { outline: 2px solid var(--hydro-primary); outline-offset: 2px; }
+.hydro-contributions__day:hover:not(:disabled) { outline: 1px solid var(--hydro-primary); outline-offset: 1px; }
+.hydro-contributions .hydro-contributions__day.hydro-button-base[data-level]:hover {
+  background-color: var(--contribution-cell, var(--contribution-0));
+}
+.hydro-contributions__swatch { width: 11px; height: 11px; }
+
+@media (max-width: 480px) {
+  .hydro-contributions { padding: 16px; }
+  .hydro-contributions__value { font-size: 23px; }
+}

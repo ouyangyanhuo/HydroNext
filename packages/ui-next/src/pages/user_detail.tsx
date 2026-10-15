@@ -5,6 +5,7 @@ import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
+import { ContributionCard } from '@/components/user/contribution-card';
 import { OwnedHonorFrames } from '@/components/user/owned-honor-frames';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
@@ -179,7 +180,7 @@ export default function UserDetailPage() {
         <Tabs value={tab} onChange={setTab} className="hydro-user-profile__tabs">
           <Tabs.List className="hydro-user-profile__tablist">
             <Tabs.Tab value="bio">{t('Bio')}</Tabs.Tab>
-            <Tabs.Tab value="accepted">{t('Accepted Problems')}</Tabs.Tab>
+            <Tabs.Tab value="accepted">{t('Accepted Problems in This Domain')}</Tabs.Tab>
             <Tabs.Tab value="frames">{t('Owned honor frames')}</Tabs.Tab>
           </Tabs.List>
 
@@ -248,6 +249,7 @@ export default function UserDetailPage() {
             </Group>
           </Card>
         )}
+        {args.contributions && <ContributionCard key={udoc._id} history={args.contributions} />}
       </Stack>
     </main>
   );
