@@ -2,7 +2,7 @@ import { Badge, Group, SimpleGrid, Stack, Text, TextInput, Title } from '@mantin
 import {
   IconArrowUpRight, IconCalendarEvent, IconClock, IconCornerDownLeft, IconPlus, IconSearch, IconUsers,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
 import { EmptyState } from '@/components/common/empty-state';
 import { Paginator } from '@/components/common/paginator';
@@ -202,12 +202,6 @@ export default function ContestMainPage() {
     url.searchParams.delete('page');
     navigate(url.pathname + url.search);
   };
-
-  useEffect(() => {
-    setSearch(q);
-    setGroup(currentGroup);
-    setRule(currentRule);
-  }, [q, currentGroup, currentRule]);
 
   return (
     <main className="hydro-contest-page">

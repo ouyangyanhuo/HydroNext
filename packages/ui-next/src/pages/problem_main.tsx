@@ -1,7 +1,8 @@
 import { Badge, Card, Checkbox, Group, HoverCard, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconCornerDownLeft, IconSearch } from '@tabler/icons-react';
 import { useState } from 'react';
-import { Button } from '@/components/common/button';
+import { ActionIcon, Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DataTable } from '@/components/common/data-table';
 import { ListSortSelect } from '@/components/common/list-sort-select';
@@ -323,11 +324,24 @@ export default function ProblemMainPage() {
             value={search}
             onChange={(e) => setSearch(e.currentTarget.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            leftSection={<IconSearch size={15} stroke={1.8} />}
+            rightSection={(
+              <ActionIcon
+                size="xs"
+                variant="subtle"
+                color="gray"
+                onClick={() => handleSearch()}
+                aria-label={t('Search')}
+                title={t('Search')}
+              >
+                <IconCornerDownLeft size={13} stroke={1.8} />
+              </ActionIcon>
+            )}
+            rightSectionPointerEvents="auto"
             size="xs"
             className="w-[190px] sm:w-[260px]"
           />
           <ListSortSelect kind="problem" />
-          <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
           {canCreate && <Button size="xs" variant="light" component={Link} to="problem_create">{t('Create Problem')}</Button>}
           {canCreate && <Button size="xs" variant="light" component={Link} to="problem_import">{t('Import Problems')}</Button>}
         </Group>

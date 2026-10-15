@@ -1,7 +1,7 @@
 import { Badge, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconArrowUpRight, IconBook2, IconChecklist, IconChevronRight, IconFolder, IconPencil, IconPlus, IconSearch,
+  IconArrowUpRight, IconBook2, IconChecklist, IconChevronRight, IconCornerDownLeft, IconFolder, IconPencil, IconPlus, IconSearch,
   IconSortAscending, IconTrash, IconUsers,
 } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
@@ -397,11 +397,23 @@ function TrainingMainContent() {
             onChange={(e) => setSearch(e.currentTarget.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             leftSection={<IconSearch size={15} stroke={1.8} />}
+            rightSection={(
+              <ActionIcon
+                size="xs"
+                variant="subtle"
+                color="gray"
+                onClick={() => handleSearch()}
+                aria-label={t('Search')}
+                title={t('Search')}
+              >
+                <IconCornerDownLeft size={13} stroke={1.8} />
+              </ActionIcon>
+            )}
+            rightSectionPointerEvents="auto"
             size="xs"
             className="hydro-training-header-actions__search"
           />
           <ListSortSelect kind="training" />
-          <Button size="xs" onClick={handleSearch}>{t('Search')}</Button>
           {canCreateTraining && (
             <Button
               component={Link}

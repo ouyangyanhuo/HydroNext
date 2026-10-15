@@ -53,7 +53,7 @@ test('record filter labels have translations in every supported locale', () => {
     assert.ok(source.includes("label={t('By Status')}"));
 });
 
-test('contest filter labels have translations in every supported locale and toolbar has embedded search', () => {
+test('contest filter labels have translations in every supported locale and toolbars have embedded search', () => {
     for (const locale of ['en', 'zh', 'zh_TW', 'ja', 'ko']) {
         const dictionary = load(readFileSync(new URL(`../locales/${locale}.yaml`, import.meta.url), 'utf8')) as Record<string, string>;
         for (const key of ['All Categories', 'All Rules']) {
@@ -61,9 +61,12 @@ test('contest filter labels have translations in every supported locale and tool
             if (locale !== 'en') assert.notEqual(dictionary[key], key);
         }
     }
+    for (const page of ['contest_main', 'training_main', 'problem_main']) {
+        const source = readFileSync(new URL(`../src/pages/${page}.tsx`, import.meta.url), 'utf8');
+        assert.ok(source.includes('rightSectionPointerEvents="auto"'), `${page} should have embedded search trigger`);
+    }
     const source = readFileSync(new URL('../src/pages/contest_main.tsx', import.meta.url), 'utf8');
     assert.ok(source.includes("label: t('All Categories')"));
     assert.ok(source.includes("label: t('All Rules')"));
     assert.ok(source.includes('className="hydro-contest-header-actions__search"'));
 });
-
