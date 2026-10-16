@@ -48,6 +48,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         '@/components/common/button': { Button: mantine.Button, ActionIcon: mantine.ActionIcon },
         '@/components/common/delete-resource-button': { DeleteResourceButton: () => null },
         '@/components/common/select': {
+            ShortSelect: () => null,
             LongSelect: ({ data, value, onChange, disabled, label }: any) => h('select', {
                 value, disabled, 'aria-label': label, onChange: (event: any) => onChange(event.target.value),
             }, data.flatMap((item: any) => item.items || [item]).map((item: any) => h('option', { key: item.value, value: item.value }, item.label))),
@@ -73,7 +74,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => translations[key] || key }) },
         '@/hooks/use-build-url': { useBuildUrl: () => (route: string) => `/d/team/${route}` },
         '@/hooks/use-current-user': { useCurrentUser: () => user, useIsLoggedIn: () => user._id > 0 },
-        '@/hooks/use-permission': { PERM: {}, useHasPerm: () => false },
+        '@/hooks/use-permission': { PERM: {}, useHasPerm: () => false, hasPermValue: () => false },
         '@/hooks/use-time': { useDeadlinePassed: (date: string) => new Date(date).getTime() <= Date.now() },
         '@/context/router': { useNavigate: () => (url: string) => navigations.push(url) },
         '@/context/page-data': { usePageData: () => ({ args }) },

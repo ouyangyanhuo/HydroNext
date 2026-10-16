@@ -2,6 +2,11 @@ import type { Collection, Filter } from 'mongodb';
 import { TeamCaptainLeaveError, TeamCaptainRequiredError, TeamMembershipRequiredError, ValidationError } from '../error';
 import type { VUdoc } from '../interface';
 
+/** Unscoped legacy teams are isolated to the main domain, never claimed by a visitor. */
+export function teamDomainQuery(domainId: string): Filter<VUdoc> {
+    return { domainId: domainId === 'system' ? { $in: ['system', null] } : domainId, disbandedAt: { $exists: false } };
+}
+
 /** Legacy team names encode the creator; never infer authority from member ordering. */
 export function teamCaptainId(team: Pick<VUdoc, 'uname' | 'captainId'>): number {
     const value = team.captainId === undefined ? Number(team.uname?.match(/^team:(\d+):/)?.[1]) : team.captainId;
@@ -19,20 +24,22 @@ export function requireTeamCaptain(team: VUdoc, uid: number) {
     if (teamCaptainId(team) !== uid) throw new TeamCaptainRequiredError();
 }
 
-export async function renameTeamByCaptain(collection: Collection<VUdoc>, vuid: number, uid: number, name: string) {
-    const team = await collection.findOne({ _id: vuid });
+export async function renameTeamByCaptain(collection: Collection<VUdoc>, vuid: number, uid: number, name: string, domainId = 'system') {
+    const scope = teamDomainQuery(domainId);
+    const team = await collection.findOne({ ...scope, _id: vuid });
     requireTeamCaptain(team, uid);
     const displayName = name.trim();
-    if (!displayName) throw new ValidationError('name');
+    if (!displayName || displayName.length > 80) throw new ValidationError('name');
     const updated = await collection.findOneAndUpdate({
-        _id: vuid, members: uid, ...teamCaptainGuard(team),
+        ...scope, _id: vuid, members: uid, ...teamCaptainGuard(team),
     }, { $set: { displayName, captainId: uid } }, { returnDocument: 'after' });
     if (!updated) throw new TeamCaptainRequiredError();
     return updated;
 }
 
-export async function leaveOrRemoveTeamMember(collection: Collection<VUdoc>, vuid: number, uid: number, target = uid) {
-    const team = await collection.findOne({ _id: vuid });
+export async function leaveOrRemoveTeamMember(collection: Collection<VUdoc>, vuid: number, uid: number, target = uid, domainId = 'system') {
+    const scope = teamDomainQuery(domainId);
+    const team = await collection.findOne({ ...scope, _id: vuid });
     if (!team?.members?.includes(uid)) throw new TeamMembershipRequiredError();
     const captain = teamCaptainId(team);
     if (target !== uid) {
@@ -45,11 +52,15 @@ export async function leaveOrRemoveTeamMember(collection: Collection<VUdoc>, vui
     const closing = target === uid && team.members.length === 1;
     const updated = await collection.findOneAndUpdate({
         _id: vuid,
+        ...scope,
         ...teamCaptainGuard(team),
         // An exact array match makes closing atomic with concurrent code joins.
         members: closing ? [uid] : { $all: [uid, target] },
     }, [
-        { $set: { members: { $filter: { input: '$members', as: 'member', cond: { $ne: ['$$member', target] } } } } },
+        { $set: {
+            members: { $filter: { input: '$members', as: 'member', cond: { $ne: ['$$member', target] } } },
+            ...(closing ? { disbandedAt: new Date() } : {}),
+        } },
         ...closing ? [{ $unset: ['_teamJoinCode', 'invite'] }] : [],
     ], { returnDocument: 'after' });
     if (!updated) throw new TeamMembershipRequiredError();

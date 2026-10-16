@@ -6,6 +6,7 @@ import { IconCheck, IconTrophy } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { ShortSelect } from '@/components/common/select';
+import { TeamIdentity } from '@/components/contest/team-identity';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -105,12 +106,12 @@ export default function ContestScoreboardPage() {
   const navigate = useNavigate();
   const buildUrl = useBuildUrl();
   const user = useCurrentUser();
-  const rows = args.rows || [];
+  const rows = args.rows || EMPTY_ARRAY;
   const header = rows[0] || [];
-  const bodyRows = rows.slice(1);
+  const bodyRows = useMemo(() => rows.slice(1), [rows]);
   const tdoc = args.tdoc || EMPTY_OBJECT;
   const tid = tdoc.docId || tdoc._id;
-  const udict = args.udict || {};
+  const udict = args.udict || EMPTY_OBJECT;
   const pdict = args.pdict || {};
   const groups = args.groups || EMPTY_ARRAY;
   const availableViews = args.availableViews || EMPTY_OBJECT;
@@ -150,22 +151,24 @@ export default function ContestScoreboardPage() {
   }, []);
 
   const filterOptions = useMemo(() => [
-    { value: 'all', label: t('All Users') },
-    { value: 'star', label: t('Starred Users') },
-    { value: 'rank', label: t('Ranked Users') },
+    { value: 'all', label: t(tdoc.allowTeam ? 'All participants' : 'All Users') },
+    { value: 'star', label: t(tdoc.allowTeam ? 'Starred participants' : 'Starred Users') },
+    { value: 'rank', label: t(tdoc.allowTeam ? 'Ranked participants' : 'Ranked Users') },
     ...groups.map((group: any) => ({ value: (group.uids || []).join(','), label: group.name })),
-  ], [groups, t]);
+  ], [groups, t, tdoc.allowTeam]);
 
-  const visibleRows = useMemo(() => bodyRows.filter((row: any[]) => {
-    const userCell = row.find((cell) => cell.type === 'user');
-    const rankCell = row.find((cell) => cell.type === 'rank');
-    const uid = Number(userCell?.raw);
-    if (filter === 'all') return true;
-    if (filter === 'star') return stars.includes(uid);
-    if (filter === 'rank') return String(rankCell?.value) !== '0';
-    const uids = filter.split(',').map((item) => Number(item.trim())).filter(Boolean);
-    return uids.includes(uid);
-  }), [bodyRows, filter, stars]);
+  const visibleRows = useMemo(() => {
+    const uids = new Set(filter.split(',').map((item) => Number(item.trim())).filter(Boolean));
+    return bodyRows.filter((row: any[]) => {
+      const userCell = row.find((cell) => cell.type === 'user');
+      const rankCell = row.find((cell) => cell.type === 'rank');
+      const uid = Number(userCell?.raw);
+      if (filter === 'all') return true;
+      if (filter === 'star') return stars.includes(uid);
+      if (filter === 'rank') return String(rankCell?.value) !== '0';
+      return uids.has(uid) || udict[uid]?.teamMembers?.some((member: number) => uids.has(member));
+    });
+  }, [bodyRows, filter, stars, udict]);
 
   const toggleStar = (uid: number) => {
     setStars((current) => current.includes(uid) ? current.filter((item) => item !== uid) : [...current, uid]);
@@ -241,7 +244,7 @@ export default function ContestScoreboardPage() {
             <span className="ranking-list-icon" aria-hidden="true"><IconTrophy size={24} stroke={1.8} /></span>
             <div>
               <Title order={2} size="h4">{t('Leaderboard')}</Title>
-              <Text size="xs" c="dimmed">{t('{0} ranked users').replace('{0}', String(visibleRows.length))}</Text>
+              <Text size="xs" c="dimmed">{t('{0} ranked participants', visibleRows.length)}</Text>
             </div>
           </Group>
         </div>
@@ -257,7 +260,9 @@ export default function ContestScoreboardPage() {
                         <Text size="xs" c="dimmed">{pdict[column.raw]?.nAccept || 0}/{pdict[column.raw]?.nSubmit || 0}</Text>
                       </Link>
                     ) : (
-                      <Text size="xs" fw={800} className="whitespace-pre-wrap">{column.value}</Text>
+                      <Text size="xs" fw={800} className="whitespace-pre-wrap">
+                        {column.type === 'user' && tdoc.allowTeam ? t('Participant') : column.value}
+                      </Text>
                     )}
                   </Table.Th>
                 ))}
@@ -267,7 +272,7 @@ export default function ContestScoreboardPage() {
               {visibleRows.map((row: any[], rowIndex: number) => {
                 const userCell = row.find((cell) => cell.type === 'user');
                 const uid = Number(userCell?.raw);
-                const isStarred = stars.includes(uid) || uid === user?._id;
+                const isStarred = stars.includes(uid) || uid === user?._id || udict[uid]?.teamMembers?.includes(user?._id);
                 return (
                   <Table.Tr key={uid || rowIndex} className={isStarred ? 'bg-[var(--hydro-primary-soft)]' : undefined}>
                     {row.map((cell, index) => {
@@ -280,15 +285,13 @@ export default function ContestScoreboardPage() {
                               <Button size="compact-xs" variant={stars.includes(uid) ? 'filled' : 'subtle'} onClick={() => toggleStar(uid)}>
                                 {stars.includes(uid) ? '★' : '☆'}
                               </Button>
-                              {udict[uid]?.teamMembers?.length ? (
-                                <Stack gap={2}>
-                                  <Text size="sm" fw={600}>{udict[uid].displayName || cell.value}</Text>
-                                  <Group gap="xs">{udict[uid].teamMembers.map((member: number) => (
-                                    <Link key={member} to="user_detail" params={{ uid: member }} className="text-xs no-underline hover:underline">
-                                      {udict[member] ? formatUserName(udict[member]) : member}
-                                    </Link>
-                                  ))}</Group>
-                                </Stack>
+                              {udict[uid]?.isTeam || udict[uid]?.teamMembers?.length ? (
+                                <TeamIdentity
+                                  id={uid}
+                                  name={udict[uid].displayName || cell.value}
+                                  members={udict[uid].teamMembers}
+                                  udict={udict}
+                                  canManage={args.canManageTeams === true} />
                               ) : (
                                 <Link to="user_detail" params={{ uid }} className="no-underline hover:underline">
                                   <Text size="sm">{udict[uid] ? formatUserName(udict[uid]) : (cell.value || uid)}</Text>

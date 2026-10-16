@@ -1,4 +1,24 @@
 __flag: 🇬🇧
+'All participants': 'All participants'
+'Created at': 'Created at'
+'Disband team': 'Disband team'
+'Disband this team? Its invitation code will be invalidated. Existing contest registrations and results will be retained.': 'Disband this team? Its invitation code will be invalidated. Existing contest registrations and results will be retained.'
+'Disbanded': 'Disbanded'
+'Domain team': 'Domain team'
+'No teams in this domain.': 'No teams in this domain.'
+'Participant': 'Participant'
+'Ranked participants': 'Ranked participants'
+'Search teams': 'Search teams'
+'Starred participants': 'Starred participants'
+'Team': 'Team'
+'Team Participation': 'Team Participation'
+'Team details': 'Team details'
+'Team management': 'Team management'
+'Team name': 'Team name'
+'Teams belong only to this domain.': 'Teams belong only to this domain.'
+'Teams belong only to this domain. Existing contest registrations and results are preserved when a team is disbanded.': 'Teams belong only to this domain. Existing contest registrations and results are preserved when a team is disbanded.'
+'{0} members': '{0} members'
+'{0} ranked participants': '{0} ranked participants (individuals or teams)'
 'Only the team captain can perform this operation.': 'Only the team captain can perform this operation.'
 'The captain must remove other members before leaving the team.': 'The captain must remove other members before leaving the team.'
 'Verification failed': 'Verification failed'
@@ -199,11 +219,21 @@ By Status: By status
 
 # List sorting
 Ascending ID: Ascending ID
+Contests I Joined: Contests I Joined
+Contests I joined: Contests I joined
 Default order: Default order
 Descending ID: Descending ID
+Most Attempted Problems: Most Attempted Problems
+Most attempted: Most attempted
+Most Attended Contests: Most Attended Contests
+Most attended: Most attended
 Oldest first: Oldest first
 Recently added: Recently added
+Recently Attempted Problems: Recently Attempted Problems
+Recently attempted (unsolved first): Recently attempted (unsolved first)
 Sort order: Sort order
+Sort problem list: Sort problem list
+Sort recent contests: Sort recent contests
 Title ascending: Title ascending
 Title descending: Title descending
 

@@ -41,6 +41,9 @@ function collection(initial: any[]) {
             return row.members.length < value.$lt[1];
         }
         if (typeof value === 'object' && value && '$exists' in value) return (row[key] !== undefined) === value.$exists;
+        if (typeof value === 'object' && value && '$in' in value) {
+            return value.$in.some((item: any) => item == null ? row[key] == null : row[key] === item);
+        }
         return value === null ? row[key] == null : row[key] === value;
     });
     return {
@@ -153,13 +156,15 @@ test('private invitation fields are excluded by the shared page serializer', () 
 
 async function handlerFixture(uid = 2) {
     const calls: any[] = [];
-    const store = collection([{ _id: -1000, uname: 'team:2:abc', displayName: 'Team', members: [2], invite: [3] }]);
+    const store = collection([{ _id: -1000, domainId: 'team-domain', uname: 'team:2:abc', displayName: 'Team', members: [2], invite: [3] }]);
     const model = {
         getVusersByMember: async (member: number) => store.rows.filter((row) => row.members.includes(member)).map(clone),
-        getTeamInvitation: async (...args: any[]) => api.ensureTeamInvitationCode(store, ...args),
+        getTeamInvitation: async (id: number, member: number, reset: boolean, domainId: string) =>
+            api.ensureTeamInvitationCode(store, id, member, reset, undefined, domainId),
         getList: async (domainId: string, uids: number[]) => { calls.push(['list', domainId, uids]); return {}; },
         getVuserById: async (id: number) => store.findOne({ _id: id }),
-        joinTeam: async (code: string, member: number, max: number) => api.joinTeamByInvitationCode(store, code, member, max),
+        joinTeam: async (code: string, member: number, max: number, domainId: string) =>
+            api.joinTeamByInvitationCode(store, code, member, max, domainId),
         updateVuserById: async () => {},
     };
     const module = load('../src/handler/contest.ts', {
@@ -179,7 +184,8 @@ async function handlerFixture(uid = 2) {
     });
     const handler = Reflect.construct(handlerClass, []);
     Object.assign(handler, {
-        user: { _id: uid }, response: {}, ctx: { setting: { get: () => 5 } },
+        user: { _id: uid, hasPerm: () => false }, domain: { _id: 'team-domain', owner: 99 }, args: { domainId: 'team-domain' },
+        response: {}, ctx: { setting: { get: () => 5 } },
         checkPriv: (priv: number) => { assert.equal(priv, 4); if (!uid) throw new Error('Login required'); },
         limitRate: async (...args: any[]) => { calls.push(['rate', ...args]); }, back: () => calls.push(['back']),
     });
@@ -208,7 +214,7 @@ test('team page requires a normal account and exposes codes only for that accoun
     assert.equal(orphaned.canManage, false);
     assert.equal(orphaned.canLeave, true);
     assert.equal(orphaned.invitationCode, undefined);
-    await assert.rejects(permissions.renameTeamByCaptain(outsider.store, -1000, 3, 'Takeover'), /TeamCaptainRequiredError/);
+    await assert.rejects(permissions.renameTeamByCaptain(outsider.store, -1000, 3, 'Takeover', 'team-domain'), /TeamCaptainRequiredError/);
 });
 
 test('legacy invitation operations are removed and code joins are rate-limited per account', async () => {

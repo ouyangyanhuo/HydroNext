@@ -174,7 +174,7 @@ export class ContestDetailHandler extends ContestDetailBaseHandler {
         const [udict, teamVdocs] = await Promise.all([
             user.getList(domainId, [this.tdoc.owner]),
             this.tdoc.allowTeam && this.user.hasPriv(PRIV.PRIV_USER_PROFILE)
-                ? user.getVusersByMember(this.user._id, { _id: 1, displayName: 1, members: 1 })
+                ? user.getVusersByMember(this.user._id, { _id: 1, displayName: 1, members: 1 }, domainId)
                 : [],
         ]);
         const canEdit = this.user.own(this.tdoc) || this.user.hasPerm(PERM.PERM_EDIT_CONTEST);
@@ -206,7 +206,7 @@ export class ContestDetailHandler extends ContestDetailBaseHandler {
         if (this.tdoc._code && code !== this.tdoc._code) throw new InvalidTokenError('Contest Invitation', code);
         if (vuid) {
             if (!this.tdoc.allowTeam) throw new ValidationError('allowTeam');
-            const v = await user.getVuserById(vuid);
+            const v = await user.getTeamById(domainId, vuid);
             if (!v?.members?.includes(this.user._id)) throw new PermissionError(PERM.PERM_ATTEND_CONTEST);
             if (this.tdoc.assign?.length) {
                 const memberUdict = await user.getList(domainId, v.members);
@@ -821,7 +821,8 @@ export class ContestUserHandler extends ContestManagementBaseHandler {
             domainId, [this.tdoc.owner, ...tsdocs.map((i) => i.uid), ...memberUids],
             this.user.hasPerm(PERM.PERM_VIEW_USER_PRIVATE_INFO),
         );
-        this.response.body = { tdoc: this.tdoc, tsdocs, udict };
+        this.response.body = { tdoc: this.tdoc, tsdocs, udict,
+            canManageTeams: this.user._id === this.domain.owner || this.user.hasPerm(PERM.PERM_CREATE_CONTEST) };
         this.response.pjax = 'partials/contest_user.html';
         this.response.template = 'contest_user.html';
     }
@@ -830,12 +831,18 @@ export class ContestUserHandler extends ContestManagementBaseHandler {
     @param('uids', Types.NumericArray)
     @param('unrank', Types.Boolean)
     async postAddUser(domainId: string, tid: ObjectId, uids: number[], unrank = false) {
-        await Promise.all(uids.map((uid) => contest.attend(domainId, tid, uid, { unrank })));
+        const attendees = await Promise.all([...new Set(uids)].map(async (uid) => {
+            if (uid > 0) return { uid, payload: { unrank } };
+            const team = this.tdoc.allowTeam && await user.getTeamById(domainId, uid);
+            if (!team?.members?.length) throw new ValidationError('uid');
+            return { uid, payload: { unrank, displayName: team.displayName, members: team.members } };
+        }));
+        await Promise.all(attendees.map(({ uid, payload }) => contest.attend(domainId, tid, uid, payload)));
         this.back();
     }
 
     @param('tid', Types.ObjectId)
-    @param('uid', Types.PositiveInt)
+    @param('uid', Types.Int)
     async postRank(domainId: string, tid: ObjectId, uid: number) {
         const tsdoc = await contest.getStatus(domainId, tid, uid);
         if (!tsdoc) throw new ContestNotAttendedError(uid);
@@ -844,7 +851,7 @@ export class ContestUserHandler extends ContestManagementBaseHandler {
     }
 
     @param('tid', Types.ObjectId)
-    @param('uid', Types.PositiveInt)
+    @param('uid', Types.Int)
     async postResume(domainId: string, tid: ObjectId, uid: number) {
         const tsdoc = await contest.getStatus(domainId, tid, uid);
         if (!tsdoc?.attend) throw new ContestNotAttendedError(uid);
@@ -1029,15 +1036,16 @@ declare module 'cordis' {
 class ContestTeamHandler extends Handler {
     async prepare() {
         this.checkPriv(PRIV.PRIV_USER_PROFILE);
+        if (this.args.domainId !== this.domain._id) throw new PermissionError(PERM.PERM_VIEW);
     }
 
     async get({ domainId }) {
-        const teams = await user.getVusersByMember(this.user._id);
+        const teams = await user.getVusersByMember(this.user._id, undefined, domainId);
         const mine = await Promise.all(teams.map(async (team) => {
             const captainId = teamCaptainId(team);
             const hasCaptain = captainId > 0 && team.members?.includes(captainId);
             // Keep damaged legacy teams visible without granting authority or an unusable invitation code.
-            const current = hasCaptain ? await user.getTeamInvitation(team._id, this.user._id) : team;
+            const current = hasCaptain ? await user.getTeamInvitation(team._id, this.user._id, false, domainId) : team;
             return {
                 _id: current._id, uname: current.uname, displayName: current.displayName,
                 members: current.members, invitationCode: hasCaptain ? current._teamJoinCode : undefined,
@@ -1048,48 +1056,101 @@ class ContestTeamHandler extends Handler {
         }));
         const udict = await user.getList(domainId, mine.flatMap((team) => team.members || []));
         this.response.template = 'contest_team.html';
-        this.response.body = { mine, udict, page_name: 'contest_team' };
+        this.response.body = { mine, udict, page_name: 'contest_team',
+            canManageTeams: this.user._id === this.domain.owner || this.user.hasPerm(PERM.PERM_CREATE_CONTEST) };
     }
 
     @param('name', Types.String)
     async postCreate(domainId: string, name: string) {
         const displayName = name.trim();
-        if (!displayName) throw new ValidationError('name');
+        if (!displayName || displayName.length > 80) throw new ValidationError('name');
         const vuid = await user.createVuser(`team:${this.user._id}:${randomstring(6)}`, {
             displayName,
+            domainId,
             members: [this.user._id],
             captainId: this.user._id,
         });
-        await user.getTeamInvitation(vuid, this.user._id);
+        await user.getTeamInvitation(vuid, this.user._id, false, domainId);
         this.back();
     }
 
     @param('vuid', Types.Int)
     @param('name', Types.String)
     async postRename(domainId: string, vuid: number, name: string) {
-        await user.renameTeam(vuid, this.user._id, name);
+        await user.renameTeam(vuid, this.user._id, name, domainId);
         this.back();
     }
 
     @param('code', Types.String)
     async postJoin(domainId: string, code: string) {
         await this.limitRate('contest_team_join', 3600, 30, this.user._id.toString());
-        await user.joinTeam(code, this.user._id, this.ctx.setting.get('limit.team_members'));
+        await user.joinTeam(code, this.user._id, this.ctx.setting.get('limit.team_members'), domainId);
         this.back();
     }
 
     @param('vuid', Types.Int)
     async postResetCode(domainId: string, vuid: number) {
         await this.limitRate('contest_team_reset_code', 3600, 20, this.user._id.toString());
-        await user.getTeamInvitation(vuid, this.user._id, true);
+        await user.getTeamInvitation(vuid, this.user._id, true, domainId);
         this.back();
     }
 
     @param('vuid', Types.Int)
     @param('uid', Types.Int, true)
     async postLeave(domainId: string, vuid: number, uid?: number) {
-        await user.leaveTeam(vuid, this.user._id, uid ?? this.user._id);
+        await user.leaveTeam(vuid, this.user._id, uid ?? this.user._id, domainId);
         this.back();
+    }
+}
+
+class ContestTeamManageHandler extends Handler {
+    async prepare() {
+        this.checkPriv(PRIV.PRIV_USER_PROFILE);
+        if (this.args.domainId !== this.domain._id) throw new PermissionError(PERM.PERM_VIEW);
+        if (this.user._id !== this.domain.owner) this.checkPerm(PERM.PERM_CREATE_CONTEST);
+    }
+
+    @param('vuid', Types.Int, true)
+    @param('page', Types.PositiveInt, true)
+    @param('q', Types.String, true)
+    async get(domainId: string, vuid?: number, page = 1, q = '') {
+        const serialize = (team) => ({ _id: team._id, domainId, displayName: team.displayName || team.uname,
+            captainId: teamCaptainId(team), members: team.members || [], disbandedAt: team.disbandedAt, createdAt: team.regat });
+        let team;
+        let teams = [];
+        let pageCount = 1;
+        let count = 0;
+        if (vuid !== undefined) {
+            team = await user.getTeamById(domainId, vuid, true);
+            if (!team) throw new NotFoundError('Team');
+            team = serialize(team);
+        } else {
+            q = q.trim().slice(0, 80);
+            [teams, pageCount, count] = await this.paginate(user.getTeams(domainId,
+                q ? { displayName: { $regex: escapeRegExp(q), $options: 'i' } } : {}).sort({ _id: -1 }), page, 25);
+            teams = teams.map(serialize);
+        }
+        const members = [...new Set<number>((team ? [team] : teams).flatMap((entry) => entry.members))];
+        this.response.template = vuid === undefined ? 'contest_team_manage.html' : 'contest_team_detail.html';
+        this.response.body = { team, teams, page, pageCount, count, q,
+            udict: await user.getListForRender(domainId, members, false) };
+    }
+
+    @post('vuid', Types.Int)
+    @post('name', Types.String)
+    async postRename(domainId: string, vuid: number, name: string) {
+        const displayName = name.trim();
+        if (!displayName || displayName.length > 80) throw new ValidationError('name');
+        if (!await user.manageTeam(domainId, vuid, { displayName })) throw new NotFoundError('Team');
+        await oplog.log(this, 'contest.team.rename', { vuid, displayName });
+        this.response.body = { ok: true };
+    }
+
+    @post('vuid', Types.Int)
+    async postDisband(domainId: string, vuid: number) {
+        if (!await user.manageTeam(domainId, vuid, { disbandedAt: new Date() })) throw new NotFoundError('Team');
+        await oplog.log(this, 'contest.team.disband', { vuid });
+        this.response.body = { ok: true };
     }
 }
 
@@ -1097,6 +1158,8 @@ export async function apply(ctx: Context) {
     ctx.Route('contest_create', '/contest/create', ContestEditHandler);
     ctx.Route('contest_main', '/contest', ContestListHandler, PERM.PERM_VIEW_CONTEST);
     ctx.Route('contest_team', '/contest/team', ContestTeamHandler); // before /contest/:tid: "team" is not a valid ObjectId
+    ctx.Route('contest_team_manage', '/contest/team/manage', ContestTeamManageHandler);
+    ctx.Route('contest_team_detail', '/contest/team/:vuid', ContestTeamManageHandler);
     ctx.Route('contest_detail', '/contest/:tid', ContestDetailHandler, PERM.PERM_VIEW_CONTEST);
     ctx.Route('contest_problemlist', '/contest/:tid/problems', ContestProblemListHandler, PERM.PERM_VIEW_CONTEST);
     ctx.Route('contest_edit', '/contest/:tid/edit', ContestEditHandler, PERM.PERM_VIEW_CONTEST);
@@ -1143,6 +1206,7 @@ export async function apply(ctx: Context) {
                 const availableViews = scoreboard.getAvailableViews(tdoc.rule, this);
                 this.response.body = {
                     tdoc: this.tdoc, tsdoc: this.tsdocAsPublic(), rows, udict, pdict, page_name, groups, availableViews,
+                    canManageTeams: this.user._id === this.domain.owner || this.user.hasPerm(PERM.PERM_CREATE_CONTEST),
                 };
                 this.response.pjax = 'partials/scoreboard.html';
                 this.response.template = 'contest_scoreboard.html';

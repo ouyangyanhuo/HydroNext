@@ -207,11 +207,12 @@ test('multi select retains selections as pills and emits an array', async () => 
     }
 });
 
-test('contest problem drag order is saved in the current domain without reloading labels', async () => {
+test('contest problems load on the first dropdown open and drag order is saved without reloading labels', async () => {
     const pageModule = { exports: {} as any };
-    const args = { tdoc: { docId: 'contest1', title: 'Contest', pids: [1, 2, 3], maintainer: [9] } };
+    let args: any = {};
     const requests: { url: string, body: any }[] = [];
     let finishSave: (() => void) | undefined;
+    let finishSearch: (() => void) | undefined;
     const core = require('@mantine/core');
     const mocks: Record<string, any> = {
         '@mantine/notifications': { notifications: { show() {} } },
@@ -223,7 +224,7 @@ test('contest problem drag order is saved in the current domain without reloadin
         '@/components/user/framed-avatar': { FramedAvatar: () => null },
         '@/context/page-data': { usePageData: () => ({ args }) },
         '@/context/router': { useNavigate: () => () => {} },
-        '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/team/contest' },
+        '@/hooks/use-build-url': { useBuildUrl: () => (route: string) => route === 'problem_main' ? '/d/team/p' : '/d/team/contest' },
         '@/hooks/use-domain': { useDomainId: () => 'team' },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
         '@/utils/proctor': { proctorError: (error: any) => error.message },
@@ -233,10 +234,14 @@ test('contest problem drag order is saved in the current domain without reloadin
     };
     const source = readFileSync(new URL('../src/pages/contest_edit.tsx', import.meta.url), 'utf8');
     runInNewContext(transformSync(source, { loader: 'tsx', format: 'cjs', jsx: 'automatic' }).code, {
-        module: pageModule, exports: pageModule.exports, window: dom.window,
+        module: pageModule, exports: pageModule.exports, window: dom.window, AbortController,
         require: (name: string) => mocks[name] || require(name),
         fetch: async (url: string, options: any) => {
-            requests.push({ url, body: JSON.parse(options.body) });
+            requests.push({ url, body: options.body ? JSON.parse(options.body) : undefined });
+            if (url === '/d/team/p') {
+                await new Promise<void>((resolve) => { finishSearch = resolve; });
+                return { ok: true, json: async () => ({ pdocs: [{ docId: 4, pid: 'P4', title: 'Available on first open' }] }) };
+            }
             if (url.endsWith('/api/problems')) {
                 return { ok: true, json: async () => [1, 2, 3].map((id) => ({ docId: id, title: `Problem ${id}` })) };
             }
@@ -245,6 +250,22 @@ test('contest problem drag order is saved in the current domain without reloadin
             return { ok: true, headers: new Headers({ 'content-type': 'application/json' }), json: async () => ({}) };
         },
     });
+    dom.reconfigure({ url: 'https://oj.example/d/team/contest/create' });
+    const create = await mount(pageModule.exports.default, {});
+    try {
+        const input = create.host.querySelector<HTMLInputElement>('.hydro-contest-problems input[role="combobox"]')!;
+        await act(async () => input.click());
+        assert.equal(requests.filter((request) => request.url === '/d/team/p').length, 1);
+        const dropdown = document.getElementById(input.getAttribute('aria-controls')!)!;
+        assert.ok(dropdown.textContent?.includes('Loading...'));
+        assert.ok(!dropdown.textContent?.includes('No results'));
+        await act(async () => finishSearch?.());
+        assert.ok([...document.querySelectorAll('[role="option"]')].some((option) => option.textContent?.includes('Available on first open')));
+    } finally {
+        await act(async () => finishSearch?.());
+        await create.close();
+    }
+    args = { tdoc: { docId: 'contest1', title: 'Contest', pids: [1, 2, 3], maintainer: [9] } };
     dom.reconfigure({ url: 'https://oj.example/d/team/contest/contest1/edit' });
     const view = await mount(pageModule.exports.default, {});
     const pills = () => [...view.host.querySelectorAll('.hydro-contest-problems [data-mantine-pill-index]')] as HTMLElement[];
@@ -275,7 +296,7 @@ test('contest problem drag order is saved in the current domain without reloadin
         const update = [...view.host.querySelectorAll('button')].find((button) => button.textContent === 'Update');
         assert.ok(update);
         await act(async () => update.click());
-        const save = requests.find((request) => request.body.operation === 'update');
+        const save = requests.find((request) => request.body?.operation === 'update');
         assert.equal(save?.url, 'https://oj.example/d/team/contest/contest1/edit');
         assert.equal(save?.body.pids, '2,1,3');
         assert.equal(view.host.querySelectorAll('.hydro-contest-problems [draggable="true"]').length, 0);

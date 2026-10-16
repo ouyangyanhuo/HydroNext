@@ -1,6 +1,7 @@
 import { escapeRegExp, omit, pick, uniq } from 'lodash';
 import { LRUCache } from 'lru-cache';
 import { Collection, Filter, ObjectId } from 'mongodb';
+import type { Context } from '../context';
 import { LoginError, UserAlreadyExistError, UserNotFoundError } from '../error';
 import {
     Authenticator, BaseUserDict, FileInfo, GDoc,
@@ -9,7 +10,8 @@ import {
 import avatar from '../lib/avatar';
 import pwhash from '../lib/hash.hydro';
 import { ensureTeamInvitationCode, joinTeamByInvitationCode } from '../lib/team-invitation';
-import { leaveOrRemoveTeamMember, renameTeamByCaptain } from '../lib/team-permissions';
+import { leaveOrRemoveTeamMember, renameTeamByCaptain, teamCaptainId, teamDomainQuery } from '../lib/team-permissions';
+import { Logger } from '../logger';
 import bus from '../service/bus';
 import db from '../service/db';
 import { Value } from '../typeutils';
@@ -439,29 +441,111 @@ class UserModel {
         return collV.findOne({ _id: uid });
     }
 
-    static getVusersByMember(uid: number, projection?: Partial<Record<keyof VUdoc, 0 | 1>>) {
-        const cursor = collV.find({ members: uid });
+    static getTeamById(domainId: string, uid: number, includeDisbanded = false) {
+        const scope = teamDomainQuery(domainId);
+        if (includeDisbanded) delete scope.disbandedAt;
+        return collV.findOne({ ...scope, _id: uid, members: { $exists: true } });
+    }
+
+    /** Resumable startup migration: retain one identity and clone it for each other historical domain. */
+    static async migrateLegacyTeams() {
+        const statuses = db.collection('document.status');
+        const legacy = await collV.find({ members: { $exists: true }, $or: [
+            { domainId: { $exists: false } }, { _teamMigrationDomains: { $exists: true } },
+        ] }).toArray();
+        if (!legacy.length) return 0;
+        const unplanned = legacy.filter((team) => !team._teamMigrationDomains).map((team) => team._id);
+        // Scan participation history once, rather than once per legacy team.
+        const usage = unplanned.length ? await statuses.aggregate<{ _id: number, domains: string[] }>([
+            { $match: { docType: 30, uid: { $in: unplanned } } },
+            { $group: { _id: '$uid', domains: { $addToSet: '$domainId' } } },
+        ]).toArray() : [];
+        const domainsByTeam = new Map(usage.map((entry) => [entry._id, entry.domains]));
+        for (const source of legacy) {
+            const used = domainsByTeam.get(source._id) || [];
+            const historicalDomains = used.filter((id) => typeof id === 'string' && id).sort();
+            const plannedDomains = historicalDomains.length ? historicalDomains : ['system'];
+            // Persist the full plan before moving any references so an interrupted migration can resume.
+            // eslint-disable-next-line no-await-in-loop
+            await collV.updateOne({ _id: source._id, domainId: { $exists: false }, _teamMigrationDomains: { $exists: false } }, {
+                $set: { domainId: plannedDomains[0], _legacyTeamId: source._id, _teamMigrationDomains: plannedDomains },
+            });
+            // All workers must use the same persisted plan, including when another
+            // worker has already moved some references or completed this team.
+            // eslint-disable-next-line no-await-in-loop
+            const current = await collV.findOne({ _id: source._id });
+            const domains = current?._teamMigrationDomains;
+            if (!domains) continue;
+            for (const domainId of domains) {
+                // eslint-disable-next-line no-await-in-loop
+                let target = await collV.findOne({ domainId, _legacyTeamId: source._id });
+                if (!target) {
+                    try {
+                        const captainId = teamCaptainId(source);
+                        const uname = `team:${captainId}:domain:${domainId}:${-source._id}`;
+                        // eslint-disable-next-line no-await-in-loop
+                        await UserModel.createVuser(uname, {
+                            domainId, _legacyTeamId: source._id,
+                            displayName: source.displayName, members: source.members,
+                            ...(captainId ? { captainId } : {}),
+                            ...(source.disbandedAt ? { disbandedAt: source.disbandedAt } : {}),
+                        });
+                    } catch (error) {
+                        if (error?.code !== 11000) throw error;
+                    }
+                    // eslint-disable-next-line no-await-in-loop
+                    target = await collV.findOne({ domainId, _legacyTeamId: source._id });
+                }
+                if (!target) throw new Error('Could not migrate a legacy contest team');
+                if (target._id === source._id) continue;
+                // Real submitter IDs, record IDs, members, scores and journals are never changed.
+                // eslint-disable-next-line no-await-in-loop
+                await Promise.all([
+                    ...(['document.status', 'domain.user', 'record', 'record.stat', 'contest.balloon', 'task'] as const).map((name) =>
+                        db.collection(name).updateMany({ domainId, uid: source._id }, { $set: { uid: target._id } })),
+                    // The optional replay addon's collection is not part of the core collection type map.
+                    db.collection('code_replay' as any).updateMany({ domainId, uid: source._id }, { $set: { uid: target._id } }),
+                    db.collection('document').updateMany({ domainId, owner: source._id }, { $set: { owner: target._id } }),
+                ]);
+            }
+            // eslint-disable-next-line no-await-in-loop
+            await collV.updateOne({ _id: source._id }, { $unset: { _teamMigrationDomains: '' } });
+        }
+        if (legacy.length) {
+            deleteUserCache(true);
+            new Logger('team-migration').info('Completed domain isolation for %d legacy teams.', legacy.length);
+        }
+        return legacy.length;
+    }
+
+    static getTeams(domainId: string, filter: Filter<VUdoc> = {}) {
+        return collV.find({ ...filter, ...teamDomainQuery(domainId), members: { $exists: true } });
+    }
+
+    static getVusersByMember(uid: number, projection?: Partial<Record<keyof VUdoc, 0 | 1>>, domainId = 'system') {
+        const cursor = collV.find({ ...teamDomainQuery(domainId), members: uid });
         return projection ? cursor.project<VUdoc>(projection).toArray() : cursor.toArray();
     }
 
-    static async getTeamInvitation(vuid: number, uid: number, reset = false) {
-        return await ensureTeamInvitationCode(collV, vuid, uid, reset);
+    static async getTeamInvitation(vuid: number, uid: number, reset = false, domainId = 'system') {
+        return await ensureTeamInvitationCode(collV, vuid, uid, reset, undefined, domainId);
     }
 
-    static async joinTeam(code: string, uid: number, limit: number) {
-        const team = await joinTeamByInvitationCode(collV, code, uid, limit);
+    static async joinTeam(code: string, uid: number, limit: number, domainId = 'system') {
+        const team = await joinTeamByInvitationCode(collV, code, uid, limit, domainId);
         deleteUserCache(team);
         return team;
     }
 
-    static async renameTeam(vuid: number, uid: number, name: string) {
-        const team = await renameTeamByCaptain(collV, vuid, uid, name);
+    static async renameTeam(vuid: number, uid: number, name: string, domainId = 'system') {
+        const team = await renameTeamByCaptain(collV, vuid, uid, name, domainId);
+        await db.collection('document.status').updateMany({ domainId, docType: 30, uid: vuid }, { $set: { displayName: team.displayName } });
         deleteUserCache(team);
         return team;
     }
 
-    static async leaveTeam(vuid: number, uid: number, target = uid) {
-        const team = await leaveOrRemoveTeamMember(collV, vuid, uid, target);
+    static async leaveTeam(vuid: number, uid: number, target = uid, domainId = 'system') {
+        const team = await leaveOrRemoveTeamMember(collV, vuid, uid, target, domainId);
         deleteUserCache(team);
         return team;
     }
@@ -470,6 +554,18 @@ class UserModel {
         const vdoc = await collV.findOneAndUpdate({ _id: uid }, update, { returnDocument: 'after' });
         deleteUserCache(vdoc);
         return vdoc;
+    }
+
+    static async manageTeam(domainId: string, uid: number, update: Partial<Pick<VUdoc, 'displayName' | 'disbandedAt'>>) {
+        const team = await collV.findOneAndUpdate({ ...teamDomainQuery(domainId), _id: uid, members: { $exists: true } },
+            { $set: update, ...(update.disbandedAt ? { $unset: { _teamJoinCode: '', invite: '' } } : {}) }, { returnDocument: 'after' });
+        if (team) {
+            if (update.displayName) {
+                await db.collection('document.status').updateMany({ domainId, docType: 30, uid }, { $set: { displayName: update.displayName } });
+            }
+            deleteUserCache(team);
+        }
+        return team;
     }
 
     static getMulti(params: Filter<Udoc> = {}, projection?: (keyof Udoc)[]) {
@@ -603,7 +699,8 @@ class UserModel {
     }
 }
 
-export async function apply() {
+export async function apply(ctx: Context) {
+    ctx.on('domain/delete', (domainId) => collV.deleteMany({ domainId, members: { $exists: true } }));
     await Promise.all([
         db.ensureIndexes(
             coll,
@@ -615,6 +712,9 @@ export async function apply() {
             { key: { unameLower: 1 }, name: 'uname', unique: true },
             { key: { mailLower: 1 }, name: 'mail', unique: true },
             { key: { _teamJoinCode: 1 }, name: 'team_join_code', unique: true, sparse: true },
+            { key: { domainId: 1, members: 1 }, name: 'domain_teams' },
+            { key: { domainId: 1, _legacyTeamId: 1 }, name: 'legacy_domain_team', unique: true,
+                partialFilterExpression: { _legacyTeamId: { $exists: true } } },
         ),
         db.ensureIndexes(
             collGroup,
@@ -622,6 +722,7 @@ export async function apply() {
             { key: { domainId: 1, uids: 1 }, name: 'uid' },
         ),
     ]);
+    await UserModel.migrateLegacyTeams();
 }
 export default UserModel;
 global.Hydro.model.user = UserModel;

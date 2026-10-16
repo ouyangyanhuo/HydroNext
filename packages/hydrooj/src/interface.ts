@@ -112,6 +112,10 @@ export interface VUdoc extends Record<string, any> {
     loginip: '127.0.0.1';
 
     // for contest team
+    domainId?: string;
+    disbandedAt?: Date;
+    _legacyTeamId?: number;
+    _teamMigrationDomains?: string[];
     displayName?: string;
     members?: number[];
     captainId?: number;

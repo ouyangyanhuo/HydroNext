@@ -1,15 +1,16 @@
-import { Badge, Group, Stack, Text, Title } from '@mantine/core';
+import { Badge, Group, Menu, Stack, Text, Title } from '@mantine/core';
 import {
-  IconArrowUpRight, IconChevronDown, IconChevronRight, IconClock, IconCode,
-  IconLogin2, IconSpeakerphone, IconTrophy, IconUserPlus,
+  IconArrowUpRight, IconCheck, IconChevronDown, IconChevronRight, IconClock, IconCode,
+  IconLogin2, IconSortAscending, IconSpeakerphone, IconTrophy, IconUserPlus,
 } from '@tabler/icons-react';
-import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/common/button';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActionIcon, Button } from '@/components/common/button';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
+import { PERM, useHasPerm } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { formatUserName } from '@/utils/user-name';
@@ -239,19 +240,126 @@ function DataPanelEmptyState({
   );
 }
 
-function ProblemList({ problems }: { problems: any[] }) {
+function SectionSortSelect({
+  value,
+  onChange,
+  data,
+  title,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  data: { value: string, label: string }[];
+  title: string;
+}) {
+  return (
+    <Menu shadow="md" width="auto" position="bottom-start" offset={6} withinPortal classNames={{ dropdown: 'hydro-topbar-dropdown' }}>
+      <Menu.Target>
+        <ActionIcon
+          size="sm"
+          variant="light"
+          title={title}
+          aria-label={title}
+        >
+          <IconSortAscending size={15} />
+        </ActionIcon>
+      </Menu.Target>
+      <Menu.Dropdown style={{ minWidth: 200 }}>
+        {data.map((item) => (
+          <Menu.Item
+            key={item.value}
+            onClick={() => onChange(item.value)}
+            rightSection={item.value === value ? <IconCheck size={14} stroke={2} /> : null}
+            fw={item.value === value ? 600 : 400}
+            style={item.value === value ? { color: 'var(--hydro-primary)' } : undefined}
+          >
+            {item.label}
+          </Menu.Item>
+        ))}
+      </Menu.Dropdown>
+    </Menu>
+  );
+}
+
+type ProblemSort = 'default' | 'recent' | 'hot';
+
+function ProblemList({ problems, psdict = {} }: { problems: any[], psdict?: Record<string, any> }) {
   const { t } = useI18n();
   const language = useSessionStore((s) => s.language);
+  const user = useSessionStore((s) => s.user);
+  const isLoggedIn = user && user._id > 0;
+  const canViewProblem = useHasPerm(PERM.PERM_VIEW_PROBLEM);
+  const canSort = isLoggedIn && canViewProblem;
+
+  const [sort, setSort] = useState<ProblemSort>('default');
+
+  const cardTitle = sort === 'recent'
+    ? t('Recently Attempted Problems')
+    : sort === 'hot'
+      ? t('Most Attempted Problems')
+      : t('Problem List');
+
+  const sortedProblems = useMemo(() => {
+    if (sort === 'hot') {
+      return [...problems].sort((a, b) => {
+        const aSubmits = Number(a.nSubmit) || 0;
+        const bSubmits = Number(b.nSubmit) || 0;
+        return bSubmits - aSubmits;
+      });
+    }
+    if (sort === 'recent') {
+      return [...problems].sort((a, b) => {
+        const aId = a.docId || a.pid || a._id;
+        const bId = b.docId || b.pid || b._id;
+        const aPs = psdict[aId] || psdict[String(aId)] || psdict[a.docId] || psdict[a.pid] || psdict[a._id];
+        const bPs = psdict[bId] || psdict[String(bId)] || psdict[b.docId] || psdict[b.pid] || psdict[b._id];
+
+        const aAttempted = Boolean(aPs && (aPs.rid || aPs.status !== undefined || aPs.score !== undefined));
+        const bAttempted = Boolean(bPs && (bPs.rid || bPs.status !== undefined || bPs.score !== undefined));
+
+        const aFull = Boolean(aPs && (aPs.status === 1 || (Number.isFinite(aPs.score) && aPs.score >= (a.score || 100))));
+        const bFull = Boolean(bPs && (bPs.status === 1 || (Number.isFinite(bPs.score) && bPs.score >= (b.score || 100))));
+
+        const aRank = aAttempted ? (aFull ? 1 : 0) : 2;
+        const bRank = bAttempted ? (bFull ? 1 : 0) : 2;
+
+        if (aRank !== bRank) return aRank - bRank;
+
+        if (aAttempted && bAttempted) {
+          const aTime = aPs.updatedAt ? new Date(aPs.updatedAt).getTime() : 0;
+          const bTime = bPs.updatedAt ? new Date(bPs.updatedAt).getTime() : 0;
+          if (bTime !== aTime) return bTime - aTime;
+        }
+        return 0;
+      });
+    }
+    return problems;
+  }, [problems, psdict, sort]);
+
+  const displayProblems = sortedProblems.slice(0, 5);
 
   return (
     <section className="hydro-data-panel hydro-data-panel--problems hydro-reveal hydro-reveal--3" aria-labelledby="problem-list-title">
       <div className="hydro-data-panel__header">
-        <Title id="problem-list-title" order={3}>{t('Problem List')}</Title>
+        <Group gap="xs" align="center">
+          <Title id="problem-list-title" order={3}>{cardTitle}</Title>
+          {canSort && (
+            <SectionSortSelect
+              value={sort}
+              onChange={(val) => setSort(val as ProblemSort)}
+              title={t('Sort problem list')}
+              data={[
+                { value: 'default', label: t('Default order') },
+                { value: 'recent', label: t('Recently attempted (unsolved first)') },
+                { value: 'hot', label: t('Most attempted') },
+              ]}
+            />
+          )}
+        </Group>
         <SectionLink to="problem_main" label={t('View All')} />
       </div>
-      {problems.length > 0 ? (
+      {displayProblems.length > 0 ? (
         <div className="hydro-data-list">
-          {problems.map((problem: any) => {
+          {displayProblems.map((problem: any) => {
             const id = problem.pid || problem.docId;
             const submits = Number(problem.nSubmit) || 0;
             const accepts = Number(problem.nAccept) || 0;
@@ -283,18 +391,86 @@ function ProblemList({ problems }: { problems: any[] }) {
   );
 }
 
-function RecentContests({ contests }: { contests: any[] }) {
+type ContestSort = 'default' | 'joined' | 'hot';
+
+function RecentContests({ contests, tsdict = {} }: { contests: any[], tsdict?: Record<string, any> }) {
   const { t } = useI18n();
+  const user = useSessionStore((s) => s.user);
+  const isLoggedIn = user && user._id > 0;
+  const canViewContest = useHasPerm(PERM.PERM_VIEW_CONTEST);
+  const canSort = isLoggedIn && canViewContest;
+
+  const [sort, setSort] = useState<ContestSort>('default');
+
+  const cardTitle = sort === 'joined'
+    ? t('Contests I Joined')
+    : sort === 'hot'
+      ? t('Most Attended Contests')
+      : t('Recent Contests');
+
+  const sortedContests = useMemo(() => {
+    if (sort === 'hot') {
+      const getAttendeeCount = (c: any) => {
+        if (Number.isFinite(c.attend)) return Number(c.attend);
+        if (Number.isFinite(c.nAttendee)) return Number(c.nAttendee);
+        if (Number.isFinite(c.nAttendees)) return Number(c.nAttendees);
+        if (Array.isArray(c.attendees)) return c.attendees.length;
+        return 0;
+      };
+      return [...contests].sort((a, b) => getAttendeeCount(b) - getAttendeeCount(a));
+    }
+    if (sort === 'joined') {
+      const isJoined = (c: any) => {
+        const id = c.docId || c._id;
+        const tsdoc = tsdict[id] || tsdict[String(id)] || tsdict[c.docId] || tsdict[c._id];
+        return Boolean(tsdoc?.attend || c.attend);
+      };
+      const joinedContests = contests.filter(isJoined);
+      if (joinedContests.length === 0) return contests;
+      const stateRank: Record<ContestState, number> = { running: 0, upcoming: 1, finished: 2 };
+      return [...joinedContests].sort((a, b) => {
+        const aState = getContestState(a);
+        const bState = getContestState(b);
+        if (stateRank[aState] !== stateRank[bState]) {
+          return stateRank[aState] - stateRank[bState];
+        }
+        if (aState === 'upcoming') {
+          return new Date(a.beginAt).getTime() - new Date(b.beginAt).getTime();
+        }
+        if (aState === 'running') {
+          return new Date(a.endAt).getTime() - new Date(b.endAt).getTime();
+        }
+        return new Date(b.endAt).getTime() - new Date(a.endAt).getTime();
+      });
+    }
+    return contests;
+  }, [contests, tsdict, sort]);
+
+  const displayContests = sortedContests.slice(0, 5);
 
   return (
     <section className="hydro-data-panel hydro-reveal hydro-reveal--4" aria-labelledby="recent-contests-title">
       <div className="hydro-data-panel__header">
-        <Title id="recent-contests-title" order={3}>{t('Recent Contests')}</Title>
+        <Group gap="xs" align="center">
+          <Title id="recent-contests-title" order={3}>{cardTitle}</Title>
+          {canSort && (
+            <SectionSortSelect
+              value={sort}
+              onChange={(val) => setSort(val as ContestSort)}
+              title={t('Sort recent contests')}
+              data={[
+                { value: 'default', label: t('Default order') },
+                { value: 'joined', label: t('Contests I joined') },
+                { value: 'hot', label: t('Most attended') },
+              ]}
+            />
+          )}
+        </Group>
         <SectionLink to="contest_main" label={t('View All')} />
       </div>
-      {contests.length > 0 ? (
+      {displayContests.length > 0 ? (
         <div className="hydro-data-list">
-          {contests.map((contest: any) => {
+          {displayContests.map((contest: any) => {
             const state = getContestState(contest);
             return (
               <Link
@@ -356,6 +532,13 @@ function sectionList(value: any): any[] {
   return [];
 }
 
+function sectionDict(value: any): Record<string, any> {
+  if (Array.isArray(value) && Array.isArray(value[0]) && value[1] && typeof value[1] === 'object') {
+    return value[1];
+  }
+  return {};
+}
+
 function collectSections(contents: any[]) {
   const sections: Record<string, any> = {};
   const assign = (key: string, value: any) => {
@@ -386,10 +569,12 @@ export default function HomePage() {
   const contents = args.contents || [];
   const domain = args.domain || {};
   const sections = collectSections(contents);
-  const problems = sectionList(
-    sections.recentProblems || sections.recent_problems || sections.problems,
-  ).slice(0, 5);
-  const contests = sectionList(sections.contests || sections.contest);
+  const rawProblems = sections.recentProblems || sections.recent_problems || sections.problems;
+  const rawContests = sections.contests || sections.contest;
+  const problems = sectionList(rawProblems);
+  const psdict = sectionDict(rawProblems);
+  const contests = sectionList(rawContests);
+  const tsdict = sectionDict(rawContests);
   const problemCount = numericValue(args.problemCount, domain.problemCount, domain.nProblem, problems.length);
   const contestCount = numericValue(args.contestCount, domain.contestCount, contests.length);
 
@@ -398,8 +583,8 @@ export default function HomePage() {
       <WelcomeHero problemCount={problemCount} contestCount={contestCount} />
       {domain.bulletin ? <Bulletin bulletin={domain.bulletin} /> : null}
       <div className="hydro-home-grid">
-        <ProblemList problems={problems} />
-        <RecentContests contests={contests} />
+        <ProblemList problems={problems} psdict={psdict} />
+        <RecentContests contests={contests} tsdict={tsdict} />
       </div>
     </Stack>
   );

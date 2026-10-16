@@ -93,10 +93,12 @@ export default function ContestTeamPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('My Teams')}>
+        {args.canManageTeams && <Button component={Link} to="contest_team_manage" variant="light">{t('Team management')}</Button>}
         <Button component={Link} to="contest_main" variant="subtle" leftSection={<IconArrowLeft size={16} />}>
           {t('Back')}
         </Button>
       </PageHeader>
+      <Text size="sm" c="dimmed">{t('Teams belong only to this domain.')}</Text>
       <Grid gap="lg">
         <Grid.Col span={{ base: 12, md: 8 }}>
           <Stack gap="md">
@@ -123,7 +125,7 @@ export default function ContestTeamPage() {
                         <Stack gap={2} style={{ minWidth: 0 }}>
                           <Text fw="var(--hydro-weight-semibold)" size="lg" truncate>{team.displayName}</Text>
                           <Group gap="xs">
-                            <Badge variant="outline" size="xs">ID: {team._id}</Badge>
+                            <Badge variant="outline" size="xs">{t('Domain team')}</Badge>
                             <Badge variant="light" size="xs">{members.length} {t('Members')}</Badge>
                           </Group>
                         </Stack>
@@ -270,6 +272,7 @@ export default function ContestTeamPage() {
                     onChange={(event) => setName(event.currentTarget.value)}
                     disabled={loading}
                     required
+                    maxLength={80}
                   />
                   <Button type="submit" fullWidth variant="light" loading={loading} disabled={!name.trim()}>{t('Create')}</Button>
                 </Stack>
@@ -300,6 +303,7 @@ export default function ContestTeamPage() {
               label={t('Team name')}
               value={renameModal?.name || ''}
               required
+              maxLength={80}
               autoFocus
               disabled={loading}
               onChange={(event) => {

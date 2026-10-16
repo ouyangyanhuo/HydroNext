@@ -225,6 +225,122 @@ describe('App', () => {
         }
     });
 
+    it('Domain teams isolate invitations, registration and administrator operations while preserving results', async () => {
+        const { contest, domain, problem, user } = global.Hydro.model;
+        const { collV } = require('../packages/hydrooj/src/model/user');
+        const { PERM, PRIV } = require('../packages/hydrooj/src/model/builtin');
+        const a = 'domain-teams-a';
+        const b = 'domain-teams-b';
+        const member = await user.create('domain-team-member@example.com', 'domain-team-member', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
+        await Promise.all([domain.add(a, 2, 'Team domain A', ''), domain.add(b, 2, 'Team domain B', '')]);
+        const view = PERM.PERM_VIEW | PERM.PERM_VIEW_CONTEST | PERM.PERM_ATTEND_CONTEST;
+        await domain.setRoles(a, { participant: view, organizer: view | PERM.PERM_CREATE_CONTEST });
+        await domain.setUserRole(a, member, 'participant', true);
+        await domain.setUserRole(b, member, 'default', true);
+        const memberAgent = supertest.agent(require('hydrooj').httpServer);
+        await memberAgent.post('/login').send({ uname: 'domain-team-member', password: 'secret' }).expect(302);
+        const teamA = `/d/${a}/contest/team`;
+        const teamB = `/d/${b}/contest/team`;
+        const pid = await problem.add(a, 'P1', 'Team problem', '', 2);
+        const tid = await contest.add(a, 'Scoped teams', '', 2, 'acm', new Date(Date.now() + 60000),
+            new Date(Date.now() + 3600000), [pid], false, { allowTeam: true });
+        try {
+            await agent.post(teamA).send({ operation: 'create', name: 'Team A' }).expect(302);
+            await agent.post(teamB).send({ operation: 'create', name: 'Team B' }).expect(302);
+            const pageA = getPageArgs(await agent.get(teamA).set('Accept', 'application/json').expect(200));
+            const pageB = getPageArgs(await agent.get(teamB).set('Accept', 'application/json').expect(200));
+            assert.deepEqual(pageA.mine.map((team) => team.displayName), ['Team A']);
+            assert.deepEqual(pageB.mine.map((team) => team.displayName), ['Team B']);
+            const team = pageA.mine[0];
+            await memberAgent.post(teamB).send({ operation: 'join', code: team.invitationCode }).expect(403);
+            await memberAgent.post(teamA).send({ operation: 'join', code: team.invitationCode }).expect(302);
+            await memberAgent.get(`${teamA}/manage`).expect(403);
+            await memberAgent.get(`${teamA}/${team._id}`).expect(403);
+            await memberAgent.get(`/d/${a}/user/${team._id}`).expect(403);
+            await agent.get(`${teamB}/${team._id}`).expect(404);
+            await agent.get(`/d/${b}/user/${team._id}`).expect(404);
+            await agent.get(`/d/${a}/user/${team._id}`).expect(302).expect('Location', `${teamA}/${team._id}`);
+            await agent.post(`${teamB}/manage`).send({ operation: 'rename', vuid: team._id, name: 'Wrong domain' }).expect(404);
+            await agent.post(`${teamB}/manage`).send({ operation: 'disband', vuid: team._id }).expect(404);
+            await agent.post(teamB).send({ operation: 'rename', vuid: team._id, name: 'Wrong domain' }).expect(403);
+            await agent.post(`${teamA}/manage`).send({ domainId: b, operation: 'disband', vuid: team._id }).expect(403);
+            await agent.post(`/d/${b}/contest/${tid}`).send({ operation: 'attend', vuid: team._id }).expect(404);
+            await agent.post(`/d/${a}/contest/${tid}`).send({ operation: 'attend', vuid: team._id }).expect(302);
+            await domain.setUserRole(a, member, 'organizer');
+            const managed = getPageArgs(await memberAgent.get(`${teamA}/manage`).set('Accept', 'application/json').expect(200));
+            assert.equal(managed.teams[0]._id, team._id);
+            assert.equal(managed.pageCount, 1);
+            await memberAgent.post(`${teamA}/manage`).send({ operation: 'rename', vuid: team._id, name: 'Renamed A' }).expect(200);
+            const scoreboard = getPageArgs(await agent.get(`/d/${a}/contest/${tid}/scoreboard`).set('Accept', 'application/json').expect(200));
+            assert.equal(scoreboard.udict[team._id].displayName, 'Renamed A');
+            assert.equal(scoreboard.udict[team._id].isTeam, true);
+            assert.deepEqual(scoreboard.udict[team._id].teamMembers, [2, member]);
+            const attendeePage = getPageArgs(await agent.get(`/d/${a}/contest/${tid}/user`).set('Accept', 'application/json').expect(200));
+            assert.equal(attendeePage.canManageTeams, true);
+            await agent.post(`/d/${a}/contest/${tid}/user`).send({ operation: 'rank', uid: team._id }).expect(302);
+            assert.equal((await contest.getStatus(a, tid, team._id)).unrank, true);
+            await memberAgent.post(`${teamA}/manage`).send({ operation: 'disband', vuid: team._id }).expect(200);
+            await memberAgent.post(teamA).send({ operation: 'join', code: team.invitationCode }).expect(403);
+            assert.equal((await user.getTeamById(a, team._id)), null);
+            const archived = getPageArgs(await agent.get(`${teamA}/${team._id}`).set('Accept', 'application/json').expect(200));
+            assert.ok(archived.team.disbandedAt);
+            assert.deepEqual((await contest.getStatus(a, tid, team._id)).members, [2, member]);
+            assert.equal((await contest.getStatus(a, tid, team._id)).attend, 1);
+            assert.equal((await user.getVusersByMember(2, undefined, b))[0].displayName, 'Team B');
+        } finally {
+            await contest.del(a, tid);
+            await problem.del(a, pid);
+            await Promise.all([domain.del(a), domain.del(b)]);
+            await collV.deleteMany({ domainId: { $in: [a, b] } });
+        }
+    });
+
+    it('Legacy global teams split by historical domains with resumable identities and unchanged scores', async () => {
+        const { contest, domain, record, user } = global.Hydro.model;
+        const { collV } = require('../packages/hydrooj/src/model/user');
+        const a = 'legacy-teams-a';
+        const b = 'legacy-teams-b';
+        await Promise.all([domain.add(a, 2, 'Legacy A', ''), domain.add(b, 2, 'Legacy B', '')]);
+        const legacy = await user.createVuser('team:2:legacy-domain-split', { displayName: 'Legacy team', members: [2] });
+        const unused = await user.createVuser('team:2:legacy-never-attended', { displayName: 'Unused team', members: [2] });
+        const start = new Date(Date.now() - 60000);
+        const end = new Date(Date.now() + 3600000);
+        const [ta, tb] = await Promise.all([
+            contest.add(a, 'Legacy A', '', 2, 'acm', start, end, [], false, { allowTeam: true }),
+            contest.add(b, 'Legacy B', '', 2, 'acm', start, end, [], false, { allowTeam: true }),
+        ]);
+        await Promise.all([
+            contest.attend(a, ta, legacy, { members: [2], displayName: 'Legacy team', score: 100 }),
+            contest.attend(b, tb, legacy, { members: [2], displayName: 'Legacy team', score: 80 }),
+        ]);
+        const legacyRid = await record.add(b, 1, legacy, '_', 'legacy code', false, { contest: tb, type: 'judge' });
+        const realRid = await record.add(b, 1, 2, '_', 'individual code', false, { contest: tb, type: 'judge' });
+        try {
+            await Promise.all([user.migrateLegacyTeams(), user.migrateLegacyTeams()]);
+            const one = (await user.getVusersByMember(2, undefined, a))[0];
+            const two = (await user.getVusersByMember(2, undefined, b))[0];
+            assert.ok(one && two);
+            assert.notEqual(one._id, two._id);
+            assert.equal((await contest.getStatus(a, ta, one._id)).score, 100);
+            assert.equal((await contest.getStatus(b, tb, two._id)).score, 80);
+            assert.deepEqual((await contest.getStatus(b, tb, two._id)).members, [2]);
+            assert.equal((await record.get(b, legacyRid)).uid, two._id);
+            assert.equal((await record.get(b, realRid)).uid, 2);
+            assert.equal((await record.get(b, legacyRid)).code, 'legacy code');
+            assert.equal((await user.getTeamById('system', unused))._id, unused);
+            assert.equal(two.captainId, 2, 'legacy captain authority is retained when cloning');
+            await collV.updateOne({ _id: legacy }, { $set: { _teamMigrationDomains: [a, b] } });
+            await Promise.all([user.migrateLegacyTeams(), user.migrateLegacyTeams()]);
+            assert.equal(await collV.countDocuments({ _legacyTeamId: legacy }), 2);
+            assert.equal((await user.getVusersByMember(2, undefined, b))[0]._id, two._id);
+            assert.equal((await collV.findOne({ _id: legacy }))._teamMigrationDomains, undefined);
+        } finally {
+            await Promise.all([contest.del(a, ta), contest.del(b, tb)]);
+            await Promise.all([domain.del(a), domain.del(b)]);
+            await collV.deleteMany({ _legacyTeamId: { $in: [legacy, unused] } });
+        }
+    });
+
     it('Team contests preserve individual records, replay permissions, timers and proctor evidence', async () => {
         const { contest, domain, problem, user, record } = global.Hydro.model;
         const { PRIV } = require('../packages/hydrooj/src/model/builtin');
@@ -245,7 +361,7 @@ describe('App', () => {
         await memberAgent.post('/login').send({ uname: 'teammate', password: 'secret' }).expect(302);
         try {
             await agent.post(teamRoute).send({ operation: 'create', name: 'Upgrade team' }).expect(302);
-            const [team] = await user.getVusersByMember(2);
+            const [team] = await user.getVusersByMember(2, undefined, domainId);
             const teamPage = await agent.get(teamRoute).expect(200);
             const teamCode = getPageArgs(teamPage).mine.find((doc) => doc._id === team._id).invitationCode;
             assert.match(teamCode, /^[A-HJ-NP-Z2-9]{8}$/);
@@ -312,7 +428,7 @@ describe('App', () => {
         await firstAgent.post('/login').send({ uname: 'code-first', password: 'secret' }).expect(302);
         await secondAgent.post('/login').send({ uname: 'code-second', password: 'secret' }).expect(302);
         const route = `/d/${domainId}/contest/team`;
-        const vuid = await user.createVuser('team:2:code-test', { displayName: 'Code team', members: [2], invite: [first] });
+        const vuid = await user.createVuser('team:2:code-test', { domainId, displayName: 'Code team', members: [2], invite: [first] });
         try {
             const page = await agent.get(route).expect(200);
             const team = getPageArgs(page).mine.find((doc) => doc._id === vuid);

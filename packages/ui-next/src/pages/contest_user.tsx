@@ -1,12 +1,14 @@
-import { Checkbox, Group, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Badge, Checkbox, Group, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
+import { TeamIdentity } from '@/components/contest/team-identity';
 import { Link } from '@/components/link';
 import { UserAvatar } from '@/components/user/user-avatar';
+import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
@@ -98,16 +100,23 @@ export default function ContestUserPage() {
           <Table.Tbody>
             {tsdocs.map((tsdoc: any) => {
               const udoc = udict[tsdoc.uid] || {};
+              const isTeam = tsdoc.uid < 0 && Array.isArray(tsdoc.members);
               return (
                 <Table.Tr key={tsdoc.uid}>
-                  <Table.Td><Text size="xs" ff="monospace">{tsdoc.uid}</Text></Table.Td>
                   <Table.Td>
-                    <Group gap="xs" wrap="nowrap">
+                    {isTeam ? <Badge variant="light">{t('Team Participation')}</Badge> : <Text size="xs" ff="monospace">{tsdoc.uid}</Text>}
+                  </Table.Td>
+                  <Table.Td>
+                    {isTeam ? <TeamIdentity
+                      id={tsdoc.uid}
+                      name={tsdoc.displayName || udoc.displayName}
+                      members={tsdoc.members}
+                      udict={udict}
+                      canManage={args.canManageTeams === true}
+                    /> : <Group gap="xs" wrap="nowrap">
                       <UserAvatar user={udoc} link={false} size="xs" />
-                      <Link to="user_detail" params={{ uid: tsdoc.uid }} className="no-underline hover:underline">
-                        <Text size="sm">{tsdoc.displayName || udoc.uname || tsdoc.uid}</Text>
-                      </Link>
-                    </Group>
+                      <UserLink user={{ ...udoc, _id: tsdoc.uid, ...(tsdoc.displayName ? { displayName: tsdoc.displayName } : {}) }} size="sm" />
+                    </Group>}
                   </Table.Td>
                   <Table.Td><TimeDisplay date={tsdoc.startAt || tdoc.beginAt} format="absolute" size="xs" /></Table.Td>
                   <Table.Td><TimeDisplay date={tsdoc.endAt || tdoc.endAt} format="absolute" size="xs" /></Table.Td>

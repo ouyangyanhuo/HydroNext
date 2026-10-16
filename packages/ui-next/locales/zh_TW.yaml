@@ -62,11 +62,21 @@ By Status: 按狀態
 
 # List sorting
 Ascending ID: 題目編號正序
+Contests I Joined: 我參加的比賽
+Contests I joined: 我參加的比賽
 Default order: 預設排序
 Descending ID: 題目編號倒序
+Most Attempted Problems: 最多人在寫的題
+Most attempted: 最多人在寫的題
+Most Attended Contests: 最多人參加的比賽
+Most attended: 最多人參加的比賽
 Oldest first: 最早新增
 Recently added: 最近新增
+Recently Attempted Problems: 最近在寫的題
+Recently attempted (unsolved first): 最近在寫的題（優先展示未拿滿分的題）
 Sort order: 排序方式
+Sort problem list: 排序題目列表
+Sort recent contests: 排序最近比賽
 Title ascending: 標題正序
 Title descending: 標題倒序
 

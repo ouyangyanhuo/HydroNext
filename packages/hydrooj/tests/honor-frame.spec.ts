@@ -277,6 +277,7 @@ test('user serialization and list rendering use global frames despite conflictin
         '../error': {}, '../lib/avatar': {}, '../lib/hash.hydro': {}, './token': {},
         '../lib/team-invitation': {},
         '../lib/team-permissions': {},
+        '../logger': { Logger: class { info() {} } },
         '../service/bus': { on() {}, parallel: async () => {}, broadcast: (...values: any[]) => broadcasts.push(values) },
         '../service/db': { collection: (name: string) => ({ find: () => cursor(name === 'user' ? [doc] : []) }) },
         '../utils': { ArgMethod: () => {}, buildProjection: () => ({}) },

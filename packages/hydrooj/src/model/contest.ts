@@ -97,8 +97,11 @@ async function getScoreboardUdict(
     const udict = await UserModel.getListForRender(tdoc.domainId, [...uids, ...memberUids], showDisplayName ? ['displayName'] : []);
     if (tdoc.allowTeam) {
         for (const [, tsdoc] of rankedTsdocs) {
-            if (tsdoc.members?.length && udict[tsdoc.uid]) {
-                (udict[tsdoc.uid] as any).teamMembers = tsdoc.members.filter((uid) => udict[uid]);
+            if (tsdoc.uid < 0 && Array.isArray(tsdoc.members) && udict[tsdoc.uid]) {
+                const team = udict[tsdoc.uid] as any;
+                team.isTeam = true;
+                team.teamMembers = tsdoc.members.filter((uid) => udict[uid]);
+                team.displayName = tsdoc.displayName || team.displayName;
             }
         }
     }

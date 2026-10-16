@@ -67,6 +67,7 @@ const mocks: Record<string, any> = {
     '@/components/common/confirm-dialog': { ConfirmDialog: () => null },
     '@/components/link': { Link: ({ children }: any) => h('span', null, children) },
     '@/components/user/user-avatar': { UserAvatar: () => null },
+    '@/components/user/user-link': { UserLink: () => null },
     '@/components/markdown/markdown-renderer': { MarkdownRenderer: ({ content }: any) => h('div', null, content) },
 };
 
@@ -119,6 +120,9 @@ function deferred<T = any>() {
 }
 const failure = { ok: false, json: async () => ({ error: { message: 'Denied' } }) };
 mocks['@/components/common/form-dialog'] = component('../src/components/common/form-dialog.tsx');
+mocks['@/components/contest/team-identity'] = component('../src/components/contest/team-identity.tsx', {
+    '@/components/link': { Link: ({ children, params }: any) => h('a', { href: `/d/team/contest/team/${params.vuid}` }, children) },
+});
 const ContestUser = component('../src/pages/contest_user.tsx').default;
 const ContestBalloon = component('../src/pages/contest_balloon.tsx').default;
 const ContestClarification = component('../src/pages/contest_clarification.tsx').default;
@@ -175,6 +179,25 @@ test('problem bulk download is available to creators without edit permission and
     } finally {
         await view.close();
     }
+});
+
+test('team attendees use a team label and protected management link rather than a negative user profile', async () => {
+    args = {
+        tdoc: { title: 'Team contest', docId: 'contest' }, canManageTeams: true,
+        tsdocs: [{ uid: -1000, displayName: 'Team Alpha', members: [2, 3] }, { uid: 7 }], udict: {},
+    };
+    const view = await mount(h(ContestUser));
+    try {
+        const rows = view.host.querySelectorAll('tbody tr');
+        assert.equal(rows[0].querySelector('td')?.textContent, 'Team Participation');
+        assert.equal(rows[1].querySelector('td')?.textContent, '7');
+        assert.equal(view.host.querySelector('a[href="/d/team/contest/team/-1000"]')?.textContent, 'Team Alpha');
+        assert.equal(view.host.querySelector('a[href*="/user/-1000"]'), null);
+        args = { ...args, canManageTeams: false };
+        await view.render(h(ContestUser));
+        assert.equal(view.host.querySelector('a[href="/d/team/contest/team/-1000"]'), null);
+        assert.ok(view.host.textContent?.includes('Team Alpha'));
+    } finally { await view.close(); }
 });
 
 test('attendee failures retain the dialog and draft; pending submissions are locked and retry succeeds', async () => {

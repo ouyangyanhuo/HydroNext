@@ -1,4 +1,4 @@
-import { Badge, Card, Checkbox, Group, NumberInput, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Card, Checkbox, Group, Loader, NumberInput, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -119,6 +119,8 @@ function AsyncTagSelect({
   onSearch: (query: string) => void;
   onChange: (value: string[]) => void;
 }) {
+  const { t } = useI18n();
+  const [search, setSearch] = useState('');
   return (
     <TagMultiSelect
       className={className}
@@ -132,9 +134,11 @@ function AsyncTagSelect({
       searchable
       clearable
       hidePickedOptions
-      nothingFoundMessage="No results"
-      rightSection={loading ? <Text size="xs" c="dimmed">...</Text> : null}
-      onSearchChange={onSearch}
+      nothingFoundMessage={loading ? t('Loading...') : t('No results')}
+      rightSection={loading ? <Loader size={14} /> : null}
+      searchValue={search}
+      onSearchChange={(query) => { setSearch(query); onSearch(query); }}
+      onDropdownOpen={() => onSearch(search)}
       onChange={onChange}
       renderOption={({ option }) => {
         const item = option as SearchOption;
@@ -200,7 +204,14 @@ export default function ContestEditPage() {
   const [problemSearching, setProblemSearching] = useState(false);
   const [userSearching, setUserSearching] = useState(false);
   const problemSearchSeq = useRef(0);
+  const problemSearchAbort = useRef<AbortController | null>(null);
+  const problemSearchQuery = useRef<string | null>(null);
   const userSearchSeq = useRef(0);
+  useEffect(() => () => {
+    problemSearchAbort.current?.abort();
+    problemSearchSeq.current++;
+    userSearchSeq.current++;
+  }, [domainId]);
 
   const endAt = useMemo(
     () => addHours(form.beginAtDate, form.beginAtTime, Number(form.duration)),
@@ -285,6 +296,11 @@ export default function ContestEditPage() {
 
   const searchProblems = async (query: string) => {
     if (!domainId) return;
+    if (problemSearchQuery.current === query && problemSearchAbort.current && !problemSearchAbort.current.signal.aborted) return;
+    problemSearchAbort.current?.abort();
+    const controller = new AbortController();
+    problemSearchAbort.current = controller;
+    problemSearchQuery.current = query;
     const seq = ++problemSearchSeq.current;
     setProblemSearching(true);
     try {
@@ -294,10 +310,11 @@ export default function ContestEditPage() {
           { domainId },
           { q: query, quick: 'true', sort: query ? 'default' : 'recent' },
         ),
-        { headers: { Accept: 'application/json' } },
+        { signal: controller.signal, cache: 'no-store', headers: { Accept: 'application/json' } },
       );
       const data = await res.json();
-      if (seq !== problemSearchSeq.current) return;
+      if (seq !== problemSearchSeq.current || controller.signal.aborted) return;
+      if (!res.ok || data.error) throw new Error('Problem search failed');
       const pdocs = Array.isArray(data.pdocs) ? data.pdocs : [];
       setProblemOptions((current) => mergeOptions(
         pdocs.map((pdoc: any) => ({
@@ -308,9 +325,14 @@ export default function ContestEditPage() {
         current,
       ));
     } catch {
-      notifications.show({ title: t('Problem search failed'), message: '', color: 'red' });
+      if (!controller.signal.aborted && seq === problemSearchSeq.current) {
+        notifications.show({ title: t('Problem search failed'), message: '', color: 'red' });
+      }
     } finally {
-      if (seq === problemSearchSeq.current) setProblemSearching(false);
+      if (seq === problemSearchSeq.current) {
+        problemSearchQuery.current = null;
+        setProblemSearching(false);
+      }
     }
   };
 

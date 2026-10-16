@@ -405,6 +405,12 @@ class UserDetailHandler extends Handler {
     @param('page', Types.PositiveInt, true)
     async get(domainId: string, uid: number, page = 1) {
         if (uid === 0) throw new UserNotFoundError(0);
+        if (uid < 0) {
+            if (!await user.getTeamById(domainId, uid, true)) throw new UserNotFoundError(uid);
+            if (this.user._id !== this.domain.owner) this.checkPerm(PERM.PERM_CREATE_CONTEST);
+            this.response.redirect = this.url('contest_team_detail', { vuid: uid });
+            return;
+        }
         const isSelfProfile = this.user._id === uid;
         const [udoc, sdoc, contributions] = await Promise.all([
             user.getById(domainId, uid),

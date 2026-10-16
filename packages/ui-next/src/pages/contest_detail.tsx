@@ -732,7 +732,6 @@ export default function ContestDetailPage() {
         onClose={() => { if (!attendPending.current) setAttendDialogOpen(false); }}
         title={t('Register Contest')}
         size="sm"
-        centered
         closeOnClickOutside={!attending}
         closeOnEscape={!attending}
         closeButtonProps={{ disabled: attending }}

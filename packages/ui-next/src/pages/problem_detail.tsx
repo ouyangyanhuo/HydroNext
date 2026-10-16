@@ -754,7 +754,7 @@ export default function ProblemDetailPage() {
         </Stack>
       </div>
 
-      <Modal opened={relatedOpened} onClose={() => setRelatedOpenFor(null)} title={t('Related')} size="md" centered>
+      <Modal opened={relatedOpened} onClose={() => setRelatedOpenFor(null)} title={t('Related')} size="md">
         {relatedOpened && (
           <ScrollArea.Autosize mah="60vh" offsetScrollbars>
             <Stack gap="sm">

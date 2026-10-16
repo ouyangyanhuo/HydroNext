@@ -1,4 +1,24 @@
 __flag: 🇨🇳
+'All participants': '所有参赛者'
+'Created at': '创建时间'
+'Disband team': '解散队伍'
+'Disband this team? Its invitation code will be invalidated. Existing contest registrations and results will be retained.': '确定解散此队伍吗？邀请码将立即失效，已有比赛报名和成绩会被保留。'
+'Disbanded': '已解散'
+'Domain team': '本域队伍'
+'No teams in this domain.': '本域暂无队伍。'
+'Participant': '参赛者'
+'Ranked participants': '计入排名的参赛者'
+'Search teams': '搜索队伍'
+'Starred participants': '已关注的参赛者'
+'Team': '队伍'
+'Team Participation': '团队参赛'
+'Team details': '队伍详情'
+'Team management': '队伍管理'
+'Team name': '队伍名称'
+'Teams belong only to this domain.': '队伍仅属于当前域，不与其他域共享。'
+'Teams belong only to this domain. Existing contest registrations and results are preserved when a team is disbanded.': '队伍仅属于当前域。解散队伍不会删除已有比赛报名和成绩。'
+'{0} members': '{0} 名成员'
+'{0} ranked participants': '{0} 位参赛者（个人或队伍）'
 'Only the team captain can perform this operation.': '只有队长可以执行此操作。'
 'The captain must remove other members before leaving the team.': '队长需先移除其他队员，才能退出队伍。'
 'Verification failed': '验证失败'
@@ -199,11 +219,21 @@ By Status: 按状态
 
 # List sorting
 Ascending ID: 题目编号正序
+Contests I Joined: 我参加的比赛
+Contests I joined: 我参加的比赛
 Default order: 默认排序
 Descending ID: 题目编号倒序
+Most Attempted Problems: 最多人在写的题
+Most attempted: 最多人在写的题
+Most Attended Contests: 最多人参加的比赛
+Most attended: 最多人参加的比赛
 Oldest first: 最早添加
 Recently added: 最近添加
+Recently Attempted Problems: 最近在写的题
+Recently attempted (unsolved first): 最近在写的题（优先展示未拿满分的题）
 Sort order: 排序方式
+Sort problem list: 排序题目列表
+Sort recent contests: 排序最近比赛
 Title ascending: 标题正序
 Title descending: 标题倒序
 
