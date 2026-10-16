@@ -3,8 +3,8 @@ import { LRUCache } from 'lru-cache';
 import { Collection, Filter, ObjectId } from 'mongodb';
 import type { Context } from '../context';
 import {
-    ContestAlreadyAttendedError, LoginError, NotAssignedError, PermissionError,
-    TeamAlreadyJoinedError, UserAlreadyExistError, UserNotFoundError,
+    LoginError, NotAssignedError, PermissionError,
+    TeamAlreadyJoinedError, TeamContestIndividualConflictError, TeamContestMemberConflictError, UserAlreadyExistError, UserNotFoundError,
 } from '../error';
 import {
     Authenticator, BaseUserDict, FileInfo, GDoc,
@@ -14,7 +14,7 @@ import avatar from '../lib/avatar';
 import pwhash from '../lib/hash.hydro';
 import { ensureTeamInvitationCode, joinTeamByInvitationCode, normalizeTeamInvitationCode } from '../lib/team-invitation';
 import { withTeamMembershipLock } from '../lib/team-membership-lock';
-import { leaveOrRemoveTeamMember, renameTeamByCaptain, teamCaptainId, teamDomainQuery } from '../lib/team-permissions';
+import { availableTeamName, leaveOrRemoveTeamMember, renameTeamByCaptain, teamCaptainId, teamDomainQuery } from '../lib/team-permissions';
 import { Logger } from '../logger';
 import bus from '../service/bus';
 import db from '../service/db';
@@ -441,6 +441,18 @@ class UserModel {
         }
     }
 
+    /** 域内创建队伍时串行检查重名，防止两个并发请求同时占用同一名称。 */
+    static async createTeam(domainId: string, captainId: number, name: string) {
+        return withTeamMembershipLock(domainId, async () => {
+            const displayName = await availableTeamName(collV, domainId, name);
+            const vuid = await UserModel.createVuser(`team:${captainId}:${randomstring(6)}`, {
+                domainId, displayName, captainId, members: [captainId],
+            });
+            await UserModel.getTeamInvitation(vuid, captainId, false, domainId);
+            return vuid;
+        });
+    }
+
     static getVuserById(uid: number) {
         return collV.findOne({ _id: uid });
     }
@@ -584,8 +596,15 @@ class UserModel {
             domainId, docType: 30, docId: { $in: contests.map((entry) => entry.docId) }, attend: { $gt: 0 },
             uid: { $ne: teamId }, $or: [{ uid: { $in: members } }, { members: { $in: members } }],
         });
-        if (conflict) throw new ContestAlreadyAttendedError(conflict.docId);
         const users = await UserModel.getList(domainId, members);
+        if (conflict) {
+            const uid = conflict.uid > 0 ? conflict.uid : members.find((member) => conflict.members?.includes(member));
+            const participant = users[uid];
+            const name = participant?.displayName || participant?.uname || String(uid);
+            if (conflict.uid > 0) throw new TeamContestIndividualConflictError(name);
+            const team = await UserModel.getTeamById(domainId, conflict.uid, true);
+            throw new TeamContestMemberConflictError(name, team?.displayName || conflict.displayName || String(conflict.uid));
+        }
         for (const member of members) {
             const participant = users[member];
             if (!participant?.hasPerm(PERM.PERM_ATTEND_CONTEST)) throw new PermissionError(PERM.PERM_ATTEND_CONTEST);
@@ -597,10 +616,12 @@ class UserModel {
     }
 
     static async renameTeam(vuid: number, uid: number, name: string, domainId = 'system') {
-        const team = await renameTeamByCaptain(collV, vuid, uid, name, domainId);
-        await db.collection('document.status').updateMany({ domainId, docType: 30, uid: vuid }, { $set: { displayName: team.displayName } });
-        deleteUserCache(team);
-        return team;
+        return withTeamMembershipLock(domainId, async () => {
+            const team = await renameTeamByCaptain(collV, vuid, uid, name, domainId);
+            await db.collection('document.status').updateMany({ domainId, docType: 30, uid: vuid }, { $set: { displayName: team.displayName } });
+            deleteUserCache(team);
+            return team;
+        });
     }
 
     static async leaveTeam(vuid: number, uid: number, target = uid, domainId = 'system') {
@@ -644,15 +665,20 @@ class UserModel {
     }
 
     static async manageTeam(domainId: string, uid: number, update: Partial<Pick<VUdoc, 'displayName' | 'disbandedAt'>>) {
-        const team = await collV.findOneAndUpdate({ ...teamDomainQuery(domainId), _id: uid, members: { $exists: true } },
-            { $set: update, ...(update.disbandedAt ? { $unset: { _teamJoinCode: '', invite: '' } } : {}) }, { returnDocument: 'after' });
-        if (team) {
-            if (update.displayName) {
-                await db.collection('document.status').updateMany({ domainId, docType: 30, uid }, { $set: { displayName: update.displayName } });
+        return withTeamMembershipLock(domainId, async () => {
+            if (!await UserModel.getTeamById(domainId, uid)) return null;
+            const changes = { ...update };
+            if (changes.displayName !== undefined) changes.displayName = await availableTeamName(collV, domainId, changes.displayName, uid);
+            const team = await collV.findOneAndUpdate({ ...teamDomainQuery(domainId), _id: uid, members: { $exists: true } },
+                { $set: changes, ...(changes.disbandedAt ? { $unset: { _teamJoinCode: '', invite: '' } } : {}) }, { returnDocument: 'after' });
+            if (team) {
+                if (changes.displayName) {
+                    await db.collection('document.status').updateMany({ domainId, docType: 30, uid }, { $set: { displayName: changes.displayName } });
+                }
+                deleteUserCache(team);
             }
-            deleteUserCache(team);
-        }
-        return team;
+            return team;
+        });
     }
 
     static getMulti(params: Filter<Udoc> = {}, projection?: (keyof Udoc)[]) {

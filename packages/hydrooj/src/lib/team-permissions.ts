@@ -1,5 +1,6 @@
+import { escapeRegExp } from 'lodash';
 import type { Collection, Filter } from 'mongodb';
-import { TeamCaptainLeaveError, TeamCaptainRequiredError, TeamMembershipRequiredError, ValidationError } from '../error';
+import { TeamCaptainLeaveError, TeamCaptainRequiredError, TeamMembershipRequiredError, TeamNameAlreadyExistsError, ValidationError } from '../error';
 import type { VUdoc } from '../interface';
 
 /** Unscoped legacy teams are isolated to the main domain, never claimed by a visitor. */
@@ -24,12 +25,25 @@ export function requireTeamCaptain(team: VUdoc, uid: number) {
     if (teamCaptainId(team) !== uid) throw new TeamCaptainRequiredError();
 }
 
+/** 调用方持有域成员锁；创建、队长改名与管理员改名共用校验，兼容未建立名称索引的旧队伍。 */
+export async function availableTeamName(collection: Collection<VUdoc>, domainId: string, name: string, exceptId?: number) {
+    const displayName = name.trim();
+    if (!displayName || displayName.length > 80) throw new ValidationError('name');
+    const existing = await collection.findOne({
+        ...teamDomainQuery(domainId), members: { $exists: true },
+        // 忽略首尾空白和字母大小写，正则元字符只按队名原文匹配。
+        displayName: { $regex: `^\\s*${escapeRegExp(displayName)}\\s*$`, $options: 'i' },
+        ...(exceptId === undefined ? {} : { _id: { $ne: exceptId } }),
+    });
+    if (existing) throw new TeamNameAlreadyExistsError(displayName);
+    return displayName;
+}
+
 export async function renameTeamByCaptain(collection: Collection<VUdoc>, vuid: number, uid: number, name: string, domainId = 'system') {
     const scope = teamDomainQuery(domainId);
     const team = await collection.findOne({ ...scope, _id: vuid });
     requireTeamCaptain(team, uid);
-    const displayName = name.trim();
-    if (!displayName || displayName.length > 80) throw new ValidationError('name');
+    const displayName = await availableTeamName(collection, domainId, name, vuid);
     const updated = await collection.findOneAndUpdate({
         ...scope, _id: vuid, members: uid, ...teamCaptainGuard(team),
     }, { $set: { displayName, captainId: uid } }, { returnDocument: 'after' });

@@ -132,3 +132,8 @@ user_register: Register
 user_sudo: Entering Sudo Mode
 wiki_about: About
 wiki_help: Help
+
+# 队名与参赛成员冲突
+'A team named {0} already exists in this domain.': 'A team named {0} already exists in this domain.'
+'Team member {0} has already entered this contest individually.': 'Team member {0} has already entered this contest individually.'
+'Team member {0} has already entered this contest with team {1}.': 'Team member {0} has already entered this contest with team {1}.'

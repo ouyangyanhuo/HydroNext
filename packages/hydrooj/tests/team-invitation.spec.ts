@@ -8,7 +8,7 @@ import { test } from 'node:test';
 const require = createRequire(import.meta.url);
 const errors = Object.fromEntries([
     'InvalidJoinInvitationCodeError', 'PermissionError', 'SystemError', 'TeamAlreadyJoinedError', 'TeamMemberLimitError',
-    'TeamMembershipRequiredError', 'TeamCaptainRequiredError', 'TeamCaptainLeaveError', 'ValidationError',
+    'TeamNameAlreadyExistsError', 'TeamMembershipRequiredError', 'TeamCaptainRequiredError', 'TeamCaptainLeaveError', 'ValidationError',
 ].map((name) => [name, class extends Error { constructor(...args: unknown[]) { super(`${name}:${args.join(',')}`); } }]));
 function load(path: string, mocks: Record<string, any>) {
     const module = { exports: {} as any };
@@ -40,6 +40,8 @@ function collection(initial: any[]) {
             assert.equal(JSON.stringify(value.$lt[0]), '{"$size":{"$ifNull":["$members",[]]}}');
             return row.members.length < value.$lt[1];
         }
+        if (typeof value === 'object' && value && '$regex' in value) return new RegExp(value.$regex, value.$options).test(row[key] || '');
+        if (typeof value === 'object' && value && '$ne' in value) return row[key] !== value.$ne;
         if (typeof value === 'object' && value && '$exists' in value) return (row[key] !== undefined) === value.$exists;
         if (typeof value === 'object' && value && '$in' in value) {
             return value.$in.some((item: any) => item == null ? row[key] == null : row[key] === item);
@@ -229,4 +231,24 @@ test('legacy invitation operations are removed and code joins are rate-limited p
     f.handler.user._id = 2;
     await f.handler.postResetCode('team-domain', -1000);
     assert.notEqual(f.store.rows[0]._teamJoinCode, 'ABCDEFGH');
+});
+
+test('同域有效队伍不能重名，忽略大小写和首尾空格，队长改名也使用同一检查', async () => {
+    const store = collection([
+        { _id: -1000, domainId: 'exam', displayName: 'Alpha (1)', members: [2] },
+        { _id: -1001, domainId: 'exam', displayName: 'Beta', members: [3] },
+        { _id: -1002, domainId: 'other', displayName: 'Other', members: [4] },
+        { _id: -1003, domainId: 'exam', displayName: 'Archived', members: [5], disbandedAt: new Date() },
+    ]);
+    await assert.rejects(permissions.availableTeamName(store, 'exam', ' alpha (1) '), /TeamNameAlreadyExistsError/);
+    await assert.rejects(permissions.renameTeamByCaptain(store, -1001, 3, 'Alpha (1)', 'exam'), /TeamNameAlreadyExistsError/);
+    assert.equal(store.rows[1].displayName, 'Beta');
+    assert.equal(await permissions.availableTeamName(store, 'exam', 'Alpha 1'), 'Alpha 1');
+    assert.equal(await permissions.availableTeamName(store, 'exam', 'Other'), 'Other');
+    assert.equal(await permissions.availableTeamName(store, 'exam', 'Archived'), 'Archived');
+    assert.equal((await permissions.renameTeamByCaptain(store, -1000, 2, ' Alpha (1) ', 'exam')).displayName, 'Alpha (1)');
+    await assert.rejects(permissions.availableTeamName(store, 'exam', '  '), /ValidationError/);
+    await assert.rejects(permissions.availableTeamName(store, 'exam', 'a'.repeat(81)), /ValidationError/);
+    const legacy = collection([{ _id: -1000, displayName: 'Legacy', members: [2] }]);
+    await assert.rejects(permissions.availableTeamName(legacy, 'system', 'Legacy'), /TeamNameAlreadyExistsError/);
 });

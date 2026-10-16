@@ -931,3 +931,8 @@ Visible time on this problem; saved in this tab.: Visible time on this problem; 
 'This ends the contest for every teammate. Nobody on the team will be able to submit again.': 'This ends the contest for every teammate. Nobody on the team will be able to submit again.'
 'This ends your contest. You must still end proctoring and upload your log in the client.': 'This ends your contest. You must still end proctoring and upload your log in the client.'
 'This ends your contest. You will not be able to submit again.': 'This ends your contest. You will not be able to submit again.'
+
+# 队名与参赛成员冲突
+'A team named {0} already exists in this domain.': 'A team named {0} already exists in this domain.'
+'Team member {0} has already entered this contest individually.': 'Team member {0} has already entered this contest individually.'
+'Team member {0} has already entered this contest with team {1}.': 'Team member {0} has already entered this contest with team {1}.'

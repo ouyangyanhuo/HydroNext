@@ -661,6 +661,75 @@ describe('App', () => {
         }
     });
 
+    it('Team registration names the conflicting member and identity; domain team names stay unique across all editors', async () => {
+        const { contest, domain, user } = global.Hydro.model;
+        const { PRIV } = require('../packages/hydrooj/src/model/builtin');
+        const domainId = 'team-conflict-details';
+        const otherDomain = 'team-name-other';
+        await domain.add(domainId, 2, 'Team conflicts', '');
+        await domain.add(otherDomain, 2, 'Other team names', '');
+        const members = await Promise.all(['A', 'B', 'C'].map((name) => user.create(`conflict-${name}@example.com`,
+            `conflict-${name}`, 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT)));
+        await Promise.all(members.map((uid) => domain.setJoin(domainId, uid, true)));
+        const clients = await Promise.all(['A', 'B', 'C'].map(async (name) => {
+            const client = supertest.agent(require('hydrooj').httpServer);
+            await client.post('/login').send({ uname: `conflict-${name}`, password: 'secret' }).expect(302);
+            return client;
+        }));
+        const [a, b, c] = clients;
+        const teams = `/d/${domainId}/contest/team`;
+        const now = Date.now();
+        const t1 = await contest.add(domainId, 'Team conflict', '', 2, 'acm', new Date(now + 60000),
+            new Date(now + 3600000), [], false, { allowTeam: true });
+        const t2 = await contest.add(domainId, 'Individual conflict', '', 2, 'acm', new Date(now + 60000),
+            new Date(now + 3600000), [], false, { allowTeam: true });
+        try {
+            await a.post(teams).send({ operation: 'create', name: 'D' }).expect(302);
+            await a.post(teams).send({ operation: 'create', name: 'E' }).expect(302);
+            const mine = getPageArgs(await a.get(teams).set('Accept', 'application/json').expect(200)).mine;
+            const d = mine.find((team) => team.displayName === 'D');
+            const e = mine.find((team) => team.displayName === 'E');
+            await b.post(teams).send({ operation: 'join', code: d.invitationCode }).expect(302);
+            await c.post(teams).send({ operation: 'join', code: e.invitationCode }).expect(302);
+            await b.post(`/d/${domainId}/contest/${t1}`).send({ operation: 'attend', vuid: d._id }).expect(302);
+            const member = await user.getById(domainId, members[0]);
+            const memberName = member.displayName || member.uname;
+            const conflict = await c.post(`/d/${domainId}/contest/${t1}`).set('Accept', 'application/json')
+                .send({ operation: 'attend', vuid: e._id }).expect(403);
+            assert.equal(conflict.body.error.name, 'TeamContestMemberConflictError');
+            assert.deepEqual(conflict.body.error.params, [memberName, 'D']);
+            const adminConflict = await agent.post(`/d/${domainId}/contest/${t1}/user`).set('Accept', 'application/json')
+                .send({ operation: 'add_user', uids: [e._id] }).expect(403);
+            assert.deepEqual(adminConflict.body.error.params, [memberName, 'D']);
+            await a.post(`/d/${domainId}/contest/${t2}`).send({ operation: 'attend' }).expect(302);
+            const individual = await b.post(`/d/${domainId}/contest/${t2}`).set('Accept', 'application/json')
+                .send({ operation: 'attend', vuid: d._id }).expect(403);
+            assert.equal(individual.body.error.name, 'TeamContestIndividualConflictError');
+            assert.deepEqual(individual.body.error.params, [memberName]);
+            const duplicate = await a.post(teams).set('Accept', 'application/json').send({ operation: 'create', name: ' d ' }).expect(403);
+            assert.equal(duplicate.body.error.name, 'TeamNameAlreadyExistsError');
+            await a.post(teams).send({ operation: 'rename', vuid: e._id, name: 'D' }).expect(403);
+            const adminName = await agent.post(`${teams}/manage`).set('Accept', 'application/json')
+                .send({ operation: 'rename', vuid: e._id, name: 'D' }).expect(403);
+            assert.equal(adminName.body.error.name, 'TeamNameAlreadyExistsError');
+            assert.equal((await user.getTeamById(domainId, e._id)).displayName, 'E');
+            await a.post(teams).send({ operation: 'rename', vuid: d._id, name: ' D ' }).expect(302);
+            await agent.post(`/d/${otherDomain}/contest/team`).send({ operation: 'create', name: 'D' }).expect(302);
+            const concurrent = await Promise.all([
+                a.post(teams).send({ operation: 'create', name: 'Concurrent' }),
+                agent.post(teams).send({ operation: 'create', name: ' concurrent ' }),
+            ]);
+            assert.deepEqual(concurrent.map((response) => response.status).sort(), [302, 403]);
+            assert.equal(concurrent.find((response) => response.status === 403).body.error?.name
+                || getPageArgs(concurrent.find((response) => response.status === 403)).error?.name, 'TeamNameAlreadyExistsError');
+        } finally {
+            await contest.del(domainId, t1);
+            await contest.del(domainId, t2);
+            await domain.del(domainId);
+            await domain.del(otherDomain);
+        }
+    });
+
     it('Client updates are global, private before publication and use an exact public JSON manifest', async () => {
         const updates = require('../packages/hydrooj/src/model/client-update');
         const guest = supertest.agent(require('hydrooj').httpServer);

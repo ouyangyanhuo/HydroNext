@@ -1050,15 +1050,7 @@ class ContestTeamHandler extends Handler {
 
     @param('name', Types.String)
     async postCreate(domainId: string, name: string) {
-        const displayName = name.trim();
-        if (!displayName || displayName.length > 80) throw new ValidationError('name');
-        const vuid = await user.createVuser(`team:${this.user._id}:${randomstring(6)}`, {
-            displayName,
-            domainId,
-            members: [this.user._id],
-            captainId: this.user._id,
-        });
-        await user.getTeamInvitation(vuid, this.user._id, false, domainId);
+        await user.createTeam(domainId, this.user._id, name);
         this.back();
     }
 

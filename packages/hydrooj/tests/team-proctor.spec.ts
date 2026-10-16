@@ -26,7 +26,8 @@ function handlers(model: any, teams: Map<number, any>) {
         back() {}
         checkPerm() {}
     }
-    const permission = evaluate(readFileSync(new URL('../src/lib/team-permissions.ts', import.meta.url), 'utf8'), { '../error': errors });
+    const permission = evaluate(readFileSync(new URL('../src/lib/team-permissions.ts', import.meta.url), 'utf8'),
+        { '../error': errors });
     return evaluate(readFileSync(new URL('../src/handler/contest.ts', import.meta.url), 'utf8'), {
         '../context': { Service: class {} }, '@hydrooj/utils/lib/utils': {}, '../error': errors,
         '../lib/team-permissions': permission,
@@ -39,8 +40,8 @@ function handlers(model: any, teams: Map<number, any>) {
 function registrations() {
     const statuses: any[] = [];
     const teams = new Map([
-        [-101, { _id: -101, captainId: 7, members: [7, 8] }],
-        [-102, { _id: -102, captainId: 9, members: [9, 8] }],
+        [-101, { _id: -101, displayName: 'D队', captainId: 7, members: [7, 8] }],
+        [-102, { _id: -102, displayName: 'E队', captainId: 9, members: [9, 8] }],
     ]);
     const matches = (row: any, query: any): boolean => Object.entries<any>(query).every(([key, value]) => {
         if (key === '$or') return value.some((part: any) => matches(row, part));
@@ -54,14 +55,16 @@ function registrations() {
         return String(row[key]) === String(value);
     });
     const users = { getTeamById: async (_: string, uid: number) => teams.get(uid),
-        getList: async (_: string, members: number[]) => Object.fromEntries(members.map((uid) => [uid, { hasPerm: () => true }])),
+        getList: async (_: string, members: number[]) => Object.fromEntries(members.map((uid) => [uid,
+            { displayName: `成员${uid}`, hasPerm: () => true }])),
         checkTeamContestMembers: null as any };
     const source = readFileSync(new URL('../src/model/user.ts', import.meta.url), 'utf8');
     const check = source.slice(source.indexOf('    static async checkTeamContestMembers('), source.indexOf('    static async renameTeam('))
         .replace('    static async ', 'export async function ');
     users.checkTeamContestMembers = evaluate(check, {}, { UserModel: users,
         db: { collection: () => ({ findOne: async (query: any) => statuses.find((row) => matches(row, query)) }) },
-        ContestAlreadyAttendedError: errors.ContestAlreadyAttendedError, PERM: {},
+        TeamContestIndividualConflictError: errors.TeamContestIndividualConflictError,
+        TeamContestMemberConflictError: errors.TeamContestMemberConflictError, PERM: {},
     }).checkTeamContestMembers;
     let pending = Promise.resolve();
     const sourceContest = readFileSync(new URL('../src/model/contest.ts', import.meta.url), 'utf8');
@@ -92,7 +95,7 @@ test('自助报名和管理员报名共用底层校验，个人与两支队伍�
     const admin = new f.handlers.ContestUserHandler();
     admin.tdoc = { allowTeam: true };
     await admin.postAddUser('exam', tid, [-101]);
-    await assert.rejects(admin.postAddUser('exam', tid, [-102]), /ContestAlreadyAttendedError/);
+    await assert.rejects(admin.postAddUser('exam', tid, [-102]), /TeamContestMemberConflictError:成员8,D队/);
     await assert.rejects(admin.postAddUser('exam', tid, [8]), /ContestAlreadyAttendedError/);
     const self = new f.handlers.ContestDetailHandler();
     self.user._id = 8;
@@ -101,7 +104,7 @@ test('自助报名和管理员报名共用底层校验，个人与两支队伍�
     assert.equal(f.statuses.length, 1);
     const g = registrations();
     await g.model.attend('exam', tid, 8);
-    await assert.rejects(g.model.attend('exam', tid, -101), /ContestAlreadyAttendedError/);
+    await assert.rejects(g.model.attend('exam', tid, -101), /TeamContestIndividualConflictError:成员8/);
 });
 
 test('并发报名只允许一个包含相同成员的参赛身份成功', async () => {

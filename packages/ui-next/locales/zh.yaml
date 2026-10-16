@@ -1265,3 +1265,8 @@ Visible time on this problem; saved in this tab.: 累计停留在本题页面的
 'This ends the contest for every teammate. Nobody on the team will be able to submit again.': '这会结束所有队员的比赛，全队将无法继续提交。'
 'This ends your contest. You must still end proctoring and upload your log in the client.': '这会提前结束你的比赛，之后无法继续提交。若启用了监考，仍须在客户端结束监考并上传日志。'
 'This ends your contest. You will not be able to submit again.': '这会提前结束你的比赛，之后无法继续提交。'
+
+# 队名与参赛成员冲突
+'A team named {0} already exists in this domain.': '本域已存在名为“{0}”的队伍，请使用其他队名。'
+'Team member {0} has already entered this contest individually.': '该队伍中的成员 {0} 已以个人身份参加本次比赛。'
+'Team member {0} has already entered this contest with team {1}.': '该队伍中的成员 {0} 已以“{1}”队参加本次比赛。'

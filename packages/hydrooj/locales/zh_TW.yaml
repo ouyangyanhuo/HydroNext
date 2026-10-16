@@ -1019,3 +1019,8 @@ You've already claimed this homework.: 您已認領該功課。
 You've already voted.: 您已經投過票。
 Your permission: 您的許可權
 Your role: 您的角色
+
+# 队名与参赛成员冲突
+'A team named {0} already exists in this domain.': '本域已存在名為「{0}」的隊伍，請使用其他隊名。'
+'Team member {0} has already entered this contest individually.': '該隊伍中的成員 {0} 已以個人身分參加本次比賽。'
+'Team member {0} has already entered this contest with team {1}.': '該隊伍中的成員 {0} 已以「{1}」隊參加本次比賽。'

@@ -581,7 +581,20 @@ export default function ContestEditPage() {
                   disabled={!!tdoc.allowTeam}
                   onChange={(e) => setForm({ ...form, allowTeam: e.currentTarget.checked })}
                 />
-                <Checkbox label={t('Rated')} checked={form.rated} onChange={(e) => setForm({ ...form, rated: e.currentTarget.checked })} />
+                <Checkbox
+                  label={t('Enable contest proctoring')}
+                  description={t(args.proctorPolicyLocked
+                    ? 'Proctor policy cannot change after the contest starts.'
+                    : 'Requires a compatible proctor client. Final logs are required for valid results.')}
+                  disabled={!!args.proctorPolicyLocked}
+                  checked={form.proctorEnabled}
+                  onChange={(e) => setForm({ ...form, proctorEnabled: e.currentTarget.checked })}
+                />
+                <Checkbox
+                  label={t('Rated')}
+                  checked={form.rated}
+                  onChange={(e) => setForm({ ...form, rated: e.currentTarget.checked })}
+                />
                 <Checkbox
                   label={t('Auto hide-and show')}
                   checked={form.autoHide}
@@ -597,14 +610,6 @@ export default function ContestEditPage() {
                   checked={form.allowPrint}
                   onChange={(e) => setForm({ ...form, allowPrint: e.currentTarget.checked })}
                 />
-                <Checkbox
-                  label={t('Enable contest proctoring')}
-                  description={t(args.proctorPolicyLocked
-                    ? 'Proctor policy cannot change after the contest starts.'
-                    : 'Requires a compatible proctor client. Final logs are required for valid results.')}
-                  disabled={!!args.proctorPolicyLocked}
-                  checked={form.proctorEnabled}
-                  onChange={(e) => setForm({ ...form, proctorEnabled: e.currentTarget.checked })} />
                 {showHiddenScoreboard && (
                   <Checkbox
                     label={t('Keep Scoreboard Hidden')}

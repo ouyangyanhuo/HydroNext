@@ -36,6 +36,12 @@ export const PrivilegeError = Err('PrivilegeError', ForbiddenError, function (th
 export const ContestNotAttendedError = Err('ContestNotAttendedError', ForbiddenError, "You haven't attended this contest yet.");
 export const RequireProError = Err('RequireProError', ForbiddenError, 'RequireProError');
 export const ContestAlreadyAttendedError = Err('ContestAlreadyAttendedError', ForbiddenError, "You've already attended this contest.");
+export const TeamContestMemberConflictError = Err('TeamContestMemberConflictError', ForbiddenError,
+    'Team member {0} has already entered this contest with team {1}.');
+export const TeamContestIndividualConflictError = Err('TeamContestIndividualConflictError', ForbiddenError,
+    'Team member {0} has already entered this contest individually.');
+export const TeamNameAlreadyExistsError = Err('TeamNameAlreadyExistsError', ForbiddenError,
+    'A team named {0} already exists in this domain.');
 export const TeamMemberLimitError = Err('TeamMemberLimitError', ForbiddenError, 'Team is full (maximum {0} members).');
 export const TeamAlreadyJoinedError = Err('TeamAlreadyJoinedError', ForbiddenError, 'You are already a member of this team.');
 export const TeamMembershipRequiredError = Err('TeamMembershipRequiredError', ForbiddenError, 'Only team members can manage this team.');

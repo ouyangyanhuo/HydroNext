@@ -46,3 +46,13 @@ test('formatting remains backward compatible and safely handles absent translati
     assert.equal(formatErrorMessage({ message: 'Original', params: {} as any }, 'Failed'), 'Original');
     assert.equal(formatErrorMessage({ message: '未知错误 {0}', params: ['原始参数'] }, 'Failed', translator('zh')), '未知错误 原始参数');
 });
+
+test('团队报名冲突指出具体成员及队伍或个人身份，队名重复显示中文原因', () => {
+    const t = translator('zh');
+    assert.equal(formatErrorMessage({ message: 'Team member {0} has already entered this contest with team {1}.',
+        params: ['张三', 'D'] }, 'Failed', t), '该队伍中的成员 张三 已以“D”队参加本次比赛。');
+    assert.equal(formatErrorMessage({ message: 'Team member {0} has already entered this contest individually.',
+        params: ['张三'] }, 'Failed', t), '该队伍中的成员 张三 已以个人身份参加本次比赛。');
+    assert.equal(formatErrorMessage({ message: 'A team named {0} already exists in this domain.',
+        params: ['D'] }, 'Failed', t), '本域已存在名为“D”的队伍，请使用其他队名。');
+});
