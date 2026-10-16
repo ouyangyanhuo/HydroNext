@@ -488,15 +488,38 @@ export default function ProblemDetailPage() {
   const relatedContext = `${ui.domainId}/${user._id}/${pdoc.docId}`;
   const [relatedOpenFor, setRelatedOpenFor] = useState<string | null>(null);
   const relatedOpened = relatedOpenFor === relatedContext;
-  const renderRelatedLink = (tdoc: any, to: 'contest_detail' | 'homework_detail', closeOnNavigate = false) => (
+  const renderRelatedLink = (tdoc: any, to: 'contest_detail' | 'homework_detail') => (
     <Link
       key={`${to}/${tdoc.docId || tdoc._id}`}
       to={to}
       params={{ tid: tdoc.docId || tdoc._id }}
       className="hydro-subtle-link text-sm font-semibold break-words"
-      onClick={closeOnNavigate ? () => setRelatedOpenFor(null) : undefined}
     >
       {extractLocalizedContent(tdoc.title, sessionLanguage)}
+    </Link>
+  );
+  const renderRelatedModalItem = (tdoc: any, to: 'contest_detail' | 'homework_detail') => (
+    <Link
+      key={`${to}/${tdoc.docId || tdoc._id}`}
+      to={to}
+      params={{ tid: tdoc.docId || tdoc._id }}
+      className={[
+        'w-full px-4 py-2.5 block hydro-subtle-link',
+        'border-b border-[var(--hydro-border)] last:border-b-0',
+        'hover:bg-[var(--hydro-surface-muted)] transition-colors',
+      ].join(' ')}
+      onClick={() => setRelatedOpenFor(null)}
+    >
+      <Group justify="space-between" wrap="nowrap" gap="sm">
+        <Text size="sm" fw={600} truncate>
+          {extractLocalizedContent(tdoc.title, sessionLanguage)}
+        </Text>
+        {tdoc.rule && to === 'contest_detail' && (
+          <Badge size="xs" variant="outline" tt="uppercase" className="shrink-0">
+            {tdoc.rule}
+          </Badge>
+        )}
+      </Group>
     </Link>
   );
   const langs = useMemo(() => contentLanguages(pdoc.content), [pdoc.content]);
@@ -764,9 +787,11 @@ export default function ProblemDetailPage() {
                     <Text size="xs" fw={700} c="dimmed" mb="xs" tt="uppercase">
                       {t('Contests')} ({relatedContests.length})
                     </Text>
-                    <Stack gap="xs">
-                      {relatedContests.map((tdoc: any) => renderRelatedLink(tdoc, 'contest_detail', true))}
-                    </Stack>
+                    <Paper withBorder p={0} className="overflow-hidden">
+                      <Stack gap={0}>
+                        {relatedContests.map((tdoc: any) => renderRelatedModalItem(tdoc, 'contest_detail'))}
+                      </Stack>
+                    </Paper>
                   </div>
                 )}
                 {relatedHomework.length > 0 && (
@@ -774,9 +799,11 @@ export default function ProblemDetailPage() {
                     <Text size="xs" fw={700} c="dimmed" mb="xs" tt="uppercase">
                       {t('Homework')} ({relatedHomework.length})
                     </Text>
-                    <Stack gap="xs">
-                      {relatedHomework.map((tdoc: any) => renderRelatedLink(tdoc, 'homework_detail', true))}
-                    </Stack>
+                    <Paper withBorder p={0} className="overflow-hidden">
+                      <Stack gap={0}>
+                        {relatedHomework.map((tdoc: any) => renderRelatedModalItem(tdoc, 'homework_detail'))}
+                      </Stack>
+                    </Paper>
                   </div>
                 )}
               </Stack>
