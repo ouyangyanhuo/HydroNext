@@ -4463,11 +4463,11 @@ a {
 }
 
 .mantine-Modal-body {
-  padding-top: 20px;
+  padding-top: 16px !important;
 }
 
 .mantine-Drawer-body {
-  padding-top: 14px;
+  padding-top: 14px !important;
 }
 
 .hydro-nav-drawer__header {
