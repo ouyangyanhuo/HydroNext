@@ -10,6 +10,7 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { goBackOrFallback } from '@/utils/history-back';
+import { proctorAccessHeaders } from '@/utils/proctor';
 import { formatUserName } from '@/utils/user-name';
 
 function normalizeReplayDataUrl(url?: string) {
@@ -34,7 +35,8 @@ export default function CodeReplayPage() {
     if (!dataUrl) return undefined;
     let disposed = false;
     const controller = new AbortController();
-    fetch(dataUrl, { headers: { Accept: 'application/json' }, signal: controller.signal })
+    proctorAccessHeaders(dataUrl)
+      .then((headers) => fetch(dataUrl, { headers: { Accept: 'application/json', ...headers }, signal: controller.signal }))
       .then(async (res) => {
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         return await res.json();

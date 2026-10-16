@@ -916,3 +916,16 @@ Visible time on this problem; saved in this tab.: Visible time on this problem; 
 'days': 'days'
 '{0} problems solved in {1}': '{0} problems solved in {1}'
 '{0}: {1} problems solved': '{0}: {1} problems solved'
+
+# 团队独立监考与提前结束比赛
+'All team logs uploaded': 'All team logs uploaded'
+'All team members must proctor independently and upload their own final logs.': 'All team members must proctor independently and upload their own final logs.'
+'End contest early': 'End contest early'
+'End contest for the whole team': 'End contest for the whole team'
+'Logs still required from: {0}': 'Logs still required from: {0}'
+'My log pending': 'My log pending'
+'My log uploaded': 'My log uploaded'
+'Record is outside the contest.': 'Record is outside the contest.'
+'Team logs: {0}/{1}': 'Team logs: {0}/{1}'
+'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.': 'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.'
+'This ends your contest. You must still end proctoring and upload your log in the client.': 'This ends your contest. You must still end proctoring and upload your log in the client.'

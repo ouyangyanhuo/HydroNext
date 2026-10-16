@@ -10,14 +10,15 @@ import {
 } from '@hydrooj/utils/lib/utils';
 import { Context, Service } from '../context';
 import {
-    BadRequestError, ContestAlreadyAttendedError, ContestAlreadyStartedError, ContestNotAttendedError, ContestNotEndedError,
+    BadRequestError, ContestAlreadyStartedError, ContestNotAttendedError, ContestNotEndedError,
     ContestNotFoundError, ContestNotLiveError, ContestScoreboardHiddenError, FileLimitExceededError, FileUploadError,
     InvalidTokenError, MethodNotAllowedError, NotAssignedError, NotFoundError, PermissionError,
     ValidationError,
 } from '../error';
 import { ContestStatusDoc, FileInfo, ScoreboardConfig, Tdoc } from '../interface';
 import { requireProctorAccess } from '../lib/proctor-access';
-import { teamCaptainId } from '../lib/team-permissions';
+import { teamProctorStatus } from '../lib/proctor-team';
+import { requireTeamCaptain, teamCaptainId } from '../lib/team-permissions';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as announcements from '../model/contest-announcement';
@@ -85,6 +86,7 @@ export class ContestDetailBaseHandler extends Handler {
     tdoc?: Tdoc;
     tsdoc?: ContestStatusDoc;
     team?: number;
+    proctorTeam?: ReturnType<typeof teamProctorStatus>;
 
     @param('tid', Types.ObjectId, true)
     async __prepare(domainId: string, tid: ObjectId) {
@@ -97,6 +99,10 @@ export class ContestDetailBaseHandler extends Handler {
         if (this.team && this.tsdoc) {
             const personal = await contest.getStatus(domainId, tid, this.user._id);
             this.tsdoc = { ...this.tsdoc, proctorEnded: personal?.proctorEnded, proctorLogUploaded: personal?.proctorLogUploaded };
+        }
+        if (this.team && this.tdoc.proctorEnabled && this.tsdoc) {
+            const users = await user.getList(domainId, this.tsdoc.members || []);
+            this.proctorTeam = teamProctorStatus(this.tsdoc, users);
         }
         if (this.tdoc.assign?.length && !this.user.own(this.tdoc) && !this.user.hasPerm(PERM.PERM_VIEW_HIDDEN_CONTEST)) {
             const groups = await user.listGroup(domainId, this.user._id);
@@ -115,8 +121,9 @@ export class ContestDetailBaseHandler extends Handler {
 
     tsdocAsPublic() {
         if (!this.tsdoc) return null;
-        return pick(this.tsdoc, ['attend', 'subscribe', 'startAt', 'proctorEnded', 'proctorLogUploaded',
-            'displayName', 'members', ...(this.tdoc.duration || this.tsdoc.endAt ? ['endAt'] : [])]);
+        return { ...pick(this.tsdoc, ['attend', 'subscribe', 'startAt', 'proctorEnded', 'proctorLogUploaded',
+            'displayName', 'members', ...(this.tdoc.duration || this.tsdoc.endAt ? ['endAt'] : [])]),
+        ...(this.proctorTeam ? { proctorTeam: this.proctorTeam } : {}) };
     }
 
     @param('tid', Types.ObjectId, true)
@@ -178,7 +185,11 @@ export class ContestDetailHandler extends ContestDetailBaseHandler {
                 : [],
         ]);
         const canEdit = this.user.own(this.tdoc) || this.user.hasPerm(PERM.PERM_EDIT_CONTEST);
+        const team = this.team ? await user.getTeamById(domainId, this.team, true) : null;
+        const canEndContest = !!this.tsdoc?.attend && this.tdoc.rule !== 'homework' && contest.isOngoing(this.tdoc, this.tsdoc)
+            && (!this.team || (!!team?.members?.includes(this.user._id) && teamCaptainId(team) === this.user._id));
         this.response.body = {
+            canEndContest,
             tdoc: this.tdoc,
             tsdoc: this.tsdocAsPublic(),
             udict,
@@ -208,31 +219,9 @@ export class ContestDetailHandler extends ContestDetailBaseHandler {
             if (!this.tdoc.allowTeam) throw new ValidationError('allowTeam');
             const v = await user.getTeamById(domainId, vuid);
             if (!v?.members?.includes(this.user._id)) throw new PermissionError(PERM.PERM_ATTEND_CONTEST);
-            if (this.tdoc.assign?.length) {
-                const memberUdict = await user.getList(domainId, v.members);
-                for (const uid of v.members) {
-                    if (uid === this.tdoc.owner) continue;
-                    const m = memberUdict[uid];
-                    if (m?.hasPerm(PERM.PERM_VIEW_HIDDEN_CONTEST)) continue;
-                    if (!new Set(this.tdoc.assign).intersection(new Set(m?.group || [])).size) {
-                        throw new NotAssignedError('contest', tid, uid);
-                    }
-                }
-            }
-            const conflicts = await Promise.all(v.members.map(async (uid) =>
-                ((await contest.getStatus(domainId, tid, uid))?.attend
-                    || await contest.getTeamVid(domainId, tid, uid)) ? uid : null));
-            const conflict = conflicts.find((c) => c !== null);
-            if (conflict != null) throw new ContestAlreadyAttendedError(tid, conflict);
-            await contest.attend(domainId, tid, vuid, {
-                subscribe: 1,
-                displayName: v.displayName,
-                members: v.members,
-            });
+            // 成员权限、指定分组与重复参赛均由持锁的底层报名方法统一检查。
+            await contest.attend(domainId, tid, vuid, { subscribe: 1 });
         } else {
-            if (this.tdoc.allowTeam && await contest.getTeamVid(domainId, tid, this.user._id)) {
-                throw new ContestAlreadyAttendedError(tid, this.user._id);
-            }
             await contest.attend(domainId, tid, this.user._id, { subscribe: 1 });
         }
         this.back();
@@ -251,6 +240,7 @@ export class ContestDetailHandler extends ContestDetailBaseHandler {
         if (this.tdoc.rule === 'homework') throw new ContestNotFoundError(domainId, tid);
         if (!this.tsdoc?.attend) throw new ContestNotAttendedError(domainId, tid);
         if (!contest.isOngoing(this.tdoc, this.tsdoc)) throw new ContestNotLiveError(domainId, tid);
+        if (this.team) requireTeamCaptain(await user.getTeamById(domainId, this.team, true), this.user._id);
         const now = new Date();
         await contest.setStatus(domainId, tid, this.team ?? this.user._id, { endAt: now, ...(!this.tsdoc.startAt ? { startAt: now } : {}) });
         this.back();
@@ -831,12 +821,10 @@ export class ContestUserHandler extends ContestManagementBaseHandler {
     @param('uids', Types.NumericArray)
     @param('unrank', Types.Boolean)
     async postAddUser(domainId: string, tid: ObjectId, uids: number[], unrank = false) {
-        const attendees = await Promise.all([...new Set(uids)].map(async (uid) => {
-            if (uid > 0) return { uid, payload: { unrank } };
-            const team = this.tdoc.allowTeam && await user.getTeamById(domainId, uid);
-            if (!team?.members?.length) throw new ValidationError('uid');
-            return { uid, payload: { unrank, displayName: team.displayName, members: team.members } };
-        }));
+        const attendees = [...new Set(uids)].map((uid) => {
+            if (!Number.isSafeInteger(uid) || !uid || (uid < 0 && !this.tdoc.allowTeam)) throw new ValidationError('uid');
+            return { uid, payload: { unrank } };
+        });
         await Promise.all(attendees.map(({ uid, payload }) => contest.attend(domainId, tid, uid, payload)));
         this.back();
     }

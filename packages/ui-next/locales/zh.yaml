@@ -1250,3 +1250,16 @@ Visible time on this problem; saved in this tab.: 累计停留在本题页面的
 'days': '天'
 '{0} problems solved in {1}': '{1} 年共解决 {0} 题'
 '{0}: {1} problems solved': '{0}：解决 {1} 题'
+
+# 团队独立监考与提前结束比赛
+'All team logs uploaded': '全队日志已上传'
+'All team members must proctor independently and upload their own final logs.': '团队成员必须分别使用本人账号接受监考，并各自上传最终日志；全员上传后全队成绩才有效。'
+'End contest early': '提前结束比赛'
+'End contest for the whole team': '结束全队比赛'
+'Logs still required from: {0}': '仍缺：{0}'
+'My log pending': '本人日志待上传'
+'My log uploaded': '本人日志已上传'
+'Record is outside the contest.': '该提交记录不属于当前比赛。'
+'Team logs: {0}/{1}': '全队日志：{0}/{1}'
+'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.': '这会结束所有队员的比赛，所有人都将无法继续提交。这不会结束个人监考；每位成员仍须在客户端分别结束监考并上传本人日志。'
+'This ends your contest. You must still end proctoring and upload your log in the client.': '这会提前结束你的比赛，之后无法继续提交。若启用了监考，仍须在客户端结束监考并上传日志。'

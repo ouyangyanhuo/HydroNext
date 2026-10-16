@@ -418,6 +418,12 @@ describe('App', () => {
             await agent.post(`${route}/user`).send({ operation: 'remove_user', uid: team._id }).expect(302);
             assert.equal(await contest.getTeamVid(domainId, tid, member), null);
             await agent.post(route).send({ operation: 'attend', vuid: team._id }).expect(302);
+            // 管理员添加参赛者也不能绕过团队/个人的冲突检查。
+            await agent.post(`${route}/user`).send({ operation: 'add_user', uids: [member] }).expect(403);
+            const conflictTeam = await user.createVuser('team:2:conflict-proctor', {
+                domainId, captainId: 2, members: [2, member], displayName: 'Conflicting team',
+            });
+            await agent.post(`${route}/user`).send({ operation: 'add_user', uids: [conflictTeam] }).expect(403);
             await contest.edit(domainId, tid, { beginAt: new Date(now - 60_000) });
             await agent.post(`${route}/user`).send({ operation: 'remove_user', uid: team._id }).expect(403);
             const rid = await record.add(domainId, pid, member, '_', 'team code', false, { contest: tid });
@@ -437,16 +443,38 @@ describe('App', () => {
             assert.equal((await contest.getStatus(domainId, tid, member)).problemActivity.token, 'member-tab');
             assert.equal((await activity.getTimes(domainId, tid)).length, 1);
             await contest.edit(domainId, tid, { proctorEnabled: true });
+            const memberView = getPageArgs(await memberAgent.get(route).set('Accept', 'application/json').expect(200));
+            assert.equal(memberView.canEndContest, false);
+            assert.equal(memberView.tsdoc.proctorTeam.total, 2);
+            assert.equal(memberView.tsdoc.proctorTeam.uploaded, 0);
+            await memberAgent.post(route).send({ operation: 'early_end' }).expect(403);
+            await memberAgent.get(`/d/${domainId}/record/${rid}`).set('Accept', 'application/json').expect(403);
+            await memberAgent.get(`/d/${domainId}/record/${rid}?download=true`).expect(403);
+
             await contest.setStatus(domainId, tid, member, { proctorEnded: true, proctorLogUploaded: false });
             assert.equal((await contest.getAndListStatus(domainId, tid))[1].length, 0);
             await contest.setStatus(domainId, tid, member, { proctorLogUploaded: true });
             assert.equal((await contest.getAndListStatus(domainId, tid))[1].length, 1);
+            const progress = getPageArgs(await memberAgent.get(route).set('Accept', 'application/json').expect(200));
+            assert.equal(progress.tsdoc.proctorLogUploaded, true);
+            assert.equal(progress.tsdoc.proctorTeam.uploaded, 1);
+            assert.equal(progress.tsdoc.proctorTeam.pending[0].uid, 2);
             await contest.edit(domainId, tid, { endAt: new Date(now - 1) });
             assert.equal((await contest.getAndListStatus(domainId, tid))[1].length, 0);
             await contest.setStatus(domainId, tid, 2, { proctorEnded: true, proctorLogUploaded: true });
+            const complete = getPageArgs(await memberAgent.get(route).set('Accept', 'application/json').expect(200));
+            assert.equal(complete.tsdoc.proctorTeam.uploaded, 2);
+            assert.deepEqual(complete.tsdoc.proctorTeam.pending, []);
+
             assert.equal((await contest.getAndListStatus(domainId, tid))[1].length, 1);
             await contest.setStatus(domainId, tid, member, { proctorLogUploaded: false });
             assert.equal((await contest.getAndListStatus(domainId, tid))[1].length, 0);
+            await contest.edit(domainId, tid, { endAt: new Date(now + 3_600_000) });
+            const captainView = getPageArgs(await agent.get(route).set('Accept', 'application/json').expect(200));
+            assert.equal(captainView.canEndContest, true);
+            await agent.post(route).send({ operation: 'early_end' }).expect(302);
+            assert.ok((await contest.getStatus(domainId, tid, team._id)).endAt <= new Date());
+            assert.equal((await contest.getStatus(domainId, tid, member)).proctorLogUploaded, false);
         } finally {
             await contest.del(domainId, tid);
             await problem.del(domainId, pid);

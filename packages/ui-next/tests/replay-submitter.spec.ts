@@ -35,6 +35,7 @@ test('replay shows the submitting users domain name, username, avatar and domain
         '@/hooks/use-i18n': { useI18n: () => ({ t: translate }) },
         '@/utils/user-name': { formatUserName },
         '@/utils/history-back': { goBackOrFallback: () => undefined },
+        '@/utils/proctor': { proctorAccessHeaders: async () => ({ 'x-proctor-proof': 'signed' }) },
         '@/context/page-data': { usePageData: () => ({ args }), useUiContext: () => ({ codeReplayDataUrl: '/d/team/record/rid/replay/data' }) },
         '@/context/router': { useNavigate: () => () => undefined },
         '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/team/record' },
@@ -43,7 +44,11 @@ test('replay shows the submitting users domain name, username, avatar and domain
         const module = { exports: {} as any };
         const code = transformSync(readFileSync(new URL(path, import.meta.url), 'utf8'), { loader: 'tsx', format: 'cjs', jsx: 'automatic' }).code;
         runInNewContext(code, { module, exports: module.exports, AbortController, window: dom.window,
-            fetch: async (url: string) => { requests.push(url); return { ok: true, json: async () => response }; },
+            fetch: async (url: string, options: any) => {
+                assert.equal(options.headers['x-proctor-proof'], 'signed');
+                requests.push(url);
+                return { ok: true, json: async () => response };
+            },
             require: (name: string) => mocks[name] || require(name) });
         return module.exports;
     }

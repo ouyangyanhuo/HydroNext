@@ -23,6 +23,8 @@ export function proctorAccessRequest(url: string, origin: string) {
     if (Number.isSafeInteger(+pid)) pid = String(+pid);
     return { action: 'problem_view', method: 'GET', path: target.pathname, payload: { tid: tids[0].toLowerCase(), pid } };
   }
+  const record = target.pathname.match(/^\/(?:d\/[^/]+\/)?record\/([a-f0-9]{24})(?:\/replay(?:\/data)?)?$/i);
+  if (record) return { action: 'record_view', method: 'GET', path: target.pathname, payload: { rid: record[1].toLowerCase() } };
   const contest = target.pathname.match(
     /^\/(?:d\/[^/]+\/)?contest\/([a-f0-9]{24})\/(?:problems|print|api\/printing\/team|file\/private\/.+)$/i,
   );

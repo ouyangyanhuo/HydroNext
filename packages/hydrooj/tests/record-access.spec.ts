@@ -3,17 +3,18 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { buildSync } from 'esbuild';
+import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
 
 const require = createRequire(import.meta.url);
 const built = buildSync({
     entryPoints: [fileURLToPath(new URL('../src/lib/record-access.ts', import.meta.url))],
     bundle: true, write: false, format: 'cjs', platform: 'node',
-    external: ['../error', '../model/builtin', '../model/contest', '../model/problem'],
+    external: ['../error', '../model/builtin', '../model/contest', '../model/problem', '../model/proctor'],
 });
 
 function fixture(options: any = {}) {
-    const PERM = Object.fromEntries(['VIEW_RECORD', 'READ_RECORD_CODE', 'READ_RECORD_CODE_ACCEPT', 'VIEW_PROBLEM_HIDDEN']
+    const PERM = Object.fromEntries(['EDIT_CONTEST', 'VIEW_RECORD', 'READ_RECORD_CODE', 'READ_RECORD_CODE_ACCEPT', 'VIEW_PROBLEM_HIDDEN']
         .map((key) => [`PERM_${key}`, key]));
     const user = {
         _id: options.owner ? 1 : 2,
@@ -22,11 +23,16 @@ function fixture(options: any = {}) {
         own: () => !!options.contestOwner,
     };
     const stubs: any = {
-        '../error': { PermissionError: Error, ContestNotFoundError: Error },
+        '../error': { PermissionError: Error, ContestNotFoundError: Error, ProctorClientRequiredError: Error },
+        '../model/proctor': { authenticateAccess: async (...args: any[]) => {
+            options.onAuth?.(args);
+            if (options.authFailure) throw new Error('认证已失效');
+            return { uid: user._id };
+        } },
         '../model/builtin': { PERM, PRIV: { PRIV_READ_RECORD_CODE: 'global' }, STATUS: { STATUS_ACCEPTED: 1 } },
         '../model/contest': {
             get: async () => (options.deletedContest ? null : { docId: 'contest',
-                allowTeam: !!options.teammate,
+                allowTeam: !!options.teammate, proctorEnabled: !!options.proctor, endAt: new Date(Date.now() + (options.done ? -60000 : 60000)),
                 allowViewCode: options.allowViewCode }),
             getStatus: async () => ({ attend: options.attend }),
             canShowRecord: () => !!options.showRecord, canShowSelfRecord: () => !!options.showSelf,
@@ -45,8 +51,10 @@ function fixture(options: any = {}) {
     runInNewContext(built.outputFiles[0].text, {
         module, exports: module.exports, require: (name: string) => stubs[name] || require(name),
     });
-    const record = { _id: 'rid', uid: 1, domainId: 'team', pid: 1, contest: options.contest };
-    return () => module.exports.getRecordAccess({ user }, record);
+    const record = { _id: new ObjectId('abcdef1234567890abcdef12'), uid: 1, domainId: 'team', pid: 1, contest: options.contest };
+    return () => module.exports.getRecordAccess({ user, domain: { _id: 'team' },
+        response: { addHeader: () => {} }, context: { originalPath: options.path || '/d/team/record/abcdef1234567890abcdef12' },
+        request: { headers: options.proof ? { 'x-proctor-token': 'token', 'x-proctor-proof': 'proof' } : {} } }, record);
 }
 
 test('code privileges, accepted status and ownership cannot bypass hidden problem visibility', async () => {
@@ -89,4 +97,25 @@ test('teammates share record and replay code access without bypassing contest vi
     await assert.rejects(fixture({ teammate: true, contest: 'contest', hidden: true, permissions: [] })(), /VIEW_PROBLEM_HIDDEN/);
     await assert.rejects(fixture({ teammate: true, contest: `${'0'.repeat(23)}1`, permissions: [] })(), /VIEW_RECORD/);
     await assert.rejects(fixture({ contest: 'other-contest', permissions: [] })(), /VIEW_RECORD/);
+});
+
+test('监考比赛的本人和队友记录、下载与回放必须有绑定当前用户和记录的读取证明', async () => {
+    const base = { teammate: true, contest: 'contest', attend: true, showSelf: true, permissions: [], proctor: true };
+    await assert.rejects(fixture(base)());
+    await assert.rejects(fixture({ ...base, owner: true })());
+    await assert.rejects(fixture({ ...base, proof: true, authFailure: true })(), /认证已失效/);
+    for (const path of ['/d/team/record/abcdef1234567890abcdef12', '/d/team/record/abcdef1234567890abcdef12/replay',
+        '/d/team/record/abcdef1234567890abcdef12/replay/data']) {
+        const calls: any[] = [];
+        // eslint-disable-next-line no-await-in-loop
+        assert.equal((await fixture({ ...base, proof: true, path, onAuth: (args: any[]) => calls.push(args) })()).canViewCode, true);
+        assert.equal(calls.length, 1);
+        assert.equal(calls[0][0].uid, 2);
+        assert.equal(calls[0][0].domainId, 'team');
+        assert.equal(calls[0][3], 'record_view');
+        assert.equal(calls[0][4], path);
+        assert.equal(calls[0][5].rid, 'abcdef1234567890abcdef12');
+    }
+    assert.equal((await fixture({ ...base, done: true })()).canViewCode, true);
+    assert.equal((await fixture({ ...base, contestOwner: true })()).canViewCode, true);
 });

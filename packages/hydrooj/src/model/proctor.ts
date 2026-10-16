@@ -235,10 +235,22 @@ export async function authenticate(
     return session;
 }
 
+/** 实时连接不重复消费 GET 证明，但每次推送前检查会话撤销、过期和监考结束状态。 */
+export async function assertAccessSession(session: Session) {
+    const config = await getConfig();
+    if (!config.enabled || session.version !== config.requiredVersion || session.keyId !== config.keyId
+        || !await sessions.findOne({ _id: session._id, revoked: false, expiresAt: { $gt: new Date() } })) {
+        throw new ForbiddenError('Proctor session expired or client version mismatch.');
+    }
+    const { uid, domainId, tid } = session;
+    const attempt = await attempts.findOne({ uid, domainId, tid, _id: session.attemptId, state: 'open', fingerprint: session.fingerprint });
+    if (!attempt) throw new ForbiddenError('Proctor session is already finished.');
+    return session;
+}
+
 export async function authenticateAccess(identity: Identity, token: string, proof: string, action: string, path: string, payload: unknown) {
     const session = await authenticate(identity, token, proof, action, path, payload, 'GET');
-    const attempt = await attempts.findOne({ ...identity, _id: session.attemptId, state: 'open', fingerprint: session.fingerprint });
-    if (!attempt) throw new ForbiddenError('Proctor session is already finished.');
+    await assertAccessSession(session);
     return session;
 }
 

@@ -219,7 +219,7 @@ export function sortFiles(files: Record<string, any>[] | string[], key = '_id') 
     if (!files?.length) return [];
     const isString = typeof files[0] === 'string';
     const result = files
-        .map((i: any) => (isString ? { name: i, _weights: i.match(fSortR) } : { ...i, _weights: (i[key] || i.name).match(fSortR) }))
+        .map((i: any) => (isString ? { name: i, _weights: i.match(fSortR) || [] } : { ...i, _weights: (i[key] || i.name || '').match(fSortR) || [] }))
         .sort((a, b) => {
             let pos = 0;
             const weightsA = a._weights;

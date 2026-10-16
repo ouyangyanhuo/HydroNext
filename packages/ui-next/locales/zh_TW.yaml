@@ -884,3 +884,16 @@ Contest starts in: 距離比賽開始
 Contest time remaining: 比賽剩餘時間
 Time on this problem: 本題用時
 Visible time on this problem; saved in this tab.: 累計停留在本題頁面的時間，於目前分頁內儲存。
+
+# 团队独立监考与提前结束比赛
+'All team logs uploaded': '全隊日誌已上傳'
+'All team members must proctor independently and upload their own final logs.': '團隊成員必須分別使用本人帳號接受監考，並各自上傳最終日誌；全員上傳後全隊成績才有效。'
+'End contest early': '提前結束比賽'
+'End contest for the whole team': '結束全隊比賽'
+'Logs still required from: {0}': '仍缺：{0}'
+'My log pending': '本人日誌待上傳'
+'My log uploaded': '本人日誌已上傳'
+'Record is outside the contest.': '該提交記錄不屬於目前比賽。'
+'Team logs: {0}/{1}': '全隊日誌：{0}/{1}'
+'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.': '這會結束所有隊員的比賽，所有人都將無法繼續提交。這不會結束個人監考；每位成員仍須在客戶端分別結束監考並上傳本人日誌。'
+'This ends your contest. You must still end proctoring and upload your log in the client.': '這會提前結束你的比賽，之後無法繼續提交。若啟用了監考，仍須在客戶端結束監考並上傳日誌。'

@@ -11,6 +11,7 @@ import * as contest from '../model/contest';
 import * as oplog from '../model/oplog';
 import problem from '../model/problem';
 import * as proctor from '../model/proctor';
+import record from '../model/record';
 import storage from '../model/storage';
 import system from '../model/system';
 import { Handler, param, requireSudo, Types } from '../service/server';
@@ -283,7 +284,8 @@ export class ProctorIdentityHandler extends Handler {
     @param('clientNonce', Types.String)
     @param('tid', Types.ObjectId, true)
     @param('problem', Types.Name, true)
-    async post(domainId: string, clientNonce: string, tid?: ObjectId, routePid = '') {
+    @param('rid', Types.ObjectId, true)
+    async post(domainId: string, clientNonce: string, tid?: ObjectId, routePid = '', rid?: ObjectId) {
         checkOrigin(this.request);
         this.response.addHeader('Cache-Control', 'no-store');
         await this.limitRate('proctor_identity', 60, 120);
@@ -291,6 +293,15 @@ export class ProctorIdentityHandler extends Handler {
         const config = await proctor.getConfig();
         const keys = await proctor.getKeys(config.keyId);
         const root = this.user._id > 0 && this.user.hasPriv(PRIV.PRIV_ALL);
+        // 记录所属比赛由服务端解析并签名，不信任网页自报的比赛编号。
+        if (rid) {
+            const rdoc = await record.get(domainId, rid);
+            if (!rdoc) throw new NotFoundError('Record');
+            if (!await contest.isOwnOrTeammateRecord(domainId, rdoc, this.user._id)) this.checkPerm(PERM.PERM_VIEW_RECORD);
+            const recordTid = rdoc.contest && !rdoc.contest.toString().startsWith('0'.repeat(23)) ? rdoc.contest : undefined;
+            if (tid && !recordTid?.equals(tid)) throw new ForbiddenError('Record is outside the contest.');
+            tid = recordTid;
+        }
         let pid = 0;
         let proctorEnabled = false;
         if (tid && this.user._id) {
@@ -310,7 +321,8 @@ export class ProctorIdentityHandler extends Handler {
         const origin = proctorOrigin(`${this.context.protocol}://${this.request.host}`, this.request.host, system.get('server.url'));
         const payload = { protocol: PROCTOR_PROTOCOL, action: 'identity', keyId: keys.keyId, origin,
             clientNonce, uid: this.user._id || 0, domainId: this.domain._id, root,
-            tid: tid?.toHexString() || '', routePid, pid, proctorEnabled, expiresAt: new Date(Date.now() + 60000).toISOString() };
+            tid: tid?.toHexString() || '', ...(rid ? { rid: rid.toHexString() } : {}), routePid, pid, proctorEnabled,
+            expiresAt: new Date(Date.now() + 60000).toISOString() };
         this.response.body = { payload, signature: signedPayload(payload, keys.signingPrivateKey) };
     }
 }

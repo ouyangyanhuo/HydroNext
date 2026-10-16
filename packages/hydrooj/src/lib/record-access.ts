@@ -4,6 +4,7 @@ import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import problem from '../model/problem';
 import type { Handler } from '../service/server';
+import { requireProctorRecordAccess } from './proctor-record-access';
 
 /** Shared by record details and replay endpoints; code privileges never bypass problem visibility. */
 export async function getRecordAccess(handler: Handler, rdoc: RecordDoc) {
@@ -23,6 +24,7 @@ export async function getRecordAccess(handler: Handler, rdoc: RecordDoc) {
             || (owner && contest.canShowSelfRecord.call(handler, tdoc, true));
         if (!canViewDetail && !owner) throw new PermissionError(rdoc._id);
     }
+    await requireProctorRecordAccess(handler, tdoc, rdoc);
     const teamVid = tdoc?.allowTeam ? await contest.getTeamVid(rdoc.domainId, tdoc.docId, handler.user._id) : null;
     const [pdoc, self, tsdoc] = await Promise.all([
         problem.get(rdoc.domainId, rdoc.pid, problem.PROJECTION_LIST.concat('config')),

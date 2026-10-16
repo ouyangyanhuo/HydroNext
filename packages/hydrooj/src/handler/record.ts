@@ -8,11 +8,13 @@ import {
     RecordNotFoundError,
 } from '../error';
 import { ContestStatusDoc, RecordDoc, Tdoc } from '../interface';
+import { requireProctorRecordAccess } from '../lib/proctor-record-access';
 import { getRecordAccess } from '../lib/record-access';
 import { resolveRecordUserIds } from '../lib/record-filter';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import problem, { ProblemDoc } from '../model/problem';
+import { assertAccessSession, type Session } from '../model/proctor';
 import record from '../model/record';
 import { langs } from '../model/setting';
 import storage from '../model/storage';
@@ -391,10 +393,11 @@ export class RecordMainConnectionHandler extends ConnectionHandler {
         }
         if (this.applyProjection && rdoc.contest?.toString() !== '0'.repeat(24)) rdoc = contest.applyProjection(tdoc, rdoc, this.user);
         if (this.pretest) {
-            this.queueSend(rdoc._id.toHexString(), async () => ({ rdoc: omit(rdoc, ['code', 'input']) }));
+            this.queueSend(rdoc._id.toHexString(), async () => ({ rdoc: pick(rdoc, record.PROJECTION_LIST) }));
         } else if (this.noTemplate) {
             this.queueSend(rdoc._id.toHexString(), async () => ({
-                rdoc,
+                // 列表广播只发送摘要，代码读取必须经过详情接口的个人监考认证。
+                rdoc: pick(rdoc, record.PROJECTION_LIST),
                 udoc: udoc ? pick(udoc, ['_id', 'uname', 'displayName']) : null,
                 pdoc: pdoc ? pick(pdoc, ['domainId', 'docId', 'pid', 'title']) : null,
             }));
@@ -428,6 +431,7 @@ export class RecordDetailConnectionHandler extends ConnectionHandler {
     applyProjection = false;
     noTemplate = false;
     canViewCode = false;
+    proctorSession?: Session;
 
     @param('rid', Types.ObjectId)
     @param('noTemplate', Types.Boolean, true)
@@ -444,6 +448,7 @@ export class RecordDetailConnectionHandler extends ConnectionHandler {
             if (!this.user.own(this.tdoc) && !this.user.hasPerm(PERM.PERM_EDIT_CONTEST)) {
                 this.applyProjection = true;
             }
+            this.proctorSession = await requireProctorRecordAccess(this, this.tdoc, rdoc);
             const teamVid = this.tdoc.allowTeam ? await contest.getTeamVid(domainId, this.tdoc.docId, this.user._id) : null;
             this.tsdoc = await contest.getStatus(domainId, this.tdoc.docId, teamVid ?? this.user._id);
         }
@@ -467,6 +472,14 @@ export class RecordDetailConnectionHandler extends ConnectionHandler {
     }
 
     async sendUpdate(rdoc: RecordDoc) {
+        if (this.proctorSession) {
+            try {
+                await assertAccessSession(this.proctorSession);
+            } catch {
+                this.close(4002, '监考认证已失效，请重新验证客户端');
+                return;
+            }
+        }
         if (this.noTemplate) {
             this.send({ rdoc });
         } else {

@@ -3,6 +3,7 @@ import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconFileDescription } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DeleteResourceButton } from '@/components/common/delete-resource-button';
 import { LongSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
@@ -437,6 +438,9 @@ export default function ContestDetailPage() {
   const [attendDialogOpen, setAttendDialogOpen] = useState(false);
   const [invitationCode, setInvitationCode] = useState('');
   const [attending, setAttending] = useState(false);
+  const [endDialogOpen, setEndDialogOpen] = useState(false);
+  const [ending, setEnding] = useState(false);
+  const endPending = useRef(false);
   const attendPending = useRef(false);
   const pdict = args.pdict || {};
   const udict = args.udict || {};
@@ -480,6 +484,27 @@ export default function ContestDetailPage() {
     } finally {
       attendPending.current = false;
       setAttending(false);
+    }
+  };
+
+  const handleEarlyEnd = async () => {
+    if (endPending.current || !args.canEndContest) return;
+    endPending.current = true;
+    setEnding(true);
+    try {
+      const response = await fetch(buildUrl('contest_detail', { tid }), {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ operation: 'early_end' }),
+      });
+      const data = await response.json();
+      if (!response.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Operation failed'), t));
+      setEndDialogOpen(false);
+      await navigate(window.location.href);
+    } catch (error) {
+      notifications.show({ title: t('Operation failed'), message: String(error), color: 'red' });
+    } finally {
+      endPending.current = false;
+      setEnding(false);
     }
   };
 
@@ -688,6 +713,12 @@ export default function ContestDetailPage() {
               </Button>
             )}
 
+            {args.canEndContest && (
+              <Button color="red" variant="light" fullWidth onClick={() => setEndDialogOpen(true)}>
+                {t(tsdoc.members ? 'End contest for the whole team' : 'End contest early')}
+              </Button>
+            )}
+
             {canEdit && (
               <>
                 <Button component={Link} to="contest_edit" params={{ tid }} variant="subtle" fullWidth>
@@ -727,6 +758,17 @@ export default function ContestDetailPage() {
           </Stack>
         </div>
       </div>
+      <ConfirmDialog
+        opened={endDialogOpen}
+        onClose={() => { if (!endPending.current) setEndDialogOpen(false); }}
+        onConfirm={() => void handleEarlyEnd()}
+        title={t(tsdoc.members ? 'End contest for the whole team' : 'End contest early')}
+        confirmLabel={t(tsdoc.members ? 'End contest for the whole team' : 'End contest early')}
+        message={t(tsdoc.members
+          ? 'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.'
+          : 'This ends your contest. You must still end proctoring and upload your log in the client.')}
+        loading={ending}
+      />
       <Modal
         opened={attendDialogOpen && !!tdoc.allowTeam && isLoggedIn && !tsdoc.attend && !contestEnded}
         onClose={() => { if (!attendPending.current) setAttendDialogOpen(false); }}
@@ -751,6 +793,9 @@ export default function ContestDetailPage() {
               }] : [],
             ]}
           />
+          {tdoc.proctorEnabled && attendTeam !== 'personal' && (
+            <Text size="sm" c="dimmed">{t('All team members must proctor independently and upload their own final logs.')}</Text>
+          )}
           {!args.team_vdocs?.length && (
             <Text size="sm" c="dimmed">
               {t('You are not in any team yet.')}

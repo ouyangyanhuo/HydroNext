@@ -982,6 +982,8 @@ export async function getListStatus(domainId: string, uid: number, tids: ObjectI
 }
 
 export async function attend(domainId: string, tid: ObjectId, uid: number, payload: any = {}) {
+    if (!Number.isSafeInteger(uid) || !uid) throw new ValidationError('uid');
+    // 自助报名、管理员添加以及入队同步都使用同一成员锁，禁止个人/队伍重复参赛。
     return withTeamMembershipLock(domainId, async () => {
         if (uid < 0) {
             const team = await UserModel.getTeamById(domainId, uid);

@@ -82,8 +82,9 @@ function fixture(options: any = {}) {
         '../model/proctor': model,
         '../lib/proctor': { PROCTOR_PROTOCOL, proctorOrigin, signedPayload },
         '../model/system': { __esModule: true, default: { get: () => '' } },
+        '../model/record': { __esModule: true, default: { get: async () => options.missingRecord ? null : { contest: tid } } },
         '../model/problem': { __esModule: true, default: { get: async () => ({ docId: options.problemId || 100 }) } },
-        '../model/contest': { get: async () => ({ pids: [100], proctorEnabled: true }),
+        '../model/contest': { isOwnOrTeammateRecord: async () => true, get: async () => ({ pids: [100], proctorEnabled: true }),
             getStatus: async () => ({ attend: !options.notEnrolled }),
             setStatus: async (domainId: string, contestId: ObjectId, uid: number, status: any) => calls.push(['status', status]) },
         '../model/oplog': { log: async (...args: any[]) => calls.push(['audit', ...args.slice(1)]) },
@@ -311,4 +312,18 @@ test('native identity binds contest membership and display PID to numeric PID, r
     await assert.rejects(handler.post('exam', 'bad'));
     await assert.rejects(new (fixture({ notEnrolled: true }).exports.ProctorIdentityHandler)().post('exam', 'n'.repeat(43), tid));
     await assert.rejects(new (fixture({ problemId: 101 }).exports.ProctorIdentityHandler)().post('exam', 'n'.repeat(43), tid, 'P101'));
+});
+
+test('记录身份由服务端绑定实际比赛和记录编号，并拒绝伪造的比赛归属', async () => {
+    const f = fixture({ signingPrivateKey: identityPrivateKey });
+    const handler = new f.exports.ProctorIdentityHandler();
+    const rid = new ObjectId();
+    await handler.post('exam', 'n'.repeat(43), undefined, '', rid);
+    assert.equal(handler.response.body.payload.rid, rid.toHexString());
+    assert.equal(handler.response.body.payload.tid, tid.toHexString());
+    assert.equal(handler.response.body.payload.uid, 7);
+    assert.ok(verifyPayload(handler.response.body.payload, handler.response.body.signature, identityPublicKey));
+    await assert.rejects(handler.post('exam', 'n'.repeat(43), new ObjectId(), '', rid), /Record is outside/);
+    const missing = fixture({ missingRecord: true });
+    await assert.rejects(new missing.exports.ProctorIdentityHandler().post('exam', 'n'.repeat(43), undefined, '', rid));
 });

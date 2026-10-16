@@ -398,3 +398,17 @@ test('HTTPS reverse proxies use the configured public origin; remote HTTP is rej
     assert.equal(proctorOrigin('http://localhost:2333', 'localhost:2333', '/'), 'http://localhost:2333');
     assert.throws(() => proctorOrigin('http://oj.example', 'oj.example', '/'));
 });
+
+test('实时记录连接在令牌撤销、版本更改或个人监考结束后立即停止读取', async () => {
+    for (const change of ['revoked', 'version', 'closing', 'expired']) {
+        const f = fixture();
+        await f.start();
+        const session = f.coll('proctor.session').rows[0];
+        await f.model.assertAccessSession(session);
+        if (change === 'revoked') session.revoked = true;
+        if (change === 'expired') session.expiresAt = new Date(0);
+        if (change === 'version') f.coll('proctor.config').rows[0].requiredVersion = '2.0.0';
+        if (change === 'closing') f.coll('proctor.attempt').rows[0].state = 'closing';
+        await assert.rejects(f.model.assertAccessSession(session));
+    }
+});

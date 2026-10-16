@@ -1,0 +1,18 @@
+import { ProctorClientRequiredError } from '../error';
+import type { RecordDoc, Tdoc } from '../interface';
+import { PERM } from '../model/builtin';
+import * as proctor from '../model/proctor';
+import type { ConnectionHandler, Handler } from '../service/server';
+
+/** 记录详情、下载、回放和实时连接共用个人监考验证；比赛管理权限不受影响。 */
+export async function requireProctorRecordAccess(handler: Handler | ConnectionHandler, tdoc: Tdoc, rdoc: RecordDoc) {
+    if (!tdoc?.proctorEnabled || Date.now() >= tdoc.endAt.getTime()
+        || handler.user.own(tdoc) || handler.user.hasPerm(PERM.PERM_EDIT_CONTEST)) return undefined;
+    if ('response' in handler) handler.response.addHeader('Cache-Control', 'no-store');
+    const token = handler.request.headers['x-proctor-token'];
+    const proof = handler.request.headers['x-proctor-proof'];
+    if (typeof token !== 'string' || !token || typeof proof !== 'string' || !proof) throw new ProctorClientRequiredError();
+    return proctor.authenticateAccess({ uid: handler.user._id, domainId: handler.domain._id, tid: tdoc.docId },
+        token, proof, 'record_view', (handler.context.originalPath || handler.request.path).split('?')[0],
+        { rid: rdoc._id.toHexString() });
+}
