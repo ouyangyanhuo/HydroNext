@@ -763,12 +763,14 @@ describe('App', () => {
         }
     });
 
-    it('Solved ranking includes domain members with zero solved problems', async () => {
+    it('Solved ranking excludes domain members with zero solved problems', async () => {
         const res = await agent.get('/ranking').expect(200);
         const args = getPageArgs(res);
         assert.equal(args.sort, 'solved');
-        assert.equal(args.udocs[0]._id, 2);
-        assert.equal(args.solvedCounts[2], 0);
+        assert.deepEqual(args.udocs, []);
+        assert.deepEqual(args.solvedCounts, {});
+        assert.equal(args.ucount, 0);
+        assert.equal(args.upcount, 0);
     });
 
     it('Solved ranking counts only accepted problems in this domain', async () => {
@@ -782,6 +784,29 @@ describe('App', () => {
         const args = getPageArgs(res);
         assert.equal(args.solvedCounts[2], 1);
         assert.equal(args.udocs[0]._id, 2);
+        assert.equal(args.udocs.length, 1);
+        assert.equal(args.ucount, 1);
+        assert.equal(args.upcount, 1);
+        const next = getPageArgs(await agent.get('/ranking?page=2').expect(200));
+        assert.deepEqual(next.udocs, []);
+        assert.equal(next.ucount, 1);
+        assert.equal(next.upcount, 1);
+    });
+
+    it('RP ranking still includes positive-RP members with zero solved problems', async () => {
+        const { domain } = global.Hydro.model;
+        const domainId = 'ranking-rp-zero-solved';
+        await domain.add(domainId, 2, 'RP ranking', '');
+        try {
+            await domain.setUserInDomain(domainId, 2, { join: true, rp: 100 });
+            const args = getPageArgs(await agent.get(`/d/${domainId}/ranking?sort=rp`).expect(200));
+            assert.equal(args.sort, 'rp');
+            assert.deepEqual(args.udocs.map((entry) => entry._id), [2]);
+            assert.equal(args.solvedCounts[2], 0);
+            assert.equal(args.ucount, 1);
+        } finally {
+            await domain.del(domainId);
+        }
     });
 
     it('Contest announcements remain domain-scoped and require active-contest administration', async () => {

@@ -87,6 +87,8 @@ class DomainRankHandler extends Handler {
                 _id: '$uid', solved: { $ifNull: [{ $arrayElemAt: ['$accepted.count', 0] }, 0] },
                 rp: { $ifNull: ['$rp', 0] },
             } },
+            // 解题榜先排除零解题用户，再统计人数和分页；RP 榜沿用原有准入规则。
+            ...rankingSort === 'solved' ? [{ $match: { solved: { $gt: 0 } } }] : [],
             { $sort: rankingSort === 'rp' ? { rp: -1, solved: -1, _id: 1 } : { solved: -1, rp: -1, _id: 1 } },
             {
                 $facet: {
