@@ -98,7 +98,6 @@ export default function ContestTeamPage() {
           {t('Back')}
         </Button>
       </PageHeader>
-      <Text size="sm" c="dimmed">{t('Teams belong only to this domain.')}</Text>
       <Grid gap="lg">
         <Grid.Col span={{ base: 12, md: 8 }}>
           <Stack gap="md">
@@ -281,6 +280,7 @@ export default function ContestTeamPage() {
             <Card withBorder p="lg" className="hydro-content-card">
               <Stack gap="sm">
                 <Group gap="xs"><IconInfoCircle size={18} /><Title order={4}>{t('How It Works')}</Title></Group>
+                <Text size="sm" c="dimmed">{t('Teams belong only to this domain.')}</Text>
                 <Text size="sm" c="dimmed">{instructions}</Text>
                 <Text size="sm" c="dimmed">{postInstructions}</Text>
               </Stack>

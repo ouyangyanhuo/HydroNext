@@ -349,7 +349,7 @@ function ProblemList({ problems, psdict = {} }: { problems: any[], psdict?: Reco
               title={t('Sort problem list')}
               data={[
                 { value: 'default', label: t('Default order') },
-                { value: 'recent', label: t('Recently attempted (unsolved first)') },
+                { value: 'recent', label: t('Recently attempted') },
                 { value: 'hot', label: t('Most attempted') },
               ]}
             />
