@@ -1262,4 +1262,6 @@ Visible time on this problem; saved in this tab.: 累计停留在本题页面的
 'Record is outside the contest.': '该提交记录不属于当前比赛。'
 'Team logs: {0}/{1}': '全队日志：{0}/{1}'
 'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.': '这会结束所有队员的比赛，所有人都将无法继续提交。这不会结束个人监考；每位成员仍须在客户端分别结束监考并上传本人日志。'
+'This ends the contest for every teammate. Nobody on the team will be able to submit again.': '这会结束所有队员的比赛，全队将无法继续提交。'
 'This ends your contest. You must still end proctoring and upload your log in the client.': '这会提前结束你的比赛，之后无法继续提交。若启用了监考，仍须在客户端结束监考并上传日志。'
+'This ends your contest. You will not be able to submit again.': '这会提前结束你的比赛，之后无法继续提交。'

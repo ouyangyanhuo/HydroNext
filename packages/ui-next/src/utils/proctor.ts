@@ -38,6 +38,8 @@ export async function proctorAccessHeaders(url: string): Promise<Record<string, 
   const bridge = (window as any).examAPI?.proctorHeaders;
   if (!request || typeof bridge !== 'function') return {};
   const headers = await bridge(request);
+  // 未启用监考时原生桥返回空对象；是否需要证明仍由服务端最终决定。
+  if (headers && typeof headers === 'object' && !Array.isArray(headers) && Object.keys(headers).length === 0) return {};
   if (typeof headers?.['x-proctor-token'] !== 'string' || typeof headers?.['x-proctor-proof'] !== 'string') {
     throw new TypeError('Proctor authentication required.');
   }

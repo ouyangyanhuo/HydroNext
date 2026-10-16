@@ -1,4 +1,5 @@
 import assert from 'assert';
+import { generateKeyPairSync } from 'crypto';
 import { writeFileSync } from 'fs';
 import autocannon from 'autocannon';
 import {
@@ -388,6 +389,9 @@ describe('App', () => {
         const { PRIV } = require('../packages/hydrooj/src/model/builtin');
         const { getRecordAccess } = require('../packages/hydrooj/src/lib/record-access');
         const activity = require('../packages/hydrooj/src/model/contest-activity');
+        const proctor = require('../packages/hydrooj/src/model/proctor');
+        const { canonical, digest, secret, signedPayload } = require('../packages/hydrooj/src/lib/proctor');
+        const previousProctorConfig = await proctor.getConfig();
         const domainId = 'team-upgrade-test';
         const member = await user.create('teammate@example.com', 'teammate', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
         const outsider = await user.create('outsider@example.com', 'outsider', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
@@ -450,6 +454,37 @@ describe('App', () => {
             await memberAgent.post(route).send({ operation: 'early_end' }).expect(403);
             await memberAgent.get(`/d/${domainId}/record/${rid}`).set('Accept', 'application/json').expect(403);
             await memberAgent.get(`/d/${domainId}/record/${rid}?download=true`).expect(403);
+            // 使用真实握手、签名与 MongoDB 会话验证普通成员读取队友代码。
+            await proctor.generateKeys();
+            await proctor.saveConfig({ ...previousProctorConfig, enabled: true, requiredVersion: '1.0.0' });
+            const client = generateKeyPairSync('ed25519');
+            const identity = { domainId, tid, uid: member };
+            const fingerprint = 'b'.repeat(64);
+            const challenge = await proctor.challenge(identity, await contest.get(domainId, tid), {
+                version: '1.0.0', fingerprint, clientNonce: secret(),
+                publicKey: client.publicKey.export({ type: 'spki', format: 'pem' }).toString(),
+            }, 'http://localhost');
+            const session = await proctor.handshake(identity, challenge.payload.challengeId,
+                signedPayload(challenge.payload, client.privateKey), '127.0.0.1');
+            const sharedRid = await record.add(domainId, pid, 2, '_', 'shared teammate code', false,
+                { contest: tid, contestUid: team._id });
+            const sharedPath = `/d/${domainId}/record/${sharedRid}`;
+            const headers = (path: string, recordId = sharedRid) => {
+                const payload = { protocol: 'hydro-proctor/1', action: 'record_view', method: 'GET', path,
+                    tokenHash: digest(session.token), fingerprint, version: '1.0.0',
+                    payloadHash: digest(canonical({ rid: recordId.toHexString() })), timestamp: Date.now(), nonce: secret() };
+                return { 'x-proctor-token': session.token, 'x-proctor-proof': Buffer.from(JSON.stringify({ payload,
+                    signature: signedPayload(payload, client.privateKey) })).toString('base64url') };
+            };
+            const once = headers(sharedPath);
+            const shared = await memberAgent.get(sharedPath).set('Accept', 'application/json').set(once).expect(200);
+            assert.equal(shared.body.rdoc.code, 'shared teammate code');
+            await memberAgent.get(sharedPath).set(once).expect(403);
+            await memberAgent.get(sharedPath).set(headers(sharedPath, rid)).expect(403);
+            const download = await memberAgent.get(`${sharedPath}?download=true`).set(headers(sharedPath)).expect(200);
+            assert.equal(download.text, 'shared teammate code');
+            await proctor.closeAttempt(await proctor.sessions.findOne({ _id: digest(session.token) }));
+            await memberAgent.get(sharedPath).set(headers(sharedPath)).expect(403);
 
             await contest.setStatus(domainId, tid, member, { proctorEnded: true, proctorLogUploaded: false });
             assert.equal((await contest.getAndListStatus(domainId, tid))[1].length, 0);
@@ -476,6 +511,7 @@ describe('App', () => {
             assert.ok((await contest.getStatus(domainId, tid, team._id)).endAt <= new Date());
             assert.equal((await contest.getStatus(domainId, tid, member)).proctorLogUploaded, false);
         } finally {
+            await proctor.saveConfig(previousProctorConfig);
             await contest.del(domainId, tid);
             await problem.del(domainId, pid);
             await domain.del(domainId);

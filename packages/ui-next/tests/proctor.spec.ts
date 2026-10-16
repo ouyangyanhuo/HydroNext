@@ -120,3 +120,18 @@ test('admin requests never follow unsafe authorization destinations or redirects
         });
     } finally { globalThis.fetch = original; }
 });
+
+test('记录详情、下载和回放使用独立读取动作，普通比赛允许原生桥返回空证明', async () => {
+    const rid = 'abcdef1234567890abcdef12';
+    const origin = 'https://oj.example';
+    for (const suffix of ['', '?download=true', '/replay', '/replay/data']) {
+        assert.deepEqual(proctorAccessRequest(`/d/exam/record/${rid}${suffix}`, origin), {
+            action: 'record_view', method: 'GET', path: `/d/exam/record/${rid}${suffix.split('?')[0]}`, payload: { rid },
+        });
+    }
+    assert.equal(proctorAccessRequest(`/record/${rid}/edit`, origin), null);
+    assert.equal(proctorAccessRequest(`https://evil.example/record/${rid}`, origin), null);
+    await withWindow({ location: { origin }, examAPI: { proctorHeaders: async () => ({}) } }, async () => {
+        assert.deepEqual(await proctorAccessHeaders(`/record/${rid}/replay/data`), {});
+    });
+});

@@ -764,9 +764,11 @@ export default function ContestDetailPage() {
         onConfirm={() => void handleEarlyEnd()}
         title={t(tsdoc.members ? 'End contest for the whole team' : 'End contest early')}
         confirmLabel={t(tsdoc.members ? 'End contest for the whole team' : 'End contest early')}
-        message={t(tsdoc.members
+        message={tdoc.proctorEnabled ? t(tsdoc.members
           ? 'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.'
-          : 'This ends your contest. You must still end proctoring and upload your log in the client.')}
+          : 'This ends your contest. You must still end proctoring and upload your log in the client.') : t(tsdoc.members
+          ? 'This ends the contest for every teammate. Nobody on the team will be able to submit again.'
+          : 'This ends your contest. You will not be able to submit again.')}
         loading={ending}
       />
       <Modal
