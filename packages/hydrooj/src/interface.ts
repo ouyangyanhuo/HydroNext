@@ -229,6 +229,8 @@ export type RecordDoc = {
 } & {
     _id: ObjectId;
     notify?: boolean;
+    /** Contest participant (individual/team) at submission time, independent of later roster changes. */
+    contestUid?: number;
 };
 
 export interface RecordHistoryDoc extends RecordJudgeInfo {

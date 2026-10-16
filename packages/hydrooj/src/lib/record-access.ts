@@ -9,7 +9,7 @@ import type { Handler } from '../service/server';
 export async function getRecordAccess(handler: Handler, rdoc: RecordDoc) {
     const ownSubmission = rdoc.uid === handler.user._id;
     const owner = ownSubmission || (rdoc.contest && !rdoc.contest.toString().startsWith('0'.repeat(23))
-        && await contest.isSameTeam(rdoc.domainId, rdoc.contest, rdoc.uid, handler.user._id));
+        && await contest.isOwnOrTeammateRecord(rdoc.domainId, rdoc, handler.user._id));
     if (!owner && !handler.user.hasPerm(PERM.PERM_VIEW_RECORD)) throw new PermissionError(PERM.PERM_VIEW_RECORD);
     let tdoc: Tdoc = null;
     let canViewDetail = true;

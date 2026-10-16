@@ -2,14 +2,18 @@ import { escapeRegExp, omit, pick, uniq } from 'lodash';
 import { LRUCache } from 'lru-cache';
 import { Collection, Filter, ObjectId } from 'mongodb';
 import type { Context } from '../context';
-import { LoginError, UserAlreadyExistError, UserNotFoundError } from '../error';
+import {
+    ContestAlreadyAttendedError, LoginError, NotAssignedError, PermissionError,
+    TeamAlreadyJoinedError, UserAlreadyExistError, UserNotFoundError,
+} from '../error';
 import {
     Authenticator, BaseUserDict, FileInfo, GDoc,
-    OwnerInfo, Udict, Udoc, VUdoc,
+    OwnerInfo, Tdoc, Udict, Udoc, VUdoc,
 } from '../interface';
 import avatar from '../lib/avatar';
 import pwhash from '../lib/hash.hydro';
-import { ensureTeamInvitationCode, joinTeamByInvitationCode } from '../lib/team-invitation';
+import { ensureTeamInvitationCode, joinTeamByInvitationCode, normalizeTeamInvitationCode } from '../lib/team-invitation';
+import { withTeamMembershipLock } from '../lib/team-membership-lock';
 import { leaveOrRemoveTeamMember, renameTeamByCaptain, teamCaptainId, teamDomainQuery } from '../lib/team-permissions';
 import { Logger } from '../logger';
 import bus from '../service/bus';
@@ -532,9 +536,64 @@ class UserModel {
     }
 
     static async joinTeam(code: string, uid: number, limit: number, domainId = 'system') {
-        const team = await joinTeamByInvitationCode(collV, code, uid, limit, domainId);
-        deleteUserCache(team);
-        return team;
+        return withTeamMembershipLock(domainId, async () => {
+            const current = await collV.findOne({ ...teamDomainQuery(domainId), _teamJoinCode: normalizeTeamInvitationCode(code) });
+            if (current?.members?.includes(uid)) throw new TeamAlreadyJoinedError();
+            const statuses = db.collection('document.status');
+            const registrations = current ? await statuses.find({
+                domainId, docType: 30, uid: current._id, attend: { $gt: 0 },
+            }).project({ docId: 1 }).toArray() : [];
+            const tids = registrations.map((entry) => entry.docId);
+            if (tids.length) {
+                const contests = await db.collection('document').find({ domainId, docType: 30, docId: { $in: tids } })
+                    .project<Tdoc>({ docId: 1, owner: 1, assign: 1 }).toArray();
+                await UserModel.checkTeamContestMembers(domainId, contests, [uid], current._id);
+            }
+            const team = await joinTeamByInvitationCode(collV, code, uid, limit, domainId);
+            try {
+                // Targeted writes avoid replacing ranking, journal and other members' live updates.
+                const personal = tids.length ? await statuses.find({ domainId, docType: 30, uid, docId: { $in: tids } })
+                    .project({ docId: 1, proctorEnded: 1, proctorLogUploaded: 1 }).toArray() : [];
+                const evidence = new Map(personal.map((entry) => [entry.docId.toString(), pick(entry, ['proctorEnded', 'proctorLogUploaded'])]));
+                if (registrations.length) {
+                    await statuses.bulkWrite(registrations.map((entry) => ({ updateOne: {
+                        filter: { domainId, docType: 30, uid: team._id, docId: entry.docId, attend: { $gt: 0 } },
+                        update: { $addToSet: { members: uid }, $set: { [`proctorMembers.${uid}`]: evidence.get(entry.docId.toString()) || {} } },
+                    } })));
+                }
+            } catch (error) {
+                await statuses.updateMany({ domainId, docType: 30, uid: team._id }, [
+                    { $set: { members: { $filter: { input: { $ifNull: ['$members', []] }, as: 'member', cond: { $ne: ['$$member', uid] } } } } },
+                    { $unset: `proctorMembers.${uid}` },
+                ]);
+                await collV.updateOne({ ...teamDomainQuery(domainId), _id: team._id }, [
+                    { $set: { members: { $filter: { input: '$members', as: 'member', cond: { $ne: ['$$member', uid] } } } } },
+                ]);
+                deleteUserCache(team);
+                throw error;
+            }
+            deleteUserCache(team);
+            return team;
+        });
+    }
+
+    /** Caller holds the domain membership lock until registration/membership writes finish. */
+    static async checkTeamContestMembers(domainId: string, contests: Tdoc[], members: number[], teamId: number) {
+        if (!contests.length || !members.length) return;
+        const conflict = await db.collection('document.status').findOne({
+            domainId, docType: 30, docId: { $in: contests.map((entry) => entry.docId) }, attend: { $gt: 0 },
+            uid: { $ne: teamId }, $or: [{ uid: { $in: members } }, { members: { $in: members } }],
+        });
+        if (conflict) throw new ContestAlreadyAttendedError(conflict.docId);
+        const users = await UserModel.getList(domainId, members);
+        for (const member of members) {
+            const participant = users[member];
+            if (!participant?.hasPerm(PERM.PERM_ATTEND_CONTEST)) throw new PermissionError(PERM.PERM_ATTEND_CONTEST);
+            for (const contest of contests) {
+                if (!contest.assign?.length || member === contest.owner || participant.hasPerm(PERM.PERM_VIEW_HIDDEN_CONTEST)) continue;
+                if (!contest.assign.some((group) => participant.group?.includes(group))) throw new NotAssignedError('contest', contest.docId, member);
+            }
+        }
     }
 
     static async renameTeam(vuid: number, uid: number, name: string, domainId = 'system') {
@@ -545,9 +604,37 @@ class UserModel {
     }
 
     static async leaveTeam(vuid: number, uid: number, target = uid, domainId = 'system') {
-        const team = await leaveOrRemoveTeamMember(collV, vuid, uid, target, domainId);
-        deleteUserCache(team);
-        return team;
+        return withTeamMembershipLock(domainId, async () => {
+            const before = await collV.findOne({ ...teamDomainQuery(domainId), _id: vuid });
+            const team = await leaveOrRemoveTeamMember(collV, vuid, uid, target, domainId);
+            const statuses = db.collection('document.status');
+            let registrations = [];
+            try {
+                registrations = await statuses.find({ domainId, docType: 30, uid: vuid, attend: { $gt: 0 }, members: target })
+                    .project({ docId: 1, proctorMembers: 1 }).toArray();
+                await statuses.updateMany({ domainId, docType: 30, uid: vuid, attend: { $gt: 0 } }, [
+                    { $set: { members: { $filter: { input: { $ifNull: ['$members', []] }, as: 'member', cond: { $ne: ['$$member', target] } } } } },
+                    { $unset: `proctorMembers.${target}` },
+                ]);
+            } catch (error) {
+                if (registrations.length) {
+                    await statuses.bulkWrite(registrations.map((entry) => ({ updateOne: {
+                        filter: { domainId, docType: 30, uid: vuid, docId: entry.docId, attend: { $gt: 0 } },
+                        update: { $addToSet: { members: target },
+                            ...entry.proctorMembers?.[target] ? { $set: { [`proctorMembers.${target}`]: entry.proctorMembers[target] } } : {} },
+                    } })));
+                }
+                // Restore only fields changed by leaving; never overwrite a concurrent rename/code reset.
+                await collV.updateOne({ _id: vuid, domainId: before.domainId ?? { $exists: false } }, {
+                    $set: { members: before.members, ...(team.disbandedAt && before._teamJoinCode ? { _teamJoinCode: before._teamJoinCode } : {}) },
+                    ...(team.disbandedAt ? { $unset: { disbandedAt: '' } } : {}),
+                });
+                deleteUserCache(team);
+                throw error;
+            }
+            deleteUserCache(team);
+            return team;
+        });
     }
 
     static async updateVuserById(uid: number, update: any) {

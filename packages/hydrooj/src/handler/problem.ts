@@ -641,7 +641,9 @@ export class ProblemSubmitHandler extends ProblemDetailHandler {
             await release?.assert();
             const rid = await record.add(
                 domainId, this.pdoc.docId, this.user._id, lang, code, true,
-                pretest ? { input, type: 'pretest' } : { contest: tid, files, type: 'judge' },
+                pretest ? { input, type: 'pretest' } : {
+                    contest: tid, contestUid: tid ? this.team ?? this.user._id : undefined, files, type: 'judge',
+                },
             );
             this.submittedRecordId = rid;
             if (!pretest) {

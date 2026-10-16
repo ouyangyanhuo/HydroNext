@@ -16,6 +16,7 @@ import {
 import avatar from '../lib/avatar';
 import { appendContestActivityTimes } from '../lib/contest-activity';
 import { proctorRankingFilter } from '../lib/proctor';
+import { withTeamMembershipLock } from '../lib/team-membership-lock';
 import bus from '../service/bus';
 import db from '../service/db';
 import type { Handler } from '../service/server';
@@ -931,8 +932,17 @@ export function getMultiStatus(domainId: string, query: any) {
 }
 
 export async function getTeamVid(domainId: string, tid: ObjectId, uid: number): Promise<number | null> {
-    const s = await getMultiStatus(domainId, { docId: tid, members: uid }).project({ uid: 1 }).limit(1).next();
+    const s = await getMultiStatus(domainId, { docId: tid, uid: { $lt: 0 }, members: uid, attend: { $gt: 0 } })
+        .project({ uid: 1 }).limit(1).next();
     return s?.uid ?? null;
+}
+
+/** Preserve the original score owner when a submitter leaves or switches teams before judging/rejudging. */
+export async function getRecordContestUid(rdoc: RecordDoc): Promise<number> {
+    if (Number.isSafeInteger(rdoc.contestUid) && rdoc.contestUid !== 0) return rdoc.contestUid;
+    const original = await getMultiStatus(rdoc.domainId, { docId: rdoc.contest, 'journal.rid': rdoc._id })
+        .project({ uid: 1 }).limit(1).next();
+    return original?.uid ?? await getTeamVid(rdoc.domainId, rdoc.contest, rdoc.uid) ?? rdoc.uid;
 }
 
 export async function updateStatus(
@@ -972,13 +982,23 @@ export async function getListStatus(domainId: string, uid: number, tids: ObjectI
 }
 
 export async function attend(domainId: string, tid: ObjectId, uid: number, payload: any = {}) {
-    try {
-        await document.cappedIncStatus(domainId, document.TYPE_CONTEST, tid, uid, 'attend', 1, 0, 1, payload);
-    } catch (e) {
-        throw new ContestAlreadyAttendedError(tid, uid);
-    }
-    await document.inc(domainId, document.TYPE_CONTEST, tid, 'attend', 1);
-    return {};
+    return withTeamMembershipLock(domainId, async () => {
+        if (uid < 0) {
+            const team = await UserModel.getTeamById(domainId, uid);
+            const tdoc = await get(domainId, tid);
+            if (!tdoc.allowTeam || !team?.members?.length) throw new ValidationError('uid');
+            // Re-read inside the lock: members may have changed since the handler's initial checks.
+            await UserModel.checkTeamContestMembers(domainId, [tdoc], team.members, uid);
+            payload = { ...payload, displayName: team.displayName, members: team.members };
+        } else if (await getTeamVid(domainId, tid, uid)) throw new ContestAlreadyAttendedError(tid, uid);
+        try {
+            await document.cappedIncStatus(domainId, document.TYPE_CONTEST, tid, uid, 'attend', 1, 0, 1, payload);
+        } catch (e) {
+            throw new ContestAlreadyAttendedError(tid, uid);
+        }
+        await document.inc(domainId, document.TYPE_CONTEST, tid, 'attend', 1);
+        return {};
+    });
 }
 
 export async function cancelAttend(domainId: string, tid: ObjectId, uid: number) {
@@ -1064,7 +1084,8 @@ export async function isOwnOrTeammateRecord(domainId: string, rdoc: RecordDoc, u
     if (rdoc.uid === uid) return true;
     if (!rdoc.contest) return false;
     if (RecordModel.RECORD_PRETEST.equals(rdoc.contest) || RecordModel.RECORD_GENERATE.equals(rdoc.contest)) return false;
-    return isSameTeam(domainId, rdoc.contest, rdoc.uid, uid);
+    const participant = await getRecordContestUid(rdoc);
+    return participant < 0 && await getTeamVid(domainId, rdoc.contest, uid) === participant;
 }
 
 export function canViewHiddenScoreboard(this: { user: User }, tdoc: Tdoc) {
@@ -1230,6 +1251,7 @@ global.Hydro.model.contest = {
     getListStatus,
     getMultiStatus,
     getTeamVid,
+    getRecordContestUid,
     isSameTeam,
     isOwnOrTeammateRecord,
     attend,

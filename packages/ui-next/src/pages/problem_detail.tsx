@@ -756,12 +756,37 @@ export default function ProblemDetailPage() {
 
       <Modal opened={relatedOpened} onClose={() => setRelatedOpenFor(null)} title={t('Related')} size="md">
         {relatedOpened && (
-          <ScrollArea.Autosize mah="60vh" offsetScrollbars>
-            <Stack gap="sm">
-              {relatedContests.map((tdoc: any) => renderRelatedLink(tdoc, 'contest_detail', true))}
-              {relatedHomework.map((tdoc: any) => renderRelatedLink(tdoc, 'homework_detail', true))}
-            </Stack>
-          </ScrollArea.Autosize>
+          <Stack gap="md">
+            <ScrollArea.Autosize mah="60vh" offsetScrollbars>
+              <Stack gap="md">
+                {relatedContests.length > 0 && (
+                  <div>
+                    <Text size="xs" fw={700} c="dimmed" mb="xs" tt="uppercase">
+                      {t('Contests')} ({relatedContests.length})
+                    </Text>
+                    <Stack gap="xs">
+                      {relatedContests.map((tdoc: any) => renderRelatedLink(tdoc, 'contest_detail', true))}
+                    </Stack>
+                  </div>
+                )}
+                {relatedHomework.length > 0 && (
+                  <div>
+                    <Text size="xs" fw={700} c="dimmed" mb="xs" tt="uppercase">
+                      {t('Homework')} ({relatedHomework.length})
+                    </Text>
+                    <Stack gap="xs">
+                      {relatedHomework.map((tdoc: any) => renderRelatedLink(tdoc, 'homework_detail', true))}
+                    </Stack>
+                  </div>
+                )}
+              </Stack>
+            </ScrollArea.Autosize>
+            <Group justify="flex-end">
+              <Button variant="default" size="xs" onClick={() => setRelatedOpenFor(null)}>
+                {t('Close')}
+              </Button>
+            </Group>
+          </Stack>
         )}
       </Modal>
 

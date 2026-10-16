@@ -244,6 +244,8 @@ describe('App', () => {
         const pid = await problem.add(a, 'P1', 'Team problem', '', 2);
         const tid = await contest.add(a, 'Scoped teams', '', 2, 'acm', new Date(Date.now() + 60000),
             new Date(Date.now() + 3600000), [pid], false, { allowTeam: true });
+        const concurrentTid = await contest.add(a, 'Concurrent team enrollment', '', 2, 'acm', new Date(Date.now() + 60000),
+            new Date(Date.now() + 3600000), [pid], false, { allowTeam: true });
         try {
             await agent.post(teamA).send({ operation: 'create', name: 'Team A' }).expect(302);
             await agent.post(teamB).send({ operation: 'create', name: 'Team B' }).expect(302);
@@ -275,6 +277,43 @@ describe('App', () => {
             assert.equal(scoreboard.udict[team._id].displayName, 'Renamed A');
             assert.equal(scoreboard.udict[team._id].isTeam, true);
             assert.deepEqual(scoreboard.udict[team._id].teamMembers, [2, member]);
+            const rid = await global.Hydro.model.record.add(a, pid, member, '_', 'preserved team code', false,
+                { contest: tid, contestUid: team._id });
+            const journal = [{ rid, pid, score: 100, status: STATUS.STATUS_ACCEPTED }];
+            await contest.setStatus(a, tid, team._id, { score: 100, journal });
+            await contest.setStatus(a, tid, member, { proctorEnded: true, proctorLogUploaded: true });
+            await memberAgent.post(teamA).send({ operation: 'leave', vuid: team._id }).expect(302);
+            assert.deepEqual((await contest.getStatus(a, tid, team._id)).members, [2]);
+            assert.equal((await contest.getStatus(a, tid, team._id)).proctorMembers?.[member], undefined);
+            assert.equal(await contest.getTeamVid(a, tid, member), null);
+            const historicRecord = await global.Hydro.model.record.get(a, rid);
+            assert.equal(historicRecord.contestUid, team._id);
+            assert.equal(await contest.getRecordContestUid(historicRecord), team._id);
+            assert.equal(await contest.getRecordContestUid({ ...historicRecord, contestUid: undefined }), team._id);
+            assert.equal(await contest.isOwnOrTeammateRecord(a, historicRecord, 2), true);
+            await memberAgent.post(`/d/${a}/contest/${tid}`).send({ operation: 'attend' }).expect(302);
+            await memberAgent.post(teamA).send({ operation: 'join', code: team.invitationCode }).expect(403);
+            assert.ok(!(await user.getTeamById(a, team._id)).members.includes(member));
+            assert.deepEqual((await contest.getStatus(a, tid, team._id)).members, [2]);
+            await contest.cancelAttend(a, tid, member);
+            await contest.setStatus(a, tid, member, { proctorEnded: true, proctorLogUploaded: true });
+            await memberAgent.post(teamA).send({ operation: 'join', code: team.invitationCode }).expect(302);
+            assert.equal(await contest.getTeamVid(a, tid, member), team._id);
+            assert.deepEqual((await contest.getStatus(a, tid, team._id)).members, [2, member]);
+            assert.equal((await contest.getStatus(a, tid, team._id)).proctorMembers[member].proctorLogUploaded, true);
+            await agent.post(teamA).send({ operation: 'leave', vuid: team._id, uid: member }).expect(302);
+            assert.equal(await contest.getTeamVid(a, tid, member), null);
+            await memberAgent.post(teamA).send({ operation: 'join', code: team.invitationCode }).expect(302);
+            const retained = await contest.getStatus(a, tid, team._id);
+            assert.equal(retained.score, 100);
+            assert.deepEqual(retained.journal, journal);
+            assert.equal((await global.Hydro.model.record.get(a, rid)).code, 'preserved team code');
+            await memberAgent.post(teamA).send({ operation: 'leave', vuid: team._id }).expect(302);
+            await Promise.all([
+                memberAgent.post(teamA).send({ operation: 'join', code: team.invitationCode }).expect(302),
+                agent.post(`/d/${a}/contest/${concurrentTid}`).send({ operation: 'attend', vuid: team._id }).expect(302),
+            ]);
+            assert.deepEqual((await contest.getStatus(a, concurrentTid, team._id)).members, (await user.getTeamById(a, team._id)).members);
             const attendeePage = getPageArgs(await agent.get(`/d/${a}/contest/${tid}/user`).set('Accept', 'application/json').expect(200));
             assert.equal(attendeePage.canManageTeams, true);
             await agent.post(`/d/${a}/contest/${tid}/user`).send({ operation: 'rank', uid: team._id }).expect(302);
@@ -289,6 +328,7 @@ describe('App', () => {
             assert.equal((await user.getVusersByMember(2, undefined, b))[0].displayName, 'Team B');
         } finally {
             await contest.del(a, tid);
+            await contest.del(a, concurrentTid);
             await problem.del(a, pid);
             await Promise.all([domain.del(a), domain.del(b)]);
             await collV.deleteMany({ domainId: { $in: [a, b] } });
@@ -309,9 +349,11 @@ describe('App', () => {
             contest.add(a, 'Legacy A', '', 2, 'acm', start, end, [], false, { allowTeam: true }),
             contest.add(b, 'Legacy B', '', 2, 'acm', start, end, [], false, { allowTeam: true }),
         ]);
+        // Seed pre-migration records directly: current registration rejects cross-domain teams.
+        const { document } = global.Hydro.model;
         await Promise.all([
-            contest.attend(a, ta, legacy, { members: [2], displayName: 'Legacy team', score: 100 }),
-            contest.attend(b, tb, legacy, { members: [2], displayName: 'Legacy team', score: 80 }),
+            document.setStatus(a, document.TYPE_CONTEST, ta, legacy, { attend: 1, members: [2], displayName: 'Legacy team', score: 100 }),
+            document.setStatus(b, document.TYPE_CONTEST, tb, legacy, { attend: 1, members: [2], displayName: 'Legacy team', score: 80 }),
         ]);
         const legacyRid = await record.add(b, 1, legacy, '_', 'legacy code', false, { contest: tb, type: 'judge' });
         const realRid = await record.add(b, 1, 2, '_', 'individual code', false, { contest: tb, type: 'judge' });

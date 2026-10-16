@@ -26,7 +26,7 @@ export default class RecordModel {
     static PROJECTION_LIST: (keyof RecordDoc)[] = [
         '_id', 'score', 'time', 'memory', 'lang',
         'uid', 'pid', 'rejudged', 'progress', 'domainId',
-        'contest', 'judger', 'judgeAt', 'status', 'source',
+        'contest', 'contestUid', 'judger', 'judgeAt', 'status', 'source',
         'files', 'hackTarget',
     ];
 
@@ -132,6 +132,7 @@ export default class RecordModel {
         lang: string, code: string, addTask: boolean,
         args: {
             contest?: ObjectId;
+            contestUid?: number;
             input?: string[];
             files?: Record<string, string>;
             hackTarget?: ObjectId;
@@ -158,7 +159,10 @@ export default class RecordModel {
             rejudged: false,
         };
         let isContest = !!args.contest;
-        if (args.contest) data.contest = args.contest;
+        if (args.contest) {
+            data.contest = args.contest;
+            if (Number.isSafeInteger(args.contestUid) && args.contestUid !== 0) data.contestUid = args.contestUid;
+        }
         if (args.files) data.files = args.files;
         if (args.hackTarget) data.hackTarget = args.hackTarget;
         if (args.notify) data.notify = true;

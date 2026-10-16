@@ -32,6 +32,7 @@ function fixture(options: any = {}) {
             canShowRecord: () => !!options.showRecord, canShowSelfRecord: () => !!options.showSelf,
             isDone: () => !!options.done,
             isSameTeam: async () => !!options.teammate,
+            isOwnOrTeammateRecord: async () => !!options.teammate,
             getTeamVid: async () => options.teammate ? -1000 : null,
         },
         '../model/problem': {

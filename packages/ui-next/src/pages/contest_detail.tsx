@@ -738,7 +738,7 @@ export default function ContestDetailPage() {
       >
         <Stack gap="md">
           <LongSelect
-            label={t('Choose how you want to participate in this contest.')}
+            label={t('Participation Mode')}
             value={attendTeam}
             onChange={(value) => setAttendTeam(value || 'personal')}
             allowDeselect={false}
@@ -751,11 +751,38 @@ export default function ContestDetailPage() {
               }] : [],
             ]}
           />
-          {!args.team_vdocs?.length && <Text size="sm" c="dimmed">{t('You are not in any team.')}</Text>}
-          <Button component={Link} to="contest_team" variant="subtle" size="xs" disabled={attending}>{t('Manage Teams')}</Button>
-          <Group justify="flex-end" gap="xs">
-            <Button variant="default" disabled={attending} onClick={() => setAttendDialogOpen(false)}>{t('Cancel')}</Button>
-            <Button loading={attending} onClick={() => void handleAttend(attendTeam)}>{t('Confirm')}</Button>
+          {!args.team_vdocs?.length && (
+            <Text size="sm" c="dimmed">
+              {t('You are not in any team yet.')}
+            </Text>
+          )}
+          <Group justify="space-between" align="center" mt="xs">
+            <Button
+              component={Link}
+              to="contest_team"
+              variant="subtle"
+              size="xs"
+              disabled={attending}
+            >
+              {t('Manage Teams')}
+            </Button>
+            <Group gap="xs">
+              <Button
+                variant="default"
+                size="xs"
+                disabled={attending}
+                onClick={() => setAttendDialogOpen(false)}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                size="xs"
+                loading={attending}
+                onClick={() => void handleAttend(attendTeam)}
+              >
+                {t('Confirm')}
+              </Button>
+            </Group>
           </Group>
         </Stack>
       </Modal>

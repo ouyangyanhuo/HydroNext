@@ -276,6 +276,7 @@ test('user serialization and list rendering use global frames despite conflictin
     const module = load('../src/model/user.ts', {
         '../error': {}, '../lib/avatar': {}, '../lib/hash.hydro': {}, './token': {},
         '../lib/team-invitation': {},
+        '../lib/team-membership-lock': {},
         '../lib/team-permissions': {},
         '../logger': { Logger: class { info() {} } },
         '../service/bus': { on() {}, parallel: async () => {}, broadcast: (...values: any[]) => broadcasts.push(values) },
