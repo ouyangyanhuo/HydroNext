@@ -1,8 +1,8 @@
 import { Badge, Card, Group, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft, IconEdit, IconSearch, IconTrash } from '@tabler/icons-react';
+import { IconArrowLeft, IconCornerDownLeft, IconEdit, IconSearch, IconTrash } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
-import { Button } from '@/components/common/button';
+import { ActionIcon, Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DataTable } from '@/components/common/data-table';
 import { FormDialog } from '@/components/common/form-dialog';
@@ -71,17 +71,38 @@ export default function ContestTeamManagePage() {
   const searchTeams = () => void navigate(buildUrl('contest_team_manage', {}, search.trim() ? { q: search.trim() } : {}));
   return <Stack gap="lg">
     <PageHeader title={team ? t('Team details') : t('Team management')}>
-      <Group gap="xs">
-        {!team && <>
+      <Group gap="xs" wrap="wrap">
+        {!team && (
           <TextInput
-            aria-label={t('Search teams')}
-            placeholder={t('Search teams')}
+            placeholder={t('Search teams...')}
             value={search}
             onChange={(event) => setSearch(event.currentTarget.value)}
-            onKeyDown={(event) => { if (event.key === 'Enter') searchTeams(); }} />
-          <Button onClick={searchTeams} leftSection={<IconSearch size={15} />}>{t('Search')}</Button>
-        </>}
-        <Button component={Link} to={team ? 'contest_team_manage' : 'contest_team'} variant="subtle" leftSection={<IconArrowLeft size={15} />}>
+            onKeyDown={(event) => { if (event.key === 'Enter') searchTeams(); }}
+            leftSection={<IconSearch size={15} stroke={1.8} />}
+            rightSection={(
+              <ActionIcon
+                size="xs"
+                variant="subtle"
+                color="gray"
+                onClick={searchTeams}
+                aria-label={t('Search')}
+                title={t('Search')}
+              >
+                <IconCornerDownLeft size={13} stroke={1.8} />
+              </ActionIcon>
+            )}
+            rightSectionPointerEvents="auto"
+            size="xs"
+            className="w-[190px] sm:w-[260px]"
+          />
+        )}
+        <Button
+          component={Link}
+          to={team ? 'contest_team_manage' : 'contest_team'}
+          variant="subtle"
+          size="xs"
+          leftSection={<IconArrowLeft size={15} />}
+        >
           {t('Back')}
         </Button>
       </Group>
@@ -100,16 +121,25 @@ export default function ContestTeamManagePage() {
       <Card withBorder p="lg" className="hydro-content-card">
         <Title order={3} size="h4" mb="md">{t('Members')} ({team.members.length})</Title>
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
-          {team.members.map((uid: number) => <Card key={uid} withBorder p="sm" className="hydro-panel">
-            <Group wrap="nowrap" gap="sm">
-              <UserAvatar user={udict[uid] || { _id: uid }} size={38} />
-              <Stack gap={3}>
-                <UserLink user={udict[uid] || { _id: uid, uname: String(uid) }} />
-                <Group gap="xs"><Text size="xs" c="dimmed">UID {uid}</Text>
-                  {uid === team.captainId && <Badge size="xs" color="yellow">{t('Leader')}</Badge>}</Group>
-              </Stack>
-            </Group>
-          </Card>)}
+          {team.members.map((uid: number) => {
+            const memberUser = udict[uid];
+            return (
+              <Card key={uid} withBorder p="sm" className="hydro-panel">
+                <Group wrap="nowrap" gap="sm">
+                  <UserAvatar user={memberUser || { _id: uid }} size={38} />
+                  <Stack gap={3}>
+                    {memberUser?.uname || memberUser?.displayName
+                      ? <UserLink user={memberUser} />
+                      : <Text size="sm" c="dimmed">{t('Unknown')}</Text>}
+                    <Group gap="xs">
+                      <Text size="xs" c="dimmed">UID {uid}</Text>
+                      {uid === team.captainId && <Badge size="xs" color="yellow">{t('Leader')}</Badge>}
+                    </Group>
+                  </Stack>
+                </Group>
+              </Card>
+            );
+          })}
         </SimpleGrid>
       </Card>
     </> : <Card withBorder p="md" className="hydro-content-card">
@@ -121,7 +151,13 @@ export default function ContestTeamManagePage() {
             to="contest_team_detail"
             params={{ vuid: entry._id }}
             className="hydro-subtle-link">{entry.displayName}</Link> },
-          { key: 'captain', title: t('Leader'), render: (entry: any) => <UserLink user={udict[entry.captainId] || { _id: entry.captainId }} /> },
+          { key: 'captain', title: t('Leader'), render: (entry: any) => {
+            const captain = udict[entry.captainId];
+            if (captain?.uname || captain?.displayName) {
+              return <UserLink user={captain} />;
+            }
+            return <Text size="sm" c="dimmed">{t('Unknown')}</Text>;
+          } },
           { key: 'members', title: t('Members'), render: (entry: any) => <Text size="sm">{entry.members.length}</Text> },
           { key: 'actions', title: t('Actions'), render: actions },
         ]} />

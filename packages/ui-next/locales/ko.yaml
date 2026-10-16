@@ -1,727 +1,1274 @@
 __flag: 🇰🇷
+'All participants': '모든 참가자'
+'Created at': '생성 일시'
+'Disband team': '팀 해체'
+'Disband this team? Its invitation code will be invalidated. Existing contest registrations and results will be retained.': '이 팀을 해체할까요? 초대 코드는 즉시 무효화되지만 기존 대회 참가 신청 및 결과는 유지됩니다.'
+'Disbanded': '해체됨'
+'Domain team': '이 도메인의 팀'
+'No teams in this domain.': '이 도메인에 아직 팀이 없습니다.'
+'Participant': '참가자'
+'Ranked participants': '순위에 포함된 참가자'
+'Search teams': '팀 검색'
+'Starred participants': '관심 참가자'
+'Team': '팀'
+'Team Participation': '팀 참가'
+'Team details': '팀 상세 정보'
+'Team management': '팀 관리'
+'Team name': '팀 이름'
+'Teams belong only to this domain.': '팀은 현재 도메인에만 속하며 다른 도메인과 공유되지 않습니다.'
+'Teams belong only to this domain. Existing contest registrations and results are preserved when a team is disbanded.': '팀은 현재 도메인에만 속합니다. 팀을 해체해도 기존 대회 참가 신청 및 결과는 유지됩니다.'
+'{0} members': '{0}명의 멤버'
+'{0} ranked participants': '{0}명의 참가자 (개인 또는 팀)'
+'Only the team captain can perform this operation.': '팀장만 이 작업을 수행할 수 있습니다.'
+'The captain must remove other members before leaving the team.': '팀장은 다른 팀원을 먼저 제외해야 팀에서 나갈 수 있습니다.'
+'Verification failed': '인증 실패'
+'After joining, select Team Participation when registering for a contest that allows teams.': '팀에 가입한 후, 팀 참가를 허용하는 대회 신청 시 ''팀 참가''를 선택할 수 있습니다.'
+'Create a team and share its invitation code. Teammates enter the code to join; no private messages are needed.': '팀을 생성하고 초대 코드를 공유하세요. 팀원은 코드를 입력하여 참여할 수 있으며 개별 메시지는 필요하지 않습니다.'
+'Enter the 8-character team invitation code': '8자리 팀 초대 코드를 입력하세요'
+'Join a Team': '팀 가입'
+'Only team members can manage this team.': '팀원만 이 팀을 관리할 수 있습니다.'
+'Next problem': '다음 문제'
+'No other problems': '다른 문제가 없습니다'
+'Previous problem': '이전 문제'
+'Problem navigation': '문제 탐색'
+'This problem is no longer in the source list. Return to the list to continue.': '문제 순서나 접근 권한이 변경되었습니다. 목록으로 돌아가서 계속하세요.'
+'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.': '문제 풀이 시간이 동기화되지 않았습니다. 서버에서 확인된 시간만 순위표에 반영됩니다.'
+'Reset team invitation code': '팀 초대 코드 재설정'
+'Resetting invalidates the old invitation code immediately. Existing members are not affected.': '재설정 시 기존 초대 코드는 즉시 무효화되며 현재 팀원에게는 영향을 주지 않습니다.'
+'Team invitation code': '팀 초대 코드'
+'Team is full (maximum {0} members).': '팀 정원이 찼습니다 (최대 {0}명).'
+'Timing not synced': '시간 미동기화'
+'You are already a member of this team.': '이미 이 팀의 멤버입니다.'
+'You are not in any team yet.': '아직 어떤 팀에도 가입하지 않았습니다.'
+'Allow public registration': '사용자 자체 회원가입 허용 (비활성화 시 관리자만 생성 및 가져오기 가능)'
+'Public registration is disabled. Please contact a system administrator.': '공개 회원가입이 비활성화되었습니다. 시스템 관리자에게 문의하세요.'
+'server.allowRegister': '공개 가입 허용'
+'{0} characters': '{0}자'
+'Foreground problem time; saved to the contest scoreboard.': '문제 페이지를 열어둔 시간으로, 대회 순위표에 저장됩니다.'
+'Loaded code template': '코드 템플릿 불러옴'
+'Pasted code': '코드 붙여넣음'
+'Recorded actions': '작업 기록'
+'Submitted self-test': '셀프 테스트 제출'
+'Submitted solution': '코드 제출'
+'Total problem time': '총 문제 풀이 시간'
+'Add at least one chapter.': '최소 하나의 챕터를 추가하세요.'
+'Add chapter': '챕터 추가'
+'Advanced JSON plan': '고급 JSON 편집'
+'Chapter ID (_id)': '챕터 ID (_id)'
+'Chapter IDs must be unique positive integers.': '챕터 ID는 중복되지 않는 양의 정수여야 합니다.'
+'Chapter prerequisites cannot contain cycles.': '챕터 선수 조건에 순환 의존성이 있을 수 없습니다.'
+'Chapter title': '챕터 제목'
+'Chapters': '훈련 챕터'
+'Complete these earlier chapters to unlock this chapter.': '이 챕터를 잠금 해제하려면 이전 선수 챕터를 완료하세요.'
+'Each chapter needs a title.': '각 챕터마다 제목이 필요합니다.'
+'Each chapter needs at least one problem.': '각 챕터마다 최소 한 개의 문제가 필요합니다.'
+'Edit chapter IDs, titles, prerequisites and problem order here.': '여기서 챕터 ID, 제목, 선수 챕터 및 문제 순서를 편집하세요.'
+'Fix the JSON plan before using the chapter editor.': '챕터 편집기를 사용하기 전에 JSON 계획을 먼저 수정하세요.'
+'Invalid prerequisite chapter.': '선수 챕터가 존재하지 않거나 현재 챕터 자신을 참조하고 있습니다.'
+'Invalid training plan structure.': '훈련 계획 구조가 올바르지 않습니다. 챕터 필드를 확인하세요.'
+'Prerequisite chapters': '선수 챕터'
+'Problem search failed': '문제 검색 실패'
+'Remove chapter': '챕터 제거'
+'Remove this chapter and its prerequisite references? Problems themselves will not be deleted.': '이 챕터와 해당 챕터를 가리키는 선수 참조를 제거할까요? 문제 자체는 삭제되지 않습니다.'
+'Announcement content (up to 4000 characters)': '공지 내용 (최대 4000자)'
+'Announcement sent': '공지 발송 완료'
+'Announcements are available while the contest is running.': '대회 진행 중에만 공지를 전송할 수 있습니다.'
+'Contest announcement': '대회 공지'
+'Drag timer; use arrow keys to move, or Home to reset.': '타이머 캡슐을 드래그하세요. 방향키로 이동하거나 Home 키로 기본 위치로 초기화할 수 있습니다.'
+'I understand': '확인했습니다'
+'Reconnecting…': '재연결 중…'
+'Send announcement': '공지 발송'
+'Send to all registered participants': '등록된 모든 참가자에게 전송'
+'Sent to {count} participants.': '{count}명의 참가자에게 전송되었습니다.'
+'Unread announcements': '개의 읽지 않은 공지'
+'Already owned': '이미 보유 중'
+'Already owned by: {users}. Remove these recipients before granting.': '다음 사용자가 이미 이 프레임을 보유하고 있습니다: {users}. 해당 사용자를 제외한 후 수여하세요.'
+'An avatar frame with this name already exists.': '이미 같은 이름의 아바타 프레임이 있습니다. 다른 이름을 사용하세요.'
+'Application runtime': '애플리케이션 가동 시간'
+'Apply this action to {count} selected users?': '선택한 {count}명의 사용자에게 이 작업을 적용할까요?'
+'Avatar frame management': '아바타 프레임 관리'
+'Based on container PID 1. Reloading the application does not reset this timer.': '컨테이너 PID 1 기준입니다. 애플리케이션을 다시 로드해도 이 타이머는 재설정되지 않습니다.'
+'Choose one artwork per shape.': '모양별로 하나의 이미지를 선택하세요.'
+'Circular': '원형'
+'Circular artwork': '원형 이미지'
+'Circular artwork overlaps the avatar area. Check the preview.': '원형 이미지의 장식이 아바타 영역과 겹칩니다. 미리 보기를 확인하세요.'
+'Container runtime': '컨테이너 가동 시간'
+'Container timing is unavailable; showing the application process instead.': '컨테이너 가동 시간을 가져올 수 없어 대신 애플리케이션 프로세스 가동 시간을 표시합니다.'
+'Continuous uptime': '연속 가동 시간'
+'Delete frame': '프레임 삭제'
+'Delete {name}? It will be removed from all users and cannot be restored.': '''{name}'' 프레임을 삭제할까요? 모든 사용자의 보유 항목에서 제거되며 복구할 수 없습니다.'
+'Describe the honor and how this frame is awarded.': '이 프레임이 나타내는 명예와 획득 조건을 설명하세요.'
+'Disabled': '비활성화됨'
+'Drag selected problems to reorder, or use Alt + Left/Right.': '선택한 문제를 드래그하여 순서를 변경하거나 Alt + 좌우 방향키를 사용하세요.'
+'Drop artwork here or click to choose': '이미지를 여기에 끌어다 놓거나 클릭하여 선택'
+'Drop artwork here to replace, or click to choose': '이미지를 여기에 끌어다 놓아 변경하거나 클릭하여 선택'
+'Edit description': '설명 편집'
+'Edit frame': '프레임 편집'
+'Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.': '착용 시 현재 프레임이 교체됩니다. 착용 해제 시 소유권은 유지되며, 회수 시 소유 자격이 제거됩니다.'
+'Frame artwork must be 512 × 512 px.': '프레임 이미지는 512 × 512 px여야 합니다.'
+'Frame description': '프레임 설명'
+'Frame must contain transparent and visible pixels': '이미지에는 투명 영역과 표시되는 장식 픽셀이 모두 포함되어야 합니다.'
+'Frame owners': '프레임 보유자'
+'Invalid PNG artwork. Please export a new PNG or WebP image.': '유효하지 않은 PNG 이미지입니다. 새로운 PNG 또는 WebP 이미지를 다시 내보내세요.'
+'Invalid authorization destination.': '인증 대상 주소가 올바르지 않습니다. 인증이 필요한 페이지를 다시 열어주세요.'
+'No contest introduction yet.': '대회 소개가 아직 없습니다'
+'No description yet.': '설명이 아직 없습니다.'
+'Not running in a container; showing the application process.': '컨테이너 환경이 아니므로 애플리케이션 프로세스 시간을 표시합니다.'
+'One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.': '하나의 이름에 두 가지 모양. 캔버스: 512 × 512 px, 아바타: 384 px, 주변 장식 여백: 각 64 px. 가운데 영역은 흰색이 아닌 투명이어야 합니다.'
+'Only published frames can be awarded. Awards are global across all domains.': '게시된 프레임만 수여할 수 있습니다. 획득한 자격은 모든 도메인에서 공통으로 적용됩니다.'
+'Owned honor frames': '보유한 명예 프레임'
+'Owners': '소유자'
+'Page resources could not be loaded.': '페이지 리소스를 불러올 수 없습니다.'
+'Recipients': '수여 대상자'
+'Reload page': '페이지 다시 로드'
+'Replacing legacy artwork requires both shapes.': '기존 규격 이미지를 교체할 때는 둥근 모서리 사각형과 원형 이미지를 모두 업로드해야 합니다.'
+'Rounded square': '둥근 사각형'
+'Rounded square artwork': '둥근 사각형 이미지'
+'Rounded square artwork overlaps the avatar area. Check the preview.': '둥근 사각형 이미지의 장식이 아바타 영역과 겹칩니다. 미리 보기를 확인하세요.'
+'Runtime information unavailable.': '가동 정보를 확인할 수 없습니다.'
+'Save unfinished work before reloading.': '다시 로드하기 전에 작성 중인 내용을 저장하세요.'
+'Saved, but old artwork cleanup failed.': '저장되었으나 이전 이미지 정리에 실패했습니다.'
+'Search by username or user ID': '사용자 이름 또는 사용자 ID로 검색'
+'Search by username or user ID. Up to 50 users at a time.': '사용자 이름 또는 ID로 검색할 수 있으며, 한 번에 최대 50명까지 선택 가능합니다.'
+'Select a frame and at least one user.': '프레임과 최소 한 명의 사용자를 선택하세요.'
+'Select current page': '현재 페이지 사용자 선택'
+'Some users changed during this operation. Refresh and retry.': '작업 중 일부 사용자의 보유 상태가 변경되었습니다. 새로고침 후 다시 시도하세요.'
+'Some selected users already own this avatar frame.': '선택한 사용자 중 일부가 이미 이 아바타 프레임을 보유하고 있습니다.'
+'Started at': '시작 일시'
+'The central avatar area must be transparent.': '중앙의 아바타 영역은 투명해야 합니다.'
+'The frontend may have been updated. Check your connection and reload this page.': '프론트엔드가 업데이트되었을 수 있습니다. 네트워크 연결을 확인하고 이 페이지를 다시 로드하세요.'
+'These avatar frame images have already been uploaded.': '이 아바타 프레임 이미지는 이미 업로드되었습니다. 기존 프레임을 사용하세요.'
+'This frame changed. Refresh and try again.': '이 프레임 정보가 변경되었습니다. 새로고침 후 다시 시도하세요.'
+'Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).': '중앙 투명 영역: 384 × 384 px, 모서리 반경 64 px, 시작 좌표 (64, 64).'
+'Transparent center: diameter 384 px, centered at (256, 256).': '중앙 투명 영역: 지름 384 px, 중심 좌표 (256, 256).'
+'Upload both rounded square and circular artwork.': '둥근 사각형과 원형 이미지를 모두 업로드하세요.'
+'Unchanged artwork is kept. Editing preserves ownership and publication status.': '변경되지 않은 이미지는 유지됩니다. 편집해도 소유권과 게시 상태는 유지됩니다.'
+'Uploaded frames start disabled. Publish them from the library.': '업로드된 프레임은 비활성화 상태로 시작됩니다. 라이브러리에서 게시하세요.'
+'Use two 512 × 512 px images with a transparent 384 px center.': '중앙에 384 px의 투명 영역이 있는 512 × 512 px 이미지 2장을 사용하세요.'
 __id: ko
+'{days}d {hours}h {minutes}m {seconds}s': '{days}일 {hours}시간 {minutes}분 {seconds}초'
+'Saved. Please refresh this page.': '저장되었습니다. 이 페이지를 새로고침하세요.'
 'Discard changes': '변경 사항 버리기'
 'Discard your unsaved changes?': '저장하지 않은 변경 사항을 버릴까요?'
 'Failed to load file': '파일을 불러오지 못했습니다'
 'Please select only one file.': '파일을 하나만 선택해 주세요.'
 'Unsupported file type: {name}': '지원하지 않는 파일 형식: {name}'
 'Unsaved changes': '저장하지 않은 변경 사항'
-Choose a PNG or WebP file no larger than 2 MiB.: 2 MiB 이하의 PNG 또는 WebP 파일을 선택해 주세요.
-Choose frame (coming soon): 프레임 선택 (준비 중)
-Global appearance: 공통 외관
-Honor avatar frame: 명예 아바타 프레임
-Honor frames are supplied by system administrators. Equipping will be available after server integration.: 명예 프레임은 시스템 관리자가 제공합니다. 착용 기능은 서버 연동 후 사용할 수 있습니다.
-Honor frames belong to your global account and remain the same in every domain.: 명예 프레임은 계정에 속하며 모든 도메인에서 동일하게 표시됩니다.
-No domains found: 도메인을 찾을 수 없습니다
-No honor frame equipped: 착용한 명예 프레임이 없습니다
-Preview frame artwork: 프레임 이미지 미리 보기
-Publish frame (coming soon): 프레임 게시 (준비 중)
-Publishing and awarding frames will be enabled after server integration.: 게시 및 수여 기능은 서버 연동 후 사용할 수 있습니다.
-Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.: 투명 PNG 또는 WebP, 최대 2 MiB. 로컬 미리 보기만 지원하며 업로드되지 않습니다.
+'Choose a PNG or WebP file no larger than 2 MiB.': '2 MiB 이하의 PNG 또는 WebP 파일을 선택해 주세요.'
+'Choose frame (coming soon)': '프레임 선택 (준비 중)'
+'Global appearance': '공통 외관'
+'Honor avatar frame': '명예 아바타 프레임'
+'Honor frames are supplied by system administrators. Equipping will be available after server integration.': '명예 프레임은 시스템 관리자가 제공합니다. 착용 기능은 서버 연동 후 사용할 수 있습니다.'
+'Honor frames belong to your global account and remain the same in every domain.': '명예 프레임은 계정에 속하며 모든 도메인에서 동일하게 표시됩니다.'
+'No domains found': '도메인을 찾을 수 없습니다'
+'No honor frame equipped': '착용한 명예 프레임이 없습니다'
+'Preview frame artwork': '프레임 이미지 미리 보기'
+'Publish frame (coming soon)': '프레임 게시 (준비 중)'
+'Publishing and awarding frames will be enabled after server integration.': '게시 및 수여 기능은 서버 연동 후 사용할 수 있습니다.'
+'Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.': '투명 PNG 또는 WebP, 최대 2 MiB. 로컬 미리 보기만 지원하며 업로드되지 않습니다.'
 __interface: yes
 __langname: 한국어
 
-# Code replay
-Replay could not be saved locally. Keep this editor open until submission.: 리플레이를 로컬에 저장하지 못했습니다. 제출이 완료될 때까지 편집기를 닫지 마세요.
-Replay upload failed. Your recording is kept; please retry submission.: 리플레이 업로드에 실패했습니다. 기록은 유지됩니다. 다시 제출해 주세요.
+# Honor frame management
+'Awarded': '수여됨'
+'Enter a valid user ID.': '올바른 사용자 ID를 입력하세요.'
+'Equip frame': '착용'
+'Equipped': '착용 중'
+'Frame artwork': '프레임 이미지'
+'Frame artwork must be square, between 64 and 1024 pixels.': '프레임 이미지는 64~1024픽셀 사이의 정사각형이어야 합니다.'
+'Frame name': '프레임 이름'
+'Frames are global. Upload as a draft, then publish before awarding to a user.': '프레임은 전체 도메인 공통입니다. 초안으로 업로드한 후 게시해야 사용자에게 수여할 수 있습니다.'
+'Grant frame': '프레임 수여'
+'Grant this frame to {user}?': '이 프레임을 {user}에게 수여할까요?'
+'Manage honor frames': '명예 아바타 프레임 관리'
+'Managing awards for': '다음 사용자의 명예 관리 중'
+'No available honor frames. Frames are awarded by system administrators.': '사용 가능한 명예 프레임이 없습니다. 프레임은 시스템 관리자가 수여합니다.'
+'No honor frames found.': '해당하는 명예 프레임이 없습니다.'
+'Publish': '게시'
+'Publish this frame so it can be awarded?': '이 프레임을 게시하여 수여할 수 있도록 할까요?'
+'Published': '게시됨'
+'Recipient user ID': '수여 대상 사용자 ID'
+'Retry': '다시 시도'
+'Revoke frame': '프레임 회수'
+'Revoke this frame from {user}? It will also be unequipped.': '{user}에게서 이 프레임을 회수할까요? 착용도 해제됩니다.'
+'Saved': '저장됨'
+'Search frames': '프레임 검색'
+'Select a user by ID to grant or revoke frames.': '사용자 ID를 입력하여 해당 사용자에게 프레임을 수여하거나 회수하세요.'
+'Transparent square PNG or WebP, 64–1024 px, up to 2 MiB. Leave the center clear.': '64~1024 px의 투명 정사각형 PNG 또는 WebP, 최대 2 MiB. 중앙 영역은 비워 두세요.'
+'Unable to process frame artwork.': '프레임 이미지를 처리할 수 없습니다. 유효한 이미지인지 확인하세요.'
+'Unequip frame': '착용 해제'
+'Unpublish': '게시 취소'
+'Unpublish this frame? It will stop displaying for all users.': '이 프레임을 게시 취소할까요? 모든 사용자의 화면에서 표시가 중단됩니다.'
+'Unpublished': '미게시'
+'Upload artwork, publish frames, and manage user awards across all domains.': '이미지를 업로드하고 프레임을 게시하며, 모든 도메인의 사용자 수여 자격을 관리합니다.'
+'Upload frame': '프레임 업로드'
 
-Submission succeeded, but replay could not be linked. Your recording is kept.: 제출은 성공했지만 리플레이를 연결하지 못했습니다. 기록은 유지됩니다.
+# Code replay
+'Replay could not be saved locally. Keep this editor open until submission.': '리플레이를 로컬에 저장하지 못했습니다. 제출이 완료될 때까지 편집기를 닫지 마세요.'
+'Replay upload failed. Your recording is kept; please retry submission.': '리플레이 업로드에 실패했습니다. 기록은 유지됩니다. 다시 제출해 주세요.'
+
+'Submission succeeded, but replay could not be linked. Your recording is kept.': '제출은 성공했지만 리플레이를 연결하지 못했습니다. 기록은 유지됩니다.'
 
 # Code blocks
-Code copied: 코드가 복사되었습니다
-Copy code: 코드 복사
+'Code copied': '코드가 복사되었습니다'
+'Copy code': '코드 복사'
 
 # Record filters
-By Language: 언어별
-By Status: 상태별
+'By Language': '언어별'
+'By Status': '상태별'
+
+# List sorting
+'Ascending ID': '문제 번호 오름차순'
+'Contests I Joined': '내가 참가한 대회'
+'Contests I joined': '내가 참가한 대회'
+'Default order': '기본 정렬'
+'Descending ID': '문제 번호 내림차순'
+'Most Attempted Problems': '가장 많이 도전한 문제'
+'Most attempted': '가장 많이 도전한 문제'
+'Most Attended Contests': '가장 많이 참가한 대회'
+'Most attended': '가장 많이 참가한 대회'
+'Oldest first': '오래된 순'
+'Recently added': '최근 추가순'
+'Recently Attempted Problems': '최근 도전한 문제'
+'Recently attempted': '최근 도전한 문제'
+'Sort order': '정렬 기준'
+'Sort problem list': '문제 목록 정렬'
+'Sort recent contests': '최근 대회 정렬'
+'Title ascending': '제목 오름차순'
+'Title descending': '제목 내림차순'
 
 # Navigation
-Home: 홈
-Problems: 문제
-Contests: 대회
-Training: 훈련
-Records: 제출 기록
-Discussion: 토론
-About: 소개
-Help: 도움말
-Ranking: 랭킹
-See every effort. Grow through code.: 모든 노력을 응원합니다. 코드로 함께 성장해요.
-Ranking type: 랭킹 유형
-Top three: 상위 3명
-Leaderboard: 순위표
-Ranked by RP in this domain.: 이 도메인의 RP 순으로 표시합니다.
-Search users on this page: 현재 페이지 사용자 검색
-No users match your search.: 현재 페이지에 일치하는 사용자가 없습니다.
-No users in this domain yet.: 이 도메인에는 아직 사용자가 없습니다.
-No users in this domain have solved a problem.: 이 도메인에서 문제를 해결한 사용자가 아직 없습니다.
-RP Ranking: RP 랭킹
-Solved Ranking: 해결 문제 랭킹
-Ranked by distinct accepted problems in this domain.: 이 도메인에서 정답 처리된 서로 다른 문제 수를 기준으로 순위를 매깁니다.
-View Training: 훈련 계획 보기
-Status: 상태
+'Home': '홈'
+'Problems': '문제'
+'Contests': '대회'
+'Training': '훈련'
+'Records': '제출 기록'
+'Discussion': '토론'
+'About preferredPrefix option': 'preferredPrefix 옵션에 대해'
+'About': '소개'
+'Help': '도움말'
+'Ranking': '랭킹'
+'See every effort. Grow through code.': '모든 노력을 응원합니다. 코드로 함께 성장해요.'
+'Ranking type': '랭킹 유형'
+'Top three': '상위 3명'
+'Leaderboard': '순위표'
+'Ranked by RP in this domain.': '이 도메인의 RP 순으로 표시합니다.'
+'Search users on this page': '현재 페이지 사용자 검색'
+'No users match your search.': '현재 페이지에 일치하는 사용자가 없습니다.'
+'No users in this domain yet.': '이 도메인에는 아직 사용자가 없습니다.'
+'No users in this domain have solved a problem.': '이 도메인에서 문제를 해결한 사용자가 아직 없습니다.'
+'RP Ranking': 'RP 랭킹'
+'Solved Ranking': '해결 문제 랭킹'
+'Ranked by distinct accepted problems in this domain.': '이 도메인에서 정답 처리된 서로 다른 문제 수를 기준으로 순위를 매깁니다.'
+'View Training': '훈련 계획 보기'
+'Status': '상태'
+'Information': '정보'
+'Rejudge': '재채점'
+'Cancel Score': '채점 취소'
+'Test Case': '테스트 케이스'
+'Time Cost': '시간'
+'Memory Cost': '메모리'
+'Total Time': '총 시간'
+'Peak Time': '최대 시간'
+'Peak Memory': '메모리'
+'Code Length': '코드 길이'
+'Judged At': '채점 시각'
+'Judged By': '채점자'
+'Hacked': '해킹됨'
+'History': '기록'
+'Latest Version': '최신 버전'
+'Submission detail': '제출 상세'
 
 # Auth
-Login: 로그인
-Register: 회원가입
-Logout: 로그아웃
-Username: 사용자 이름
-Username or Email: 사용자 이름 또는 이메일
-Password: 비밀번호
-Remember me: 로그인 상태 유지
-Forgot Password?: 비밀번호를 잊으셨나요?
-Send Reset Link: 재설정 링크 보내기
-Reset Password: 비밀번호 재설정
-New Password: 새 비밀번호
-Old Password: 현재 비밀번호
-Confirm Password: 비밀번호 확인
-Change Password: 비밀번호 변경
-Email: 이메일
-Verify: 인증
-Verify Email: 이메일 인증
-Verification Code: 인증 코드
-Back to Login: 로그인으로 돌아가기
-Sudo Mode: Sudo 모드
-Please enter your password to continue.: 계속하려면 비밀번호를 입력하세요.
-Email Sent: 이메일 발송됨
-A password reset link has been sent to your email. Please check your inbox.: 비밀번호 재설정 링크가 이메일로 발송되었습니다. 받은 편지함을 확인하세요.
-Verification Email Sent: 인증 이메일 발송됨
-A verification link has been sent to your email. Please check your inbox to complete registration.: 인증 링크가 이메일로 발송되었습니다. 등록을 완료하려면 받은 편지함을 확인하세요.
-A verification link will be sent to your email.: 인증 링크가 이메일로 발송됩니다.
-Send Verification Email: 인증 이메일 발송
-Passwords do not match: 비밀번호가 일치하지 않습니다
-Registration failed: 등록 실패
+'Login': '로그인'
+'Register': '회원가입'
+'Logout': '로그아웃'
+'Username': '사용자 이름'
+'Username or Email': '사용자 이름 또는 이메일'
+'Password': '비밀번호'
+'Remember me': '로그인 상태 유지'
+'Forgot Password?': '비밀번호를 잊으셨나요?'
+'Forgot Password': '비밀번호 찾기'
+'Please contact the administrator': '관리자에게 문의해 주세요'
+'Send Reset Link': '재설정 링크 보내기'
+'Reset Password': '비밀번호 재설정'
+'New Password': '새 비밀번호'
+'Old Password': '현재 비밀번호'
+'Confirm Password': '비밀번호 확인'
+'Change Password': '비밀번호 변경'
+'Email': '이메일'
+'Verify': '인증'
+'Verify Email': '이메일 인증'
+'Verification Code': '인증 코드'
+'Back to Login': '로그인으로 돌아가기'
+'Sudo Mode': 'Sudo 모드'
+'Please enter your password to continue.': '계속하려면 비밀번호를 입력하세요.'
+'Email Sent': '이메일 발송됨'
+'A password reset link has been sent to your email. Please check your inbox.': '비밀번호 재설정 링크가 이메일로 발송되었습니다. 받은 편지함을 확인하세요.'
+'Verification Email Sent': '인증 이메일 발송됨'
+'A verification link has been sent to your email. Please check your inbox to complete registration.': '인증 링크가 이메일로 발송되었습니다. 등록을 완료하려면 받은 편지함을 확인하세요.'
+'A verification link will be sent to your email.': '인증 링크가 이메일로 발송됩니다.'
+'Send Verification Email': '인증 이메일 발송'
+'Passwords do not match': '비밀번호가 일치하지 않습니다'
+'Invalid email format': '올바르지 않은 이메일 형식입니다'
+'Registration failed': '등록 실패'
 'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': '이메일 발송이 너무 빈번합니다 (제한: 60초에 1회).'
-Logging out...: 로그아웃 중...
-Account Deletion Pending: 계정 삭제 대기 중
-You do not have permission to import problems.: 문제를 가져올 권한이 없습니다.
-Your account deletion request has been received. It will be processed within 30 days.: 계정 삭제 요청이 접수되었습니다. 30일 이내에 처리됩니다.
-Or login with: 또는 다음으로 로그인
+'Logging out...': '로그아웃 중...'
+'Account Deletion Pending': '계정 삭제 대기 중'
+'You do not have permission to import problems.': '문제를 가져올 권한이 없습니다.'
+'Your account deletion request has been received. It will be processed within 30 days.': '계정 삭제 요청이 접수되었습니다. 30일 이내에 처리됩니다.'
+'Or login with': '또는 다음으로 로그인'
+'6-Digit Code': '6자리 코드'
+'Active Sessions': '활성 세션'
+'Add Authenticator': '인증기 추가'
+'Authenticator': '인증기'
+'Authenticators': '인증기'
+'Choose Authenticator Type': '인증기 유형 선택'
+'Failed to fetch registration data.': '등록 데이터를 가져오지 못했습니다.'
+'Logout All Sessions': '모든 세션에서 로그아웃'
+'Logout This Session': '이 세션에서 로그아웃'
+'Multi Platform Authenticator': '다중 플랫폼 인증기'
+'Two Factor Authentication': '2단계 인증'
+'Use Authenticator': '인증기 사용'
+'Use Password': '비밀번호 사용'
+'Use TFA Code': '2단계 인증 코드 사용'
+'Your Device': '현재 기기'
+'Your browser does not support WebAuthn or you are not in secure context.': '브라우저가 WebAuthn을 지원하지 않거나 보안 환경이 아닙니다.'
 
 # Common
-Save: 저장
-Save failed: 저장 실패
-Save successfully: 저장 성공
-Cancel: 취소
-Confirm: 확인
-Delete: 삭제
-Delete failed: 삭제 실패
-Delete Contest: 대회 삭제
-Delete Training Plan: 훈련 계획 삭제
-Delete Problem: 문제 삭제
-Select All: 전체 선택
-Create: 만들기
-Edit: 편집
-Close: 닫기
-Back: 뒤로
-Submit: 제출
-Search: 검색
-Upload: 업로드
-Download: 다운로드
-Rename: 이름 변경
-Rename to: 새 이름
-Generate: 생성
-Generate Testdata: 테스트데이터 생성
-Data Generator: 데이터 생성기
-Standard Program: 표준 프로그램
-Please input the generator.: 생성기를 입력하세요.
-Please input the standard program.: 표준 프로그램을 입력하세요.
-A data generator is a program that generates testdata.: 데이터 생성기는 테스트데이터를 생성하는 프로그램입니다.
-A standard program is a program that solves the problem.: 표준 프로그램은 문제를 푸는 프로그램입니다.
-Confirm to delete the file?: 이 파일을 삭제하시겠습니까?
-Confirm to delete the selected files?: 선택한 파일을 삭제하시겠습니까?
-Confirm to delete this problem?: 이 문제를 삭제하시겠습니까?
-Confirm deleting this contest? Its files and status will be deleted as well.: 이 대회를 삭제하시겠습니까? 관련 파일과 상태도 함께 삭제됩니다.
-Confirm deleting this training? Its files and status will be deleted as well.: 이 훈련 계획을 삭제하시겠습니까? 관련 파일과 상태도 함께 삭제됩니다.
-Download Selected: 선택 다운로드
-Remove Selected: 선택 삭제
-Rename Selected: 선택 이름 변경
+'Save': '저장'
+'Cancel': '취소'
+'Confirm': '확인'
+'Delete': '삭제'
+'Delete failed': '삭제 실패'
+'Delete Contest': '대회 삭제'
+'Delete Training Plan': '훈련 계획 삭제'
+'Delete Problem': '문제 삭제'
+'Select All': '전체 선택'
+'Create': '만들기'
+'Edit': '편집'
+'Close': '닫기'
+'Back': '뒤로'
+'Contest has not started yet': '대회가 아직 시작되지 않았습니다'
+'Submit': '제출'
+'Search': '검색'
+'Upload': '업로드'
+'Download': '다운로드'
+'Rename': '이름 변경'
+'Rename to': '새 이름'
+'Generate': '생성'
+'Generate Testdata': '테스트데이터 생성'
+'Data Generator': '데이터 생성기'
+'Standard Program': '표준 프로그램'
+'Please input the generator.': '생성기를 입력하세요.'
+'Please input the standard program.': '표준 프로그램을 입력하세요.'
+'A data generator is a program that generates testdata.': '데이터 생성기는 테스트데이터를 생성하는 프로그램입니다.'
+'A standard program is a program that solves the problem.': '표준 프로그램은 문제를 푸는 프로그램입니다.'
+'Confirm to delete the file?': '이 파일을 삭제하시겠습니까?'
+'Confirm to delete the selected files?': '선택한 파일을 삭제하시겠습니까?'
+'Confirm to delete this problem?': '이 문제를 삭제하시겠습니까?'
+'Confirm deleting this contest? Its files and status will be deleted as well.': '이 대회를 삭제하시겠습니까? 관련 파일과 상태도 함께 삭제됩니다.'
+'Confirm deleting this training? Its files and status will be deleted as well.': '이 훈련 계획을 삭제하시겠습니까? 관련 파일과 상태도 함께 삭제됩니다.'
+'Download Selected': '선택 다운로드'
+'Remove Selected': '선택 삭제'
+'Rename Selected': '선택 이름 변경'
 'Enter a new name for the file:': '파일의 새 이름을 입력하세요:'
-Batch replacement: 일괄 대체
-Original content: 원본 내용
-Replace with: 대체할 내용
-Add prefix: 접두사 추가
-Add suffix: 접미사 추가
-Add prefix/suffix: 접두사/접미사 추가
-RegExp supported, quote with "/": 정규식 지원, "/"로 감싸기
-Original filename(s): 원본 파일명
-New filename(s): 새 파일명
-Are you sure to rename the following file?: 다음 파일의 이름을 변경하시겠습니까?
-Cannot preview this file type.: 이 파일 형식은 미리볼 수 없습니다.
-Next: 다음
-Import: 가져오기
-Export: 내보내기
-Loading...: 로딩 중...
-Error: 오류
-Success: 성공
-Warning: 경고
-No data: 데이터 없음
-No results: 결과 없음
-Settings: 설정
-Configuration: 설정
-Dashboard: 대시보드
-Manage: 관리
-Admin: 관리자
-View All: 모두 보기
-View Record: 기록 보기
-All Records: 모든 기록
-Latest Record: 최신 기록
-Replies: 답변
-Reply: 답변
-Post Reply: 답변 작성
-Title: 제목
-Content: 내용
-Tags: 태그
-Hidden: 숨김
-Name: 이름
-Size: 크기
-Date: 날짜
-Time: 시간
-Duration: 기간
-Rule: 규칙
-Start: 시작
-End: 종료
-User: 사용자
-Users: 사용자
-Problem: 문제
-Contest: 대회
-Record: 기록
-Domain: 도메인
-Score: 점수
-Language: 언어
-Submissions: 제출
-Accept Rate: 정답률
-Total Submissions: 총 제출 수
-Joined: 가입일
-Last login: 마지막 로그인
-Like: 좋아요
-Bio: 자기소개
-School: 학교
-Grade: 학년
-Gender: 성별
-Avatar URL: 아바타 URL
-Bulletin: 공지
-Host: 호스트
-
-# Problem
-Create Problem: 문제 만들기
-Edit Problem: 문제 편집
-Problem ID: 문제 ID
-Problem ID must start with a letter and contain only letters and numbers.: 문제 ID는 영문자로 시작해야 하며, 영문자와 숫자만 포함할 수 있습니다.
-Problem ID must start with a letter. Auto-corrected to {0}: '문제 ID는 영문자로 시작해야 합니다. 자동 수정: {0}'
-Content (Markdown): 내용 (Markdown)
-Test Data: 테스트 데이터
-Upload Test Data: 테스트 데이터 업로드
-Source Code: 소스 코드
-Solutions: 해설
-Write Solution: 해설 작성
-Statistics: 통계
-Config: 설정
-Files: 파일
-No files: 파일 없음
-Hack: Hack
-Submit Hack: Hack 제출
-Import Problems: 문제 가져오기
-Source: 소스
-URL or ID: URL 또는 ID
-Enter Online Programming Mode: 온라인 프로그래밍 모드 시작
-
-# Submit
-Please select a language: 언어를 선택하세요
-Please enter your code: 코드를 입력하세요
-Select language: 언어 선택
-
-# Record
-Judging...: 채점 중...
-Test Cases: 테스트 케이스
-Compiler Output: 컴파일 출력
-Judge Message: 채점 메시지
-Code Replay: 코드 리플레이
-Play: 재생
-Pause: 일시정지
-Reset: 리셋
-
-# Contest
-Create Contest: 대회 만들기
-Edit Contest: 대회 편집
-Running: 진행 중
-Upcoming: 예정
-Finished: 종료
-Scoreboard: 스코어보드
-Participants: 참가자
-Register Contest: 참가 등록
-Registered: 등록됨
-Clarifications: 질의응답
-Ask a Question: 질문하기
-Answered: 답변됨
-Pending: 대기 중
-Balloons: 풍선
-Done: 완료
-Print: 인쇄
-Send to Printer: 프린터로 보내기
-Contest Settings: 대회 설정
-
-# Homework
-Homework: 숙제
-Create Homework: 숙제 만들기
-Edit Homework: 숙제 편집
-Due: 마감
-Open: 열림
-No homework: 숙제 없음
-
-# Training
-Create Training: 훈련 만들기
-Edit Training: 훈련 편집
-Section: 섹션
-No training: 훈련 없음
-
-# Discussion
-Create Discussion: 토론 만들기
-Edit Discussion: 토론 편집
-Node: 노드
-No discussions: 토론 없음
-No replies: 답변 없음
-replies: 개의 답변
-
-# User
-My Profile: 내 프로필
-My Files: 내 파일
-My Domains: 내 도메인
-Create Domain: 도메인 만들기
-Delete Domain: 도메인 삭제
-Domain Settings: 도메인 설정
-Domain Manage: 도메인 관리
-Domain Users: 도메인 사용자
-Domain ID: 도메인 ID
-Roles: 역할
-Permissions: 권한
-Groups: 그룹
-Create Group: 그룹 만들기
-Join Applications: 가입 신청
-Request to Join: 가입 요청
-Accept: 수락
-Reject: 거절
-No pending applications: 대기 중인 신청 없음
-No domains: 도메인 없음
-This operation cannot be undone.: 이 작업은 되돌릴 수 없습니다.
-Confirm to delete this domain?: 이 도메인을 삭제하시겠습니까?
-Group Assignment (Optional): 그룹 할당 (선택사항)
-The group to join when user joining the domain.: 사용자가 도메인에 가입할 때 참여할 그룹입니다.
-Preference: 환경설정
-You can also upload your avatar to Gravatar and it will be automatically updated here.: Cravatar에 아바타를 업로드하면 여기에서도 자동으로 업데이트됩니다.
-Linked Accounts: 연결된 계정
-Email Account: 이메일 계정
-Manage all active login sessions.: 모든 활성 로그인 세션을 관리합니다.
-Email for Gravatar: Gravatar 이메일
-Email for Cravatar: Cravatar 이메일
-QQ Number: QQ 번호
-GitHub Username: GitHub 사용자 이름
-Choose avatar file: 아바타 파일 선택
-Gravatar uses your email to fetch avatar from: Gravatar는 이메일을 사용하여 아바타를 가져옵니다
-Cravatar uses your email to fetch avatar from: Cravatar는 이메일을 사용하여 아바타를 가져옵니다
-
-# Manage
-System Management: 시스템 관리
-System Settings: 시스템 설정
-Scripts: 스크립트
-Run: 실행
-User Import: 사용자 가져오기
-User Privileges: 사용자 권한
-Format: 형식
-Data: 데이터
-Apply: 적용
-Service Status: 서비스 상태
-Uptime: 가동 시간
-Online: 온라인
-No judges connected: 채점기 미연결
-
-# Messages
-Messages: 메시지
-No messages: 메시지 없음
-New Message: 새 메시지
-Select a conversation: 대화할 사용자를 선택하세요
-
-# User Profile
-No bio: 자기소개 없음
-Accepted Problems: 푼 문제
-No accepted problems: 푼 문제 없음
-Problem Tags: 문제 태그
-Solved: 해결됨
-RP: RP
-Last active: 마지막 활동
-Edit Profile: 프로필 수정
-Send Message: 메시지 보내기
-Male: 남성
-Female: 여성
-Other: 기타
-
-# Misc
-Welcome: 환영합니다
-Welcome to Hydro: HydroNext에 오신 것을 환영합니다
-Explore problems, contests, and improve your skills.: 문제와 대회를 탐색하고 실력을 향상시키세요.
-Login or register to start solving problems.: 로그인 또는 등록 후 문제를 풀기 시작하세요.
-Recent Problems: 최근 문제
-Recent Contests: 최근 대회
-Recent Discussions: 최근 토론
-Powered by: Powered by
-Paste limit exceeded: 붙여넣기 제한 초과
-'Pasting more than {0} characters is not allowed (currently {1}).': '{0}자를 초과하는 내용은 붙여넣을 수 없습니다(현재 {1}자).'
-File too large: 파일이 너무 큽니다
-'File too large: {name}': '파일이 너무 큽니다: {name}'
-Drag files here or click to upload: 여기에 파일을 드래그하거나 클릭하여 업로드
-Uploading...: 업로드 중...
-Nothing to preview: 미리보기 없음
-Write: 작성
-Preview: 미리보기
-Build Time: 빌드 시간
-Version: 버전
-No about page content configured.: 소개 페이지가 설정되지 않았습니다.
-
-# Error pages
-Page not found: 페이지를 찾을 수 없음
-An error occurred: 오류가 발생했습니다
-Back to Home: 홈으로 돌아가기
-
-# Scratchpad
-Scratchpad: 스크래치패드
-Code template loaded: 코드 템플릿을 불러왔습니다
-Load Code Template: 코드 템플릿 불러오기
-No code template is available for this language.: 이 언어에 사용할 수 있는 코드 템플릿이 없습니다.
-Open Scratchpad: 스크래치패드 열기
-
-# Search placeholders
-Search problems...: 문제 검색...
-Search contests...: 대회 검색...
-
-# Empty states
-No records found: 기록 없음
-No contests found: 대회 없음
-No problems found: 문제 없음
-No clarifications: 질문 없음
-No solutions: 해설 없음
-
-# Auth links
-Already have an account? Login: 계정이 있으신가요? 로그인
-Don't have an account? Register: 계정이 없으신가요? 회원가입
-
-# Misc
-Unknown: 알 수 없음
-Login failed: 로그인 실패
-Network error: 네트워크 오류
-Continue: 계속
-Account: 계정
-Sign in to continue to Hydro.: 로그인하여 Hydro를 계속 사용하세요.
-Create an account to start solving problems.: 계정을 만들어 문제를 풀기 시작하세요.
-Enter your email to receive a reset link.: 재설정 링크를 받으려면 이메일을 입력하세요.
-votes: 표
-Online Judge: Online Judge
-Pinned: 고정됨
-Problem Type: 문제 유형
-Uploaded By: 업로더
-Login to Submit: 로그인 후 제출
-No Permission to Submit: 제출 권한 없음
-Rejudge all submissions: 모든 제출 재채점
-Judge Config: 채점 설정
-Related: 관련
-Lucky: 랜덤 선택
-Random Problem: 랜덤 문제
-Pick a problem randomly based on the current filter.: 현재 필터를 기반으로 무작위로 문제를 선택합니다.
-sort::default: 기본 정렬
-sort::recent: 최근 추가
-AC: 정답
-Tried: 시도함
-Time Limit: 시간 제한
-Memory Limit: 메모리 제한
-Accepted: 맞음
-Difficulty: 난이도
-problemType::default: 전통
-problemType::submit_answer: 답안 제출
-problemType::interactive: 인터랙티브
-problemType::communication: 커뮤니케이션
-problemType::objective: 객관식
-problemType::remote_judge: 리모트 저지
-files: 파일
-submissions: 제출
-Filename: 파일명
-Testdata: 테스트 데이터
-Additional Files: 추가 파일
-Input, output, and config files used by the judge.: 채점에 사용되는 입력, 출력 및 설정 파일입니다.
-Public attachments shown with this problem.: 이 문제와 함께 공개되는 첨부 파일입니다.
-This is a copy of another problem.: 이것은 다른 문제의 복사본입니다.
-'This problem has no testdata.': '이 문제에는 테스트데이터가 없습니다.'
-Status Distribution: 상태 분포
-Submission Statistics: 제출 통계
-Submit By: 제출자
-Submit At: 제출 시간
-Direction: 정렬 방향
-Ascending: 오름차순
-Descending: 내림차순
-Sort: 정렬
-Switch to dark mode: 다크 모드로 전환
-Switch to light mode: 라이트 모드로 전환
-Switch to paper mode: 페이퍼 모드로 전환
-Theme mode: 테마 모드
-Automatic: 자동
-Automatic theme enabled: 자동 테마 사용 중
-Light mode: 라이트 모드
-Paper mode: 페이퍼 모드
-Dark mode: 다크 모드
-Code: 코드
-Oh, there is no submission!: 제출이 없습니다!
-Redirecting: 리다이렉트 중
-No problem found: 문제를 찾을 수 없음
-Opening the selected problem.: 선택한 문제를 열고 있습니다.
-Try changing the current filter.: 현재 필터를 변경해 보세요.
-Back to Problems: 문제 목록으로 돌아가기
-Confirm rejudge this problem?: 이 문제를 재채점하시겠습니까?
-Download failed: 다운로드 실패
-Copy failed: 복사 실패
-Copied: 복사되었습니다
-Target: 대상 도메인
-Monaco Editor: Monaco 에디터
-Pretest: 프리테스트
-Input: 입력
-Basic: 기본
-Languages: 언어
-Config Editor: 설정 에디터
-YAML: YAML
-click to add: 클릭하여 추가
-Update: 업데이트
-Operation failed: 작업 실패
-Confirm delete?: 삭제하시겠습니까?
-Copy Link: 링크 복사
-Share: 공유
-Show less: 접기
-Show more: 더 보기
-solutions: 해설
-Write Your Solution: 해설 작성
-No solutions so far...: 아직 해설이 없습니다...
-View all {0} solutions: 전체 {0}개 해설 보기
-No categories: 카테고리 없음
-Permissions data is incomplete: 권한 데이터가 완전하지 않습니다
-React to discussion: 토론에 반응
-Read all record codes: 모든 제출 코드 보기
-"View other's records": 다른 사용자의 제출 기록 보기
-Submit problem: 문제 제출
-Read data of problem: 문제 데이터 읽기
-Join Settings: 가입 설정
-System Data: 시스템 데이터
-View domains and additional files.: 도메인과 추가 파일을 봅니다.
-All Domains: 모든 도메인
-All Additional Files: 모든 추가 파일
-No additional files: 추가 파일 없음
-Delete Additional File: 추가 파일 삭제
-Delete domain confirmation: 이 작업은 도메인과 관련 데이터를 삭제합니다.
-Delete additional file confirmation: 선택한 추가 파일을 삭제합니다.
-Owner: 소유자
-File: 파일
-Last Modified: 마지막 수정
-User Management: 사용자 관리
-All Users: 모든 사용자
-View users and reset passwords: 사용자를 보고 비밀번호를 재설정합니다.
-View users and reset passwords.: 사용자를 보고 비밀번호를 재설정합니다.
-Search users by username, UID or email: 사용자 이름, UID 또는 이메일로 사용자 검색
-Clear Search: 검색 지우기
-Last Login: 최근 로그인
-Login IP: 로그인 IP
-Total: 합계
-Reset password for: 다음 사용자의 비밀번호 재설정
-Password reset: 비밀번호가 재설정되었습니다
-Password reset failed: 비밀번호 재설정 실패
-Banned: 차단됨
-Ban User: 사용자 차단
-Ban failed: 차단 실패
-User banned: 사용자가 차단되었습니다
-Ban user confirmation: 이 작업은 사용자를 차단하고 관련 사용자 데이터를 정리합니다.
-Role Management: 역할 관리
-Save Role Changes: 역할 변경 저장
-Group Name: 그룹 이름
-Remove Selected Group: 선택한 그룹 제거
-Search users by username or UID: 사용자 이름 또는 UID로 사용자 검색
-Search users: 사용자 검색
-Type to search users: 사용자 이름 또는 UID를 입력하여 검색
-Type username or UID: 사용자 이름 또는 UID 입력
-User search failed: 사용자 검색 실패
-No users found: 사용자를 찾을 수 없음
-Change: 변경
-Selected Users: 선택한 사용자
-No users selected: 선택한 사용자가 없습니다
-Select: 선택
-Selected: 선택됨
-Remove: 제거
-You can create your own training plans and share them with others.: 직접 훈련 계획을 만들고 다른 사용자와 공유할 수 있습니다.
-Create Training Plan: 훈련 계획 만들기
-New Training Plan: 새 훈련 계획
-Go to Solve: 풀이하러 가기
-Contest Closed: 대회 종료
-The contest has ended. You can view the problems, but contest submissions are closed.: 대회가 종료되었습니다. 문제는 볼 수 있지만 대회 제출은 마감되었습니다.
-The contest has ended. You can view the problem, but contest submissions are closed.: 대회가 종료되었습니다. 문제 설명은 볼 수 있지만 대회 제출은 마감되었습니다.
-Confirm to delete this clarification?: 이 질문을 삭제하시겠습니까?
-Deleted: 삭제됨
-Compilers' Version and Parameters: 컴파일러 버전 및 매개변수
-Limitations: 제한
-IO: 입출력
-Judge Status: 채점 상태
-Compile Error: 컴파일 오류
-Accepted Ratio: 정답률
-RP Algorithm: RP 알고리즘
-Difficulty Algorithm: 난이도 알고리즘
-Dataset Format: 테스트데이터 형식
-Forgot Password and/or Username: 비밀번호 또는 사용자 이름을 잊은 경우
-Markdown: Markdown
-
-# Additional translations
-Invalid: 무효
-All Categories: 전체 분류
-All Rules: 전체 규칙
-All Training Plans: 모든 훈련 계획
-About preferredPrefix option: preferredPrefix 옵션에 대해
-Contest has not started yet: 대회가 아직 시작되지 않았습니다
-Enter a new name for the file: 파일의 새 이름을 입력하세요
+'Enter a new name for the file': '파일의 새 이름을 입력하세요'
+'New Filename': '새 파일명'
+'Create File': '파일 생성'
+'Batch replacement': '일괄 대체'
+'Original content': '원본 내용'
+'Replace with': '대체할 내용'
+'Add prefix': '접두사 추가'
+'Add suffix': '접미사 추가'
+'Add prefix/suffix': '접두사/접미사 추가'
+'RegExp supported, quote with "/"': '정규식 지원, "/"로 감싸기'
+'Original filename(s)': '원본 파일명'
+'New filename(s)': '새 파일명'
+'Are you sure to rename the following file?': '다음 파일의 이름을 변경하시겠습니까?'
+'Cannot preview this file type.': '이 파일 형식은 미리볼 수 없습니다.'
+'Next': '다음'
+'Import': '가져오기'
+'Export': '내보내기'
+'Loading...': '로딩 중...'
 'Page {0} of {1}': '{0} / {1} 페이지'
-Rows per page: 페이지당 행 수
-just now: 방금
+'Rows per page': '페이지당 행 수'
+'just now': '방금'
 '{0}m ago': '{0}분 전'
 '{0}h ago': '{0}시간 전'
 '{0}d ago': '{0}일 전'
-Access Denied: 접근이 거부되었습니다
-Problem List: 문제 목록
-My Submissions: 내 제출
-All Submissions: 모든 제출
-Enrolled Users: 등록된 사용자
-Select problems to generate a basic training plan. You can still edit the JSON plan below.: 문제를 선택하여 기본 훈련 계획을 생성합니다. 아래 JSON 계획을 계속 편집할 수 있습니다.
-Ignored: 무시됨
-Not joined yet: 미참가
-No changes: 변경 없음
-Leave empty for default: 기본값은 비워두세요
-Preferred Prefix: 선호 접두사
-Import From Hydro: Hydro에서 가져오기
-Please select a file: 파일을 선택하세요
-Attendee Manage: 참가자 관리
-Actions: 작업
-UnRank: 순위 제외
-Rank: 순위
-Balloon Status: 풍선 상태
-Set Color: 색상 설정
-Color: 색상
-Please set the balloon color for each problem first.: 먼저 각 문제의 풍선 색상을 설정하세요.
-Overview: 개요
-Quit Scratchpad: 스크래치패드 종료
-The preferred problem ID prefix.: 선호하는 문제 ID 접두사.
-Self Test: 셀프 테스트
-Run Result: 실행 결과
-No result: 결과 없음
-Default: 기본값
-Make the problem hidden.: 문제를 숨깁니다.
-More import sources can be added via plugins.: 플러그인으로 더 많은 가져오기 소스를 추가할 수 있습니다.
-Select a zip file: zip 파일 선택
-Upload zipfile: zip 파일 업로드
-What is this?: 이것이 무엇인가요?
-preferredPrefix_hint: 선호하는 문제 ID 접두사 힌트.
+'Error': '오류'
+'Success': '성공'
+'Warning': '경고'
+'No data': '데이터 없음'
+'No results': '결과 없음'
+'Settings': '설정'
+'Editor Settings': '편집기 설정'
+'Font Size': '글꼴 크기'
+'Tab Size': '탭 너비'
+'Table Size': '탭 너비'
+'Editor Theme': '편집기 테마'
+'Default': '기본값'
+'Auto': '자동'
+'Light': '라이트'
+'Dark': '다크'
+'Switch to dark mode': '다크 모드로 전환'
+'Switch to light mode': '라이트 모드로 전환'
+'Switch to paper mode': '페이퍼 모드로 전환'
+'Theme mode': '테마 모드'
+'Automatic': '자동'
+'Automatic theme enabled': '자동 테마 사용 중'
+'Light mode': '라이트 모드'
+'Paper mode': '페이퍼 모드'
+'Dark mode': '다크 모드'
+'High Contrast': '고대비'
+'Run Pretest': '프리테스트 실행'
+'Run Self Test': '프리테스트 실행'
+'Submit Solution': '답안 제출'
+'Self Test': '셀프 테스트'
+'Run Result': '실행 결과'
+'No result': '결과 없음'
+'All Training Plans': '모든 훈련 계획'
+'Search training...': '훈련 계획 검색...'
+'Sorry, there are no training plans.': '학습 계획 없음'
+'Create Training Plan': '훈련 계획 만들기'
+'New Training Plan': '새 훈련 계획'
+'Enrolled': '참여함'
+'Not Enrolled': '참가하지 않음'
+'Enroll Training': '학습 참여'
+'Enrollees': '참여 없음'
+'Created By': '제작자'
+'My status': '내 상태'
+'Invalid': '무효'
+'Login to join training plan': '로그인하여 훈련 계획 참여'
+'Some problems in the training are missing or you do not have permission to view them.': '훈련의 일부 문제가 존재하지 않거나 볼 수 있는 권한이 없습니다.'
+'This section cannot be challenged at present, so please complete the following sections first': '아래 섹션을 먼저 해결해 주세요.'
+'All Categories': '전체 분류'
+'All Contests': '전체 대회'
+'All Rules': '전체 규칙'
+'All {0} Contests': '전체 {0} 대회'
+'Create a contest': '대회 만들기'
+'View Details': '세부사항'
+'Live...': '진행 중...'
+'Ready (☆▽☆)': '준비 완료! (☆▽☆)'
+'Not Attended': '참여하지 않음'
+'Attended': '참가함'
+'Partic.': '참여자'
+'Configuration': '설정'
+'Dashboard': '대시보드'
+'Manage': '관리'
+'Access Denied': '접근이 거부되었습니다'
+'Admin': '관리자'
+'View All': '모두 보기'
+'View Record': '기록 보기'
+'All Records': '모든 기록'
+'Latest Record': '최신 기록'
+'Replies': '답변'
+'Reply': '답변'
+'Post Reply': '답변 작성'
+'Title': '제목'
+'Content': '내용'
+'Tags': '태그'
+'Hidden': '숨김'
+'Name': '이름'
+'Size': '크기'
+'Date': '날짜'
+'Time': '시간'
+'Duration': '기간'
+'Rule': '규칙'
+'Start': '시작'
+'End': '종료'
+'User': '사용자'
+'Users': '사용자'
+'Problem': '문제'
+'Problem List': '문제 목록'
+'My Submissions': '내 제출'
+'All Submissions': '모든 제출'
+'Enrolled Users': '등록된 사용자'
+'Select problems to generate a basic training plan. You can still edit the JSON plan below.': '문제를 선택하여 기본 훈련 계획을 생성합니다. 아래 JSON 계획을 계속 편집할 수 있습니다.'
+'Contest': '대회'
+'Record': '기록'
+'Domain': '도메인'
+'Score': '점수'
+'Ignored': '무시됨'
+'Language': '언어'
+'Leave empty for default': '기본값은 비워두세요'
+'Submissions': '제출'
+'Accept Rate': '정답률'
+'Total Submissions': '총 제출 수'
+'Joined': '가입일'
+'Not joined yet': '미참가'
+'No changes': '변경 없음'
+'Last login': '마지막 로그인'
+'Like': '좋아요'
+'Bio': '자기소개'
+'School': '학교'
+'Grade': '학년'
+'Gender': '성별'
+'Avatar URL': '아바타 URL'
+'Bulletin': '공지'
+'Host': '호스트'
 
-# Page titles
-Submit Solution: 답안 제출
-Submission detail: 제출 상세
-Security: 보안
-Manage Contest: 대회 관리
-Edit Training Plan: 훈련 계획 편집
-Domain Dashboard: 도메인 대시보드
-Join Domain: 도메인 가입
-A unique invitation code of up to 8 characters is generated automatically.: 8자 이내의 고유한 초대 코드가 자동으로 생성됩니다.
-Enter an invitation code to find and join a domain.: 초대 코드를 입력하여 해당 도메인을 찾아 가입하세요.
-This invitation link never expires.: 이 초대 링크는 만료되지 않습니다.
-Create Training Category: 훈련 카테고리 만들기
-Edit Training Category: 훈련 카테고리 편집
-Enrolled Training Plans: 등록한 훈련 계획
-View all: 모두 보기
-No enrolled users.: 등록한 사용자가 없습니다.
-Viewing progress for: 다음 사용자의 훈련 진행 상황을 보는 중
-Back to my progress: 내 진행 상황으로 돌아가기
-Category Name: 카테고리 이름
-Search categories...: 카테고리 검색...
-Training Plans: 훈련 계획
-Select all training plans included in this category.: 이 카테고리에 포함할 훈련 계획을 선택하세요.
-Delete Category: 카테고리 삭제
-Confirm to delete this category?: 이 카테고리를 삭제하시겠습니까?
+# Problem
+'Create Problem': '문제 만들기'
+'Edit Problem': '문제 편집'
+'Preferred Prefix': '선호 접두사'
+'Problem ID': '문제 ID'
+'Problem ID must start with a letter and contain only letters and numbers.': '문제 ID는 영문자로 시작해야 하며, 영문자와 숫자만 포함할 수 있습니다.'
+'Problem ID must start with a letter. Auto-corrected to {0}': '문제 ID는 영문자로 시작해야 합니다. 자동 수정: {0}'
+'Content (Markdown)': '내용 (Markdown)'
+'Test Data': '테스트 데이터'
+'Upload Test Data': '테스트 데이터 업로드'
+'Source Code': '소스 코드'
+'Solutions': '해설'
+'Write Solution': '해설 작성'
+'Statistics': '통계'
+'Config': '설정'
+'Files': '파일'
+'No files': '파일 없음'
+'Hack': 'Hack'
+'Submit Hack': 'Hack 제출'
+'Import Problems': '문제 가져오기'
+'Source': '소스'
+'URL or ID': 'URL 또는 ID'
+
+# Submit
+'Please select a language': '언어를 선택하세요'
+'Please enter your code': '코드를 입력하세요'
+'Please select a file': '파일을 선택하세요'
+'Select language': '언어 선택'
+
+# Record
+'Judging...': '채점 중...'
+'Test Cases': '테스트 케이스'
+'Compiler Output': '컴파일 출력'
+'Judge Message': '채점 메시지'
+'Code Replay': '코드 리플레이'
+'Replay editing process': '편집 과정 다시보기'
+'No replay data is available.': '리플레이 데이터가 없습니다.'
+'Play': '재생'
+'Pause': '일시정지'
+'Reset': '리셋'
+
+# Contest
+'Create Contest': '대회 만들기'
+'Edit Contest': '대회 편집'
+'Running': '진행 중'
+'Upcoming': '예정'
+'Finished': '종료'
+'Scoreboard': '스코어보드'
+'Attendee Manage': '참가자 관리'
+'Actions': '작업'
+'UnRank': '순위 제외'
+'Rank': '순위'
+'Balloon Status': '풍선 상태'
+'Set Color': '색상 설정'
+'Color': '색상'
+'Manage Teams': '팀 관리'
+'Participants': '참가자'
+'Participation Mode': '참가 방식'
+'Personal Participation': '개인 참가'
+'Please set the balloon color for each problem first.': '먼저 각 문제의 풍선 색상을 설정하세요.'
+'Register Contest': '참가 등록'
+'Registered': '등록됨'
+'Leader': '팀장'
+'You': '나'
+'Invited': '초대됨'
+'Remove Member': '멤버 제외'
+'Remove this member from the team?': '이 멤버를 팀에서 제외할까요?'
+'Clarifications': '질의응답'
+'Overview': '개요'
+'Ask a Question': '질문하기'
+'Answered': '답변됨'
+'Pending': '대기 중'
+'Balloons': '풍선'
+'Done': '완료'
+'Print': '인쇄'
+'Send to Printer': '프린터로 보내기'
+'Contest Settings': '대회 설정'
+'Basic Info': '기본 정보'
+'Begin Date': '시작 날짜'
+'Duration (hours)': '지속시간 (h)'
+'Description': '문제 설명'
+'Permission Control': '권한 제어'
+'Contest Maintainer': '대회 관리자'
+'Require Invitation Code': '초대 코드 필요'
+'Assign User or Group': '사용자 또는 그룹 지정'
+'Assign': '지정'
+'Invitation Code': '초대 코드'
+'Group / UID': '그룹 / UID'
+'Submission language limit': '제출 언어 제한'
+'Lock (minutes)': '순위표 동결 시간 (분)'
+'Flexable Duration': '유연한 경기 시간'
+'Rated': '레이팅 반영'
+'Auto hide-and show': '자동 숨기기 및 표시'
+'Allow View Code': '코드 보기 허용'
+'Allow Print': '인쇄 허용'
+'Keep Scoreboard Hidden': '순위표 숨김 유지'
+'Clone': '복제'
+'Summary': '요약'
+'Seperated with '',''': '쉼표(,)로 구분'
+
+# Homework
+'Homework': '숙제'
+'Create Homework': '숙제 만들기'
+'Edit Homework': '숙제 편집'
+'Due': '마감'
+'Open': '열림'
+'No homework': '숙제 없음'
+
+# Training
+'Create Training': '훈련 만들기'
+'Edit Training': '훈련 편집'
+'Section': '섹션'
+'No training': '훈련 없음'
+
+# Discussion
+'Create Discussion': '토론 만들기'
+'Edit Discussion': '토론 편집'
+'Node': '노드'
+'No discussions': '토론 없음'
+'No replies': '답변 없음'
+'replies': '개의 답변'
+
+# User
+'My Profile': '내 프로필'
+'My Files': '내 파일'
+'My Domains': '내 도메인'
+'Switch Domain': '도메인 전환'
+'Create Domain': '도메인 만들기'
+'Delete Domain': '도메인 삭제'
+'Domain Settings': '도메인 설정'
+'Domain Manage': '도메인 관리'
+'Domain Users': '도메인 사용자'
+'Domain ID': '도메인 ID'
+'Roles': '역할'
+'Permissions': '권한'
+'Groups': '그룹'
+'Create Group': '그룹 만들기'
+'Join Applications': '가입 신청'
+'Request to Join': '가입 요청'
+'Accept': '수락'
+'Reject': '거절'
+'No pending applications': '대기 중인 신청 없음'
+'No domains': '도메인 없음'
+'This operation cannot be undone.': '이 작업은 되돌릴 수 없습니다.'
+'Confirm to delete this domain?': '이 도메인을 삭제하시겠습니까?'
+'Group Assignment (Optional)': '그룹 할당 (선택사항)'
+'The group to join when user joining the domain.': '사용자가 도메인에 가입할 때 참여할 그룹입니다.'
+'Preference': '환경설정'
+'You can also upload your avatar to Gravatar and it will be automatically updated here.': 'Cravatar에 아바타를 업로드하면 여기에서도 자동으로 업데이트됩니다.'
+'Linked Accounts': '연결된 계정'
+'Email Account': '이메일 계정'
+'Manage all active login sessions.': '모든 활성 로그인 세션을 관리합니다.'
+'Email for Gravatar': 'Gravatar 이메일'
+'Email for Cravatar': 'Cravatar 이메일'
+'QQ Number': 'QQ 번호'
+'GitHub Username': 'GitHub 사용자 이름'
+'Choose avatar file': '아바타 파일 선택'
+'Gravatar uses your email to fetch avatar from': 'Gravatar는 이메일을 사용하여 아바타를 가져옵니다'
+'Cravatar uses your email to fetch avatar from': 'Cravatar는 이메일을 사용하여 아바타를 가져옵니다'
+
+# Manage
+'System Management': '시스템 관리'
+'System Settings': '시스템 설정'
+'Scripts': '스크립트'
+'Run': '실행'
+'User Import': '사용자 가져오기'
+'User Privileges': '사용자 권한'
+'Format': '형식'
+'Data': '데이터'
+'Apply': '적용'
+'Service Status': '서비스 상태'
+'Tools': '도구'
+'Open Panel': '패널 열기'
+'Runtime settings grouped by feature.': '기능별로 그룹화된 런타임 설정입니다.'
+'Edit raw YAML configuration source.': 'YAML 구성 원본 파일을 직접 편집합니다.'
+'Run registered maintenance scripts.': '등록된 유지 관리 스크립트를 실행합니다.'
+'Preview and import users in batches.': '사용자를 일괄 미리 보고 가져옵니다.'
+'Inspect and edit user privilege values.': '사용자 권한 값을 확인하고 편집합니다.'
+'Check service health and runtime status.': '서비스 상태 및 런타임 현황을 확인합니다.'
+'Save All Changes': '변경사항 저장'
+'Config Source': '구성 원본'
+'Secrets marked as hidden keep their old values when left unchanged.': '숨김으로 표시된 보안 필드는 변경하지 않고 비워두면 기존 값이 유지됩니다.'
+'(Not changed)': '수정되지 않음'
+'setting_display': '표시 설정'
+'setting_usage': '언어 설정'
+'setting_info': '정보 설정'
+'setting_customize': '개인 설정'
+'setting_domain': '그룹 설정'
+'setting_server': '서버 설정'
+'setting_limits': '제한 설정'
+'setting_basic': '기본 설정'
+'setting_session': '세션 설정'
+'setting_storage': '설정 저장'
+'Run script': '스크립트 실행'
+'Params': '파라미터'
+'Run failed': '실행 실패'
+'Invalid JSON': '유효하지 않은 JSON'
+'Import From Hydro': 'Hydro에서 가져오기'
+'Import failed': '가져오기 실패'
+'Import User': '사용자 불러오기'
+'Special Users': '특별 권한 사용자'
+'Default Privilege': '기본 권한'
+'Same as default': '기본값과 동일'
+'No users': '사용자 없음'
+'Set Privilege': '권한 설정'
+'Uptime': '가동 시간'
+'Online': '온라인'
+'No judges connected': '채점기 미연결'
+
+# Messages
+'Messages': '메시지'
+'No messages': '메시지 없음'
+'New Message': '새 메시지'
+'Select a conversation': '대화할 사용자를 선택하세요'
+
+# User Profile
+'No bio': '자기소개 없음'
+'Accepted Problems': '푼 문제'
+'No accepted problems': '푼 문제 없음'
+'Problem Tags': '문제 태그'
+'Solved': '해결됨'
+'RP': 'RP'
+'Last active': '마지막 활동'
+'Edit Profile': '프로필 수정'
+'Send Message': '메시지 보내기'
+'Male': '남성'
+'Female': '여성'
+'Other': '기타'
+
+# Misc
+'Welcome': '환영합니다'
+'Welcome to Hydro': 'HydroNext에 오신 것을 환영합니다'
+'Online Judge': 'Online Judge'
+'Pinned': '고정됨'
+'Explore problems, contests, and improve your skills.': '문제와 대회를 탐색하고 실력을 향상시키세요.'
+'Login or register to start solving problems.': '로그인 또는 등록 후 문제를 풀기 시작하세요.'
+'Recent Problems': '최근 문제'
+'Recent Contests': '최근 대회'
+'Recent Discussions': '최근 토론'
+'Powered by': 'Powered by'
+'Paste limit exceeded': '붙여넣기 제한 초과'
+'Pasting more than {0} characters is not allowed (currently {1}).': '{0}자를 초과하는 내용은 붙여넣을 수 없습니다(현재 {1}자).'
+'粘贴内容超过限制': '붙여넣기 제한 초과'
+'File too large': '파일이 너무 큽니다'
+'File too large: {name}': '파일이 너무 큽니다: {name}'
+'Drag files here or click to upload': '여기에 파일을 드래그하거나 클릭하여 업로드'
+'Uploading...': '업로드 중...'
+'Upload failed': '업로드 실패'
+'Upload zipfile': 'zip 파일 업로드'
+'Save failed': '저장 실패'
+'Save successfully': '저장 성공'
+'Generating...': '생성 중...'
+'Select a testdata file': '테스트 데이터 파일 선택'
+'Select a zip file': 'zip 파일 선택'
+'Testdata generated successfully.': '테스트 데이터가 생성되었습니다.'
+'Nothing to preview': '미리보기 없음'
+'Write': '작성'
+'Preview': '미리보기'
+'Build Time': '빌드 시간'
+'Version': '버전'
+'No about page content configured.': '소개 페이지가 설정되지 않았습니다.'
+
+# Error pages
+'Page not found': '페이지를 찾을 수 없음'
+'An error occurred': '오류가 발생했습니다'
+'Back to Home': '홈으로 돌아가기'
+
+# Scratchpad
+'Scratchpad': '스크래치패드'
+'Code template loaded': '코드 템플릿을 불러왔습니다'
+'Load Code Template': '코드 템플릿 불러오기'
+'No code template is available for this language.': '이 언어에 사용할 수 있는 코드 템플릿이 없습니다.'
+'Open Scratchpad': '스크래치패드 열기'
+'Quit Scratchpad': '스크래치패드 종료'
+'Enter Online Programming Mode': '온라인 프로그래밍 모드 시작'
+
+# Search placeholders
+'Search problems...': '문제 검색...'
+'Search contests...': '대회 검색...'
+'Search teams...': '팀 검색...'
+
+# Empty states
+'No records found': '기록 없음'
+'No contests found': '대회 없음'
+'No problems found': '문제 없음'
+'No clarifications': '질문 없음'
+'No solutions': '해설 없음'
+'No categories': '카테고리 없음'
+'Permissions data is incomplete': '권한 데이터가 완전하지 않습니다'
+'React to discussion': '토론에 반응'
+'Read all record codes': '모든 제출 코드 보기'
+'View other''s records': '다른 사용자의 제출 기록 보기'
+'Submit problem': '문제 제출'
+'Read data of problem': '문제 데이터 읽기'
+'Join Settings': '가입 설정'
+'System Data': '시스템 데이터'
+'View domains and additional files.': '도메인과 추가 파일을 봅니다.'
+'All Domains': '모든 도메인'
+'All Additional Files': '모든 추가 파일'
+'No additional files': '추가 파일 없음'
+'Delete Additional File': '추가 파일 삭제'
+'Delete domain confirmation': '이 작업은 도메인과 관련 데이터를 삭제합니다.'
+'Delete additional file confirmation': '선택한 추가 파일을 삭제합니다.'
+'Owner': '소유자'
+'File': '파일'
+'Last Modified': '마지막 수정'
+'User Management': '사용자 관리'
+'All Users': '모든 사용자'
+'View users and reset passwords': '사용자를 보고 비밀번호를 재설정합니다.'
+'View users and reset passwords.': '사용자를 보고 비밀번호를 재설정합니다.'
+'Search users by username, UID or email': '사용자 이름, UID 또는 이메일로 사용자 검색'
+'Clear Search': '검색 지우기'
+'Last Login': '최근 로그인'
+'Login IP': '로그인 IP'
+'Total': '합계'
+'Reset password for': '다음 사용자의 비밀번호 재설정'
+'Password reset': '비밀번호가 재설정되었습니다'
+'Password reset failed': '비밀번호 재설정 실패'
+'Banned': '차단됨'
+'Ban User': '사용자 차단'
+'Ban failed': '차단 실패'
+'User banned': '사용자가 차단되었습니다'
+'Ban user confirmation': '이 작업은 사용자를 차단하고 관련 사용자 데이터를 정리합니다.'
+'Role Management': '역할 관리'
+'Save Role Changes': '역할 변경 저장'
+'Group Name': '그룹 이름'
+'Remove Selected Group': '선택한 그룹 제거'
+'Search users by username or UID': '사용자 이름 또는 UID로 사용자 검색'
+'Search users': '사용자 검색'
+'Type to search users': '사용자 이름 또는 UID를 입력하여 검색'
+'Type username or UID': '사용자 이름 또는 UID 입력'
+'User search failed': '사용자 검색 실패'
+'No users found': '사용자를 찾을 수 없음'
+'Change': '변경'
+'Selected Users': '선택한 사용자'
+'No users selected': '선택한 사용자가 없습니다'
+'Select': '선택'
+'Selected': '선택됨'
+'Remove': '제거'
+
+# Auth links
+'Account': '계정'
+'Sign in to continue to Hydro.': '로그인하여 Hydro를 계속 사용하세요.'
+'Create an account to start solving problems.': '계정을 만들어 문제를 풀기 시작하세요.'
+'Enter your email to receive a reset link.': '재설정 링크를 받으려면 이메일을 입력하세요.'
+'Already have an account? Login': '계정이 있으신가요? 로그인'
+'Don''t have an account? Register': '계정이 없으신가요? 회원가입'
+'votes': '표'
+
+# Misc
+'Unknown': '알 수 없음'
+'Login failed': '로그인 실패'
+'Network error': '네트워크 오류'
+'Continue': '계속'
+'Problem Type': '문제 유형'
+'Uploaded By': '업로더'
+'Login to Submit': '로그인 후 제출'
+'No Permission to Submit': '제출 권한 없음'
+'Rejudge all submissions': '모든 제출 재채점'
+'Judge Config': '채점 설정'
+'Related': '관련'
+'Lucky': '랜덤 선택'
+'Random Problem': '랜덤 문제'
+'Pick a problem randomly based on the current filter.': '현재 필터를 기반으로 무작위로 문제를 선택합니다.'
+'sort::default': '기본 정렬'
+'sort::recent': '최근 추가'
+'AC': '정답'
+'Tried': '시도함'
+'The preferred problem ID prefix.': '선호하는 문제 ID 접두사.'
+'Time Limit': '시간 제한'
+'Memory Limit': '메모리 제한'
+'Accepted': '맞음'
+'Waiting': '대기 중'
+'Wrong Answer': '오답 (Wrong Answer)'
+'Time Limit Exceeded': '시간 초과 (Time Limit Exceeded)'
+'Memory Limit Exceeded': '메모리 초과 (Memory Limit Exceeded)'
+'Output Limit Exceeded': '출력 초과 (Output Limit Exceeded)'
+'Runtime Error': '런타임 에러 (Runtime Error)'
+'System Error': '시스템 에러 (System Error)'
+'Canceled': '취소됨'
+'Judging': '채점 중'
+'Compiling': '컴파일 중'
+'Fetched': '가져옴'
+'Difficulty': '난이도'
+'problemType::default': '전통'
+'problemType::submit_answer': '답안 제출'
+'problemType::interactive': '인터랙티브'
+'problemType::communication': '커뮤니케이션'
+'problemType::objective': '객관식'
+'problemType::remote_judge': '리모트 저지'
+'files': '파일'
+'submissions': '제출'
+'Filename': '파일명'
+'Testdata': '테스트 데이터'
+'Additional Files': '추가 파일'
+'Input, output, and config files used by the judge.': '채점에 사용되는 입력, 출력 및 설정 파일입니다.'
+'Public attachments shown with this problem.': '이 문제와 함께 공개되는 첨부 파일입니다.'
+'This is a copy of another problem.': '이것은 다른 문제의 복사본입니다.'
+'This problem has no testdata.': '이 문제에는 테스트데이터가 없습니다.'
+'Status Distribution': '상태 분포'
+'Score Distribution': '점수 분포'
+'Fastest': '가장 빠른 제출'
+'Min Memory': '최소 메모리'
+'Shortest': '가장 짧은 코드'
+'Latest': '최근 제출'
+'Submission Statistics': '제출 통계'
+'Submit By': '제출자'
+'Submit At': '제출 시간'
+'Direction': '정렬 방향'
+'Ascending': '오름차순'
+'Descending': '내림차순'
+'Sort': '정렬'
+'Code': '코드'
+'Oh, there is no submission!': '제출이 없습니다!'
+'Redirecting': '리다이렉트 중'
+'No problem found': '문제를 찾을 수 없음'
+'Opening the selected problem.': '선택한 문제를 열고 있습니다.'
+'Try changing the current filter.': '현재 필터를 변경해 보세요.'
+'Back to Problems': '문제 목록으로 돌아가기'
+'Confirm rejudge this problem?': '이 문제를 재채점하시겠습니까?'
+'Download failed': '다운로드 실패'
+'Copy failed': '복사 실패'
+'Copied': '복사되었습니다'
+'Target': '대상 도메인'
+'Copy Problem': '문제 복사'
+'Search by domain ID or name': '도메인 ID 또는 이름으로 검색'
+'Monaco Editor': 'Monaco 에디터'
+'Pretest': '프리테스트'
+'Input': '입력'
+'Basic': '기본'
+'Languages': '언어'
+'Config Editor': '설정 에디터'
+'Checker': '스페셜 저지 (Checker)'
+'Extra Files': '추가 파일'
+'Subtasks': '서브태스크'
+'FileIO': '파일 입출력'
+'Make the problem hidden.': '문제를 숨깁니다.'
+'Max Passes': '최대 통과 횟수'
+'Number of Processes': '프로세스 수'
+'More import sources can be added via plugins.': '플러그인으로 더 많은 가져오기 소스를 추가할 수 있습니다.'
+'Multi-file': '다중 파일'
+'CheckerType': '체커 유형'
+'other': '기타'
+'Ignore trailing space and enter.': '줄 끝 공백 및 줄 바꿈 무시'
+'Interface': '인터페이스'
+'Interactor': '인터랙터'
+'Manager': '관리'
+'Unsupported configure this type of problem. Please refer to the documentation.': '이 유형의 문제는 현재 구성을 지원하지 않습니다. 문서를 참조하세요.'
+'user_extra_files': '사용자 추가 파일'
+'judge_extra_files': '채점 추가 파일'
+'Auto configure': '자동 구성'
+'Add new subtask': '서브태스크 추가'
+'Subtask {0}': '서브태스크 {0}'
+'Depend On': '의존성'
+'Add Testcase': '테스트케이스 추가'
+'No subtasks': '서브태스크 없음'
+'Unlimited': '무제한'
+'problem_type.default': '전통'
+'problem_type.interactive': '인터랙티브'
+'problem_type.communication': '커뮤니케이션'
+'problem_type.submit_answer': '답안 제출'
+'problem_type.objective': '객관식'
+'YAML': 'YAML'
+'click to add': '클릭하여 추가'
+'Update': '업데이트'
+'Operation failed': '작업 실패'
+'Confirm delete?': '삭제하시겠습니까?'
+'Copy Link': '링크 복사'
+'Share': '공유'
+'Show less': '접기'
+'Show more': '더 보기'
+'solutions': '해설'
+'Write Your Solution': '해설 작성'
+'What is this?': '이것이 무엇인가요?'
+'preferredPrefix_hint': '선호하는 문제 ID 접두사 힌트.'
+'No solutions so far...': '아직 해설이 없습니다...'
+'View all {0} solutions': '전체 {0}개 해설 보기'
+'You can create your own training plans and share them with others.': '직접 훈련 계획을 만들고 다른 사용자와 공유할 수 있습니다.'
+'Go to Solve': '풀이하러 가기'
+'Contest Closed': '대회 종료'
+'The contest has ended. You can view the problems, but contest submissions are closed.': '대회가 종료되었습니다. 문제는 볼 수 있지만 대회 제출은 마감되었습니다.'
+'The contest has ended. You can view the problem, but contest submissions are closed.': '대회가 종료되었습니다. 문제 설명은 볼 수 있지만 대회 제출은 마감되었습니다.'
+'Confirm to delete this clarification?': '이 질문을 삭제하시겠습니까?'
+'Deleted': '삭제됨'
+'Compilers'' Version and Parameters': '컴파일러 버전 및 매개변수'
+'Limitations': '제한'
+'IO': '입출력'
+'Judge Status': '채점 상태'
+'Compile Error': '컴파일 오류'
+'Accepted Ratio': '정답률'
+'RP Algorithm': 'RP 알고리즘'
+'Difficulty Algorithm': '난이도 알고리즘'
+'Dataset Format': '테스트데이터 형식'
+'Forgot Password and/or Username': '비밀번호 또는 사용자 이름을 잊은 경우'
+'Markdown': 'Markdown'
+
+# 페이지 제목
+'Security': '보안'
+'Manage Contest': '대회 관리'
+'Edit Training Plan': '훈련 계획 편집'
+'Domain Dashboard': '도메인 대시보드'
+'Join Domain': '도메인 가입'
+'A unique invitation code of up to 8 characters is generated automatically.': '8자 이내의 고유한 초대 코드가 자동으로 생성됩니다.'
+'Enter an invitation code to find and join a domain.': '초대 코드를 입력하여 해당 도메인을 찾아 가입하세요.'
+'This invitation link never expires.': '이 초대 링크는 만료되지 않습니다.'
+'Create Training Category': '훈련 카테고리 만들기'
+'Edit Training Category': '훈련 카테고리 편집'
+'Enrolled Training Plans': '등록한 훈련 계획'
+'View all': '모두 보기'
+'No enrolled users.': '등록한 사용자가 없습니다.'
+'Viewing progress for': '다음 사용자의 훈련 진행 상황을 보는 중'
+'Back to my progress': '내 진행 상황으로 돌아가기'
+'Category Name': '카테고리 이름'
+'Category moved to position {0}. Save to apply.': '카테고리가 {0}번째 위치로 이동되었습니다. 저장해야 적용됩니다.'
+'Drag category handles to reorder, or use Alt + Up/Down. Save to apply this order to everyone in this domain.': '카테고리 핸들을 드래그하거나 Alt + 상하 방향키를 사용하여 순서를 변경하세요. 저장하면 이 도메인의 모든 사용자에게 적용됩니다.'
+'Drag to reorder, or use Alt + Up/Down.': '드래그하여 순서 변경, 또는 Alt + 상하 방향키 사용.'
+'Dragging {0}. Release to place at position {1}.': '''{0}''을(를) 드래그 중입니다. 놓으면 {1}번째 위치에 배치됩니다.'
+'Invalid training category order.': '훈련 카테고리 순서가 유효하지 않습니다. 새로고침 후 다시 시도하세요.'
+'Reorder': '순서 변경'
+'Reordering cancelled.': '순서 변경이 취소되었습니다. 순서는 변경되지 않았습니다.'
+'Sort Training Categories': '훈련 카테고리 정렬'
+'Training categories changed. Reload before sorting.': '훈련 카테고리가 변경되었습니다. 정렬하기 전에 다시 로드하세요.'
+'Search categories...': '카테고리 검색...'
+'Training Plans': '훈련 계획'
+'Select all training plans included in this category.': '이 카테고리에 포함할 훈련 계획을 선택하세요.'
+'Delete Category': '카테고리 삭제'
+'Confirm to delete this category?': '이 카테고리를 삭제하시겠습니까?'
 '{0} ranked users': '순위 참여자 {0}명'
-Forgot Password: 비밀번호 찾기
-Please contact the administrator: 관리자에게 문의해 주세요
-Change Email: 이메일 변경
+'Change Email': '이메일 변경'
+
+# File preview and upload
+'Failed to load PDF': 'PDF 로드 실패'
+'{count} files uploaded. Upload stopped at {name}; remaining files were not uploaded.': '{count}개의 파일이 업로드되었습니다. {name}에서 중단되어 나머지 파일은 업로드되지 않았습니다.'
 
 # Theme
-Theme color: 테마 색상
-Preset themes: 프리셋 테마
-Custom color: 사용자 지정 색상
-Teal: 틸
-Blue: 블루
-Violet: 바이올렛
-Rose: 로즈
+'Theme color': '테마 색상'
+'Preset themes': '프리셋 테마'
+'Custom color': '사용자 지정 색상'
+'Teal': '틸'
+'Blue': '블루'
+'Violet': '바이올렛'
+'Rose': '로즈'
 
 # Font
-Sans-serif: 산세리프
-Serif: 세리프
-Your Status: 내 상태
+'Sans-serif': '산세리프'
+'Serif': '세리프'
+'Your Status': '내 상태'
+
+# Proctoring
+'Active': '활성'
+'Allow token refresh': '세션 토큰 갱신 허용'
+'Authentication keys': '인증 키'
+'Authentication private key': '인증 개인 키'
+'Authentication public key (Ed25519)': '인증 공개 키 (Ed25519)'
+'Authorization required.': '다시 인증해야 합니다.'
+'Changing the required version or rotating keys invalidates current session tokens.': '필수 버전을 변경하거나 키를 순환하면 현재 세션 토큰이 무효화됩니다.'
+'Deleting logs invalidates the corresponding contest results until logs are uploaded again. Continue?': '로그를 삭제하면 로그를 다시 업로드할 때까지 해당 대회 결과가 무효화됩니다. 계속할까요?'
+'Enable contest proctoring': '대회 감독 활성화'
+'Enable proctor service': '감독 서비스 활성화'
+'Enable the proctor service in system settings first.': '시스템 설정의 감독 설정에서 먼저 감독 서비스를 활성화하세요.'
+'Encrypted final logs.': '암호화된 최종 감독 로그'
+'Existing sessions will become invalid. Continue?': '기존 세션이 무효화됩니다. 계속할까요?'
+'Final log uploaded': '최종 로그 업로드됨'
+'Final proctor log cannot be replaced.': '최종 감독 로그는 다른 파일로 대체할 수 없습니다.'
+'Finish proctoring in the client and upload the encrypted final log. Failed uploads may be retried within the configured window.': '클라이언트에서 감독을 종료하고 암호화된 최종 로그를 업로드하세요. 업로드 실패 시 설정된 기간 내에 다시 시도할 수 있습니다.'
+'Generate authentication keys': '인증 키 생성'
+'Generate authentication keys first.': '먼저 인증 키를 생성하세요.'
+'Generate both key pairs and inject both public keys when building the client. No manual client enrollment is required.': '인증 및 로그 암호화 키 쌍 2개를 모두 생성하고 클라이언트 빌드 시 두 공개 키를 주입하세요. 수동 클라이언트 등록은 필요하지 않습니다.'
+'Hack submissions are unavailable in proctored contests.': '감독 대회에서는 Hack 제출을 이용할 수 없습니다.'
+'Invalid encrypted proctor log.': '암호화된 감독 로그의 형식 또는 무결성 검증에 실패했습니다.'
+'Invalid proctor handshake.': '감독 핸드셰이크 검증에 실패했습니다.'
+'Invalid proctor request origin.': '유효하지 않은 감독 요청 출처입니다.'
+'Invalid proctor request proof.': '감독 요청 서명 검증에 실패했습니다.'
+'Late upload window (days)': '추가 업로드 허용 기간 (일)'
+'Log decryption private key': '로그 복호화 개인 키'
+'Log download failed.': '로그 다운로드 실패.'
+'Log encryption public key (RSA-OAEP)': '로그 암호화 공개 키 (RSA-OAEP)'
+'Manage authentication keys, session policy and encrypted logs.': '인증 키, 세션 정책 및 암호화된 로그를 관리합니다.'
+'Maximum log size (MiB)': '최대 로그 크기 (MiB)'
+'No proctor logs yet.': '감독 로그가 아직 없습니다.'
+'Private keys': '개인 키'
+'Private keys are server-only. Do not put them in build variables, repositories or chat messages. Closing this dialog clears the display.': '개인 키는 서버 전용입니다. 빌드 변수, 저장소 또는 채팅 메시지에 넣지 마세요. 이 대화 상자를 닫으면 표시 내용이 지워집니다.'
+'Proctor authentication keys are unavailable. Check the server key storage.': '감독 인증 키를 사용할 수 없습니다. 서버 키 저장소 디렉터리 및 권한을 확인하세요.'
+'Proctor authentication required.': '감독 클라이언트 인증이 필요합니다.'
+'Proctor challenge has already been used.': '해당 감독 챌린지가 이미 사용되었습니다.'
+'Proctor client version mismatch.': '감독 클라이언트 버전이 시스템 요구 사항과 일치하지 않습니다.'
+'Proctor environment mismatch.': '감독 환경 핑거프린트 또는 기기가 일치하지 않습니다.'
+'Proctor is not configured.': '감독 서비스가 올바르게 구성되지 않았거나 활성화되지 않았습니다.'
+'Proctor log is busy. Please retry.': '감독 로그를 처리 중입니다. 잠시 후 다시 시도하세요.'
+'Proctor log operation timed out. Please retry.': '감독 로그 처리 시간이 초과되었습니다. 다시 시도하세요.'
+'Proctor logs': '감독 로그'
+'Proctor policy cannot change after the contest starts.': '대회가 시작된 후에는 감독 정책을 변경할 수 없습니다.'
+'Proctor request has already been used.': '감독 요청이 이미 사용되었습니다. 새 요청 서명을 생성하세요.'
+'Proctor requires HTTPS. Configure the public server URL and trusted proxy.': '감독 기능에는 HTTPS가 필요합니다. 공개 서버 URL 및 신뢰할 수 있는 프록시를 구성하세요.'
+'Proctor session expired or client version mismatch.': '감독 세션이 만료되었거나 클라이언트 버전이 일치하지 않습니다.'
+'Proctor session has already been refreshed.': '해당 세션 토큰이 이미 갱신되었습니다. 새 토큰을 사용하세요.'
+'Proctor session is already finished.': '감독 세션이 이미 종료되어 더 이상 제출할 수 없습니다.'
+'Proctor session is outside the permitted time window.': '허용된 감독 또는 로그 추가 업로드 기간이 아닙니다.'
+'Proctor session refresh is disabled.': '감독 세션 토큰 갱신이 비활성화되었습니다.'
+'Proctor settings': '감독 설정'
+'Proctor submission lease expired. Please retry.': '감독 제출 임대가 만료되었습니다. 다시 시도하세요.'
+'Proctored contest': '감독 대회'
+'Public keys are build-time trust anchors, not secrets. Never include either private key in the client.': '공개 키는 빌드 시 주입되는 신뢰 앵커이며 비밀 정보가 아닙니다. 어떤 개인 키도 클라이언트에 포함하지 마세요.'
+'Required client version': '필수 클라이언트 버전'
+'Requires a compatible proctor client. Final logs are required for valid results.': '호환되는 감독 클라이언트가 필요합니다. 유효한 결과를 위해 최종 로그 업로드가 필요합니다.'
+'Results invalid: log pending': '성적 무효: 로그 업로드 대기 중'
+'Results provisional: final log required': '임시 성적: 최종 로그 확인 필요'
+'Revoked': '회수됨'
+'Rotate authentication keys': '인증 키 순환'
+'Search filename, user, domain or contest': '파일 이름, 사용자, 도메인 또는 대회 검색'
+'Session policy': '세션 토큰 정책'
+'Token lifetime (seconds)': '토큰 유효 기간 (초)'
+'Upload time': '업로드 시간'
+'Use an up-to-date proctor client to access contest problems.': '이 대회는 감독이 활성화되어 있습니다. 요구 사항을 충족하는 최신 감독 클라이언트로 인증한 후 문제를 확인하세요.'
+'Use an up-to-date proctor client to submit.': '요구 사항을 충족하는 최신 감독 클라이언트를 사용하여 제출하세요.'
+'Verify client and continue': '클라이언트 검증 후 계속'
+'View private keys': '개인 키 보기'
+'Wait for pending submissions before finishing proctoring.': '진행 중인 제출이 완료될 때까지 기다린 후 감독을 종료하세요.'
+
+# 클라이언트 업데이트 관리
+'25 packages per page': '페이지당 25개 패키지'
+'ASAR fallback URL': 'ASAR 대체 URL'
+'ASAR must contain a root package.json and a valid entry point.': 'ASAR에는 루트 package.json과 유효한 진입점이 포함되어야 합니다. 클라이언트 패키징 범위를 수정하세요.'
+'ASAR size in bytes': 'ASAR 파일 크기 (바이트)'
+'All version values may be lowered when publishing. Use a new, higher buildVersion to distribute rollback code to newer clients. Proctor version requirements are unchanged.': '모든 버전 필드는 낮춰서 게시할 수 있습니다. 최신 클라이언트에 롤백 코드를 배포하려면 더 큰 새 buildVersion을 사용하세요. 감독 지정 버전은 영향을 받지 않습니다.'
+'Authorization may require reselecting the file. Uploaded files are private until published; historical packages can be deleted.': '재인증 후 파일을 다시 선택해야 할 수 있습니다. 업로드된 패키지는 게시 전까지 비공개이며, 이전 패키지는 삭제할 수 있습니다.'
+'Authorization may require reselecting the file. Uploaded files are private until published; published package URLs remain available.': '재인증 후 파일을 다시 선택해야 할 수 있습니다. 업로드된 패키지는 게시 전까지 비공개이며, 게시된 패키지 URL은 계속 유효합니다.'
+'Changelog': '변경 이력'
+'Choose an uploaded package': '업로드된 패키지 선택'
+'Choose at least one update package.': '최소 하나의 업데이트 패키지를 선택하세요.'
+'Choose either an uploaded package or a download URL for each package type.': '각 패키지 유형별로 업로드된 패키지를 선택하거나 다운로드 URL을 입력하세요. 둘 다 선택할 수는 없습니다.'
+'Choose or drop one update file': '업데이트 파일 하나를 선택하거나 끌어다 놓기'
+'Client update URLs': '클라이언트 업데이트 URL'
+'Clients will read this release at the next update check. Confirm the version, public URLs and package contents before publishing. Continue?': '클라이언트는 다음 업데이트 확인 시 이 릴리스를 읽어옵니다. 게시하기 전에 버전, 공개 URL 및 패키지 내용을 확인하세요. 계속 게시할까요?'
+'Configuration fallback URL': '설정 대체 URL'
+'Delete package': '패키지 삭제'
+'Deleting this historical package invalidates its download URL and clears related draft selections. Continue?': '이 이전 패키지를 삭제하면 서버 다운로드 링크가 무효화되고 관련 초안 선택도 지워집니다. 계속할까요?'
+'Download JSON': 'JSON 다운로드'
+'Download URL': '다운로드 URL'
+'Draft': '초안'
+'Draft JSON preview': '초안 JSON 미리 보기'
+'Draft saved': '초안 저장됨'
+'Enter a URL or choose an uploaded package; only one source is used.': '다운로드 URL을 입력하거나 업로드된 패키지를 선택할 수 있습니다. 패키지당 하나의 소스만 사용됩니다.'
+'External ASAR URLs require a valid size (bytes) and SHA-256.': '외부 ASAR URL에는 유효한 파일 크기(바이트)와 SHA-256이 필요합니다.'
+'Hot update ASAR': 'ASAR 핫 업데이트 패키지'
+'Increment the version before replacing the ASAR package.': 'ASAR 패키지를 교체하기 전에 릴리스 버전 번호를 먼저 올리세요.'
+'Informational in the current client.': '현재 클라이언트에서는 이 필드를 메타데이터로만 사용합니다.'
+'Internal build version': '내부 빌드 버전'
+'Invalid ASAR archive.': 'ASAR 파일이 손상되었거나 형식이 올바르지 않습니다.'
+'Invalid changelog.': '변경 이력 형식이 올바르지 않거나 길이 제한을 초과했습니다.'
+'Invalid update configuration.': '업데이트 구성 형식이 올바르지 않습니다.'
+'Invalid update description.': '버전 설명 형식이 올바르지 않거나 길이 제한을 초과했습니다.'
+'Invalid update package.': '업데이트 패키지 형식 또는 선택이 올바르지 않습니다.'
+'JSON up to 256 KiB; requires exam.targetUrl.': 'JSON 최대 256 KiB, exam.targetUrl이 필요합니다.'
+'Last published': '최근 게시 일시'
+'Manifest URL': '매니페스트 URL'
+'Minimum client version': '최소 클라이언트 버전'
+'Minimum client compatibility version; independent of update ordering.': '최소 호환 버전으로, 업데이트 순서와 무관합니다.'
+'Minimum version cannot exceed the release version.': '최소 버전은 릴리스 버전보다 높을 수 없습니다.'
+'No update packages yet.': '업데이트 패키지가 아직 없습니다.'
+'Not published': '미게시'
+'One change per line.': '한 줄에 하나의 변경 사항을 입력하세요.'
+'Package': '패키지'
+'Package URL': '패키지 다운로드 URL'
+'Package deleted': '업데이트 패키지 삭제됨'
+'Package type': '패키지 유형'
+'Package version': '패키지 버전'
+'Package version must match the release version.': '패키지 버전은 릴리스 버전과 일치해야 합니다.'
+'Packages up to 240 MiB. ASAR must include package.json and the application entry point.': '패키지 최대 240 MiB. ASAR에는 루트 package.json과 유효한 진입점이 포함되어야 합니다.'
+'Public OJ origin': 'OJ 공개 원본 주소'
+'Publish client versions, packages and update manifests.': '클라이언트 버전, 패키지 및 업데이트 매니페스트를 관리합니다.'
+'Publish update': '업데이트 게시'
+'Published JSON': '게시된 JSON'
+'Published manifest URL': '게시된 매니페스트 URL'
+'Published package URL': '게시된 패키지 다운로드 URL'
+'Publishing does not change the required version in proctor settings. ASAR replacements require a higher version.': '게시해도 감독 설정의 필수 버전은 변경되지 않습니다. ASAR을 교체하려면 버전 번호를 올려야 합니다.'
+'Release configuration': '릴리스 구성'
+'Release description': '릴리스 설명'
+'Release version': '릴리스 버전'
+'Release version cannot go backwards.': '릴리스 버전은 현재 게시된 버전보다 낮을 수 없습니다.'
+'Remote client configuration': '원격 클라이언트 구성'
+'Save draft': '초안 저장'
+'Search package filename or version': '패키지 파일 이름 또는 버전 검색'
+'The client must support buildVersion comparison before using this manifest for update ordering. Publishing lower values is allowed; clients do not automatically downgrade.': '클라이언트가 buildVersion 비교를 지원해야 이 매니페스트를 사용하여 업데이트 순서를 결정할 수 있습니다. 더 낮은 값을 게시하는 것은 허용되지만 클라이언트는 자동으로 다운그레이드되지 않습니다.'
+'The current client does not enforce minimum versions or verify SHA-256. Installer links are for manual downloads; fallback and signature support require client changes.': '현재 클라이언트는 최소 버전을 강제하거나 SHA-256을 검증하지 않습니다. 설치 프로그램 링크는 수동 다운로드용입니다. 대체 및 서명 지원에는 클라이언트 수정이 필요합니다.'
+'The manifest returns 404 until the first publication. Put this URL in the client build configuration.': '처음 게시하기 전까지 매니페스트는 404를 반환합니다. 이 URL을 클라이언트 빌드 구성에 입력하세요.'
+'The package is unavailable. File cleanup will be retried automatically.': '패키지를 사용할 수 없습니다. 파일 정리는 자동으로 다시 시도됩니다.'
+'This is an unpublished preview. The server validates it and sets releaseDate when publishing.': '아직 게시되지 않은 미리 보기입니다. 게시 시 서버에서 유효성을 검사하고 releaseDate를 설정합니다.'
+'This package is used by the published release. Publish a replacement before deleting it.': '이 패키지는 현재 게시된 릴리스에서 사용 중입니다. 삭제하기 전에 대체 버전을 먼저 게시하세요.'
+'Update file': '업데이트 파일'
+'Update manifest JSON': '업데이트 매니페스트 JSON'
+'Update package file is missing or corrupted.': '업데이트 패키지 파일이 없거나 손상되었습니다. 다시 업로드하세요.'
+'Update package file is missing.': '업데이트 패키지 파일이 없습니다. 다시 업로드하세요.'
+'Update package is too large or empty.': '업데이트 패키지가 비어 있거나 크기 제한을 초과했습니다.'
+'Update package library': '업데이트 패키지 보관함'
+'Update published': '업데이트가 게시됨'
+'Update settings': '업데이트 설정'
+'Update settings changed. Reload before saving.': '업데이트 설정이 변경되었습니다. 다시 로드한 후 저장하세요.'
+'Upload a Windows executable package.': 'Windows 실행 파일 패키지를 업로드하세요.'
+'Upload completed': '업로드 완료'
+'Upload is a draft. Publish to make it available to clients.': '업로드 완료되었습니다 (초안). 클라이언트에서 사용할 수 있도록 하려면 게시하세요.'
+'Upload update package': '업데이트 패키지 업로드'
+'Use HTTPS without a path. Published URLs do not depend on the current domain.': '경로가 없는 HTTPS 주소를 사용하세요. 게시된 링크는 현재 도메인에 영향을 받지 않습니다. '
+'Use a complete HTTPS URL.': '전체 HTTPS 주소를 입력하세요 (로컬 개발 시에는 localhost HTTP 사용 가능).'
+'Use a 10-digit buildVersion in YYYYMMDDNN format, for example 2026101001.': 'YYYYMMDDNN 형식의 10자리 내부 빌드 버전을 입력하세요 (예: 2026101001). 유효한 날짜여야 합니다.'
+'Use a stable numeric version, for example 1.2.3.': '1.2.3과 같은 안정적인 숫자 버전을 사용하세요.'
+'Use the package library below to find older packages.': '이전 패키지를 찾으려면 아래 보관함을 검색하세요.'
+'Use this package': '이 패키지 사용'
+'Used by the published release': '현재 게시된 릴리스에서 사용 중'
+'View draft': '초안 보기'
+'View published': '게시된 버전 보기'
+'Windows installer': 'Windows 설치 프로그램'
+'Windows portable package': 'Windows 포터블 패키지'
+'buildVersion: YYYYMMDDNN, for example 2026101001. Used for update ordering, not the display version.': 'buildVersion: YYYYMMDDNN 형식 (예: 2026101001). 표시 버전이 아닌 업데이트 순서 판별에 사용됩니다.'
 
 # 대회 문제 타이머
-Contest starts in: 대회 시작까지
-Contest time remaining: 대회 남은 시간
-Time on this problem: 이 문제에 사용한 시간
-Visible time on this problem; saved in this tab.: 이 문제 페이지를 보고 있던 누적 시간입니다. 현재 탭에 저장됩니다.
-# # Reused from existing Hydro Korean locale sources
-(Not changed): 수정되지 않음
-Active Sessions: 활성 세션
-All Contests: 전체 대회
-All {0} Contests: 전체 {0} 대회
-Attended: 참가함
-Begin Date: 시작 날짜
-Cancel Score: 채점 취소
-Create a contest: 대회 만들기
-Created By: 제작자
-Description: 문제 설명
-Duration (hours): 지속시간 (h)
-Enroll Training: 학습 참여
-Enrolled: 참여함
-Enrollees: 참여 없음
-Information: 정보
-Invitation Code: 초대 코드
-Judged At: 채점 시각
-Judged By: 채점자
-Logout All Sessions: 모든 세션에서 로그아웃
-Logout This Session: 이 세션에서 로그아웃
-Manager: 관리
-Memory Cost: 메모리
-Not Attended: 참여하지 않음
-Not Enrolled: 참가하지 않음
-Params: 파라미터
-Partic.: 참여자
-Peak Memory: 메모리
-Ready (☆▽☆): 준비 완료! (☆▽☆)
-Rejudge: 재채점
-Run Pretest: 프리테스트 실행
-Save All Changes: 변경사항 저장
-Sorry, there are no training plans.: 학습 계획 없음
-This section cannot be challenged at present, so please complete the following sections first: 아래 섹션을 먼저 해결해 주세요.
-Time Cost: 시간
-Total Time: 총 시간
-View Details: 세부사항
-setting_customize: 개인 설정
-setting_display: 표시 설정
-setting_domain: 그룹 설정
-setting_info: 정보 설정
-setting_server: 서버 설정
-setting_session: 세션 설정
-setting_storage: 설정 저장
-setting_usage: 언어 설정
+'Contest starts in': '대회 시작까지'
+'Contest time remaining': '대회 남은 시간'
+'Time on this problem': '이 문제에 사용한 시간'
+'Visible time on this problem; saved in this tab.': '이 문제 페이지를 보고 있던 누적 시간입니다. 현재 탭에 저장됩니다.'
 
-# # Reused by matching identical Chinese translations in Hydro locale sources
-Auto: 자동
-Import User: 사용자 불러오기
-New Filename: 새 파일명
-Run Self Test: 프리테스트 실행
-Test Case: 테스트 케이스
-other: 기타
-problem_type.communication: 커뮤니케이션
-problem_type.default: 전통
-problem_type.interactive: 인터랙티브
-problem_type.objective: 객관식
-problem_type.submit_answer: 답안 제출
-粘贴内容超过限制: 붙여넣기 제한 초과
+# User contribution history
+'Accepted Problems in This Domain': '이 도메인에서 정답 처리된 문제'
+'All-time longest streak': '역대 최장 연속 풀이 일수'
+'All-time solved': '역대 누적 풀이 문제 수'
+'Contribution history': '기여도 기록'
+'Contribution year': '기여도 연도'
+'Daily solved problems': '일일 문제 풀이 수'
+'Daily solved problems in {0}': '{0}년 일일 풀이 현황 히트맵'
+'Dates use UTC+8. Recent year and month mean the last 365 and 30 days, including today.': '날짜는 UTC+8 기준입니다. 최근 1년과 최근 1개월은 오늘을 포함한 지난 365일과 30일입니다.'
+'Fri': '금'
+'Less': '적음'
+'Longest streak in the last 30 days': '최근 30일 최장 연속 일수'
+'Longest streak in the last 365 days': '최근 365일 최장 연속 일수'
+'Mon': '월'
+'More': '많음'
+'No problems solved yet.': '아직 해결한 문제가 없습니다.'
+'Solved in the last 30 days': '최근 30일 문제 풀이 수'
+'Solved in the last 365 days': '최근 365일 문제 풀이 수'
+'Wed': '수'
+'days': '일'
+'{0} problems solved in {1}': '{1}년에 {0}문제 해결'
+'{0}: {1} problems solved': '{0}: {1}문제 해결'
+
+# 팀 독립 감독 및 대회 조기 종료
+'All team logs uploaded': '팀 전원 로그 업로드됨'
+'All team members must proctor independently and upload their own final logs.': '팀원은 각자 본인 계정으로 감독을 받아야 하며, 각자의 최종 로그를 업로드해야 합니다. 전원이 업로드해야 팀 성적이 유효하게 처리됩니다.'
+'End contest early': '대회 조기 종료'
+'End contest for the whole team': '팀 전체 대회 종료'
+'Logs still required from: {0}': '미제출: {0}'
+'My log pending': '본인 로그 업로드 대기 중'
+'My log uploaded': '본인 로그 업로드됨'
+'Record is outside the contest.': '이 제출 기록은 현재 대회에 속하지 않습니다.'
+'Team logs: {0}/{1}': '팀 로그: {0}/{1}'
+'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.': '모든 팀원의 대회가 종료되며 전원 더 이상 제출할 수 없습니다. 이는 개인 감독을 종료하지 않으므로 각 팀원은 클라이언트에서 개별적으로 감독을 종료하고 본인의 로그를 업로드해야 합니다.'
+'This ends the contest for every teammate. Nobody on the team will be able to submit again.': '모든 팀원의 대회가 종료됩니다. 팀의 누구도 다시 제출할 수 없게 됩니다.'
+'This ends your contest. You must still end proctoring and upload your log in the client.': '대회가 조기 종료되며 이후에는 제출할 수 없습니다. 감독이 활성화된 경우 클라이언트에서 감독을 종료하고 로그를 업로드해야 합니다.'
+'This ends your contest. You will not be able to submit again.': '대회가 조기 종료됩니다. 이후에는 다시 제출할 수 없습니다.'
+
+# 팀 이름 및 참가 멤버 충돌
+'A team named {0} already exists in this domain.': '이 도메인에 이미 ''{0}''(이)라는 이름의 팀이 존재합니다. 다른 팀 이름을 사용하세요.'
+'Team member {0} has already entered this contest individually.': '팀원 {0}은(는) 이미 개인 자격으로 이 대회에 참가했습니다.'
+'Team member {0} has already entered this contest with team {1}.': '팀원 {0}은(는) 이미 ''{1}'' 팀으로 이 대회에 참가했습니다.'

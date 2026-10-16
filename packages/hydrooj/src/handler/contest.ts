@@ -1110,7 +1110,11 @@ class ContestTeamManageHandler extends Handler {
                 q ? { displayName: { $regex: escapeRegExp(q), $options: 'i' } } : {}).sort({ _id: -1 }), page, 25);
             teams = teams.map(serialize);
         }
-        const members = [...new Set<number>((team ? [team] : teams).flatMap((entry) => entry.members))];
+        const allTeams = team ? [team] : teams;
+        const members = [...new Set<number>(allTeams.flatMap((entry) => [
+            entry.captainId,
+            ...(entry.members || []),
+        ].filter((id): id is number => typeof id === 'number' && id > 0)))];
         this.response.template = vuid === undefined ? 'contest_team_manage.html' : 'contest_team_detail.html';
         this.response.body = { team, teams, page, pageCount, count, q,
             udict: await user.getListForRender(domainId, members, false) };

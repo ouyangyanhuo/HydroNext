@@ -664,6 +664,9 @@ describe('App', () => {
     it('Team registration names the conflicting member and identity; domain team names stay unique across all editors', async () => {
         const { contest, domain, user } = global.Hydro.model;
         const { PRIV } = require('../packages/hydrooj/src/model/builtin');
+        const rateCounters = require('../packages/hydrooj/src/service/db').default.collection('opcount');
+        // 集成用例共用回环地址，隔离全局计数，避免其他用例的请求耗尽本用例的限额。
+        await rateCounters.deleteMany({ op: 'global' });
         const domainId = 'team-conflict-details';
         const otherDomain = 'team-name-other';
         await domain.add(domainId, 2, 'Team conflicts', '');
@@ -727,6 +730,7 @@ describe('App', () => {
             await contest.del(domainId, t2);
             await domain.del(domainId);
             await domain.del(otherDomain);
+            await rateCounters.deleteMany({ op: 'global' });
         }
     });
 

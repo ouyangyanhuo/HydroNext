@@ -1,684 +1,1274 @@
 __flag: 🇯🇵
+'All participants': 'すべての参加者'
+'Created at': '作成日時'
+'Disband team': 'チームを解散'
+'Disband this team? Its invitation code will be invalidated. Existing contest registrations and results will be retained.': 'このチームを解散しますか？招待コードは直ちに無効化されますが、既存のコンテスト登録と結果は保持されます。'
+'Disbanded': '解散済み'
+'Domain team': 'このドメインのチーム'
+'No teams in this domain.': 'このドメインにはまだチームがありません。'
+'Participant': '参加者'
+'Ranked participants': '順位対象の参加者'
+'Search teams': 'チームを検索'
+'Starred participants': 'フォロー中の参加者'
+'Team': 'チーム'
+'Team Participation': 'チーム参加'
+'Team details': 'チームの詳細'
+'Team management': 'チーム管理'
+'Team name': 'チーム名'
+'Teams belong only to this domain.': 'チームは現在のドメインにのみ属し、他のドメインとは共有されません。'
+'Teams belong only to this domain. Existing contest registrations and results are preserved when a team is disbanded.': 'チームは現在のドメインにのみ属します。チームを解散しても既存のコンテスト登録と結果は保持されます。'
+'{0} members': '{0} 人のメンバー'
+'{0} ranked participants': '{0} 人の参加者（個人またはチーム）'
+'Only the team captain can perform this operation.': 'チームリーダーのみがこの操作を実行できます。'
+'The captain must remove other members before leaving the team.': 'チームリーダーは他のメンバーを退出させてからチームを脱退する必要があります。'
+'Verification failed': '検証に失敗しました'
+'After joining, select Team Participation when registering for a contest that allows teams.': 'チーム参加後、チーム参加が許可されているコンテストの登録時に「チーム参加」を選択できます。'
+'Create a team and share its invitation code. Teammates enter the code to join; no private messages are needed.': 'チームを作成して招待コードを共有してください。チームメイトはコードを入力して参加でき、個別のメッセージは不要です。'
+'Enter the 8-character team invitation code': '8文字のチーム招待コードを入力してください'
+'Join a Team': 'チームに参加'
+'Only team members can manage this team.': 'チームメンバーのみがこのチームを管理できます。'
+'Next problem': '次の問題'
+'No other problems': '他の問題はありません'
+'Previous problem': '前の問題'
+'Problem navigation': '問題ナビゲーション'
+'This problem is no longer in the source list. Return to the list to continue.': '問題の順序またはアクセス権限が変更されました。元のリストに戻って続行してください。'
+'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.': '解答時間が同期されていません。サーバーで確認された時間のみが順位表に反映されます。'
+'Reset team invitation code': 'チーム招待コードを再生成'
+'Resetting invalidates the old invitation code immediately. Existing members are not affected.': '再生成すると古い招待コードは直ちに無効化されます。既存のメンバーには影響しません。'
+'Team invitation code': 'チーム招待コード'
+'Team is full (maximum {0} members).': 'チームが満員です（最大 {0} 人）。'
+'Timing not synced': '時間未同期'
+'You are already a member of this team.': 'あなたはこのチームのメンバーです。'
+'You are not in any team yet.': 'まだどのチームにも参加していません。'
+'Allow public registration': 'ユーザーの自己登録を許可（無効にすると管理者のみが作成・インポート可能）'
+'Public registration is disabled. Please contact a system administrator.': '公開登録は無効になっています。システム管理者にアカウント作成をお問い合わせください。'
+'server.allowRegister': 'ユーザー登録を許可'
+'{0} characters': '{0} 文字'
+'Foreground problem time; saved to the contest scoreboard.': '問題ページが表示されていた時間。コンテスト順位表に保存されます。'
+'Loaded code template': 'コードテンプレートを読み込みました'
+'Pasted code': 'コードを貼り付けました'
+'Recorded actions': '操作履歴'
+'Submitted self-test': 'セルフテストを提出しました'
+'Submitted solution': 'コードを提出しました'
+'Total problem time': '問題の総解答時間'
+'Add at least one chapter.': '少なくとも1つのチャプターを追加してください。'
+'Add chapter': 'チャプターを追加'
+'Advanced JSON plan': '高度な JSON 編集'
+'Chapter ID (_id)': 'チャプター ID (_id)'
+'Chapter IDs must be unique positive integers.': 'チャプター ID は一意の正の整数である必要があります。'
+'Chapter prerequisites cannot contain cycles.': 'チャプターの前提条件に循環依存を含めることはできません。'
+'Chapter title': 'チャプターのタイトル'
+'Chapters': 'トレーニングチャプター'
+'Complete these earlier chapters to unlock this chapter.': 'このチャプターをアンロックするには、前提となるチャプターを完了してください。'
+'Each chapter needs a title.': '各チャプターにタイトルを入力してください。'
+'Each chapter needs at least one problem.': '各チャプターに少なくとも1つの問題が必要です。'
+'Edit chapter IDs, titles, prerequisites and problem order here.': 'ここでチャプター ID、タイトル、前提チャプター、問題の順序を編集します。'
+'Fix the JSON plan before using the chapter editor.': 'チャプターエディタを使用する前に、JSON 計画を修正してください。'
+'Invalid prerequisite chapter.': '前提チャプターが存在しないか、自分自身を参照しています。'
+'Invalid training plan structure.': 'トレーニング計画の構造が無効です。チャプターのフィールドを確認してください。'
+'Prerequisite chapters': '前提チャプター'
+'Problem search failed': '問題の検索に失敗しました'
+'Remove chapter': 'チャプターを削除'
+'Remove this chapter and its prerequisite references? Problems themselves will not be deleted.': 'このチャプターと他のチャプターからの前提参照を削除しますか？問題自体は削除されません。'
+'Announcement content (up to 4000 characters)': 'お知らせ内容（最大 4000 文字）'
+'Announcement sent': 'お知らせを送信しました'
+'Announcements are available while the contest is running.': 'お知らせはコンテスト実施中のみ送信できます。'
+'Contest announcement': 'コンテストのお知らせ'
+'Drag timer; use arrow keys to move, or Home to reset.': 'タイマーをドラッグして移動。矢印キーで微調整、Home キーで位置をリセットできます。'
+'I understand': '了解しました'
+'Reconnecting…': '再接続中…'
+'Send announcement': 'お知らせを送信'
+'Send to all registered participants': 'すべての登録参加者に送信'
+'Sent to {count} participants.': '{count} 人の参加者に送信しました。'
+'Unread announcements': '件の未読お知らせ'
+'Already owned': '所持済み'
+'Already owned by: {users}. Remove these recipients before granting.': '以下のユーザーはすでに所持しています：{users}。対象から除外してから付与してください。'
+'An avatar frame with this name already exists.': 'この名前のアバターフレームはすでに存在します。別の名前を使用してください。'
+'Application runtime': 'アプリケーション稼働時間'
+'Apply this action to {count} selected users?': '選択した {count} 人のユーザーにこの操作を適用しますか？'
+'Avatar frame management': 'アバターフレーム管理'
+'Based on container PID 1. Reloading the application does not reset this timer.': 'コンテナの PID 1 に基づきます。アプリケーションのリロードでタイマーはリセットされません。'
+'Choose one artwork per shape.': '形状ごとに1つの画像素材を選択してください。'
+'Circular': '円形'
+'Circular artwork': '円形素材'
+'Circular artwork overlaps the avatar area. Check the preview.': '円形素材の装飾がアバター領域に入り込んでいます。プレビューを確認してください。'
+'Container runtime': 'コンテナ稼働時間'
+'Container timing is unavailable; showing the application process instead.': 'コンテナの稼働時間を取得できません。代わりにアプリケーションプロセスの時間を表示しています。'
+'Continuous uptime': '連続稼働時間'
+'Delete frame': 'フレームを削除'
+'Delete {name}? It will be removed from all users and cannot be restored.': '「{name}」を削除しますか？すべてのユーザーから削除され、元に戻すことはできません。'
+'Describe the honor and how this frame is awarded.': 'このフレームが表す栄誉や授与の条件について説明してください。'
+'Disabled': '無効'
+'Drag selected problems to reorder, or use Alt + Left/Right.': '選択した問題をドラッグして並べ替えるか、Alt + 左右キーを使用してください。'
+'Drop artwork here or click to choose': 'ここに画像をドロップするか、クリックして選択'
+'Drop artwork here to replace, or click to choose': 'ここに画像をドロップして置換するか、クリックして選択'
+'Edit description': '説明を編集'
+'Edit frame': 'フレームを編集'
+'Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.': '装着すると現在のフレームが置き換えられます。装着解除しても所持権は保持されますが、取り消すと所持資格が削除されます。'
+'Frame artwork must be 512 × 512 px.': 'フレーム画像は 512 × 512 px である必要があります。'
+'Frame description': 'フレームの説明'
+'Frame must contain transparent and visible pixels': '画像には透明な部分と可視ピクセルの両方が含まれている必要があります。'
+'Frame owners': 'フレーム所持者'
+'Invalid PNG artwork. Please export a new PNG or WebP image.': 'PNG 画像のデータが無効です。新しい PNG または WebP 画像を書き出してください。'
+'Invalid authorization destination.': '認証の遷移先アドレスが無効です。認証が必要なページを再度開いてください。'
+'No contest introduction yet.': 'コンテストの紹介はまだありません'
+'No description yet.': '説明はまだありません。'
+'Not running in a container; showing the application process.': 'コンテナ環境ではないため、アプリケーションプロセスの稼働時間を表示しています。'
+'One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.': '1つの名前に2つの形状。キャンバス：512 × 512 px、アバター：384 px、周囲の装飾マージン：各 64 px。中央は白ではなく透明にしてください。'
+'Only published frames can be awarded. Awards are global across all domains.': '公開されたフレームのみ授与できます。付与された資格は全ドメイン共通です。'
+'Owned honor frames': '所持している栄誉フレーム'
+'Owners': '所持者'
+'Page resources could not be loaded.': 'ページリソースを読み込めませんでした。'
+'Recipients': '付与対象ユーザー'
+'Reload page': 'ページを再読み込み'
+'Replacing legacy artwork requires both shapes.': '旧形式のフレーム画像を置き換える際は、角丸正方形と円形の両方をアップロードしてください。'
+'Rounded square': '角丸正方形'
+'Rounded square artwork': '角丸正方形素材'
+'Rounded square artwork overlaps the avatar area. Check the preview.': '角丸正方形素材の装飾がアバター領域に入り込んでいます。プレビューを確認してください。'
+'Runtime information unavailable.': '稼働情報を取得できません。'
+'Save unfinished work before reloading.': '再読み込みする前に、未保存の作業内容を保存してください。'
+'Saved, but old artwork cleanup failed.': '保存されましたが、古い画像素材のクリーンアップに失敗しました。'
+'Search by username or user ID': 'ユーザー名またはユーザー ID で検索'
+'Search by username or user ID. Up to 50 users at a time.': 'ユーザー名またはユーザー ID で検索できます。一度に最大 50 人まで選択可能です。'
+'Select a frame and at least one user.': 'フレームと少なくとも1人のユーザーを選択してください。'
+'Select current page': 'このページのユーザーを選択'
+'Some users changed during this operation. Refresh and retry.': '操作中に一部のユーザーの所持情報が変更されました。更新してやり直してください。'
+'Some selected users already own this avatar frame.': '選択したユーザーの中に、すでにこのフレームを所持しているユーザーがいます。'
+'Started at': '起動日時'
+'The central avatar area must be transparent.': '中央のアバター領域は透明である必要があります。'
+'The frontend may have been updated. Check your connection and reload this page.': 'フロントエンドのリソースが更新された可能性があります。接続を確認し、このページを再読み込みしてください。'
+'These avatar frame images have already been uploaded.': 'このフレーム画像はすでにアップロードされています。既存のフレームを使用してください。'
+'This frame changed. Refresh and try again.': 'このフレームは変更されました。更新してもう一度お試しください。'
+'Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).': '中央透明領域：384 × 384 px、角丸半径 64 px、左上座標 (64, 64)。'
+'Transparent center: diameter 384 px, centered at (256, 256).': '中央透明領域：直径 384 px、中心座標 (256, 256)。'
+'Upload both rounded square and circular artwork.': '角丸正方形と円形の両方の素材をアップロードしてください。'
+'Unchanged artwork is kept. Editing preserves ownership and publication status.': '変更されていない素材は保持されます。編集しても所持権や公開状態は維持されます。'
+'Uploaded frames start disabled. Publish them from the library.': 'アップロードされたフレームは無効な状態から始まります。ライブラリから公開してください。'
+'Use two 512 × 512 px images with a transparent 384 px center.': '中央に 384 px の透明領域を設けた 512 × 512 px の画像を2枚使用してください。'
 __id: ja
+'{days}d {hours}h {minutes}m {seconds}s': '{days}日 {hours}時間 {minutes}分 {seconds}秒'
+'Saved. Please refresh this page.': '保存しました。このページを再読み込みしてください。'
 'Discard changes': '変更を破棄'
 'Discard your unsaved changes?': '保存していない変更を破棄しますか？'
 'Failed to load file': 'ファイルを読み込めませんでした'
 'Please select only one file.': 'ファイルを1つだけ選択してください。'
 'Unsupported file type: {name}': '対応していないファイル形式：{name}'
 'Unsaved changes': '未保存の変更'
-Choose a PNG or WebP file no larger than 2 MiB.: 2 MiB 以下の PNG または WebP ファイルを選択してください。
-Choose frame (coming soon): フレームを選択（準備中）
-Global appearance: 共通の外観
-Honor avatar frame: 栄誉アバターフレーム
-Honor frames are supplied by system administrators. Equipping will be available after server integration.: 栄誉フレームはシステム管理者が提供します。装着機能はサーバー連携後に利用できます。
-Honor frames belong to your global account and remain the same in every domain.: 栄誉フレームはアカウント共通で、すべてのドメインで同じものが表示されます。
-No domains found: ドメインが見つかりません
-No honor frame equipped: 栄誉フレームは未装着です
-Preview frame artwork: フレーム素材のプレビュー
-Publish frame (coming soon): フレームを公開（準備中）
-Publishing and awarding frames will be enabled after server integration.: 公開と授与はサーバー連携後に利用できます。
-Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.: 透過 PNG または WebP、最大 2 MiB。ローカルプレビューのみで、アップロードはされません。
+'Choose a PNG or WebP file no larger than 2 MiB.': '2 MiB 以下の PNG または WebP ファイルを選択してください。'
+'Choose frame (coming soon)': 'フレームを選択（準備中）'
+'Global appearance': '共通の外観'
+'Honor avatar frame': '栄誉アバターフレーム'
+'Honor frames are supplied by system administrators. Equipping will be available after server integration.': '栄誉フレームはシステム管理者が提供します。装着機能はサーバー連携後に利用できます。'
+'Honor frames belong to your global account and remain the same in every domain.': '栄誉フレームはアカウント共通で、すべてのドメインで同じものが表示されます。'
+'No domains found': 'ドメインが見つかりません'
+'No honor frame equipped': '栄誉フレームは未装着です'
+'Preview frame artwork': 'フレーム素材のプレビュー'
+'Publish frame (coming soon)': 'フレームを公開（準備中）'
+'Publishing and awarding frames will be enabled after server integration.': '公開と授与はサーバー連携後に利用できます。'
+'Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.': '透過 PNG または WebP、最大 2 MiB。ローカルプレビューのみで、アップロードはされません。'
 __interface: yes
 __langname: 日本語
 
-# Code replay
-Replay could not be saved locally. Keep this editor open until submission.: リプレイをローカルに保存できませんでした。提出が完了するまでエディターを閉じないでください。
-Replay upload failed. Your recording is kept; please retry submission.: リプレイのアップロードに失敗しました。記録は保持されています。もう一度提出してください。
+# Honor frame management
+'Awarded': '授与済み'
+'Enter a valid user ID.': '有効なユーザー ID を入力してください。'
+'Equip frame': '装着'
+'Equipped': '装着中'
+'Frame artwork': 'フレーム画像'
+'Frame artwork must be square, between 64 and 1024 pixels.': 'フレーム画像は 64〜1024 ピクセルの正方形である必要があります。'
+'Frame name': 'フレーム名'
+'Frames are global. Upload as a draft, then publish before awarding to a user.': 'フレームは全ドメイン共通です。下書きとしてアップロードし、公開してからユーザーに授与してください。'
+'Grant frame': 'フレームを授与'
+'Grant this frame to {user}?': 'このフレームを {user} に授与しますか？'
+'Manage honor frames': '栄誉アバターフレーム管理'
+'Managing awards for': '対象ユーザーの栄誉を管理中'
+'No available honor frames. Frames are awarded by system administrators.': '利用可能な栄誉フレームはありません。フレームはシステム管理者によって授与されます。'
+'No honor frames found.': '条件に一致する栄誉フレームが見つかりません。'
+'Publish': '公開'
+'Publish this frame so it can be awarded?': 'このフレームを公開して授与できるようにしますか？'
+'Published': '公開済み'
+'Recipient user ID': '授与先ユーザー ID'
+'Retry': '再試行'
+'Revoke frame': 'フレームを取り消す'
+'Revoke this frame from {user}? It will also be unequipped.': '{user} からこのフレームを取り消しますか？装着も解除されます。'
+'Saved': '保存しました'
+'Search frames': 'フレームを検索'
+'Select a user by ID to grant or revoke frames.': 'ユーザー ID で検索し、フレームの授与または取り消しを行います。'
+'Transparent square PNG or WebP, 64–1024 px, up to 2 MiB. Leave the center clear.': '64〜1024 px の透過正方形 PNG または WebP、最大 2 MiB。中央のアバター部分は透明にしてください。'
+'Unable to process frame artwork.': 'フレーム画像を処理できません。画像が有効か確認してください。'
+'Unequip frame': '装着解除'
+'Unpublish': '非公開にする'
+'Unpublish this frame? It will stop displaying for all users.': 'このフレームを非公開にしますか？すべてのユーザーに表示されなくなります。'
+'Unpublished': '未公開'
+'Upload artwork, publish frames, and manage user awards across all domains.': '画像素材のアップロード、フレームの公開、および全ドメインにおけるユーザーへの授与を管理します。'
+'Upload frame': 'フレームをアップロード'
 
-Submission succeeded, but replay could not be linked. Your recording is kept.: 提出は成功しましたが、リプレイを関連付けできませんでした。記録は保持されています。
+# Code replay
+'Replay could not be saved locally. Keep this editor open until submission.': 'リプレイをローカルに保存できませんでした。提出が完了するまでエディターを閉じないでください。'
+'Replay upload failed. Your recording is kept; please retry submission.': 'リプレイのアップロードに失敗しました。記録は保持されています。もう一度提出してください。'
+
+'Submission succeeded, but replay could not be linked. Your recording is kept.': '提出は成功しましたが、リプレイを関連付けできませんでした。記録は保持されています。'
 
 # Code blocks
-Code copied: コードをコピーしました
-Copy code: コードをコピー
+'Code copied': 'コードをコピーしました'
+'Copy code': 'コードをコピー'
 
 # Record filters
-By Language: 言語で絞り込み
-By Status: 状態で絞り込み
+'By Language': '言語で絞り込み'
+'By Status': '状態で絞り込み'
+
+# List sorting
+'Ascending ID': '問題番号の昇順'
+'Contests I Joined': '参加したコンテスト'
+'Contests I joined': '参加したコンテスト'
+'Default order': 'デフォルトの並び順'
+'Descending ID': '問題番号の降順'
+'Most Attempted Problems': '最も挑戦者が多い問題'
+'Most attempted': '最も挑戦者が多い問題'
+'Most Attended Contests': '最も参加者が多いコンテスト'
+'Most attended': '最も参加者が多いコンテスト'
+'Oldest first': '追加が古い順'
+'Recently added': '最近追加された順'
+'Recently Attempted Problems': '最近挑戦した問題'
+'Recently attempted': '最近挑戦した問題'
+'Sort order': '並び順'
+'Sort problem list': '問題リストを並べ替え'
+'Sort recent contests': '最近のコンテストを並べ替え'
+'Title ascending': 'タイトル昇順'
+'Title descending': 'タイトル降順'
 
 # Navigation
-Home: ホーム
-Problems: 問題
-Contests: コンテスト
-Training: トレーニング
-Records: 提出記録
-Discussion: ディスカッション
-About: 概要
-Help: ヘルプ
-Ranking: ランキング
-See every effort. Grow through code.: 一つひとつの努力を、コードで成長につなげよう。
-Ranking type: ランキングの種類
-Top three: 上位3名
-Leaderboard: リーダーボード
-Ranked by RP in this domain.: このドメインの RP 順に表示します。
-Search users on this page: このページのユーザーを検索
-No users match your search.: このページに一致するユーザーはいません。
-No users in this domain yet.: このドメインにはまだユーザーがいません。
-No users in this domain have solved a problem.: このドメインでは、まだ問題を解いたユーザーはいません。
-RP Ranking: RP ランキング
-Solved Ranking: 正解数ランキング
-Ranked by distinct accepted problems in this domain.: このドメインで正解した異なる問題数で順位を決定します。
-View Training: トレーニングを表示
-Status: ステータス
+'Home': 'ホーム'
+'Problems': '問題'
+'Contests': 'コンテスト'
+'Training': 'トレーニング'
+'Records': '提出記録'
+'Discussion': 'ディスカッション'
+'About preferredPrefix option': 'preferredPrefix オプションについて'
+'About': '概要'
+'Help': 'ヘルプ'
+'Ranking': 'ランキング'
+'See every effort. Grow through code.': '一つひとつの努力を、コードで成長につなげよう。'
+'Ranking type': 'ランキングの種類'
+'Top three': '上位3名'
+'Leaderboard': 'リーダーボード'
+'Ranked by RP in this domain.': 'このドメインの RP 順に表示します。'
+'Search users on this page': 'このページのユーザーを検索'
+'No users match your search.': 'このページに一致するユーザーはいません。'
+'No users in this domain yet.': 'このドメインにはまだユーザーがいません。'
+'No users in this domain have solved a problem.': 'このドメインでは、まだ問題を解いたユーザーはいません。'
+'RP Ranking': 'RP ランキング'
+'Solved Ranking': '正解数ランキング'
+'Ranked by distinct accepted problems in this domain.': 'このドメインで正解した異なる問題数で順位を決定します。'
+'View Training': 'トレーニングを表示'
+'Status': 'ステータス'
+'Information': '情報'
+'Rejudge': '再ジャッジ'
+'Cancel Score': '得点を取り消す'
+'Test Case': 'テストケース'
+'Time Cost': '実行時間'
+'Memory Cost': 'メモリ'
+'Total Time': '合計時間'
+'Peak Time': '最大実行時間'
+'Peak Memory': '最大メモリ'
+'Code Length': 'コード長'
+'Judged At': 'ジャッジ日時'
+'Judged By': 'ジャッジ者'
+'Hacked': 'ハックされた'
+'History': '履歴'
+'Latest Version': '最新バージョン'
+'Submission detail': '提出詳細'
 
 # Auth
-Login: ログイン
-Register: 新規登録
-Logout: ログアウト
-Username: ユーザー名
-Username or Email: ユーザー名またはメール
-Password: パスワード
-Remember me: ログイン状態を保持
-Forgot Password?: パスワードをお忘れですか？
-Send Reset Link: リセットリンクを送信
-Reset Password: パスワードをリセット
-New Password: 新しいパスワード
-Old Password: 現在のパスワード
-Confirm Password: パスワードを確認
-Change Password: パスワードを変更
-Email: メールアドレス
-Verify: 確認
-Verify Email: メールを確認
-Verification Code: 確認コード
-Back to Login: ログインに戻る
-Sudo Mode: Sudo モード
-Please enter your password to continue.: 続行するにはパスワードを入力してください。
-Email Sent: メール送信済み
-A password reset link has been sent to your email. Please check your inbox.: パスワードリセットリンクがメールで送信されました。受信箱をご確認ください。
-Verification Email Sent: 確認メール送信済み
-A verification link has been sent to your email. Please check your inbox to complete registration.: 確認リンクがメールで送信されました。登録を完了するには受信箱をご確認ください。
-A verification link will be sent to your email.: 確認リンクがメールで送信されます。
-Send Verification Email: 確認メールを送信
-Passwords do not match: パスワードが一致しません
-Registration failed: 登録失敗
-'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': メール送信が頻繁すぎます（制限：60秒に1回）。
-Logging out...: ログアウト中...
-Account Deletion Pending: アカウント削除保留中
-You do not have permission to import problems.: 問題をインポートする権限がありません。
-Your account deletion request has been received. It will be processed within 30 days.: アカウント削除リクエストを受け付けました。30日以内に処理されます。
-Or login with: または以下の方法でログイン
+'Login': 'ログイン'
+'Register': '新規登録'
+'Logout': 'ログアウト'
+'Username': 'ユーザー名'
+'Username or Email': 'ユーザー名またはメール'
+'Password': 'パスワード'
+'Remember me': 'ログイン状態を保持'
+'Forgot Password?': 'パスワードをお忘れですか？'
+'Forgot Password': 'パスワードを忘れた'
+'Please contact the administrator': '管理者にお問い合わせください'
+'Send Reset Link': 'リセットリンクを送信'
+'Reset Password': 'パスワードをリセット'
+'New Password': '新しいパスワード'
+'Old Password': '現在のパスワード'
+'Confirm Password': 'パスワードを確認'
+'Change Password': 'パスワードを変更'
+'Email': 'メールアドレス'
+'Verify': '確認'
+'Verify Email': 'メールを確認'
+'Verification Code': '確認コード'
+'Back to Login': 'ログインに戻る'
+'Sudo Mode': 'Sudo モード'
+'Please enter your password to continue.': '続行するにはパスワードを入力してください。'
+'Email Sent': 'メール送信済み'
+'A password reset link has been sent to your email. Please check your inbox.': 'パスワードリセットリンクがメールで送信されました。受信箱をご確認ください。'
+'Verification Email Sent': '確認メール送信済み'
+'A verification link has been sent to your email. Please check your inbox to complete registration.': '確認リンクがメールで送信されました。登録を完了するには受信箱をご確認ください。'
+'A verification link will be sent to your email.': '確認リンクがメールで送信されます。'
+'Send Verification Email': '確認メールを送信'
+'Passwords do not match': 'パスワードが一致しません'
+'Invalid email format': 'メールアドレスの形式が正しくありません'
+'Registration failed': '登録失敗'
+'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': 'メール送信が頻繁すぎます（制限：60秒に1回）。'
+'Logging out...': 'ログアウト中...'
+'Account Deletion Pending': 'アカウント削除保留中'
+'You do not have permission to import problems.': '問題をインポートする権限がありません。'
+'Your account deletion request has been received. It will be processed within 30 days.': 'アカウント削除リクエストを受け付けました。30日以内に処理されます。'
+'Or login with': 'または以下の方法でログイン'
+'6-Digit Code': '6桁のコード'
+'Active Sessions': 'アクティブなセッション'
+'Add Authenticator': '認証器を追加'
+'Authenticator': '認証器'
+'Authenticators': '認証器'
+'Choose Authenticator Type': '認証器の種類を選択'
+'Failed to fetch registration data.': '登録データの取得に失敗しました。'
+'Logout All Sessions': 'すべてのセッションからログアウト'
+'Logout This Session': 'このセッションからログアウト'
+'Multi Platform Authenticator': 'クロスプラットフォーム認証器'
+'Two Factor Authentication': '2要素認証'
+'Use Authenticator': '認証器を使用'
+'Use Password': 'パスワードを使用'
+'Use TFA Code': '2段階認証コードを使用'
+'Your Device': 'このデバイス'
+'Your browser does not support WebAuthn or you are not in secure context.': 'お使いのブラウザは WebAuthn に対応していないか、安全な接続（HTTPS）ではありません。'
 
 # Common
-Save: 保存
-Save failed: 保存失敗
-Save successfully: 保存成功
-Cancel: キャンセル
-Confirm: 確認
-Delete: 削除
-Delete failed: 削除失敗
-Delete Contest: コンテストを削除
-Delete Training Plan: トレーニングプランを削除
-Delete Problem: 問題を削除
-Select All: すべて選択
-Create: 作成
-Edit: 編集
-Close: 閉じる
-Back: 戻る
-Submit: 提出
-Search: 検索
-Upload: アップロード
-Download: ダウンロード
-Rename: 名前変更
-Rename to: 新しい名前
-Generate: 生成
-Generate Testdata: テストデータ生成
-Data Generator: データジェネレータ
-Standard Program: 標準プログラム
-Please input the generator.: ジェネレータを入力してください。
-Please input the standard program.: 標準プログラムを入力してください。
-A data generator is a program that generates testdata.: データジェネレータはテストデータを生成するプログラムです。
-A standard program is a program that solves the problem.: 標準プログラムは問題を解くプログラムです。
-Confirm to delete the file?: このファイルを削除しますか？
-Confirm to delete the selected files?: 選択したファイルを削除しますか？
-Confirm to delete this problem?: この問題を削除しますか？
-Confirm deleting this contest? Its files and status will be deleted as well.: このコンテストを削除しますか？関連するファイルとステータスも削除されます。
-Confirm deleting this training? Its files and status will be deleted as well.: このトレーニングプランを削除しますか？関連するファイルとステータスも削除されます。
-Download Selected: 選択をダウンロード
-Remove Selected: 選択を削除
-Rename Selected: 選択を名前変更
-'Enter a new name for the file:': ファイルの新しい名前を入力：
-Batch replacement: バッチ置換
-Original content: 元の内容
-Replace with: 置換先
-Add prefix: プレフィックス追加
-Add suffix: サフィックス追加
-Add prefix/suffix: プレフィックス/サフィックス追加
-RegExp supported, quote with "/": 正規表現対応、"/" で囲む
-Original filename(s): 元のファイル名
-New filename(s): 新しいファイル名
-Are you sure to rename the following file?: 以下のファイルを名前変更しますか？
-Cannot preview this file type.: このファイルタイプはプレビューできません。
-Next: 次へ
-Import: インポート
-Export: エクスポート
-Loading...: 読み込み中...
-Error: エラー
-Success: 成功
-Warning: 警告
-No data: データなし
-No results: 結果なし
-Settings: 設定
-Configuration: 設定
-Dashboard: ダッシュボード
-Manage: 管理
-Admin: 管理者
-View All: すべて表示
-View Record: 記録を表示
-All Records: すべての記録
-Latest Record: 最新の記録
-Replies: 返信
-Reply: 返信
-Post Reply: 返信を投稿
-Title: タイトル
-Content: 内容
-Tags: タグ
-Hidden: 非表示
-Name: 名前
-Size: サイズ
-Date: 日付
-Time: 時間
-Duration: 期間
-Rule: ルール
-Start: 開始
-End: 終了
-User: ユーザー
-Users: ユーザー
-Problem: 問題
-Contest: コンテスト
-Record: 記録
-Domain: ドメイン
-Score: スコア
-Language: 言語
-Submissions: 提出
-Accept Rate: 正解率
-Total Submissions: 総提出数
-Joined: 参加日
-Last login: 最終ログイン
-Like: いいね
-Bio: 自己紹介
-School: 学校
-Grade: 学年
-Gender: 性別
-Avatar URL: アバターURL
-Bulletin: お知らせ
-Host: ホスト
-
-# Problem
-Create Problem: 問題を作成
-Edit Problem: 問題を編集
-Problem ID: 問題ID
-Problem ID must start with a letter and contain only letters and numbers.: 問題IDは英字で始まり、英数字のみを含む必要があります。
-Problem ID must start with a letter. Auto-corrected to {0}: '問題IDは英字で始まる必要があります。自動修正: {0}'
-Content (Markdown): 内容（Markdown）
-Test Data: テストデータ
-Upload Test Data: テストデータをアップロード
-Source Code: ソースコード
-Solutions: 解説
-Write Solution: 解説を書く
-Statistics: 統計
-Config: 設定
-Files: ファイル
-No files: ファイルなし
-Hack: Hack
-Submit Hack: Hackを提出
-Import Problems: 問題をインポート
-Source: ソース
-URL or ID: URLまたはID
-Enter Online Programming Mode: オンラインプログラミングモードに入る
-
-# Submit
-Please select a language: 言語を選択してください
-Please enter your code: コードを入力してください
-Select language: 言語を選択
-
-# Record
-Judging...: 判定中...
-Test Cases: テストケース
-Compiler Output: コンパイル出力
-Judge Message: 判定メッセージ
-Code Replay: コードリプレイ
-Play: 再生
-Pause: 一時停止
-Reset: リセット
-
-# Contest
-Create Contest: コンテストを作成
-Edit Contest: コンテストを編集
-Running: 進行中
-Upcoming: 予定
-Finished: 終了
-Scoreboard: スコアボード
-Participants: 参加者
-Register Contest: 参加登録
-Registered: 登録済み
-Clarifications: 質問
-Ask a Question: 質問する
-Answered: 回答済み
-Pending: 保留中
-Balloons: 風船
-Done: 完了
-Print: 印刷
-Send to Printer: プリンターに送信
-Contest Settings: コンテスト設定
-
-# Homework
-Homework: 宿題
-Create Homework: 宿題を作成
-Edit Homework: 宿題を編集
-Due: 期限
-Open: 開放
-No homework: 宿題なし
-
-# Training
-Create Training: トレーニングを作成
-Edit Training: トレーニングを編集
-Section: セクション
-No training: トレーニングなし
-
-# Discussion
-Create Discussion: ディスカッションを作成
-Edit Discussion: ディスカッションを編集
-Node: ノード
-No discussions: ディスカッションなし
-No replies: 返信なし
-replies: 件の返信
-
-# User
-My Profile: マイプロフィール
-My Files: マイファイル
-My Domains: マイドメイン
-Create Domain: ドメインを作成
-Delete Domain: ドメインを削除
-Domain Settings: ドメイン設定
-Domain Manage: ドメイン管理
-Domain Users: ドメインユーザー
-Domain ID: ドメインID
-Roles: 役割
-Permissions: 権限
-Groups: グループ
-Create Group: グループを作成
-Join Applications: 参加申請
-Request to Join: 参加を申請
-Accept: 承認
-Reject: 拒否
-No pending applications: 保留中の申請なし
-No domains: ドメインなし
-This operation cannot be undone.: この操作は元に戻せません。
-Confirm to delete this domain?: このドメインを削除しますか？
-Group Assignment (Optional): グループ割り当て（オプション）
-The group to join when user joining the domain.: ユーザーがドメインに参加する際に加入するグループ。
-Preference: 設定
-You can also upload your avatar to Gravatar and it will be automatically updated here.: Cravatarにアバターをアップロードすると、ここでも自動的に更新されます。
-Linked Accounts: 連携アカウント
-Email Account: メールアカウント
-Manage all active login sessions.: すべてのアクティブなログインセッションを管理。
-Email for Gravatar: Gravatar用メールアドレス
-Email for Cravatar: Cravatar用メールアドレス
-QQ Number: QQ番号
-GitHub Username: GitHubユーザー名
-Choose avatar file: アバターファイルを選択
-Gravatar uses your email to fetch avatar from: Gravatarはメールアドレスを使用してアバターを取得します
-Cravatar uses your email to fetch avatar from: Cravatarはメールアドレスを使用してアバターを取得します
-
-# Manage
-System Management: システム管理
-System Settings: システム設定
-Scripts: スクリプト
-Run: 実行
-User Import: ユーザーインポート
-User Privileges: ユーザー権限
-Format: フォーマット
-Data: データ
-Apply: 適用
-Service Status: サービス状態
-Uptime: 稼働時間
-Online: オンライン
-No judges connected: 判定機未接続
-
-# Messages
-Messages: メッセージ
-No messages: メッセージなし
-New Message: 新規メッセージ
-Select a conversation: 会話してユーザーを選択してください
-
-# User Profile
-No bio: 自己紹介なし
-Accepted Problems: 正解した問題
-No accepted problems: 正解した問題なし
-Problem Tags: 問題タグ
-Solved: 解決済み
-RP: RP
-Last active: 最終アクティブ
-Edit Profile: プロフィール編集
-Send Message: メッセージ送信
-Male: 男性
-Female: 女性
-Other: その他
-
-# Misc
-Welcome: ようこそ
-Welcome to Hydro: HydroNextへようこそ
-Explore problems, contests, and improve your skills.: 問題やコンテストを探して、スキルを向上させましょう。
-Login or register to start solving problems.: ログインまたは登録して問題を解き始めましょう。
-Recent Problems: 最近の問題
-Recent Contests: 最近のコンテスト
-Recent Discussions: 最近のディスカッション
-Powered by: Powered by
-Paste limit exceeded: ペースト制限を超過しました
-'Pasting more than {0} characters is not allowed (currently {1}).': '{0}文字を超える内容は貼り付けできません（現在{1}文字）。'
-File too large: ファイルが大きすぎます
-'File too large: {name}': 'ファイルが大きすぎます: {name}'
-Drag files here or click to upload: ここにファイルをドラッグまたはクリックしてアップロード
-Uploading...: アップロード中...
-Nothing to preview: プレビューなし
-Write: 書く
-Preview: プレビュー
-Build Time: ビルド日時
-Version: バージョン
-No about page content configured.: 概要ページが設定されていません。
-
-# Error pages
-Page not found: ページが見つかりません
-An error occurred: エラーが発生しました
-Back to Home: ホームに戻る
-
-# Scratchpad
-Scratchpad: スクラッチパッド
-Code template loaded: コードテンプレートを読み込みました
-Load Code Template: コードテンプレートを読み込む
-No code template is available for this language.: この言語で利用できるコードテンプレートはありません。
-Open Scratchpad: スクラッチパッドを開く
-
-# Search placeholders
-Search problems...: 問題を検索...
-Search contests...: コンテストを検索...
-
-# Empty states
-No records found: 記録なし
-No contests found: コンテストなし
-No problems found: 問題なし
-No clarifications: 質問なし
-No solutions: 解説なし
-
-# Auth links
-Already have an account? Login: アカウントをお持ちですか？ログイン
-Don't have an account? Register: アカウントをお持ちでないですか？新規登録
-
-# Misc
-Unknown: 不明
-Login failed: ログイン失敗
-Network error: ネットワークエラー
-Continue: 続ける
-Account: アカウント
-Sign in to continue to Hydro.: ログインしてHydroを続けます。
-Create an account to start solving problems.: アカウントを作成して問題を解き始めましょう。
-Enter your email to receive a reset link.: リセットリンクを受け取るにはメールアドレスを入力してください。
-votes: 票
-Online Judge: Online Judge
-Pinned: ピン留め
-Problem Type: 問題タイプ
-Uploaded By: アップロード者
-Login to Submit: ログインして提出
-No Permission to Submit: 提出権限がありません
-Rejudge all submissions: すべての提出を再判定
-Judge Config: 判定設定
-Related: 関連
-Lucky: ランダム選題
-Random Problem: ランダム問題
-Pick a problem randomly based on the current filter.: 現在のフィルターに基づいてランダムに問題を選択します。
-sort::default: デフォルト
-sort::recent: 最近追加
-AC: 正解
-Tried: 挑戦済み
-Time Limit: 時間制限
-Memory Limit: メモリ制限
-Accepted: 正解
-Difficulty: 難易度
-problemType::default: 伝統
-problemType::submit_answer: 解答提出
-problemType::interactive: インタラクティブ
-problemType::communication: コミュニケーション
-problemType::objective: 客観問題
-problemType::remote_judge: リモートジャッジ
-files: ファイル
-submissions: 提出
-Filename: ファイル名
-Testdata: テストデータ
-Additional Files: 追加ファイル
-Input, output, and config files used by the judge.: 判定に使用される入力、出力、設定ファイル。
-Public attachments shown with this problem.: この問題に公開されている添付ファイル。
-This is a copy of another problem.: これは別の問題のコピーです。
-This problem has no testdata.: この問題にはテストデータがありません。
-Status Distribution: ステータス分布
-Submission Statistics: 提出統計
-Submit By: 提出者
-Submit At: 提出日時
-Direction: 並び順
-Ascending: 昇順
-Descending: 降順
-Sort: 並び替え
-Switch to dark mode: ダークモードに切り替え
-Switch to light mode: ライトモードに切り替え
-Switch to paper mode: ペーパーモードに切り替え
-Theme mode: テーマモード
-Automatic: 自動
-Automatic theme enabled: 自動テーマが有効です
-Light mode: ライトモード
-Paper mode: ペーパーモード
-Dark mode: ダークモード
-Code: コード
-Oh, there is no submission!: 提出がありません！
-Redirecting: リダイレクト中
-No problem found: 問題が見つかりません
-Opening the selected problem.: 選択された問題を開いています。
-Try changing the current filter.: 現在のフィルターを変更してみてください。
-Back to Problems: 問題一覧に戻る
-Confirm rejudge this problem?: この問題を再判定しますか？
-Download failed: ダウンロード失敗
-Copy failed: コピー失敗
-Copied: コピーしました
-Target: 対象ドメイン
-Monaco Editor: Monacoエディタ
-Pretest: プレテスト
-Input: 入力
-Basic: 基本
-Languages: 言語
-Config Editor: 設定エディタ
-YAML: YAML
-click to add: クリックして追加
-Update: 更新
-Operation failed: 操作失敗
-Confirm delete?: 削除しますか？
-Copy Link: リンクをコピー
-Share: 共有
-Show less: 閉じる
-Show more: もっと見る
-solutions: 解説
-Write Your Solution: 解説を書く
-No solutions so far...: まだ解説がありません...
-View all {0} solutions: すべての{0}件の解説を表示
-No categories: カテゴリなし
-Permissions data is incomplete: 権限データが不完全です
-React to discussion: ディスカッションに反応
-Read all record codes: すべての提出コードを閲覧
-"View other's records": 他人の提出記録を閲覧
-Submit problem: 問題を提出
-Read data of problem: 問題データを閲覧
-Join Settings: 参加設定
-System Data: システムデータ
-View domains and additional files.: ドメインと追加ファイルを表示します。
-All Domains: すべてのドメイン
-All Additional Files: すべての追加ファイル
-No additional files: 追加ファイルはありません
-Delete Additional File: 追加ファイルを削除
-Delete domain confirmation: この操作により、ドメインと関連データが削除されます。
-Delete additional file confirmation: 選択した追加ファイルを削除します。
-Owner: 所有者
-File: ファイル
-Last Modified: 最終更新
-User Management: ユーザー管理
-All Users: すべてのユーザー
-View users and reset passwords: ユーザーを表示してパスワードをリセットします。
-View users and reset passwords.: ユーザーを表示してパスワードをリセットします。
-Search users by username, UID or email: ユーザー名、UID、またはメールでユーザーを検索
-Clear Search: 検索をクリア
-Last Login: 最終ログイン
-Login IP: ログイン IP
-Total: 合計
-Reset password for: 次のユーザーのパスワードをリセット
-Password reset: パスワードをリセットしました
-Password reset failed: パスワードのリセットに失敗しました
-Banned: 凍結済み
-Ban User: ユーザーを凍結
-Ban failed: 凍結に失敗しました
-User banned: ユーザーを凍結しました
-Ban user confirmation: この操作により、ユーザーを凍結し、関連ユーザーデータを削除します。
-Role Management: ロール管理
-Save Role Changes: ロール変更を保存
-Group Name: グループ名
-Remove Selected Group: 選択したグループを削除
-Search users by username or UID: ユーザー名または UID でユーザーを検索
-Search users: ユーザーを検索
-Type to search users: ユーザー名または UID を入力して検索
-Type username or UID: ユーザー名または UID を入力
-User search failed: ユーザー検索に失敗しました
-No users found: ユーザーが見つかりません
-Change: 変更
-Selected Users: 選択したユーザー
-No users selected: ユーザーが選択されていません
-Select: 選択
-Selected: 選択済み
-Remove: 削除
-You can create your own training plans and share them with others.: 自分のトレーニングプランを作成して他のユーザーと共有できます。
-Create Training Plan: トレーニングプランを作成
-New Training Plan: 新しいトレーニングプラン
-Go to Solve: 解答へ進む
-Contest Closed: コンテスト終了
-The contest has ended. You can view the problems, but contest submissions are closed.: コンテストは終了しました。問題は閲覧できますが、コンテスト提出は締め切られています。
-The contest has ended. You can view the problem, but contest submissions are closed.: コンテストは終了しました。問題文は閲覧できますが、コンテスト提出は締め切られています。
-Confirm to delete this clarification?: この質問を削除しますか？
-Deleted: 削除しました
-Compilers' Version and Parameters: コンパイラのバージョンとパラメータ
-Limitations: 制限
-IO: 入出力
-Judge Status: ジャッジ状態
-Compile Error: コンパイルエラー
-Accepted Ratio: 正解率
-RP Algorithm: RP アルゴリズム
-Difficulty Algorithm: 難易度アルゴリズム
-Dataset Format: テストデータ形式
-Forgot Password and/or Username: パスワードまたはユーザー名を忘れた場合
-Markdown: Markdown
-
-# Additional translations
-Invalid: 無効
-All Categories: すべての分類
-All Rules: すべてのルール
-All Training Plans: すべてのトレーニングプラン
-About preferredPrefix option: preferredPrefix オプションについて
-Contest has not started yet: コンテストはまだ始まっていません
-Enter a new name for the file: ファイルの新しい名前を入力してください
+'Save': '保存'
+'Cancel': 'キャンセル'
+'Confirm': '確認'
+'Delete': '削除'
+'Delete failed': '削除失敗'
+'Delete Contest': 'コンテストを削除'
+'Delete Training Plan': 'トレーニングプランを削除'
+'Delete Problem': '問題を削除'
+'Select All': 'すべて選択'
+'Create': '作成'
+'Edit': '編集'
+'Close': '閉じる'
+'Back': '戻る'
+'Contest has not started yet': 'コンテストはまだ始まっていません'
+'Submit': '提出'
+'Search': '検索'
+'Upload': 'アップロード'
+'Download': 'ダウンロード'
+'Rename': '名前変更'
+'Rename to': '新しい名前'
+'Generate': '生成'
+'Generate Testdata': 'テストデータ生成'
+'Data Generator': 'データジェネレータ'
+'Standard Program': '標準プログラム'
+'Please input the generator.': 'ジェネレータを入力してください。'
+'Please input the standard program.': '標準プログラムを入力してください。'
+'A data generator is a program that generates testdata.': 'データジェネレータはテストデータを生成するプログラムです。'
+'A standard program is a program that solves the problem.': '標準プログラムは問題を解くプログラムです。'
+'Confirm to delete the file?': 'このファイルを削除しますか？'
+'Confirm to delete the selected files?': '選択したファイルを削除しますか？'
+'Confirm to delete this problem?': 'この問題を削除しますか？'
+'Confirm deleting this contest? Its files and status will be deleted as well.': 'このコンテストを削除しますか？関連するファイルとステータスも削除されます。'
+'Confirm deleting this training? Its files and status will be deleted as well.': 'このトレーニングプランを削除しますか？関連するファイルとステータスも削除されます。'
+'Download Selected': '選択をダウンロード'
+'Remove Selected': '選択を削除'
+'Rename Selected': '選択を名前変更'
+'Enter a new name for the file:': 'ファイルの新しい名前を入力：'
+'Enter a new name for the file': 'ファイルの新しい名前を入力してください'
+'New Filename': '新しいファイル名'
+'Create File': 'ファイルを作成'
+'Batch replacement': 'バッチ置換'
+'Original content': '元の内容'
+'Replace with': '置換先'
+'Add prefix': 'プレフィックス追加'
+'Add suffix': 'サフィックス追加'
+'Add prefix/suffix': 'プレフィックス/サフィックス追加'
+'RegExp supported, quote with "/"': '正規表現対応、"/" で囲む'
+'Original filename(s)': '元のファイル名'
+'New filename(s)': '新しいファイル名'
+'Are you sure to rename the following file?': '以下のファイルを名前変更しますか？'
+'Cannot preview this file type.': 'このファイルタイプはプレビューできません。'
+'Next': '次へ'
+'Import': 'インポート'
+'Export': 'エクスポート'
+'Loading...': '読み込み中...'
 'Page {0} of {1}': '{0} / {1} ページ'
-Rows per page: 1ページの件数
-just now: たった今
+'Rows per page': '1ページの件数'
+'just now': 'たった今'
 '{0}m ago': '{0}分前'
 '{0}h ago': '{0}時間前'
 '{0}d ago': '{0}日前'
-Access Denied: アクセスが拒否されました
-Problem List: 問題一覧
-My Submissions: 自分の提出
-All Submissions: すべての提出
-Enrolled Users: 登録ユーザー
-Select problems to generate a basic training plan. You can still edit the JSON plan below.: 問題を選択して基本的なトレーニングプランを生成します。下のJSONプランを引き続き編集できます。
-Ignored: 無視
-Not joined yet: 未参加
-No changes: 変更なし
-Leave empty for default: デフォルトの場合は空欄
-Preferred Prefix: 希望プレフィックス
-Import From Hydro: Hydro からインポート
-Please select a file: ファイルを選択してください
-Attendee Manage: 参加者管理
-Actions: 操作
-UnRank: ランク除外
-Rank: ランク
-Balloon Status: バルーン状態
-Set Color: 色を設定
-Color: 色
-Please set the balloon color for each problem first.: まず各問題のバルーン色を設定してください。
-Overview: 概要
-Quit Scratchpad: スクラッチパッドを終了
-The preferred problem ID prefix.: 希望の問題IDプレフィックス。
-Self Test: セルフテスト
-Run Result: 実行結果
-No result: 結果なし
-Default: デフォルト
-Make the problem hidden.: 問題を非表示にする。
-More import sources can be added via plugins.: プラグインで追加のインポートソースを追加できます。
-Select a zip file: zipファイルを選択
-Upload zipfile: zipファイルをアップロード
-What is this?: これは何ですか？
-preferredPrefix_hint: 希望の問題IDプレフィックスのヒント。
+'Error': 'エラー'
+'Success': '成功'
+'Warning': '警告'
+'No data': 'データなし'
+'No results': '結果なし'
+'Settings': '設定'
+'Editor Settings': 'エディタ設定'
+'Font Size': 'フォントサイズ'
+'Tab Size': 'タブ幅'
+'Table Size': 'タブ幅'
+'Editor Theme': 'エディタテーマ'
+'Default': 'デフォルト'
+'Auto': '自動'
+'Light': 'ライト'
+'Dark': 'ダーク'
+'Switch to dark mode': 'ダークモードに切り替え'
+'Switch to light mode': 'ライトモードに切り替え'
+'Switch to paper mode': 'ペーパーモードに切り替え'
+'Theme mode': 'テーマモード'
+'Automatic': '自動'
+'Automatic theme enabled': '自動テーマが有効です'
+'Light mode': 'ライトモード'
+'Paper mode': 'ペーパーモード'
+'Dark mode': 'ダークモード'
+'High Contrast': 'ハイコントラスト'
+'Run Pretest': 'プレテスト実行'
+'Run Self Test': 'セルフテスト実行'
+'Submit Solution': '解答を提出'
+'Self Test': 'セルフテスト'
+'Run Result': '実行結果'
+'No result': '結果なし'
+'All Training Plans': 'すべてのトレーニングプラン'
+'Search training...': 'トレーニング計画を検索...'
+'Sorry, there are no training plans.': 'トレーニングプランはありません。'
+'Create Training Plan': 'トレーニングプランを作成'
+'New Training Plan': '新しいトレーニングプラン'
+'Enrolled': '登録済み'
+'Not Enrolled': '未登録'
+'Enroll Training': 'トレーニングに参加'
+'Enrollees': '参加人数'
+'Created By': '作成者'
+'My status': 'マイステータス'
+'Invalid': '無効'
+'Login to join training plan': 'ログインしてトレーニング計画に参加'
+'Some problems in the training are missing or you do not have permission to view them.': 'トレーニング内の一部の問題が存在しないか、閲覧権限がありません。'
+'This section cannot be challenged at present, so please complete the following sections first': '現在このセクションには挑戦できません。先に以下のセクションを完了してください'
+'All Categories': 'すべての分類'
+'All Contests': 'すべてのコンテスト'
+'All Rules': 'すべてのルール'
+'All {0} Contests': 'すべての {0} コンテスト'
+'Create a contest': 'コンテストを作成'
+'View Details': '詳細を表示'
+'Live...': '進行中...'
+'Ready (☆▽☆)': '予定'
+'Not Attended': '未参加'
+'Attended': '参加済み'
+'Partic.': '参加者数'
+'Configuration': '設定'
+'Dashboard': 'ダッシュボード'
+'Manage': '管理'
+'Access Denied': 'アクセスが拒否されました'
+'Admin': '管理者'
+'View All': 'すべて表示'
+'View Record': '記録を表示'
+'All Records': 'すべての記録'
+'Latest Record': '最新の記録'
+'Replies': '返信'
+'Reply': '返信'
+'Post Reply': '返信を投稿'
+'Title': 'タイトル'
+'Content': '内容'
+'Tags': 'タグ'
+'Hidden': '非表示'
+'Name': '名前'
+'Size': 'サイズ'
+'Date': '日付'
+'Time': '時間'
+'Duration': '期間'
+'Rule': 'ルール'
+'Start': '開始'
+'End': '終了'
+'User': 'ユーザー'
+'Users': 'ユーザー'
+'Problem': '問題'
+'Problem List': '問題一覧'
+'My Submissions': '自分の提出'
+'All Submissions': 'すべての提出'
+'Enrolled Users': '登録ユーザー'
+'Select problems to generate a basic training plan. You can still edit the JSON plan below.': '問題を選択して基本的なトレーニングプランを生成します。下のJSONプランを引き続き編集できます。'
+'Contest': 'コンテスト'
+'Record': '記録'
+'Domain': 'ドメイン'
+'Score': 'スコア'
+'Ignored': '無視'
+'Language': '言語'
+'Leave empty for default': 'デフォルトの場合は空欄'
+'Submissions': '提出'
+'Accept Rate': '正解率'
+'Total Submissions': '総提出数'
+'Joined': '参加日'
+'Not joined yet': '未参加'
+'No changes': '変更なし'
+'Last login': '最終ログイン'
+'Like': 'いいね'
+'Bio': '自己紹介'
+'School': '学校'
+'Grade': '学年'
+'Gender': '性別'
+'Avatar URL': 'アバターURL'
+'Bulletin': 'お知らせ'
+'Host': 'ホスト'
 
-# Page titles
-Submit Solution: 解答を提出
-Submission detail: 提出詳細
-Security: セキュリティ
-Manage Contest: コンテスト管理
-Edit Training Plan: トレーニングプランを編集
-Domain Dashboard: ドメインダッシュボード
-Join Domain: ドメインに参加
-A unique invitation code of up to 8 characters is generated automatically.: 8文字以内の一意な招待コードが自動生成されます。
-Enter an invitation code to find and join a domain.: 招待コードを入力して、対応するドメインに参加します。
-This invitation link never expires.: この招待リンクに有効期限はありません。
-Create Training Category: トレーニングカテゴリを作成
-Edit Training Category: トレーニングカテゴリを編集
-Enrolled Training Plans: 登録済みトレーニングプラン
-View all: すべて表示
-No enrolled users.: 登録ユーザーはいません。
-Viewing progress for: 次のユーザーの進捗を表示中
-Back to my progress: 自分の進捗に戻る
-Category Name: カテゴリ名
-Search categories...: カテゴリを検索...
-Training Plans: トレーニングプラン
-Select all training plans included in this category.: このカテゴリに含めるトレーニングプランを選択します。
-Delete Category: カテゴリを削除
-Confirm to delete this category?: このカテゴリを削除しますか？
+# Problem
+'Create Problem': '問題を作成'
+'Edit Problem': '問題を編集'
+'Preferred Prefix': '希望プレフィックス'
+'Problem ID': '問題ID'
+'Problem ID must start with a letter and contain only letters and numbers.': '問題IDは英字で始まり、英数字のみを含む必要があります。'
+'Problem ID must start with a letter. Auto-corrected to {0}': '問題IDは英字で始まる必要があります。自動修正: {0}'
+'Content (Markdown)': '内容（Markdown）'
+'Test Data': 'テストデータ'
+'Upload Test Data': 'テストデータをアップロード'
+'Source Code': 'ソースコード'
+'Solutions': '解説'
+'Write Solution': '解説を書く'
+'Statistics': '統計'
+'Config': '設定'
+'Files': 'ファイル'
+'No files': 'ファイルなし'
+'Hack': 'Hack'
+'Submit Hack': 'Hackを提出'
+'Import Problems': '問題をインポート'
+'Source': 'ソース'
+'URL or ID': 'URLまたはID'
+
+# Submit
+'Please select a language': '言語を選択してください'
+'Please enter your code': 'コードを入力してください'
+'Please select a file': 'ファイルを選択してください'
+'Select language': '言語を選択'
+
+# Record
+'Judging...': '判定中...'
+'Test Cases': 'テストケース'
+'Compiler Output': 'コンパイル出力'
+'Judge Message': '判定メッセージ'
+'Code Replay': 'コードリプレイ'
+'Replay editing process': '編集プロセスを再生'
+'No replay data is available.': 'リプレイデータはありません。'
+'Play': '再生'
+'Pause': '一時停止'
+'Reset': 'リセット'
+
+# Contest
+'Create Contest': 'コンテストを作成'
+'Edit Contest': 'コンテストを編集'
+'Running': '進行中'
+'Upcoming': '予定'
+'Finished': '終了'
+'Scoreboard': 'スコアボード'
+'Attendee Manage': '参加者管理'
+'Actions': '操作'
+'UnRank': 'ランク除外'
+'Rank': 'ランク'
+'Balloon Status': 'バルーン状態'
+'Set Color': '色を設定'
+'Color': '色'
+'Manage Teams': 'チーム管理'
+'Participants': '参加者'
+'Participation Mode': '参加方法'
+'Personal Participation': '個人参加'
+'Please set the balloon color for each problem first.': 'まず各問題のバルーン色を設定してください。'
+'Register Contest': '参加登録'
+'Registered': '登録済み'
+'Leader': 'リーダー'
+'You': 'あなた'
+'Invited': '招待済み'
+'Remove Member': 'メンバーを削除'
+'Remove this member from the team?': 'このメンバーをチームから削除しますか？'
+'Clarifications': '質問'
+'Overview': '概要'
+'Ask a Question': '質問する'
+'Answered': '回答済み'
+'Pending': '保留中'
+'Balloons': '風船'
+'Done': '完了'
+'Print': '印刷'
+'Send to Printer': 'プリンターに送信'
+'Contest Settings': 'コンテスト設定'
+'Basic Info': '基本情報'
+'Begin Date': '開始日時'
+'Duration (hours)': '所要時間（時間）'
+'Description': '説明'
+'Permission Control': '権限管理'
+'Contest Maintainer': 'コンテスト管理者'
+'Require Invitation Code': '招待コードを要求'
+'Assign User or Group': 'ユーザーまたはグループを指定'
+'Assign': '指定'
+'Invitation Code': '招待コード'
+'Group / UID': 'グループ / UID'
+'Submission language limit': '提出言語の制限'
+'Lock (minutes)': '順位表凍結時間（分）'
+'Flexable Duration': 'フレキシブル時間'
+'Rated': 'レーティング対象'
+'Auto hide-and show': '自動非表示・表示'
+'Allow View Code': 'コード閲覧を許可'
+'Allow Print': '印刷を許可'
+'Keep Scoreboard Hidden': '順位表を非表示のままにする'
+'Clone': '複製'
+'Summary': '概要'
+'Seperated with '',''': '半角カンマで区切る'
+
+# Homework
+'Homework': '宿題'
+'Create Homework': '宿題を作成'
+'Edit Homework': '宿題を編集'
+'Due': '期限'
+'Open': '開放'
+'No homework': '宿題なし'
+
+# Training
+'Create Training': 'トレーニングを作成'
+'Edit Training': 'トレーニングを編集'
+'Section': 'セクション'
+'No training': 'トレーニングなし'
+
+# Discussion
+'Create Discussion': 'ディスカッションを作成'
+'Edit Discussion': 'ディスカッションを編集'
+'Node': 'ノード'
+'No discussions': 'ディスカッションなし'
+'No replies': '返信なし'
+'replies': '件の返信'
+
+# User
+'My Profile': 'マイプロフィール'
+'My Files': 'マイファイル'
+'My Domains': 'マイドメイン'
+'Switch Domain': 'ドメインを切り替え'
+'Create Domain': 'ドメインを作成'
+'Delete Domain': 'ドメインを削除'
+'Domain Settings': 'ドメイン設定'
+'Domain Manage': 'ドメイン管理'
+'Domain Users': 'ドメインユーザー'
+'Domain ID': 'ドメインID'
+'Roles': '役割'
+'Permissions': '権限'
+'Groups': 'グループ'
+'Create Group': 'グループを作成'
+'Join Applications': '参加申請'
+'Request to Join': '参加を申請'
+'Accept': '承認'
+'Reject': '拒否'
+'No pending applications': '保留中の申請なし'
+'No domains': 'ドメインなし'
+'This operation cannot be undone.': 'この操作は元に戻せません。'
+'Confirm to delete this domain?': 'このドメインを削除しますか？'
+'Group Assignment (Optional)': 'グループ割り当て（オプション）'
+'The group to join when user joining the domain.': 'ユーザーがドメインに参加する際に加入するグループ。'
+'Preference': '設定'
+'You can also upload your avatar to Gravatar and it will be automatically updated here.': 'Cravatarにアバターをアップロードすると、ここでも自動的に更新されます。'
+'Linked Accounts': '連携アカウント'
+'Email Account': 'メールアカウント'
+'Manage all active login sessions.': 'すべてのアクティブなログインセッションを管理。'
+'Email for Gravatar': 'Gravatar用メールアドレス'
+'Email for Cravatar': 'Cravatar用メールアドレス'
+'QQ Number': 'QQ番号'
+'GitHub Username': 'GitHubユーザー名'
+'Choose avatar file': 'アバターファイルを選択'
+'Gravatar uses your email to fetch avatar from': 'Gravatarはメールアドレスを使用してアバターを取得します'
+'Cravatar uses your email to fetch avatar from': 'Cravatarはメールアドレスを使用してアバターを取得します'
+
+# Manage
+'System Management': 'システム管理'
+'System Settings': 'システム設定'
+'Scripts': 'スクリプト'
+'Run': '実行'
+'User Import': 'ユーザーインポート'
+'User Privileges': 'ユーザー権限'
+'Format': 'フォーマット'
+'Data': 'データ'
+'Apply': '適用'
+'Service Status': 'サービス状態'
+'Tools': 'ツール'
+'Open Panel': 'パネルを開く'
+'Runtime settings grouped by feature.': '機能別にグループ化されたランタイム設定。'
+'Edit raw YAML configuration source.': 'YAML 設定ソースファイルを直接編集。'
+'Run registered maintenance scripts.': '登録されたメンテナンススクリプトを実行。'
+'Preview and import users in batches.': 'ユーザーを一括プレビューしてインポート。'
+'Inspect and edit user privilege values.': 'ユーザーの権限値を確認・編集。'
+'Check service health and runtime status.': 'サービスの健全性と実行状態を確認。'
+'Save All Changes': 'すべての変更を保存'
+'Config Source': '設定ソース'
+'Secrets marked as hidden keep their old values when left unchanged.': '非表示としてマークされたシークレットは、空欄のままにすると元の値が維持されます。'
+'(Not changed)': '（変更なし）'
+'setting_display': '表示設定'
+'setting_usage': '使用状況'
+'setting_info': 'サイト情報'
+'setting_customize': 'カスタマイズ'
+'setting_domain': 'ドメイン設定'
+'setting_server': 'サーバー設定'
+'setting_limits': '制限設定'
+'setting_basic': '基本設定'
+'setting_session': 'セッション設定'
+'setting_storage': 'ストレージ設定'
+'Run script': 'スクリプトを実行'
+'Params': 'パラメータ'
+'Run failed': '実行失敗'
+'Invalid JSON': '無効な JSON'
+'Import From Hydro': 'Hydro からインポート'
+'Import failed': 'インポート失敗'
+'Import User': 'ユーザーをインポート'
+'Special Users': '特別権限ユーザー'
+'Default Privilege': 'デフォルト権限'
+'Same as default': 'デフォルトと同じ'
+'No users': 'ユーザーはいません'
+'Set Privilege': '権限を設定'
+'Uptime': '稼働時間'
+'Online': 'オンライン'
+'No judges connected': '判定機未接続'
+
+# Messages
+'Messages': 'メッセージ'
+'No messages': 'メッセージなし'
+'New Message': '新規メッセージ'
+'Select a conversation': '会話してユーザーを選択してください'
+
+# User Profile
+'No bio': '自己紹介なし'
+'Accepted Problems': '正解した問題'
+'No accepted problems': '正解した問題なし'
+'Problem Tags': '問題タグ'
+'Solved': '解決済み'
+'RP': 'RP'
+'Last active': '最終アクティブ'
+'Edit Profile': 'プロフィール編集'
+'Send Message': 'メッセージ送信'
+'Male': '男性'
+'Female': '女性'
+'Other': 'その他'
+
+# Misc
+'Welcome': 'ようこそ'
+'Welcome to Hydro': 'HydroNextへようこそ'
+'Online Judge': 'Online Judge'
+'Pinned': 'ピン留め'
+'Explore problems, contests, and improve your skills.': '問題やコンテストを探して、スキルを向上させましょう。'
+'Login or register to start solving problems.': 'ログインまたは登録して問題を解き始めましょう。'
+'Recent Problems': '最近の問題'
+'Recent Contests': '最近のコンテスト'
+'Recent Discussions': '最近のディスカッション'
+'Powered by': 'Powered by'
+'Paste limit exceeded': 'ペースト制限を超過しました'
+'Pasting more than {0} characters is not allowed (currently {1}).': '{0}文字を超える内容は貼り付けできません（現在{1}文字）。'
+'粘贴内容超过限制': 'ペースト制限を超過しました'
+'File too large': 'ファイルが大きすぎます'
+'File too large: {name}': 'ファイルが大きすぎます: {name}'
+'Drag files here or click to upload': 'ここにファイルをドラッグまたはクリックしてアップロード'
+'Uploading...': 'アップロード中...'
+'Upload failed': 'アップロード失敗'
+'Upload zipfile': 'zipファイルをアップロード'
+'Save failed': '保存失敗'
+'Save successfully': '保存成功'
+'Generating...': '生成中...'
+'Select a testdata file': 'テストデータファイルを選択'
+'Select a zip file': 'zipファイルを選択'
+'Testdata generated successfully.': 'テストデータを正常に生成しました。'
+'Nothing to preview': 'プレビューなし'
+'Write': '書く'
+'Preview': 'プレビュー'
+'Build Time': 'ビルド日時'
+'Version': 'バージョン'
+'No about page content configured.': '概要ページが設定されていません。'
+
+# Error pages
+'Page not found': 'ページが見つかりません'
+'An error occurred': 'エラーが発生しました'
+'Back to Home': 'ホームに戻る'
+
+# Scratchpad
+'Scratchpad': 'スクラッチパッド'
+'Code template loaded': 'コードテンプレートを読み込みました'
+'Load Code Template': 'コードテンプレートを読み込む'
+'No code template is available for this language.': 'この言語で利用できるコードテンプレートはありません。'
+'Open Scratchpad': 'スクラッチパッドを開く'
+'Quit Scratchpad': 'スクラッチパッドを終了'
+'Enter Online Programming Mode': 'オンラインプログラミングモードに入る'
+
+# Search placeholders
+'Search problems...': '問題を検索...'
+'Search contests...': 'コンテストを検索...'
+'Search teams...': 'チームを検索...'
+
+# Empty states
+'No records found': '記録なし'
+'No contests found': 'コンテストなし'
+'No problems found': '問題なし'
+'No clarifications': '質問なし'
+'No solutions': '解説なし'
+'No categories': 'カテゴリなし'
+'Permissions data is incomplete': '権限データが不完全です'
+'React to discussion': 'ディスカッションに反応'
+'Read all record codes': 'すべての提出コードを閲覧'
+'View other''s records': '他人の提出記録を閲覧'
+'Submit problem': '問題を提出'
+'Read data of problem': '問題データを閲覧'
+'Join Settings': '参加設定'
+'System Data': 'システムデータ'
+'View domains and additional files.': 'ドメインと追加ファイルを表示します。'
+'All Domains': 'すべてのドメイン'
+'All Additional Files': 'すべての追加ファイル'
+'No additional files': '追加ファイルはありません'
+'Delete Additional File': '追加ファイルを削除'
+'Delete domain confirmation': 'この操作により、ドメインと関連データが削除されます。'
+'Delete additional file confirmation': '選択した追加ファイルを削除します。'
+'Owner': '所有者'
+'File': 'ファイル'
+'Last Modified': '最終更新'
+'User Management': 'ユーザー管理'
+'All Users': 'すべてのユーザー'
+'View users and reset passwords': 'ユーザーを表示してパスワードをリセットします。'
+'View users and reset passwords.': 'ユーザーを表示してパスワードをリセットします。'
+'Search users by username, UID or email': 'ユーザー名、UID、またはメールでユーザーを検索'
+'Clear Search': '検索をクリア'
+'Last Login': '最終ログイン'
+'Login IP': 'ログイン IP'
+'Total': '合計'
+'Reset password for': '次のユーザーのパスワードをリセット'
+'Password reset': 'パスワードをリセットしました'
+'Password reset failed': 'パスワードのリセットに失敗しました'
+'Banned': '凍結済み'
+'Ban User': 'ユーザーを凍結'
+'Ban failed': '凍結に失敗しました'
+'User banned': 'ユーザーを凍結しました'
+'Ban user confirmation': 'この操作により、ユーザーを凍結し、関連ユーザーデータを削除します。'
+'Role Management': 'ロール管理'
+'Save Role Changes': 'ロール変更を保存'
+'Group Name': 'グループ名'
+'Remove Selected Group': '選択したグループを削除'
+'Search users by username or UID': 'ユーザー名または UID でユーザーを検索'
+'Search users': 'ユーザーを検索'
+'Type to search users': 'ユーザー名または UID を入力して検索'
+'Type username or UID': 'ユーザー名または UID を入力'
+'User search failed': 'ユーザー検索に失敗しました'
+'No users found': 'ユーザーが見つかりません'
+'Change': '変更'
+'Selected Users': '選択したユーザー'
+'No users selected': 'ユーザーが選択されていません'
+'Select': '選択'
+'Selected': '選択済み'
+'Remove': '削除'
+
+# Auth links
+'Account': 'アカウント'
+'Sign in to continue to Hydro.': 'ログインしてHydroを続けます。'
+'Create an account to start solving problems.': 'アカウントを作成して問題を解き始めましょう。'
+'Enter your email to receive a reset link.': 'リセットリンクを受け取るにはメールアドレスを入力してください。'
+'Already have an account? Login': 'アカウントをお持ちですか？ログイン'
+'Don''t have an account? Register': 'アカウントをお持ちでないですか？新規登録'
+'votes': '票'
+
+# Misc
+'Unknown': '不明'
+'Login failed': 'ログイン失敗'
+'Network error': 'ネットワークエラー'
+'Continue': '続ける'
+'Problem Type': '問題タイプ'
+'Uploaded By': 'アップロード者'
+'Login to Submit': 'ログインして提出'
+'No Permission to Submit': '提出権限がありません'
+'Rejudge all submissions': 'すべての提出を再判定'
+'Judge Config': '判定設定'
+'Related': '関連'
+'Lucky': 'ランダム選題'
+'Random Problem': 'ランダム問題'
+'Pick a problem randomly based on the current filter.': '現在のフィルターに基づいてランダムに問題を選択します。'
+'sort::default': 'デフォルト'
+'sort::recent': '最近追加'
+'AC': '正解'
+'Tried': '挑戦済み'
+'The preferred problem ID prefix.': '希望の問題IDプレフィックス。'
+'Time Limit': '時間制限'
+'Memory Limit': 'メモリ制限'
+'Accepted': '正解'
+'Waiting': '待機中'
+'Wrong Answer': '不正解 (WA)'
+'Time Limit Exceeded': '時間制限超過 (TLE)'
+'Memory Limit Exceeded': 'メモリ制限超過 (MLE)'
+'Output Limit Exceeded': '出力制限超過 (OLE)'
+'Runtime Error': '実行時エラー (RE)'
+'System Error': 'システムエラー (SE)'
+'Canceled': 'キャンセル済み'
+'Judging': 'ジャッジ中'
+'Compiling': 'コンパイル中'
+'Fetched': '取得済み'
+'Difficulty': '難易度'
+'problemType::default': '伝統'
+'problemType::submit_answer': '解答提出'
+'problemType::interactive': 'インタラクティブ'
+'problemType::communication': 'コミュニケーション'
+'problemType::objective': '客観問題'
+'problemType::remote_judge': 'リモートジャッジ'
+'files': 'ファイル'
+'submissions': '提出'
+'Filename': 'ファイル名'
+'Testdata': 'テストデータ'
+'Additional Files': '追加ファイル'
+'Input, output, and config files used by the judge.': '判定に使用される入力、出力、設定ファイル。'
+'Public attachments shown with this problem.': 'この問題に公開されている添付ファイル。'
+'This is a copy of another problem.': 'これは別の問題のコピーです。'
+'This problem has no testdata.': 'この問題にはテストデータがありません。'
+'Status Distribution': 'ステータス分布'
+'Score Distribution': '得点分布'
+'Fastest': '最速'
+'Min Memory': '最小メモリ'
+'Shortest': '最短コード'
+'Latest': '最新の提出'
+'Submission Statistics': '提出統計'
+'Submit By': '提出者'
+'Submit At': '提出日時'
+'Direction': '並び順'
+'Ascending': '昇順'
+'Descending': '降順'
+'Sort': '並び替え'
+'Code': 'コード'
+'Oh, there is no submission!': '提出がありません！'
+'Redirecting': 'リダイレクト中'
+'No problem found': '問題が見つかりません'
+'Opening the selected problem.': '選択された問題を開いています。'
+'Try changing the current filter.': '現在のフィルターを変更してみてください。'
+'Back to Problems': '問題一覧に戻る'
+'Confirm rejudge this problem?': 'この問題を再判定しますか？'
+'Download failed': 'ダウンロード失敗'
+'Copy failed': 'コピー失敗'
+'Copied': 'コピーしました'
+'Target': '対象ドメイン'
+'Copy Problem': '問題を複製'
+'Search by domain ID or name': 'ドメイン ID または名前で検索'
+'Monaco Editor': 'Monacoエディタ'
+'Pretest': 'プレテスト'
+'Input': '入力'
+'Basic': '基本'
+'Languages': '言語'
+'Config Editor': '設定エディタ'
+'Checker': 'チェッカー'
+'Extra Files': '追加ファイル'
+'Subtasks': 'サブタスク'
+'FileIO': 'ファイル入出力'
+'Make the problem hidden.': '問題を非表示にする。'
+'Max Passes': '最大通過回数'
+'Number of Processes': 'プロセス数'
+'More import sources can be added via plugins.': 'プラグインで追加のインポートソースを追加できます。'
+'Multi-file': '複数ファイル'
+'CheckerType': 'チェッカーの種類'
+'other': 'その他'
+'Ignore trailing space and enter.': '末尾のスペースと改行を無視'
+'Interface': 'インターフェース'
+'Interactor': 'インタラクター'
+'Manager': '管理者'
+'Unsupported configure this type of problem. Please refer to the documentation.': 'この種類の問題の設定は現在サポートされていません。ドキュメントを参照してください。'
+'user_extra_files': 'ユーザー追加ファイル'
+'judge_extra_files': 'ジャッジ追加ファイル'
+'Auto configure': '自動構成'
+'Add new subtask': 'サブタスクを追加'
+'Subtask {0}': 'サブタスク {0}'
+'Depend On': '依存先'
+'Add Testcase': 'テストケースを追加'
+'No subtasks': 'サブタスクはありません'
+'Unlimited': '無制限'
+'problem_type.default': '伝統'
+'problem_type.interactive': 'インタラクティブ'
+'problem_type.communication': 'コミュニケーション'
+'problem_type.submit_answer': '解答提出'
+'problem_type.objective': '客観問題'
+'YAML': 'YAML'
+'click to add': 'クリックして追加'
+'Update': '更新'
+'Operation failed': '操作失敗'
+'Confirm delete?': '削除しますか？'
+'Copy Link': 'リンクをコピー'
+'Share': '共有'
+'Show less': '閉じる'
+'Show more': 'もっと見る'
+'solutions': '解説'
+'Write Your Solution': '解説を書く'
+'What is this?': 'これは何ですか？'
+'preferredPrefix_hint': '希望の問題IDプレフィックスのヒント。'
+'No solutions so far...': 'まだ解説がありません...'
+'View all {0} solutions': 'すべての{0}件の解説を表示'
+'You can create your own training plans and share them with others.': '自分のトレーニングプランを作成して他のユーザーと共有できます。'
+'Go to Solve': '解答へ進む'
+'Contest Closed': 'コンテスト終了'
+'The contest has ended. You can view the problems, but contest submissions are closed.': 'コンテストは終了しました。問題は閲覧できますが、コンテスト提出は締め切られています。'
+'The contest has ended. You can view the problem, but contest submissions are closed.': 'コンテストは終了しました。問題文は閲覧できますが、コンテスト提出は締め切られています。'
+'Confirm to delete this clarification?': 'この質問を削除しますか？'
+'Deleted': '削除しました'
+'Compilers'' Version and Parameters': 'コンパイラのバージョンとパラメータ'
+'Limitations': '制限'
+'IO': '入出力'
+'Judge Status': 'ジャッジ状態'
+'Compile Error': 'コンパイルエラー'
+'Accepted Ratio': '正解率'
+'RP Algorithm': 'RP アルゴリズム'
+'Difficulty Algorithm': '難易度アルゴリズム'
+'Dataset Format': 'テストデータ形式'
+'Forgot Password and/or Username': 'パスワードまたはユーザー名を忘れた場合'
+'Markdown': 'Markdown'
+
+# ページタイトル
+'Security': 'セキュリティ'
+'Manage Contest': 'コンテスト管理'
+'Edit Training Plan': 'トレーニングプランを編集'
+'Domain Dashboard': 'ドメインダッシュボード'
+'Join Domain': 'ドメインに参加'
+'A unique invitation code of up to 8 characters is generated automatically.': '8文字以内の一意な招待コードが自動生成されます。'
+'Enter an invitation code to find and join a domain.': '招待コードを入力して、対応するドメインに参加します。'
+'This invitation link never expires.': 'この招待リンクに有効期限はありません。'
+'Create Training Category': 'トレーニングカテゴリを作成'
+'Edit Training Category': 'トレーニングカテゴリを編集'
+'Enrolled Training Plans': '登録済みトレーニングプラン'
+'View all': 'すべて表示'
+'No enrolled users.': '登録ユーザーはいません。'
+'Viewing progress for': '次のユーザーの進捗を表示中'
+'Back to my progress': '自分の進捗に戻る'
+'Category Name': 'カテゴリ名'
+'Category moved to position {0}. Save to apply.': 'カテゴリを {0} 番目に移動しました。保存すると反映されます。'
+'Drag category handles to reorder, or use Alt + Up/Down. Save to apply this order to everyone in this domain.': 'カテゴリ左側のハンドルをドラッグするか、Alt + 上下キーで並べ替えます。保存するとこのドメインの全ユーザーに適用されます。'
+'Drag to reorder, or use Alt + Up/Down.': 'ドラッグして並べ替え、または Alt + 上下キーを使用。'
+'Dragging {0}. Release to place at position {1}.': '「{0}」をドラッグ中。離すと {1} 番目に配置されます。'
+'Invalid training category order.': 'トレーニングカテゴリの並び順が無効です。更新してやり直してください。'
+'Reorder': '順序変更'
+'Reordering cancelled.': '並べ替えをキャンセルしました。順序は変更されていません。'
+'Sort Training Categories': 'トレーニングカテゴリの並び替え'
+'Training categories changed. Reload before sorting.': 'トレーニングカテゴリが変更されました。並べ替える前に再読み込みしてください。'
+'Search categories...': 'カテゴリを検索...'
+'Training Plans': 'トレーニングプラン'
+'Select all training plans included in this category.': 'このカテゴリに含めるトレーニングプランを選択します。'
+'Delete Category': 'カテゴリを削除'
+'Confirm to delete this category?': 'このカテゴリを削除しますか？'
 '{0} ranked users': 'ランキング対象 {0} 人'
-Forgot Password: パスワードを忘れた
-Please contact the administrator: 管理者にお問い合わせください
-Change Email: メールアドレスを変更
+'Change Email': 'メールアドレスを変更'
+
+# File preview and upload
+'Failed to load PDF': 'PDF の読み込みに失敗しました'
+'{count} files uploaded. Upload stopped at {name}; remaining files were not uploaded.': '{count} 個のファイルをアップロードしました。{name} で停止したため、残りのファイルはアップロードされませんでした。'
 
 # Theme
-Theme color: テーマカラー
-Preset themes: プリセットテーマ
-Custom color: カスタムカラー
-Teal: ティール
-Blue: ブルー
-Violet: バイオレット
-Rose: ローズ
+'Theme color': 'テーマカラー'
+'Preset themes': 'プリセットテーマ'
+'Custom color': 'カスタムカラー'
+'Teal': 'ティール'
+'Blue': 'ブルー'
+'Violet': 'バイオレット'
+'Rose': 'ローズ'
 
 # Font
-Sans-serif: サンセリフ
-Serif: セリフ
-Your Status: あなたのステータス
+'Sans-serif': 'サンセリフ'
+'Serif': 'セリフ'
+'Your Status': 'あなたのステータス'
+
+# Proctoring
+'Active': '有効'
+'Allow token refresh': 'セッショントークンの更新を許可'
+'Authentication keys': '認証キー'
+'Authentication private key': '認証秘密鍵'
+'Authentication public key (Ed25519)': '認証公開鍵 (Ed25519)'
+'Authorization required.': '再認証が必要です。'
+'Changing the required version or rotating keys invalidates current session tokens.': '指定バージョンの変更やキーのローテーションを行うと、現在のセッショントークンは無効化されます。'
+'Deleting logs invalidates the corresponding contest results until logs are uploaded again. Continue?': 'ログを削除すると、再アップロードされるまで対応するコンテスト結果が無効になります。続行しますか？'
+'Enable contest proctoring': 'コンテスト監視を有効化'
+'Enable proctor service': '監視サービスを有効化'
+'Enable the proctor service in system settings first.': '先にシステム管理の監視設定で監視サービスを有効にしてください。'
+'Encrypted final logs.': '暗号化された最終監視ログ'
+'Existing sessions will become invalid. Continue?': '既存のセッションは無効になります。続行しますか？'
+'Final log uploaded': '最終ログがアップロードされました'
+'Final proctor log cannot be replaced.': '最終監視ログを別のファイルに置き換えることはできません。'
+'Finish proctoring in the client and upload the encrypted final log. Failed uploads may be retried within the configured window.': 'クライアントで監視を終了し、暗号化された最終ログをアップロードしてください。失敗した場合は設定された期間内に再試行できます。'
+'Generate authentication keys': '認証キーを生成'
+'Generate authentication keys first.': '最初に認証キーを生成してください。'
+'Generate both key pairs and inject both public keys when building the client. No manual client enrollment is required.': '認証用とログ暗号化用の2組のキーペアを生成し、クライアントビルド時に両方の公開鍵を注入します。手動でのクライアント登録は不要です。'
+'Hack submissions are unavailable in proctored contests.': '監視付きコンテストでは Hack の提出は利用できません。'
+'Invalid encrypted proctor log.': '暗号化された監視ログの形式または完全性検証に失敗しました。'
+'Invalid proctor handshake.': '監視ハンドシェイクの検証に失敗しました。'
+'Invalid proctor request origin.': '監視リクエストの発信元が無効です。'
+'Invalid proctor request proof.': '監視リクエストの署名検証に失敗しました。'
+'Late upload window (days)': '追アップロード許容期間（日）'
+'Log decryption private key': 'ログ復号秘密鍵'
+'Log download failed.': 'ログのダウンロードに失敗しました。'
+'Log encryption public key (RSA-OAEP)': 'ログ暗号化公開鍵 (RSA-OAEP)'
+'Manage authentication keys, session policy and encrypted logs.': '認証キー、セッションポリシー、暗号化ログを管理します。'
+'Maximum log size (MiB)': '最大ログサイズ (MiB)'
+'No proctor logs yet.': '監視ログはまだありません。'
+'Private keys': '秘密鍵'
+'Private keys are server-only. Do not put them in build variables, repositories or chat messages. Closing this dialog clears the display.': '秘密鍵はサーバー専用です。ビルド変数、リポジトリ、チャットメッセージに含めないでください。このダイアログを閉じると表示が消去されます。'
+'Proctor authentication keys are unavailable. Check the server key storage.': '監視認証キーを取得できません。サーバーのキーストレージディレクトリと権限を確認してください。'
+'Proctor authentication required.': '監視クライアントの認証が必要です。'
+'Proctor challenge has already been used.': 'この監視チャレンジは既に使用されています。'
+'Proctor client version mismatch.': '監視クライアントのバージョンが要件を満たしていません。'
+'Proctor environment mismatch.': '監視環境の指紋またはデバイスが一致しません。'
+'Proctor is not configured.': '監視サービスが設定されていないか、無効になっています。'
+'Proctor log is busy. Please retry.': '監視ログを処理中です。しばらく待ってから再試行してください。'
+'Proctor log operation timed out. Please retry.': '監視ログの処理がタイムアウトしました。再試行してください。'
+'Proctor logs': '監視ログ'
+'Proctor policy cannot change after the contest starts.': 'コンテスト開始後に監視設定を変更することはできません。'
+'Proctor request has already been used.': '監視リクエストは既に使用されています。新しいリクエスト署名を生成してください。'
+'Proctor requires HTTPS. Configure the public server URL and trusted proxy.': '監視機能には HTTPS が必要です。公開サーバーの URL と信頼できるプロキシを設定してください。'
+'Proctor session expired or client version mismatch.': '監視セッションの期限が切れたか、クライアントバージョンが一致しません。'
+'Proctor session has already been refreshed.': 'この監視セッションは既に更新されています。新しいトークンを使用してください。'
+'Proctor session is already finished.': '監視セッションは既に終了しています。これ以上の提出はできません。'
+'Proctor session is outside the permitted time window.': '許可された監視時間またはログアップロード期間の外です。'
+'Proctor session refresh is disabled.': '監視セッションのトークン更新は無効になっています。'
+'Proctor settings': '監視設定'
+'Proctor submission lease expired. Please retry.': '監視提出リースが期限切れになりました。再試行してください。'
+'Proctored contest': '監視付きコンテスト'
+'Public keys are build-time trust anchors, not secrets. Never include either private key in the client.': '公開鍵はビルド時に注入される信頼の基盤であり、秘密情報ではありません。秘密鍵をクライアントに含めないでください。'
+'Required client version': '必須クライアントバージョン'
+'Requires a compatible proctor client. Final logs are required for valid results.': '要件を満たす監視クライアントが必要です。結果を有効にするには最終ログのアップロードが必要です。'
+'Results invalid: log pending': '成績無効：ログアップロード待ち'
+'Results provisional: final log required': '暫定成績：最終ログの確認待ち'
+'Revoked': '取り消し済み'
+'Rotate authentication keys': '認証キーをローテーション'
+'Search filename, user, domain or contest': 'ファイル名、ユーザー、ドメイン、コンテストを検索'
+'Session policy': 'セッショントークンポリシー'
+'Token lifetime (seconds)': 'トークン有効期間（秒）'
+'Upload time': 'アップロード日時'
+'Use an up-to-date proctor client to access contest problems.': 'このコンテストは監視が有効になっています。要件を満たす最新の監視クライアントで認証を完了してから問題を確認してください。'
+'Use an up-to-date proctor client to submit.': '最新の互換性のある監視クライアントを使用して提出してください。'
+'Verify client and continue': 'クライアントを検証して続行'
+'View private keys': '秘密鍵を表示'
+'Wait for pending submissions before finishing proctoring.': '処理中の提出が完了してから監視を終了してください。'
+
+# クライアント更新管理
+'25 packages per page': '1ページあたり25パッケージ'
+'ASAR fallback URL': 'ASAR 代替 URL'
+'ASAR must contain a root package.json and a valid entry point.': 'ASAR にはルートの package.json と有効なエントリポイントを含める必要があります。クライアントのパッケージ範囲を修正してください。'
+'ASAR size in bytes': 'ASAR ファイルサイズ（バイト）'
+'All version values may be lowered when publishing. Use a new, higher buildVersion to distribute rollback code to newer clients. Proctor version requirements are unchanged.': '公開時、すべてのバージョン値を下げることができます。新しいクライアントにロールバックコードを配布するには、より大きな新しい buildVersion を使用してください。監視指定バージョンは変更されません。'
+'Authorization may require reselecting the file. Uploaded files are private until published; historical packages can be deleted.': '再認証後にファイルを再選択する必要がある場合があります。アップロードされたファイルは公開されるまで非公開です。過去のパッケージは削除できます。'
+'Authorization may require reselecting the file. Uploaded files are private until published; published package URLs remain available.': '再認証後にファイルを再選択する必要がある場合があります。アップロードされたファイルは公開されるまで非公開です。公開済みパッケージの URL は引き続き有効です。'
+'Changelog': '変更履歴'
+'Choose an uploaded package': 'アップロード済みパッケージを選択'
+'Choose at least one update package.': '少なくとも1つの更新パッケージを選択してください。'
+'Choose either an uploaded package or a download URL for each package type.': 'パッケージの種類ごとに、アップロード済みパッケージを選択するかダウンロード URL を入力してください（両方は選択できません）。'
+'Choose or drop one update file': '更新ファイルを1つ選択またはドロップ'
+'Client update URLs': 'クライアント更新 URL'
+'Clients will read this release at the next update check. Confirm the version, public URLs and package contents before publishing. Continue?': 'クライアントは次回の更新確認時にこのリリースを読み込みます。公開前にバージョン、公開 URL、パッケージ内容に誤りがないことを確認してください。公開を続行しますか？'
+'Configuration fallback URL': '設定代替 URL'
+'Delete package': 'パッケージを削除'
+'Deleting this historical package invalidates its download URL and clears related draft selections. Continue?': 'この過去のパッケージを削除すると、サーバーのダウンロードリンクが無効になり、関連する下書きの選択もクリアされます。続行しますか？'
+'Download JSON': 'JSON をダウンロード'
+'Download URL': 'ダウンロード URL'
+'Draft': '下書き'
+'Draft JSON preview': '下書き JSON プレビュー'
+'Draft saved': '下書きを保存しました'
+'Enter a URL or choose an uploaded package; only one source is used.': 'ダウンロード URL を入力するか、アップロード済みパッケージを選択できます。各パッケージで使用されるソースは1つのみです。'
+'External ASAR URLs require a valid size (bytes) and SHA-256.': '外部 ASAR URL には、有効なファイルサイズ（バイト）と SHA-256 が必要です。'
+'Hot update ASAR': 'ASAR ホットアップデートパッケージ'
+'Increment the version before replacing the ASAR package.': 'ASAR パッケージを置き換える前に、リリースバージョン番号を上げてください。'
+'Informational in the current client.': '現在のクライアントではメタデータとしてのみ使用されます。'
+'Internal build version': '内部ビルドバージョン'
+'Invalid ASAR archive.': 'ASAR ファイルが破損しているか、形式が無効です。'
+'Invalid changelog.': '変更履歴の形式が無効か、長さの上限を超えています。'
+'Invalid update configuration.': '更新設定の形式が無効です。'
+'Invalid update description.': 'バージョン説明の形式が無効か、長さの上限を超えています。'
+'Invalid update package.': '更新パッケージの形式または選択が無効です。'
+'JSON up to 256 KiB; requires exam.targetUrl.': 'JSON は最大 256 KiB で、exam.targetUrl が必要です。'
+'Last published': '最終公開日時'
+'Manifest URL': 'マニフェスト URL'
+'Minimum client version': '最小クライアントバージョン'
+'Minimum client compatibility version; independent of update ordering.': '最小互換バージョン（更新順序とは独立）。'
+'Minimum version cannot exceed the release version.': '最小バージョンはリリースバージョンを超えることはできません。'
+'No update packages yet.': '更新パッケージはまだありません。'
+'Not published': '未公開'
+'One change per line.': '1行に1つの変更点を入力してください。'
+'Package': 'パッケージ'
+'Package URL': 'パッケージ URL'
+'Package deleted': 'パッケージを削除しました'
+'Package type': 'パッケージの種類'
+'Package version': 'パッケージバージョン'
+'Package version must match the release version.': 'パッケージバージョンはリリースバージョンと一致している必要があります。'
+'Packages up to 240 MiB. ASAR must include package.json and the application entry point.': 'パッケージは最大 240 MiB です。ASAR には package.json とエントリポイントが含まれている必要があります。'
+'Public OJ origin': '公開 OJ オリジン'
+'Publish client versions, packages and update manifests.': 'クライアントバージョン、パッケージ、更新マニフェストを管理します。'
+'Publish update': '更新を公開'
+'Published JSON': '公開済み JSON'
+'Published manifest URL': '公開済みマニフェスト URL'
+'Published package URL': '公開済みパッケージ URL'
+'Publishing does not change the required version in proctor settings. ASAR replacements require a higher version.': '公開しても監視設定の必須バージョンは変更されません。ASAR を置き換える場合はバージョンを上げる必要があります。'
+'Release configuration': 'リリース設定'
+'Release description': 'リリースの説明'
+'Release version': 'リリースバージョン'
+'Release version cannot go backwards.': 'リリースバージョンを現在公開されているバージョンより低くすることはできません。'
+'Remote client configuration': 'リモートクライアント設定'
+'Save draft': '下書きを保存'
+'Search package filename or version': 'パッケージファイル名またはバージョンを検索'
+'The client must support buildVersion comparison before using this manifest for update ordering. Publishing lower values is allowed; clients do not automatically downgrade.': 'このマニフェストで更新順序を決定する前に、クライアントが buildVersion の比較に対応している必要があります。より低い値の公開も許可されますが、クライアントは自動的にダウングレードしません。'
+'The current client does not enforce minimum versions or verify SHA-256. Installer links are for manual downloads; fallback and signature support require client changes.': '現在のクライアントは最小バージョンの強制や SHA-256 の検証を行いません。インストーラーのリンクは手動ダウンロード用です。フォールバックや署名サポートにはクライアントの修正が必要です。'
+'The manifest returns 404 until the first publication. Put this URL in the client build configuration.': '最初の公開までマニフェストは 404 を返します。この URL をクライアントのビルド設定に記述してください。'
+'The package is unavailable. File cleanup will be retried automatically.': 'パッケージは利用できなくなりました。ファイルのクリーンアップは自動的に再試行されます。'
+'This is an unpublished preview. The server validates it and sets releaseDate when publishing.': 'これは未公開のプレビューです。公開時にサーバーによって検証され、releaseDate が設定されます。'
+'This package is used by the published release. Publish a replacement before deleting it.': 'このパッケージは公開中のリリースで使用されています。削除する前に代替パッケージを公開してください。'
+'Update file': '更新ファイル'
+'Update manifest JSON': '更新マニフェスト JSON'
+'Update package file is missing or corrupted.': '更新パッケージファイルが見つからないか破損しています。再アップロードしてください。'
+'Update package file is missing.': '更新パッケージファイルが見つかりません。再アップロードしてください。'
+'Update package is too large or empty.': '更新パッケージが空であるか、サイズ上限を超えています。'
+'Update package library': '更新パッケージライブラリ'
+'Update published': '更新を公開しました'
+'Update settings': '更新設定'
+'Update settings changed. Reload before saving.': '更新設定が変更されました。再読み込みしてから保存してください。'
+'Upload a Windows executable package.': 'Windows 実行可能ファイルパッケージをアップロードしてください。'
+'Upload completed': 'アップロード完了'
+'Upload is a draft. Publish to make it available to clients.': 'アップロードされました（下書き）。クライアントが利用できるようにするには公開してください。'
+'Upload update package': '更新パッケージをアップロード'
+'Use HTTPS without a path. Published URLs do not depend on the current domain.': 'パスを含まない HTTPS URL を使用してください。公開 URL は現在のドメインに依存しません。'
+'Use a complete HTTPS URL.': '完全な HTTPS URL を入力してください（ローカル開発では localhost HTTP を使用可能）。'
+'Use a 10-digit buildVersion in YYYYMMDDNN format, for example 2026101001.': 'YYYYMMDDNN 形式の10桁の内部バージョン番号を入力してください（例：2026101001）。日付は有効である必要があります。'
+'Use a stable numeric version, for example 1.2.3.': '1.2.3 のような安定した数値バージョンを使用してください。'
+'Use the package library below to find older packages.': '過去のパッケージを検索するには、以下のパッケージライブラリを使用してください。'
+'Use this package': 'このパッケージを使用'
+'Used by the published release': '公開済みリリースで使用中'
+'View draft': '下書きを表示'
+'View published': '公開済みバージョンを表示'
+'Windows installer': 'Windows インストーラー'
+'Windows portable package': 'Windows ポータブルパッケージ'
+'buildVersion: YYYYMMDDNN, for example 2026101001. Used for update ordering, not the display version.': 'buildVersion：YYYYMMDDNN 形式（例：2026101001）。表示バージョンではなく更新順序の判定に使用されます。'
 
 # コンテスト問題のタイマー
-Contest starts in: コンテスト開始まで
-Contest time remaining: コンテストの残り時間
-Time on this problem: この問題の経過時間
-Visible time on this problem; saved in this tab.: この問題のページを表示していた時間。このタブに保存されます。
+'Contest starts in': 'コンテスト開始まで'
+'Contest time remaining': 'コンテストの残り時間'
+'Time on this problem': 'この問題の経過時間'
+'Visible time on this problem; saved in this tab.': 'この問題のページを表示していた時間。このタブに保存されます。'
 
-# # Reused by matching identical Chinese translations in this locale
-Auto: 自動
-Create a contest: コンテストを作成
-Enrolled: 登録済み
-New Filename: 新しいファイル名
-Ready (☆▽☆): 予定
-Test Case: テストケース
-other: その他
-problem_type.communication: コミュニケーション
-problem_type.default: 伝統
-problem_type.interactive: インタラクティブ
-problem_type.objective: 客観問題
-problem_type.submit_answer: 解答提出
-setting_domain: ドメイン設定
-粘贴内容超过限制: ペースト制限を超過しました
+# User contribution history
+'Accepted Problems in This Domain': 'このドメインで正解した問題'
+'All-time longest streak': '最長連続解答日数'
+'All-time solved': '累計正解問題数'
+'Contribution history': 'コントリビューション履歴'
+'Contribution year': '対象年'
+'Daily solved problems': '1日の正解問題数'
+'Daily solved problems in {0}': '{0} 年の日別解答ヒートマップ'
+'Dates use UTC+8. Recent year and month mean the last 365 and 30 days, including today.': '日付は UTC+8 基準です。直近1年および直近1ヶ月は、本日を含む直近 365 日と 30 日です。'
+'Fri': '金'
+'Less': '少'
+'Longest streak in the last 30 days': '直近30日間の最長連続日数'
+'Longest streak in the last 365 days': '直近365日間の最長連続日数'
+'Mon': '月'
+'More': '多'
+'No problems solved yet.': 'まだ正解した問題がありません。'
+'Solved in the last 30 days': '直近30日間の正解数'
+'Solved in the last 365 days': '直近365日間の正解数'
+'Wed': '水'
+'days': '日'
+'{0} problems solved in {1}': '{1} 年に {0} 問正解'
+'{0}: {1} problems solved': '{0}：{1} 問解決'
+
+# チーム独立監視とコンテスト早期終了
+'All team logs uploaded': 'チーム全員のログがアップロードされました'
+'All team members must proctor independently and upload their own final logs.': 'チームメンバーはそれぞれ自身のアカウントで監視を受け、各自の最終ログをアップロードする必要があります。全員のログがアップロードされてからチーム成績が有効になります。'
+'End contest early': 'コンテストを早期終了'
+'End contest for the whole team': 'チーム全員のコンテストを終了'
+'Logs still required from: {0}': '未アップロード：{0}'
+'My log pending': '自分のログ未アップロード'
+'My log uploaded': '自分のログをアップロード済み'
+'Record is outside the contest.': 'この提出記録は現在のコンテストのものではありません。'
+'Team logs: {0}/{1}': 'チームログ：{0}/{1}'
+'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.': 'これによりチームメンバー全員のコンテストが終了し、提出できなくなります。個人の監視は終了しないため、各メンバーはクライアントで監視を終了して各自のログをアップロードする必要があります。'
+'This ends the contest for every teammate. Nobody on the team will be able to submit again.': 'これによりチームメンバー全員のコンテストが終了します。チームの誰も再提出できなくなります。'
+'This ends your contest. You must still end proctoring and upload your log in the client.': 'これによりあなたのコンテストが終了し、以降は提出できなくなります。監視が有効な場合は、クライアントで監視を終了してログをアップロードする必要があります。'
+'This ends your contest. You will not be able to submit again.': 'これによりあなたのコンテストが終了します。以降は再提出できなくなります。'
+
+# チーム名と参加メンバーの競合
+'A team named {0} already exists in this domain.': 'このドメインには「{0}」という名前のチームが既に存在します。別のチーム名を使用してください。'
+'Team member {0} has already entered this contest individually.': 'チームメンバー {0} は既に個人としてこのコンテストに参加しています。'
+'Team member {0} has already entered this contest with team {1}.': 'チームメンバー {0} は既にチーム「{1}」としてこのコンテストに参加しています。'
