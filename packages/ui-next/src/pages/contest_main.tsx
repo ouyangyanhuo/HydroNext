@@ -258,7 +258,14 @@ export default function ContestMainPage() {
             className="hydro-contest-header-actions__select hydro-contest-header-actions__select--rule"
           />
           {user._id > 0 && (
-            <Button component={Link} to="contest_team" size="xs" variant="light">
+            <Button
+              component={Link}
+              to="contest_team"
+              size="xs"
+              variant="filled"
+              leftSection={<IconUsers size={15} stroke={1.9} />}
+              className="hydro-contest-header-actions__team"
+            >
               {t('My Teams')}
             </Button>
           )}

@@ -567,6 +567,13 @@ No accepted problems: 暫無已通過題目
 Problem Tags: 題目標籤
 Solved: 已解決
 RP: RP
+About RP: 關於 RP
+How RP is calculated: RP 的含義與計算規則
+RP combines problem points, rated-contest points and extra adjustments within this domain. It is not the solved-problem count.: RP 是本域綜合實力積分，由題目分、比賽分和額外調整組成，不等同於解題數。
+'Problem total S: sum min(score, 100) × difficulty / 100 for public problems with at least one accepted submission. Your own problems are excluded; each problem counts once.': '題目累計分 S：對公開且已有通過紀錄的題目，累加 min(題目得分, 100) × 難度 / 100。自己建立的題目不計入，同一題目不重複累計。'
+Difficulty uses the problem setting, otherwise submission statistics, with a fallback of 5. Problem points = max(0, min(S, ln(S) / ln(1.03))); zero when S = 0.: 難度優先採用題目設定，否則根據提交統計估算，預設為 5。題目分 = max(0, min(S, ln(S) / ln(1.03)))；S 為 0 時題目分為 0。
+Rated contests use a Codeforces-style rating algorithm based on ranks and opponent ratings. Contest points = max(1, rating / 4 - 375). The current script processes at most 10 contests.: 計分比賽採用類 Codeforces Rating 演算法，結合名次和對手實力更新評分。比賽分 = max(1, rating / 4 - 375)，目前指令碼最多處理 10 場計分比賽。
+Final RP = max(0, problem points + contest points + extra adjustments). Updated by the daily task or administrator recalculation, not immediately after each submission.: 最終 RP = max(0, 題目分 + 比賽分 + 額外調整)。由每日任務或管理員重新計算更新，並非每次提交後立即更新。
 Last active: 最後活躍
 Edit Profile: 編輯資料
 Send Message: 傳送訊息

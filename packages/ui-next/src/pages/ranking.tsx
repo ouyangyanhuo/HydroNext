@@ -1,11 +1,11 @@
 import './ranking.css';
 
-import { Group, Stack, Table, Text, TextInput, Title } from '@mantine/core';
+import { Group, Stack, Table, Text, TextInput, Title, Tooltip } from '@mantine/core';
 import {
-  IconChartBar, IconCrown, IconMedal, IconSearch, IconTrophy,
+  IconChartBar, IconCrown, IconInfoCircle, IconMedal, IconSearch, IconTrophy,
 } from '@tabler/icons-react';
 import { useDeferredValue, useState } from 'react';
-import { Button } from '@/components/common/button';
+import { ActionIcon, Button } from '@/components/common/button';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
 import { UserAvatar } from '@/components/user/user-avatar';
@@ -24,6 +24,45 @@ interface RankingUser {
 
 function getRp(user: RankingUser) {
   return Math.round(Number(user.rp) || 0);
+}
+
+function RpInformation() {
+  const { t } = useI18n();
+  return <Tooltip
+    withArrow
+    withinPortal
+    multiline
+    w={420}
+    maw="calc(100vw - 32px)"
+    openDelay={150}
+    events={{ hover: true, focus: true, touch: true }}
+    label={<Stack gap="xs">
+      <Text size="sm" fw="var(--hydro-weight-semibold)">{t('How RP is calculated')}</Text>
+      <Text size="xs">{t(
+        'RP combines problem points, rated-contest points and extra adjustments within this domain. It is not the solved-problem count.',
+      )}</Text>
+      <Text size="xs">{t(
+        'Problem total S: sum min(score, 100) × difficulty / 100 for public problems with at least one accepted submission.'
+        + ' Your own problems are excluded; each problem counts once.',
+      )}</Text>
+      <Text size="xs">{t(
+        'Difficulty uses the problem setting, otherwise submission statistics, with a fallback of 5.'
+        + ' Problem points = max(0, min(S, ln(S) / ln(1.03))); zero when S = 0.',
+      )}</Text>
+      <Text size="xs">{t(
+        'Rated contests use a Codeforces-style rating algorithm based on ranks and opponent ratings.'
+        + ' Contest points = max(1, rating / 4 - 375). The current script processes at most 10 contests.',
+      )}</Text>
+      <Text size="xs">{t(
+        'Final RP = max(0, problem points + contest points + extra adjustments).'
+        + ' Updated by the daily task or administrator recalculation, not immediately after each submission.',
+      )}</Text>
+    </Stack>}
+  >
+    <ActionIcon variant="subtle" color="gray" size="xs" aria-label={t('About RP')}>
+      <IconInfoCircle size={15} stroke={1.8} aria-hidden="true" />
+    </ActionIcon>
+  </Tooltip>;
 }
 
 export default function RankingPage() {
@@ -130,7 +169,12 @@ export default function RankingPage() {
                 <Table.Th>{t('Rank')}</Table.Th>
                 <Table.Th>{t('User')}</Table.Th>
                 <Table.Th>{t('Solved')}</Table.Th>
-                <Table.Th>{t('RP')}</Table.Th>
+                <Table.Th>
+                  <Group gap={4} justify="center" wrap="nowrap">
+                    <span>{t('RP')}</span>
+                    <RpInformation />
+                  </Group>
+                </Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>

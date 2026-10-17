@@ -601,6 +601,13 @@ No accepted problems: No accepted problems
 Problem Tags: Problem Tags
 Solved: Solved
 RP: RP
+About RP: About RP
+How RP is calculated: How RP is calculated
+RP combines problem points, rated-contest points and extra adjustments within this domain. It is not the solved-problem count.: RP combines problem points, rated-contest points and extra adjustments within this domain. It is not the solved-problem count.
+'Problem total S: sum min(score, 100) × difficulty / 100 for public problems with at least one accepted submission. Your own problems are excluded; each problem counts once.': 'Problem total S: sum min(score, 100) × difficulty / 100 for public problems with at least one accepted submission. Your own problems are excluded; each problem counts once.'
+Difficulty uses the problem setting, otherwise submission statistics, with a fallback of 5. Problem points = max(0, min(S, ln(S) / ln(1.03))); zero when S = 0.: Difficulty uses the problem setting, otherwise submission statistics, with a fallback of 5. Problem points = max(0, min(S, ln(S) / ln(1.03))); zero when S = 0.
+Rated contests use a Codeforces-style rating algorithm based on ranks and opponent ratings. Contest points = max(1, rating / 4 - 375). The current script processes at most 10 contests.: Rated contests use a Codeforces-style rating algorithm based on ranks and opponent ratings. Contest points = max(1, rating / 4 - 375). The current script processes at most 10 contests.
+Final RP = max(0, problem points + contest points + extra adjustments). Updated by the daily task or administrator recalculation, not immediately after each submission.: Final RP = max(0, problem points + contest points + extra adjustments). Updated by the daily task or administrator recalculation, not immediately after each submission.
 Last active: Last active
 Edit Profile: Edit Profile
 Male: Male

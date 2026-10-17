@@ -730,6 +730,13 @@ No accepted problems: 暂无已通过题目
 Problem Tags: 题目标签
 Solved: 已解决
 RP: RP
+About RP: 关于 RP
+How RP is calculated: RP 的含义与计算规则
+RP combines problem points, rated-contest points and extra adjustments within this domain. It is not the solved-problem count.: RP 是本域综合实力积分，由题目分、比赛分和额外调整组成，不等同于解题数。
+'Problem total S: sum min(score, 100) × difficulty / 100 for public problems with at least one accepted submission. Your own problems are excluded; each problem counts once.': '题目累计分 S：对公开且已有通过记录的题目，累加 min(题目得分, 100) × 难度 / 100。自己创建的题目不计入，同一题目不重复累计。'
+Difficulty uses the problem setting, otherwise submission statistics, with a fallback of 5. Problem points = max(0, min(S, ln(S) / ln(1.03))); zero when S = 0.: 难度优先采用题目设置，否则根据提交统计估算，缺省为 5。题目分 = max(0, min(S, ln(S) / ln(1.03)))；S 为 0 时题目分为 0。
+Rated contests use a Codeforces-style rating algorithm based on ranks and opponent ratings. Contest points = max(1, rating / 4 - 375). The current script processes at most 10 contests.: 计分比赛采用类 Codeforces Rating 算法，结合名次和对手实力更新评分。比赛分 = max(1, rating / 4 - 375)，当前脚本最多处理 10 场计分比赛。
+Final RP = max(0, problem points + contest points + extra adjustments). Updated by the daily task or administrator recalculation, not immediately after each submission.: 最终 RP = max(0, 题目分 + 比赛分 + 额外调整)。由每日任务或管理员重算更新，并非每次提交后立即刷新。
 Last active: 最后活跃
 Edit Profile: 编辑资料
 Send Message: 发送消息
