@@ -634,10 +634,11 @@ a {
 
 .hydro-bulletin__toggle {
   flex-shrink: 0;
-  height: 24px;
-  padding: 0 8px;
+  min-width: 104px;
+  height: 36px;
+  padding: 0 12px;
   color: var(--hydro-primary-strong);
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 600;
   transition: color var(--hydro-duration-fast) var(--hydro-ease-out),
               background-color var(--hydro-duration-fast) var(--hydro-ease-out);

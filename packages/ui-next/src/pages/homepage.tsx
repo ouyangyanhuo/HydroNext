@@ -133,12 +133,12 @@ function Bulletin({ bulletin }: { bulletin: string }) {
         {isOverflowing && (
           <Button
             variant="subtle"
-            size="compact-xs"
+            size="sm"
             className="hydro-bulletin__toggle"
             onClick={() => setExpanded(!expanded)}
             rightSection={(
               <IconChevronDown
-                size={13}
+                size={16}
                 stroke={2}
                 className={`hydro-bulletin__toggle-icon ${expanded ? 'hydro-bulletin__toggle-icon--expanded' : ''}`}
                 aria-hidden="true"
