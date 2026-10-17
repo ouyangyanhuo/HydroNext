@@ -1,4 +1,4 @@
-import { Anchor, Badge, Card, Group, Paper, SimpleGrid, Stack, Tabs, Text, Title } from '@mantine/core';
+import { Anchor, Card, Group, Paper, SimpleGrid, Stack, Tabs, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { Paginator } from '@/components/common/paginator';
@@ -276,23 +276,27 @@ export default function UserDetailPage() {
           </Tabs.Panel>
         </Tabs>
 
+        {args.contributions && <ContributionCard key={udoc._id} history={args.contributions} />}
         {tags.length > 0 && (
           <Card withBorder p="lg" className="hydro-content-card hydro-user-profile__tags">
-            <Title order={4} mb="sm">{t('Problem Tags')}</Title>
-            <Group gap="xs">
+            <Group justify="space-between" align="flex-start" gap="md" mb="lg">
+              <Title order={4}>{t('Problem Tags')}</Title>
+              <Text size="xs" c="dimmed">{t('Accepted Problems in This Domain')}</Text>
+            </Group>
+            <SimpleGrid component="dl" cols={{ base: 1, xs: 2, sm: 3 }} spacing="sm" m={0}>
               {tags.map((tag: any) => {
                 const name = Array.isArray(tag) ? tag[0] : (tag.name || tag._id);
                 const count = Array.isArray(tag) ? tag[1] : tag.count;
                 return (
-                  <Badge key={name} variant="light">
-                    {name} ({Number(count) || 0})
-                  </Badge>
+                  <div key={name} className="hydro-user-profile__tag">
+                    <Text component="dt" size="sm" c="dimmed" className="hydro-user-profile__tag-name">{name}</Text>
+                    <Text component="dd" fw={650} className="hydro-user-profile__tag-count">{(Number(count) || 0).toLocaleString()}</Text>
+                  </div>
                 );
               })}
-            </Group>
+            </SimpleGrid>
           </Card>
         )}
-        {args.contributions && <ContributionCard key={udoc._id} history={args.contributions} />}
       </Stack>
     </main>
   );

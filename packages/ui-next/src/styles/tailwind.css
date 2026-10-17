@@ -3419,9 +3419,37 @@ a {
   transform: translateX(3px);
 }
 
-.hydro-user-profile__tags .mantine-Badge-root {
-  color: var(--hydro-primary-strong);
-  background: var(--hydro-primary-soft);
+.hydro-user-profile__tags {
+  min-width: 0;
+}
+
+.hydro-user-profile__tag {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-md);
+  background: color-mix(in srgb, var(--hydro-surface-muted) 45%, var(--hydro-surface-raised));
+}
+
+.hydro-user-profile__tag-name {
+  overflow-wrap: anywhere;
+}
+
+.hydro-user-profile__tag-count {
+  margin: 0;
+  color: var(--hydro-text);
+  font-size: 26px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .hydro-user-profile__tags { padding: 16px; }
+  .hydro-user-profile__tag-count { font-size: 23px; }
 }
 
 @media (max-width: 700px) {

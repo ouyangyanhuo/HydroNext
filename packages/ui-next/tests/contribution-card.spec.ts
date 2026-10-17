@@ -43,7 +43,10 @@ function component(filename: string, mocks: Record<string, any>) {
     const source = readFileSync(new URL(filename, import.meta.url), 'utf8');
     const code = transformSync(source, { loader: 'tsx', format: 'cjs', jsx: 'automatic' }).code;
     const module = { exports: {} as any };
-    runInNewContext(code, { module, exports: module.exports, require: (name: string) => mocks[name] ?? require(name) });
+    runInNewContext(code, {
+        module, exports: module.exports, window: dom.window, URLSearchParams,
+        require: (name: string) => mocks[name] ?? require(name),
+    });
     return module.exports;
 }
 
@@ -63,6 +66,44 @@ const fixture = {
     days: [{ date: '2024-02-29', count: 7 }, { date: '2026-10-15', count: 2 }],
     summary: { total: 9, lastYear: 2, lastMonth: 2, longestStreak: 1, lastYearLongestStreak: 1, lastMonthLongestStreak: 1 },
 };
+
+test('profile problem tags follow contribution history and preserve counts with responsive metric markup', async () => {
+    const Profile = component('../src/pages/user_detail.tsx', {
+        '@/components/common/button': buttons,
+        '@/components/common/paginator': { Paginator: () => null },
+        '@/components/common/time-display': { TimeDisplay: () => null },
+        '@/components/link': { Link: ({ children }: any) => h('a', null, children) },
+        '@/components/markdown/markdown-renderer': { MarkdownRenderer: () => null },
+        '@/components/user/contribution-card': { ContributionCard },
+        '@/components/user/owned-honor-frames': { OwnedHonorFrames: () => null },
+        '@/components/user/user-avatar': { UserAvatar: () => null },
+        '@/context/page-data': { usePageData: () => ({ args: {
+            udoc: { _id: 42, uname: 'Ada' }, contributions: fixture,
+            tags: [['binary search', 7], { name: 'DP', count: 4 }, { _id: '图论', count: 2 }],
+        } }) },
+        '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/team/record' },
+        '@/hooks/use-i18n': { useI18n: () => ({ t, language: 'zh' }) },
+        '@/stores/session': { useSessionStore: (select: any) => select({ user: { _id: 0 } }) },
+        '@/utils/user-name': { formatUserName: (user: any) => user.uname },
+    }).default;
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+        await act(async () => root.render(h(MantineProvider, null, h(Profile))));
+        const contribution = host.querySelector('.hydro-contributions')!;
+        const tags = host.querySelector('.hydro-user-profile__tags')!;
+        assert.equal(contribution.nextElementSibling, tags);
+        assert.ok(tags.textContent.includes(t('Problem Tags')));
+        assert.deepEqual([...tags.querySelectorAll('dt')].map((item) => item.textContent), ['binary search', 'DP', '图论']);
+        assert.deepEqual([...tags.querySelectorAll('dd')].map((item) => item.textContent), ['7', '4', '2']);
+        assert.equal(tags.querySelector('.mantine-Badge-root'), null);
+        assert.ok(tags.querySelector('dl'));
+    } finally {
+        await act(async () => root.unmount());
+        host.remove();
+    }
+});
 
 async function mount(history = fixture) {
     const host = document.createElement('div');
