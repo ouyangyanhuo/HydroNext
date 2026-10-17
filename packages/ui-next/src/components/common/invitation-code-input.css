@@ -29,6 +29,7 @@
               box-shadow var(--hydro-duration-fast) var(--hydro-ease-out);
 }
 
+.hydro-invitation-code__character[data-filled],
 .hydro-invitation-code__character:hover:not(:disabled),
 .hydro-invitation-code__character:focus {
   border-bottom-color: var(--hydro-primary);

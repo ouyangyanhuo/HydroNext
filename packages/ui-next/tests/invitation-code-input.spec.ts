@@ -61,6 +61,13 @@ test('invitation code slots preserve positions, advance focus, handle paste, and
             Object.defineProperty(event, 'clipboardData', { value: { getData: () => value } });
             inputs[index].dispatchEvent(event);
         });
+        await act(async () => inputs[6].focus());
+        assert.equal(document.activeElement, inputs[0], 'clicking ahead focuses the first empty slot');
+        assert.equal(inputs[6].tabIndex, -1, 'future empty slots are skipped by Tab');
+        await enter(6, 'x');
+        assert.equal(currentValue, '', 'input cannot bypass an earlier empty slot');
+        await key(0, 'End');
+        assert.equal(document.activeElement, inputs[0], 'End cannot skip empty slots');
         await key(0, 'Enter');
         assert.equal(submissions, 0);
         for (let index = 0; index < 8; index++) {
@@ -68,6 +75,7 @@ test('invitation code slots preserve positions, advance focus, handle paste, and
             // eslint-disable-next-line no-await-in-loop
             await enter(index, 'abc23456'[index]);
             assert.equal(document.activeElement, inputs[Math.min(index + 1, 7)]);
+            assert.ok(inputs[index].hasAttribute('data-filled'), 'filled slots retain their active underline');
         }
         assert.equal(currentValue, 'ABC23456');
         assert.ok(isInvitationCodeComplete(currentValue));
@@ -75,6 +83,11 @@ test('invitation code slots preserve positions, advance focus, handle paste, and
         assert.equal(currentValue, 'AB 23456');
         assert.equal(inputs[3].value, '2');
         assert.equal(isInvitationCodeComplete(currentValue), false);
+        assert.equal(inputs[2].hasAttribute('data-filled'), false);
+        await act(async () => inputs[7].focus());
+        assert.equal(document.activeElement, inputs[2], 'an edited gap must be filled before later slots');
+        await enter(7, 'z');
+        assert.equal(currentValue, 'AB 23456', 'later characters cannot change while an earlier slot is empty');
         await key(2, 'Enter');
         assert.equal(submissions, 0);
         await enter(2, 'c');
@@ -87,7 +100,7 @@ test('invitation code slots preserve positions, advance focus, handle paste, and
         await paste(0, 'ABCD23456');
         assert.equal(currentValue, '', 'overlong paste is rejected, not truncated');
         assert.ok(document.querySelector('[aria-invalid="true"]'));
-        await paste(0, 'ab');
+        await paste(6, 'ab');
         assert.equal(currentValue, 'AB');
         assert.equal(document.activeElement, inputs[2]);
         await key(2, 'Backspace');
