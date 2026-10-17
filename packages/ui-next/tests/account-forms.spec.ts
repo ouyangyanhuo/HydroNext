@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
 import { formatErrorMessage } from '../src/utils/error.ts';
+import { INVITATION_CODE_LENGTH, isInvitationCodeComplete } from '../src/utils/invitation-code';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -42,7 +43,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
     const notices: any[] = [];
     const calls: any[] = [];
     const copied: string[] = [];
-    const mocks = {
+    const mocks: Record<string, any> = {
         '@mantine/core': mantine,
         '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
         '@/components/common/button': { Button: mantine.Button, ActionIcon: mantine.ActionIcon },
@@ -80,11 +81,20 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         '@/context/page-data': { usePageData: () => ({ args }) },
         '@/stores/session': { useSessionStore: (select: any) => select({ ui, user, language: 'en' }) },
         '@/utils/error': { formatErrorMessage },
+        '@/utils/invitation-code': { INVITATION_CODE_LENGTH, isInvitationCodeComplete },
+        './invitation-code-input.css': {},
         '@/components/common/time-display': { TimeDisplay: () => null },
         '@/components/markdown/markdown-renderer': { MarkdownRenderer: () => null },
         '@/utils/i18n-content': { extractLocalizedContent: (content: string) => content },
         '@/utils/user-name': { formatUserName: (value: any) => value.uname },
     };
+    if (page === 'contest_team') {
+        const component = { exports: {} as any };
+        runInNewContext(transformSync(readFileSync(new URL('../src/components/common/invitation-code-input.tsx', import.meta.url), 'utf8'), {
+            loader: 'tsx', format: 'cjs', jsx: 'automatic',
+        }).code, { module: component, exports: component.exports, require: (id: string) => mocks[id] ?? require(id) });
+        mocks['@/components/common/invitation-code-input'] = component.exports;
+    }
     const module = { exports: {} as any };
     const code = transformSync(readFileSync(new URL(`../src/pages/${page}.tsx`, import.meta.url), 'utf8'), {
         loader: 'tsx', format: 'cjs', jsx: 'automatic',
@@ -106,6 +116,12 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         async input(index: number, value: string) {
             const input = host.querySelectorAll('input')[index];
             await act(async () => {
+                if (page === 'contest_team' && index === 0) {
+                    const event = new dom.window.Event('paste', { bubbles: true, cancelable: true });
+                    Object.defineProperty(event, 'clipboardData', { value: { getData: () => value } });
+                    input.dispatchEvent(event);
+                    return;
+                }
                 Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!.call(input, value);
                 input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
             });
@@ -212,7 +228,7 @@ test('team page replaces pending invites with a case-insensitive invitation-code
         assert.ok(f.host.textContent?.includes('Join a Team'));
         assert.ok(!f.host.textContent?.includes('Old invitation'));
         await f.input(0, 'abcdefgh');
-        assert.equal(f.host.querySelector('input')!.value, 'ABCDEFGH');
+        assert.equal([...f.host.querySelectorAll<HTMLInputElement>('.hydro-invitation-code input')].map((input) => input.value).join(''), 'ABCDEFGH');
         await f.submit();
         assert.deepEqual(JSON.parse(f.calls[0].init.body), { operation: 'join', code: 'ABCDEFGH' });
         assert.equal(f.calls[0].url, 'https://oj.example/d/team/contest/team');
@@ -254,7 +270,7 @@ test('rejected team code requests keep the code and display an error notificatio
         await f.input(0, 'ABCDEFGH');
         await f.submit();
         assert.equal(f.notices[0].color, 'red');
-        assert.equal(f.host.querySelector('input')!.value, 'ABCDEFGH');
+        assert.equal([...f.host.querySelectorAll<HTMLInputElement>('.hydro-invitation-code input')].map((input) => input.value).join(''), 'ABCDEFGH');
         assert.equal(f.navigations.length, 0);
     } finally { await f.close(); }
 });
@@ -266,7 +282,7 @@ test('expired sessions follow the authentication redirect without displaying a f
         await f.submit();
         assert.deepEqual(f.navigations, ['/d/team/login?redirect=team']);
         assert.equal(f.notices.length, 0);
-        assert.equal(f.host.querySelector('input')!.value, 'ABCDEFGH');
+        assert.equal([...f.host.querySelectorAll<HTMLInputElement>('.hydro-invitation-code input')].map((input) => input.value).join(''), 'ABCDEFGH');
     } finally { await f.close(); }
 });
 

@@ -24,6 +24,7 @@ test('joining a domain requires exactly eight characters for both Continue and E
         '@mantine/notifications': { notifications: {} },
         '@/components/common/button': { Button: 'Button' },
         '@/components/common/confirm-dialog': { ConfirmDialog: 'ConfirmDialog' },
+        '@/components/common/invitation-code-input': { InvitationCodeInput: 'InvitationCodeInput' },
         '@/components/common/page-header': { PageHeader: 'PageHeader' },
         '@/components/link': { Link: 'Link' },
         '@/context/page-data': { usePageData: () => ({ args: {} }) },
@@ -33,6 +34,7 @@ test('joining a domain requires exactly eight characters for both Continue and E
         '@/stores/session': { useSessionStore: (select: (state: unknown) => unknown) => select({ user: {} }) },
         '@/utils/avatar': {},
         '@/utils/error': {},
+        '@/utils/invitation-code': { isInvitationCodeComplete: (value: string) => /^[A-Z0-9]{8}$/.test(value) },
     };
     const module = { exports: {} as any };
     const code = transformSync(readFileSync(new URL('../src/pages/home_domain.tsx', import.meta.url), 'utf8'), {
@@ -55,19 +57,18 @@ test('joining a domain requires exactly eight characters for both Continue and E
         };
         visit(module.exports.default());
         return {
-            input: elements.find((element) => element.type === 'TextInput').props,
+            input: elements.find((element) => element.type === 'InvitationCodeInput').props,
             button: elements.find((element) => element.type === 'Button' && element.props.children === 'Continue').props,
         };
     }
     for (const value of ['', 'ABC2345', 'ABC234567', 'ABC23456']) {
-        render().input.onChange({ currentTarget: { value } });
+        render().input.onChange(value);
         const { input, button } = render();
         const valid = value.length === 8;
         assert.equal(button.disabled, !valid, value);
-        assert.equal(input.maxLength, undefined, 'overlong input must not be silently truncated into a valid code');
         const before = destinations.length;
         button.onClick();
-        input.onKeyDown({ key: 'Enter' });
+        input.onSubmit();
         assert.equal(destinations.length - before, valid ? 2 : 0, value);
     }
     assert.ok(destinations.every((url) => url === '/domain/join?code=ABC23456'));

@@ -1,8 +1,9 @@
-import { Avatar, Card, Group, Modal, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Avatar, Card, Group, Modal, ScrollArea, Stack, Table, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
+import { InvitationCodeInput } from '@/components/common/invitation-code-input';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
@@ -12,6 +13,7 @@ import { PRIV, usePermission } from '@/hooks/use-permission';
 import { useSessionStore } from '@/stores/session';
 import { getAvatarUrl } from '@/utils/avatar';
 import { formatErrorMessage } from '@/utils/error';
+import { isInvitationCodeComplete } from '@/utils/invitation-code';
 
 export default function HomeDomainPage() {
   const { args } = usePageData();
@@ -24,7 +26,7 @@ export default function HomeDomainPage() {
   const [leaveTarget, setLeaveTarget] = useState<string | null>(null);
   const [joinOpened, setJoinOpened] = useState(false);
   const [invitationCode, setInvitationCode] = useState('');
-  const canJoin = /^[A-Z0-9]{8}$/.test(invitationCode);
+  const canJoin = isInvitationCodeComplete(invitationCode);
 
   const ddocs = args.ddocs || [];
   const roles = args.role || {};
@@ -216,14 +218,12 @@ export default function HomeDomainPage() {
       >
         <Stack gap="md">
           <Text size="sm" c="dimmed">{t('Enter an invitation code to find and join a domain.')}</Text>
-          <TextInput
+          <InvitationCodeInput
             label={t('Invitation Code')}
             value={invitationCode}
             autoFocus
-            onChange={(event) => setInvitationCode(event.currentTarget.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase())}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') handleJoin();
-            }}
+            onChange={setInvitationCode}
+            onSubmit={handleJoin}
           />
           <Group justify="flex-end" gap="xs">
             <Button variant="default" onClick={() => setJoinOpened(false)}>{t('Cancel')}</Button>

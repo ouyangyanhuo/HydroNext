@@ -610,9 +610,9 @@ a {
   color: var(--hydro-text-muted);
   font-size: 0.86rem;
   line-height: 1.65;
-  transition: max-height 340ms cubic-bezier(0.16, 1, 0.3, 1),
-              mask-image 340ms cubic-bezier(0.16, 1, 0.3, 1),
-              -webkit-mask-image 340ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: max-height 480ms cubic-bezier(0.16, 1, 0.3, 1),
+              mask-image 480ms cubic-bezier(0.16, 1, 0.3, 1),
+              -webkit-mask-image 480ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hydro-bulletin__inner {

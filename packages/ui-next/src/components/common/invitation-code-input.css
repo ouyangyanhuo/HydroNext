@@ -1,0 +1,54 @@
+.hydro-invitation-code {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: clamp(4px, 1.5vw, 8px);
+  width: 100%;
+  max-width: 352px;
+  margin-top: 10px;
+  direction: ltr;
+}
+
+.hydro-invitation-code__character {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  padding: 0 0 6px;
+  border: 0;
+  border-bottom: 2px solid var(--hydro-border);
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--hydro-text);
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: var(--hydro-weight-medium);
+  text-align: center;
+  caret-color: var(--hydro-primary);
+  transition: border-color var(--hydro-duration-fast) var(--hydro-ease-out),
+              box-shadow var(--hydro-duration-fast) var(--hydro-ease-out);
+}
+
+.hydro-invitation-code__character:hover:not(:disabled),
+.hydro-invitation-code__character:focus {
+  border-bottom-color: var(--hydro-primary);
+}
+
+.hydro-invitation-code__character:focus {
+  box-shadow: 0 2px 0 var(--hydro-primary);
+}
+
+.hydro-invitation-code__character:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.hydro-invitation-code[data-error] .hydro-invitation-code__character {
+  border-bottom-color: var(--hydro-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-invitation-code__character {
+    transition: none;
+  }
+}

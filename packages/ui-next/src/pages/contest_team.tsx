@@ -3,12 +3,13 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconArrowLeft, IconCopy, IconCrown, IconEdit, IconInfoCircle, IconKey, IconLogout, IconPlus, IconRefresh, IconTrash,
+  IconArrowLeft, IconCopy, IconCrown, IconEdit, IconInfoCircle, IconLogout, IconPlus, IconRefresh, IconTrash,
   IconUserPlus, IconUsers,
 } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
+import { InvitationCodeInput } from '@/components/common/invitation-code-input';
 import { PageHeader } from '@/components/common/page-header';
 import { Link } from '@/components/link';
 import { copyCodeText } from '@/components/markdown/code-copy';
@@ -19,6 +20,7 @@ import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
+import { isInvitationCodeComplete } from '@/utils/invitation-code';
 
 interface RenameModalState { vuid: number, name: string }
 interface RemoveMemberState { vuid: number, uid: number, uname: string }
@@ -231,26 +233,21 @@ export default function ContestTeamPage() {
             <Card withBorder p="lg" className="hydro-content-card">
               <form onSubmit={async (event) => {
                 event.preventDefault();
-                if (code.trim().length === 8 && await post({ operation: 'join', code: code.trim() })) setCode('');
+                if (isInvitationCodeComplete(code) && await post({ operation: 'join', code })) setCode('');
               }}>
                 <Stack gap="md">
                   <Group gap="xs">
                     <ThemeIcon variant="light"><IconUserPlus size={16} /></ThemeIcon>
                     <Title order={4}>{t('Join a Team')}</Title>
                   </Group>
-                  <TextInput
+                  <InvitationCodeInput
                     label={t('Team invitation code')}
-                    placeholder={t('Enter the 8-character team invitation code')}
                     value={code}
-                    onChange={(event) => setCode(event.currentTarget.value.toUpperCase())}
-                    maxLength={8}
-                    autoComplete="off"
-                    spellCheck={false}
+                    onChange={setCode}
                     disabled={loading}
                     required
-                    leftSection={<IconKey size={16} />}
                   />
-                  <Button type="submit" fullWidth loading={loading} disabled={code.trim().length !== 8}>{t('Join a Team')}</Button>
+                  <Button type="submit" fullWidth loading={loading} disabled={!isInvitationCodeComplete(code)}>{t('Join a Team')}</Button>
                 </Stack>
               </form>
             </Card>
