@@ -19,6 +19,23 @@ function tokensFor(selector: string) {
     return tokens;
 }
 
+test('numeric alignment is opt-in and never changes the body or code font family', () => {
+    const css = postcss.parse(readStyle('numeric.css'));
+    const rules = new Map<string, Record<string, string>>();
+    css.walkRules((rule) => {
+        const values: Record<string, string> = {};
+        rule.walkDecls((decl) => { values[decl.prop] = decl.value; });
+        for (const selector of rule.selectors) rules.set(selector, { ...rules.get(selector), ...values });
+    });
+    assert.deepEqual([...rules.keys()].sort(), ['.hydro-clock', '.hydro-numeric']);
+    for (const values of rules.values()) {
+        assert.equal(values['font-variant-numeric'], 'tabular-nums');
+        assert.equal(values['font-family'], undefined);
+        assert.equal(values['font-size'], undefined);
+    }
+    assert.equal(rules.get('.hydro-clock')!['white-space'], 'nowrap');
+});
+
 test('dark medium weights are reduced while light, regular and bold weights are preserved', () => {
     const base = tokensFor(':root');
     const dark = new Map([...base, ...tokensFor("[data-mantine-color-scheme='dark']")]);

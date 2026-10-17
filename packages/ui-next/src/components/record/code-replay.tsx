@@ -37,7 +37,7 @@ const ACTION_LABELS: Record<ReplayAction, string> = {
 
 function formatReplayTime(ms: number) {
   const seconds = Math.floor(ms / 1000);
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
 export function CodeReplay({
@@ -196,7 +196,7 @@ export function CodeReplay({
 
           <Group justify="space-between" gap="xs" className="hydro-code-replay__time-row">
             <Text size="sm" className="hydro-code-replay__clock">
-              <span>{formatReplayTime(cursor.time)}</span>
+              <span className="hydro-clock" style={{ minInlineSize: `${formatReplayTime(duration).length}ch` }}>{formatReplayTime(cursor.time)}</span>
               <span className="hydro-code-replay__total"> / {formatReplayTime(duration)}</span>
             </Text>
             {isThinking && <Badge size="sm" variant="light" color="gray">{t('Thinking time')}</Badge>}

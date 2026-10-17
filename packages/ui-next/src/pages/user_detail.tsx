@@ -177,7 +177,7 @@ export default function UserDetailPage() {
           </div>
         </Paper>
 
-        <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" className="hydro-user-profile__stats">
+        <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" className="hydro-user-profile__stats hydro-numeric">
           <Paper withBorder p="md" ta="center" className="hydro-user-profile__stat">
             <Text size="xl" fw={700}>{Number(stats.nAccept) || 0}</Text>
             <Text size="xs" c="dimmed">{t('Solved')}</Text>

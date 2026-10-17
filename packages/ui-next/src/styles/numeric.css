@@ -1,0 +1,11 @@
+/* Opt-in number alignment without changing the surrounding font family. */
+.hydro-numeric,
+.hydro-clock {
+  font-variant-numeric: tabular-nums;
+}
+
+.hydro-clock {
+  display: inline-block;
+  flex-shrink: 0;
+  white-space: nowrap;
+}

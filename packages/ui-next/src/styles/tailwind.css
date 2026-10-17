@@ -2,6 +2,7 @@
 @import './tokens.css';
 @import './select.css';
 @import './typography.css';
+@import './numeric.css';
 
 @theme inline {
   --font-weight-medium: var(--hydro-weight-medium);
@@ -3190,6 +3191,8 @@ a {
 }
 
 .hydro-security-card {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
 }
 
@@ -3220,6 +3223,76 @@ a {
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-md);
   background: color-mix(in srgb, var(--hydro-surface-muted) 54%, transparent);
+}
+
+.hydro-security-placeholder {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 130px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 16px;
+  text-align: center;
+  border: 1px dashed var(--hydro-border);
+  border-radius: var(--hydro-radius-md);
+  background: color-mix(in srgb, var(--hydro-surface-muted) 38%, transparent);
+}
+
+.hydro-security-placeholder__icon {
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--hydro-primary) 20%, var(--hydro-border));
+  border-radius: 50%;
+  color: var(--hydro-primary-strong);
+  background: var(--hydro-primary-soft);
+}
+
+.hydro-security-placeholder__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hydro-security-placeholder__title {
+  color: var(--hydro-text-muted);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: var(--hydro-weight-semibold);
+  line-height: 1.4;
+}
+
+.hydro-security-placeholder__desc {
+  color: var(--hydro-text-muted);
+  font-size: var(--mantine-font-size-xs);
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.hydro-security-placeholder--interactive {
+  cursor: pointer;
+  user-select: none;
+  transition: border-color var(--hydro-transition-fast), background-color var(--hydro-transition-fast), transform var(--hydro-transition-fast);
+}
+
+.hydro-security-placeholder--interactive:hover,
+.hydro-security-placeholder--interactive:focus-visible {
+  border-color: color-mix(in srgb, var(--hydro-primary) 55%, var(--hydro-border));
+  background: color-mix(in srgb, var(--hydro-primary-soft) 30%, var(--hydro-surface-muted));
+  outline: none;
+}
+
+.hydro-security-placeholder--interactive:hover .hydro-security-placeholder__title,
+.hydro-security-placeholder--interactive:focus-visible .hydro-security-placeholder__title {
+  color: var(--hydro-primary-strong);
+}
+
+.hydro-security-placeholder--interactive:hover .hydro-security-placeholder__icon,
+.hydro-security-placeholder--interactive:focus-visible .hydro-security-placeholder__icon {
+  transform: scale(1.05);
+  transition: transform var(--hydro-transition-fast);
 }
 
 .hydro-security-page .mantine-Input-input {
@@ -4366,6 +4439,15 @@ a {
   background-image: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-security-placeholder {
+  background-color: color-mix(in srgb, var(--hydro-surface-muted) 50%, transparent);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-security-placeholder--interactive:hover,
+[data-mantine-color-scheme='dark'] .hydro-security-placeholder--interactive:focus-visible {
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 22%, var(--hydro-surface-muted));
 }
 
 .mantine-Input-input,

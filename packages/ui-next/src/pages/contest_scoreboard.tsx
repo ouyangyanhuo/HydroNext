@@ -299,7 +299,7 @@ export default function ContestScoreboardPage() {
                               )}
                             </Group>
                           ) : (
-                            <Stack gap={3} align="center">
+                            <Stack gap={3} align="center" className="hydro-numeric">
                               <CellValue cell={cell} canViewRecord={canViewRecord} />
                               {column.type === 'problem' && cell.problemTime !== undefined && (
                                 <Text size="xs" c="dimmed" title={t('Time on this problem')} className="whitespace-nowrap tabular-nums">

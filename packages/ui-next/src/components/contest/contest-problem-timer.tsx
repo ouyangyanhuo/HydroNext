@@ -27,7 +27,9 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt, pi
   recordTime?: boolean;
 }) {
   const { t } = useI18n();
-  const [clock, setClock] = useState(() => ({ now: Date.now(), elapsed: readElapsed(storageKey) }));
+  const [mountedAt] = useState(() => Date.now());
+  const [clock, setClock] = useState(() => ({ now: mountedAt, elapsed: readElapsed(storageKey) }));
+  const clockWidth = `${formatContestClock(Math.max(beginAt - mountedAt, endAt - beginAt, 0)).length}ch`;
   const activity = useContestActivity(tid, pid, recordTime);
   const floatingRef = useCallback((element: HTMLDivElement | null) => {
     if (!element) return undefined;
@@ -120,7 +122,7 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt, pi
           <span className="hydro-contest-problem-timer__label">
             {ended ? t('Finished') : t(upcoming ? 'Contest starts in' : 'Contest time remaining')}
           </span>
-          <span className="hydro-contest-problem-timer__value" role="timer" aria-live="off">
+          <span className="hydro-contest-problem-timer__value hydro-clock" style={{ minInlineSize: clockWidth }} role="timer" aria-live="off">
             {formatContestClock(Math.ceil(remaining / 1000) * 1000)}
           </span>
         </div>
@@ -132,7 +134,7 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt, pi
           <span className="hydro-contest-problem-timer__label" style={timingUnsynced ? { color: 'var(--hydro-warning)' } : undefined}>
             {t(timingUnsynced ? 'Timing not synced' : 'Time on this problem')}
           </span>
-          <span className="hydro-contest-problem-timer__value" role="timer" aria-live="off">
+          <span className="hydro-contest-problem-timer__value hydro-clock" style={{ minInlineSize: clockWidth }} role="timer" aria-live="off">
             {timingUnsynced ? '—' : formatContestClock(elapsed)}
           </span>
         </div>

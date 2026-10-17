@@ -29,18 +29,18 @@ function formatAbsolute(date: Date): string {
 export function TimeDisplay({ date, format = 'both', size = 'xs' }: TimeDisplayProps) {
   const { t } = useI18n();
   const d = new Date(date);
-  if (Number.isNaN(d.getTime())) return <Text component="span" size={size} c="dimmed">-</Text>;
+  if (Number.isNaN(d.getTime())) return <Text component="span" size={size} c="dimmed" className="hydro-numeric">-</Text>;
 
   const absolute = formatAbsolute(d);
   const relative = formatRelative(d, t);
 
   if (format === 'absolute') {
-    return <Text component="span" size={size} c="dimmed">{absolute}</Text>;
+    return <Text component="span" size={size} c="dimmed" className="hydro-numeric">{absolute}</Text>;
   }
 
   return (
     <Tooltip label={absolute}>
-      <Text component="span" size={size} c="dimmed" style={{ cursor: 'help' }}>
+      <Text component="span" size={size} c="dimmed" className="hydro-numeric" style={{ cursor: 'help' }}>
         {format === 'relative' ? relative : relative}
       </Text>
     </Tooltip>

@@ -92,7 +92,7 @@ export default function RankingPage() {
                 </span>
                 <UserAvatar user={user} link={false} size={rank === 1 ? 68 : 58} className="ranking-podium-avatar" />
                 <Text className="ranking-podium-name" fw={700} truncate>{formatUserName(user)}</Text>
-                <div className="ranking-podium-stats">
+                <div className="ranking-podium-stats hydro-numeric">
                   <div><strong>{getSolved(user)}</strong><span>{t('Solved')}</span></div>
                   <div><strong>{getRp(user)}</strong><span>{t('RP')}</span></div>
                 </div>
@@ -124,7 +124,7 @@ export default function RankingPage() {
           />
         </div>
         <div className="ranking-table-scroll">
-          <Table className="ranking-table" verticalSpacing="sm">
+          <Table className="ranking-table hydro-numeric" verticalSpacing="sm">
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>{t('Rank')}</Table.Th>

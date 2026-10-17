@@ -1,7 +1,7 @@
 import { Alert, Badge, Card, Divider, Group, Modal, PasswordInput, Radio, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconAlertTriangle, IconCheck, IconDeviceMobile, IconDevices, IconKey, IconLink, IconLock, IconPlus, IconUsb,
+  IconAlertTriangle, IconCheck, IconDeviceMobile, IconDevices, IconKey, IconLink, IconLock, IconPencil, IconPlus, IconUsb,
 } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
@@ -52,6 +52,9 @@ export default function HomeSecurityPage() {
   const relations = args.relations || [];
   const loginMethods = args.loginMethods || [];
   const linkedPlatforms = new Set(relations.map((relation: any) => relation.platform));
+  const otherRelations = relations.filter((relation: any) => relation.platform !== 'mail');
+  const availableMethods = loginMethods.filter((method: any) => !linkedPlatforms.has(method.id));
+  const hasOtherAccounts = otherRelations.length > 0 || availableMethods.length > 0;
   const [current, setCurrent] = useState('');
   const [password, setPassword] = useState('');
   const [verifyPassword, setVerifyPassword] = useState('');
@@ -235,14 +238,14 @@ export default function HomeSecurityPage() {
 
           <Card withBorder p="lg" className="hydro-content-card hydro-security-card">
             <SecurityTitle icon={<IconLink size={18} />}>{t('Linked Accounts')}</SecurityTitle>
-            <Stack gap="sm">
+            <Stack gap="sm" className="flex-1">
               <Group justify="space-between" align="center" className="hydro-security-row">
                 <Stack gap={2}>
                   <Text fw="var(--hydro-weight-semibold)">{t('Email Account')}</Text>
                   <Text c="dimmed" size="sm">{user?.mail || '-'}</Text>
                 </Stack>
                 <Button size="xs" variant="light" onClick={() => setShowChangeMail((value) => !value)}>
-                  {t('Change')}
+                  {showChangeMail ? t('Cancel') : t('Change')}
                 </Button>
               </Group>
               {showChangeMail && (
@@ -254,39 +257,68 @@ export default function HomeSecurityPage() {
                   </Group>
                 </Stack>
               )}
-              <Divider />
-              {relations.filter((relation: any) => relation.platform !== 'mail').map((relation: any) => {
-                const method = loginMethods.find((item: any) => item.id === relation.platform);
-                return (
-                  <Group key={relation.platform} justify="space-between" align="center" className="hydro-security-row">
-                    <Stack gap={2}>
-                      <Text fw="var(--hydro-weight-semibold)">{method?.name || relation.platform}</Text>
-                      <Text c="dimmed" size="sm">{relation.id}</Text>
-                    </Stack>
-                    <Button
-                      size="xs"
-                      variant="light"
-                      onClick={() => postOperation({ operation: 'unlink_account', platform: relation.platform }, t('Unlinked'))}
-                      loading={loading === 'unlink_account'}
-                    >
-                      {t('Unlink')}
-                    </Button>
-                  </Group>
-                );
-              })}
-              {loginMethods.filter((method: any) => !linkedPlatforms.has(method.id)).map((method: any) => (
-                <Group key={method.id} justify="space-between" align="center" className="hydro-security-row">
-                  <Text fw="var(--hydro-weight-semibold)">{method.name || method.id}</Text>
-                  <Button
-                    size="xs"
-                    variant="light"
-                    onClick={() => postOperation({ operation: 'link_account', platform: method.id })}
-                    loading={loading === 'link_account'}
-                  >
-                    {t('Link')}
-                  </Button>
-                </Group>
-              ))}
+              {hasOtherAccounts ? (
+                <>
+                  <Divider />
+                  {otherRelations.map((relation: any) => {
+                    const method = loginMethods.find((item: any) => item.id === relation.platform);
+                    return (
+                      <Group key={relation.platform} justify="space-between" align="center" className="hydro-security-row">
+                        <Stack gap={2}>
+                          <Text fw="var(--hydro-weight-semibold)">{method?.name || relation.platform}</Text>
+                          <Text c="dimmed" size="sm">{relation.id}</Text>
+                        </Stack>
+                        <Button
+                          size="xs"
+                          variant="light"
+                          onClick={() => postOperation({ operation: 'unlink_account', platform: relation.platform }, t('Unlinked'))}
+                          loading={loading === 'unlink_account'}
+                        >
+                          {t('Unlink')}
+                        </Button>
+                      </Group>
+                    );
+                  })}
+                  {availableMethods.map((method: any) => (
+                    <Group key={method.id} justify="space-between" align="center" className="hydro-security-row">
+                      <Text fw="var(--hydro-weight-semibold)">{method.name || method.id}</Text>
+                      <Button
+                        size="xs"
+                        variant="light"
+                        onClick={() => postOperation({ operation: 'link_account', platform: method.id })}
+                        loading={loading === 'link_account'}
+                      >
+                        {t('Link')}
+                      </Button>
+                    </Group>
+                  ))}
+                </>
+              ) : !showChangeMail ? (
+                <div
+                  className="hydro-security-placeholder hydro-security-placeholder--interactive"
+                  onClick={() => setShowChangeMail(true)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setShowChangeMail(true);
+                    }
+                  }}
+                >
+                  <span className="hydro-security-placeholder__icon" aria-hidden="true">
+                    <IconPencil size={22} stroke={1.7} />
+                  </span>
+                  <div className="hydro-security-placeholder__content">
+                    <Text className="hydro-security-placeholder__title">
+                      {t('Please click modify')}
+                    </Text>
+                    <Text className="hydro-security-placeholder__desc">
+                      {t('Click here to update your email address.')}
+                    </Text>
+                  </div>
+                </div>
+              ) : null}
             </Stack>
           </Card>
         </SimpleGrid>

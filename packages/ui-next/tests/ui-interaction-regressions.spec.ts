@@ -220,3 +220,46 @@ test('user profile facts layout uses single-row grid and ellipsis text truncatio
     assert.match(userDetailSource, /className="hydro-user-profile__fact-label"/);
     assert.match(userDetailSource, /className="hydro-user-profile__fact-value"/);
 });
+
+test('linked accounts card renders interactive placeholder when no other accounts exist', () => {
+    const css = postcss.parse(read('../src/styles/tailwind.css'));
+    let placeholderRule = false;
+    let placeholderInteractiveRule = false;
+    let placeholderIcon = false;
+    let securityCardFlex = false;
+
+    css.walkRules((rule) => {
+        const values: Record<string, string> = {};
+        rule.walkDecls((decl) => { values[decl.prop] = decl.value; });
+
+        if (rule.selector === '.hydro-security-card' && rule.parent.type === 'root') {
+            if (values.display === 'flex' && values['flex-direction'] === 'column') {
+                securityCardFlex = true;
+            }
+        }
+        if (rule.selector === '.hydro-security-placeholder' && rule.parent.type === 'root') {
+            placeholderRule = true;
+            assert.equal(values.display, 'flex');
+            assert.equal(values.border, '1px dashed var(--hydro-border)');
+        }
+        if (rule.selector === '.hydro-security-placeholder--interactive') {
+            placeholderInteractiveRule = true;
+            assert.equal(values.cursor, 'pointer');
+        }
+        if (rule.selector === '.hydro-security-placeholder__icon') {
+            placeholderIcon = true;
+        }
+    });
+
+    assert.ok(securityCardFlex, 'hydro-security-card flex styles not found');
+    assert.ok(placeholderRule, 'hydro-security-placeholder styles not found');
+    assert.ok(placeholderInteractiveRule, 'hydro-security-placeholder--interactive styles not found');
+    assert.ok(placeholderIcon, 'hydro-security-placeholder__icon styles not found');
+
+    const source = read('../src/pages/home_security.tsx');
+    assert.match(source, /className="hydro-security-placeholder hydro-security-placeholder--interactive"/);
+    assert.match(source, /IconPencil/);
+    assert.match(source, /hasOtherAccounts \?/);
+    assert.match(source, /t\('Please click modify'\)/);
+    assert.match(source, /t\('Click here to update your email address\.'\)/);
+});

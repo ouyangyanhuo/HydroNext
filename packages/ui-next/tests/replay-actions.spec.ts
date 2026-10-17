@@ -58,10 +58,15 @@ test('replay actions show relative/actual times, paste length, and seek to the c
         await act(async () => root.render(h(MantineProvider, {}, h(module.exports.CodeReplay, { events, initialCode: '', finalCode: 'done' }))));
         const actions = [...dom.window.document.querySelectorAll<HTMLButtonElement>('.hydro-code-replay__action')];
         assert.equal(actions.length, 4);
-        assert.ok(actions[1].textContent?.includes('0:05'));
+        assert.ok(actions[1].textContent?.includes('00:05'));
+        const clock = dom.window.document.querySelector<HTMLElement>('.hydro-code-replay__clock .hydro-clock')!;
+        assert.equal(clock.textContent, '00:00');
+        assert.equal(clock.style.minInlineSize, '5ch');
         assert.ok(actions[1].textContent?.includes('3 characters'));
         assert.equal(actions[1].querySelector('time')?.dateTime, new Date(1_000_005_000).toISOString());
         await act(async () => actions[2].click());
+        assert.equal(clock.textContent, '00:09');
+        assert.equal(clock.style.minInlineSize, '5ch');
         assert.equal(dom.window.document.querySelector('[data-testid="code"]')?.textContent, 'abc');
         await act(async () => actions[3].click());
         assert.equal(dom.window.document.querySelector('[data-testid="code"]')?.textContent, 'done');

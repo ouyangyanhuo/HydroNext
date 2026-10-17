@@ -190,7 +190,7 @@ function Metric({ label, value }: { label: string, value: string | number }) {
   return (
     <div className="hydro-record-metric min-w-0 px-3 py-2">
       <Text size="xs" c="dimmed" fw={700} tt="uppercase">{label}</Text>
-      <Text size="sm" fw={700} className="truncate text-[var(--hydro-text)]" title={String(value)}>{value}</Text>
+      <Text size="sm" fw={700} className="hydro-numeric truncate text-[var(--hydro-text)]" title={String(value)}>{value}</Text>
     </div>
   );
 }
@@ -304,7 +304,7 @@ export default function RecordDetailPage() {
           <Group gap="sm">
             <RecordStatusBadge status={rdoc.status} size="lg" />
             {rdoc.score != null && (
-              <Badge variant="light" color={scoreColor} size="lg">
+              <Badge variant="light" color={scoreColor} size="lg" className="hydro-numeric">
                 {rdoc.score}
               </Badge>
             )}

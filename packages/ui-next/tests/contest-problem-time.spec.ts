@@ -35,6 +35,13 @@ test('ignores backward clock changes and invalid persisted elapsed time', () => 
 
 test('formats a stable clock, including durations longer than one day', () => {
     assert.equal(formatContestClock(-500), '00:00:00');
+    assert.equal(formatContestClock(Number.NaN), '00:00:00');
+    assert.equal(formatContestClock(Number.POSITIVE_INFINITY), '00:00:00');
+    assert.equal(formatContestClock(59_000), '00:00:59');
+    assert.equal(formatContestClock(60_000), '00:01:00');
+    assert.equal(formatContestClock(3_599_000), '00:59:59');
+    assert.equal(formatContestClock(3_600_000), '01:00:00');
     assert.equal(formatContestClock(3_661_900), '01:01:01');
     assert.equal(formatContestClock(90_061_000), '25:01:01');
+    assert.equal(formatContestClock(360_000_000), '100:00:00');
 });
