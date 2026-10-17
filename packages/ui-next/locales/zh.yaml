@@ -29,6 +29,7 @@ __flag: 🇨🇳
 'Only team members can manage this team.': '只有队伍成员可以管理该队伍。'
 'Next problem': '下一题'
 'No other problems': '无其它题目'
+'No other linked accounts': '暂无其他关联账户'
 'Previous problem': '上一题'
 'Problem navigation': '题目导航'
 'This problem is no longer in the source list. Return to the list to continue.': '题目顺序或访问权限已变化，请返回来源列表后继续。'
@@ -906,6 +907,7 @@ Input, output, and config files used by the judge.: 评测所用的输入、输�
 Public attachments shown with this problem.: 随题面公开展示的附件。
 This is a copy of another problem.: 这是另一道题目的副本。
 This problem has no testdata.: 当前没有测试数据。
+'Third-party accounts can be linked here once configured.': '系统配置第三方登录后可在此关联或解绑账号。'
 Status Distribution: 状态分布
 Score Distribution: 得分分布
 Fastest: 最快

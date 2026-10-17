@@ -29,6 +29,7 @@ __flag: 🇬🇧
 'Only team members can manage this team.': 'Only team members can manage this team.'
 'Next problem': 'Next problem'
 'No other problems': 'No other problems'
+'No other linked accounts': 'No other linked accounts'
 'Previous problem': 'Previous problem'
 'Problem navigation': 'Problem navigation'
 'This problem is no longer in the source list. Return to the list to continue.': 'This problem is no longer in the source list. Return to the list to continue.'
@@ -757,6 +758,7 @@ Input, output, and config files used by the judge.: Input, output, and config fi
 Public attachments shown with this problem.: Public attachments shown with this problem.
 This is a copy of another problem.: This is a copy of another problem.
 This problem has no testdata.: This problem has no testdata.
+'Third-party accounts can be linked here once configured.': 'Third-party accounts can be linked here once configured.'
 Status Distribution: Status Distribution
 Score Distribution: Score Distribution
 Fastest: Fastest

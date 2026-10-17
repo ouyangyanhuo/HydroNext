@@ -9,6 +9,7 @@ __flag: 🇹🇼
 'Only team members can manage this team.': '只有隊伍成員可以管理該隊伍。'
 'Next problem': '下一題'
 'No other problems': '無其他題目'
+'No other linked accounts': '暫無其他關聯帳戶'
 'Previous problem': '上一題'
 'Problem navigation': '題目導覽'
 'Retry': '重試'
@@ -743,6 +744,7 @@ Input, output, and config files used by the judge.: 評測所用的輸入、輸�
 Public attachments shown with this problem.: 隨題面公開展示的附件。
 This is a copy of another problem.: 這是另一道題目的副本。
 This problem has no testdata.: 目前沒有測試資料。
+'Third-party accounts can be linked here once configured.': '系統設定第三方登入後可在此關聯或解除綁定帳號。'
 Status Distribution: 狀態分佈
 Score Distribution: 得分分佈
 Fastest: 最快

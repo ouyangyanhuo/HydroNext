@@ -384,7 +384,6 @@ function ProblemList({ problems, psdict = {} }: { problems: any[], psdict?: Reco
         <DataPanelEmptyState
           icon={IconCode}
           message={t('No problems found')}
-          action={{ to: 'problem_main', label: t('View All') }}
         />
       )}
     </section>
@@ -506,7 +505,6 @@ function RecentContests({ contests, tsdict = {} }: { contests: any[], tsdict?: R
           icon={IconTrophy}
           message={t('No contests found')}
           tone="accent"
-          action={{ to: 'contest_main', label: t('View All') }}
         />
       )}
     </section>
