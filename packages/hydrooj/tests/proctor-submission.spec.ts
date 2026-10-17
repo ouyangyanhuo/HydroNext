@@ -46,7 +46,7 @@ function fixture(options: any = {}) {
         '../model/setting': { langs: { cc: {} } },
         '../model/system': { get: () => 100 },
         '../model/problem': { inc: async () => undefined },
-        '../model/domain': { incUserInDomain: async () => undefined },
+        '../model/domain': { incUserInDomain: async () => undefined, withUserStatisticsUpdate: async (_, __, action) => action() },
         '../model/contest': { canShowSelfRecord: () => true, updateStatus: async () => undefined },
         '../model/record': { STAT_QUERY: {}, add: async (...args: any[]) => {
             calls.push(['add', ...args]);

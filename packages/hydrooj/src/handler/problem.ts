@@ -638,21 +638,25 @@ export class ProblemSubmitHandler extends ProblemDetailHandler {
                 code = code.replace(/\r\n/g, '\n');
                 if (code.length > lengthLimit) throw new ValidationError('code');
             }
-            await release?.assert();
-            const rid = await record.add(
-                domainId, this.pdoc.docId, this.user._id, lang, code, true,
-                pretest ? { input, type: 'pretest' } : {
-                    contest: tid, contestUid: tid ? this.team ?? this.user._id : undefined, files, type: 'judge',
-                },
-            );
-            this.submittedRecordId = rid;
-            if (!pretest) {
-                await Promise.all([
-                    problem.inc(domainId, this.pdoc.docId, 'nSubmit', 1),
-                    domain.incUserInDomain(domainId, this.user._id, 'nSubmit'),
-                    tid && contest.updateStatus(domainId, tid, this.team ?? this.user._id, rid, this.pdoc.docId),
-                ]);
-            }
+            const submit = async () => {
+                await release?.assert();
+                const rid = await record.add(
+                    domainId, this.pdoc.docId, this.user._id, lang, code, true,
+                    pretest ? { input, type: 'pretest' } : {
+                        contest: tid, contestUid: tid ? this.team ?? this.user._id : undefined, files, type: 'judge',
+                    },
+                );
+                this.submittedRecordId = rid;
+                if (!pretest) {
+                    await Promise.all([
+                        problem.inc(domainId, this.pdoc.docId, 'nSubmit', 1),
+                        domain.incUserInDomain(domainId, this.user._id, 'nSubmit'),
+                        tid && contest.updateStatus(domainId, tid, this.team ?? this.user._id, rid, this.pdoc.docId),
+                    ]);
+                }
+                return rid;
+            };
+            const rid = pretest ? await submit() : await domain.withUserStatisticsUpdate(domainId, this.user._id, submit);
             if (tid && !pretest && !contest.canShowSelfRecord.call(this, this.tdoc)) {
                 this.response.body = { tid };
                 this.response.redirect = this.url(this.tdoc.rule === 'homework' ? 'homework_detail' : 'contest_problemlist', { tid });

@@ -1,13 +1,24 @@
 import Schema from 'schemastery';
 import { STATUS } from '../model/builtin';
 import * as document from '../model/document';
+import DomainModel from '../model/domain';
 import RecordModel from '../model/record';
+import { deleteUserCache } from '../model/user';
 import db from '../service/db';
 
 const sumStatus = (status) => ({ $sum: { $cond: [{ $eq: ['$status', status] }, 1, 0] } });
 
 export async function udoc(report) {
     const userStats = new Map<string, { nLiked?: number, nAccept?: number, nSubmit?: number }>();
+    // Fence abandoned operations before taking a snapshot. Stale writers cannot increment afterward.
+    await DomainModel.collUser.updateMany({ '_userStatsLock.expiresAt': { $lte: new Date() } }, [
+        { $set: { _userStatsRevision: { $add: [{ $ifNull: ['$_userStatsRevision', 0] }, 1] } } },
+        { $unset: '_userStatsLock' },
+    ]);
+    const revisions = new Map<string, number | null | undefined>();
+    for await (const user of DomainModel.collUser.find({}, { projection: { domainId: 1, uid: 1, _userStatsRevision: 1 } })) {
+        revisions.set(`${user.domainId}/${user.uid}`, user._userStatsRevision);
+    }
 
     report({ message: 'Udoc nLiked' });
     const likedPipeline = [
@@ -47,7 +58,7 @@ export async function udoc(report) {
         {
             $group: {
                 _id: { domainId: '$_id.domainId', uid: '$_id.uid' },
-                nSubmit: { $sum: { $min: ['$nSubmit', 1] } },
+                nSubmit: { $sum: '$nSubmit' },
                 nAccept: { $sum: { $min: ['$nAccept', 1] } },
             },
         },
@@ -60,22 +71,41 @@ export async function udoc(report) {
         userStats.set(key, stat);
     }
 
-    let bulk = db.collection('domain.user').initializeUnorderedBulkOp();
-    for (const [key, stat] of userStats) {
-        const [domainId, uid] = key.split('/');
-        bulk.find({ domainId, uid: +uid }).updateOne({
-            $set: {
-                nSubmit: stat.nSubmit || 0,
-                nAccept: stat.nAccept || 0,
-                nLiked: stat.nLiked || 0,
-            },
-        });
-        if (bulk.batches.length > 100) {
-            await bulk.execute(); // eslint-disable-line no-await-in-loop
-            bulk = db.collection('domain.user').initializeUnorderedBulkOp();
+    let bulk = DomainModel.collUser.initializeUnorderedBulkOp();
+    let pending = 0;
+    let updated = 0;
+    const flush = async () => {
+        if (!pending) return;
+        const result = await bulk.execute();
+        updated += result.matchedCount;
+        pending = 0;
+        bulk = DomainModel.collUser.initializeUnorderedBulkOp();
+    };
+    try {
+        for (const [key, stat] of userStats) {
+            if (!revisions.has(key)) continue;
+            const [domainId, uid] = key.split('/');
+            const revision = revisions.get(key);
+            bulk.find({ domainId, uid: +uid,
+                _userStatsRevision: revision === undefined ? { $exists: false } : revision,
+                _userStatsLock: { $exists: false },
+            }).updateOne({
+                $set: {
+                    nSubmit: stat.nSubmit || 0,
+                    nAccept: stat.nAccept || 0,
+                    nLiked: stat.nLiked || 0,
+                },
+            });
+            pending++;
+            // Active or changed users are deferred rather than overwritten with an old snapshot.
+            if (pending >= 1000) await flush(); // eslint-disable-line no-await-in-loop
         }
+        await flush();
+    } finally {
+        // Also invalidate after a partially successful bulk write.
+        deleteUserCache(true);
     }
-    if (bulk.batches.length) await bulk.execute();
+    report({ message: `Udoc: ${updated} updated; ${userStats.size - updated} active, changed or missing users deferred` });
 }
 
 export async function pdoc(report) {

@@ -125,7 +125,20 @@ export class JudgeResultCallbackContext {
         if (rdoc.contest) {
             const participant = await contest.getRecordContestUid(rdoc);
             await contest.updateStatus(rdoc.domainId, rdoc.contest, participant, rdoc._id, rdoc.pid, rdoc);
-        } else if (accept && updated) await domain.incUserInDomain(rdoc.domainId, rdoc.uid, 'nAccept', 1);
+        } else if (updated && (accept || rdoc.rejudged || rdoc.status === builtin.STATUS.STATUS_CANCELED)) {
+            await domain.withUserStatisticsUpdate(rdoc.domainId, rdoc.uid, async () => {
+                // A rebuild may already include this result before its callback runs. Reconcile
+                // distinct accepted problems instead of incrementing the same acceptance twice.
+                const count = await record.coll.aggregate<{ count: number }>([
+                    { $match: { domainId: rdoc.domainId, uid: rdoc.uid, status: builtin.STATUS.STATUS_ACCEPTED,
+                        contest: { $nin: [record.RECORD_PRETEST, record.RECORD_GENERATE] } } },
+                    { $group: { _id: '$pid' } },
+                    { $count: 'count' },
+                ]).next();
+                const current = await domain.collUser.findOne({ domainId: rdoc.domainId, uid: rdoc.uid });
+                await domain.incUserInDomain(rdoc.domainId, rdoc.uid, 'nAccept', (count?.count || 0) - (current?.nAccept || 0));
+            });
+        }
         const isNormalSubmission = ![
             STATUS.STATUS_ETC, STATUS.STATUS_HACK_SUCCESSFUL, STATUS.STATUS_HACK_UNSUCCESSFUL,
             STATUS.STATUS_FORMAT_ERROR, STATUS.STATUS_SYSTEM_ERROR, STATUS.STATUS_CANCELED,

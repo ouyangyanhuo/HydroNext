@@ -921,6 +921,146 @@ describe('App', () => {
         }
     });
 
+    it('User submission stats count repeated records, survive concurrent increments and refresh cached profiles', async () => {
+        const { domain, record, user } = global.Hydro.model;
+        const { ObjectId } = require('mongodb');
+        const a = 'submission-count-test';
+        const b = 'submission-count-other';
+        const uid = await user.create('submission-count@example.com', 'submission-count-user', 'secret');
+        await domain.add(a, 2, 'Submission count test', '');
+        await domain.add(b, 2, 'Other submission count test', '');
+        try {
+            await domain.setUserInDomain(a, uid, { nSubmit: null, nAccept: null });
+            const initialized = await domain.incUserInDomain(a, uid, 'nSubmit');
+            assert.equal(initialized.nSubmit, 1, 'legacy null values are incremented atomically from zero');
+            assert.equal(typeof initialized.perm, 'bigint', 'the domain-user return shape remains compatible');
+            assert.equal((await domain.collUser.findOne({ domainId: a, uid })).perm, undefined, 'derived permissions are not persisted');
+            await domain.setUserInDomain(a, uid, { nSubmit: 10 });
+            assert.equal((await user.getById(a, uid)).nSubmit, 10);
+            const increments = await Promise.all(Array.from({ length: 25 }, () => domain.incUserInDomain(a, uid, 'nSubmit')));
+            assert.equal(new Set(increments.map((item) => item.nSubmit)).size, 25);
+            assert.equal((await domain.collUser.findOne({ domainId: a, uid })).nSubmit, 35);
+            assert.equal((await user.getById(a, uid)).nSubmit, 35, 'increment invalidates the cached user after writing');
+            await Promise.all(Array.from({ length: 5 }, () => domain.incUserInDomain(b, uid, 'nSubmit')));
+            assert.equal((await user.getById(b, uid)).nSubmit, 5, 'first increments can create a missing domain user');
+            await Promise.all(Array.from({ length: 2 }, () => domain.incUserInDomain(a, uid, 'nAccept')));
+            assert.equal((await user.getById(a, uid)).nAccept, 2);
+
+            const submission = (domainId: string, pid: number, status = STATUS.STATUS_ACCEPTED, extra = {}) => ({
+                _id: new ObjectId(), domainId, pid, uid, status, ...extra,
+            });
+            await record.coll.insertMany([
+                ...Array.from({ length: 5 }, () => submission(a, 1)),
+                submission(a, 2), submission(a, 2, STATUS.STATUS_WRONG_ANSWER),
+                submission(a, 3, STATUS.STATUS_ACCEPTED, { contest: record.RECORD_PRETEST }),
+                submission(a, 4, STATUS.STATUS_ACCEPTED, { contest: record.RECORD_GENERATE }),
+                submission(a, 5, STATUS.STATUS_CANCELED),
+                submission(b, 1),
+            ]);
+            await global.Hydro.script.problemStat.run({ udoc: true, pdoc: false }, () => {});
+            const cached = await user.getById(a, uid);
+            assert.equal(cached.nSubmit, 7, 'five attempts on one problem plus two on another are seven submissions');
+            assert.equal(cached.nAccept, 2, 'accepted problems remain deduplicated');
+            assert.equal((await user.getById(b, uid)).nSubmit, 1, 'recalculation is domain scoped');
+            const { postJudge } = require('../packages/hydrooj/src/handler/judge');
+            const acceptedRecord = await record.coll.findOne({ domainId: a, uid, pid: 1, status: STATUS.STATUS_ACCEPTED });
+            await postJudge({ ...acceptedRecord, score: 100, time: 0, memory: 0, lang: 'cc', code: '' });
+            assert.equal((await user.getById(a, uid)).nAccept, 2, 'a verdict callback does not count an already-rebuilt acceptance again');
+            const args = getPageArgs(await agent.get(`/d/${a}/user/${uid}`).set('Accept', 'application/json').expect(200));
+            assert.equal(args.stats.nSubmit, 7);
+            assert.equal(args.stats.nAccept, 2);
+        } finally {
+            await record.coll.deleteMany({ domainId: { $in: [a, b] } });
+            await domain.del(a);
+            await domain.del(b);
+        }
+    });
+
+    it('Statistics rebuilds defer completed or pending submissions and fence expired writers', async () => {
+        const { domain, record, user } = global.Hydro.model;
+        const { ObjectId } = require('mongodb');
+        const domainId = 'submission-rebuild-race';
+        const uid = await user.create('submission-race@example.com', 'submission-race-user', 'secret');
+        await domain.add(domainId, 2, 'Rebuild race test', '');
+        const users = domain.collUser;
+        const originalBulk = users.initializeUnorderedBulkOp;
+        const addRecord = () => record.coll.insertOne({ _id: new ObjectId(), domainId, uid, pid: 1, status: STATUS.STATUS_WRONG_ANSWER });
+        const rebuild = () => global.Hydro.script.problemStat.run({ udoc: true, pdoc: false }, () => {});
+        let finishPending: (() => void) | undefined;
+        let pending: Promise<unknown> | undefined;
+        try {
+            await domain.setUserInDomain(domainId, uid, { nSubmit: 7 });
+            await record.coll.insertMany(Array.from({ length: 7 }, () => ({
+                _id: new ObjectId(), domainId, uid, pid: 1, status: STATUS.STATUS_WRONG_ANSWER,
+            })));
+            let intercepted = false;
+            users.initializeUnorderedBulkOp = function bulkWithSubmission(...args) {
+                const bulk = originalBulk.apply(this, args);
+                const execute = bulk.execute.bind(bulk);
+                bulk.execute = async (...options) => {
+                    if (!intercepted) {
+                        intercepted = true;
+                        await domain.withUserStatisticsUpdate(domainId, uid, async () => {
+                            await addRecord();
+                            await domain.incUserInDomain(domainId, uid, 'nSubmit');
+                        });
+                    }
+                    return execute(...options);
+                };
+                return bulk;
+            };
+            await rebuild();
+            users.initializeUnorderedBulkOp = originalBulk;
+            assert.ok(intercepted);
+            assert.equal((await users.findOne({ domainId, uid })).nSubmit, 8, 'the old aggregate cannot overwrite a completed increment');
+
+            let started: () => void;
+            const ready = new Promise<void>((resolve) => { started = resolve; });
+            const finish = new Promise<void>((resolve) => { finishPending = resolve; });
+            pending = domain.withUserStatisticsUpdate(domainId, uid, async () => {
+                await addRecord();
+                started();
+                await finish;
+                await domain.incUserInDomain(domainId, uid, 'nSubmit');
+            });
+            await ready;
+            await rebuild();
+            assert.equal((await users.findOne({ domainId, uid })).nSubmit, 8,
+                'a visible record is not counted early while its live increment is pending');
+            finishPending();
+            await pending;
+            assert.equal((await users.findOne({ domainId, uid })).nSubmit, 9);
+            assert.equal(await record.coll.countDocuments({ domainId, uid }), 9);
+
+            let leaseStarted: () => void;
+            const leaseReady = new Promise<void>((resolve) => { leaseStarted = resolve; });
+            const expire = new Promise<void>((resolve) => { finishPending = resolve; });
+            pending = domain.withUserStatisticsUpdate(domainId, uid, async () => {
+                leaseStarted();
+                await expire;
+                await domain.incUserInDomain(domainId, uid, 'nSubmit');
+            });
+            await leaseReady;
+            await users.updateOne({ domainId, uid }, { $set: { '_userStatsLock.expiresAt': new Date(0) } });
+            await rebuild();
+            const rejected = assert.rejects(pending, (error: any) => {
+                assert.equal(error.name, 'SystemError');
+                assert.match(String(error.params?.[0]), /statistics update expired/i);
+                return true;
+            });
+            finishPending();
+            await rejected;
+            pending = undefined;
+            assert.equal((await users.findOne({ domainId, uid })).nSubmit, 9, 'an expired writer cannot increment a reconciled count');
+        } finally {
+            users.initializeUnorderedBulkOp = originalBulk;
+            finishPending?.();
+            await pending?.catch(() => {});
+            await record.coll.deleteMany({ domainId });
+            await domain.del(domainId);
+        }
+    });
+
     // TODO add more tests
 
     const results: Record<string, autocannon.Result> = {};

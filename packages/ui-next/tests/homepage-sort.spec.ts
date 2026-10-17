@@ -162,6 +162,7 @@ test('homepage sort hints use portal tooltips without breaking the real sorting 
         const button = f.host.querySelector<HTMLButtonElement>('button[aria-label="Sort problem list"]')!;
         await act(async () => button.click());
         assert.equal(button.getAttribute('aria-expanded'), 'true');
+        await act(async () => new Promise((resolve) => setTimeout(resolve, 150)));
         const option = [...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')]
             .find((item) => item.textContent?.includes('Most attempted'))!;
         assert.ok(option);

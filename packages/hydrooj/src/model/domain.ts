@@ -3,7 +3,9 @@ import { Dictionary, escapeRegExp } from 'lodash';
 import { LRUCache } from 'lru-cache';
 import { Filter } from 'mongodb';
 import { Context } from '../context';
+import { SystemError } from '../error';
 import { DomainDoc } from '../interface';
+import { userStatisticsWriteQuery, withUserStatisticsUpdate } from '../lib/user-statistics';
 import bus from '../service/bus';
 import db from '../service/db';
 import { MaybeArray, NumberKeys } from '../typeutils';
@@ -42,6 +44,7 @@ interface DomainUserArg {
 class DomainModel {
     static coll = coll;
     static collUser = collUser;
+    static withUserStatisticsUpdate = withUserStatisticsUpdate;
     static getVersion = (ddoc) => ddoc ? ddoc[cacheVersion] : null;
 
     static JOIN_METHOD_NONE = 0;
@@ -252,6 +255,10 @@ class DomainModel {
     static async getDomainUser(domainId: string, udoc: DomainUserArg) {
         let dudoc = await collUser.findOne({ domainId, uid: udoc._id });
         dudoc ||= { domainId, uid: udoc._id };
+        return DomainModel.resolveDomainUser(domainId, udoc, dudoc);
+    }
+
+    private static async resolveDomainUser(domainId: string, udoc: DomainUserArg, dudoc: any) {
         if (!(udoc.priv & PRIV.PRIV_USER_PROFILE)) dudoc.role = 'guest';
         if (!dudoc.join && !(udoc.priv & PRIV.PRIV_VIEW_ALL_DOMAIN)) dudoc.role = 'guest';
         if (udoc.priv & PRIV.PRIV_MANAGE_ALL_DOMAIN) dudoc.role = 'root';
@@ -290,11 +297,16 @@ class DomainModel {
 
     @ArgMethod
     static async incUserInDomain(domainId: string, uid: number, field: string, n: number = 1) {
-        // @ts-ignore
-        const dudoc = await DomainModel.getDomainUser(domainId, { _id: uid });
-        dudoc[field] = dudoc[field] + n || n;
-        await DomainModel.setUserInDomain(domainId, uid, { [field]: dudoc[field] });
-        return dudoc;
+        return withUserStatisticsUpdate(domainId, uid, async () => {
+            const udoc = await UserModel.getById(domainId, uid);
+            const dudoc = await collUser.findOneAndUpdate(userStatisticsWriteQuery(domainId, uid), [
+                { $set: { [field]: { $add: [{ $ifNull: [`$${field}`, 0] }, n] } } },
+            ], { returnDocument: 'after' });
+            if (!dudoc) throw new SystemError('User statistics update expired. Please try again.');
+            deleteUserCache(udoc);
+            // Preserve the legacy domain-user return shape, without persisting derived permissions.
+            return DomainModel.resolveDomainUser(domainId, { _id: uid, priv: 0 }, dudoc);
+        });
     }
 
     @ArgMethod
