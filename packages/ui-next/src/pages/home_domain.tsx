@@ -96,7 +96,7 @@ export default function HomeDomainPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('My Domains')}>
-        <Button variant="light" size="xs" onClick={() => setJoinOpened(true)}>{t('Join Domain')}</Button>
+        <Button variant="filled" size="xs" onClick={() => setJoinOpened(true)}>{t('Join Domain')}</Button>
         {canCreateDomain && (
           <Button component={Link} to="home_domain_create" size="xs">{t('Create Domain')}</Button>
         )}

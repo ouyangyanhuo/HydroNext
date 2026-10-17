@@ -1,4 +1,4 @@
-import { Portal } from '@mantine/core';
+import { Portal, Tooltip } from '@mantine/core';
 import { IconGripVertical, IconTrophy } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { ButtonBase } from '@/components/common/button';
@@ -126,18 +126,26 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt, pi
             {formatContestClock(Math.ceil(remaining / 1000) * 1000)}
           </span>
         </div>
-        <div
-          className="hydro-contest-problem-timer__metric"
-          title={t(timingUnsynced ? 'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.'
+        <Tooltip
+          label={t(timingUnsynced ? 'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.'
             : recordTime ? 'Foreground problem time; saved to the contest scoreboard.' : 'Visible time on this problem; saved in this tab.')}
+          withArrow
+          multiline
+          w={300}
+          maw="calc(100vw - 32px)"
+          withinPortal
+          zIndex={200}
+          events={{ hover: true, focus: true, touch: true }}
         >
-          <span className="hydro-contest-problem-timer__label" style={timingUnsynced ? { color: 'var(--hydro-warning)' } : undefined}>
-            {t(timingUnsynced ? 'Timing not synced' : 'Time on this problem')}
-          </span>
-          <span className="hydro-contest-problem-timer__value hydro-clock" style={{ minInlineSize: clockWidth }} role="timer" aria-live="off">
-            {timingUnsynced ? '—' : formatContestClock(elapsed)}
-          </span>
-        </div>
+          <div className="hydro-contest-problem-timer__metric" tabIndex={0}>
+            <span className="hydro-contest-problem-timer__label" style={timingUnsynced ? { color: 'var(--hydro-warning)' } : undefined}>
+              {t(timingUnsynced ? 'Timing not synced' : 'Time on this problem')}
+            </span>
+            <span className="hydro-contest-problem-timer__value hydro-clock" style={{ minInlineSize: clockWidth }} role="timer" aria-live="off">
+              {timingUnsynced ? '—' : formatContestClock(elapsed)}
+            </span>
+          </div>
+        </Tooltip>
       </div>
     </Portal>
   );
