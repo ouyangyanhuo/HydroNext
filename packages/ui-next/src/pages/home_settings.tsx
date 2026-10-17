@@ -240,9 +240,7 @@ export default function HomeSettingsPage() {
             familyExtras={category === 'preference' ? {
               setting_display: <Switch
                 label={t('Automatic theme')}
-                description={t(
-                  'Follow your system appearance. Applies immediately in this browser only. Switching the theme in the top bar turns this off.',
-                )}
+                description={t('Follow your system appearance')}
                 checked={autoTheme}
                 onChange={(event) => setAutoTheme(event.currentTarget.checked)}
               />,
