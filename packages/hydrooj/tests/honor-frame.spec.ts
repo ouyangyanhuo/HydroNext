@@ -6,7 +6,7 @@ import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
 import { PNG } from 'pngjs';
-import { normalizeHonorFrameImage } from '../src/lib/honor-frame-image.ts';
+import { FRAME_THUMBNAIL_SIZES, normalizeHonorFrameImage, resizeHonorFrameImage } from '../src/lib/honor-frame-image.ts';
 
 const require = createRequire(import.meta.url);
 const id = '1234567890abcdef12345678';
@@ -355,11 +355,15 @@ test('upload creates an unpublished normalized asset and cleans storage if catal
     const module = load('../src/handler/honor-frame.ts', {
         'fs/promises': { readFile: async () => png(512) },
         '../context': {}, '../error': { ValidationError: Error },
-        '../lib/honor-frame-image': { normalizeHonorFrameImage, MAX_FRAME_BYTES: 2 * 1024 * 1024 },
+        '../lib/honor-frame-image': {
+            FRAME_THUMBNAIL_SIZES, normalizeHonorFrameImage, resizeHonorFrameImage, MAX_FRAME_BYTES: 2 * 1024 * 1024,
+        },
         '../lib/honor-frame-user': {}, '../model/builtin': { PRIV: {} },
         '../model/honor-frame': {
             coll: { insertOne: async (doc: any) => { if (failInsert) throw new Error('DB unavailable'); inserted.push(doc); } },
-            framePath: (value: string, shape: string) => `honor-frame/${value}-${shape}.png`,
+            framePath: (value: string, shape: string, revision?: string, size?: number) => (
+                `honor-frame/${value}-${shape}${size ? `-${size}` : ''}.png`
+            ),
         },
         '../model/oplog': { log: async () => {} },
         '../model/storage': {
@@ -382,13 +386,37 @@ test('upload creates an unpublished normalized asset and cleans storage if catal
     assert.equal(inserted[0].artworkVersion, 2);
     assert.match(stored[1][0], /-circle\.png$/);
     assert.equal(PNG.sync.read(stored[0][1]).width, 512);
+    assert.equal(inserted[0].thumbnailVersion, 1);
+    assert.deepEqual(stored.slice(2).map(([, image]) => PNG.sync.read(image).width), [64, 64, 128, 128, 256, 256]);
     failInsert = true;
     await assert.rejects(handler.postUpload('domain-b', 'Second'), /DB unavailable/);
-    assert.equal(deleted[0], stored[2][0]);
-    assert.equal(deleted[1], stored[3][0]);
+    assert.deepEqual(deleted, stored.slice(8).map(([path]) => path));
     handler.request.files.square.size = 3 * 1024 * 1024;
     await assert.rejects(handler.postUpload('domain-a', 'Too large'));
-    assert.equal(stored.length, 4);
+    assert.equal(stored.length, 16);
+});
+
+test('thumbnail sampling preserves transparent holes and does not darken translucent edges', () => {
+    const image = new PNG({ width: 512, height: 512 });
+    image.data.fill(0);
+    for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 8; x++) {
+            const offset = (y * 512 + x) * 4;
+            image.data[offset] = 255;
+            image.data[offset + 3] = x < 4 ? 255 : 0;
+        }
+    }
+    const input = PNG.sync.write(image);
+    for (const size of FRAME_THUMBNAIL_SIZES) {
+        const output = PNG.sync.read(resizeHonorFrameImage(input, size));
+        assert.equal(output.width, size);
+        assert.equal(output.height, size);
+        assert.equal(output.data[(size * Math.floor(size / 2) + Math.floor(size / 2)) * 4 + 3], 0);
+    }
+    const output = PNG.sync.read(resizeHonorFrameImage(input, 64));
+    assert.equal(output.data[0], 255);
+    assert.equal(output.data[3], 128);
+    assert.throws(() => resizeHonorFrameImage(input, 100), /size/);
 });
 
 test('wardrobe pagination reads only the authenticated users active awards and caps pages at twelve', async () => {

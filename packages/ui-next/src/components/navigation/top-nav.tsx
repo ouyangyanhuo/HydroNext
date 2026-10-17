@@ -45,7 +45,7 @@ function UserMenu() {
           py={6}
           aria-label={formatUserName(user)}
         >
-          <UserAvatar user={user} size={32} link={false} shape="circle" />
+          <UserAvatar user={user} size={32} link={false} shape="circle" loading="eager" />
           <Text size="sm" fw="var(--hydro-weight-semibold)" className="hydro-topbar-user-name" c="var(--hydro-text)">
             {formatUserName(user)}
           </Text>

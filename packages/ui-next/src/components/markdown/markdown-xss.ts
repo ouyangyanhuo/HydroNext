@@ -112,12 +112,22 @@ const htmlFilter = new FilterXSS({
 });
 
 export function markdownXssPlugin(md: MarkdownIt) {
+  const renderImage = md.renderer.rules.image!;
+  md.renderer.rules.image = (tokens, index, options, env, renderer) => {
+    tokens[index].attrSet('loading', 'lazy');
+    tokens[index].attrSet('decoding', 'async');
+    return renderImage(tokens, index, options, env, renderer);
+  };
+  // Apply the same defaults to raw HTML only AFTER sanitizing it. User-supplied
+  // loading attributes are not allowlisted, so they cannot duplicate these.
+  const sanitize = (content: string) => htmlFilter.process(content)
+    .replace(/<img(?=[\s/>])/g, '<img loading="lazy" decoding="async"');
   md.core.ruler.after('linkify', 'xss', (state) => {
     for (const token of state.tokens) {
-      if (token.type === 'html_block') token.content = htmlFilter.process(token.content);
+      if (token.type === 'html_block') token.content = sanitize(token.content);
       if (token.type !== 'inline') continue;
       for (const inlineToken of token.children || []) {
-        if (inlineToken.type === 'html_inline') inlineToken.content = htmlFilter.process(inlineToken.content);
+        if (inlineToken.type === 'html_inline') inlineToken.content = sanitize(inlineToken.content);
       }
     }
   });

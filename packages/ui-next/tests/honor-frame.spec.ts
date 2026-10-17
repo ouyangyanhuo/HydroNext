@@ -6,7 +6,7 @@ import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
 import { getAvatarUrl } from '../src/utils/avatar.ts';
 import { formatErrorMessage } from '../src/utils/error.ts';
-import { avatarFrameInset, honorFrameImageUrl } from '../src/utils/honor-frame.ts';
+import { avatarFrameInset, avatarPixelSize, honorFrameImageSources, honorFrameImageUrl } from '../src/utils/honor-frame.ts';
 import { formatUserName } from '../src/utils/user-name.ts';
 
 const require = createRequire(import.meta.url);
@@ -56,7 +56,7 @@ function component(path: string, mocks: Record<string, any>, globals: Record<str
 }
 
 const { FramedAvatar } = component('../src/components/user/framed-avatar.tsx', {
-    '@/utils/honor-frame': { avatarFrameInset, honorFrameImageUrl },
+    '@/utils/honor-frame': { avatarFrameInset, avatarPixelSize, honorFrameImageSources, honorFrameImageUrl },
 });
 const frame = { id: 'winner', name: 'Winner', imageUrl: 'https://cdn.example/frames/winner.webp' };
 const user = { _id: 42, uname: 'Ada', avatar: 'url:https://cdn.example/avatar.png', honorFrame: frame };
@@ -65,6 +65,7 @@ const { UserAvatar } = component('../src/components/user/user-avatar.tsx', {
     './framed-avatar': { FramedAvatar },
     '@/components/link': { Link: ({ params, children, ...props }: any) => h('a', { ...props, href: `/d/${domain}/user/${params.uid}` }, children) },
     '@/utils/avatar': { getAvatarUrl },
+    '@/utils/honor-frame': { avatarPixelSize },
     '@/utils/user-name': { formatUserName },
 });
 
@@ -100,6 +101,31 @@ test('frame URLs reject script/data URLs and malformed metadata', () => {
     assert.equal(honorFrameImageUrl('/frames/a.webp'), '/frames/a.webp');
     assert.equal(honorFrameImageUrl(frame.imageUrl), frame.imageUrl);
     assert.equal(honorFrameImageUrl('blob:https://oj.example/preview'), 'blob:https://oj.example/preview');
+});
+
+test('local decorations use responsive thumbnails while remote artwork and previews keep their URLs', async () => {
+    const src = '/honor-frame/1234567890abcdef12345678/circle.png?v=revision';
+    const sources = honorFrameImageSources(src, 32);
+    assert.equal(sources.src, `${src}&size=64`);
+    assert.equal(sources.sizes, `${32 * 4 / 3}px`);
+    assert.match(sources.srcSet!, /size=256 256w/);
+    for (const value of [frame.imageUrl, 'blob:https://oj.example/preview', '/img/other.png']) {
+        assert.deepEqual(honorFrameImageSources(value, 32), { src: value });
+    }
+    assert.equal(honorFrameImageSources(src, '3rem').srcSet, undefined);
+    const view = await mount(h(FramedAvatar, { size: 32, src: user.avatar.slice(4), frame: { ...frame, imageUrl: src } }));
+    try {
+        for (const image of view.host.querySelectorAll('img')) {
+            assert.equal(image.getAttribute('loading'), 'lazy');
+            assert.equal(image.getAttribute('decoding'), 'async');
+        }
+        const decoration = view.host.querySelector('.hydro-avatar-frame__decoration')!;
+        await act(async () => decoration.dispatchEvent(new dom.window.Event('error')));
+        assert.equal(decoration.getAttribute('src'), src, 'a failed thumbnail falls back to the original artwork');
+        assert.equal(decoration.getAttribute('srcset'), null);
+        await view.render(h(FramedAvatar, { size: 32, src: user.avatar.slice(4), frame, loading: 'eager' }));
+        for (const image of view.host.querySelectorAll('img')) assert.equal(image.getAttribute('loading'), 'eager');
+    } finally { await view.close(); }
 });
 
 test('switching domain changes the user link, not the globally supplied frame', async () => {

@@ -1,6 +1,7 @@
 import { PNG } from 'pngjs';
 
 export const MAX_FRAME_BYTES = 2 * 1024 * 1024;
+export const FRAME_THUMBNAIL_SIZES = [64, 128, 256] as const;
 
 /** Decode and re-encode, discarding all ancillary metadata and animation. */
 export function normalizeHonorFrameImage(input: Buffer, shape?: 'circle' | 'square', warn?: (message: string) => void): Buffer {
@@ -63,4 +64,34 @@ export function normalizeHonorFrameImage(input: Buffer, shape?: 'circle' | 'squa
     const result = PNG.sync.write(decoded, { colorType: 6 });
     if (result.length > MAX_FRAME_BYTES) throw new Error('Image too large');
     return result;
+}
+
+/** Area sampling with premultiplied alpha avoids dark fringes on transparent artwork. */
+export function resizeHonorFrameImage(input: Buffer, size: number): Buffer {
+    if (!(FRAME_THUMBNAIL_SIZES as readonly number[]).includes(size)) throw new Error('Invalid thumbnail size');
+    const normalized = normalizeHonorFrameImage(input);
+    const source = PNG.sync.read(normalized);
+    if (source.width <= size) return normalized;
+    const target = new PNG({ width: size, height: size });
+    const scale = source.width / size;
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            let alpha = 0;
+            const rgb = [0, 0, 0];
+            for (let sy = Math.floor(y * scale); sy < Math.ceil((y + 1) * scale); sy++) {
+                for (let sx = Math.floor(x * scale); sx < Math.ceil((x + 1) * scale); sx++) {
+                    const weight = (Math.min(sx + 1, (x + 1) * scale) - Math.max(sx, x * scale))
+                        * (Math.min(sy + 1, (y + 1) * scale) - Math.max(sy, y * scale));
+                    const offset = (sy * source.width + sx) * 4;
+                    const a = source.data[offset + 3] * weight;
+                    alpha += a;
+                    for (let channel = 0; channel < 3; channel++) rgb[channel] += source.data[offset + channel] * a;
+                }
+            }
+            const offset = (y * size + x) * 4;
+            for (let channel = 0; channel < 3; channel++) target.data[offset + channel] = alpha ? Math.round(rgb[channel] / alpha) : 0;
+            target.data[offset + 3] = Math.round(alpha / (scale * scale));
+        }
+    }
+    return PNG.sync.write(target, { colorType: 6 });
 }

@@ -83,6 +83,7 @@ export default function UserDetailPage() {
                   user={udoc}
                   link={false}
                   size={96}
+                  loading="eager"
                   shape="circle"
                   frameClassName="hydro-user-profile__avatar-slot"
                   className="hydro-user-profile__avatar"

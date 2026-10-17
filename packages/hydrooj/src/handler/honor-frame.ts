@@ -1,17 +1,63 @@
 import { readFile } from 'fs/promises';
 import { escapeRegExp } from 'lodash';
+import { LRUCache } from 'lru-cache';
 import { ObjectId } from 'mongodb';
 import { Context } from '../context';
 import { NotFoundError, UserNotFoundError, ValidationError } from '../error';
 import { assertUniqueFrame, frameArtworkHash, frameDuplicateError, frameNameKey, readArtwork } from '../lib/honor-frame-catalog';
-import { MAX_FRAME_BYTES, normalizeHonorFrameImage } from '../lib/honor-frame-image';
+import { FRAME_THUMBNAIL_SIZES, MAX_FRAME_BYTES, normalizeHonorFrameImage, resizeHonorFrameImage } from '../lib/honor-frame-image';
 import { equipHonorFrame, grantHonorFrame, manageHonorFrameOwners, revokeHonorFrame } from '../lib/honor-frame-user';
 import { PRIV } from '../model/builtin';
-import { coll, framePath, publicFrame, resolveFrames } from '../model/honor-frame';
+import { coll, frameAssetPaths, framePath, publicFrame, resolveFrames } from '../model/honor-frame';
 import * as oplog from '../model/oplog';
 import storage from '../model/storage';
 import user, { deleteUserCache } from '../model/user';
 import { Handler, param, Types } from '../service/server';
+
+// Authorization is always checked before consulting this process-local byte cache.
+const imageCache = new LRUCache<string, Buffer>({
+    maxSize: 32 * 1024 * 1024,
+    max: 512,
+    sizeCalculation: (image) => image.length,
+    ttl: 5 * 60 * 1000,
+});
+const pendingImages = new Map<string, Promise<Buffer>>();
+
+function artworkAssets(id: string, images: Buffer[], revision?: string) {
+    return [undefined, ...FRAME_THUMBNAIL_SIZES].flatMap((size) => ['square', 'circle'].map((shape, index) => ({
+        path: framePath(id, shape, revision, size),
+        image: size ? resizeHonorFrameImage(images[index], size) : images[index],
+    })));
+}
+
+async function storeArtwork(assets: ReturnType<typeof artworkAssets>, uid: number) {
+    // Wait for every write before cleanup, including when one sibling fails.
+    const results = await Promise.allSettled(assets.map(({ path, image }) => storage.put(path, image, uid)));
+    const failed = results.find((result) => result.status === 'rejected');
+    if (failed?.status === 'rejected') throw failed.reason;
+}
+
+async function cachedArtwork(path: string, original: string, size?: number) {
+    const cached = imageCache.get(path);
+    if (cached) return cached;
+    let pending = pendingImages.get(path);
+    if (!pending) {
+        // Bound concurrent cold resizes as well as the resident cache.
+        if (pendingImages.size >= 16) {
+            await Promise.race([...pendingImages.values()].map((value) => value.catch(() => undefined)));
+            return cachedArtwork(path, original, size);
+        }
+        pending = (async () => {
+            const image = await readArtwork(original);
+            const result = size ? resizeHonorFrameImage(image, size) : image;
+            imageCache.set(path, result);
+            return result;
+        })();
+        pendingImages.set(path, pending);
+        void pending.finally(() => pendingImages.delete(path)).catch(() => {});
+    }
+    return pending;
+}
 
 export class ManageHonorFramesHandler extends Handler {
     noCheckPermView = true;
@@ -68,12 +114,12 @@ export class ManageHonorFramesHandler extends Handler {
         const artworkHash = frameArtworkHash(images);
         await assertUniqueFrame(title, artworkHash);
         const _id = new ObjectId();
-        const paths = ['square', 'circle'].map((shape) => framePath(_id.toHexString(), shape));
+        const assets = artworkAssets(_id.toHexString(), images);
+        const paths = assets.map(({ path }) => path);
         try {
-            await storage.put(paths[0], images[0], this.user._id);
-            await storage.put(paths[1], images[1], this.user._id);
+            await storeArtwork(assets, this.user._id);
             await coll.insertOne({ _id, name: title, nameKey: frameNameKey(title), description: description.trim(), artworkHash,
-                active: false, artworkVersion: 2, createdAt: new Date(), createdBy: this.user._id });
+                active: false, artworkVersion: 2, thumbnailVersion: 1, createdAt: new Date(), createdBy: this.user._id });
         } catch (error) {
             await storage.del(paths, this.user._id);
             throw frameDuplicateError(error);
@@ -123,11 +169,12 @@ export class ManageHonorFramesHandler extends Handler {
             await assertUniqueFrame(title, changes.artworkHash, id);
             changes.artworkVersion = 2;
             changes.artworkRevision = new ObjectId().toHexString();
-            paths = ['square', 'circle'].map((shape) => framePath(value, shape, changes.artworkRevision));
+            changes.thumbnailVersion = 1;
+            const assets = artworkAssets(value, images, changes.artworkRevision);
+            paths = assets.map(({ path }) => path);
             try {
                 // Stage both assets under fresh paths; never overwrite the live pair.
-                await storage.put(paths[0], images[0], this.user._id);
-                await storage.put(paths[1], images[1], this.user._id);
+                await storeArtwork(assets, this.user._id);
             } catch (error) {
                 await storage.del(paths, this.user._id);
                 throw error;
@@ -145,8 +192,7 @@ export class ManageHonorFramesHandler extends Handler {
         }
         deleteUserCache(true);
         if (paths.length) {
-            const previous = frame.artworkVersion === 2
-                ? ['square', 'circle'].map((shape) => framePath(value, shape, frame.artworkRevision)) : [framePath(value)];
+            const previous = frameAssetPaths(frame);
             try { await storage.del(previous, this.user._id); } catch {
                 warnings.push('Saved, but old artwork cleanup failed.');
             }
@@ -174,8 +220,7 @@ export class ManageHonorFramesHandler extends Handler {
                 honorFrameId: { $cond: [{ $eq: ['$honorFrameId', value] }, '', { $ifNull: ['$honorFrameId', ''] }] },
             } }]);
             deleteUserCache(true);
-            await storage.del(frame.artworkVersion === 2
-                ? ['square', 'circle'].map((shape) => framePath(value, shape, frame.artworkRevision)) : [framePath(value)], this.user._id);
+            await storage.del(frameAssetPaths(frame), this.user._id);
             await coll.deleteOne({ _id: id, deleted: true });
             await oplog.log(this, 'honorFrame.delete', { frameId: value, name: frame.name });
         }
@@ -300,18 +345,34 @@ export class HonorFrameImageHandler extends Handler {
 
     @param('id', Types.ObjectId)
     @param('shape', Types.Range(['circle', 'square']), true)
-    async get(domainId: string, id: ObjectId, shape?: 'circle' | 'square') {
+    @param('size', Types.PositiveInt, true)
+    @param('v', Types.String, true)
+    async get(domainId: string, id: ObjectId, shape?: 'circle' | 'square', size?: number, v?: string) {
+        if (size !== undefined && ![...FRAME_THUMBNAIL_SIZES, 512].includes(size)) throw new ValidationError('size');
         const frame = await coll.findOne({ _id: id });
         if (!frame || frame.deleted || (!frame.active && !this.user.hasPriv(PRIV.PRIV_EDIT_SYSTEM)
             && !await user.coll.findOne({ honorFrameIds: id.toHexString() }, { projection: { _id: 1 } }))) {
             throw new NotFoundError(id.toHexString());
         }
-        this.response.body = await storage.get(framePath(
-            id.toHexString(), frame.artworkVersion === 2 ? shape || 'square' : undefined, frame.artworkRevision,
-        ));
+        // Never serve today's artwork under a stale revision URL.
+        if (v !== undefined && v !== frame.artworkRevision) throw new NotFoundError(id.toHexString());
+        const imageShape = frame.artworkVersion === 2 ? shape || 'square' : undefined;
+        const thumbnailSize = size === 512 ? undefined : size;
+        const original = framePath(id.toHexString(), imageShape, frame.artworkRevision);
+        const path = framePath(id.toHexString(), imageShape, frame.artworkRevision, thumbnailSize);
+        const etag = `W/"frame-${id.toHexString()}-${frame.artworkRevision || 'original'}-${imageShape || 'legacy'}-${size || 512}-1"`;
         this.response.type = 'image/png';
         this.response.addHeader('X-Content-Type-Options', 'nosniff');
-        this.response.addHeader('Cache-Control', 'private, max-age=300');
+        this.response.addHeader('ETag', etag);
+        this.response.addHeader('Cache-Control', frame.active ? 'public, max-age=300, must-revalidate' : 'private, no-cache');
+        const validators = String(this.request.headers?.['if-none-match'] || '').split(',').map((value) => value.trim());
+        if (validators.some((value) => value === '*' || value.replace(/^W\//, '') === etag.replace(/^W\//, ''))) {
+            this.response.status = 304;
+            this.response.body = Buffer.alloc(0);
+            return;
+        }
+        this.response.body = await cachedArtwork(path, frame.thumbnailVersion === 1 ? path : original,
+            frame.thumbnailVersion === 1 ? undefined : thumbnailSize);
     }
 }
 

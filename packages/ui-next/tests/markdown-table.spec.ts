@@ -16,6 +16,21 @@ const sample = [
     '| **是否有助威声** | 否 | **是** | **是** | **是** | 否 | **是** | 否 | **是** | **是** | **是** |',
 ].join('\n');
 
+test('Markdown and sanitized HTML images load lazily without accepting event handlers', () => {
+    const dom = new JSDOM(md.render('![plot](/plot.png)\n\n<img src="/photo.png" width="200" height="100" onerror="alert(1)" loading="eager">'));
+    try {
+        const images = dom.window.document.querySelectorAll('img');
+        assert.equal(images.length, 2);
+        for (const image of images) {
+            assert.equal(image.loading || image.getAttribute('loading'), 'lazy');
+            assert.equal(image.getAttribute('decoding'), 'async');
+            assert.equal(image.getAttribute('onerror'), null);
+        }
+        assert.equal(images[1].width, 200);
+        assert.equal(images[1].height, 100);
+    } finally { dom.window.close(); }
+});
+
 test('problem statement table tolerates surplus alignment markers without losing cells', () => {
     assert.doesNotMatch(original.render(sample), /<table>/);
     const dom = new JSDOM(md.render(sample));

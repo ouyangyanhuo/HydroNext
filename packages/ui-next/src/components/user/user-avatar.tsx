@@ -1,6 +1,6 @@
 import { Link } from '@/components/link';
 import { getAvatarUrl } from '@/utils/avatar';
-import type { HonorFrame } from '@/utils/honor-frame';
+import { avatarPixelSize, type HonorFrame } from '@/utils/honor-frame';
 import { formatUserName } from '@/utils/user-name';
 import { FramedAvatar, type FramedAvatarProps } from './framed-avatar';
 
@@ -12,7 +12,7 @@ interface UserAvatarProps extends Omit<FramedAvatarProps, 'src' | 'frame'> {
 export function UserAvatar({ user, link = true, ...props }: UserAvatarProps) {
   const avatar = (
     <FramedAvatar
-      src={user.avatarUrl || getAvatarUrl(user.avatar || '', typeof props.size === 'number' ? props.size : 64)}
+      src={user.avatarUrl || getAvatarUrl(user.avatar || '', Math.ceil((avatarPixelSize(props.size) || 64) * 2))}
       frame={user.honorFrame}
       alt={formatUserName(user)}
       radius="xl"

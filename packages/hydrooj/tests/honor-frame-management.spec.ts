@@ -6,7 +6,7 @@ import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
 import { PNG } from 'pngjs';
-import { normalizeHonorFrameImage } from '../src/lib/honor-frame-image.ts';
+import { FRAME_THUMBNAIL_SIZES, normalizeHonorFrameImage, resizeHonorFrameImage } from '../src/lib/honor-frame-image.ts';
 
 const require = createRequire(import.meta.url);
 const id = new ObjectId('1234567890abcdef12345678');
@@ -51,7 +51,8 @@ function fixture() {
     const mocks = {
         'fs/promises': { readFile: async () => png },
         '../context': {}, '../error': { NotFoundError: Error, UserNotFoundError: Error, ValidationError: Error },
-        '../lib/honor-frame-image': { normalizeHonorFrameImage, MAX_FRAME_BYTES: 2 * 1024 * 1024 }, '../lib/honor-frame-user': {},
+        '../lib/honor-frame-image': { FRAME_THUMBNAIL_SIZES, normalizeHonorFrameImage, resizeHonorFrameImage, MAX_FRAME_BYTES: 2 * 1024 * 1024 },
+        '../lib/honor-frame-user': {},
         '../lib/honor-frame-catalog': {
             assertUniqueFrame: async (...args: any[]) => { uniqueness.push(args); },
             frameNameKey: (value: string) => value.toLowerCase(), frameDuplicateError: (error: any) => error,
@@ -74,7 +75,12 @@ function fixture() {
                 },
                 deleteOne: async () => { events.push('remove'); removed = true; },
             },
-            framePath: (value: string, shape?: string, revision?: string) => `${value}/${revision ? `${revision}/` : ''}${shape || 'legacy'}`,
+            framePath: (value: string, shape?: string, revision?: string, size?: number) => (
+                `${value}/${revision ? `${revision}/` : ''}${shape || 'legacy'}${size ? `-${size}` : ''}`
+            ),
+            frameAssetPaths: (doc: any) => [undefined, ...(doc.thumbnailVersion === 1 ? FRAME_THUMBNAIL_SIZES : [])]
+                .flatMap((size) => (doc.artworkVersion === 2 ? ['square', 'circle'] : ['legacy'])
+                    .map((shape) => `${doc._id}/${doc.artworkRevision ? `${doc.artworkRevision}/` : ''}${shape}${size ? `-${size}` : ''}`)),
             publicFrame: (doc: any) => ({ id: doc._id.toHexString(), name: doc.name, description: doc.description || '' }),
         },
         '../model/oplog': { log: async () => {} },
@@ -83,7 +89,7 @@ function fixture() {
                 stored.push(path);
                 if (writeFails && stored.length % 2 === 0) throw new Error('Artwork write failed');
             },
-            get: async (path: string) => { paths.push(path); return Buffer.from('png'); },
+            get: async (path: string) => { paths.push(path); return png; },
             del: async (values: string[]) => {
                 events.push('storage');
                 if (storageFails) throw new Error('Storage unavailable');
@@ -100,7 +106,8 @@ function fixture() {
     runInNewContext(code, { module, exports: module.exports, Buffer, require: (name: string) => mocks[name] ?? require(name) });
     const handler = (name: string) => {
         const instance = new module.exports[name]();
-        instance.response = { addHeader() {} };
+        const headers: Record<string, string> = {};
+        instance.response = { headers, addHeader(key: string, value: string) { headers[key] = value; } };
         instance.user = { _id: 1, hasPriv: () => false };
         instance.request = { files: {} };
         instance.limitRate = async () => {};
@@ -162,14 +169,15 @@ test('replacing one shape stages a complete new pair and image and deletion rout
     await handler.postEdit('a', id, 'Award', 'New artwork');
     const revision = api.frame.artworkRevision;
     assert.match(revision!, /^[a-f0-9]{24}$/);
-    assert.deepEqual(api.stored, [`${id}/${revision}/square`, `${id}/${revision}/circle`]);
+    assert.deepEqual(api.stored, [undefined, ...FRAME_THUMBNAIL_SIZES].flatMap((size) => ['square', 'circle']
+        .map((shape) => `${id}/${revision}/${shape}${size ? `-${size}` : ''}`)));
     assert.deepEqual(api.paths, [`${id}/circle`, `${id}/square`, `${id}/circle`]);
     assert.equal(api.uniqueness[0][1], 'new-hash');
     assert.equal(api.uniqueness[0][2], id);
     await api.handler('HonorFrameImageHandler').get('b', id, 'circle');
     assert.equal(api.paths.at(-1), `${id}/${revision}/circle`);
     await handler.postDelete('b', id);
-    assert.deepEqual(api.paths.slice(-2), [`${id}/${revision}/square`, `${id}/${revision}/circle`]);
+    assert.deepEqual(api.paths.slice(-8), api.stored);
 });
 
 test('failed storage, database writes and concurrent edits clean only staged files and preserve the live frame', async () => {
@@ -207,7 +215,11 @@ test('updated artwork URLs vary by revision and legacy frame storage paths remai
     const source = readFileSync(new URL('../src/model/honor-frame.ts', import.meta.url), 'utf8');
     runInNewContext(transformSync(source, { loader: 'ts', format: 'cjs' }).code, {
         module, exports: module.exports,
-        require: (name: string) => name === '../service/db' ? { collection: () => ({}) } : require(name),
+        require: (name: string) => {
+            if (name === '../service/db') return { collection: () => ({}) };
+            if (name === '../lib/honor-frame-image') return { FRAME_THUMBNAIL_SIZES };
+            return require(name);
+        },
     });
     const { publicFrame, framePath } = module.exports;
     const frame = { _id: id, name: 'Award', artworkVersion: 2 };
@@ -219,6 +231,31 @@ test('updated artwork URLs vary by revision and legacy frame storage paths remai
     assert.equal(framePath(id.toHexString()), `honor-frame/${id}.png`);
     assert.equal(framePath(id.toHexString(), 'square'), `honor-frame/${id}-square.png`);
     assert.equal(framePath(id.toHexString(), 'square', 'revision1'), `honor-frame/${id}-revision1-square.png`);
+    assert.equal(framePath(id.toHexString(), 'circle', 'revision1', 128), `honor-frame/${id}-revision1-circle-128.png`);
+    assert.equal(module.exports.frameAssetPaths({ ...frame, thumbnailVersion: 1 }).length, 8);
+});
+
+test('image variants deduplicate reads, revalidate without loading bytes, and never bypass publication checks', async () => {
+    const api = fixture();
+    const handler = api.handler('HonorFrameImageHandler');
+    await Promise.all([handler.get('a', id, 'circle', 64), handler.get('b', id, 'circle', 64)]);
+    assert.equal(api.paths.length, 1);
+    assert.equal(PNG.sync.read(handler.response.body).width, 64);
+    assert.equal(handler.response.headers['Cache-Control'], 'public, max-age=300, must-revalidate');
+    const etag = handler.response.headers.ETag;
+    handler.request.headers = { 'if-none-match': `"unrelated", ${etag}` };
+    await handler.get('a', id, 'circle', 64);
+    assert.equal(handler.response.status, 304);
+    assert.equal(api.paths.length, 1);
+    await assert.rejects(handler.get('a', id, 'circle', 123));
+    await assert.rejects(handler.get('a', id, 'circle', 64, 'stale-revision'));
+    api.frame.active = false;
+    await assert.rejects(handler.get('a', id, 'circle', 64));
+    api.setOwners(true);
+    await handler.get('a', id, 'circle', 64);
+    assert.equal(handler.response.headers['Cache-Control'], 'private, no-cache');
+    api.frame.deleted = true;
+    await assert.rejects(handler.get('a', id, 'circle', 64));
 });
 
 test('legacy artwork can keep its old format for metadata edits, but replacement requires a complete pair', async () => {

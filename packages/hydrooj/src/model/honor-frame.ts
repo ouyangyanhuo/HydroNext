@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { Context } from '../context';
+import { FRAME_THUMBNAIL_SIZES } from '../lib/honor-frame-image';
 import db from '../service/db';
 
 export interface HonorFrameDoc {
@@ -13,6 +14,7 @@ export interface HonorFrameDoc {
     createdBy: number;
     artworkVersion?: 2;
     artworkRevision?: string;
+    thumbnailVersion?: 1;
     deleted?: boolean;
 }
 
@@ -31,9 +33,15 @@ declare module '../service/db' {
 }
 
 export const coll = db.collection('honor.frame');
-export const framePath = (id: string, shape?: string, revision?: string) => (
-    `honor-frame/${id}${revision ? `-${revision}` : ''}${shape ? `-${shape}` : ''}.png`
+export const framePath = (id: string, shape?: string, revision?: string, size?: number) => (
+    `honor-frame/${id}${revision ? `-${revision}` : ''}${shape ? `-${shape}` : ''}${size ? `-${size}` : ''}.png`
 );
+export const frameAssetPaths = (frame: HonorFrameDoc) => {
+    const id = frame._id.toHexString();
+    const shapes = frame.artworkVersion === 2 ? ['square', 'circle'] : [undefined];
+    return [undefined, ...(frame.thumbnailVersion === 1 ? FRAME_THUMBNAIL_SIZES : [])]
+        .flatMap((size) => shapes.map((shape) => framePath(id, shape, frame.artworkRevision, size)));
+};
 export const publicFrame = (frame: HonorFrameDoc): PublicHonorFrame => ({
     id: frame._id.toHexString(), name: frame.name,
     imageUrl: `/honor-frame/${frame._id.toHexString()}.png${frame.artworkRevision ? `?v=${frame.artworkRevision}` : ''}`,
