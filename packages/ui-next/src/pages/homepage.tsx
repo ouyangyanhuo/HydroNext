@@ -1,4 +1,4 @@
-import { Badge, Group, Menu, Stack, Text, Title } from '@mantine/core';
+import { Badge, Group, Menu, Stack, Text, Title, Tooltip } from '@mantine/core';
 import {
   IconArrowUpRight, IconCheck, IconChevronDown, IconChevronRight, IconClock, IconCode,
   IconLogin2, IconSortAscending, IconSpeakerphone, IconTrophy, IconUserPlus,
@@ -197,12 +197,14 @@ function ProblemAcceptance({ submits, accepts }: { submits: number, accepts: num
   const toneClass = rate >= 60 ? 'hydro-acceptance-bar--high' : rate >= 30 ? 'hydro-acceptance-bar--mid' : 'hydro-acceptance-bar--low';
 
   return (
-    <div className="hydro-problem-acceptance" title={`${accepts} / ${submits} (${rate}%)`}>
-      <div className={`hydro-acceptance-bar ${toneClass}`} aria-hidden="true">
-        <div className="hydro-acceptance-bar__fill" style={{ width: `${rate}%` }} />
+    <Tooltip label={`${accepts} / ${submits} (${rate}%)`} withArrow withinPortal>
+      <div className="hydro-problem-acceptance">
+        <div className={`hydro-acceptance-bar ${toneClass}`} aria-hidden="true">
+          <div className="hydro-acceptance-bar__fill" style={{ width: `${rate}%` }} />
+        </div>
+        <span className="hydro-data-row__meta">{rate}%</span>
       </div>
-      <span className="hydro-data-row__meta">{rate}%</span>
-    </div>
+    </Tooltip>
   );
 }
 
@@ -253,16 +255,17 @@ function SectionSortSelect({
 }) {
   return (
     <Menu shadow="md" width="auto" position="bottom-start" offset={6} withinPortal classNames={{ dropdown: 'hydro-topbar-dropdown' }}>
-      <Menu.Target>
-        <ActionIcon
-          size="sm"
-          variant="light"
-          title={title}
-          aria-label={title}
-        >
-          <IconSortAscending size={15} />
-        </ActionIcon>
-      </Menu.Target>
+      <Tooltip label={title} withArrow withinPortal openDelay={150} events={{ hover: true, focus: true, touch: false }}>
+        <Menu.Target>
+          <ActionIcon
+            size="sm"
+            variant="light"
+            aria-label={title}
+          >
+            <IconSortAscending size={15} />
+          </ActionIcon>
+        </Menu.Target>
+      </Tooltip>
       <Menu.Dropdown style={{ minWidth: 200 }}>
         {data.map((item) => (
           <Menu.Item
@@ -480,9 +483,11 @@ function RecentContests({ contests, tsdict = {} }: { contests: any[], tsdict?: R
               >
                 <div className="hydro-contest-card-row__main">
                   <div className="hydro-contest-card-row__header">
-                    <span className="hydro-contest-card-row__title" title={contest.title}>
-                      {contest.title}
-                    </span>
+                    <Tooltip label={contest.title} withArrow withinPortal multiline maw="calc(100vw - 32px)">
+                      <span className="hydro-contest-card-row__title">
+                        {contest.title}
+                      </span>
+                    </Tooltip>
                     <IconChevronRight className="hydro-data-row__arrow" size={16} stroke={1.8} aria-hidden="true" />
                   </div>
                   <div className="hydro-contest-card-row__footer">

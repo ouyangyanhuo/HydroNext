@@ -12,6 +12,7 @@ const previous = new Map<string, PropertyDescriptor | undefined>();
 for (const [key, value] of Object.entries({
     window: dom.window, document: dom.window.document, navigator: dom.window.navigator,
     HTMLElement: dom.window.HTMLElement, Element: dom.window.Element, Node: dom.window.Node,
+    Document: dom.window.Document, ShadowRoot: dom.window.ShadowRoot,
     HTMLAnchorElement: dom.window.HTMLAnchorElement,
     getComputedStyle: dom.window.getComputedStyle.bind(dom.window), IS_REACT_ACT_ENVIRONMENT: true,
     requestAnimationFrame: (callback: () => void) => setTimeout(callback, 0), cancelAnimationFrame: clearTimeout,
@@ -43,7 +44,7 @@ test('modals in problem_detail and contest_detail do not use centered layout', (
     assert.equal(registerModalTag.includes('centered'), false);
 });
 
-async function mountHomepage(args: any = {}, user: any = { _id: 0, perm: 0n }, perms: Record<string, boolean> = {}) {
+async function mountHomepage(args: any = {}, user: any = { _id: 0, perm: 0n }, perms: Record<string, boolean> = {}, realMenu = false) {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const root = createRoot(host);
@@ -61,7 +62,7 @@ async function mountHomepage(args: any = {}, user: any = { _id: 0, perm: 0n }, p
     const mocks = {
         '@mantine/core': {
             ...mantine,
-            Menu: testMenu,
+            Menu: realMenu ? mantine.Menu : testMenu,
         },
         '@/components/common/button': {
             Button: mantine.Button,
@@ -129,6 +130,45 @@ test('homepage sort buttons are hidden when user lacks view permission', async (
     } finally {
         await f.close();
     }
+});
+
+test('homepage sort hints use portal tooltips without breaking the real sorting menu', async () => {
+    const f = await mountHomepage({}, { _id: 10, perm: 1n }, { problem: true, contest: true }, true);
+    try {
+        for (const label of ['Sort problem list', 'Sort recent contests']) {
+            const button = f.host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
+            assert.ok(button);
+            assert.equal(button.hasAttribute('title'), false);
+            assert.equal(button.getAttribute('aria-haspopup'), 'menu');
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => {
+                button.dispatchEvent(new dom.window.MouseEvent('mouseover', { bubbles: true }));
+                button.dispatchEvent(new dom.window.MouseEvent('mouseenter'));
+                button.dispatchEvent(new dom.window.MouseEvent('mousemove', { bubbles: true }));
+            });
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => new Promise((resolve) => setTimeout(resolve, 250)));
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => new Promise((resolve) => setTimeout(resolve, 50)));
+            const tooltip = [...document.querySelectorAll('[role="tooltip"]')].find((element) => element.textContent === label);
+            assert.ok(tooltip, label);
+            assert.equal(f.host.contains(tooltip), false, 'portal avoids clipping by homepage panels');
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => {
+                button.dispatchEvent(new dom.window.MouseEvent('mouseout', { bubbles: true }));
+                button.dispatchEvent(new dom.window.MouseEvent('mouseleave'));
+            });
+        }
+        const button = f.host.querySelector<HTMLButtonElement>('button[aria-label="Sort problem list"]')!;
+        await act(async () => button.click());
+        assert.equal(button.getAttribute('aria-expanded'), 'true');
+        const option = [...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')]
+            .find((item) => item.textContent?.includes('Most attempted'))!;
+        assert.ok(option);
+        await act(async () => option.click());
+        assert.equal(f.host.querySelector('#problem-list-title')?.textContent, 'Most Attempted Problems');
+        assert.equal(button.getAttribute('aria-expanded'), 'false');
+    } finally { await f.close(); }
 });
 
 test('homepage problem list sorting reorders items and updates card title', async () => {
