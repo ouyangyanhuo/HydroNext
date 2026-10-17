@@ -24,6 +24,7 @@ export default function HomeDomainPage() {
   const [leaveTarget, setLeaveTarget] = useState<string | null>(null);
   const [joinOpened, setJoinOpened] = useState(false);
   const [invitationCode, setInvitationCode] = useState('');
+  const canJoin = /^[A-Z0-9]{8}$/.test(invitationCode);
 
   const ddocs = args.ddocs || [];
   const roles = args.role || {};
@@ -88,8 +89,8 @@ export default function HomeDomainPage() {
   };
 
   const handleJoin = () => {
+    if (!canJoin) return;
     const code = invitationCode.trim().toUpperCase();
-    if (!code) return;
     window.location.assign(buildUrl('domain_join', { domainId: 'system' }, { code }));
   };
 
@@ -218,7 +219,6 @@ export default function HomeDomainPage() {
           <TextInput
             label={t('Invitation Code')}
             value={invitationCode}
-            maxLength={8}
             autoFocus
             onChange={(event) => setInvitationCode(event.currentTarget.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase())}
             onKeyDown={(event) => {
@@ -227,7 +227,7 @@ export default function HomeDomainPage() {
           />
           <Group justify="flex-end" gap="xs">
             <Button variant="default" onClick={() => setJoinOpened(false)}>{t('Cancel')}</Button>
-            <Button onClick={handleJoin} disabled={!invitationCode.trim()}>{t('Continue')}</Button>
+            <Button onClick={handleJoin} disabled={!canJoin}>{t('Continue')}</Button>
           </Group>
         </Stack>
       </Modal>
