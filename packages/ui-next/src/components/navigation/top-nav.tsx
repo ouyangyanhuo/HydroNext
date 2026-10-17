@@ -1,7 +1,7 @@
 import { Burger, ColorInput, Drawer, Group, Menu, Popover, Stack, Text, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
-  IconCheck, IconChevronDown, IconClock, IconLetterP, IconMoon, IconPalette, IconRestore, IconSun,
+  IconCheck, IconMoon, IconPalette, IconRestore, IconSun,
 } from '@tabler/icons-react';
 import type { MouseEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -23,6 +23,7 @@ import { DomainSwitcher } from './domain-switcher';
 interface RootViewTransition {
   ready: Promise<void>;
   finished: Promise<void>;
+  skipTransition?: () => void;
 }
 
 type ViewTransitionDocument = Document & {
@@ -101,11 +102,13 @@ function GuestMenu() {
 function ThemeToggle() {
   const { t } = useI18n();
   const theme = useSessionStore((s) => s.theme);
-  const autoTheme = useSessionStore((s) => s.autoTheme);
   const setTheme = useSessionStore((s) => s.setTheme);
-  const setAutoTheme = useSessionStore((s) => s.setAutoTheme);
+  const busyRef = useRef(false);
+  const mountedRef = useRef(true);
   const timersRef = useRef<number[]>([]);
   const frameRef = useRef<number | null>(null);
+  const viewTransitionRef = useRef<RootViewTransition | null>(null);
+  const animationRef = useRef<Animation | null>(null);
   const [animating, setAnimating] = useState(false);
   const [transition, setTransition] = useState<{
     x: number;
@@ -114,123 +117,104 @@ function ThemeToggle() {
     targetTheme: ThemeMode;
     expanded: boolean;
   } | null>(null);
-  const nextTheme: Record<ThemeMode, ThemeMode> = { light: 'paper', paper: 'dark', dark: 'light' };
-  const themeLabel: Record<ThemeMode, string> = {
-    light: t('Switch to paper mode'),
-    paper: t('Switch to dark mode'),
-    dark: t('Switch to light mode'),
-  };
-  const label = autoTheme ? t('Automatic theme enabled') : themeLabel[theme];
-  const modeLabel: Record<ThemeMode, string> = {
-    light: t('Light mode'),
-    paper: t('Paper mode'),
-    dark: t('Dark mode'),
-  };
+  const isDark = theme === 'dark';
+  const label = t(isDark ? 'Switch to light mode' : 'Switch to dark mode');
 
-  useEffect(() => () => {
-    timersRef.current.forEach((timer) => window.clearTimeout(timer));
-    if (frameRef.current != null) window.cancelAnimationFrame(frameRef.current);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      timersRef.current.forEach((timer) => window.clearTimeout(timer));
+      if (frameRef.current != null) window.cancelAnimationFrame(frameRef.current);
+      animationRef.current?.cancel();
+      viewTransitionRef.current?.skipTransition?.();
+    };
   }, []);
 
-  const runFallbackTransition = (x: number, y: number, radius: number, targetTheme: ThemeMode) => {
-    setTransition({ x, y, radius, targetTheme, expanded: false });
-    frameRef.current = window.requestAnimationFrame(() => {
-      setTransition((current) => (current ? { ...current, expanded: true } : current));
-    });
-    timersRef.current.push(window.setTimeout(() => setTheme(targetTheme), 690));
-    timersRef.current.push(window.setTimeout(() => {
-      setTransition(null);
-      setAnimating(false);
-      timersRef.current = [];
-    }, 760));
-  };
-
   const toggleTheme = async (event: MouseEvent<HTMLButtonElement>) => {
-    const targetTheme = nextTheme[theme];
-    if (animating) return;
+    if (busyRef.current) return;
+    const targetTheme = useSessionStore.getState().theme === 'dark' ? 'light' : 'dark';
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       setTheme(targetTheme);
       return;
     }
-
     const rect = event.currentTarget.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
     const y = rect.top + rect.height / 2;
-    const radius = Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y),
-    ) + 48;
-
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y)) + 48;
+    busyRef.current = true;
     setAnimating(true);
     const transitionDocument = document as ViewTransitionDocument;
     if (!transitionDocument.startViewTransition) {
-      runFallbackTransition(x, y, radius, targetTheme);
+      setTransition({ x, y, radius, targetTheme, expanded: false });
+      frameRef.current = window.requestAnimationFrame(() => {
+        setTransition((current) => current ? { ...current, expanded: true } : current);
+      });
+      timersRef.current.push(window.setTimeout(() => setTheme(targetTheme), 690));
+      timersRef.current.push(window.setTimeout(() => {
+        setTransition(null);
+        setAnimating(false);
+        busyRef.current = false;
+        timersRef.current = [];
+      }, 760));
       return;
     }
-
     try {
       const viewTransition = transitionDocument.startViewTransition(() => {
-        flushSync(() => setTheme(targetTheme));
+        if (mountedRef.current) flushSync(() => setTheme(targetTheme));
       });
+      viewTransitionRef.current = viewTransition;
+      const finished = viewTransition.finished.catch(() => undefined);
       await viewTransition.ready;
-      const animation = document.documentElement.animate(
-        {
-          clipPath: [
-            `circle(0px at ${x}px ${y}px)`,
-            `circle(${radius}px at ${x}px ${y}px)`,
-          ],
-        },
-        {
-          duration: 720,
-          easing: 'cubic-bezier(.4, 0, .2, 1)',
-          pseudoElement: '::view-transition-new(root)',
-        } as KeyframeAnimationOptions,
-      );
+      if (!mountedRef.current) return;
+      const animation = document.documentElement.animate({
+        clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`],
+      }, {
+        duration: 720,
+        easing: 'cubic-bezier(.4, 0, .2, 1)',
+        pseudoElement: '::view-transition-new(root)',
+      } as KeyframeAnimationOptions);
+      animationRef.current = animation;
       await animation.finished;
-      await viewTransition.finished.catch(() => undefined);
+      await finished;
     } catch {
-      setTheme(targetTheme);
+      if (mountedRef.current) setTheme(targetTheme);
     } finally {
-      setAnimating(false);
+      animationRef.current = null;
+      viewTransitionRef.current = null;
+      busyRef.current = false;
+      if (mountedRef.current) setAnimating(false);
     }
   };
 
   return (
-    <Group gap={2} wrap="nowrap">
+    <>
       <Tooltip label={label} withArrow>
         <ActionIcon
           aria-label={label}
-          color={theme === 'dark' ? 'yellow' : theme === 'paper' ? 'hydroCopper' : 'hydroTeal'}
-          disabled={animating}
           onClick={toggleTheme}
+          disabled={animating}
+          color={isDark ? 'yellow' : 'hydroTeal'}
           radius="md"
           size="lg"
           variant="subtle"
-          className="relative overflow-hidden transition-colors duration-200 hover:bg-[var(--hydro-surface-muted)]"
+          className="relative overflow-hidden hover:bg-[var(--hydro-surface-muted)]"
         >
           <IconSun
             size={18}
-            stroke={2.2}
-            className={`absolute transition-[transform,opacity] duration-200 ${
-              theme === 'light' ? 'rotate-0 scale-100 opacity-100' : 'rotate-90 scale-0 opacity-0'
+            stroke={2}
+            aria-hidden="true"
+            className={`absolute transition-[transform,opacity] duration-200 motion-reduce:transition-none ${
+              isDark ? 'rotate-0 scale-100 opacity-100' : 'rotate-90 scale-0 opacity-0'
             }`}
-            style={{ transitionTimingFunction: 'var(--hydro-ease-spring)' }}
-          />
-          <IconLetterP
-            size={18}
-            stroke={2.2}
-            className={`absolute transition-[transform,opacity] duration-200 ${
-              theme === 'paper' ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'
-            }`}
-            style={{ transitionTimingFunction: 'var(--hydro-ease-spring)' }}
           />
           <IconMoon
             size={18}
-            stroke={2.2}
-            className={`absolute transition-[transform,opacity] duration-200 ${
-              theme === 'dark' ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'
+            stroke={2}
+            aria-hidden="true"
+            className={`absolute transition-[transform,opacity] duration-200 motion-reduce:transition-none ${
+              isDark ? '-rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'
             }`}
-            style={{ transitionTimingFunction: 'var(--hydro-ease-spring)' }}
           />
         </ActionIcon>
       </Tooltip>
@@ -239,51 +223,13 @@ function ThemeToggle() {
           aria-hidden="true"
           className="pointer-events-none fixed left-0 top-0 z-[9999] h-0.5 w-0.5 rounded-full transition-transform duration-[720ms]"
           style={{
-            background: transition.targetTheme === 'dark' ? '#090d11' : transition.targetTheme === 'paper' ? '#efe8de' : '#eef3f6',
+            background: transition.targetTheme === 'dark' ? '#090d11' : '#eef3f6',
             transform: `translate(${transition.x}px, ${transition.y}px) translate(-50%, -50%) scale(${transition.expanded ? transition.radius : 0})`,
             transitionTimingFunction: 'cubic-bezier(.4, 0, .2, 1)',
           }}
         />
       )}
-      <Menu shadow="md" width={190} position="bottom-end" classNames={{ dropdown: 'hydro-topbar-dropdown' }}>
-        <Menu.Target>
-          <ActionIcon
-            aria-label={t('Theme mode')}
-            radius="md"
-            size="sm"
-            variant="subtle"
-            className="hover:bg-[var(--hydro-surface-muted)]"
-          >
-            <IconChevronDown size={14} stroke={2.2} />
-          </ActionIcon>
-        </Menu.Target>
-        <Menu.Dropdown>
-          <Menu.Label>{t('Theme mode')}</Menu.Label>
-          <Menu.Item
-            leftSection={<IconClock size={16} />}
-            rightSection={autoTheme ? <IconCheck size={14} /> : null}
-            onClick={() => setAutoTheme(true)}
-          >
-            {t('Automatic')}
-          </Menu.Item>
-          <Menu.Divider />
-          {(['light', 'paper', 'dark'] as ThemeMode[]).map((mode) => (
-            <Menu.Item
-              key={mode}
-              leftSection={mode === 'light'
-                ? <IconSun size={16} />
-                : mode === 'paper'
-                  ? <IconLetterP size={16} />
-                  : <IconMoon size={16} />}
-              rightSection={!autoTheme && theme === mode ? <IconCheck size={14} /> : null}
-              onClick={() => setTheme(mode)}
-            >
-              {modeLabel[mode]}
-            </Menu.Item>
-          ))}
-        </Menu.Dropdown>
-      </Menu>
-    </Group>
+    </>
   );
 }
 

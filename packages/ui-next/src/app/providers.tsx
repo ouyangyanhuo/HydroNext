@@ -21,28 +21,28 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const accentColor = useSessionStore((s) => s.accentColor);
   const fontFamily = useSessionStore((s) => s.fontFamily);
   const isDark = colorScheme === 'dark';
-  const isPaper = colorScheme === 'paper';
   const isPreset = accentColor in ACCENT_PRESETS;
   const palette = isPreset
     ? getAccentScheme(accentColor)[isDark ? 'dark' : 'light']
     : null;
   const { theme: dynamicTheme, cssResolver } = useMemo(
-    () => createDynamicTheme(isPaper ? '#7a6240' : accentColor),
-    [accentColor, isPaper],
+    () => createDynamicTheme(accentColor),
+    [accentColor],
   );
 
   useEffect(() => {
     if (!autoTheme) return undefined;
 
     syncAutoTheme();
-    const timer = window.setInterval(syncAutoTheme, 60_000);
+    const systemTheme = window.matchMedia?.('(prefers-color-scheme: dark)');
+    systemTheme?.addEventListener('change', syncAutoTheme);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') syncAutoTheme();
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', syncAutoTheme);
     return () => {
-      window.clearInterval(timer);
+      systemTheme?.removeEventListener('change', syncAutoTheme);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', syncAutoTheme);
     };
@@ -50,34 +50,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (!isPaper) {
-      if (palette) {
-        const vars = accentToCssVars(palette);
-        for (const [key, value] of Object.entries(vars)) {
-          root.style.setProperty(key, value);
-        }
-      } else {
-        root.style.setProperty('--hydro-primary', accentColor);
-        root.style.setProperty('--hydro-primary-strong', accentColor);
-        root.style.setProperty('--hydro-primary-soft', `${accentColor}18`);
-        root.style.setProperty('--hydro-accent', accentColor);
-        root.style.setProperty('--hydro-accent-soft', `${accentColor}18`);
+    if (palette) {
+      const vars = accentToCssVars(palette);
+      for (const [key, value] of Object.entries(vars)) {
+        root.style.setProperty(key, value);
       }
     } else {
-      const keys = ['--hydro-primary', '--hydro-primary-strong', '--hydro-primary-soft', '--hydro-accent', '--hydro-accent-soft'];
-      for (const key of keys) root.style.removeProperty(key);
-    }
-    if (isPaper) {
-      root.setAttribute('data-hydro-theme', 'paper');
-    } else {
-      root.removeAttribute('data-hydro-theme');
+      root.style.setProperty('--hydro-primary', accentColor);
+      root.style.setProperty('--hydro-primary-strong', accentColor);
+      root.style.setProperty('--hydro-primary-soft', `${accentColor}18`);
+      root.style.setProperty('--hydro-accent', accentColor);
+      root.style.setProperty('--hydro-accent-soft', `${accentColor}18`);
     }
     return () => {
       const keys = ['--hydro-primary', '--hydro-primary-strong', '--hydro-primary-soft', '--hydro-accent', '--hydro-accent-soft'];
       for (const key of keys) root.style.removeProperty(key);
-      root.removeAttribute('data-hydro-theme');
     };
-  }, [accentColor, palette, isDark, isPaper]);
+  }, [accentColor, palette, isDark]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -90,7 +79,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <MantineProvider
       theme={dynamicTheme}
       cssVariablesResolver={cssResolver}
-      forceColorScheme={colorScheme === 'paper' ? 'light' : colorScheme}
+      forceColorScheme={colorScheme}
     >
       <Notifications position="top-left" />
       <HydroNotifications />

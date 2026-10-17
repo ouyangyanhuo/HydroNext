@@ -3,7 +3,7 @@ import { initialLang, initialPage } from '@/globals';
 import { type AccentColorValue, DEFAULT_ACCENT } from '@/styles/accent-colors';
 import type { HonorFrame } from '@/utils/honor-frame';
 
-export type ThemeMode = 'light' | 'paper' | 'dark';
+export type ThemeMode = 'light' | 'dark';
 export type FontFamily = 'sans' | 'serif';
 
 export interface UserContext {
@@ -67,16 +67,9 @@ const initialUi: UiContext = initialPage.args?.UiContext as UiContext ?? {
 };
 
 function normalizeTheme(value: unknown): ThemeMode | null {
-  return value === 'dark' || value === 'light' || value === 'paper' ? value : null;
-}
-
-function readStoredTheme(): ThemeMode | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    return normalizeTheme(window.localStorage.getItem(THEME_STORAGE_KEY));
-  } catch {
-    return null;
-  }
+  // Migrate the removed mode without losing an existing manual preference.
+  if (value === 'paper') return 'light';
+  return value === 'dark' || value === 'light' ? value : null;
 }
 
 function writeStoredTheme(theme: ThemeMode) {
@@ -85,6 +78,18 @@ function writeStoredTheme(theme: ThemeMode) {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {
     // Ignore storage failures in restricted browser contexts.
+  }
+}
+
+function readStoredTheme(): ThemeMode | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    const theme = normalizeTheme(stored);
+    if (theme && stored !== theme) writeStoredTheme(theme);
+    return theme;
+  } catch {
+    return null;
   }
 }
 
@@ -107,9 +112,12 @@ function writeStoredAutoTheme(enabled: boolean) {
   }
 }
 
-export function getTimeBasedTheme(date = new Date()): ThemeMode {
-  const hour = date.getHours();
-  return hour >= 6 && hour < 18 ? 'light' : 'dark';
+export function getSystemTheme(): ThemeMode {
+  try {
+    return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
 }
 
 function readStoredAccent(): AccentColorValue {
@@ -152,35 +160,28 @@ function writeStoredFont(font: FontFamily) {
   }
 }
 
+const initialAutoTheme = readStoredAutoTheme();
+const storedTheme = readStoredTheme();
+
 export const useSessionStore = create<SessionStore>((set, get) => ({
   user: initialUser,
   ui: initialUi,
-  theme: readStoredAutoTheme()
-    ? getTimeBasedTheme()
+  theme: initialAutoTheme
+    ? getSystemTheme()
     : (
-      readStoredTheme()
+      storedTheme
       || normalizeTheme(initialUser.theme)
       || normalizeTheme(initialUi.theme)
       || 'light'
     ),
-  autoTheme: readStoredAutoTheme(),
+  autoTheme: initialAutoTheme,
   accentColor: readStoredAccent(),
   fontFamily: readStoredFont(),
   language: initialUser.viewLang || initialLang,
   setSession: ({ user, ui }) => {
-    const autoTheme = readStoredAutoTheme();
-    const theme = autoTheme
-      ? getTimeBasedTheme()
-      : (
-        readStoredTheme()
-        || normalizeTheme((user as any).theme)
-        || normalizeTheme((ui as any).theme)
-        || 'light'
-      );
     const language = (user as any).viewLang || initialLang;
-    set({
-      user, ui, theme, autoTheme, language,
-    });
+    // Appearance is browser-local, not reset by navigation, login or server preferences.
+    set({ user, ui, language });
   },
   setTheme: (theme) => {
     writeStoredTheme(theme);
@@ -190,14 +191,16 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   setAutoTheme: (autoTheme) => {
     writeStoredAutoTheme(autoTheme);
     if (autoTheme) {
-      set({ autoTheme, theme: getTimeBasedTheme() });
+      set({ autoTheme, theme: getSystemTheme() });
     } else {
       writeStoredTheme(get().theme);
       set({ autoTheme });
     }
   },
   syncAutoTheme: () => {
-    if (get().autoTheme) set({ theme: getTimeBasedTheme() });
+    if (!get().autoTheme) return;
+    const theme = getSystemTheme();
+    if (get().theme !== theme) set({ theme });
   },
   setAccentColor: (accentColor) => {
     writeStoredAccent(accentColor);

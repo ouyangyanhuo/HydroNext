@@ -19,11 +19,10 @@ function tokensFor(selector: string) {
     return tokens;
 }
 
-test('dark medium weights are reduced while light, paper, regular and bold weights are preserved', () => {
+test('dark medium weights are reduced while light, regular and bold weights are preserved', () => {
     const base = tokensFor(':root');
     const dark = new Map([...base, ...tokensFor("[data-mantine-color-scheme='dark']")]);
-    const paper = new Map([...dark, ...tokensFor("[data-hydro-theme='paper']")]);
-    for (const [tokens, medium, semibold] of [[base, '500', '600'], [dark, '460', '560'], [paper, '500', '600']] as const) {
+    for (const [tokens, medium, semibold] of [[base, '500', '600'], [dark, '460', '560']] as const) {
         assert.equal(tokens.get('--hydro-weight-medium'), medium);
         assert.equal(tokens.get('--hydro-weight-semibold'), semibold);
         assert.equal(tokens.get('--hydro-weight-regular'), '400');

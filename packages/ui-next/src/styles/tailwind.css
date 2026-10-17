@@ -194,15 +194,6 @@ body::before {
     linear-gradient(180deg, color-mix(in srgb, var(--hydro-primary) 3.5%) 1px, transparent 1px);
 }
 
-[data-hydro-theme='paper'] body::before {
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
-    linear-gradient(90deg, color-mix(in srgb, var(--hydro-primary) 5%) 1px, transparent 1px),
-    linear-gradient(180deg, color-mix(in srgb, var(--hydro-accent) 3%) 1px, transparent 1px);
-  background-size: 200px 200px, 46px 46px, 46px 46px;
-  mask-image: linear-gradient(180deg, black 0, transparent 520px);
-}
-
 a {
   color: var(--hydro-primary);
 }
@@ -355,11 +346,6 @@ a {
 
 [data-mantine-color-scheme='dark'] .hydro-app-surface {
   background: none;
-}
-
-[data-hydro-theme='paper'] .hydro-app-surface {
-  background:
-    linear-gradient(180deg, transparent 0, rgb(139 111 71 / 4%) 360px, transparent 760px);
 }
 
 .hydro-container {
@@ -3323,18 +3309,47 @@ a {
 
 .hydro-user-profile__facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 8px;
   margin-top: 22px;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
-.hydro-user-profile__facts > .mantine-Text-root {
+.hydro-user-profile__facts > .mantine-Text-root,
+.hydro-user-profile__fact {
   min-width: 0;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: var(--hydro-radius-md);
   background: var(--hydro-surface-muted);
-  line-height: 1.6;
-  overflow-wrap: anywhere;
+  line-height: 1.4;
+  overflow: hidden;
+}
+
+.hydro-user-profile__fact-label {
+  font-size: var(--mantine-font-size-xs);
+  color: var(--hydro-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.hydro-user-profile__fact-value,
+.hydro-user-profile__fact-value .mantine-Text-root {
+  font-size: var(--mantine-font-size-xs);
+  color: var(--hydro-text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hydro-user-profile__fact-value .mantine-Text-root {
+  display: block;
+  width: 100%;
 }
 
 .hydro-user-profile__stat {
@@ -3414,7 +3429,7 @@ a {
   .hydro-user-profile__info-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .hydro-user-profile__identity { gap: 12px; }
   .hydro-user-profile__edit { justify-self: start; margin-top: 0; }
-  .hydro-user-profile__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 18px; }
+  .hydro-user-profile__facts { grid-auto-columns: minmax(100px, 1fr); margin-top: 18px; padding-bottom: 4px; }
   .hydro-security-session { flex-wrap: wrap; }
 }
 
@@ -4204,16 +4219,6 @@ a {
               inset 0 1px 0 0 color-mix(in srgb, var(--hydro-glass-highlight) 60%, transparent);
 }
 
-[data-hydro-theme='paper'] .hydro-top-nav {
-  border-bottom-color: var(--hydro-border);
-  background-color: var(--hydro-nav-bg);
-  background-image: linear-gradient(180deg, color-mix(in srgb, var(--hydro-glass-highlight) 80%, transparent), transparent 65%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  backdrop-filter: blur(16px) saturate(140%);
-  box-shadow: 0 1px 3px rgb(60 50 30 / 6%),
-              inset 0 1px 0 0 var(--hydro-glass-highlight);
-}
-
 .hydro-top-nav__indicator {
   position: absolute;
   bottom: 0;
@@ -4325,7 +4330,8 @@ a {
   .hydro-security-session,
   .hydro-user-profile__tablist,
   .hydro-settings-field--wide:has(.mantine-Checkbox-root),
-  .hydro-user-profile__facts > .mantine-Text-root
+  .hydro-user-profile__facts > .mantine-Text-root,
+  .hydro-user-profile__fact
 ) {
   background-color: var(--hydro-surface-muted);
   background-image: none;
@@ -4379,11 +4385,6 @@ a {
   border-color: color-mix(in srgb, var(--alert-color, var(--hydro-border)) 32%, var(--hydro-border));
   background-color: color-mix(in srgb, var(--alert-color, var(--hydro-primary)) 12%, var(--hydro-surface));
   box-shadow: 0 2px 8px rgb(0 0 0 / 22%);
-}
-
-[data-hydro-theme='paper'] .mantine-Alert-root {
-  border-color: color-mix(in srgb, var(--alert-color, var(--hydro-border)) 36%, var(--hydro-border));
-  background-color: color-mix(in srgb, var(--alert-color, var(--hydro-primary)) 7%, var(--hydro-surface));
 }
 
 .mantine-Alert-wrapper {

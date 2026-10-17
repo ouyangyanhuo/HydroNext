@@ -33,10 +33,11 @@ const { create } = require('zustand');
 const mantine = require('@mantine/core');
 
 async function fixture(uid = 0, topNav = false, captureMenu = false) {
-    const store = create(() => ({
+    const store = create((set: any) => ({
         user: { _id: uid, uname: `user${uid}`, priv: 0, avatar: '' },
         ui: { domainId: 'system', domain: { name: 'System' }, serverName: 'HydroNext' },
-        theme: 'light', autoTheme: false, accentColor: 'teal', setTheme() {}, setAutoTheme() {}, setAccentColor() {},
+        theme: 'light', autoTheme: false, accentColor: 'teal',
+        setTheme(theme: string) { set({ theme, autoTheme: false }); }, setAutoTheme() {}, setAccentColor() {},
     }));
     const calls: Array<{ url: string, init: RequestInit }> = [];
     let respond: (url: string, init: RequestInit) => Promise<any> = async () => ({
@@ -123,6 +124,12 @@ test('a directly mounted guest domain switcher renders nothing and never request
 
 test('guest desktop navigation and mobile drawer hide domain entries while retaining login', async () => {
     const f = await fixture(0, true);
+    const doc = document as any;
+    const element = document.documentElement as any;
+    const originalTransition = doc.startViewTransition;
+    const originalAnimate = element.animate;
+    const originalMatchMedia = dom.window.matchMedia;
+    const animations: any[] = [];
     try {
         assert.ok(f.host.textContent?.includes('Login'));
         assert.equal(f.host.textContent?.includes('System'), false);
@@ -132,7 +139,43 @@ test('guest desktop navigation and mobile drawer hide domain entries while retai
         assert.equal(document.body.textContent?.includes('My Domains'), false);
         assert.equal(document.body.textContent?.includes('Switch Domain'), false);
         assert.equal(f.calls.length, 0);
-    } finally { await f.close(); }
+        const themeToggle = f.host.querySelector<HTMLButtonElement>('button[aria-label="Switch to dark mode"]')!;
+        assert.ok(themeToggle);
+        doc.startViewTransition = (callback: () => void) => {
+            callback();
+            return { ready: Promise.resolve(), finished: Promise.resolve() };
+        };
+        element.animate = (frames: any, options: any) => {
+            animations.push({ frames, options });
+            return { finished: Promise.resolve(), cancel() {} };
+        };
+        await act(async () => themeToggle.click());
+        assert.ok(f.host.querySelector('button[aria-label="Switch to light mode"]'));
+        assert.equal(f.host.querySelector('button[aria-label="Theme mode"]'), null);
+        await act(async () => themeToggle.click());
+        assert.ok(f.host.querySelector('button[aria-label="Switch to dark mode"]'));
+        assert.equal(animations.length, 2);
+        assert.equal(animations[0].options.duration, 720);
+        assert.equal(animations[0].options.pseudoElement, '::view-transition-new(root)');
+        assert.match(animations[0].frames.clipPath[0], /^circle\(0px at /);
+        doc.startViewTransition = undefined;
+        await act(async () => themeToggle.click());
+        assert.equal(themeToggle.disabled, true);
+        assert.ok(f.host.querySelector('div[aria-hidden="true"].fixed'));
+        await act(async () => new Promise((resolve) => setTimeout(resolve, 810)));
+        assert.ok(f.host.querySelector('button[aria-label="Switch to light mode"]'));
+        assert.equal(themeToggle.disabled, false);
+        assert.equal(f.host.querySelector('div[aria-hidden="true"].fixed'), null);
+        dom.window.matchMedia = () => ({ matches: true });
+        await act(async () => themeToggle.click());
+        assert.ok(f.host.querySelector('button[aria-label="Switch to dark mode"]'));
+        assert.equal(f.host.querySelector('div[aria-hidden="true"].fixed'), null);
+    } finally {
+        await f.close();
+        doc.startViewTransition = originalTransition;
+        element.animate = originalAnimate;
+        dom.window.matchMedia = originalMatchMedia;
+    }
 });
 
 test('desktop and mobile guest registration entries follow the system registration switch', async () => {

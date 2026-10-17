@@ -29,6 +29,17 @@ function formatGender(gender: any, t: (key: string) => string) {
   return '';
 }
 
+function formatFullDate(date: any): string {
+  if (!date) return '';
+  const d = new Date(date);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString();
+}
+
+function getFactTitle(label: string, value: any): string {
+  if (value === undefined || value === null || value === '') return label;
+  return `${label}: ${value}`;
+}
+
 export default function UserDetailPage() {
   const { args } = usePageData();
   const { t } = useI18n();
@@ -92,43 +103,75 @@ export default function UserDetailPage() {
                 className="hydro-user-profile__edit">{t('Edit Profile')}</Button>}
             </div>
             <div className="hydro-user-profile__facts">
-              <Text size="xs" c="dimmed" component="span">
-                {t('Joined')}: <br /><TimeDisplay date={udoc.regat} format="absolute" size="xs" />
-              </Text>
+              <div
+                className="hydro-user-profile__fact"
+                title={getFactTitle(t('Joined'), formatFullDate(udoc.regat))}
+              >
+                <div className="hydro-user-profile__fact-label" title={t('Joined')}>{t('Joined')}:</div>
+                <div className="hydro-user-profile__fact-value">
+                  <TimeDisplay date={udoc.regat} format="absolute" size="xs" />
+                </div>
+              </div>
               {udoc.loginat && (
-                <Text size="xs" c="dimmed" component="span">
-                  {t('Last login')}: <br /><TimeDisplay date={udoc.loginat} format="relative" size="xs" />
-                </Text>
+                <div className="hydro-user-profile__fact">
+                  <div className="hydro-user-profile__fact-label" title={t('Last login')}>{t('Last login')}:</div>
+                  <div className="hydro-user-profile__fact-value">
+                    <TimeDisplay date={udoc.loginat} format="relative" size="xs" />
+                  </div>
+                </div>
               )}
               {sdoc.updateAt && (
-                <Text size="xs" c="dimmed" component="span">
-                  {t('Last active')}: <br /><TimeDisplay date={sdoc.updateAt} format="relative" size="xs" />
-                </Text>
+                <div className="hydro-user-profile__fact">
+                  <div className="hydro-user-profile__fact-label" title={t('Last active')}>{t('Last active')}:</div>
+                  <div className="hydro-user-profile__fact-value">
+                    <TimeDisplay date={sdoc.updateAt} format="relative" size="xs" />
+                  </div>
+                </div>
               )}
               {formatGender(udoc.gender, t) && (
-                <Text size="xs" c="dimmed" component="span">
-                  {t('Gender')}: <br />{formatGender(udoc.gender, t)}
-                </Text>
+                <div
+                  className="hydro-user-profile__fact"
+                  title={getFactTitle(t('Gender'), formatGender(udoc.gender, t))}
+                >
+                  <div className="hydro-user-profile__fact-label" title={t('Gender')}>{t('Gender')}:</div>
+                  <div className="hydro-user-profile__fact-value">{formatGender(udoc.gender, t)}</div>
+                </div>
               )}
               {udoc.school && (
-                <Text size="xs" c="dimmed" component="span">
-                  {t('School')}: <br />{udoc.school}
-                </Text>
+                <div
+                  className="hydro-user-profile__fact"
+                  title={getFactTitle(t('School'), udoc.school)}
+                >
+                  <div className="hydro-user-profile__fact-label" title={t('School')}>{t('School')}:</div>
+                  <div className="hydro-user-profile__fact-value">{udoc.school}</div>
+                </div>
               )}
               {udoc.studentId && (
-                <Text size="xs" c="dimmed" component="span">
-                  {t('Student ID')}: <br />{udoc.studentId}
-                </Text>
+                <div
+                  className="hydro-user-profile__fact"
+                  title={getFactTitle(t('Student ID'), udoc.studentId)}
+                >
+                  <div className="hydro-user-profile__fact-label" title={t('Student ID')}>{t('Student ID')}:</div>
+                  <div className="hydro-user-profile__fact-value">{udoc.studentId}</div>
+                </div>
               )}
               {udoc.qq && (
-                <Text size="xs" c="dimmed" component="span">
-                  QQ: <br />{udoc.qq}
-                </Text>
+                <div
+                  className="hydro-user-profile__fact"
+                  title={getFactTitle('QQ', udoc.qq)}
+                >
+                  <div className="hydro-user-profile__fact-label" title="QQ">QQ:</div>
+                  <div className="hydro-user-profile__fact-value">{udoc.qq}</div>
+                </div>
               )}
               {udoc.phone && (
-                <Text size="xs" c="dimmed" component="span">
-                  {t('Phone')}: <br />{udoc.phone}
-                </Text>
+                <div
+                  className="hydro-user-profile__fact"
+                  title={getFactTitle(t('Phone'), udoc.phone)}
+                >
+                  <div className="hydro-user-profile__fact-label" title={t('Phone')}>{t('Phone')}:</div>
+                  <div className="hydro-user-profile__fact-value">{udoc.phone}</div>
+                </div>
               )}
             </div>
           </div>

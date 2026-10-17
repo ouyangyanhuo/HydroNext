@@ -129,7 +129,7 @@ test('solution and file operations use shared dialogs and domain-aware copy link
     assert.match(solution, /replyPermissions\.deleteReply/);
 });
 
-test('night containers and nested surfaces are opaque without changing light or paper tokens', () => {
+test('night containers and nested surfaces are opaque without changing light tokens', () => {
     const css = postcss.parse(read('../src/styles/tailwind.css'));
     let outer = false;
     let nested = false;
@@ -158,5 +158,65 @@ test('night containers and nested surfaces are opaque without changing light or 
             else assert.match(decl.value, /^rgb\(/);
         });
     });
-    assert.equal(surfaceCount, 9);
+    assert.equal(surfaceCount, 6);
+});
+
+test('user profile facts layout uses single-row grid and ellipsis text truncation', () => {
+    const css = postcss.parse(read('../src/styles/tailwind.css'));
+    let factsGrid = false;
+    let factCard = false;
+    let factLabel = false;
+    let factValue = false;
+    let responsiveFacts = false;
+
+    css.walkRules((rule) => {
+        const values: Record<string, string> = {};
+        rule.walkDecls((decl) => { values[decl.prop] = decl.value; });
+
+        if (rule.selector === '.hydro-user-profile__facts' && rule.parent.type === 'root') {
+            factsGrid = true;
+            assert.equal(values.display, 'grid');
+            assert.equal(values['grid-auto-flow'], 'column');
+            assert.equal(values['grid-auto-columns'], 'minmax(0, 1fr)');
+            assert.equal(values['overflow-x'], 'auto');
+        }
+        if (rule.selector.includes('.hydro-user-profile__fact')) {
+            if (values.overflow === 'hidden' && values['min-width'] === '0') {
+                factCard = true;
+            }
+        }
+        if (rule.selector === '.hydro-user-profile__fact-label') {
+            factLabel = true;
+            assert.equal(values['white-space'], 'nowrap');
+            assert.equal(values.overflow, 'hidden');
+            assert.equal(values['text-overflow'], 'ellipsis');
+        }
+        if (rule.selector.includes('.hydro-user-profile__fact-value') && values['text-overflow'] === 'ellipsis') {
+            factValue = true;
+            assert.equal(values['white-space'], 'nowrap');
+            assert.equal(values.overflow, 'hidden');
+        }
+    });
+
+    css.walkAtRules('media', (atRule) => {
+        if (atRule.params.includes('max-width: 700px')) {
+            atRule.walkRules('.hydro-user-profile__facts', (rule) => {
+                const values: Record<string, string> = {};
+                rule.walkDecls((decl) => { values[decl.prop] = decl.value; });
+                responsiveFacts = true;
+                assert.equal(values['grid-auto-columns'], 'minmax(100px, 1fr)');
+            });
+        }
+    });
+
+    assert.ok(factsGrid, 'facts grid selector not found or invalid');
+    assert.ok(factCard, 'fact card selector not found or invalid');
+    assert.ok(factLabel, 'fact label selector not found or invalid');
+    assert.ok(factValue, 'fact value selector not found or invalid');
+    assert.ok(responsiveFacts, 'responsive facts media query not found or invalid');
+
+    const userDetailSource = read('../src/pages/user_detail.tsx');
+    assert.match(userDetailSource, /className="hydro-user-profile__fact"/);
+    assert.match(userDetailSource, /className="hydro-user-profile__fact-label"/);
+    assert.match(userDetailSource, /className="hydro-user-profile__fact-value"/);
 });

@@ -1,4 +1,4 @@
-import { Badge, Card, FileInput, Group, Radio, Stack, Text, TextInput } from '@mantine/core';
+import { Badge, Card, FileInput, Group, Radio, Stack, Switch, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconBuildingCommunity, IconSettings, IconUserCircle } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -46,6 +46,8 @@ export default function HomeSettingsPage() {
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const user = useSessionStore((s) => s.user);
+  const autoTheme = useSessionStore((s) => s.autoTheme);
+  const setAutoTheme = useSessionStore((s) => s.setAutoTheme);
   const category = args.category || 'preference';
   const current = args.current || user || {};
   const [loading, setLoading] = useState(false);
@@ -235,6 +237,16 @@ export default function HomeSettingsPage() {
             onSubmit={handleSubmit}
             excludeKeys={category === 'account' ? ['avatar'] : []}
             variant="personal"
+            familyExtras={category === 'preference' ? {
+              setting_display: <Switch
+                label={t('Automatic theme')}
+                description={t(
+                  'Follow your system appearance. Applies immediately in this browser only. Switching the theme in the top bar turns this off.',
+                )}
+                checked={autoTheme}
+                onChange={(event) => setAutoTheme(event.currentTarget.checked)}
+              />,
+            } : undefined}
           />
         </Stack>
       </div>

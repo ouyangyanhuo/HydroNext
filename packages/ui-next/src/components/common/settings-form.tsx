@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { Card, Checkbox, Group, PasswordInput, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { LongSelect } from '@/components/common/select';
 import { useI18n } from '@/hooks/use-i18n';
@@ -34,6 +34,8 @@ interface SettingsFormProps {
   onSubmit: (payload: Record<string, any>) => void | Promise<void>;
   excludeKeys?: string[];
   variant?: 'default' | 'personal';
+  /** Browser-local controls are rendered with a family but never added to the server payload. */
+  familyExtras?: Record<string, ReactNode>;
 }
 
 function getByPath(source: Record<string, any>, key: string) {
@@ -196,6 +198,7 @@ export function SettingsForm({
   onSubmit,
   excludeKeys = EMPTY_KEYS,
   variant = 'default',
+  familyExtras,
 }: SettingsFormProps) {
   const { t } = useI18n();
   const normalized = useMemo(
@@ -211,7 +214,13 @@ export function SettingsForm({
       ];
     }),
   ));
-  const groups = useMemo(() => groupByFamily(normalized), [normalized]);
+  const groups = useMemo(() => {
+    const grouped = groupByFamily(normalized);
+    for (const family of Object.keys(familyExtras || {})) {
+      if (!grouped.some(([key]) => key === family)) grouped.push([family, []]);
+    }
+    return grouped;
+  }, [normalized, familyExtras]);
   const booleanKeys = useMemo(
     () => normalized
       .filter((setting) => setting.type === 'boolean' && !((setting.flag || 0) & FLAG_HIDDEN))
@@ -259,6 +268,9 @@ export function SettingsForm({
                 />
               </div>
             ))}
+            {familyExtras?.[family] && (
+              <div className="hydro-settings-field hydro-settings-field--wide">{familyExtras[family]}</div>
+            )}
           </div>
         </Card>
       ))}
