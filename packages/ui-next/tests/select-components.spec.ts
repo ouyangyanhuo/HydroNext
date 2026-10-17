@@ -168,6 +168,40 @@ test('short select opens portalled options and changes selection in light and da
     }
 });
 
+test('list sort uses a translated portal tooltip and preserves select interaction', async () => {
+    const component = { exports: {} as any };
+    let selected = '';
+    const mocks: Record<string, any> = {
+        '@/components/common/select': { ShortSelect },
+        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key === 'Sort order' ? '排序方式' : key }) },
+        '@/hooks/use-list-sort': { useListSort: () => ({ value: 'default', onChange: (value: string) => { selected = value; } }) },
+    };
+    runInNewContext(transformSync(readFileSync(new URL('../src/components/common/list-sort-select.tsx', import.meta.url), 'utf8'), {
+        loader: 'tsx', format: 'cjs', jsx: 'automatic',
+    }).code, { module: component, exports: component.exports, require: (name: string) => mocks[name] ?? require(name) });
+    const view = await mount(component.exports.ListSortSelect, { kind: 'problem' });
+    try {
+        const input = view.host.querySelector<HTMLInputElement>('input[aria-label="排序方式"]')!;
+        assert.ok(input);
+        assert.equal(view.host.querySelector('[title]'), null);
+        await act(async () => {
+            input.dispatchEvent(new dom.window.MouseEvent('mouseover', { bubbles: true }));
+            input.dispatchEvent(new dom.window.MouseEvent('mouseenter'));
+            input.dispatchEvent(new dom.window.MouseEvent('mousemove', { bubbles: true }));
+        });
+        await act(async () => new Promise((resolve) => setTimeout(resolve, 250)));
+        await act(async () => new Promise((resolve) => setTimeout(resolve, 50)));
+        const tooltip = document.querySelector('[role="tooltip"]')!;
+        assert.equal(tooltip?.textContent, '排序方式');
+        assert.equal(view.host.contains(tooltip), false);
+        await act(async () => input.click());
+        const option = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((item) => item.textContent === 'Descending ID')!;
+        assert.ok(option);
+        await act(async () => option.click());
+        assert.equal(selected, 'desc');
+    } finally { await view.close(); }
+});
+
 test('long select filters options and supports clearing', async () => {
     let selected: string | null = 'Alpha';
     const view = await mount(LongSelect, {
