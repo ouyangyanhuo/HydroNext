@@ -1,3 +1,5 @@
+import './contest-detail.css';
+
 import { Badge, Card, Divider, Group, Modal, Paper, Stack, Table, Text, Textarea, TextInput, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconFileDescription } from '@tabler/icons-react';
@@ -105,12 +107,13 @@ function ContestProblemList({ tdoc, tsdoc, pdict, psdict, rdict, correction, sho
               const correctionRecord = correctionDoc?.rid ? rdict?.[correctionDoc.rid] : null;
               const submitAt = getObjectIdDate(rdoc?._id || psdoc?.rid);
               const score = showScore ? (tdoc.score?.[pid] || 100) : null;
+              const problemUrl = buildUrl('problem_detail', { pid }, { tid: String(tdoc.docId || tdoc._id) });
               return (
-                <Table.Tr key={pid}>
+                <Table.Tr key={pid} className="hydro-contest-problem-row">
                   <Table.Td>
                     {rdoc?.status != null ? (
                       canViewRecord ? (
-                        <Link to="record_detail" params={{ rid: rdoc._id || psdoc.rid }} className="no-underline">
+                        <Link to="record_detail" params={{ rid: rdoc._id || psdoc.rid }} className="hydro-contest-problem-row__action no-underline">
                           <RecordStatusBadge status={rdoc.status} size="xs" />
                         </Link>
                       ) : (
@@ -150,7 +153,7 @@ function ContestProblemList({ tdoc, tsdoc, pdict, psdict, rdict, correction, sho
                   <Table.Td>
                     <Group justify="space-between" wrap="nowrap" gap="md">
                       <div className="min-w-0">
-                        <Link href={buildUrl('problem_detail', { pid }, { tid: String(tdoc.docId || tdoc._id) })} className="hydro-subtle-link">
+                        <Link href={problemUrl} className="hydro-subtle-link hydro-contest-problem-row__link">
                           <Text size="sm" fw={700} className="truncate">{alphabetic(index)}. {pdoc.title || pid}</Text>
                         </Link>
                         {pdoc.config && pdoc.config.type !== 'objective' && pdoc.config.type !== 'submit_answer' && (
@@ -173,7 +176,8 @@ function ContestProblemList({ tdoc, tsdoc, pdict, psdict, rdict, correction, sho
                       {pdoc.config?.type !== 'objective' && !closed && (
                         <Button
                           component={Link}
-                          href={buildUrl('problem_detail', { pid }, { tid: String(tdoc.docId || tdoc._id) })}
+                          href={problemUrl}
+                          className="hydro-contest-problem-row__action"
                           size="compact-xs"
                           variant="light"
                         >

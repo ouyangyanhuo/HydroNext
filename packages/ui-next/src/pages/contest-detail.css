@@ -1,0 +1,26 @@
+.hydro-contest-problem-row {
+  position: relative;
+  cursor: pointer;
+}
+
+/* Stretch the real problem link across its row, retaining native link behavior. */
+.hydro-contest-problem-row__link::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: '';
+}
+
+.hydro-contest-problem-row__action {
+  position: relative;
+  z-index: 2;
+}
+
+.hydro-contest-problem-row:has(.hydro-contest-problem-row__link:focus-visible) {
+  outline: 2px solid var(--hydro-primary);
+  outline-offset: -2px;
+}
+
+.hydro-contest-problem-row__link:focus-visible {
+  outline: none;
+}

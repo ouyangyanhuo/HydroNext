@@ -36,14 +36,21 @@ const { act, createElement: h, forwardRef } = require('react');
 const { createRoot } = require('react-dom/client');
 const mantine = require('@mantine/core');
 
-async function fixture(page: string, ui: any = {}, response: any = {}, args: any = {}, user: any = { _id: 0 }, translations = {}) {
+async function fixture(page: string, ui: any = {}, response: any = {}, args: any = {}, user: any = { _id: 0 }, translations = {}, pageName = page) {
     const path = page === 'contest_team' ? 'contest/team' : page === 'contest_detail' ? 'contest/123' : 'register';
     dom.reconfigure({ url: `https://oj.example/d/team/${path}` });
     const navigations: string[] = [];
     const notices: any[] = [];
     const calls: any[] = [];
     const copied: string[] = [];
+    const prefix = ui.domainId === 'system' ? '' : `/d/${ui.domainId || 'team'}`;
+    const buildUrl = (route: string, params: any = {}, query: any = {}) => {
+        if (route === 'problem_detail') return `${prefix}/p/${params.pid}?${new URLSearchParams(query)}`;
+        if (route === 'record_detail') return `${prefix}/record/${params.rid}`;
+        return `${prefix}/${route}`;
+    };
     const mocks: Record<string, any> = {
+        './contest-detail.css': {},
         '@mantine/core': mantine,
         '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
         '@/components/common/button': { Button: mantine.Button, ActionIcon: mantine.ActionIcon },
@@ -70,15 +77,17 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         },
         '@/components/auth/oauth-buttons': { OAuthButtons: () => null },
         '@/components/link': {
-            Link: forwardRef(({ children, to, ...props }: any, ref: any) => h('a', { ...props, href: `/${to}`, ref }, children)),
+            Link: forwardRef(({ children, to, href, params, ...props }: any, ref: any) => h('a', {
+                ...props, href: href ?? (to === 'record_detail' ? buildUrl(to, params) : `/${to}`), ref,
+            }, children)),
         },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => translations[key] || key }) },
-        '@/hooks/use-build-url': { useBuildUrl: () => (route: string) => `/d/team/${route}` },
+        '@/hooks/use-build-url': { useBuildUrl: () => buildUrl },
         '@/hooks/use-current-user': { useCurrentUser: () => user, useIsLoggedIn: () => user._id > 0 },
         '@/hooks/use-permission': { PERM: {}, useHasPerm: () => false, hasPermValue: () => false },
         '@/hooks/use-time': { useDeadlinePassed: (date: string) => new Date(date).getTime() <= Date.now() },
         '@/context/router': { useNavigate: () => (url: string) => navigations.push(url) },
-        '@/context/page-data': { usePageData: () => ({ args }) },
+        '@/context/page-data': { usePageData: () => ({ args, name: pageName }) },
         '@/stores/session': { useSessionStore: (select: any) => select({ ui, user, language: 'en' }) },
         '@/utils/error': { formatErrorMessage },
         '@/utils/invitation-code': { INVITATION_CODE_LENGTH, isInvitationCodeComplete },
@@ -220,6 +229,32 @@ test('team-enabled contest registration asks before posting and keeps personal-o
         assert.deepEqual(JSON.parse(personal.calls[0].init.body), { operation: 'attend', code: '' });
         assert.equal(document.querySelector('[role="dialog"]'), null);
     } finally { await personal.close(); }
+});
+
+test('contest problem rows stretch native links while preserving domain, contest context and record actions', async () => {
+    for (const domainId of ['system', 'team']) {
+        const args = {
+            tdoc: { docId: 'contest-123', title: 'Contest', pids: [10, 11], beginAt: new Date(), endAt: new Date(Date.now() + 60_000) },
+            pdict: { 10: { title: 'A+B', config: { type: 'default' } }, 11: { title: 'Choice', config: { type: 'objective' } } },
+            psdict: { 10: { rid: 'record-123' } }, rdict: { 'record-123': { _id: 'record-123', status: 1 } }, showScore: true,
+        };
+        // eslint-disable-next-line no-await-in-loop
+        const f = await fixture('contest_detail', { domainId }, {}, args, { _id: 2 }, {}, 'contest_problemlist');
+        try {
+            const rows = [...f.host.querySelectorAll('.hydro-contest-problem-row')];
+            assert.equal(rows.length, 2);
+            const prefix = domainId === 'system' ? '' : '/d/team';
+            const problem = rows[0].querySelector<HTMLAnchorElement>('.hydro-contest-problem-row__link')!;
+            assert.equal(problem.getAttribute('href'), `${prefix}/p/10?tid=contest-123`);
+            assert.match(problem.textContent!, /A\. A\+B/);
+            const actions = [...rows[0].querySelectorAll<HTMLAnchorElement>('.hydro-contest-problem-row__action')];
+            assert.ok(actions.some((link) => link.getAttribute('href') === `${prefix}/record/record-123`));
+            assert.ok(actions.some((link) => link.getAttribute('href') === problem.getAttribute('href')));
+            assert.equal(rows[1].querySelector('a')?.getAttribute('href'), `${prefix}/p/11?tid=contest-123`);
+            assert.equal(problem.tabIndex, 0, 'the native row link remains keyboard accessible');
+        // eslint-disable-next-line no-await-in-loop
+        } finally { await f.close(); }
+    }
 });
 
 test('team page replaces pending invites with a case-insensitive invitation-code join form', async () => {
