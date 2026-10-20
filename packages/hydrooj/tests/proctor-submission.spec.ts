@@ -103,6 +103,12 @@ test('ordinary contests and non-contest submissions do not acquire monitoring de
     await g.handler.post('exam', 'cc', 'code');
     assert.equal(g.calls.length, 1);
     assert.equal(g.calls[0][0], 'add');
+    const selfTest = fixture({ enabled: false });
+    const tid = new ObjectId();
+    await selfTest.handler.post('exam', 'cc', 'code', true, ['input'], tid);
+    const args = selfTest.calls.find((call) => call[0] === 'add')[7];
+    assert.equal(args.type, 'pretest');
+    assert.equal(args.contest, tid, 'the server retains the authorized contest context for the private result');
 });
 
 test('expired submission reservations fail closed and always release the lease', async () => {

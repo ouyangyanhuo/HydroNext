@@ -327,6 +327,7 @@ Authenticator: 认证器
 Authenticators: 认证器
 Choose Authenticator Type: 选择认证器类型
 Failed to fetch registration data.: 获取注册数据失败。
+Failed to load self-test results. Please retry.: 自测结果加载失败，请重新运行自测。
 Logout All Sessions: 注销所有会话
 Logout This Session: 注销该会话
 Multi Platform Authenticator: 跨平台认证器
@@ -747,7 +748,7 @@ Other: 其他
 
 # Misc
 Welcome: 欢迎
-Welcome to Hydro: 欢迎使用 HydroNext
+Welcome to {0}: 欢迎使用 {0}
 Online Judge: Online Judge
 Pinned: 置顶
 Explore problems, contests, and improve your skills.: 探索题目、参加比赛，提升您的编程能力。

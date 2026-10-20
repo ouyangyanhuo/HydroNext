@@ -32,6 +32,7 @@ function SectionLink({ to, label }: { to: string, label: string }) {
 
 function WelcomeHero({ problemCount, contestCount }: { problemCount: number, contestCount: number }) {
   const user = useSessionStore((s) => s.user);
+  const serverName = useSessionStore((s) => s.ui.serverName) || 'HydroNext';
   const registrationEnabled = useSessionStore((s) => s.ui.registrationEnabled !== false);
   const { t } = useI18n();
   const isLoggedIn = user._id > 0;
@@ -45,7 +46,7 @@ function WelcomeHero({ problemCount, contestCount }: { problemCount: number, con
     <section className="hydro-home-hero hydro-reveal" aria-labelledby="hydro-home-title">
       <div className="hydro-home-hero__copy">
         <Title id="hydro-home-title" order={1} className="hydro-home-title">
-          {isLoggedIn ? `${t('Welcome')}, ${formatUserName(user)}` : t('Welcome to HydroNext')}
+          {isLoggedIn ? `${t('Welcome')}, ${formatUserName(user)}` : t('Welcome to {0}', serverName)}
         </Title>
         <Text className="hydro-home-lead">
           {isLoggedIn

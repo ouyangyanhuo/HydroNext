@@ -738,7 +738,7 @@ __langname: 한국어
 
 # Misc
 'Welcome': '환영합니다'
-'Welcome to Hydro': 'HydroNext에 오신 것을 환영합니다'
+'Welcome to {0}': '{0}에 오신 것을 환영합니다'
 'Online Judge': 'Online Judge'
 'Pinned': '고정됨'
 'Explore problems, contests, and improve your skills.': '문제와 대회를 탐색하고 실력을 향상시키세요.'

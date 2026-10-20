@@ -12,6 +12,7 @@ interface RecordUpdate {
   judgeText?: string;
   compilerText?: string;
   progress?: any;
+  error?: { name?: string, params?: unknown[] };
 }
 
 /**
@@ -29,12 +30,25 @@ export function useRecordSocket(rid: string | undefined) {
     if (!payload) return;
     const payloadRid = payload._id || payload.rid;
     if (rid && payloadRid && String(payloadRid) !== String(rid)) return;
-    setUpdate((prev) => ({ context, record: { ...(prev?.context === context ? prev.record : {}), ...payload } }));
+    setUpdate((prev) => {
+      const record = { ...(prev?.context === context ? prev.record : {}), ...payload };
+      if (!payload.error) delete record.error;
+      return { context, record };
+    });
   }, [context, rid]);
+
+  const handleClose = useCallback((event?: CloseEvent) => {
+    if (!event || ![1008, 4000, 4002].includes(event.code)) return;
+    setUpdate((prev) => prev?.context === context && prev.record.error ? prev : {
+      context,
+      record: { ...(prev?.context === context ? prev.record : {}), error: { name: 'RecordConnectionError' } },
+    });
+  }, [context]);
 
   useWebSocket({
     url: socketUrl,
     onMessage: handleMessage,
+    onClose: handleClose,
     // A reconnect obtains the current snapshot; terminal 4001/Ended stays closed.
     autoReconnect: true,
     reconnectInterval: 5000,

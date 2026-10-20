@@ -173,6 +173,8 @@ export default class RecordModel {
             data.input = args.input || [];
             isContest = false;
             data.contest = RecordModel.RECORD_PRETEST;
+            if (args.contest) data.pretestContest = args.contest;
+            delete data.contestUid;
         } else if (args.type === 'generate') {
             data.contest = RecordModel.RECORD_GENERATE;
         }

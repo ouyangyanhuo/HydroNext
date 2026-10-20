@@ -231,6 +231,8 @@ export type RecordDoc = {
     notify?: boolean;
     /** Contest participant (individual/team) at submission time, independent of later roster changes. */
     contestUid?: number;
+    /** Real contest context for a self-test; `contest` remains the pretest sentinel. */
+    pretestContest?: ObjectId;
 };
 
 export interface RecordHistoryDoc extends RecordJudgeInfo {

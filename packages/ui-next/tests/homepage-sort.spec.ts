@@ -44,7 +44,9 @@ test('modals in problem_detail and contest_detail do not use centered layout', (
     assert.equal(registerModalTag.includes('centered'), false);
 });
 
-async function mountHomepage(args: any = {}, user: any = { _id: 0, perm: 0n }, perms: Record<string, boolean> = {}, realMenu = false) {
+async function mountHomepage(
+    args: any = {}, user: any = { _id: 0, perm: 0n }, perms: Record<string, boolean> = {}, realMenu = false, ui: any = {},
+) {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const root = createRoot(host);
@@ -74,7 +76,8 @@ async function mountHomepage(args: any = {}, user: any = { _id: 0, perm: 0n }, p
         },
         '@/components/markdown/markdown-renderer': { MarkdownRenderer: () => null },
         '@/context/page-data': { usePageData: () => ({ args }) },
-        '@/hooks/use-i18n': { useI18n: () => ({ t: (k: string) => k }) },
+        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string, ...values: any[]) => key
+            .replace(/\{(\d+)\}/g, (placeholder, index) => values[index] === undefined ? placeholder : String(values[index])) }) },
         '@/hooks/use-permission': {
             PERM: { PERM_VIEW_PROBLEM: 1n << 7n, PERM_VIEW_CONTEST: 1n << 41n },
             useHasPerm: (perm: bigint) => {
@@ -83,7 +86,7 @@ async function mountHomepage(args: any = {}, user: any = { _id: 0, perm: 0n }, p
                 return false;
             },
         },
-        '@/stores/session': { useSessionStore: (select: any) => select({ ui: {}, user, language: 'zh' }) },
+        '@/stores/session': { useSessionStore: (select: any) => select({ ui, user, language: 'zh' }) },
         '@/utils/i18n-content': { extractLocalizedContent: (c: any) => (typeof c === 'string' ? c : (c?.zh || c?.en || '')) },
         '@/utils/user-name': { formatUserName: (u: any) => u.uname || 'user' },
     };
@@ -111,6 +114,20 @@ async function mountHomepage(args: any = {}, user: any = { _id: 0, perm: 0n }, p
         },
     };
 }
+
+test('guest welcome uses the configured website name as escaped text and falls back when absent', async () => {
+    for (const serverName of ['My University OJ', '<img src=x onerror=alert(1)>', '']) {
+        // eslint-disable-next-line no-await-in-loop
+        const f = await mountHomepage({}, undefined, {}, false, { serverName });
+        try {
+            assert.equal(f.host.querySelector('#hydro-home-title')?.textContent, `Welcome to ${serverName || 'HydroNext'}`);
+            assert.equal(f.host.querySelector('#hydro-home-title img'), null);
+        } finally {
+            // eslint-disable-next-line no-await-in-loop
+            await f.close();
+        }
+    }
+});
 
 test('homepage sort buttons are hidden for unauthenticated users', async () => {
     const f = await mountHomepage({}, { _id: 0, perm: 0n });

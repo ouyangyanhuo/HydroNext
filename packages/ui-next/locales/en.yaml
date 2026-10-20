@@ -312,6 +312,7 @@ Authenticator: Authenticator
 Authenticators: Authenticators
 Choose Authenticator Type: Choose Authenticator Type
 Failed to fetch registration data.: Failed to fetch registration data.
+Failed to load self-test results. Please retry.: Failed to load self-test results. Please retry.
 Logout All Sessions: Logout All Sessions
 Logout This Session: Logout This Session
 Multi Platform Authenticator: Multi Platform Authenticator
@@ -618,7 +619,7 @@ Send Message: Send Message
 
 # Misc
 Welcome: Welcome
-Welcome to Hydro: Welcome to HydroNext
+Welcome to {0}: Welcome to {0}
 Online Judge: Online Judge
 Pinned: Pinned
 Explore problems, contests, and improve your skills.: Explore problems, contests, and improve your skills.

@@ -738,7 +738,7 @@ __langname: 日本語
 
 # Misc
 'Welcome': 'ようこそ'
-'Welcome to Hydro': 'HydroNextへようこそ'
+'Welcome to {0}': '{0}へようこそ'
 'Online Judge': 'Online Judge'
 'Pinned': 'ピン留め'
 'Explore problems, contests, and improve your skills.': '問題やコンテストを探して、スキルを向上させましょう。'

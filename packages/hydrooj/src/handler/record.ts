@@ -208,7 +208,8 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
         this.tsdoc = tsdoc;
         if (this.tdoc) {
             this.args.tid = this.tdoc.docId;
-            if (!this.user.own(this.tdoc) && !this.user.hasPerm(PERM.PERM_EDIT_CONTEST)) {
+            if (!record.RECORD_PRETEST.equals(rdoc.contest)
+                && !this.user.own(this.tdoc) && !this.user.hasPerm(PERM.PERM_EDIT_CONTEST)) {
                 this.rdoc = contest.applyProjection(this.tdoc, this.rdoc, this.user);
             }
         }
@@ -437,7 +438,22 @@ export class RecordDetailConnectionHandler extends ConnectionHandler {
     @param('noTemplate', Types.Boolean, true)
     async prepare(domainId: string, rid: ObjectId, noTemplate = false) {
         const rdoc = await record.get(domainId, rid);
-        if (!rdoc) return;
+        if (!rdoc) throw new RecordNotFoundError(rid);
+        if (record.RECORD_PRETEST.equals(rdoc.contest)) {
+            // Self-tests have a sentinel contest ID. Resolve their saved context,
+            // rather than treating an enrolled contestant as an outsider to a hidden problem.
+            const access = await getRecordAccess(this, rdoc);
+            this.pdoc = access.pdoc;
+            this.tdoc = access.tdoc;
+            this.tsdoc = access.tsdoc;
+            this.canViewCode = access.canViewCode;
+            this.proctorSession = access.proctorSession;
+            this.noTemplate = noTemplate;
+            this.throttleSend = throttle(this.sendUpdate, 1000, { trailing: true });
+            this.rid = rid.toString();
+            this.onRecordChange(rdoc);
+            return;
+        }
         const isOwnOrTeammate = await contest.isOwnOrTeammateRecord(domainId, rdoc, this.user._id);
         if (rdoc.contest && ![record.RECORD_GENERATE, record.RECORD_PRETEST].some((i) => i.toHexString() === rdoc.contest.toHexString())) {
             this.tdoc = await contest.get(domainId, rdoc.contest);

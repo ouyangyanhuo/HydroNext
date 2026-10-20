@@ -169,6 +169,7 @@ Authenticator: 認證器
 Authenticators: 認證器
 Choose Authenticator Type: 選擇認證器型別
 Failed to fetch registration data.: 獲取註冊資料失敗。
+Failed to load self-test results. Please retry.: 自我測試結果載入失敗，請重新執行自我測試。
 Logout All Sessions: 登出所有會話
 Logout This Session: 登出該會話
 Multi Platform Authenticator: 跨平臺認證器
@@ -584,7 +585,7 @@ Other: 其他
 
 # Misc
 Welcome: 歡迎
-Welcome to Hydro: 歡迎使用 HydroNext
+Welcome to {0}: 歡迎使用 {0}
 Online Judge: Online Judge
 Pinned: 置頂
 Explore problems, contests, and improve your skills.: 探索題目、參加比賽，提升您的程式設計能力。

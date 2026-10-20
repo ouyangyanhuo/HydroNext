@@ -16,11 +16,14 @@ function load(path: string, mocks: Record<string, any>) {
     });
     return module.exports;
 }
-function fixture() {
+function fixture(options: { pretest?: boolean, hidden?: boolean, owner?: boolean, attend?: boolean, wrongProblem?: boolean } = {}) {
     const rid = new ObjectId();
     const tid = new ObjectId();
-    const rdoc = { _id: rid, uid: 8, domainId: 'exam', pid: 1, contest: tid, status: 1, code: 'secret', compilerTexts: ['private'] };
-    const tdoc = { docId: tid, proctorEnabled: true, allowTeam: true, endAt: new Date(Date.now() + 60000) };
+    const rdoc = { _id: rid, uid: options.owner ? 7 : 8, domainId: 'exam', pid: 1,
+        contest: options.pretest ? new ObjectId('000000000000000000000000') : tid,
+        pretestContest: options.pretest ? tid : undefined, status: 1, code: 'secret', compilerTexts: ['private'] };
+    const tdoc = { docId: tid, pids: [options.wrongProblem ? 2 : 1], proctorEnabled: !options.pretest, allowTeam: true,
+        endAt: new Date(Date.now() + 60000) };
     const calls: any[] = [];
     let expired = false;
     class Handler {
@@ -41,16 +44,34 @@ function fixture() {
         './contest': { ContestDetailBaseHandler: Handler },
         '../model/contest': { isOwnOrTeammateRecord: async () => true, get: async () => tdoc,
             canShowRecord: () => false, canShowSelfRecord: () => true, getTeamVid: async () => -101,
-            getStatus: async () => ({ attend: 1 }), applyProjection: (_: any, doc: any) => doc },
+            getStatus: async () => ({ attend: options.attend === false ? 0 : 1 }), applyProjection: (_: any, doc: any) => doc },
         '../model/record': { __esModule: true, default: { get: async () => rdoc,
             PROJECTION_LIST: ['_id', 'uid', 'pid', 'status', 'contest', 'domainId'],
             RECORD_GENERATE: new ObjectId('000000000000000000000001'), RECORD_PRETEST: new ObjectId('000000000000000000000000') } },
-        '../model/problem': { __esModule: true, default: { get: async () => ({}), getStatus: async () => null } },
+        '../model/problem': { __esModule: true, default: { PROJECTION_LIST: [], get: async () => ({ hidden: options.hidden }),
+            getStatus: async () => null, canViewBy: () => !options.hidden } },
         '../model/user': { __esModule: true, default: { getById: async () => ({ _id: 8, uname: 'teammate' }) } },
     };
     mocks['../lib/proctor-record-access'] = load('../src/lib/proctor-record-access.ts', mocks);
+    mocks['./proctor-record-access'] = mocks['../lib/proctor-record-access'];
+    mocks['../lib/record-access'] = load('../src/lib/record-access.ts', mocks);
     return { ...load('../src/handler/record.ts', mocks), calls, rid, rdoc, expire: () => { expired = true; } };
 }
+
+test('ordinary participants receive their own hidden-contest pretest results, never another user’s or an unrelated hidden problem’s', async () => {
+    const f = fixture({ pretest: true, hidden: true, owner: true });
+    const handler = new f.RecordDetailConnectionHandler();
+    await handler.prepare('exam', f.rid, true);
+    handler.throttleSend.flush();
+    assert.equal(f.calls.find((call) => call[0] === 'send')[1].rdoc.status, 1);
+    assert.equal(f.calls.find((call) => call[0] === 'send')[1].rdoc.compilerTexts[0], 'private');
+    for (const options of [{ owner: false }, { attend: false }, { wrongProblem: true }]) {
+        const denied = fixture({ pretest: true, hidden: true, owner: true, ...options });
+        // eslint-disable-next-line no-await-in-loop
+        await assert.rejects(new denied.RecordDetailConnectionHandler().prepare('exam', denied.rid, true));
+        assert.equal(denied.calls.some((call) => call[0] === 'send'), false);
+    }
+});
 
 test('队友实时记录连接必须先验证个人证明，推送前过期则关闭且不发送代码', async () => {
     const f = fixture();

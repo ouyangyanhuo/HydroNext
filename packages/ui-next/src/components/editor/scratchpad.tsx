@@ -138,6 +138,12 @@ export function Scratchpad({
   const judgePending = useRef(false);
   const pretestUpdate = useRecordSocket(pretestRid);
 
+  useEffect(() => {
+    if (pretestUpdate?.error) {
+      notifications.show({ color: 'red', message: t('Failed to load self-test results. Please retry.') });
+    }
+  }, [pretestUpdate?.error, t]);
+
   const resolvedSubmitUrl = submitUrl || `/p/${pid}/submit${window.location.search || ''}`;
   const resolvedReplayUrl = codeReplaySessionUrl || ui.codeReplaySessionUrl;
   const replayReady = !resolvedReplayUrl || !user?._id || readyReplayKey === replayStorageKey;
@@ -319,8 +325,10 @@ export function Scratchpad({
     if (pretest) setPretesting(true);
     else setSubmitting(true);
     setError('');
-    if (pretest) setPretestResult(null);
-    else setSubmitResult(null);
+    if (pretest) {
+      setPretestResult(null);
+      setPretestRid(undefined);
+    } else setSubmitResult(null);
 
     try {
       if (replayRef.current) recordCode(replayRef.current, code, lang);
@@ -418,6 +426,7 @@ export function Scratchpad({
 
   const renderPretestOutput = (result: any) => {
     if (error) return <Text c="red" size="sm">{error}</Text>;
+    if (result?.error) return <Text c="red" size="sm" role="alert">{t('Failed to load self-test results. Please retry.')}</Text>;
     if (!result) return <Text size="sm" c="dimmed">{t('No result')}</Text>;
     const lines: string[] = [];
     if (result.status !== undefined) {

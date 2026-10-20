@@ -413,6 +413,74 @@ describe('App', () => {
         }
     });
 
+    it('Ordinary contestants receive private self-test output for hidden OI problems over HTTP and WebSocket', async () => {
+        const { contest, domain, problem, user, record } = global.Hydro.model;
+        const { PERM, PRIV } = require('../packages/hydrooj/src/model/builtin');
+        const WebSocket = require('ws');
+        const domainId = 'contest-pretest-test';
+        const uid = await user.create('pretest@example.com', 'pretest-user', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
+        await domain.add(domainId, 2, 'Pretest test', '');
+        await domain.setRoles(domainId, { guest: 0n, default: PERM.PERM_VIEW | PERM.PERM_VIEW_PROBLEM
+            | PERM.PERM_VIEW_CONTEST | PERM.PERM_ATTEND_CONTEST | PERM.PERM_SUBMIT_PROBLEM });
+        await domain.setJoin(domainId, uid, true);
+        const pid = await problem.add(domainId, 'H1', 'Hidden contest problem', 'Statement', 2);
+        await problem.edit(domainId, pid, { hidden: true });
+        const now = Date.now();
+        const tid = await contest.add(domainId, 'OI self-test', '', 2, 'oi', new Date(now - 60_000), new Date(now + 3600_000), [pid]);
+        await contest.attend(domainId, tid, uid, { startAt: new Date(now - 1000) });
+        const initialSubmissions = (await user.getById(domainId, uid)).nSubmit;
+        const rid = await record.add(domainId, pid, uid, '_', 'own code', false, { type: 'pretest', input: ['1 2'], contest: tid });
+        const participant = supertest.agent(require('hydrooj').httpServer);
+        const login = await participant.post('/login').send({ uname: 'pretest-user', password: 'secret' }).expect(302);
+        let socket;
+        try {
+            assert.equal((await user.getById(domainId, uid)).hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN), false);
+            const doc = await record.get(domainId, rid);
+            assert.equal(doc.contest.toHexString(), record.RECORD_PRETEST.toHexString());
+            assert.equal(doc.pretestContest.toHexString(), tid.toHexString());
+            await record.update(domainId, rid, { status: STATUS.STATUS_ACCEPTED,
+                testCases: [{ id: 1, subtaskId: 1, status: STATUS.STATUS_ACCEPTED, score: 0, time: 1, memory: 1, message: '3' }] });
+            const path = `/d/${domainId}/record/${rid}`;
+            const page = await participant.get(path).set('Accept', 'application/json').expect(200);
+            assert.equal(page.body.rdoc.testCases[0].message, '3');
+            const { port } = require('hydrooj').httpServer.address();
+            const cookie = login.headers['set-cookie'].map((value: string) => value.split(';')[0]).join('; ');
+            const update = await new Promise<any>((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error('self-test WebSocket timed out')), 5000);
+                socket = new WebSocket(`ws://127.0.0.1:${port}/d/${domainId}/record-detail-conn?rid=${rid}&noTemplate=true`,
+                    { headers: { Cookie: cookie } });
+                socket.on('error', (error: Error) => {
+                    clearTimeout(timer);
+                    reject(error);
+                });
+                socket.on('close', () => {
+                    clearTimeout(timer);
+                    reject(new Error('self-test WebSocket closed without a result'));
+                });
+                socket.on('message', (data: Buffer) => {
+                    if (data.toString() === 'ping') return socket.send('pong');
+                    const payload = JSON.parse(data.toString());
+                    clearTimeout(timer);
+                    if (payload.error) reject(new Error(JSON.stringify(payload.error)));
+                    else resolve(payload);
+                    return undefined;
+                });
+            });
+            assert.equal(update.rdoc.status, STATUS.STATUS_ACCEPTED);
+            assert.equal(update.rdoc.testCases[0].message, '3');
+            await agent.get(path).set('Accept', 'application/json').expect(403);
+            await participant.get(`/d/system/record/${rid}`).set('Accept', 'application/json').expect(404);
+            await contest.cancelAttend(domainId, tid, uid);
+            await participant.get(path).set('Accept', 'application/json').expect(403);
+            assert.equal((await user.getById(domainId, uid)).nSubmit, initialSubmissions);
+        } finally {
+            socket?.terminate();
+            await record.coll.deleteMany({ domainId });
+            await contest.del(domainId, tid);
+            await domain.del(domainId);
+        }
+    });
+
     it('Team contests preserve individual records, replay permissions, timers and proctor evidence', async () => {
         const { contest, domain, problem, user, record } = global.Hydro.model;
         const { PRIV } = require('../packages/hydrooj/src/model/builtin');

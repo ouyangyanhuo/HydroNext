@@ -444,3 +444,19 @@ test('record subscriptions recover their current snapshot, stop on Ended and nev
         assert.equal(f.result.status, 1);
     } finally { await f.close(); }
 });
+
+test('record permission failures and policy closures reach the UI instead of remaining an empty waiting result', async () => {
+    const f = await fixture({}, true);
+    try {
+        await f.open();
+        await f.receive('{"error":{"name":"PermissionError","params":[]}}');
+        assert.equal(f.result.error.name, 'PermissionError');
+        await f.end(4000);
+        assert.equal(f.result.error.name, 'PermissionError');
+        await f.render({ rid: 'abcdef1234567890abcdef12' });
+        assert.equal(f.result, null);
+        await f.open();
+        await f.end(1008);
+        assert.equal(f.result.error.name, 'RecordConnectionError');
+    } finally { await f.close(); }
+});
