@@ -284,7 +284,31 @@ function SectionSortSelect({
   );
 }
 
-type ProblemSort = 'default' | 'recent' | 'hot';
+const PROBLEM_SORTS = ['default', 'recent', 'hot'] as const;
+const CONTEST_SORTS = ['default', 'joined', 'hot'] as const;
+
+/** Preferences are independent for each list, domain and signed-in account. */
+function useHomepageSort<T extends string>(kind: 'problem' | 'contest', options: readonly T[], enabled: boolean) {
+  const uid = useSessionStore((s) => s.user._id);
+  const domainId = useSessionStore((s) => s.ui.domainId) || 'system';
+  const key = enabled ? `hydro:homepage-sort:v1:${kind}:${uid}:${encodeURIComponent(domainId)}` : null;
+  const initial = useMemo(() => {
+    try {
+      const saved = key ? window.localStorage.getItem(key) : null;
+      if (options.includes(saved as T)) return saved as T;
+    } catch { /* Storage can be unavailable in restricted browsers. */ }
+    return options[0];
+  }, [key, options]);
+  const [selection, setSelection] = useState(() => ({ key, value: initial }));
+  // A scope change must never render the previous account/domain's preference.
+  const value = selection.key === key ? selection.value : initial;
+  const onChange = (next: string) => {
+    if (!key || !options.includes(next as T)) return;
+    setSelection({ key, value: next as T });
+    try { window.localStorage.setItem(key, next); } catch { /* Keep sorting usable without persistence. */ }
+  };
+  return [value, onChange] as const;
+}
 
 function ProblemList({ problems, psdict = {} }: { problems: any[], psdict?: Record<string, any> }) {
   const { t } = useI18n();
@@ -294,7 +318,7 @@ function ProblemList({ problems, psdict = {} }: { problems: any[], psdict?: Reco
   const canViewProblem = useHasPerm(PERM.PERM_VIEW_PROBLEM);
   const canSort = isLoggedIn && canViewProblem;
 
-  const [sort, setSort] = useState<ProblemSort>('default');
+  const [sort, setSort] = useHomepageSort('problem', PROBLEM_SORTS, canSort);
 
   const cardTitle = sort === 'recent'
     ? t('Recently Attempted Problems')
@@ -349,7 +373,7 @@ function ProblemList({ problems, psdict = {} }: { problems: any[], psdict?: Reco
           {canSort && (
             <SectionSortSelect
               value={sort}
-              onChange={(val) => setSort(val as ProblemSort)}
+              onChange={setSort}
               title={t('Sort problem list')}
               data={[
                 { value: 'default', label: t('Default order') },
@@ -394,8 +418,6 @@ function ProblemList({ problems, psdict = {} }: { problems: any[], psdict?: Reco
   );
 }
 
-type ContestSort = 'default' | 'joined' | 'hot';
-
 function RecentContests({ contests, tsdict = {} }: { contests: any[], tsdict?: Record<string, any> }) {
   const { t } = useI18n();
   const user = useSessionStore((s) => s.user);
@@ -403,7 +425,7 @@ function RecentContests({ contests, tsdict = {} }: { contests: any[], tsdict?: R
   const canViewContest = useHasPerm(PERM.PERM_VIEW_CONTEST);
   const canSort = isLoggedIn && canViewContest;
 
-  const [sort, setSort] = useState<ContestSort>('default');
+  const [sort, setSort] = useHomepageSort('contest', CONTEST_SORTS, canSort);
 
   const cardTitle = sort === 'joined'
     ? t('Contests I Joined')
@@ -426,10 +448,10 @@ function RecentContests({ contests, tsdict = {} }: { contests: any[], tsdict?: R
       const isJoined = (c: any) => {
         const id = c.docId || c._id;
         const tsdoc = tsdict[id] || tsdict[String(id)] || tsdict[c.docId] || tsdict[c._id];
-        return Boolean(tsdoc?.attend || c.attend);
+        // c.attend is the total participant count, not this user's enrollment.
+        return Number(tsdoc?.attend) > 0;
       };
       const joinedContests = contests.filter(isJoined);
-      if (joinedContests.length === 0) return contests;
       const stateRank: Record<ContestState, number> = { running: 0, upcoming: 1, finished: 2 };
       return [...joinedContests].sort((a, b) => {
         const aState = getContestState(a);
@@ -459,7 +481,7 @@ function RecentContests({ contests, tsdict = {} }: { contests: any[], tsdict?: R
           {canSort && (
             <SectionSortSelect
               value={sort}
-              onChange={(val) => setSort(val as ContestSort)}
+              onChange={setSort}
               title={t('Sort recent contests')}
               data={[
                 { value: 'default', label: t('Default order') },

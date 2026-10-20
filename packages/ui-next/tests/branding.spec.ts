@@ -7,12 +7,13 @@ const require = createRequire(import.meta.url);
 const yaml = require('js-yaml');
 const oldBrand = ['HNTOU', 'OJ'].join(' ');
 
-test('welcome translations use HydroNext without changing their lookup key', () => {
+test('welcome translations accept the configured website name instead of hardcoding a brand', () => {
     for (const language of ['en', 'zh', 'zh_TW', 'ja', 'ko']) {
         const source = readFileSync(new URL(`../locales/${language}.yaml`, import.meta.url), 'utf8');
         const locale = yaml.load(source);
         assert.equal(source.includes(oldBrand), false, language);
-        assert.ok(locale['Welcome to Hydro'].includes('HydroNext'), language);
+        assert.ok(locale['Welcome to {0}'].includes('{0}'), language);
+        assert.equal(locale['Welcome to {0}'].includes('HydroNext'), false, language);
     }
 });
 

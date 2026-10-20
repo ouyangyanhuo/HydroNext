@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
-import { after, test } from 'node:test';
+import { after, beforeEach, test } from 'node:test';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -22,6 +22,7 @@ for (const [key, value] of Object.entries({
     Object.defineProperty(globalThis, key, { value, configurable: true, writable: true });
 }
 dom.window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+beforeEach(() => dom.window.localStorage.clear());
 after(async () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     dom.window.close();
@@ -47,6 +48,7 @@ test('modals in problem_detail and contest_detail do not use centered layout', (
 async function mountHomepage(
     args: any = {}, user: any = { _id: 0, perm: 0n }, perms: Record<string, boolean> = {}, realMenu = false, ui: any = {},
 ) {
+    const state = { args, user, ui };
     const host = document.createElement('div');
     document.body.appendChild(host);
     const root = createRoot(host);
@@ -75,7 +77,7 @@ async function mountHomepage(
             Link: forwardRef(({ children, to, ...props }: any, ref: any) => h('a', { ...props, href: `/${to}`, ref }, children)),
         },
         '@/components/markdown/markdown-renderer': { MarkdownRenderer: () => null },
-        '@/context/page-data': { usePageData: () => ({ args }) },
+        '@/context/page-data': { usePageData: () => ({ args: state.args }) },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string, ...values: any[]) => key
             .replace(/\{(\d+)\}/g, (placeholder, index) => values[index] === undefined ? placeholder : String(values[index])) }) },
         '@/hooks/use-permission': {
@@ -86,7 +88,7 @@ async function mountHomepage(
                 return false;
             },
         },
-        '@/stores/session': { useSessionStore: (select: any) => select({ ui, user, language: 'zh' }) },
+        '@/stores/session': { useSessionStore: (select: any) => select({ ui: state.ui, user: state.user, language: 'zh' }) },
         '@/utils/i18n-content': { extractLocalizedContent: (c: any) => (typeof c === 'string' ? c : (c?.zh || c?.en || '')) },
         '@/utils/user-name': { formatUserName: (u: any) => u.uname || 'user' },
     };
@@ -108,6 +110,10 @@ async function mountHomepage(
 
     return {
         host,
+        render: async (next: Partial<typeof state>) => {
+            Object.assign(state, next);
+            await act(async () => root.render(h(mantine.MantineProvider, null, h(HomePage))));
+        },
         close: async () => {
             await act(async () => { root.unmount(); });
             host.remove();
@@ -276,11 +282,17 @@ test('homepage contest sorting reorders items and updates card title', async () 
                             beginAt: new Date(now - 1800000).toISOString(),
                             endAt: new Date(now + 1800000).toISOString(),
                         },
+                        {
+                            docId: 'c4', _id: 'c4', title: 'Popular unjoined contest', attend: 1000,
+                            beginAt: new Date(now - 1800000).toISOString(),
+                            endAt: new Date(now + 1800000).toISOString(),
+                        },
                     ],
                     {
                         c1: { attend: true },
                         c2: { attend: true },
-                        c3: { attend: true },
+                        c3: { attend: true, uid: -1000, members: [10] },
+                        c4: { attend: 0 },
                     },
                 ]],
             ],
@@ -308,7 +320,7 @@ test('homepage contest sorting reorders items and updates card title', async () 
         });
         assert.equal(titleEl?.textContent, 'Most Attended Contests');
         let titles = [...f.host.querySelectorAll('.hydro-contest-card-row__title')].map((el) => el.textContent);
-        assert.deepEqual(titles, ['Finished Contest', 'Running Contest', 'Upcoming Contest']);
+        assert.deepEqual(titles, ['Popular unjoined contest', 'Finished Contest', 'Running Contest', 'Upcoming Contest']);
 
         // Sort by joined (running -> upcoming -> finished)
         await act(async () => {
@@ -317,7 +329,64 @@ test('homepage contest sorting reorders items and updates card title', async () 
         assert.equal(titleEl?.textContent, 'Contests I Joined');
         titles = [...f.host.querySelectorAll('.hydro-contest-card-row__title')].map((el) => el.textContent);
         assert.deepEqual(titles, ['Running Contest', 'Upcoming Contest', 'Finished Contest']);
+        await f.render({ args: { contents: [{ sections: [['contest', [(contents[0].sections[0][1] as any)[0], {}]]] }] } });
+        assert.equal(f.host.querySelectorAll('.hydro-contest-card-row').length, 0);
+        assert.match(f.host.querySelector('[aria-labelledby="recent-contests-title"]')!.textContent!, /No contests found/);
     } finally {
+        await f.close();
+    }
+});
+
+test('homepage remembers both sort preferences on reload and isolates accounts and domains during SPA navigation', async () => {
+    const user = { _id: 10, perm: 1n };
+    const permissions = { problem: true, contest: true };
+    let f = await mountHomepage({}, user, permissions, false, { domainId: 'a' });
+    try {
+        const problemHot = [...f.host.querySelectorAll('.hydro-data-panel--problems .hydro-menu-item')]
+            .find((item) => item.textContent === 'Most attempted')!;
+        const joined = [...f.host.querySelectorAll('[aria-labelledby="recent-contests-title"] .hydro-menu-item')]
+            .find((item) => item.textContent === 'Contests I joined')!;
+        await act(async () => {
+            problemHot.click();
+            joined.click();
+        });
+        await f.close();
+        f = await mountHomepage({}, user, permissions, false, { domainId: 'a' });
+        assert.equal(f.host.querySelector('#problem-list-title')!.textContent, 'Most Attempted Problems');
+        assert.equal(f.host.querySelector('#recent-contests-title')!.textContent, 'Contests I Joined');
+        await f.render({ ui: { domainId: 'b' } });
+        assert.equal(f.host.querySelector('#problem-list-title')!.textContent, 'Problem List');
+        assert.equal(f.host.querySelector('#recent-contests-title')!.textContent, 'Recent Contests');
+        await f.render({ ui: { domainId: 'a' } });
+        assert.equal(f.host.querySelector('#problem-list-title')!.textContent, 'Most Attempted Problems');
+        assert.equal(f.host.querySelector('#recent-contests-title')!.textContent, 'Contests I Joined');
+        await f.render({ user: { _id: 11, perm: 1n } });
+        assert.equal(f.host.querySelector('#problem-list-title')!.textContent, 'Problem List');
+        assert.equal(f.host.querySelector('#recent-contests-title')!.textContent, 'Recent Contests');
+        await f.render({ user: { _id: 0, perm: 0n } });
+        assert.equal(f.host.querySelectorAll('button[aria-label^="Sort"]').length, 0);
+    } finally { await f.close(); }
+});
+
+test('invalid stored preferences fall back safely and blocked storage does not prevent changing sort order', async () => {
+    const storage = Object.getOwnPropertyDescriptor(dom.window, 'localStorage')!;
+    dom.window.localStorage.setItem('hydro:homepage-sort:v1:problem:10:a', 'joined');
+    dom.window.localStorage.setItem('hydro:homepage-sort:v1:contest:10:a', 'recent');
+    const user = { _id: 10, perm: 1n };
+    const permissions = { problem: true, contest: true };
+    let f = await mountHomepage({}, user, permissions, false, { domainId: 'a' });
+    try {
+        assert.equal(f.host.querySelector('#problem-list-title')!.textContent, 'Problem List');
+        assert.equal(f.host.querySelector('#recent-contests-title')!.textContent, 'Recent Contests');
+        await f.close();
+        Object.defineProperty(dom.window, 'localStorage', { configurable: true, get() { throw new Error('Storage blocked'); } });
+        f = await mountHomepage({}, user, permissions, false, { domainId: 'a' });
+        const hot = [...f.host.querySelectorAll('.hydro-data-panel--problems .hydro-menu-item')]
+            .find((item) => item.textContent === 'Most attempted')!;
+        await act(async () => hot.click());
+        assert.equal(f.host.querySelector('#problem-list-title')!.textContent, 'Most Attempted Problems');
+    } finally {
+        Object.defineProperty(dom.window, 'localStorage', storage);
         await f.close();
     }
 });
