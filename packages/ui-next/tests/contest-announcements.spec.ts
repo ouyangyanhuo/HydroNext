@@ -50,6 +50,9 @@ test('global announcement modal displays escaped content, confirms one at a time
     const { ContestAnnouncements } = load('../src/components/contest/contest-announcements.tsx', {
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
         '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send: (data: any) => sent.push(data) }; } },
+        '@/context/page-data': { usePageData: () => ({ args: {}, name: 'homepage', url: '/' }) },
+        '@/context/router': { useNavigate: () => async () => {} },
+        '@/hooks/use-build-url': { useBuildUrl: () => () => '/' },
         '@/components/common/button': { Button }, '@/utils/error': { formatErrorMessage: () => 'Failed' },
     });
     const container = dom.window.document.createElement('div');
@@ -82,6 +85,51 @@ test('global announcement modal displays escaped content, confirms one at a time
             callbacks.onOpen();
             callbacks.onMessage({ announcements: [] });
         });
+    } finally {
+        await act(async () => root.unmount());
+        container.remove();
+    }
+});
+
+test('ending notices refresh only their contest and return to its domain overview after server acknowledgement', async () => {
+    let callbacks: any;
+    const navigations: string[] = [];
+    const sent: any[] = [];
+    const tid = '1234567890abcdef12345678';
+    const navigate = async (url: string) => { navigations.push(url); };
+    const { ContestAnnouncements } = load('../src/components/contest/contest-announcements.tsx', {
+        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send: (data: any) => sent.push(data) }; } },
+        '@/context/page-data': { usePageData: () => ({ args: { tdoc: { docId: tid }, UiContext: { domainId: 'exam' } },
+            name: 'problem_detail', url: '/d/exam/p/1' }) },
+        '@/context/router': { useNavigate: () => navigate },
+        '@/hooks/use-build-url': { useBuildUrl: () => (_: string, args: any) => `/d/${args.domainId}/contest/${args.tid}` },
+        '@/components/common/button': { Button }, '@/utils/error': { formatErrorMessage: () => 'Failed' },
+    });
+    const container = dom.window.document.createElement('div');
+    dom.window.document.body.append(container);
+    const root = createRoot(container);
+    const notice = { _id: 'abcdef1234567890abcdef12', tid, domainId: 'other', title: 'Exam', content: 'Team ended',
+        createdAt: new Date().toISOString(), kind: 'team-ended', proctorEnabled: true };
+    try {
+        await act(async () => root.render(h(MantineProvider, null, h(ContestAnnouncements))));
+        await act(async () => {
+            callbacks.onOpen();
+            callbacks.onMessage({ announcements: [notice] });
+        });
+        assert.equal(navigations.length, 0);
+        await act(async () => callbacks.onMessage({ announcements: [{ ...notice, domainId: 'exam' }] }));
+        assert.deepEqual(navigations, [dom.window.location.href]);
+        await act(async () => callbacks.onMessage({ announcements: [{ ...notice, domainId: 'exam' }] }));
+        assert.equal(navigations.length, 1);
+        assert.ok(dom.window.document.body.textContent?.includes('End proctoring and upload your log'));
+        const button = Array.from(dom.window.document.querySelectorAll('button'))
+            .find((item: any) => item.textContent === 'I understand') as HTMLButtonElement;
+        await act(async () => button.click());
+        assert.equal(sent[0].id, notice._id);
+        assert.equal(navigations.length, 1);
+        await act(async () => callbacks.onMessage({ announcements: [] }));
+        assert.equal(navigations[1], `/d/exam/contest/${tid}`);
     } finally {
         await act(async () => root.unmount());
         container.remove();

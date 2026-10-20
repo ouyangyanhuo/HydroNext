@@ -999,6 +999,10 @@ You can create your own training plans and share them with others.: 您可以创
 Go to Solve: 去做题
 Contest Closed: 比赛已结束
 The contest has ended. You can view the problems, but contest submissions are closed.: 比赛已结束。您可以查看题目，但无法再提交比赛代码。
+The contest has ended. Contest submissions are now closed.: 比赛已结束，现已停止接收比赛提交。
+The contest has ended for your team. Contest submissions are now closed.: 您所在队伍的比赛已结束，队员均无法再提交比赛代码。
+Your contest time is up. Contest submissions are now closed.: 您的参赛时间已到，现已停止接收比赛提交。
+End proctoring and upload your log in the client. Ending the contest does not upload it automatically.: 请在监考客户端中结束监考并上传日志。结束比赛不会自动上传日志。
 The contest has ended. You can view the problem, but contest submissions are closed.: 比赛已结束。您可以查看题面，但无法再提交比赛代码。
 Confirm to delete this clarification?: 确认删除这条答疑？
 Deleted: 已删除

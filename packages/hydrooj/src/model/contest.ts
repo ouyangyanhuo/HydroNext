@@ -23,6 +23,7 @@ import type { Handler } from '../service/server';
 import { Optional } from '../typeutils';
 import { PERM, STATUS, STATUS_SHORT_TEXTS } from './builtin';
 import { getTimes } from './contest-activity';
+import * as ending from './contest-ending';
 import * as document from './document';
 import MessageModel from './message';
 import problem, { ProblemModel } from './problem';
@@ -850,6 +851,7 @@ export async function add(
         assign: [], ...data, title, rule, beginAt, endAt, pids, attend: 0, rated,
     });
     await bus.parallel('contest/add', data, docId);
+    await ending.scheduleContest({ ...data, domainId, docId } as Tdoc);
     return docId;
 }
 
@@ -860,6 +862,7 @@ export async function edit(domainId: string, tid: ObjectId, $set: Partial<Tdoc>)
     await bus.parallel('contest/before-edit', tdoc, $set);
     RULES[$set.rule || tdoc.rule].check(Object.assign(tdoc, $set));
     const res = await document.set(domainId, document.TYPE_CONTEST, tid, $set);
+    if (['beginAt', 'endAt', 'duration', 'rule'].some((key) => key in $set)) await ending.scheduleContest(res);
     await bus.parallel('contest/edit', res);
     return res;
 }
@@ -999,6 +1002,7 @@ export async function attend(domainId: string, tid: ObjectId, uid: number, paylo
             throw new ContestAlreadyAttendedError(tid, uid);
         }
         await document.inc(domainId, document.TYPE_CONTEST, tid, 'attend', 1);
+        if (payload.startAt || payload.endAt) await ending.scheduleParticipant(domainId, tid, uid);
         return {};
     });
 }
@@ -1011,6 +1015,9 @@ export async function cancelAttend(domainId: string, tid: ObjectId, uid: number)
 
 export async function setStatus(domainId: string, tid: ObjectId, uid: number, $set?: any, $unset?: any) {
     const result = await document.setStatus(domainId, document.TYPE_CONTEST, tid, uid, $set, $unset);
+    if (['startAt', 'endAt'].some((key) => ($set && key in $set) || ($unset && key in $unset))) {
+        await ending.scheduleParticipant(domainId, tid, uid);
+    }
     const evidence = ['proctorEnded', 'proctorLogUploaded'].filter((key) => $set && key in $set);
     if (uid > 0 && evidence.length) {
         const teamVid = await getTeamVid(domainId, tid, uid);

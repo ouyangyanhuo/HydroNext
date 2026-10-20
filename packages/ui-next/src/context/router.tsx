@@ -31,7 +31,7 @@ export interface RouterState {
 }
 
 interface RouterNavigateContextValue {
-  navigate: (url: string, options?: { replace?: boolean }) => Promise<void>;
+  navigate: (url: string, options?: { replace?: boolean, preservePage?: boolean }) => Promise<void>;
 }
 
 function getRoutePath(url: string): string {
@@ -72,7 +72,7 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
   }, []);
 
   const fetchPage = useCallback(
-    async (url: string, init = false, push = false, replace = false) => {
+    async (url: string, init = false, push = false, replace = false, preservePage = false) => {
       abortRef.current?.abort();
       const gen = ++genRef.current;
       const controller = new AbortController();
@@ -181,7 +181,7 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
             name: pageName,
             url: nextUrl.pathname + nextUrl.search,
             template,
-          }));
+          }), preservePage);
           dispatch({ type: 'FETCH_SUCCESS' });
           return true;
         } catch (e) {
@@ -243,13 +243,13 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
     [state.status, state.error],
   );
 
-  const navigate = useCallback(async (url: string, options?: { replace?: boolean }) => {
+  const navigate = useCallback<RouterNavigateContextValue['navigate']>(async (url, options) => {
     if (!canNavigateInDocument(url)) {
       if (options?.replace) window.location.replace(url);
       else window.location.href = url;
       return;
     }
-    await fetchPage(url, false, true, options?.replace);
+    await fetchPage(url, false, true, options?.replace, options?.preservePage);
   }, [canNavigateInDocument, fetchPage]);
 
   const navigateValue = useMemo<RouterNavigateContextValue>(() => ({ navigate }), [navigate]);

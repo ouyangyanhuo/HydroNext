@@ -501,7 +501,8 @@ describe('App', () => {
         const route = `/d/${domainId}/contest/${tid}`;
         const teamRoute = `/d/${domainId}/contest/team`;
         const memberAgent = supertest.agent(require('hydrooj').httpServer);
-        await memberAgent.post('/login').send({ uname: 'teammate', password: 'secret' }).expect(302);
+        const memberLogin = await memberAgent.post('/login').send({ uname: 'teammate', password: 'secret' }).expect(302);
+        let announcementSocket;
         try {
             await agent.post(teamRoute).send({ operation: 'create', name: 'Upgrade team' }).expect(302);
             const [team] = await user.getVusersByMember(2, undefined, domainId);
@@ -604,10 +605,27 @@ describe('App', () => {
             await contest.edit(domainId, tid, { endAt: new Date(now + 3_600_000) });
             const captainView = getPageArgs(await agent.get(route).set('Accept', 'application/json').expect(200));
             assert.equal(captainView.canEndContest, true);
+            const WebSocket = require('ws');
+            const cookie = memberLogin.headers['set-cookie'].map((value: string) => value.split(';')[0]).join('; ');
+            const port = require('hydrooj').httpServer.address().port;
+            const teamEnded = new Promise<any>((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error('team end announcement timed out')), 5000);
+                announcementSocket = new WebSocket(`ws://127.0.0.1:${port}/contest-announcements-conn`, { headers: { Cookie: cookie } });
+                announcementSocket.on('error', (error: Error) => { clearTimeout(timer); reject(error); });
+                announcementSocket.on('message', (message: Buffer) => {
+                    if (message.toString() === 'ping') return announcementSocket.send('pong');
+                    const notice = JSON.parse(message.toString()).announcements?.find((item) => item.tid === tid.toHexString()
+                        && item.domainId === domainId && item.kind === 'team-ended');
+                    if (notice) { clearTimeout(timer); resolve(notice); }
+                    return undefined;
+                });
+            });
             await agent.post(route).send({ operation: 'early_end' }).expect(302);
+            assert.equal((await teamEnded).proctorEnabled, true);
             assert.ok((await contest.getStatus(domainId, tid, team._id)).endAt <= new Date());
             assert.equal((await contest.getStatus(domainId, tid, member)).proctorLogUploaded, false);
         } finally {
+            announcementSocket?.terminate();
             await proctor.saveConfig(previousProctorConfig);
             await contest.del(domainId, tid);
             await problem.del(domainId, pid);
@@ -944,6 +962,32 @@ describe('App', () => {
             await nonadmin.post('/login').send({ uname: 'announcement-outsider', password: 'secret' }).expect(302);
             await nonadmin.post(route).set('Accept', 'application/json')
                 .send({ operation: 'announcement', content: 'Not an administrator' }).expect(403);
+            const ending = require('../packages/hydrooj/src/model/contest-ending');
+            // Editing an expired schedule back into the future must not end the contest.
+            await contest.edit(domainId, tid, { endAt: new Date(now - 1000) });
+            await contest.edit(domainId, tid, { endAt: new Date(now + 3_600_000) });
+            await ending.runDue();
+            assert.equal((await announcements.pending(2)).filter((item) => item.domainId === domainId).length, 0);
+            // A team finish targets its real members, not the team's negative virtual UID.
+            const documents = global.Hydro.model.document;
+            await documents.setStatus(domainId, documents.TYPE_CONTEST, tid, -1000,
+                { attend: 1, members: [2, uid], endAt: new Date(now - 1000) });
+            await Promise.all([ending.notifyEnded(domainId, tid, -1000), ending.notifyEnded(domainId, tid, -1000)]);
+            const teamNotice = (await announcements.pending(uid)).filter((item) => item.domainId === domainId);
+            assert.equal(teamNotice.length, 1);
+            assert.equal(teamNotice[0].kind, 'team-ended');
+            assert.equal(teamNotice[0].recipients, undefined);
+            await announcements.acknowledge(uid, teamNotice[0]._id.toHexString());
+            assert.equal((await announcements.pending(uid)).filter((item) => item.domainId === domainId).length, 0);
+            assert.equal((await announcements.pending(2)).filter((item) => item.domainId === domainId).length, 1);
+            // The persistent deadline job sends a single global end notice despite retries.
+            await contest.edit(domainId, tid, { endAt: new Date(now - 1000) });
+            await ending.runDue();
+            await ending.notifyEnded(domainId, tid);
+            const ended = (await announcements.pending(uid)).filter((item) => item.domainId === domainId);
+            assert.equal(ended.length, 1);
+            assert.equal(ended[0].kind, 'contest-ended');
+            assert.equal((await announcements.pending(1)).filter((item) => item.domainId === domainId).length, 0);
         } finally {
             await contest.del(domainId, tid);
             await domain.del(domainId);

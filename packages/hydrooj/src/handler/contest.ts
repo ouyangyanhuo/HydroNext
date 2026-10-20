@@ -22,6 +22,7 @@ import { requireTeamCaptain, teamCaptainId } from '../lib/team-permissions';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as announcements from '../model/contest-announcement';
+import * as ending from '../model/contest-ending';
 import * as discussion from '../model/discussion';
 import * as document from '../model/document';
 import message from '../model/message';
@@ -243,6 +244,7 @@ export class ContestDetailHandler extends ContestDetailBaseHandler {
         if (this.team) requireTeamCaptain(await user.getTeamById(domainId, this.team, true), this.user._id);
         const now = new Date();
         await contest.setStatus(domainId, tid, this.team ?? this.user._id, { endAt: now, ...(!this.tsdoc.startAt ? { startAt: now } : {}) });
+        await ending.notifyEnded(domainId, tid, this.team ?? this.user._id);
         this.back();
     }
 }
@@ -616,10 +618,10 @@ export class ContestManagementHandler extends ContestManagementBaseHandler {
         if (!contest.isOngoing(this.tdoc)) throw new ContestNotLiveError(domainId, tid);
         if (!content.trim() || content.trim().length > 4000) throw new ValidationError('content');
         await this.limitRate('contest_announcement', 60, 10);
-        const statuses = await contest.getMultiStatus(domainId, { docId: tid, attend: 1 }).project({ uid: 1 }).toArray();
+        const statuses = await contest.getMultiStatus(domainId, { docId: tid, attend: 1 }).project({ uid: 1, members: 1 }).toArray();
         this.response.body = await announcements.publish({
             domainId, tid, content, title: this.tdoc.title, createdBy: this.user._id,
-            recipients: statuses.map((status) => status.uid),
+            recipients: statuses.flatMap((status) => status.members?.length ? status.members : [status.uid]),
         });
         await oplog.log(this, 'contest.announcement', { tid });
     }

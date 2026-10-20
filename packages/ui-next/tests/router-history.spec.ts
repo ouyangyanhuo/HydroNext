@@ -29,8 +29,12 @@ after(() => {
 
 function fixture(isInjected: boolean) {
     const requests: { url: string, options: RequestInit }[] = [];
+    const preserved: boolean[] = [];
     let data: any = { name: 'record_main', args: {}, url: '/d/team/record?page=2' };
-    const setData = (update: any) => { data = update(data); };
+    const setData = (update: any, preservePage = false) => {
+        data = update(data);
+        preserved.push(preservePage);
+    };
     const module = { exports: {} as any };
     const code = transformSync(readFileSync(new URL('../src/context/router.tsx', import.meta.url), 'utf8'), {
         loader: 'tsx', format: 'cjs', jsx: 'automatic',
@@ -60,8 +64,8 @@ function fixture(isInjected: boolean) {
     const container = dom.window.document.createElement('div');
     const root = createRoot(container);
     return {
-        requests, getData: () => data,
-        navigate: (url: string) => navigate(url),
+        requests, preserved, getData: () => data,
+        navigate: (url: string, options?: any) => navigate(url, options),
         mount: () => act(async () => root.render(h(module.exports.RouterProvider, null, h(Child)))),
         unmount: () => act(async () => root.unmount()),
     };
@@ -94,6 +98,8 @@ test('navigation, browser back/forward and bfcache restoration fetch uncached JS
             assert.equal(new Headers(options.headers).get('Accept'), 'application/json');
             assert.ok(new Headers(options.headers).get('x-hydro-inject')?.includes('usercontext'));
         }
+        await act(async () => router.navigate(dom.window.location.href, { replace: true, preservePage: true }));
+        assert.equal(router.preserved.at(-1), true);
     } finally {
         await router.unmount();
     }

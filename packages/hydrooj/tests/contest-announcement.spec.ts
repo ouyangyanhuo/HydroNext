@@ -97,7 +97,7 @@ test('publishing requires contest administration, an ongoing contest and the cur
             isOngoing: () => ongoing,
             getMultiStatus: (domainId: string, query: any) => {
                 requests.push([domainId, query]);
-                return { project: () => ({ toArray: async () => [{ uid: 2 }, { uid: 3 }] }) };
+                return { project: () => ({ toArray: async () => [{ uid: -1000, members: [2, 3] }] }) };
             },
         },
         '../model/contest-announcement': { publish: async (payload: any) => { requests.push(payload); return { recipients: 2 }; } },

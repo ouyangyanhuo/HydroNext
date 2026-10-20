@@ -686,6 +686,7 @@ export default function ProblemDetailPage() {
           title={`${pdoc.pid || pdoc.docId}. ${title}`}
           submitUrl={submitUrl}
           codeReplaySessionUrl={ui.codeReplaySessionUrl}
+          submissionDisabled={Boolean(tid) && (contestClosed || !canSubmitProblem)}
           onClose={() => switchScratchpad(false)}
         />
       </div>

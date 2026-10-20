@@ -20,7 +20,7 @@ export interface PageData {
 interface PageDataContextValue {
   data: PageData;
   revision: number;
-  setData: React.Dispatch<React.SetStateAction<PageData>>;
+  setData: (next: React.SetStateAction<PageData>, preservePage?: boolean) => void;
 }
 
 const PageDataContext = createContext<PageDataContextValue | null>(null);
@@ -33,7 +33,8 @@ interface PageDataProviderProps {
 export function PageDataProvider({ initial, children }: PageDataProviderProps) {
   const [{ data, revision }, setState] = useState({ data: initial, revision: 0 });
   const dataRef = useRef(initial);
-  const setData = useCallback<React.Dispatch<React.SetStateAction<PageData>>>((next) => {
+  const setData = useCallback<PageDataContextValue['setData']>((next, preservePage = false) => {
+    const previousData = dataRef.current;
     const nextData = typeof next === 'function' ? next(dataRef.current) : next;
     dataRef.current = nextData;
 
@@ -47,7 +48,9 @@ export function PageDataProvider({ initial, children }: PageDataProviderProps) {
 
     setState((prev) => ({
       data: nextData,
-      revision: prev.revision + 1,
+      // Background permission updates must not destroy an open editor's local state.
+      revision: prev.revision + (preservePage && nextData.name === previousData.name
+        && nextData.url === previousData.url && !nextData.args.error ? 0 : 1),
     }));
   }, []);
   const value = useMemo(() => ({ data, revision, setData }), [data, revision, setData]);
@@ -89,7 +92,7 @@ export function usePageData(): PageData {
   return usePageDataContext().data;
 }
 
-export function useSetPageData(): React.Dispatch<React.SetStateAction<PageData>> {
+export function useSetPageData(): PageDataContextValue['setData'] {
   return usePageDataContext().setData;
 }
 

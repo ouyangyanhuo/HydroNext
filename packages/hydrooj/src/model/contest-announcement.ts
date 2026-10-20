@@ -13,6 +13,10 @@ export interface ContestAnnouncementDoc {
     createdBy: number;
     createdAt: Date;
     recipients: number[];
+    kind?: 'contest-ended' | 'team-ended' | 'participation-ended';
+    endAt?: Date;
+    proctorEnabled?: boolean;
+    eventKey?: string;
 }
 
 interface AnnouncementReceipt {
@@ -37,7 +41,21 @@ export async function publish(payload: Omit<ContestAnnouncementDoc, '_id' | 'cre
     if (!content || content.length > 4000) throw new ValidationError('content');
     const recipients = [...new Set(payload.recipients.filter((uid) => Number.isSafeInteger(uid) && uid > 0))];
     const doc = { ...payload, _id: new ObjectId(), createdAt: new Date(), content, recipients };
-    await coll.insertOne(doc);
+    if (payload.eventKey) {
+        try {
+            const result = await coll.updateOne({ eventKey: payload.eventKey }, { $setOnInsert: doc }, { upsert: true });
+            if (!result.upsertedCount) {
+                bus.broadcast('contest/announcement', recipients);
+                return { id: '', recipients: 0 };
+            }
+        } catch (error) {
+            if (error?.code === 11000) {
+                bus.broadcast('contest/announcement', recipients);
+                return { id: '', recipients: 0 };
+            }
+            throw error;
+        }
+    } else await coll.insertOne(doc);
     bus.broadcast('contest/announcement', recipients);
     return { id: doc._id.toHexString(), recipients: recipients.length };
 }
@@ -46,7 +64,8 @@ export async function pending(uid: number) {
     // Receipts are per user; confirming a broadcast must never dismiss it for other participants.
     return coll.aggregate([
         { $match: { recipients: uid } },
-        { $sort: { _id: 1 } },
+        // End notices must not wait behind a backlog of ordinary announcements.
+        { $sort: { kind: -1, _id: 1 } },
         { $lookup: {
             from: receipts.collectionName,
             let: { announcementId: '$_id' },
@@ -55,7 +74,7 @@ export async function pending(uid: number) {
         } },
         { $match: { 'receipt.0': { $exists: false } } },
         { $limit: 20 },
-        { $project: { recipients: 0, receipt: 0, createdBy: 0 } },
+        { $project: { recipients: 0, receipt: 0, createdBy: 0, eventKey: 0 } },
     ]).toArray();
 }
 
@@ -76,7 +95,10 @@ export async function acknowledge(uid: number, id: string) {
 
 export async function apply(ctx: Context) {
     await ctx.db.ensureIndexes(coll, { key: { recipients: 1, _id: 1 }, name: 'participant_announcements' });
+    await ctx.db.ensureIndexes(coll, { key: { recipients: 1, kind: -1, _id: 1 }, name: 'participant_announcement_priority' });
     await ctx.db.ensureIndexes(coll, { key: { domainId: 1, tid: 1 }, name: 'contest_announcements' });
+    await ctx.db.ensureIndexes(coll, { key: { eventKey: 1 }, unique: true, name: 'unique_contest_end_event',
+        partialFilterExpression: { eventKey: { $type: 'string' } } });
     await ctx.db.ensureIndexes(receipts, { key: { uid: 1, announcementId: 1 }, unique: true, name: 'announcement_receipts' });
     const remove = async (domainId: string, tid?: ObjectId) => {
         const query = { domainId, ...(tid ? { tid } : {}) };

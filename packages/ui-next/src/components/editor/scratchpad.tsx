@@ -44,6 +44,7 @@ interface ScratchpadProps {
   onSubmit?: (lang: string, code: string) => Promise<any>;
   submitUrl?: string;
   codeReplaySessionUrl?: string;
+  submissionDisabled?: boolean;
 }
 
 function getStoredNumber(key: string, fallback: number) {
@@ -81,6 +82,7 @@ export function Scratchpad({
   onSubmit,
   submitUrl,
   codeReplaySessionUrl,
+  submissionDisabled = false,
 }: ScratchpadProps) {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -305,6 +307,10 @@ export function Scratchpad({
   }, [lang, submissionContext.pid, submissionContext.tid, replayStorageKey, resolvedReplayUrl, t, userId, warnReplayStorage]);
 
   const postJudge = useCallback(async (pretest: boolean) => {
+    if (submissionDisabled) {
+      notifications.show({ color: 'red', message: t('Contest Closed') });
+      return;
+    }
     if (!replayReady || judgePending.current) return;
     const now = Date.now();
     if (now < (pretest ? cooldownUntil.pretest : cooldownUntil.submit)) return;
@@ -380,7 +386,7 @@ export function Scratchpad({
     }
   }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, flushReplay,
     resolvedSubmitUrl, input, navigate, replayReady, replayStorageKey, warnReplayStorage, captureAction,
-    proctorPid, proctorEnabled, navigationSearch, args.tdoc]);
+    proctorPid, proctorEnabled, navigationSearch, args.tdoc, submissionDisabled]);
 
   const pretestCooldown = Math.max(0, Math.ceil((cooldownUntil.pretest - clock) / 1000));
   const submitCooldown = Math.max(0, Math.ceil((cooldownUntil.submit - clock) / 1000));
@@ -512,7 +518,7 @@ export function Scratchpad({
                     leftSection={<IconSend size={14} />}
                     onClick={() => postJudge(false)}
                     loading={submitting}
-                    disabled={!replayReady || pretesting || submitCooldown > 0}
+                    disabled={submissionDisabled || !replayReady || pretesting || submitCooldown > 0}
                     className="hydro-scratchpad-submit-action"
                   >
                     {submitCooldown ? `${t('Submit Solution')} (${submitCooldown}s)` : t('Submit Solution')}
@@ -605,7 +611,7 @@ export function Scratchpad({
                               leftSection={<IconPlayerPlay size={14} />}
                               onClick={() => postJudge(true)}
                               loading={pretesting}
-                              disabled={!replayReady || submitting || pretestCooldown > 0}
+                              disabled={submissionDisabled || !replayReady || submitting || pretestCooldown > 0}
                               className="hydro-scratchpad-run-action hydro-scratchpad-console__run-action"
                             >
                               {pretestCooldown ? `${t('Run Self Test')} (${pretestCooldown}s)` : t('Run Self Test')}

@@ -836,6 +836,10 @@ You can create your own training plans and share them with others.: 您可以建
 Go to Solve: 去做題
 Contest Closed: 比賽已結束
 The contest has ended. You can view the problems, but contest submissions are closed.: 比賽已結束。您可以檢視題目，但無法再提交比賽程式碼。
+The contest has ended. Contest submissions are now closed.: 比賽已結束，現已停止接收比賽提交。
+The contest has ended for your team. Contest submissions are now closed.: 您所在隊伍的比賽已結束，隊員均無法再提交比賽程式碼。
+Your contest time is up. Contest submissions are now closed.: 您的參賽時間已到，現已停止接收比賽提交。
+End proctoring and upload your log in the client. Ending the contest does not upload it automatically.: 請在監考客戶端中結束監考並上傳日誌。結束比賽不會自動上傳日誌。
 The contest has ended. You can view the problem, but contest submissions are closed.: 比賽已結束。您可以檢視題面，但無法再提交比賽程式碼。
 Confirm to delete this clarification?: 確認刪除這條答疑？
 Deleted: 已刪除
