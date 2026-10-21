@@ -124,6 +124,9 @@ export default async function (env: { watch?: boolean, production?: boolean, mea
     output: {
       path: root('public'),
       publicPath: '/', // overwrite in entry.js
+      // Workers stay same-origin: classic worker script requests carry no
+      // Origin header, so cross-origin CDN CORS (echo-based) never applies.
+      // Self-contained same-origin workers keep plain HTTP caching.
       workerPublicPath: '/',
       hashFunction: 'sha1',
       hashDigest: 'hex',
