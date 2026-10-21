@@ -300,3 +300,30 @@ test('domain dashboard layout renders categorized panels, hero section and maint
     assert.match(source, /className="hydro-bulletin__toggle"/);
     assert.match(source, /t\('Show less'\) : t\('Show more'\)/);
 });
+
+test('domain switcher renders refined select pill trigger and searchable dropdown', () => {
+    const css = postcss.parse(read('../src/styles/tailwind.css'));
+    let triggerClass = false;
+    let menuItemActive = false;
+    let menuListClass = false;
+
+    css.walkRules((rule) => {
+        if (rule.selector === '.hydro-domain-switcher-trigger') triggerClass = true;
+        if (rule.selector === '.hydro-domain-menu-item--active') menuItemActive = true;
+        if (rule.selector === '.hydro-domain-menu-list') menuListClass = true;
+    });
+
+    assert.ok(triggerClass, '.hydro-domain-switcher-trigger selector not found');
+    assert.ok(menuItemActive, '.hydro-domain-menu-item--active selector not found');
+    assert.ok(menuListClass, '.hydro-domain-menu-list selector not found');
+
+    const source = read('../src/components/navigation/domain-switcher.tsx');
+    assert.match(source, /className="hydro-domain-switcher-trigger"/);
+    assert.match(source, /data-expanded=\{opened \|\| undefined\}/);
+    assert.match(source, /className="hydro-domain-switcher-trigger__chevron"/);
+    assert.match(source, /className="hydro-domain-menu-list flex flex-col gap-1/);
+    assert.match(source, /t\('Switch Domain'\)/);
+    assert.match(source, /t\('All Domains'\)/);
+    assert.match(source, /IconCheck/);
+    assert.match(source, /to="home_domain"/);
+});

@@ -13,7 +13,6 @@ import { i18n, request } from 'vj/utils';
 
 export { renderMarkdown } from 'monaco-editor/esm/vs/base/browser/markdownRenderer';
 
-
 // Classic worker *entry* scripts are fetched in same-origin mode — a
 // cross-origin CDN can never serve them (verified: even ACAO * fails). But
 // importScripts inside a worker is CORS-mode and CDN-friendly. So: emit the

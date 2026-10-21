@@ -4340,6 +4340,99 @@ a {
 .hydro-frame-owned-card { transition: border-color 160ms ease; }
 .hydro-frame-owned-card:hover, .hydro-frame-owned-card:focus-visible { border-color: var(--hydro-primary); }
 
+/* Domain switcher in top navigation */
+.hydro-domain-switcher-trigger {
+  height: 32px;
+  padding: 0 10px 0 6px !important;
+  border-radius: var(--hydro-radius-full);
+  border: 1px solid var(--hydro-border);
+  background-color: color-mix(in srgb, var(--hydro-surface-raised) 70%, var(--hydro-surface-muted));
+  color: var(--hydro-text);
+  font-weight: var(--hydro-weight-medium);
+  transition: all var(--hydro-transition-fast);
+}
+
+.hydro-domain-switcher-trigger:hover {
+  border-color: var(--hydro-border-strong);
+  background-color: var(--hydro-surface-muted);
+}
+
+.hydro-domain-switcher-trigger[data-expanded] {
+  border-color: color-mix(in srgb, var(--hydro-primary) 65%, var(--hydro-border));
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 40%, var(--hydro-surface-raised));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--hydro-primary) 35%, transparent);
+}
+
+.hydro-domain-switcher-trigger__avatar {
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 60%, transparent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.hydro-domain-switcher-trigger__chevron {
+  color: var(--hydro-text-muted);
+  transition: transform var(--hydro-transition-fast);
+}
+
+.hydro-domain-switcher-trigger[data-expanded] .hydro-domain-switcher-trigger__chevron {
+  transform: rotate(180deg);
+  color: var(--hydro-primary-strong);
+}
+
+.hydro-domain-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 2px;
+}
+
+.hydro-domain-menu-item {
+  margin: 0 !important;
+  padding: 8px 10px;
+  border-radius: var(--hydro-radius-md);
+  transition: background-color var(--hydro-transition-fast), color var(--hydro-transition-fast);
+}
+
+.hydro-domain-menu-item:hover,
+.hydro-domain-menu-item[data-menu-active] {
+  background-color: var(--hydro-surface-muted);
+}
+
+.hydro-domain-menu-item--active {
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 55%, var(--hydro-surface-muted)) !important;
+}
+
+.hydro-domain-menu-item--active:hover,
+.hydro-domain-menu-item--active[data-menu-active] {
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 72%, var(--hydro-surface-muted)) !important;
+}
+
+.hydro-domain-menu-item__avatar {
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 50%, transparent);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-domain-switcher-trigger {
+  background-color: color-mix(in srgb, var(--hydro-surface-raised) 85%, transparent);
+  border-color: var(--hydro-border);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-domain-switcher-trigger:hover {
+  background-color: var(--hydro-surface-muted);
+  border-color: var(--hydro-border-strong);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-domain-switcher-trigger[data-expanded] {
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 25%, var(--hydro-surface-raised));
+}
+
+[data-mantine-color-scheme='dark'] .hydro-domain-menu-item--active {
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 28%, var(--hydro-surface-muted)) !important;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-domain-menu-item--active:hover,
+[data-mantine-color-scheme='dark'] .hydro-domain-menu-item--active[data-menu-active] {
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 40%, var(--hydro-surface-muted)) !important;
+}
+
 .hydro-topbar-user-button {
   display: inline-flex;
   align-items: center;
