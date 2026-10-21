@@ -33,6 +33,7 @@ const { create } = require('zustand');
 const mantine = require('@mantine/core');
 
 async function fixture(uid = 0, topNav = false, captureMenu = false) {
+    let canViewRanking = false;
     const store = create((set: any) => ({
         user: { _id: uid, uname: `user${uid}`, priv: 0, avatar: '' },
         ui: { domainId: 'system', domain: { name: 'System' }, serverName: 'HydroNext' },
@@ -62,7 +63,7 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
             useCurrentUser: () => store((state: any) => state.user), useIsLoggedIn: () => store((state: any) => state.user._id > 0),
         },
         '@/context/page-data': { usePageData: () => ({ name: 'homepage' }) },
-        '@/hooks/use-permission': { PRIV: {}, PERM: {}, useHasPriv: () => false, useHasPerm: () => false },
+        '@/hooks/use-permission': { PRIV: {}, PERM: {}, useHasPriv: () => false, useHasPerm: () => canViewRanking },
         '@/registry/page-metadata': { getPageMetadata: () => ({ nav: 'homepage' }) },
         '@/assets/logo.png': '/logo.png',
         '@/components/user/user-avatar': { UserAvatar: () => h('span', null, 'Avatar') },
@@ -95,6 +96,12 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
     await act(async () => root.render(h(mantine.MantineProvider, null, h(Component))));
     return {
         host, calls,
+        async setDomain(domainId: string, navigationHidden: Record<string, boolean>, ranking = true) {
+            canViewRanking = ranking;
+            await act(async () => store.setState((state: any) => ({
+                ui: { ...state.ui, domainId, domain: { name: domainId, navigationHidden } },
+            })));
+        },
         setResponse(callback: typeof respond) { respond = callback; },
         async setRegistrationEnabled(enabled: boolean) {
             await act(async () => store.setState((state: any) => ({ ui: { ...state.ui, registrationEnabled: enabled } })));
@@ -212,6 +219,27 @@ test('logged-in domains load only on opening, show the response and reuse the ca
         await f.clickDomain();
         await f.clickDomain();
         assert.equal(f.calls.length, 1);
+    } finally { await f.close(); }
+});
+
+test('domain navigation settings hide desktop and mobile entries without leaking into other domains or granting ranking access', async () => {
+    const f = await fixture(0, true);
+    try {
+        await f.setDomain('exam', { problem_main: true, training_main: true, homepage: true });
+        assert.equal(f.host.querySelector('a[href="/problem_main"]'), null);
+        assert.equal(f.host.querySelector('a[href="/training_main"]'), null);
+        assert.ok(f.host.querySelector('a[href="/contest_main"]'));
+        assert.ok(f.host.querySelector('a[href="/ranking"]'));
+        assert.equal(f.host.querySelectorAll('a[href="/homepage"]').length, 1, 'the logo still provides a way home');
+        await act(async () => f.host.querySelector<HTMLButtonElement>('.mantine-Burger-root')!.click());
+        assert.ok(document.querySelector('[role="dialog"]'));
+        assert.equal(document.querySelector('a[href="/training_main"]'), null);
+        assert.equal(document.querySelector('a[href="/problem_main"]'), null);
+        await f.setDomain('practice', {});
+        assert.ok(document.querySelectorAll('a[href="/training_main"]').length >= 2);
+        assert.ok(document.querySelectorAll('a[href="/problem_main"]').length >= 2);
+        await f.setDomain('practice', { ranking: false }, false);
+        assert.equal(document.querySelector('a[href="/ranking"]'), null);
     } finally { await f.close(); }
 });
 

@@ -1,4 +1,12 @@
 __flag: 🇬🇧
+'Hide Contests navigation entry': 'Hide Contests navigation entry'
+'Hide Home navigation entry': 'Hide Home navigation entry'
+'Hide Problems navigation entry': 'Hide Problems navigation entry'
+'Hide Ranking navigation entry': 'Hide Ranking navigation entry'
+'Hide Records navigation entry': 'Hide Records navigation entry'
+'Hide Training navigation entry': 'Hide Training navigation entry'
+'Only hides top navigation and mobile menu entries in this domain. Page access permissions are unchanged.': 'Only hides top navigation and mobile menu entries in this domain. Page access permissions are unchanged.'
+setting_navigation: Navigation entries
 'All participants': 'All participants'
 'Created at': 'Created at'
 'Disband team': 'Disband team'

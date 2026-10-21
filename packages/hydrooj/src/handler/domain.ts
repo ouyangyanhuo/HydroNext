@@ -139,11 +139,17 @@ class DomainEditHandler extends ManageHandler {
         const $set = {};
         const booleanKeys = args.booleanKeys || {};
         delete args.booleanKeys;
-        for (const key in booleanKeys) if (!args[key]) $set[key] = false;
-        for (const key in args) {
-            if (DOMAIN_SETTINGS_BY_KEY[key]) $set[key] = args[key];
+        for (const key in booleanKeys) {
+            if (DOMAIN_SETTINGS_BY_KEY[key]?.type === 'boolean' && !args[key]) $set[key] = false;
         }
-        await domain.edit(args.domainId, $set);
+        for (const key in args) {
+            if (!Object.hasOwn(DOMAIN_SETTINGS_BY_KEY, key)) continue;
+            if (DOMAIN_SETTINGS_BY_KEY[key].type === 'boolean') {
+                if (typeof args[key] !== 'boolean' && typeof args[key] !== 'string') throw new ValidationError(key);
+                $set[key] = Types.Boolean[0](args[key]);
+            } else $set[key] = args[key];
+        }
+        await domain.edit(this.domain._id, $set);
         this.response.redirect = this.url('domain_dashboard');
     }
 }

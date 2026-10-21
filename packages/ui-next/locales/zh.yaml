@@ -1,4 +1,12 @@
 __flag: 🇨🇳
+'Hide Contests navigation entry': '隐藏比赛入口'
+'Hide Home navigation entry': '隐藏首页入口'
+'Hide Problems navigation entry': '隐藏题目入口'
+'Hide Ranking navigation entry': '隐藏排名入口'
+'Hide Records navigation entry': '隐藏提交记录入口'
+'Hide Training navigation entry': '隐藏训练入口'
+'Only hides top navigation and mobile menu entries in this domain. Page access permissions are unchanged.': '仅隐藏当前域顶部导航和移动端菜单中的入口，不改变页面的访问权限。'
+setting_navigation: 导航入口
 'All participants': '所有参赛者'
 'Created at': '创建时间'
 'Disband team': '解散队伍'

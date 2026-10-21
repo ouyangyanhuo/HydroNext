@@ -155,6 +155,63 @@ describe('App', () => {
         await agent.get('/api/user?args={"id":2}&projection=uname').expect({ uname: 'root' });
     });
 
+    it('Proctor settings and log access require sudo and return to the original scoped URL after authorization', async () => {
+        const admin = supertest.agent(require('hydrooj').httpServer);
+        await admin.post('/login').send({ uname: Root.username, password: Root.password }).expect(302);
+        const route = '/d/system/manage/proctor?pageSize=50&q=test';
+        const denied = await admin.get(route).set('Accept', 'application/json').expect(200);
+        assert.match(denied.body.url, /\/user\/sudo$/);
+        assert.equal(denied.body.config, undefined);
+        assert.equal(denied.body.logs, undefined);
+        const authorization = await admin.get(denied.body.url).set('Accept', 'application/json').expect(200);
+        assert.equal(authorization.body.redirect, route);
+        await admin.post(denied.body.url).send({ password: Root.password }).expect(302).expect('Location', route);
+        const allowed = await admin.get(route).set('Accept', 'application/json').expect(200);
+        assert.ok(allowed.body.config);
+        assert.equal(allowed.body.pageSize, 50);
+        await admin.post('/login').send({ uname: Root.username, password: Root.password }).expect(302);
+        const logs = await admin.get('/manage/proctor/logs').set('Accept', 'application/json').expect(200);
+        assert.match(logs.body.url, /\/user\/sudo$/);
+        assert.equal(logs.body.logs, undefined);
+        const download = await admin.post('/manage/proctor/logs').set('Accept', 'application/json')
+            .send({ operation: 'download', ids: [] }).expect(200);
+        assert.match(download.body.url, /\/user\/sudo$/);
+    });
+
+    it('Domain navigation settings persist only in their domain, preserve page permissions and reject malformed flags', async () => {
+        const { domain } = global.Hydro.model;
+        const a = 'navigation-exam';
+        const b = 'navigation-practice';
+        await domain.add(a, 2, 'Exam navigation', '');
+        await domain.add(b, 2, 'Practice navigation', '');
+        const route = `/d/${a}/domain/edit`;
+        try {
+            const settings = getPageArgs(await agent.get(route).set('Accept', 'application/json').expect(200));
+            assert.equal(settings.settings.filter((setting) => setting.family === 'setting_navigation').length, 6);
+            await agent.post(route).set('Accept', 'application/json').send({
+                'navigationHidden.problem_main': true, 'navigationHidden.training_main': true, 'navigationHidden.ranking': 'on',
+                booleanKeys: { owner: true, _id: true },
+            }).expect(200);
+            assert.deepEqual((await domain.get(a)).navigationHidden, { problem_main: true, training_main: true, ranking: true });
+            assert.equal((await domain.get(a)).owner, 2);
+            assert.equal((await domain.get(b)).navigationHidden, undefined);
+            const page = getPageArgs(await agent.get(`/d/${a}/p`).set('Accept', 'application/json')
+                .set('x-hydro-inject', 'uicontext').expect(200));
+            assert.equal(page.UiContext.domain.navigationHidden.problem_main, true);
+            assert.equal(page.UiContext.domainId, a);
+            await agent.get(`/d/${a}/training`).expect(200);
+            await agent.post(route).set('Accept', 'application/json').send({ 'navigationHidden.ranking': [] }).expect(403);
+            assert.equal((await domain.get(a)).navigationHidden.ranking, true);
+            await agent.post(route).set('Accept', 'application/json').send({ 'navigationHidden.ranking': 'false',
+                booleanKeys: { 'navigationHidden.training_main': true } }).expect(200);
+            assert.equal((await domain.get(a)).navigationHidden.ranking, false);
+            assert.equal((await domain.get(a)).navigationHidden.training_main, false);
+            assert.equal((await domain.get(a)).navigationHidden.problem_main, true);
+        } finally {
+            await Promise.all([domain.del(a), domain.del(b)]);
+        }
+    });
+
     it('User contributions count first solves across private domains without exposing their records', async () => {
         const { domain, user, record } = global.Hydro.model;
         const { ObjectId } = require('mongodb');
@@ -611,12 +668,18 @@ describe('App', () => {
             const teamEnded = new Promise<any>((resolve, reject) => {
                 const timer = setTimeout(() => reject(new Error('team end announcement timed out')), 5000);
                 announcementSocket = new WebSocket(`ws://127.0.0.1:${port}/contest-announcements-conn`, { headers: { Cookie: cookie } });
-                announcementSocket.on('error', (error: Error) => { clearTimeout(timer); reject(error); });
+                announcementSocket.on('error', (error: Error) => {
+                    clearTimeout(timer);
+                    reject(error);
+                });
                 announcementSocket.on('message', (message: Buffer) => {
                     if (message.toString() === 'ping') return announcementSocket.send('pong');
                     const notice = JSON.parse(message.toString()).announcements?.find((item) => item.tid === tid.toHexString()
                         && item.domainId === domainId && item.kind === 'team-ended');
-                    if (notice) { clearTimeout(timer); resolve(notice); }
+                    if (notice) {
+                        clearTimeout(timer);
+                        resolve(notice);
+                    }
                     return undefined;
                 });
             });
@@ -756,6 +819,9 @@ describe('App', () => {
                 assert.equal(denied.headers['cache-control'], 'no-store');
             }
             assert.equal((await contest.getStatus(domainId, tid, 2)).startAt, undefined);
+            const authorization = await agent.get('/manage/proctor?pageSize=50').set('Accept', 'application/json').expect(200);
+            assert.match(authorization.body.url, /\/user\/sudo$/);
+            await agent.post(authorization.body.url).send({ password: Root.password }).expect(302);
             const settings = await agent.get('/manage/proctor?pageSize=50').set('Accept', 'application/json').expect(200);
             assert.equal(settings.body.pageSize, 50);
             assert.ok(Array.isArray(settings.body.logs));

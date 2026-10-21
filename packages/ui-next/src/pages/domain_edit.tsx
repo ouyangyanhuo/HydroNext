@@ -1,19 +1,18 @@
-import { Stack } from '@mantine/core';
+import { Stack, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { SettingsForm } from '@/components/common/settings-form';
+import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
-import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 
 export default function DomainEditPage() {
   const { args } = usePageData();
   const { t } = useI18n();
-  const domainId = useSessionStore((s) => s.ui.domainId);
   const current = args.current || args.domain || args.ddoc || {};
   const [loading, setLoading] = useState(false);
 
@@ -27,10 +26,10 @@ export default function DomainEditPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (data.error) {
-        notifications.show({ title: formatErrorMessage(data.error, t('Save failed')), message: '', color: 'red' });
-      } else if (data.redirect) {
-        window.location.href = data.redirect;
+      if (!res.ok || data.error) {
+        notifications.show({ title: formatErrorMessage(data.error, t('Save failed'), t), message: '', color: 'red' });
+      } else if (data.url || data.redirect) {
+        window.location.href = data.url || data.redirect;
       } else {
         notifications.show({ title: t('Saved'), message: '', color: 'green' });
       }
@@ -44,7 +43,7 @@ export default function DomainEditPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Domain Settings')}>
-        <Button component="a" href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button component={Link} to="domain_dashboard" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
       </PageHeader>
@@ -54,6 +53,11 @@ export default function DomainEditPage() {
         payloadMode="flat"
         loading={loading}
         onSubmit={handleSubmit}
+        familyExtras={{ setting_navigation: (
+          <Text size="sm" c="dimmed">
+            {t('Only hides top navigation and mobile menu entries in this domain. Page access permissions are unchanged.')}
+          </Text>
+        ) }}
       />
     </Stack>
   );

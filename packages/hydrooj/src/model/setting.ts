@@ -275,6 +275,12 @@ DomainSetting(
     Setting('setting_domain', 'share', '', 'text', 'Share problem with domain (* for any)'),
     Setting('setting_domain', 'bulletin', '', 'markdown', 'Bulletin'),
     Setting('setting_domain', 'langs', '', 'text', 'Allowed langs', null),
+    Setting('setting_navigation', 'navigationHidden.homepage', false, 'boolean', 'Hide Home navigation entry'),
+    Setting('setting_navigation', 'navigationHidden.problem_main', false, 'boolean', 'Hide Problems navigation entry'),
+    Setting('setting_navigation', 'navigationHidden.contest_main', false, 'boolean', 'Hide Contests navigation entry'),
+    Setting('setting_navigation', 'navigationHidden.training_main', false, 'boolean', 'Hide Training navigation entry'),
+    Setting('setting_navigation', 'navigationHidden.record_main', false, 'boolean', 'Hide Records navigation entry'),
+    Setting('setting_navigation', 'navigationHidden.ranking', false, 'boolean', 'Hide Ranking navigation entry'),
     Setting('setting_storage', 'host', '', 'text', 'Custom host', null, FLAG_HIDDEN | FLAG_DISABLED),
 );
 

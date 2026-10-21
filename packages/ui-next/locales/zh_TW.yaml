@@ -1,4 +1,12 @@
 __flag: 🇹🇼
+'Hide Contests navigation entry': '隱藏比賽入口'
+'Hide Home navigation entry': '隱藏首頁入口'
+'Hide Problems navigation entry': '隱藏題目入口'
+'Hide Ranking navigation entry': '隱藏排名入口'
+'Hide Records navigation entry': '隱藏提交紀錄入口'
+'Hide Training navigation entry': '隱藏訓練入口'
+'Only hides top navigation and mobile menu entries in this domain. Page access permissions are unchanged.': '僅隱藏目前網域頂部導覽和行動版選單中的入口，不變更頁面的存取權限。'
+setting_navigation: 導覽入口
 'Only the team captain can perform this operation.': '只有隊長可以執行此操作。'
 'The captain must remove other members before leaving the team.': '隊長須先移除其他隊員，才能退出隊伍。'
 'Verification failed': '驗證失敗'

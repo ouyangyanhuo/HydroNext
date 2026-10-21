@@ -4,7 +4,7 @@ import {
   IconCheck, IconMoon, IconPalette, IconRestore, IconSun,
 } from '@tabler/icons-react';
 import type { MouseEvent } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import logoUrl from '@/assets/logo.png';
 import { ActionIcon, Button, UnstyledButton } from '@/components/common/button';
@@ -337,6 +337,7 @@ export function TopNav() {
   const [opened, { toggle, close }] = useDisclosure(false);
   const isLoggedIn = useIsLoggedIn();
   const serverName = useSessionStore((s) => s.ui.serverName);
+  const navigationHidden = useSessionStore((s) => s.ui.domain.navigationHidden);
   const registrationEnabled = useSessionStore((s) => s.ui.registrationEnabled !== false);
   const { name } = usePageData();
   const activeNav = getPageMetadata(name).nav;
@@ -346,7 +347,8 @@ export function TopNav() {
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
   const canViewRanking = useHasPerm(PERM.PERM_VIEW_RANKING);
-  const visibleNavItems = canViewRanking ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.to !== 'ranking');
+  const visibleNavItems = useMemo(() => NAV_ITEMS.filter((item) => navigationHidden?.[item.to] !== true
+    && (item.to !== 'ranking' || canViewRanking)), [navigationHidden, canViewRanking]);
 
   useEffect(() => {
     const activeTab = activeNav ? tabRefs.current.get(activeNav) : undefined;
@@ -358,7 +360,7 @@ export function TopNav() {
     } else {
       setIndicator((current) => ({ left: current.left, width: 0 }));
     }
-  }, [activeNav]);
+  }, [activeNav, visibleNavItems]);
 
   return (
     <>
@@ -382,7 +384,10 @@ export function TopNav() {
                   key={item.to}
                   component={Link}
                   to={item.to}
-                  ref={(el) => { if (el) tabRefs.current.set(item.to, el); }}
+                  ref={(el) => {
+                    if (el) tabRefs.current.set(item.to, el);
+                    else tabRefs.current.delete(item.to);
+                  }}
                   variant="subtle"
                   color={activeNav === item.to ? 'hydroTeal' : 'gray'}
                   className={

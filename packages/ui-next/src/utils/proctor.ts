@@ -66,6 +66,19 @@ export function proctorError(error: any, fallback = 'Operation failed'): string 
   return message;
 }
 
+/** Handle sudo redirects consistently for settings, paginated logs and binary downloads. */
+export function followProctorRedirect(data: any) {
+  const redirect = data?.url || data?.redirect;
+  if (!redirect) return;
+  if (typeof redirect !== 'string' || redirect.includes('\\')) throw new Error('Invalid authorization destination.');
+  const target = new URL(redirect, window.location.origin);
+  if (target.origin !== window.location.origin || !['https:', 'http:'].includes(target.protocol)) {
+    throw new Error('Invalid authorization destination.');
+  }
+  window.location.assign(target.href);
+  throw new Error('Authorization required.');
+}
+
 export async function proctorRequest(url: string, body: Record<string, unknown>, formatError: (error: any) => string = proctorError) {
   const response = await fetch(url, { method: 'POST', cache: 'no-store', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify(body) });
@@ -75,15 +88,6 @@ export async function proctorRequest(url: string, body: Record<string, unknown>,
     throw new Error(formatError(data.error));
   }
   // Hydro serializes response.redirect as `url`, including requireSudo responses.
-  const redirect = data.url || data.redirect;
-  if (redirect) {
-    if (typeof redirect !== 'string' || redirect.includes('\\')) throw new Error('Invalid authorization destination.');
-    const target = new URL(redirect, window.location.origin);
-    if (target.origin !== window.location.origin || !['https:', 'http:'].includes(target.protocol)) {
-      throw new Error('Invalid authorization destination.');
-    }
-    window.location.assign(target.href);
-    throw new Error('Authorization required.');
-  }
+  followProctorRedirect(data);
   return data;
 }

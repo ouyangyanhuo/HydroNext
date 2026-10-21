@@ -46,6 +46,7 @@ export class ManageProctorHandler extends Handler {
         this.response.addHeader('Cache-Control', 'no-store');
     }
 
+    @requireSudo
     @param('page', Types.PositiveInt, true)
     @param('q', Types.String, true)
     @param('pageSize', Types.PositiveInt, true)
@@ -99,6 +100,7 @@ export class ManageProctorLogsHandler extends Handler {
         this.response.addHeader('Cache-Control', 'no-store');
     }
 
+    @requireSudo
     @param('page', Types.PositiveInt, true)
     @param('q', Types.String, true)
     @param('pageSize', Types.PositiveInt, true)
@@ -118,6 +120,7 @@ export class ManageProctorLogsHandler extends Handler {
         return docs;
     }
 
+    @requireSudo
     async postDownload() {
         const docs = await this.selected();
         if (docs.length === 1) {

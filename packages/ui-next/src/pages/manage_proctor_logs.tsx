@@ -10,7 +10,7 @@ import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
-import { proctorError, proctorRequest } from '@/utils/proctor';
+import { followProctorRedirect, proctorError, proctorRequest } from '@/utils/proctor';
 
 export function ProctorLogsPanel({ args }: { args: any }) {
   const { t } = useI18n();
@@ -27,6 +27,7 @@ export function ProctorLogsPanel({ args }: { args: any }) {
     const url = buildUrl('manage_proctor_logs', {}, { page: String(page), q: query.trim(), pageSize: String(pageSize) });
     const response = await fetch(url, { cache: 'no-store', headers: { Accept: 'application/json' } });
     const result = await response.json();
+    followProctorRedirect(result);
     if (!response.ok || result.error || !Array.isArray(result.logs)) throw new Error(proctorError(result.error));
     setData(result);
     setSelected([]);
@@ -65,6 +66,7 @@ export function ProctorLogsPanel({ args }: { args: any }) {
         );
         if (response.headers.get('content-type')?.includes('json')) {
           const responseData = await response.json();
+          followProctorRedirect(responseData);
           throw new Error(proctorError(responseData.error, 'Log download failed.'));
         }
         if (!response.ok) throw new Error('Log download failed.');

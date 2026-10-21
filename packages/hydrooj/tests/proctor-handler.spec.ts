@@ -252,6 +252,9 @@ test('management APIs reject cross-site and malformed origins', async () => {
 
 test('settings save requires sudo, acknowledges persisted configuration and never acknowledges failed writes', async () => {
     const denied = fixture({ noSudo: true });
+    assert.throws(() => new denied.exports.ManageProctorHandler().get(), /sudo required/);
+    assert.throws(() => new denied.exports.ManageProctorLogsHandler().get(), /sudo required/);
+    assert.throws(() => new denied.exports.ManageProctorLogsHandler().postDownload(), /sudo required/);
     assert.throws(() => new denied.exports.ManageProctorHandler().postSave(), /sudo required/);
     assert.ok(!denied.calls.some((call) => call[0] === 'save'));
     const f = fixture();
