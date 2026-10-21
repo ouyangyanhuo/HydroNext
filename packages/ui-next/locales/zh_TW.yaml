@@ -37,6 +37,8 @@ setting_navigation: 隱藏功能
 'Retry': '重試'
 'This problem is no longer in the source list. Return to the list to continue.': '題目順序或存取權限已變更，請返回來源列表後繼續。'
 'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.': '作答用時未能同步，排行榜僅統計伺服器確認儲存的時間。'
+'Allowed langs': '域內允許使用的提交語言'
+'Leave blank to allow all languages': '留空表示允許全部語言'
 'Reset team invitation code': '重設隊伍邀請碼'
 'Resetting invalidates the old invitation code immediately. Existing members are not affected.': '重設後舊邀請碼立即失效，現有成員不受影響。'
 'Team invitation code': '隊伍邀請碼'

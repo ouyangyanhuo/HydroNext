@@ -37,6 +37,8 @@ __flag: 🇯🇵
 'Reset team invitation code': 'チーム招待コードを再生成'
 'Resetting invalidates the old invitation code immediately. Existing members are not affected.': '再生成すると古い招待コードは直ちに無効化されます。既存のメンバーには影響しません。'
 'Team invitation code': 'チーム招待コード'
+'Allowed langs': 'ドメイン内で許可される提出言語'
+'Leave blank to allow all languages': '空白のままにするとすべての言語を許可'
 'Team is full (maximum {0} members).': 'チームが満員です（最大 {0} 人）。'
 'Timing not synced': '時間未同期'
 'You are already a member of this team.': 'あなたはこのチームのメンバーです。'

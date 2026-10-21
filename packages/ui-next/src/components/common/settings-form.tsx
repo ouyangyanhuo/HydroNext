@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import {
+  Avatar,
   Card,
   Checkbox,
   Group,
@@ -13,8 +14,45 @@ import {
 } from '@mantine/core';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
-import { LongSelect } from '@/components/common/select';
+import { LongSelect, TagMultiSelect } from '@/components/common/select';
 import { useI18n } from '@/hooks/use-i18n';
+
+const FALLBACK_LANG_DISPLAY: Record<string, string> = {
+  bash: 'Bash',
+  c: 'C',
+  cc: 'C++',
+  'cc.cc98': 'C++98',
+  'cc.cc98o2': 'C++98(O2)',
+  'cc.cc11': 'C++11',
+  'cc.cc11o2': 'C++11(O2)',
+  'cc.cc14': 'C++14',
+  'cc.cc14o2': 'C++14(O2)',
+  'cc.cc17': 'C++17',
+  'cc.cc17o2': 'C++17(O2)',
+  'cc.cc20': 'C++20',
+  'cc.cc20o2': 'C++20(O2)',
+  cs: 'C#',
+  go: 'Golang',
+  hs: 'Haskell',
+  java: 'Java',
+  js: 'NodeJS',
+  kt: 'Kotlin',
+  'kt.jvm': 'Kotlin/JVM',
+  pas: 'Pascal',
+  php: 'PHP',
+  py: 'Python',
+  'py.py2': 'Python 2',
+  'py.py3': 'Python 3',
+  'py.pypy3': 'PyPy3',
+  r: 'R',
+  rb: 'Ruby',
+  rs: 'Rust',
+  ts: 'TypeScript',
+};
+
+function getLocalLangDisplay(lang: string): string {
+  return FALLBACK_LANG_DISPLAY[lang] || lang;
+}
 
 const FLAG_HIDDEN = 1;
 const FLAG_DISABLED = 2;
@@ -44,15 +82,23 @@ interface SettingsFormProps {
   loading?: boolean;
   onSubmit: (payload: Record<string, any>) => void | Promise<void>;
   excludeKeys?: string[];
-  variant?: 'default' | 'personal';
+  variant?: 'default' | 'personal' | 'grid';
   /** Browser-local controls are rendered with a family but never added to the server payload. */
   familyExtras?: Record<string, ReactNode>;
   itemIcons?: Record<string, any>;
   booleanGrid?: boolean;
+  fieldsGrid?: boolean;
   /** Display these boolean controls positively while preserving their storage semantics. */
   invertedBooleanKeys?: readonly string[];
   /** Storage values for local previews; this callback never submits the form. */
   onValuesChange?: (values: Record<string, any>) => void;
+}
+
+function getDomainAvatarUrl(avatar?: string) {
+  if (!avatar) return undefined;
+  if (avatar.startsWith('http://') || avatar.startsWith('https://') || avatar.startsWith('/')) return avatar;
+  if (avatar.startsWith('url:')) return avatar.slice(4);
+  return undefined;
 }
 
 function getByPath(source: Record<string, any>, key: string) {
@@ -153,6 +199,70 @@ function SettingInput({
     );
   }
 
+  if (setting.key === 'langs') {
+    const rawLangs = (typeof window !== 'undefined' && (window as any).LANGS) || {};
+    const options = Object.entries<any>(rawLangs)
+      .filter(([, val]) => !val?.hidden && !val?.disabled)
+      .map(([k, val]) => ({ value: k, label: val?.display || getLocalLangDisplay(k) }));
+    const data = options.length > 0
+      ? options
+      : Object.entries(FALLBACK_LANG_DISPLAY).map(([val, lbl]) => ({ value: val, label: lbl }));
+
+    const selected = typeof value === 'string'
+      ? value.split(',').map((s) => s.trim()).filter(Boolean)
+      : (Array.isArray(value) ? value.map(String) : []);
+
+    for (const item of selected) {
+      if (!data.some((d) => d.value === item)) {
+        data.push({ value: item, label: getLocalLangDisplay(item) });
+      }
+    }
+
+    return (
+      <TagMultiSelect
+        label={label || t('Allowed langs')}
+        description={description || t('Leave blank to allow all languages')}
+        placeholder={t('Leave blank to allow all languages')}
+        data={data}
+        value={selected}
+        disabled={disabled}
+        searchable
+        clearable
+        onChange={(next) => onChange((next || []).join(','))}
+      />
+    );
+  }
+
+  if (setting.key === 'avatar') {
+    const avatarUrl = getDomainAvatarUrl(value);
+    const displayInitial = (label || 'D').charAt(0).toUpperCase();
+
+    return (
+      <TextInput
+        label={label}
+        description={description}
+        value={value == null ? '' : String(value)}
+        disabled={disabled}
+        placeholder={secret ? t('(Not changed)') : 'https://...'}
+        leftSection={(
+          <Avatar
+            src={avatarUrl}
+            color="hydroTeal"
+            size={20}
+            radius="xl"
+            variant="light"
+          >
+            {displayInitial}
+          </Avatar>
+        )}
+        onChange={(e) => {
+          const val = e.currentTarget.value;
+          onChange(val);
+        }}
+      />
+    );
+  }
+
   if (setting.type === 'select' || setting.type === 'radio' || setting.type === 'image_radio') {
     return (
       <LongSelect
@@ -218,6 +328,7 @@ export function SettingsForm({
   familyExtras,
   itemIcons,
   booleanGrid = false,
+  fieldsGrid = false,
   invertedBooleanKeys = EMPTY_KEYS,
   onValuesChange,
 }: SettingsFormProps) {
@@ -413,24 +524,33 @@ export function SettingsForm({
               )}
             </div>
           ) : (
-            <div className={variant === 'personal' ? 'hydro-settings-fields' : 'flex flex-col gap-4'}>
-              {items.map((setting) => (
-                <div
-                  key={setting.key}
-                  className={variant === 'personal' && (
-                    setting.type === 'boolean'
-                    || setting.type === 'textarea'
-                    || setting.type === 'markdown'
-                    || setting.type === 'json'
-                  ) ? 'hydro-settings-field hydro-settings-field--wide' : 'hydro-settings-field'}
-                >
-                  <SettingInput
-                    setting={setting}
-                    value={values[setting.key]}
-                    onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
-                  />
-                </div>
-              ))}
+            <div
+              className={variant === 'personal' || variant === 'grid' || fieldsGrid
+                ? 'hydro-settings-fields'
+                : 'flex flex-col gap-4'}
+            >
+              {items.map((setting) => {
+                const isWide = setting.type === 'markdown'
+                  || setting.type === 'textarea'
+                  || setting.type === 'json'
+                  || setting.key === 'bulletin'
+                  || (variant === 'personal' && setting.type === 'boolean');
+
+                return (
+                  <div
+                    key={setting.key}
+                    className={(variant === 'personal' || variant === 'grid' || fieldsGrid) && isWide
+                      ? 'hydro-settings-field hydro-settings-field--wide'
+                      : 'hydro-settings-field'}
+                  >
+                    <SettingInput
+                      setting={setting}
+                      value={values[setting.key]}
+                      onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
+                    />
+                  </div>
+                );
+              })}
               {familyExtras?.[family] && (
                 <div className="hydro-settings-field hydro-settings-field--wide">{familyExtras[family]}</div>
               )}

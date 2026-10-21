@@ -4601,8 +4601,8 @@ a {
   background-color: var(--hydro-primary);
   box-shadow: 0 0 10px 1px var(--hydro-ambient-primary),
               0 1px 3px rgb(0 0 0 / 12%);
-  transition: left var(--hydro-duration-normal) var(--hydro-ease-out),
-              width var(--hydro-duration-normal) var(--hydro-ease-out);
+  transition: left 320ms cubic-bezier(.4, 0, .2, 1) 60ms,
+              width 180ms ease-out;
   pointer-events: none;
 }
 

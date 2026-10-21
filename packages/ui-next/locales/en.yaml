@@ -47,6 +47,8 @@ setting_navigation: Hiding features
 'Create a team and share its invitation code. Teammates enter the code to join; no private messages are needed.': 'Create a team and share its invitation code. Teammates enter the code to join; no private messages are needed.'
 'Enter exactly {0} letters or numbers.': 'Enter exactly {0} letters or numbers.'
 'Enter the 8-character team invitation code': 'Enter the 8-character team invitation code'
+'Allowed langs': 'Allowed languages'
+'Leave blank to allow all languages': 'Leave blank to allow all languages'
 'Join a Team': 'Join a Team'
 'Only team members can manage this team.': 'Only team members can manage this team.'
 'Next problem': 'Next problem'

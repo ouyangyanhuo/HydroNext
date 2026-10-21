@@ -355,3 +355,14 @@ test('domain visibility settings render responsive boolean cards grid and contes
     assert.match(settingsFormSource, /className="hydro-setting-checkbox-card__icon/);
     assert.match(settingsFormSource, /hydro-setting-checkbox-card hydro-setting-checkbox-card--feature/);
 });
+
+test('domain settings layout uses multi-column fields grid and TagMultiSelect for allowed submission languages', () => {
+    const domainEditSource = read('../src/pages/domain_edit.tsx');
+    assert.match(domainEditSource, /fieldsGrid=\{!visibility\}/);
+
+    const settingsFormSource = read('../src/components/common/settings-form.tsx');
+    assert.match(settingsFormSource, /setting\.key === 'langs'/);
+    assert.match(settingsFormSource, /<TagMultiSelect/);
+    assert.match(settingsFormSource, /setting\.key === 'avatar'/);
+    assert.match(settingsFormSource, /variant === 'grid' \|\| fieldsGrid/);
+});

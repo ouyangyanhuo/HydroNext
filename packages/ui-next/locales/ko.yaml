@@ -37,6 +37,8 @@ __flag: 🇰🇷
 'Reset team invitation code': '팀 초대 코드 재설정'
 'Resetting invalidates the old invitation code immediately. Existing members are not affected.': '재설정 시 기존 초대 코드는 즉시 무효화되며 현재 팀원에게는 영향을 주지 않습니다.'
 'Team invitation code': '팀 초대 코드'
+'Allowed langs': '도메인 내 허용된 제출 언어'
+'Leave blank to allow all languages': '비워두면 모든 언어 허용'
 'Team is full (maximum {0} members).': '팀 정원이 찼습니다 (최대 {0}명).'
 'Timing not synced': '시간 미동기화'
 'You are already a member of this team.': '이미 이 팀의 멤버입니다.'

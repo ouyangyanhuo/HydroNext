@@ -4,7 +4,7 @@ import {
   IconCheck, IconMoon, IconPalette, IconRestore, IconSun,
 } from '@tabler/icons-react';
 import type { MouseEvent } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import logoUrl from '@/assets/logo.png';
 import { ActionIcon, Button, UnstyledButton } from '@/components/common/button';
@@ -13,6 +13,7 @@ import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
+import { useNavigationMotion } from '@/hooks/use-navigation-motion';
 import { PERM, PRIV, useHasPerm, useHasPriv } from '@/hooks/use-permission';
 import { getPageMetadata } from '@/registry/page-metadata';
 import { useDomainNavigationPreview } from '@/stores/domain-navigation-preview';
@@ -350,23 +351,30 @@ export function TopNav() {
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
-  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+  const indicatorRef = useRef<HTMLDivElement>(null);
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
   const canViewRanking = useHasPerm(PERM.PERM_VIEW_RANKING);
   const visibleNavItems = useMemo(() => NAV_ITEMS.filter((item) => navigationHidden?.[item.to] !== true
     && (!contestMode || !['homepage', 'problem_main', 'training_main'].includes(item.to))
     && (item.to !== 'ranking' || canViewRanking)), [navigationHidden, canViewRanking, contestMode]);
+  const navigationKey = visibleNavItems.map((item) => item.to).join('/');
+  const desktopNavRef = useNavigationMotion(navigationKey, containerRef);
+  const mobileNavRef = useNavigationMotion(navigationKey);
 
-  useEffect(() => {
-    const activeTab = activeNav ? tabRefs.current.get(activeNav) : undefined;
+  useLayoutEffect(() => {
+    const activeTab = activeNav && visibleNavItems.some((item) => item.to === activeNav) ? tabRefs.current.get(activeNav) : undefined;
     const container = containerRef.current;
-    if (activeTab && container) {
-      const cr = container.getBoundingClientRect();
-      const tr = activeTab.getBoundingClientRect();
-      setIndicator({ left: tr.left - cr.left, width: tr.width });
-    } else {
-      setIndicator((current) => ({ left: current.left, width: 0 }));
-    }
+    const update = () => {
+      const indicator = indicatorRef.current;
+      if (!indicator) return;
+      // Layout coordinates are unaffected by the button's in-flight FLIP transform.
+      indicator.style.width = `${activeTab && container ? activeTab.offsetWidth : 0}px`;
+      if (activeTab && container) indicator.style.left = `${activeTab.offsetLeft}px`;
+    };
+    update();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
+    if (container) observer?.observe(container);
+    return () => observer?.disconnect();
   }, [activeNav, visibleNavItems]);
 
   return (
@@ -385,10 +393,11 @@ export function TopNav() {
                 </span>
               </span>
             </Link>
-            <div ref={containerRef} className="relative hidden lg:flex">
+            <div ref={desktopNavRef} className="relative hidden lg:flex">
               {visibleNavItems.map((item) => (
                 <Button
                   key={item.to}
+                  data-nav-motion-id={item.to}
                   component={Link}
                   to={item.to}
                   ref={(el) => {
@@ -407,8 +416,9 @@ export function TopNav() {
                 </Button>
               ))}
               <div
+                ref={indicatorRef}
                 className="hydro-top-nav__indicator"
-                style={{ left: indicator.left, width: indicator.width }}
+                style={{ width: 0 }}
               />
             </div>
           </Group>
@@ -440,10 +450,11 @@ export function TopNav() {
           body: 'hydro-nav-drawer__body',
         }}
       >
-        <Stack gap="xs">
+        <Stack ref={mobileNavRef} gap="xs" className="relative">
           {visibleNavItems.map((item) => (
             <Button
               key={item.to}
+              data-nav-motion-id={item.to}
               component={Link}
               to={item.to}
               variant={activeNav === item.to ? 'filled' : 'subtle'}
@@ -454,7 +465,7 @@ export function TopNav() {
               {t(item.label)}
             </Button>
           ))}
-          <div className="border-t border-[var(--hydro-border)] pt-2 mt-2">
+          <div data-nav-motion-id="account-menu" className="border-t border-[var(--hydro-border)] pt-2 mt-2">
             {isLoggedIn ? (
               <>
                 <Button

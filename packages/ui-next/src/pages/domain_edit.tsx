@@ -104,6 +104,7 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
         current={current}
         payloadMode="flat"
         loading={loading}
+        fieldsGrid={!visibility}
         booleanGrid={visibility}
         itemIcons={visibility ? VISIBILITY_ICONS : undefined}
         invertedBooleanKeys={visibility ? INVERTED_KEYS : undefined}

@@ -90,6 +90,7 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
     }
     const previewStore = load('../src/stores/domain-navigation-preview.ts').useDomainNavigationPreview;
     mocks['@/stores/domain-navigation-preview'] = { useDomainNavigationPreview: previewStore };
+    mocks['@/hooks/use-navigation-motion'] = load('../src/hooks/use-navigation-motion.ts');
     const { DomainSwitcher } = load('../src/components/navigation/domain-switcher.tsx');
     mocks['./domain-switcher'] = { DomainSwitcher };
     const Component = topNav ? load('../src/components/navigation/top-nav.tsx').TopNav : DomainSwitcher;
@@ -108,7 +109,7 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
                 })),
             ] };
             mocks['@/components/common/page-header'] = { PageHeader: ({ title, children }: any) => h('header', null, title, children) };
-            mocks['@/components/common/select'] = { LongSelect: mantine.Select };
+            mocks['@/components/common/select'] = { LongSelect: mantine.Select, TagMultiSelect: mantine.MultiSelect };
             mocks['@/utils/error'] = { formatErrorMessage: (_error: any, fallback: string) => fallback };
             mocks['@mantine/notifications'] = { notifications: { show() {} } };
             mocks['@/components/common/settings-form'] = load('../src/components/common/settings-form.tsx');
@@ -287,6 +288,82 @@ test('logout aborts a pending request and discards a late response', async () =>
         assert.equal(f.host.querySelector('button'), null);
         assert.equal(document.body.textContent?.includes('Private old team'), false);
     } finally { await f.close(); }
+});
+
+test('navigation fades removed buttons, slides remaining buttons and cancels motion safely on rapid toggles and reduced motion', async () => {
+    const prototype = dom.window.HTMLElement.prototype;
+    const originalAnimate = prototype.animate;
+    const originalRect = prototype.getBoundingClientRect;
+    const originalMedia = dom.window.matchMedia;
+    let reduced = false;
+    let animations: any[] = [];
+    prototype.getBoundingClientRect = function rect() {
+        if (!this.dataset.navMotionId) return originalRect.call(this);
+        const siblings = Array.from(this.parentElement!.querySelectorAll(':scope > [data-nav-motion-id]'));
+        const index = siblings.indexOf(this);
+        const x = this.parentElement!.classList.contains('mantine-Stack-root') ? 0 : index * 80;
+        const y = this.parentElement!.classList.contains('mantine-Stack-root') ? index * 40 : 0;
+        return { x, y, left: x, top: y, right: x + 80, bottom: y + 32, width: 80, height: 32 };
+    };
+    prototype.animate = function animate(frames: any, options: any) {
+        let finish: () => void;
+        let fail: (error: Error) => void;
+        const finished = new Promise<void>((resolve, reject) => {
+            finish = resolve;
+            fail = reject;
+        });
+        const animation = { element: this, frames, options, finished, finish: () => finish(), canceled: false,
+            cancel() { this.canceled = true; fail(new Error('Animation canceled')); } };
+        animations.push(animation);
+        return animation;
+    };
+    dom.window.matchMedia = () => ({ matches: reduced, addEventListener() {}, removeEventListener() {} });
+    let f: Awaited<ReturnType<typeof fixture>> | undefined;
+    try {
+        f = await fixture(0, true);
+        await f.setDomain('system', {});
+        await act(async () => {
+            for (const animation of animations) animation.finish();
+        });
+        animations = [];
+        await f.setDomain('system', { homepage: true });
+        const ghost = f.host.querySelector<HTMLElement>('[data-nav-motion-exit="homepage"]')!;
+        assert.ok(ghost);
+        assert.equal(ghost.inert, true);
+        assert.equal(ghost.getAttribute('aria-hidden'), 'true');
+        assert.equal(ghost.hasAttribute('href'), false);
+        const exit = animations.find((animation) => animation.element === ghost);
+        assert.equal(exit.options.duration, 180);
+        assert.equal(exit.frames[1].opacity, 0);
+        const moving = animations.find((animation) => animation.element.dataset.navMotionId === 'problem_main');
+        assert.equal(moving.frames[0].transform, 'translate(80px, 0px)');
+        assert.equal(moving.options.duration, 320);
+        assert.equal(moving.options.delay, 60);
+        await f.setDomain('system', {});
+        assert.equal(moving.canceled, true);
+        assert.equal(ghost.isConnected, false);
+        assert.equal(f.host.querySelectorAll('[data-nav-motion-id="homepage"]').length, 1);
+        await act(async () => f!.host.querySelector<HTMLButtonElement>('.mantine-Burger-root')!.click());
+        await act(async () => {
+            for (const animation of animations) animation.finish();
+        });
+        animations = [];
+        await f.setDomain('system', { homepage: true });
+        const mobileMove = animations.find((animation) => animation.element.dataset.navMotionId === 'problem_main'
+            && animation.element.closest('[role="dialog"]'));
+        assert.equal(mobileMove.frames[0].transform, 'translate(0px, 40px)');
+        reduced = true;
+        const count = animations.length;
+        await f.setDomain('system', { homepage: true, problem_main: true });
+        assert.equal(animations.length, count);
+        assert.equal(document.querySelector('[data-nav-motion-exit]'), null);
+        assert.equal(f.host.querySelector('a[href="/problem_main"]'), null);
+    } finally {
+        await f?.close();
+        prototype.animate = originalAnimate;
+        prototype.getBoundingClientRect = originalRect;
+        dom.window.matchMedia = originalMedia;
+    }
 });
 
 test('visibility checkboxes default to visible, preview locally and submit only on Save All Changes', async () => {
