@@ -121,6 +121,26 @@ async function mountHomepage(
     };
 }
 
+test('homepage lists follow the current domain visibility and fill the remaining column without empty panels', async () => {
+    const f = await mountHomepage({ domain: { navigationHidden: { problem_main: true } } });
+    try {
+        assert.equal(f.host.querySelector('#problem-list-title'), null);
+        assert.ok(f.host.querySelector('#recent-contests-title'));
+        assert.ok(f.host.querySelector('.hydro-home-grid--single'));
+        await f.render({ ui: { domain: { navigationHidden: { contest_main: true } } } });
+        assert.ok(f.host.querySelector('#problem-list-title'));
+        assert.equal(f.host.querySelector('#recent-contests-title'), null);
+        assert.ok(f.host.querySelector('.hydro-home-grid--single'));
+        await f.render({ ui: { domain: { navigationHidden: { problem_main: true, contest_main: true } } } });
+        assert.equal(f.host.querySelector('.hydro-home-grid'), null);
+        assert.ok(f.host.querySelector('#hydro-home-title'));
+        await f.render({ ui: { domain: {} } });
+        assert.ok(f.host.querySelector('#problem-list-title'));
+        assert.ok(f.host.querySelector('#recent-contests-title'));
+        assert.equal(f.host.querySelector('.hydro-home-grid--single'), null);
+    } finally { await f.close(); }
+});
+
 test('guest welcome uses the configured website name as escaped text and falls back when absent', async () => {
     for (const serverName of ['My University OJ', '<img src=x onerror=alert(1)>', '']) {
         // eslint-disable-next-line no-await-in-loop

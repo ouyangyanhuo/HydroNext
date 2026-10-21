@@ -263,3 +263,37 @@ test('linked accounts card renders interactive placeholder when no other account
     assert.match(source, /t\('Please click modify'\)/);
     assert.match(source, /t\('Click here to update your email address\.'\)/);
 });
+
+test('domain dashboard layout renders categorized panels, hero section and maintenance tools', () => {
+    const css = postcss.parse(read('../src/styles/tailwind.css'));
+    let dashboardClass = false;
+    let panelCardClass = false;
+    let panelCardIcon = false;
+    let dangerCardClass = false;
+
+    css.walkRules((rule) => {
+        if (rule.selector === '.hydro-domain-dashboard') dashboardClass = true;
+        if (rule.selector === '.hydro-domain-panel-card') panelCardClass = true;
+        if (rule.selector === '.hydro-domain-panel-card__icon') panelCardIcon = true;
+        if (rule.selector === '.hydro-domain-danger-card') dangerCardClass = true;
+    });
+
+    assert.ok(dashboardClass, '.hydro-domain-dashboard selector not found');
+    assert.ok(panelCardClass, '.hydro-domain-panel-card selector not found');
+    assert.ok(panelCardIcon, '.hydro-domain-panel-card__icon selector not found');
+    assert.ok(dangerCardClass, '.hydro-domain-danger-card selector not found');
+
+    const source = read('../src/pages/domain_dashboard.tsx');
+    assert.match(source, /className="hydro-content-card hydro-domain-hero"/);
+    assert.match(source, /className="hydro-domain-hero__avatar"/);
+    assert.match(source, /t\('Properties'\)/);
+    assert.match(source, /t\('Access Control'\)/);
+    assert.match(source, /t\('Init Discussion Nodes'\)/);
+    assert.match(source, /t\('Domain Settings'\)/);
+    assert.match(source, /t\('Visibility and contests'\)/);
+    assert.match(source, /t\('User Management'\)/);
+    assert.match(source, /t\('Role Management'\)/);
+    assert.match(source, /t\('Permissions'\)/);
+    assert.match(source, /t\('Groups'\)/);
+    assert.match(source, /canDeleteDomain/);
+});

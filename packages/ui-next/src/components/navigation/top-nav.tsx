@@ -338,6 +338,7 @@ export function TopNav() {
   const isLoggedIn = useIsLoggedIn();
   const serverName = useSessionStore((s) => s.ui.serverName);
   const navigationHidden = useSessionStore((s) => s.ui.domain.navigationHidden);
+  const contestMode = useSessionStore((s) => s.ui.domain.contestMode === true);
   const registrationEnabled = useSessionStore((s) => s.ui.registrationEnabled !== false);
   const { name } = usePageData();
   const activeNav = getPageMetadata(name).nav;
@@ -348,7 +349,8 @@ export function TopNav() {
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
   const canViewRanking = useHasPerm(PERM.PERM_VIEW_RANKING);
   const visibleNavItems = useMemo(() => NAV_ITEMS.filter((item) => navigationHidden?.[item.to] !== true
-    && (item.to !== 'ranking' || canViewRanking)), [navigationHidden, canViewRanking]);
+    && (!contestMode || !['homepage', 'problem_main', 'training_main'].includes(item.to))
+    && (item.to !== 'ranking' || canViewRanking)), [navigationHidden, canViewRanking, contestMode]);
 
   useEffect(() => {
     const activeTab = activeNav ? tabRefs.current.get(activeNav) : undefined;
@@ -367,7 +369,7 @@ export function TopNav() {
       <div className="hydro-top-nav">
         <div className="hydro-container flex h-16 items-center justify-between">
           <Group gap="lg" wrap="nowrap">
-            <Link to="homepage" className="group flex min-w-0 items-center gap-3 no-underline">
+            <Link to={contestMode ? 'contest_main' : 'homepage'} className="group flex min-w-0 items-center gap-3 no-underline">
               <img src={logoUrl} alt="" className="h-11 w-11 shrink-0 object-contain" />
               <span className="hidden min-w-0 sm:block">
                 <span className="block truncate text-base font-black leading-tight text-[var(--hydro-text)]">

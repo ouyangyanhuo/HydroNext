@@ -96,10 +96,10 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
     await act(async () => root.render(h(mantine.MantineProvider, null, h(Component))));
     return {
         host, calls,
-        async setDomain(domainId: string, navigationHidden: Record<string, boolean>, ranking = true) {
+        async setDomain(domainId: string, navigationHidden: Record<string, boolean>, ranking = true, contestMode = false) {
             canViewRanking = ranking;
             await act(async () => store.setState((state: any) => ({
-                ui: { ...state.ui, domainId, domain: { name: domainId, navigationHidden } },
+                ui: { ...state.ui, domainId, domain: { name: domainId, navigationHidden, contestMode } },
             })));
         },
         setResponse(callback: typeof respond) { respond = callback; },
@@ -240,6 +240,17 @@ test('domain navigation settings hide desktop and mobile entries without leaking
         assert.ok(document.querySelectorAll('a[href="/problem_main"]').length >= 2);
         await f.setDomain('practice', { ranking: false }, false);
         assert.equal(document.querySelector('a[href="/ranking"]'), null);
+        await f.setDomain('exam', { record_main: true }, true, true);
+        assert.equal(document.querySelector('a[href="/homepage"]'), null);
+        assert.equal(document.querySelector('a[href="/problem_main"]'), null);
+        assert.equal(document.querySelector('a[href="/training_main"]'), null);
+        assert.equal(document.querySelector('a[href="/record_main"]'), null);
+        assert.ok(f.host.querySelector('a.group[href="/contest_main"]'), 'the logo links directly to contests');
+        await f.setDomain('exam', { record_main: true });
+        assert.ok(document.querySelector('a[href="/homepage"]'));
+        assert.ok(document.querySelector('a[href="/problem_main"]'));
+        assert.ok(document.querySelector('a[href="/training_main"]'));
+        assert.equal(document.querySelector('a[href="/record_main"]'), null, 'manual hiding survives contest mode');
     } finally { await f.close(); }
 });
 

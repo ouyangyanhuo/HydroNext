@@ -1,12 +1,18 @@
 __flag: 🇬🇧
+'Contest mode takes priority over manual hiding. Turning it off restores your manual settings.': 'Contest mode takes priority over manual hiding. Turning it off restores your manual settings.'
+'Enable contest mode': 'Enable contest mode'
 'Hide Contests navigation entry': 'Hide Contests navigation entry'
 'Hide Home navigation entry': 'Hide Home navigation entry'
+"Hide Home, Problems and Training navigation entries and use the contest list as this domain's homepage.": "Hide Home, Problems and Training navigation entries and use the contest list as this domain's homepage."
 'Hide Problems navigation entry': 'Hide Problems navigation entry'
 'Hide Ranking navigation entry': 'Hide Ranking navigation entry'
 'Hide Records navigation entry': 'Hide Records navigation entry'
 'Hide Training navigation entry': 'Hide Training navigation entry'
-'Only hides top navigation and mobile menu entries in this domain. Page access permissions are unchanged.': 'Only hides top navigation and mobile menu entries in this domain. Page access permissions are unchanged.'
-setting_navigation: Navigation entries
+'Hiding Problems or Contests also hides its homepage list.': 'Hiding Problems or Contests also hides its homepage list.'
+'These settings apply only to this domain and do not change page permissions.': 'These settings apply only to this domain and do not change page permissions.'
+'Visibility and contests': 'Visibility and contests'
+setting_contest_mode: Contest features
+setting_navigation: Hiding features
 'All participants': 'All participants'
 'Created at': 'Created at'
 'Disband team': 'Disband team'
@@ -959,3 +965,25 @@ Visible time on this problem; saved in this tab.: Visible time on this problem; 
 'A team named {0} already exists in this domain.': 'A team named {0} already exists in this domain.'
 'Team member {0} has already entered this contest individually.': 'Team member {0} has already entered this contest individually.'
 'Team member {0} has already entered this contest with team {1}.': 'Team member {0} has already entered this contest with team {1}.'
+
+# Domain Dashboard
+'Access Control': 'Access Control'
+'Audit join applications, manage invitation codes and admission rules.': 'Audit join applications, manage invitation codes and admission rules.'
+'Configure basic domain properties, bulletin, and general preferences.': 'Configure basic domain properties, bulletin, and general preferences.'
+'Configure role-level and system privileges within the domain.': 'Configure role-level and system privileges within the domain.'
+'Confirm to reset discussion nodes? Default discussion categories will be restored.': 'Confirm to reset discussion nodes? Default discussion categories will be restored.'
+'Contest Mode': 'Contest Mode'
+'Contest Mode Active': 'Contest Mode Active'
+'Copy': 'Copy'
+'Customize domain roles, define role priorities and assignable roles.': 'Customize domain roles, define role priorities and assignable roles.'
+'Discussion nodes initialized': 'Discussion nodes initialized'
+'Enabled': 'Enabled'
+'Frontpage URL': 'Frontpage URL'
+'Init Discussion Nodes': 'Init Discussion Nodes'
+'Manage navigation bar visibility, contest mode, and homepage display.': 'Manage navigation bar visibility, contest mode, and homepage display.'
+'Organize users into groups for batch operations and team access.': 'Organize users into groups for batch operations and team access.'
+'Properties': 'Properties'
+'Reset and synchronize default discussion forums and category nodes for this domain.': 'Reset and synchronize default discussion forums and category nodes for this domain.'
+'System Domain': 'System Domain'
+'View domain members, assign roles, and manage memberships.': 'View domain members, assign roles, and manage memberships.'
+'Visit': 'Visit'

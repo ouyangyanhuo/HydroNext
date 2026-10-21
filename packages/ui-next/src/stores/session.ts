@@ -22,7 +22,7 @@ export interface UiContext {
   url_prefix: string;
   ws_prefix: string;
   domainId: string;
-  domain: { name: string, avatar?: string, navigationHidden?: Record<string, boolean>, [key: string]: any };
+  domain: { name: string, avatar?: string, contestMode?: boolean, navigationHidden?: Record<string, boolean>, [key: string]: any };
   serverName: string;
   registrationEnabled?: boolean;
   passwordResetEnabled?: boolean;

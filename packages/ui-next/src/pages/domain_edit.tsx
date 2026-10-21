@@ -10,7 +10,7 @@ import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 
-export default function DomainEditPage() {
+export function DomainSettingsPage({ visibility = false }: { visibility?: boolean }) {
   const { args } = usePageData();
   const { t } = useI18n();
   const current = args.current || args.domain || args.ddoc || {};
@@ -42,7 +42,7 @@ export default function DomainEditPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('Domain Settings')}>
+      <PageHeader title={t(visibility ? 'Visibility and contests' : 'Domain Settings')}>
         <Button component={Link} to="domain_dashboard" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
@@ -53,12 +53,19 @@ export default function DomainEditPage() {
         payloadMode="flat"
         loading={loading}
         onSubmit={handleSubmit}
-        familyExtras={{ setting_navigation: (
+        familyExtras={visibility ? { setting_contest_mode: (
+          <Text size="sm" c="dimmed">{t('Contest mode takes priority over manual hiding. Turning it off restores your manual settings.')}</Text>
+        ), setting_navigation: (
           <Text size="sm" c="dimmed">
-            {t('Only hides top navigation and mobile menu entries in this domain. Page access permissions are unchanged.')}
+            {t('Hiding Problems or Contests also hides its homepage list.')}
+            {' '}{t('These settings apply only to this domain and do not change page permissions.')}
           </Text>
-        ) }}
+        ) } : undefined}
       />
     </Stack>
   );
+}
+
+export default function DomainEditPage() {
+  return <DomainSettingsPage />;
 }

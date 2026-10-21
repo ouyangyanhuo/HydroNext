@@ -70,6 +70,7 @@ registerPage('training_edit', () => import('./training_edit'), { title: 'Edit Tr
 registerPage('training_files', () => import('./training_files'), { title: 'Files', nav: TRAINING });
 registerPage('domain_dashboard', () => import('./domain_dashboard'), { title: 'Domain Dashboard' });
 registerPage('domain_edit', () => import('./domain_edit'), { title: 'Domain Settings' });
+registerPage('domain_visibility', () => import('./domain_visibility'), { title: 'Visibility and contests' });
 registerPage('domain_user', () => import('./domain_user'), { title: 'Domain Users' });
 registerPage('domain_role', () => import('./domain_role'), { title: 'Roles' });
 registerPage('domain_permission', () => import('./domain_permission'), { title: 'Permissions' });

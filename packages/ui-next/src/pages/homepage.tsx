@@ -592,8 +592,11 @@ function collectSections(contents: any[]) {
 
 export default function HomePage() {
   const { args } = usePageData();
+  const currentDomain = useSessionStore((s) => s.ui.domain);
   const contents = args.contents || [];
-  const domain = args.domain || {};
+  const domain = currentDomain || args.domain || {};
+  const showProblems = domain.navigationHidden?.problem_main !== true && domain.contestMode !== true;
+  const showContests = domain.navigationHidden?.contest_main !== true;
   const sections = collectSections(contents);
   const rawProblems = sections.recentProblems || sections.recent_problems || sections.problems;
   const rawContests = sections.contests || sections.contest;
@@ -608,10 +611,12 @@ export default function HomePage() {
     <Stack gap="lg" className="hydro-home">
       <WelcomeHero problemCount={problemCount} contestCount={contestCount} />
       {domain.bulletin ? <Bulletin bulletin={domain.bulletin} /> : null}
-      <div className="hydro-home-grid">
-        <ProblemList problems={problems} psdict={psdict} />
-        <RecentContests contests={contests} tsdict={tsdict} />
-      </div>
+      {(showProblems || showContests) && (
+        <div className={`hydro-home-grid${showProblems && showContests ? '' : ' hydro-home-grid--single'}`}>
+          {showProblems && <ProblemList problems={problems} psdict={psdict} />}
+          {showContests && <RecentContests contests={contests} tsdict={tsdict} />}
+        </div>
+      )}
     </Stack>
   );
 }

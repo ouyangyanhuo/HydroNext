@@ -129,21 +129,26 @@ class ManageHandler extends Handler {
 }
 
 class DomainEditHandler extends ManageHandler {
+    get settings() {
+        return DOMAIN_SETTINGS.filter((item) => !['setting_contest_mode', 'setting_navigation'].includes(item.family));
+    }
+
     async get() {
         this.response.template = 'domain_edit.html';
-        this.response.body = { current: this.domain, settings: DOMAIN_SETTINGS };
+        this.response.body = { current: this.domain, settings: this.settings };
     }
 
     async post(args) {
         if (args.operation) return;
         const $set = {};
+        const allowedKeys = new Set(this.settings.map((item) => item.key));
         const booleanKeys = args.booleanKeys || {};
         delete args.booleanKeys;
         for (const key in booleanKeys) {
-            if (DOMAIN_SETTINGS_BY_KEY[key]?.type === 'boolean' && !args[key]) $set[key] = false;
+            if (allowedKeys.has(key) && DOMAIN_SETTINGS_BY_KEY[key]?.type === 'boolean' && !args[key]) $set[key] = false;
         }
         for (const key in args) {
-            if (!Object.hasOwn(DOMAIN_SETTINGS_BY_KEY, key)) continue;
+            if (!allowedKeys.has(key)) continue;
             if (DOMAIN_SETTINGS_BY_KEY[key].type === 'boolean') {
                 if (typeof args[key] !== 'boolean' && typeof args[key] !== 'string') throw new ValidationError(key);
                 $set[key] = Types.Boolean[0](args[key]);
@@ -151,6 +156,17 @@ class DomainEditHandler extends ManageHandler {
         }
         await domain.edit(this.domain._id, $set);
         this.response.redirect = this.url('domain_dashboard');
+    }
+}
+
+class DomainVisibilityHandler extends DomainEditHandler {
+    get settings() {
+        return DOMAIN_SETTINGS.filter((item) => ['setting_contest_mode', 'setting_navigation'].includes(item.family));
+    }
+
+    async get() {
+        await super.get();
+        this.response.template = 'domain_visibility.html';
     }
 }
 
@@ -581,6 +597,7 @@ export async function apply(ctx: Context) {
     ctx.Route('ranking', '/ranking', DomainRankHandler, PERM.PERM_VIEW_RANKING);
     ctx.Route('domain_dashboard', '/domain/dashboard', DomainDashboardHandler);
     ctx.Route('domain_edit', '/domain/edit', DomainEditHandler);
+    ctx.Route('domain_visibility', '/domain/visibility', DomainVisibilityHandler);
     ctx.Route('domain_user', '/domain/user', DomainUserHandler);
     ctx.Route('domain_permission', '/domain/permission', DomainPermissionHandler);
     ctx.Route('domain_role', '/domain/role', DomainRoleHandler);

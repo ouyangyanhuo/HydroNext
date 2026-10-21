@@ -184,10 +184,13 @@ describe('App', () => {
         const b = 'navigation-practice';
         await domain.add(a, 2, 'Exam navigation', '');
         await domain.add(b, 2, 'Practice navigation', '');
-        const route = `/d/${a}/domain/edit`;
+        const route = `/d/${a}/domain/visibility`;
         try {
             const settings = getPageArgs(await agent.get(route).set('Accept', 'application/json').expect(200));
             assert.equal(settings.settings.filter((setting) => setting.family === 'setting_navigation').length, 6);
+            assert.equal(settings.settings.filter((setting) => setting.family === 'setting_contest_mode').length, 1);
+            const general = getPageArgs(await agent.get(`/d/${a}/domain/edit`).set('Accept', 'application/json').expect(200));
+            assert.ok(general.settings.every((setting) => !['setting_navigation', 'setting_contest_mode'].includes(setting.family)));
             await agent.post(route).set('Accept', 'application/json').send({
                 'navigationHidden.problem_main': true, 'navigationHidden.training_main': true, 'navigationHidden.ranking': 'on',
                 booleanKeys: { owner: true, _id: true },
@@ -207,6 +210,20 @@ describe('App', () => {
             assert.equal((await domain.get(a)).navigationHidden.ranking, false);
             assert.equal((await domain.get(a)).navigationHidden.training_main, false);
             assert.equal((await domain.get(a)).navigationHidden.problem_main, true);
+            await agent.post(route).set('Accept', 'application/json').send({ contestMode: true }).expect(200);
+            await agent.get(`/d/${a}/`).expect(302).expect('Location', `/d/${a}/contest`);
+            const homepage = await agent.get(`/d/${a}/`).set('Accept', 'application/json').expect(200);
+            assert.equal(homepage.body.url, `/d/${a}/contest`);
+            assert.equal(homepage.body.contents, undefined);
+            await domain.edit(a, { host: ['contest-home.example'] });
+            await agent.get('/').set('Host', 'contest-home.example').expect(302).expect('Location', '/contest');
+            await agent.get(`/d/${b}/`).expect(200);
+            assert.equal((await domain.get(b)).contestMode, undefined);
+            await agent.get(`/d/${a}/p`).expect(200);
+            await agent.post(route).set('Accept', 'application/json').send({ contestMode: false }).expect(200);
+            const restored = getPageArgs(await agent.get(`/d/${a}/`).set('Accept', 'application/json').expect(200));
+            assert.ok(Array.isArray(restored.contents));
+            assert.equal(restored.domain.navigationHidden.problem_main, true);
         } finally {
             await Promise.all([domain.del(a), domain.del(b)]);
         }
