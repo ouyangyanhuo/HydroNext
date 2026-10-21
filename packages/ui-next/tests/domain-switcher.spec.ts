@@ -34,6 +34,7 @@ const mantine = require('@mantine/core');
 
 async function fixture(uid = 0, topNav = false, captureMenu = false) {
     let canViewRanking = false;
+    let pageArgs: any = {};
     const store = create((set: any) => ({
         user: { _id: uid, uname: `user${uid}`, priv: 0, avatar: '' },
         ui: { domainId: 'system', domain: { name: 'System' }, serverName: 'HydroNext' },
@@ -62,7 +63,7 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
         '@/hooks/use-current-user': {
             useCurrentUser: () => store((state: any) => state.user), useIsLoggedIn: () => store((state: any) => state.user._id > 0),
         },
-        '@/context/page-data': { usePageData: () => ({ name: 'homepage' }) },
+        '@/context/page-data': { usePageData: () => ({ name: 'homepage', args: pageArgs }) },
         '@/hooks/use-permission': { PRIV: {}, PERM: {}, useHasPriv: () => false, useHasPerm: () => canViewRanking },
         '@/registry/page-metadata': { getPageMetadata: () => ({ nav: 'homepage' }) },
         '@/assets/logo.png': '/logo.png',
@@ -87,15 +88,34 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
         });
         return module.exports;
     }
+    const previewStore = load('../src/stores/domain-navigation-preview.ts').useDomainNavigationPreview;
+    mocks['@/stores/domain-navigation-preview'] = { useDomainNavigationPreview: previewStore };
     const { DomainSwitcher } = load('../src/components/navigation/domain-switcher.tsx');
     mocks['./domain-switcher'] = { DomainSwitcher };
     const Component = topNav ? load('../src/components/navigation/top-nav.tsx').TopNav : DomainSwitcher;
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
-    await act(async () => root.render(h(mantine.MantineProvider, null, h(Component))));
+    const render = (extra: any = null) => act(async () => root.render(h(mantine.MantineProvider, null, h(Component), extra)));
+    await render();
     return {
-        host, calls,
+        host, calls, previewStore, store,
+        async editVisibility(current: any = { _id: 'system' }) {
+            pageArgs = { current, settings: [
+                { key: 'contestMode', type: 'boolean', family: 'setting_contest_mode', value: false, name: 'Enable contest mode' },
+                ...['homepage', 'problem_main', 'contest_main', 'training_main', 'record_main', 'ranking'].map((key) => ({
+                    key: `navigationHidden.${key}`, type: 'boolean', family: 'setting_navigation', value: false,
+                })),
+            ] };
+            mocks['@/components/common/page-header'] = { PageHeader: ({ title, children }: any) => h('header', null, title, children) };
+            mocks['@/components/common/select'] = { LongSelect: mantine.Select };
+            mocks['@/utils/error'] = { formatErrorMessage: (_error: any, fallback: string) => fallback };
+            mocks['@mantine/notifications'] = { notifications: { show() {} } };
+            mocks['@/components/common/settings-form'] = load('../src/components/common/settings-form.tsx');
+            const Page = load('../src/pages/domain_edit.tsx').DomainSettingsPage;
+            await render(h(Page, { visibility: true }));
+        },
+        leaveEditor: () => render(),
         async setDomain(domainId: string, navigationHidden: Record<string, boolean>, ranking = true, contestMode = false) {
             canViewRanking = ranking;
             await act(async () => store.setState((state: any) => ({
@@ -266,6 +286,63 @@ test('logout aborts a pending request and discards a late response', async () =>
         await act(async () => finish({ ok: true, json: async () => ({ ddocs: [{ _id: 'private', name: 'Private old team' }] }) }));
         assert.equal(f.host.querySelector('button'), null);
         assert.equal(document.body.textContent?.includes('Private old team'), false);
+    } finally { await f.close(); }
+});
+
+test('visibility checkboxes default to visible, preview locally and submit only on Save All Changes', async () => {
+    const f = await fixture(0, true);
+    try {
+        await f.setDomain('system', {});
+        await f.editVisibility();
+        const card = Array.from(f.host.querySelectorAll<HTMLDivElement>('[role="button"]'))
+            .find((item) => item.textContent?.includes('Show Problems navigation entry'))!;
+        assert.ok(card);
+        const checkboxes = f.host.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+        assert.equal(checkboxes.length, 7);
+        assert.equal(Array.from(checkboxes).filter((input) => input.checked).length, 6, 'navigation defaults on, contest mode off');
+        await act(async () => card.click());
+        assert.equal(card.querySelector<HTMLInputElement>('input')?.checked, false);
+        assert.equal(f.host.querySelector('a[href="/problem_main"]'), null);
+        assert.equal(f.calls.length, 0);
+        assert.equal(f.store.getState().ui.domain.navigationHidden.problem_main, undefined);
+        await act(async () => f.host.querySelector<HTMLButtonElement>('.mantine-Burger-root')!.click());
+        assert.equal(document.querySelector('a[href="/problem_main"]'), null, 'mobile preview matches the desktop');
+        await f.setDomain('other', {});
+        assert.ok(f.host.querySelector('a[href="/problem_main"]'), 'preview never affects another domain');
+        await f.setDomain('system', {});
+        assert.equal(f.host.querySelector('a[href="/problem_main"]'), null);
+        f.setResponse(async () => ({ ok: true, headers: { get: () => 'application/json' }, json: async () => ({ ok: true }) }));
+        const save = Array.from(f.host.querySelectorAll<HTMLButtonElement>('button')).find((item) => item.textContent === 'Save All Changes')!;
+        await act(async () => save.click());
+        assert.equal(f.calls.length, 1);
+        assert.equal(f.calls[0].init.method, 'POST');
+        const payload = JSON.parse(f.calls[0].init.body as string);
+        assert.equal(payload['navigationHidden.problem_main'], true);
+        assert.equal(payload['navigationHidden.contest_main'], false);
+        assert.equal(payload.contestMode, false);
+        await f.leaveEditor();
+        assert.equal(f.previewStore.getState().preview, null);
+        assert.ok(f.host.querySelector('a[href="/problem_main"]'), 'leaving discards local preview without modifying saved session data');
+    } finally { await f.close(); }
+});
+
+test('saved hidden entries start unchecked and failed saves keep only a temporary preview', async () => {
+    const f = await fixture(0, true);
+    try {
+        await f.setDomain('system', { ranking: true });
+        await f.editVisibility({ _id: 'system', navigationHidden: { ranking: true } });
+        const card = Array.from(f.host.querySelectorAll<HTMLDivElement>('[role="button"]'))
+            .find((item) => item.textContent?.includes('Show Ranking navigation entry'))!;
+        assert.equal(card.querySelector<HTMLInputElement>('input')?.checked, false);
+        await act(async () => card.click());
+        assert.ok(f.host.querySelector('a[href="/ranking"]'));
+        f.setResponse(async () => ({ ok: false, headers: { get: () => 'application/json' }, json: async () => ({ error: 'Failed' }) }));
+        const save = Array.from(f.host.querySelectorAll<HTMLButtonElement>('button')).find((item) => item.textContent === 'Save All Changes')!;
+        await act(async () => save.click());
+        assert.equal(f.store.getState().ui.domain.navigationHidden.ranking, true);
+        await f.leaveEditor();
+        assert.equal(f.host.querySelector('a[href="/ranking"]'), null);
+        assert.equal(f.previewStore.getState().preview, null);
     } finally { await f.close(); }
 });
 

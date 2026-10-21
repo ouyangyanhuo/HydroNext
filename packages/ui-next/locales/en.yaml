@@ -1,4 +1,5 @@
 __flag: 🇬🇧
+'Checked entries are visible. Uncheck to preview hiding; only Save All Changes saves your changes.': 'Checked entries are visible. Uncheck to preview hiding; only Save All Changes saves your changes.'
 'Contest mode takes priority over manual hiding. Turning it off restores your manual settings.': 'Contest mode takes priority over manual hiding. Turning it off restores your manual settings.'
 'Enable contest mode': 'Enable contest mode'
 'Hide Contests navigation entry': 'Hide Contests navigation entry'
@@ -9,6 +10,12 @@ __flag: 🇬🇧
 'Hide Records navigation entry': 'Hide Records navigation entry'
 'Hide Training navigation entry': 'Hide Training navigation entry'
 'Hiding Problems or Contests also hides its homepage list.': 'Hiding Problems or Contests also hides its homepage list.'
+'Show Contests navigation entry': 'Show Contests navigation entry'
+'Show Home navigation entry': 'Show Home navigation entry'
+'Show Problems navigation entry': 'Show Problems navigation entry'
+'Show Ranking navigation entry': 'Show Ranking navigation entry'
+'Show Records navigation entry': 'Show Records navigation entry'
+'Show Training navigation entry': 'Show Training navigation entry'
 'These settings apply only to this domain and do not change page permissions.': 'These settings apply only to this domain and do not change page permissions.'
 'Visibility and contests': 'Visibility and contests'
 setting_contest_mode: Contest features

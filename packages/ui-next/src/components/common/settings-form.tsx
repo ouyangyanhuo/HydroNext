@@ -1,6 +1,17 @@
 /* eslint-disable react-refresh/only-export-components */
-import { Card, Checkbox, Group, PasswordInput, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
-import { type ReactNode, useMemo, useState } from 'react';
+import {
+  Card,
+  Checkbox,
+  Group,
+  PasswordInput,
+  Stack,
+  Switch,
+  Text,
+  Textarea,
+  TextInput,
+  Title,
+} from '@mantine/core';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { LongSelect } from '@/components/common/select';
 import { useI18n } from '@/hooks/use-i18n';
@@ -36,6 +47,12 @@ interface SettingsFormProps {
   variant?: 'default' | 'personal';
   /** Browser-local controls are rendered with a family but never added to the server payload. */
   familyExtras?: Record<string, ReactNode>;
+  itemIcons?: Record<string, any>;
+  booleanGrid?: boolean;
+  /** Display these boolean controls positively while preserving their storage semantics. */
+  invertedBooleanKeys?: readonly string[];
+  /** Storage values for local previews; this callback never submits the form. */
+  onValuesChange?: (values: Record<string, any>) => void;
 }
 
 function getByPath(source: Record<string, any>, key: string) {
@@ -199,21 +216,35 @@ export function SettingsForm({
   excludeKeys = EMPTY_KEYS,
   variant = 'default',
   familyExtras,
+  itemIcons,
+  booleanGrid = false,
+  invertedBooleanKeys = EMPTY_KEYS,
+  onValuesChange,
 }: SettingsFormProps) {
   const { t } = useI18n();
   const normalized = useMemo(
     () => normalizeSettings(settings, current).filter((s) => !excludeKeys.includes(s.key)),
     [settings, current, excludeKeys],
   );
+  const invertedKeys = useMemo(() => new Set(normalized
+    .filter((setting) => setting.type === 'boolean' && invertedBooleanKeys.includes(setting.key))
+    .map((setting) => setting.key)), [normalized, invertedBooleanKeys]);
   const [values, setValues] = useState<Record<string, any>>(() => Object.fromEntries(
     normalized.map((setting) => {
       const currentValue = getByPath(current, setting.key);
+      const value = ((setting.flag || 0) & FLAG_SECRET) ? '' : (currentValue ?? setting.value ?? '');
       return [
         setting.key,
-        ((setting.flag || 0) & FLAG_SECRET) ? '' : (currentValue ?? setting.value ?? ''),
+        invertedKeys.has(setting.key) ? !value : value,
       ];
     }),
   ));
+  const storageValues = useMemo(() => Object.fromEntries(Object.entries(values)
+    .map(([key, value]) => [key, invertedKeys.has(key) ? !value : value])), [values, invertedKeys]);
+
+  useEffect(() => {
+    onValuesChange?.(storageValues);
+  }, [storageValues, onValuesChange]);
   const groups = useMemo(() => {
     const grouped = groupByFamily(normalized);
     for (const family of Object.keys(familyExtras || {})) {
@@ -229,7 +260,7 @@ export function SettingsForm({
   );
 
   const handleSubmit = async () => {
-    await onSubmit(buildSettingsPayload(values, booleanKeys, payloadMode, extraPayload));
+    await onSubmit(buildSettingsPayload(storageValues, booleanKeys, payloadMode, extraPayload));
   };
 
   return (
@@ -250,28 +281,161 @@ export function SettingsForm({
               <Title order={3} size="h4">{t(family)}</Title>
             </Group>
           )}
-          <div className={variant === 'personal' ? 'hydro-settings-fields' : 'flex flex-col gap-4'}>
-            {items.map((setting) => (
-              <div
-                key={setting.key}
-                className={variant === 'personal' && (
-                  setting.type === 'boolean'
-                  || setting.type === 'textarea'
-                  || setting.type === 'markdown'
-                  || setting.type === 'json'
-                ) ? 'hydro-settings-field hydro-settings-field--wide' : 'hydro-settings-field'}
-              >
-                <SettingInput
-                  setting={setting}
-                  value={values[setting.key]}
-                  onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
-                />
+          {booleanGrid && items.length === 1 && items[0].type === 'boolean' ? (
+            <div>
+              {(() => {
+                const setting = items[0];
+                const value = !!values[setting.key];
+                const disabled = ((setting.flag || 0) & FLAG_DISABLED) !== 0;
+                const label = t(setting.name || setting.key);
+                const description = setting.desc ? t(setting.desc) : '';
+                const IconComponent = itemIcons?.[setting.key];
+
+                return (
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      if (!disabled) {
+                        setValues((prev) => ({ ...prev, [setting.key]: !value }));
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if ((e.key === ' ' || e.key === 'Enter') && !disabled) {
+                        e.preventDefault();
+                        setValues((prev) => ({ ...prev, [setting.key]: !value }));
+                      }
+                    }}
+                    className={[
+                      'hydro-setting-checkbox-card hydro-setting-checkbox-card--feature',
+                      value ? 'hydro-setting-checkbox-card--checked' : '',
+                      disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+                    ].filter(Boolean).join(' ')}
+                  >
+                    <div className="flex items-start sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                        {IconComponent && (
+                          <div className="hydro-setting-checkbox-card__icon hydro-setting-checkbox-card__icon--feature">
+                            <IconComponent size={22} stroke={2} />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <Text size="sm" fw="var(--hydro-weight-semibold)" className="leading-snug">
+                            {label}
+                          </Text>
+                          {description ? (
+                            <Text size="xs" c="dimmed" className="mt-1 leading-normal">
+                              {description}
+                            </Text>
+                          ) : null}
+                        </div>
+                      </div>
+                      <Switch
+                        checked={value}
+                        disabled={disabled}
+                        size="md"
+                        readOnly
+                        tabIndex={-1}
+                        aria-hidden="true"
+                        className="pointer-events-none shrink-0"
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
+              {familyExtras?.[family] && (
+                <div className="mt-3">{familyExtras[family]}</div>
+              )}
+            </div>
+          ) : booleanGrid && items.length > 1 && items.every((s) => s.type === 'boolean') ? (
+            <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {items.map((setting) => {
+                  const value = !!values[setting.key];
+                  const disabled = ((setting.flag || 0) & FLAG_DISABLED) !== 0;
+                  const label = t(setting.name || setting.key);
+                  const description = setting.desc ? t(setting.desc) : '';
+                  const IconComponent = itemIcons?.[setting.key];
+
+                  return (
+                    <div
+                      key={setting.key}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        if (!disabled) {
+                          setValues((prev) => ({ ...prev, [setting.key]: !value }));
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if ((e.key === ' ' || e.key === 'Enter') && !disabled) {
+                          e.preventDefault();
+                          setValues((prev) => ({ ...prev, [setting.key]: !value }));
+                        }
+                      }}
+                      className={[
+                        'hydro-setting-checkbox-card',
+                        value ? 'hydro-setting-checkbox-card--checked' : '',
+                        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+                      ].filter(Boolean).join(' ')}
+                    >
+                      <div className="flex items-center gap-3">
+                        {IconComponent && (
+                          <div className="hydro-setting-checkbox-card__icon">
+                            <IconComponent size={18} stroke={1.8} />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <Text size="sm" fw="var(--hydro-weight-medium)" className="leading-snug" truncate>
+                            {label}
+                          </Text>
+                          {description ? (
+                            <Text size="xs" c="dimmed" className="mt-0.5 line-clamp-2">
+                              {description}
+                            </Text>
+                          ) : null}
+                        </div>
+                        <Checkbox
+                          checked={value}
+                          disabled={disabled}
+                          readOnly
+                          tabIndex={-1}
+                          aria-hidden="true"
+                          className="pointer-events-none shrink-0"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-            {familyExtras?.[family] && (
-              <div className="hydro-settings-field hydro-settings-field--wide">{familyExtras[family]}</div>
-            )}
-          </div>
+              {familyExtras?.[family] && (
+                <div className="mt-3">{familyExtras[family]}</div>
+              )}
+            </div>
+          ) : (
+            <div className={variant === 'personal' ? 'hydro-settings-fields' : 'flex flex-col gap-4'}>
+              {items.map((setting) => (
+                <div
+                  key={setting.key}
+                  className={variant === 'personal' && (
+                    setting.type === 'boolean'
+                    || setting.type === 'textarea'
+                    || setting.type === 'markdown'
+                    || setting.type === 'json'
+                  ) ? 'hydro-settings-field hydro-settings-field--wide' : 'hydro-settings-field'}
+                >
+                  <SettingInput
+                    setting={setting}
+                    value={values[setting.key]}
+                    onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
+                  />
+                </div>
+              ))}
+              {familyExtras?.[family] && (
+                <div className="hydro-settings-field hydro-settings-field--wide">{familyExtras[family]}</div>
+              )}
+            </div>
+          )}
         </Card>
       ))}
       <Group

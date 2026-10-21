@@ -3138,6 +3138,87 @@ a {
   background: color-mix(in srgb, var(--hydro-surface-muted) 54%, transparent);
 }
 
+/* Boolean checkbox and switch card tiles in settings forms */
+.hydro-setting-checkbox-card {
+  position: relative;
+  display: block;
+  padding: 12px 14px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-md);
+  background-color: var(--hydro-surface);
+  box-shadow: var(--hydro-shadow-sm);
+  transition: border-color var(--hydro-transition-fast),
+              background-color var(--hydro-transition-fast),
+              box-shadow var(--hydro-transition-fast);
+  user-select: none;
+}
+
+.hydro-setting-checkbox-card:hover {
+  border-color: var(--hydro-border-strong);
+  background-color: var(--hydro-surface-muted);
+}
+
+.hydro-setting-checkbox-card--checked {
+  border-color: color-mix(in srgb, var(--hydro-primary) 55%, var(--hydro-border));
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 40%, var(--hydro-surface));
+}
+
+.hydro-setting-checkbox-card--checked:hover {
+  border-color: color-mix(in srgb, var(--hydro-primary) 70%, var(--hydro-border));
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 55%, var(--hydro-surface));
+}
+
+.hydro-setting-checkbox-card--feature {
+  padding: 16px 18px;
+}
+
+.hydro-setting-checkbox-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--hydro-radius-sm);
+  background-color: var(--hydro-surface-muted);
+  color: var(--hydro-text-muted);
+  transition: all var(--hydro-transition-fast);
+}
+
+.hydro-setting-checkbox-card:hover .hydro-setting-checkbox-card__icon {
+  color: var(--hydro-text);
+  background-color: var(--hydro-surface-raised);
+}
+
+.hydro-setting-checkbox-card--checked .hydro-setting-checkbox-card__icon {
+  background-color: var(--hydro-primary-soft);
+  color: var(--hydro-primary-strong);
+}
+
+.hydro-setting-checkbox-card__icon--feature {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--hydro-radius-md);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-setting-checkbox-card {
+  background-color: color-mix(in srgb, var(--hydro-surface-raised) 85%, transparent);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-setting-checkbox-card:hover {
+  background-color: var(--hydro-surface-muted);
+  border-color: var(--hydro-border-strong);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-setting-checkbox-card--checked {
+  border-color: color-mix(in srgb, var(--hydro-primary) 55%, var(--hydro-border));
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 22%, var(--hydro-surface-raised));
+}
+
+[data-mantine-color-scheme='dark'] .hydro-setting-checkbox-card--checked:hover {
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 32%, var(--hydro-surface-raised));
+}
+
 .hydro-settings-form .mantine-InputWrapper-label {
   margin-bottom: 5px;
   color: var(--hydro-text);

@@ -327,3 +327,31 @@ test('domain switcher renders refined select pill trigger and searchable dropdow
     assert.match(source, /IconCheck/);
     assert.match(source, /to="home_domain"/);
 });
+
+test('domain visibility settings render responsive boolean cards grid and contest mode toggle', () => {
+    const css = postcss.parse(read('../src/styles/tailwind.css'));
+    let checkboxCard = false;
+    let checkboxCardChecked = false;
+    let checkboxCardFeature = false;
+
+    css.walkRules((rule) => {
+        if (rule.selector === '.hydro-setting-checkbox-card') checkboxCard = true;
+        if (rule.selector === '.hydro-setting-checkbox-card--checked') checkboxCardChecked = true;
+        if (rule.selector === '.hydro-setting-checkbox-card--feature') checkboxCardFeature = true;
+    });
+
+    assert.ok(checkboxCard, '.hydro-setting-checkbox-card selector not found');
+    assert.ok(checkboxCardChecked, '.hydro-setting-checkbox-card--checked selector not found');
+    assert.ok(checkboxCardFeature, '.hydro-setting-checkbox-card--feature selector not found');
+
+    const domainEditSource = read('../src/pages/domain_edit.tsx');
+    assert.match(domainEditSource, /booleanGrid=\{visibility\}/);
+    assert.match(domainEditSource, /VISIBILITY_ICONS/);
+    assert.match(domainEditSource, /contestMode: IconFlame/);
+    assert.match(domainEditSource, /'navigationHidden\.homepage': IconHome/);
+
+    const settingsFormSource = read('../src/components/common/settings-form.tsx');
+    assert.match(settingsFormSource, /grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3/);
+    assert.match(settingsFormSource, /className="hydro-setting-checkbox-card__icon/);
+    assert.match(settingsFormSource, /hydro-setting-checkbox-card hydro-setting-checkbox-card--feature/);
+});
