@@ -149,8 +149,6 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
               color="blue"
               variant="light"
             >
-              {t('Checked entries are visible. Uncheck to preview hiding; only Save All Changes saves your changes.')}{' '}
-              {t('Hiding Problems or Contests also hides its homepage list.')}{' '}
               {t('These settings apply only to this domain and do not change page permissions.')}
             </Alert>
           ),

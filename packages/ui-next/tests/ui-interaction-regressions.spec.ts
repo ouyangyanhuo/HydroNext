@@ -369,3 +369,70 @@ test('domain settings layout uses multi-column fields grid and TagMultiSelect fo
     assert.match(settingsFormSource, /setting\.key === 'avatar'/);
     assert.match(settingsFormSource, /variant === 'grid' \|\| fieldsGrid/);
 });
+
+test('problems, contests, training and records page headers align with ranking title design without slogans', () => {
+    const css = postcss.parse(read('../src/styles/tailwind.css'));
+    let headerRule = false;
+    let iconRule = false;
+    let iconSvgRule = false;
+    let titleRule = false;
+
+    css.walkRules((rule) => {
+        if (rule.selector.includes('.hydro-page-header') && rule.selector.includes('.ranking-page-header')) headerRule = true;
+        if (rule.selector.includes('.hydro-page-icon') && rule.selector.includes('.ranking-page-icon')) {
+            if (rule.selector.includes('svg')) iconSvgRule = true;
+            else iconRule = true;
+        }
+        if (rule.selector.includes('.hydro-page-title') && rule.selector.includes('.ranking-page-title')) titleRule = true;
+    });
+
+    assert.ok(headerRule, '.hydro-page-header / .ranking-page-header selector found in tailwind.css');
+    assert.ok(iconRule, '.hydro-page-icon / .ranking-page-icon selector found in tailwind.css');
+    assert.ok(iconSvgRule, '.hydro-page-icon svg / .ranking-page-icon svg selector found in tailwind.css');
+    assert.ok(titleRule, '.hydro-page-title / .ranking-page-title selector found in tailwind.css');
+
+    const rankingSource = read('../src/pages/ranking.tsx');
+    assert.match(rankingSource, /icon=\{<IconChartBar size=\{22\} stroke=\{2\} \/>\}|<IconChartBar size=\{22\} stroke=\{2\} \/>/);
+    assert.doesNotMatch(rankingSource, /See every effort\. Grow through code\./);
+
+    const problemSource = read('../src/pages/problem_main.tsx');
+    assert.match(problemSource, /icon=\{<IconCode size=\{22\} stroke=\{2\} \/>\}/);
+    assert.doesNotMatch(problemSource, /<PageHeader[^>]*description=/);
+    assert.doesNotMatch(problemSource, /Explore challenges/);
+
+    const contestSource = read('../src/pages/contest_main.tsx');
+    assert.match(contestSource, /<PageHeader/);
+    assert.match(contestSource, /icon=\{<IconTrophy size=\{22\} stroke=\{2\} \/>\}/);
+    assert.doesNotMatch(contestSource, /<PageHeader[^>]*description=/);
+    assert.doesNotMatch(contestSource, /Compete with peers/);
+
+    const trainingSource = read('../src/pages/training_main.tsx');
+    assert.match(trainingSource, /icon=\{<IconSchool size=\{22\} stroke=\{2\} \/>\}/);
+    assert.doesNotMatch(trainingSource, /<PageHeader[^>]*description=/);
+    assert.doesNotMatch(trainingSource, /Follow structured paths/);
+
+    const recordSource = read('../src/pages/record_main.tsx');
+    assert.match(recordSource, /icon=\{<IconHistory size=\{22\} stroke=\{2\} \/>\}/);
+    assert.doesNotMatch(recordSource, /<PageHeader[^>]*description=/);
+    assert.doesNotMatch(recordSource, /Track submission history/);
+
+    let accentRule = false;
+    let bgPrimary = false;
+    let softGlow = false;
+    css.walkRules((rule) => {
+        if (rule.selector.includes('.hydro-page-title__accent')) {
+            accentRule = true;
+            rule.walkDecls((decl) => {
+                if (decl.prop === 'background-color' && decl.value.includes('--hydro-primary')) bgPrimary = true;
+                if (decl.prop === 'box-shadow' && decl.value.includes('--hydro-primary')) softGlow = true;
+            });
+        }
+    });
+    assert.ok(accentRule, '.hydro-page-title__accent selector found in tailwind.css');
+    assert.ok(bgPrimary, 'title accent bar should use --hydro-primary (register button color)');
+    assert.ok(softGlow, 'title accent bar should have refined subtle primary glow');
+
+    const pageHeaderSource = read('../src/components/common/page-header.tsx');
+    assert.match(pageHeaderSource, /className="hydro-page-title__accent"/);
+    assert.match(rankingSource, /className="hydro-page-title__accent"/);
+});

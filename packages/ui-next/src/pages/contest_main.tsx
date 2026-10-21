@@ -1,10 +1,11 @@
 import { Badge, Group, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import {
-  IconArrowUpRight, IconCalendarEvent, IconClock, IconCornerDownLeft, IconPlus, IconSearch, IconUsers,
+  IconArrowUpRight, IconCalendarEvent, IconClock, IconCornerDownLeft, IconPlus, IconSearch, IconTrophy, IconUsers,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { ShortSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
@@ -205,13 +206,11 @@ export default function ContestMainPage() {
 
   return (
     <main className="hydro-contest-page">
-      <header className="hydro-contest-page-header">
-        <div className="hydro-contest-page-header__heading">
-          <Title order={2}>
-            {currentRule ? t('All {0} Contests').replace('{0}', currentRule) : t('All Contests')}
-          </Title>
-          <div className="hydro-contest-page-header__accent" aria-hidden="true" />
-        </div>
+      <PageHeader
+        title={currentRule ? t('All {0} Contests').replace('{0}', currentRule) : t('Contests')}
+        icon={<IconTrophy size={22} stroke={2} />}
+        className="hydro-contest-page-header"
+      >
         <div className="hydro-contest-header-actions" aria-label={t('Search')}>
           <TextInput
             placeholder={t('Search contests...')}
@@ -280,7 +279,7 @@ export default function ContestMainPage() {
             </Button>
           )}
         </div>
-      </header>
+      </PageHeader>
 
       <Stack gap="xl">
         {important.length > 0 && (

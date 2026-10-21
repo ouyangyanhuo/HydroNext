@@ -1,6 +1,8 @@
 import { Badge, Card, Checkbox, Group, HoverCard, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconCornerDownLeft, IconDownload, IconSearch } from '@tabler/icons-react';
+import {
+  IconCode, IconCornerDownLeft, IconDownload, IconSearch,
+} from '@tabler/icons-react';
 import { useRef, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
@@ -353,7 +355,10 @@ export default function ProblemMainPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('Problems')}>
+      <PageHeader
+        title={t('Problems')}
+        icon={<IconCode size={22} stroke={2} />}
+      >
         <Group gap="xs" wrap="wrap" className="hydro-problem-toolbar">
           {canCreate && selected.length > 0 && (
             <Button

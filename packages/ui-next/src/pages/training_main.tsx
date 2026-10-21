@@ -1,8 +1,8 @@
 import { Badge, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconArrowUpRight, IconBook2, IconChecklist, IconChevronRight, IconCornerDownLeft, IconFolder, IconPencil, IconPlus, IconSearch,
-  IconSortAscending, IconTrash, IconUsers,
+  IconArrowUpRight, IconBook2, IconChecklist, IconChevronRight, IconCornerDownLeft, IconFolder, IconPencil, IconPlus, IconSchool,
+  IconSearch, IconSortAscending, IconTrash, IconUsers,
 } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
@@ -389,7 +389,11 @@ function TrainingMainContent() {
 
   return (
     <main className="hydro-training-page">
-      <PageHeader title={t('All Training Plans')}>
+      <PageHeader
+        title={t('Training')}
+        icon={<IconSchool size={22} stroke={2} />}
+        className="hydro-training-page-header"
+      >
         <div className="hydro-training-header-actions">
           <TextInput
             placeholder={t('Search training...')}

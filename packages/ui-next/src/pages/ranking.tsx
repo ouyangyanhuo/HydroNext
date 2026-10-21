@@ -90,10 +90,10 @@ export default function RankingPage() {
     <Stack gap="xl" className="ranking-page">
       <header className="ranking-page-header">
         <Group gap="md" align="center" wrap="nowrap">
-          <span className="ranking-page-icon" aria-hidden="true"><IconChartBar size={28} stroke={2.2} /></span>
-          <div>
+          <span className="ranking-page-icon" aria-hidden="true"><IconChartBar size={22} stroke={2} /></span>
+          <div className="min-w-0">
             <Title order={1} className="ranking-page-title">{t('Ranking')}</Title>
-            <Text size="sm" c="dimmed">{t('See every effort. Grow through code.')}</Text>
+            <div className="hydro-page-title__accent" aria-hidden="true" />
           </div>
         </Group>
         <div className="ranking-switch" role="group" aria-label={t('Ranking type')}>

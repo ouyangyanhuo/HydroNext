@@ -1,5 +1,4 @@
 __flag: 🇹🇼
-'Checked entries are visible. Uncheck to preview hiding; only Save All Changes saves your changes.': '勾選表示顯示，取消勾選可預覽隱藏效果；只有點選「儲存所有變更」才會儲存。'
 'Contest mode takes priority over manual hiding. Turning it off restores your manual settings.': '賽事模式優先於手動隱藏設定，關閉後恢復原有的手動設定。'
 'Enable contest mode': '啟用賽事模式'
 'Hide Contests navigation entry': '隱藏比賽入口'
@@ -9,7 +8,6 @@ __flag: 🇹🇼
 'Hide Ranking navigation entry': '隱藏排名入口'
 'Hide Records navigation entry': '隱藏提交紀錄入口'
 'Hide Training navigation entry': '隱藏訓練入口'
-'Hiding Problems or Contests also hides its homepage list.': '隱藏題目或比賽入口時，首頁對應的列表也會隱藏。'
 'Show Contests navigation entry': '顯示比賽入口'
 'Show Home navigation entry': '顯示首頁入口'
 'Show Problems navigation entry': '顯示題目入口'
@@ -119,6 +117,10 @@ About: 關於
 Help: 幫助
 Ranking: 排名
 See every effort. Grow through code.: 見證每一份努力，用程式碼寫出更好的自己。
+Explore challenges and sharpen problem-solving skills.: 探索豐富題庫，在思考中磨礪解題能力。
+Compete with peers and push your limits.: 與同行者同台競技，突破自我極限。
+Follow structured paths and master algorithm skills step by step.: 循序漸進打牢基礎，系統掌握演算法與資料結構。
+Track submission history and analyze code execution.: 回顧每一次評測結果，追蹤程式碼提交與執行詳情。
 Ranking type: 排行榜類型
 Top three: 前三名
 Leaderboard: 排行榜

@@ -202,7 +202,7 @@ export default function ContestScoreboardPage() {
     <Stack gap="xl" className={`ranking-page scoreboard-page scoreboard--${tdoc.rule || 'contest'}`}>
       <header className="ranking-page-header">
         <Group gap="md" align="center" wrap="nowrap">
-          <span className="ranking-page-icon" aria-hidden="true"><IconTrophy size={28} stroke={2.1} /></span>
+          <span className="ranking-page-icon" aria-hidden="true"><IconTrophy size={22} stroke={2} /></span>
           <div className="min-w-0">
             <Title order={1} className="ranking-page-title">{tdoc.title}</Title>
             <Text size="sm" c="dimmed">{t('Scoreboard')}</Text>

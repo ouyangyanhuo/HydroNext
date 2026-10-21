@@ -1,5 +1,7 @@
 import { Badge, Group, Stack, Text, TextInput, Title } from '@mantine/core';
-import { IconFilter, IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
+import {
+  IconFilter, IconHistory, IconPlayerPlay, IconRefresh,
+} from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { DataTable } from '@/components/common/data-table';
@@ -270,7 +272,10 @@ function RecordMainContent({ args }: { args: any }) {
   return (
     <main className="hydro-record-page">
       <Stack gap="lg">
-        <PageHeader title={t('Records')} />
+        <PageHeader
+          title={t('Records')}
+          icon={<IconHistory size={22} stroke={2} />}
+        />
 
         <form
           className="hydro-record-filter"
