@@ -398,11 +398,12 @@ test('submitting and returning through record problem links retains the source n
         const qs = new URLSearchParams(query).toString();
         return `/d/team${path}${qs ? `?${qs}` : ''}`;
     };
+    let socketUpdate: any = null;
     const overrides = {
         '@/utils/problem-navigation': navigationUtils,
         '@/hooks/use-build-url': { useBuildUrl: () => buildUrl },
         '@/hooks/use-current-user': { useCurrentUser: () => ({ _id: 2, codeLang: 'cc' }) },
-        '@/hooks/use-record-socket': { useRecordSocket: () => null },
+        '@/hooks/use-record-socket': { useRecordSocket: () => socketUpdate },
         '@/hooks/use-permission': { PRIV: {}, useHasPriv: () => false },
         '@/context/page-data': { usePageData: () => ({ args }), useUiContext: () => ({}) },
         '@/components/editor/code-editor': { CodeEditor: () => null },
@@ -436,8 +437,78 @@ test('submitting and returning through record problem links retains the source n
         });
         assert.equal(neighbors.previous.pid, 1);
         assert.equal(neighbors.next.pid, 3);
+        dom.reconfigure({ url: `https://oj.example${recordUrl}&submissionSource=editor` });
+        for (const status of [0, 2, 7, 20, 1, 8]) {
+            socketUpdate = { status };
+            // eslint-disable-next-line no-await-in-loop
+            await view.render(h(Record));
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => button('Back', view.host).click());
+            const target = new URL(navigated.at(-1)!, 'https://oj.example');
+            assert.equal(target.pathname, '/d/team/p/P2');
+            assert.equal(target.searchParams.get('page'), '3');
+            assert.equal(target.searchParams.get('sort'), 'desc');
+            assert.equal(target.searchParams.get('mode'), status === 1 ? null : 'code', 'use the latest WebSocket status, not the initial AC');
+        }
     } finally {
         await view.close();
+        dom.reconfigure({ url: previousUrl });
+    }
+});
+
+test('problem editor mode survives remount and its entry/exit preserve URL context and existing history state', async () => {
+    const previousUrl = dom.window.location.href;
+    const search = '?nav=list&page=3&sort=desc';
+    dom.reconfigure({ url: `https://oj.example/d/team/p/P2${search}` });
+    dom.window.history.replaceState({ retained: true }, '', dom.window.location.href);
+    const updates: any[] = [];
+    args = { pdoc: { docId: 2, pid: 'P2', title: 'Problem', content: 'Statement', config: {} }, canSubmitProblem: true };
+    const Page = component('../src/pages/problem_detail.tsx', {
+        '@/utils/problem-navigation': component('../src/utils/problem-navigation.ts', {}, { URLSearchParams }),
+        '@/utils/lang-display': { getLangDisplay: (value: string) => value },
+        '@/utils/i18n-content': { extractLocalizedContent: (value: string) => value },
+        '@/hooks/use-current-user': { useIsLoggedIn: () => true },
+        '@/hooks/use-permission': { PERM: {}, PRIV: {}, hasPermValue: () => false, hasPrivValue: () => false, useHasPerm: () => false },
+        '@/stores/session': { useSessionStore: (select: any) => select({ language: 'en' }) },
+        '@/context/page-data': {
+            usePageData: () => ({ args }), useUiContext: () => ({ domainId: 'team' }), useUserContext: () => ({ _id: 2 }),
+            useSetPageData: () => (update: any, preserve: boolean) => updates.push({ data: update({ args }), preserve }),
+        },
+        '@/components/common/problem-navigation': { ProblemNavigation: () => null },
+        '@/components/common/file-preview-modal': { FilePreviewModal: () => null },
+        '@/components/common/form-dialog': { FormDialog: () => null },
+        '@/components/record/record-status-badge': { RecordStatusBadge: () => null },
+        '@/components/contest/contest-problem-timer': { ContestProblemTimer: () => null },
+        '@/components/editor/submission-context': component('../src/components/editor/submission-context.ts', {}, { URLSearchParams }),
+        '@/components/editor/scratchpad': {
+            Scratchpad: ({ onClose }: any) => h('section', { 'data-editor': true }, h('button', { onClick: onClose }, 'Close editor')),
+        },
+    }, { URLSearchParams, document: dom.window.document }).default;
+    // Exercise the existing View Transition callback without requiring a real browser animation.
+    const transitionDocument = dom.window.document as any;
+    transitionDocument.startViewTransition = (update: () => void) => {
+        update();
+        return { finished: Promise.resolve() };
+    };
+    const view = await mount(h(Page));
+    try {
+        const length = dom.window.history.length;
+        await act(async () => button('Enter Online Programming Mode', view.host).click());
+        assert.ok(view.host.querySelector('[data-editor]'));
+        assert.equal(dom.window.location.search, `${search}&mode=code`);
+        assert.equal(dom.window.history.length, length + 1);
+        assert.equal(dom.window.history.state.retained, true);
+        assert.equal(updates.at(-1).preserve, true);
+        assert.equal(updates.at(-1).data.url, `/d/team/p/P2${search}&mode=code`);
+        await view.render(h(Page, { key: 'restored-page' }));
+        assert.ok(view.host.querySelector('[data-editor]'), 'restoring this URL must reopen the editor');
+        await act(async () => button('Close editor', view.host).click());
+        assert.equal(dom.window.location.search, search);
+        assert.equal(view.host.querySelector('[data-editor]'), null);
+        assert.ok(button('Enter Online Programming Mode', view.host));
+    } finally {
+        await view.close();
+        delete transitionDocument.startViewTransition;
         dom.reconfigure({ url: previousUrl });
     }
 });

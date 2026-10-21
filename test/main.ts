@@ -155,6 +155,79 @@ describe('App', () => {
         await agent.get('/api/user?args={"id":2}&projection=uname').expect({ uname: 'root' });
     });
 
+    it('User profile administration requires system privileges and sudo, limits editable fields and invalidates domain caches', async () => {
+        const { user, domain } = global.Hydro.model;
+        const { PRIV } = require('../packages/hydrooj/src/model/builtin');
+        const uid = await user.create('profile-edit@example.com', 'profile-edit-user', 'secret');
+        const limitedAdmin = await user.create('profile-admin@example.com', 'profile-admin', 'secret', undefined,
+            '127.0.0.1', PRIV.PRIV_DEFAULT | PRIV.PRIV_EDIT_SYSTEM);
+        const domainId = 'profile-edit-scope';
+        await domain.add(domainId, 2, 'Profile scope', '');
+        await domain.setUserInDomain(domainId, uid, { displayName: 'Domain alias' });
+        await user.setById(uid, { avatar: 'qq:123456', bio: 'Original bio', honorFrameIds: ['1234567890abcdef12345678'] });
+        const route = `/d/${domainId}/manage/users/${uid}?page=3&q=profile`;
+        const payload = { bio: 'Updated **bio**', qq: '998877', school: 'School A', studentId: '000123', phone: '+86 010-1234' };
+        const admin = supertest.agent(require('hydrooj').httpServer);
+        const ordinary = supertest.agent(require('hydrooj').httpServer);
+        try {
+            await ordinary.post('/login').send({ uname: 'profile-edit-user', password: 'secret' }).expect(302);
+            await ordinary.get(route).set('Accept', 'application/json').expect(403);
+            await ordinary.post(route).set('Accept', 'application/json').send(payload).expect(403);
+            await admin.post('/login').send({ uname: Root.username, password: Root.password }).expect(302);
+            const pending = await admin.get(route).set('Accept', 'application/json').expect(200);
+            assert.match(pending.body.url, /\/user\/sudo$/);
+            assert.equal(pending.body.profile, undefined);
+            await admin.post(route).set('Accept', 'application/json').send(payload).expect(200)
+                .then((response) => assert.match(response.body.url, /\/user\/sudo$/));
+            assert.equal((await user.coll.findOne({ _id: uid })).bio, 'Original bio');
+            const verification = await admin.post(pending.body.url).set('Accept', 'application/json')
+                .send({ password: Root.password }).expect(200);
+            assert.equal(verification.body.redirect, route);
+            const loaded = await admin.get(route).set('Accept', 'application/json').expect(200);
+            assert.deepEqual(Object.keys(loaded.body.profile).sort(),
+                ['_id', 'uname', 'mail', 'avatar', 'bio', 'qq', 'school', 'studentId', 'phone'].sort());
+            const original = await user.coll.findOne({ _id: uid });
+            await user.getById('system', uid);
+            await user.getById(domainId, uid);
+            await admin.post(route).set('Accept', 'application/json').send({
+                ...payload, uid: 2, priv: -1, uname: 'must-not-change', mail: 'must-not-change@example.com', avatar: 'url:https://evil.example/a.png',
+            }).expect(200).expect(({ body }) => assert.equal(body.saved, true));
+            const edited = await user.coll.findOne({ _id: uid });
+            assert.equal(edited.uname, original.uname);
+            assert.equal(edited.mail, original.mail);
+            assert.equal(edited.priv, original.priv);
+            assert.equal(edited.hash, original.hash);
+            assert.equal(edited.avatar, 'qq:123456');
+            assert.equal((await user.getById('system', uid)).bio, payload.bio);
+            assert.equal((await user.getById(domainId, uid)).school, payload.school);
+            assert.equal((await user.getById(domainId, uid)).displayName, 'Domain alias');
+            await admin.post(route).set('Accept', 'application/json').send({ ...payload, resetAvatar: true }).expect(200);
+            const reset = await user.coll.findOne({ _id: uid });
+            assert.equal(reset.avatar, `gravatar:${original.mail}`);
+            assert.equal(reset.studentId, '000123');
+            assert.deepEqual(reset.honorFrameIds, original.honorFrameIds);
+            await admin.post(route).set('Accept', 'application/json').send({ ...payload, phone: 'x'.repeat(256) }).expect(403)
+                .then((response) => assert.equal(response.body.error.params[0], 'phone'));
+            await admin.post(route).set('Accept', 'application/json')
+                .send({ bio: '', qq: '', school: '', studentId: '', phone: '' }).expect(200);
+            assert.equal((await user.getById(domainId, uid)).school, '');
+            const manager = supertest.agent(require('hydrooj').httpServer);
+            await manager.post('/login').send({ uname: 'profile-admin', password: 'secret' }).expect(302);
+            const authorization = await manager.get('/manage/users/2').set('Accept', 'application/json').expect(200);
+            await manager.post(authorization.body.url).send({ password: 'secret' }).expect(302);
+            await manager.get('/manage/users/2').set('Accept', 'application/json').expect(400);
+            await manager.post('/manage/users/2').set('Accept', 'application/json').send(payload).expect(400);
+            await admin.get('/manage/users/2').set('Accept', 'application/json').expect(200)
+                .then((response) => assert.equal(response.body.profile._id, 2));
+            await admin.get('/manage/users/1').set('Accept', 'application/json').expect(400);
+            await admin.get('/manage/users/999999').set('Accept', 'application/json').expect(404);
+        } finally {
+            await domain.del(domainId);
+            await user.coll.deleteMany({ _id: { $in: [uid, limitedAdmin] } });
+            user._deleteUserCache(true);
+        }
+    });
+
     it('Proctor settings and log access require sudo and return to the original scoped URL after authorization', async () => {
         const admin = supertest.agent(require('hydrooj').httpServer);
         await admin.post('/login').send({ uname: Root.username, password: Root.password }).expect(302);

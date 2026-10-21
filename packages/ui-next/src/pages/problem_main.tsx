@@ -377,6 +377,20 @@ export default function ProblemMainPage() {
               {t('Delete')} ({selected.length})
             </Button>
           )}
+          {canSelect && pdocs.length > 0 && (
+            <label className="hydro-problem-select-all">
+              <Checkbox
+                aria-label={t('Select All')}
+                checked={allSelected}
+                indeterminate={selected.length > 0 && !allSelected}
+                onChange={(e) => toggleSelectAll(e.currentTarget.checked)}
+                size="xs"
+              />
+              <span className="hydro-problem-select-all__label">
+                {t('Select All')}
+              </span>
+            </label>
+          )}
           <TextInput
             placeholder={t('Search problems...')}
             value={search}
@@ -412,16 +426,6 @@ export default function ProblemMainPage() {
             className={`hydro-problem-list ${routeLoading ? 'hydro-problem-list--loading' : ''}`}
             aria-busy={routeLoading}
           >
-            {canSelect && pdocs.length > 0 && (
-              <Group gap="xs" mb="xs" className="hydro-problem-select-all">
-                <Checkbox
-                  aria-label={t('Select All')}
-                  checked={allSelected}
-                  onChange={(e) => toggleSelectAll(e.currentTarget.checked)}
-                />
-                <Text size="xs" c="dimmed">{t('Select All')}</Text>
-              </Group>
-            )}
             <DataTable columns={columns} data={pdocs} emptyMessage={t('No problems found')} />
             <Paginator page={page} totalPages={ppcount} />
           </div>

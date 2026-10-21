@@ -23,6 +23,7 @@ for (const [key, value] of Object.entries({
     Object.defineProperty(globalThis, key, { value, configurable: true, writable: true });
 }
 dom.window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+Object.defineProperty(dom.window.document, 'fonts', { value: { addEventListener() {}, removeEventListener() {}, ready: Promise.resolve() } });
 after(async () => {
     // Let Mantine's deferred focus callbacks settle before removing browser globals.
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -37,7 +38,8 @@ const { createRoot } = require('react-dom/client');
 const mantine = require('@mantine/core');
 
 async function fixture(page: string, ui: any = {}, response: any = {}, args: any = {}, user: any = { _id: 0 }, translations = {}, pageName = page) {
-    const path = page === 'contest_team' ? 'contest/team' : page === 'contest_detail' ? 'contest/123' : 'register';
+    const path = page === 'contest_team' ? 'contest/team' : page === 'contest_detail' ? 'contest/123'
+        : page === 'manage_user_edit' ? 'manage/users/42?page=3&q=student' : 'register';
     dom.reconfigure({ url: `https://oj.example/d/team/${path}` });
     const navigations: string[] = [];
     const notices: any[] = [];
@@ -47,7 +49,9 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
     const buildUrl = (route: string, params: any = {}, query: any = {}) => {
         if (route === 'problem_detail') return `${prefix}/p/${params.pid}?${new URLSearchParams(query)}`;
         if (route === 'record_detail') return `${prefix}/record/${params.rid}`;
-        return `${prefix}/${route}`;
+        const search = new URLSearchParams(query).toString();
+        if (route === 'manage_user_edit') return `${prefix}/manage/users/${params.uid}${search ? `?${search}` : ''}`;
+        return `${prefix}/${route}${search ? `?${search}` : ''}`;
     };
     const mocks: Record<string, any> = {
         './contest-detail.css': {},
@@ -93,6 +97,14 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         '@/utils/invitation-code': { INVITATION_CODE_LENGTH, isInvitationCodeComplete },
         './invitation-code-input.css': {},
         '@/components/common/time-display': { TimeDisplay: () => null },
+        '@/components/common/paginator': { Paginator: () => null },
+        '@/components/common/data-table': {
+            DataTable: ({ data, columns }: any) => h('div', null,
+                data.map((row: any) => h('div', { key: row._id },
+                    columns.map((column: any) => h('div', { key: column.key }, column.render?.(row))),
+                )),
+            ),
+        },
         '@/components/markdown/markdown-renderer': { MarkdownRenderer: () => null },
         '@/utils/i18n-content': { extractLocalizedContent: (content: string) => content },
         '@/utils/user-name': { formatUserName: (value: any) => value.uname },
@@ -143,6 +155,44 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         async close() { await act(async () => root.unmount()); host.remove(); },
     };
 }
+
+test('managed user names open the editor and the profile form preserves drafts, sudo redirects and scoped back links', async () => {
+    const list = await fixture('manage_user', {}, {}, { page: 3, q: 'student', udocs: [{ _id: 42, uname: 'student', canEditProfile: true }] });
+    try {
+        assert.ok(list.host.querySelector('a[href="/d/team/manage/users/42?page=3&q=student"]'));
+        assert.equal(list.host.querySelector('a[href^="/user_detail"]'), null);
+    } finally { await list.close(); }
+    for (const response of [{ saved: true }, { error: { message: 'Denied' } }, { url: '/d/team/user/sudo' }]) {
+        // eslint-disable-next-line no-await-in-loop
+        const form = await fixture('manage_user_edit', {}, response, {
+            profile: { _id: 42, uname: 'student', bio: 'Bio draft', qq: '12345', school: 'School A', studentId: '001', phone: '0123' },
+        });
+        try {
+            assert.ok(form.host.querySelector('a[href="/d/team/manage_user?page=3&q=student"]'));
+            assert.equal(form.host.querySelector('textarea')?.value, 'Bio draft');
+            // eslint-disable-next-line no-await-in-loop
+            await form.input(1, '54321');
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => form.host.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click());
+            // eslint-disable-next-line no-await-in-loop
+            await form.submit();
+            const payload = JSON.parse(form.calls[0].init.body);
+            assert.deepEqual(payload, { bio: 'Bio draft', qq: '54321', school: 'School A', studentId: '001', phone: '0123', resetAvatar: true });
+            assert.equal(form.calls[0].url, 'https://oj.example/d/team/manage/users/42?page=3&q=student');
+            if ('saved' in response) {
+                assert.equal(form.notices.at(-1).color, 'green');
+            } else if ('error' in response) {
+                assert.equal(form.notices.at(-1).color, 'red');
+                assert.equal(form.host.querySelector('textarea')?.value, 'Bio draft');
+                assert.equal(form.navigations.length, 0);
+            } else {
+                assert.deepEqual(form.navigations, ['/d/team/user/sudo']);
+                assert.equal(form.notices.length, 0, 'requiring sudo is not a successful save');
+            }
+        // eslint-disable-next-line no-await-in-loop
+        } finally { await form.close(); }
+    }
+});
 
 test('login shows a translated parameterized password error in its existing notification', async () => {
     const f = await fixture('user_login', {}, {

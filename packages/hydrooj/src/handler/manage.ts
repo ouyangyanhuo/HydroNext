@@ -385,7 +385,11 @@ class SystemUserManageHandler extends SystemHandler {
             limit,
         );
         this.response.body = {
-            udocs, page, upcount, ucount, q,
+            udocs: udocs.map((udoc) => ({
+                ...udoc,
+                canEditProfile: udoc._id > 1 && (udoc.priv !== PRIV.PRIV_ALL || this.user.priv === PRIV.PRIV_ALL),
+            })),
+            page, upcount, ucount, q,
         };
         this.response.template = 'manage_user.html';
     }
@@ -440,6 +444,42 @@ class SystemUserManageHandler extends SystemHandler {
             oplog.log(this, 'user.ban', { uid }),
         ]);
         this.back();
+    }
+}
+
+class SystemUserEditHandler extends SystemHandler {
+    async getEditableUser(uid: number) {
+        const udoc = await user.getById('system', uid);
+        if (!udoc) throw new UserNotFoundError(uid);
+        if (uid === 1 || (udoc.priv === PRIV.PRIV_ALL && this.user.priv !== PRIV.PRIV_ALL)) throw new CannotEditSuperAdminError();
+        return udoc;
+    }
+
+    @requireSudo
+    @param('uid', Types.PositiveInt)
+    async get(domainId: string, uid: number) {
+        const udoc = await this.getEditableUser(uid);
+        this.response.body.profile = Object.fromEntries(
+            ['_id', 'uname', 'mail', 'avatar', 'bio', 'qq', 'school', 'studentId', 'phone'].map((key) => [key, udoc[key] ?? '']),
+        );
+        this.response.template = 'manage_user_edit.html';
+    }
+
+    @requireSudo
+    @param('uid', Types.PositiveInt)
+    @param('bio', Types.Content, true)
+    @param('qq', Types.ShortString, true)
+    @param('school', Types.ShortString, true)
+    @param('studentId', Types.ShortString, true)
+    @param('phone', Types.ShortString, true)
+    @param('resetAvatar', Types.Boolean)
+    async post(domainId: string, uid: number, bio = '', qq = '', school = '', studentId = '', phone = '', resetAvatar = false) {
+        const udoc = await this.getEditableUser(uid);
+        const changes: Record<string, string> = { bio, qq, school, studentId, phone };
+        if (resetAvatar) changes.avatar = `gravatar:${udoc.mail}`;
+        await user.setById(uid, changes);
+        await oplog.log(this, 'user.editProfile', { uid, fields: Object.keys(changes), resetAvatar });
+        this.response.body = { saved: true };
     }
 }
 
@@ -525,6 +565,7 @@ export async function apply(ctx) {
     ctx.Route('manage_setting', '/manage/setting', SystemSettingHandler);
     ctx.Route('manage_config', '/manage/config', SystemConfigHandler);
     ctx.Route('manage_user', '/manage/users', SystemUserManageHandler);
+    ctx.Route('manage_user_edit', '/manage/users/:uid', SystemUserEditHandler);
     ctx.Route('manage_system_data', '/manage/system-data', SystemDataManageHandler);
     ctx.Route('manage_user_import', '/manage/userimport', SystemUserImportHandler);
     ctx.Route('manage_user_priv', '/manage/userpriv', SystemUserPrivHandler);

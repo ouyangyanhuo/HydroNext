@@ -17,7 +17,7 @@ import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { UserLink } from '@/components/user/user-link';
-import { usePageData, useUiContext, useUserContext } from '@/context/page-data';
+import { usePageData, useSetPageData, useUiContext, useUserContext } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
@@ -27,7 +27,7 @@ import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { getLangDisplay } from '@/utils/lang-display';
-import { getProblemNavigationQuery, getProblemNavigationSource, getSubmissionRecordQuery } from '@/utils/problem-navigation';
+import { getProblemEditorUrl, getProblemNavigationQuery, getProblemNavigationSource, getSubmissionRecordQuery } from '@/utils/problem-navigation';
 
 interface ProblemViewTransition {
   finished: Promise<void>;
@@ -463,6 +463,7 @@ function ProblemSidebar({
 
 export default function ProblemDetailPage() {
   const { args } = usePageData();
+  const setPageData = useSetPageData();
   const ui = useUiContext();
   const user = useUserContext();
   const { t } = useI18n();
@@ -527,7 +528,7 @@ export default function ProblemDetailPage() {
     const queryLang = new URLSearchParams(window.location.search).get('lang');
     return queryLang || (langs.includes(sessionLanguage) ? sessionLanguage : langs[0] || sessionLanguage);
   });
-  const [scratchpadOpen, setScratchpadOpen] = useState(false);
+  const [scratchpadOpen, setScratchpadOpen] = useState(() => new URLSearchParams(window.location.search).get('mode') === 'code');
   const workspaceRef = useRef<HTMLDivElement>(null);
   const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);
   const pid = pdoc.pid || pdoc.docId;
@@ -613,13 +614,20 @@ export default function ProblemDetailPage() {
   const defaultCode = rdoc?.code || '';
   const switchScratchpad = (open: boolean) => {
     if (open === scratchpadOpen) return;
+    const update = () => {
+      const url = getProblemEditorUrl(window.location.href, open);
+      window.history.pushState({ ...window.history.state, url }, '', url);
+      flushSync(() => {
+        setPageData((previous) => ({ ...previous, url: window.location.pathname + window.location.search }), true);
+        setScratchpadOpen(open);
+      });
+    };
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) {
-      setScratchpadOpen(open);
+      update();
       return;
     }
 
-    const update = () => flushSync(() => setScratchpadOpen(open));
     const transitionDocument = document as ProblemTransitionDocument;
     if (transitionDocument.startViewTransition) {
       const root = document.documentElement;

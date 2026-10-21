@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-    getProblemNavigationQuery, getProblemNavigationSource, getRecordProblemQuery, getSubmissionRecordQuery, resolveProblemNavigation,
+    getProblemEditorUrl, getProblemNavigationQuery, getProblemNavigationSource, getRecordProblemQuery, getRecordReturnQuery,
+    getSubmissionRecordQuery, resolveProblemNavigation,
 } from '../src/utils/problem-navigation.ts';
 
 const tid = '1234567890abcdef12345678';
@@ -12,6 +13,26 @@ const buildUrl = (route: string, params: Record<string, string | number> = {}, q
     return `/d/team${path}${search ? `?${search}` : ''}`;
 };
 const queryOf = (href: string) => new URL(href, 'https://oj.example').searchParams;
+
+test('editor mode is addressable and result-aware returns preserve source context without trusting arbitrary URLs', () => {
+    for (const search of [
+        '', '?nav=list&page=3&q=graph&sort=desc', `?tid=${tid}`, `?nav=training&training=${tid}&chapter=2&uid=9&viewRecords=false`,
+    ]) {
+        const descriptionUrl = `https://oj.example/d/team/p/P2${search}#statement`;
+        const editorUrl = getProblemEditorUrl(descriptionUrl, true);
+        assert.equal(queryOf(editorUrl).get('mode'), 'code');
+        assert.equal(new URL(editorUrl, descriptionUrl).hash, '#statement');
+        assert.equal(getProblemEditorUrl(new URL(editorUrl, descriptionUrl).href, false), `${new URL(descriptionUrl).pathname}${search}#statement`);
+        const submitted = new URLSearchParams(getSubmissionRecordQuery(queryOf(editorUrl).toString(), undefined, 'editor')).toString();
+        const context = getProblemNavigationQuery(search);
+        assert.deepEqual(getRecordReturnQuery(submitted, true), context);
+        assert.deepEqual(getRecordReturnQuery(submitted, false), { ...context, mode: 'code' });
+        assert.equal(getRecordReturnQuery(new URLSearchParams(getSubmissionRecordQuery(search)).toString(), false), null,
+            'self-tests and ordinary record links must not opt into smart return');
+    }
+    assert.equal(getRecordReturnQuery('?submissionSource=https://evil.example', true), null);
+    assert.deepEqual(getRecordReturnQuery('?submissionSource=editor&problemNav=redirect%3Dhttps%3A%2F%2Fevil.example', true), {});
+});
 
 test('submit and record round trips preserve list, contest and training navigation without carrying arbitrary URLs', async () => {
     for (const search of [

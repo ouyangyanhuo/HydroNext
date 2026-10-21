@@ -71,6 +71,45 @@ function fixture(isInjected: boolean) {
     };
 }
 
+test('URL-only editor mode updates preserve the page instance while real navigation and errors remount it', async () => {
+    const module = { exports: {} as any };
+    const code = transformSync(readFileSync(new URL('../src/context/page-data.tsx', import.meta.url), 'utf8'), {
+        loader: 'tsx', format: 'cjs', jsx: 'automatic',
+    }).code;
+    const mocks = {
+        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/registry/page-metadata': { getPageMetadata: () => ({ title: 'Problem' }) },
+        '@/stores/session': { useSessionStore: { getState: () => ({ setSession() {} }) } },
+        '@/stores/route': {
+            useRouteStore: Object.assign((select: any) => select({ setRouteMap() {} }), { getState: () => ({ setPage() {} }) }),
+        },
+    };
+    runInNewContext(code, {
+        module, exports: module.exports, window: dom.window, document: dom.window.document,
+        require: (id: string) => mocks[id] || require(id),
+    });
+    let setData: any;
+    let revision: number;
+    function Probe() {
+        setData = module.exports.useSetPageData();
+        revision = module.exports.usePageDataRevision();
+        return null;
+    }
+    const root = createRoot(dom.window.document.createElement('div'));
+    const initial = { name: 'problem_detail', url: '/d/team/p/1', args: {} };
+    try {
+        await act(async () => root.render(h(module.exports.PageDataProvider, { initial }, h(Probe))));
+        await act(async () => setData((data: any) => ({ ...data, url: '/d/team/p/1?mode=code' }), true));
+        assert.equal(revision!, 0);
+        await act(async () => setData((data: any) => ({ ...data, args: { refreshed: true } }), true));
+        assert.equal(revision!, 0);
+        await act(async () => setData((data: any) => ({ ...data, url: '/d/team/p/2', args: {} }), true));
+        assert.equal(revision!, 1);
+        await act(async () => setData((data: any) => ({ ...data, args: { error: 'Forbidden' } }), true));
+        assert.equal(revision!, 2);
+    } finally { await act(async () => root.unmount()); }
+});
+
 test('navigation, browser back/forward and bfcache restoration fetch uncached JSON without losing domain or query', async () => {
     dom.window.history.replaceState({}, '', '/d/team/record?page=2');
     const router = fixture(true);
@@ -100,6 +139,15 @@ test('navigation, browser back/forward and bfcache restoration fetch uncached JS
         }
         await act(async () => router.navigate(dom.window.location.href, { replace: true, preservePage: true }));
         assert.equal(router.preserved.at(-1), true);
+        const editorUrl = '/d/team/p/P2?nav=list&page=3&mode=code';
+        await act(async () => router.navigate(editorUrl));
+        await act(async () => router.navigate('/d/team/record/123?submissionSource=editor'));
+        await act(async () => {
+            const changed = new Promise<void>((resolve) => dom.window.addEventListener('popstate', () => resolve(), { once: true }));
+            dom.window.history.back();
+            await changed;
+        });
+        assert.equal(router.getData().url, editorUrl, 'native back must restore the editor URL even for a smart-return record');
     } finally {
         await router.unmount();
     }

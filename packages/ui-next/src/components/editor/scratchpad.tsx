@@ -371,7 +371,7 @@ export function Scratchpad({
             // Keep all previous events and persist in-flight edits before navigating away.
             await replaceRecording(replayStorageKey, next).catch(warnReplayStorage);
           }
-          if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }, getSubmissionRecordQuery(navigationSearch, args.tdoc)));
+          if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }, getSubmissionRecordQuery(navigationSearch, args.tdoc, 'editor')));
           else setSubmitResult(data);
         }
       }

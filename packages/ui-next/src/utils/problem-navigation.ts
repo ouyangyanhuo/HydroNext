@@ -49,13 +49,30 @@ export function getProblemNavigationQuery(search: string, contest?: ProblemNavig
 }
 
 /** Namespace problem state so it cannot collide with record-page query fields. */
-export function getSubmissionRecordQuery(search: string, contest?: ProblemNavigationOptions['contest']): Record<string, string> {
+export function getSubmissionRecordQuery(
+  search: string, contest?: ProblemNavigationOptions['contest'], source?: 'editor',
+): Record<string, string> {
   const context = new URLSearchParams(getProblemNavigationQuery(search, contest)).toString();
-  return context ? { problemNav: context } : {};
+  return { ...(context ? { problemNav: context } : {}), ...(source === 'editor' ? { submissionSource: source } : {}) };
 }
 
 export function getRecordProblemQuery(search: string, contest?: ProblemNavigationOptions['contest']) {
   return getProblemNavigationQuery(new URLSearchParams(search).get('problemNav') || '', contest);
+}
+
+/** Keep editor mode in the document URL so refresh and native history restore it. */
+export function getProblemEditorUrl(href: string, open: boolean) {
+  const url = new URL(href);
+  if (open) url.searchParams.set('mode', 'code');
+  else url.searchParams.delete('mode');
+  return url.pathname + url.search + url.hash;
+}
+
+/** Only the formal editor-submit flow opts into result-aware return navigation. */
+export function getRecordReturnQuery(search: string, accepted: boolean, contest?: ProblemNavigationOptions['contest']) {
+  if (new URLSearchParams(search).get('submissionSource') !== 'editor') return null;
+  const query = getRecordProblemQuery(search, contest);
+  return accepted ? query : { ...query, mode: 'code' };
 }
 
 export function getProblemNavigationSource({ contest, search, buildUrl }: Pick<ProblemNavigationOptions, 'contest' | 'search' | 'buildUrl'>) {

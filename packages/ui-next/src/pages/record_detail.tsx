@@ -10,6 +10,7 @@ import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData, useUiContext } from '@/context/page-data';
+import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
@@ -17,7 +18,7 @@ import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useRecordSocket } from '@/hooks/use-record-socket';
 import { formatErrorMessage } from '@/utils/error';
 import { extractLocalizedContent } from '@/utils/i18n-content';
-import { getRecordProblemQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
+import { getRecordProblemQuery, getRecordReturnQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
 
 function asArray(value: any) {
   if (!value) return [];
@@ -221,6 +222,7 @@ export default function RecordDetailPage() {
   const { args } = usePageData();
   const ui = useUiContext();
   const buildUrl = useBuildUrl();
+  const navigate = useNavigate();
   const { t, language } = useI18n();
   const user = useCurrentUser();
   const canJudge = useHasPriv(PRIV.PRIV_JUDGE) || args.canRejudge;
@@ -257,7 +259,12 @@ export default function RecordDetailPage() {
   const recordNavigationQuery = getSubmissionRecordQuery(new URLSearchParams(problemQuery).toString());
 
   const goBack = () => {
-    if (window.history.length > 1) window.history.back();
+    const returnQuery = rdoc.uid === user._id
+      ? getRecordReturnQuery(window.location.search, rdoc.status === STATUS.STATUS_ACCEPTED, tdoc)
+      : null;
+    if (returnQuery) {
+      void navigate(buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId || rdoc.pid }, returnQuery), { replace: true });
+    } else if (window.history.length > 1) window.history.back();
     else window.location.assign(buildUrl('record_main'));
   };
 

@@ -1236,7 +1236,40 @@ a {
 }
 
 .hydro-problem-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--hydro-toolbar-control-height);
+  cursor: pointer;
+  user-select: none;
   transition: opacity var(--hydro-duration-normal) var(--hydro-ease-out);
+}
+
+.hydro-problem-select-all .mantine-Checkbox-root,
+.hydro-problem-select-all .mantine-Checkbox-body,
+.hydro-problem-select-all .mantine-Checkbox-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hydro-problem-select-all .mantine-Checkbox-input {
+  cursor: pointer;
+}
+
+.hydro-problem-select-all__label {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--mantine-font-size-xs);
+  line-height: 1;
+  color: var(--hydro-text-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--hydro-duration-normal) var(--hydro-ease-out);
+}
+
+.hydro-problem-select-all:hover .hydro-problem-select-all__label {
+  color: var(--hydro-text);
 }
 
 .hydro-category-flyout {

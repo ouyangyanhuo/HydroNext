@@ -48,9 +48,9 @@ export function PageDataProvider({ initial, children }: PageDataProviderProps) {
 
     setState((prev) => ({
       data: nextData,
-      // Background permission updates must not destroy an open editor's local state.
+      // URL-only mode changes and background permission updates must not destroy an open editor's local state.
       revision: prev.revision + (preservePage && nextData.name === previousData.name
-        && nextData.url === previousData.url && !nextData.args.error ? 0 : 1),
+        && (nextData.url === previousData.url || nextData.args === previousData.args) && !nextData.args.error ? 0 : 1),
     }));
   }, []);
   const value = useMemo(() => ({ data, revision, setData }), [data, revision, setData]);

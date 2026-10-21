@@ -92,6 +92,7 @@ registerPage('manage_config', () => import('./manage_config'), { title: 'Configu
 registerPage('manage_script', () => import('./manage_script'), { title: 'Scripts' });
 registerPage('manage_system_data', () => import('./manage_system_data'), { title: 'System Data' });
 registerPage('manage_user', () => import('./manage_user'), { title: 'User Management' });
+registerPage('manage_user_edit', () => import('./manage_user_edit'), { title: 'Edit user information' });
 registerPage('manage_user_import', () => import('./manage_user_import'), { title: 'User Import' });
 registerPage('manage_user_priv', () => import('./manage_user_priv'), { title: 'User Privileges' });
 registerPage('ranking', () => import('./ranking'), { title: 'Ranking', nav: 'ranking' });

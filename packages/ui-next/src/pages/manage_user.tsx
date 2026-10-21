@@ -8,7 +8,6 @@ import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
-import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -25,6 +24,7 @@ interface ManagedUser {
   regat?: string;
   loginat?: string;
   loginip?: string;
+  canEditProfile?: boolean;
 }
 
 export default function ManageUserPage() {
@@ -174,7 +174,14 @@ export default function ManageUserPage() {
     {
       key: 'user',
       title: t('User'),
-      render: (user: ManagedUser) => <UserLink user={user} size="sm" />,
+      render: (user: ManagedUser) => user.canEditProfile ? (
+        <Link
+          href={buildUrl('manage_user_edit', { uid: user._id }, { page: String(page), ...(initialQuery ? { q: initialQuery } : {}) })}
+          className="no-underline hover:underline"
+        >
+          <Text size="sm" fw="var(--hydro-weight-medium)">{formatUserName(user)}</Text>
+        </Link>
+      ) : <Text size="sm" c="dimmed">{formatUserName(user)}</Text>,
     },
     {
       key: 'mail',
@@ -253,7 +260,7 @@ export default function ManageUserPage() {
         <Group justify="space-between" align="flex-end" mb="md" wrap="wrap">
           <Stack gap={2}>
             <Title order={3} size="h4">{t('All Users')}</Title>
-            <Text size="sm" c="dimmed">{t('View users and reset passwords')}</Text>
+            <Text size="sm" c="dimmed">{t('Edit user profiles and manage accounts.')}</Text>
           </Stack>
           <Group gap="xs">
             <TextInput
