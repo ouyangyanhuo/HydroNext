@@ -296,4 +296,7 @@ test('domain dashboard layout renders categorized panels, hero section and maint
     assert.match(source, /t\('Permissions'\)/);
     assert.match(source, /t\('Groups'\)/);
     assert.match(source, /canDeleteDomain/);
+    assert.match(source, /className="hydro-bulletin"/);
+    assert.match(source, /className="hydro-bulletin__toggle"/);
+    assert.match(source, /t\('Show less'\) : t\('Show more'\)/);
 });
