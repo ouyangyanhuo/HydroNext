@@ -40,6 +40,7 @@ const VISIBILITY_LABELS: Record<string, string> = {
   'navigationHidden.ranking': 'Show Ranking navigation entry',
 };
 const INVERTED_KEYS = Object.keys(VISIBILITY_LABELS);
+const DOMAIN_FIELD_ORDER = ['name', 'avatar', 'share', 'langs', 'bulletin'];
 
 export function DomainSettingsPage({ visibility = false }: { visibility?: boolean }) {
   const { args } = usePageData();
@@ -47,10 +48,32 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
   const current = args.current || args.domain || args.ddoc || {};
   const domainId = String(current._id || args.UiContext?.domainId || '');
   const previewOwner = useRef(Symbol('domain-navigation-preview'));
-  const settings = useMemo(() => visibility && Array.isArray(args.settings)
-    ? args.settings.map((setting) => VISIBILITY_LABELS[setting.key]
-      ? { ...setting, name: VISIBILITY_LABELS[setting.key] } : setting)
-    : args.settings || {}, [args.settings, visibility]);
+  const settings = useMemo(() => {
+    if (!Array.isArray(args.settings)) return args.settings || {};
+    if (visibility) {
+      return args.settings.map((setting) => (VISIBILITY_LABELS[setting.key]
+        ? { ...setting, name: VISIBILITY_LABELS[setting.key] }
+        : setting));
+    }
+    const modified = args.settings.map((setting) => {
+      if (setting.key === 'avatar') {
+        return { ...setting, name: 'Domain icon', desc: '' };
+      }
+      if (setting.key === 'langs') {
+        return { ...setting, desc: '' };
+      }
+      return setting;
+    });
+
+    return modified.slice().sort((a, b) => {
+      const ia = DOMAIN_FIELD_ORDER.indexOf(a.key);
+      const ib = DOMAIN_FIELD_ORDER.indexOf(b.key);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      return 0;
+    });
+  }, [args.settings, visibility]);
   const [loading, setLoading] = useState(false);
 
   const previewChanges = useCallback((values: Record<string, any>) => {

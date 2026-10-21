@@ -48,6 +48,8 @@ setting_navigation: Hiding features
 'Enter exactly {0} letters or numbers.': 'Enter exactly {0} letters or numbers.'
 'Enter the 8-character team invitation code': 'Enter the 8-character team invitation code'
 'Allowed langs': 'Allowed languages'
+'Domain icon': 'Domain icon'
+'avatar': 'Domain icon'
 'Leave blank to allow all languages': 'Leave blank to allow all languages'
 'Join a Team': 'Join a Team'
 'Only team members can manage this team.': 'Only team members can manage this team.'

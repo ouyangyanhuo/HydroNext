@@ -221,7 +221,6 @@ function SettingInput({
     return (
       <TagMultiSelect
         label={label || t('Allowed langs')}
-        description={description || t('Leave blank to allow all languages')}
         placeholder={t('Leave blank to allow all languages')}
         data={data}
         value={selected}

@@ -359,6 +359,9 @@ test('domain visibility settings render responsive boolean cards grid and contes
 test('domain settings layout uses multi-column fields grid and TagMultiSelect for allowed submission languages', () => {
     const domainEditSource = read('../src/pages/domain_edit.tsx');
     assert.match(domainEditSource, /fieldsGrid=\{!visibility\}/);
+    assert.match(domainEditSource, /DOMAIN_FIELD_ORDER = \['name', 'avatar', 'share', 'langs', 'bulletin'\]/);
+    assert.match(domainEditSource, /setting\.key === 'avatar'\)\s*\{\s*return \{ \.\.\.setting, name: 'Domain icon', desc: '' \};/);
+    assert.match(domainEditSource, /setting\.key === 'langs'\)\s*\{\s*return \{ \.\.\.setting, desc: '' \};/);
 
     const settingsFormSource = read('../src/components/common/settings-form.tsx');
     assert.match(settingsFormSource, /setting\.key === 'langs'/);
