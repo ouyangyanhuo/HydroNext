@@ -1,4 +1,4 @@
-FROM node:22-bookworm AS dependencies
+FROM node:22.23.4-bookworm AS dependencies
 
 WORKDIR /hydrooj
 
@@ -13,7 +13,7 @@ COPY examples ./examples
 RUN corepack enable && \
     YARN_ENABLE_IMMUTABLE_INSTALLS=true yarn workspaces focus @hydrooj/hydrojudge --production
 
-FROM node:22-bookworm
+FROM node:22.23.4-bookworm
 
 WORKDIR /hydrooj
 
