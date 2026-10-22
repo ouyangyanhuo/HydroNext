@@ -327,7 +327,7 @@ export function Scratchpad({
       return;
     }
     judgePending.current = true;
-    setCooldownUntil((current) => ({ ...current, [pretest ? 'pretest' : 'submit']: now + 10000 }));
+    setCooldownUntil((current) => ({ ...current, [pretest ? 'pretest' : 'submit']: now + 5000 }));
     if (pretest) setPretesting(true);
     else setSubmitting(true);
     setError('');
