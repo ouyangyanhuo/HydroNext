@@ -355,6 +355,26 @@ test('scoreboard filters translate personal/team labels, rename the implicit UID
     }
 });
 
+test('stale scoreboard filters restore all rows and keep the displayed filter and history metadata consistent', async () => {
+    const f = await fixture('contest_scoreboard', {}, {}, {
+        tdoc: { docId: 'stale-filter' }, groups: [],
+        rows: [[{ type: 'user' }, { type: 'rank' }],
+            [{ type: 'user', raw: 4, value: 'Alice' }, { type: 'rank', value: 1 }],
+            [{ type: 'user', raw: 5, value: 'Bob' }, { type: 'rank', value: 2 }]],
+    }, { _id: 2 });
+    try {
+        for (const value of ['4', 'missing-group', '4,5']) {
+            dom.window.history.replaceState({ marker: 'keep-router-state' }, '', `#filter=${value}`);
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => dom.window.dispatchEvent(new dom.window.HashChangeEvent('hashchange')));
+            assert.equal(f.host.querySelector<HTMLInputElement>('input[aria-label="Filter participants"]')?.value, 'All Users');
+            assert.equal(f.host.querySelectorAll('tbody tr').length, 2);
+            assert.equal(dom.window.location.hash, '#filter=all');
+            assert.equal(dom.window.history.state.marker, 'keep-router-state');
+        }
+    } finally { await f.close(); }
+});
+
 test('login shows a translated parameterized password error in its existing notification', async () => {
     const f = await fixture('user_login', {}, {
         error: { message: 'Invalid password for user {0}.', params: ['admin123'] },

@@ -944,6 +944,9 @@ export class ContestScoreboardHandler extends ContestDetailBaseHandler {
         }
         const view = this.ctx.scoreboard.getView(viewId);
         if (!view) throw new NotFoundError(`View ${viewId} not found`);
+        if (['html', 'csv', 'ghost'].includes(viewId)) {
+            this.checkPerm(this.user.own(this.tdoc) ? PERM.PERM_EDIT_CONTEST_SELF : PERM.PERM_EDIT_CONTEST);
+        }
         const args = {};
         const fetcher = {
             tdoc: () => this.tdoc,
@@ -1212,7 +1215,8 @@ export async function apply(ctx: Context) {
                     problem.getList(tdoc.domainId, tdoc.pids, true, false, problem.PROJECTION_LIST, true),
                     contest.getMultiStatus(tdoc.domainId, { docId: tdoc._id }).toArray(),
                 ]);
-                const udict = await user.getList(tdoc.domainId, teams.map((i) => i.uid));
+                const showPrivateInfo = this.user.hasPerm(PERM.PERM_VIEW_USER_PRIVATE_INFO);
+                const udict = await user.getListForRender(tdoc.domainId, teams.map((i) => i.uid), showPrivateInfo);
                 const teamIds: Record<number, number> = {};
                 for (let i = 1; i <= teams.length; i++) teamIds[teams[i - 1].uid] = i;
                 const time = (t: ObjectId) => Math.floor((t.getTimestamp().getTime() - tdoc.beginAt.getTime()) / Time.second);
@@ -1245,9 +1249,10 @@ export async function apply(ctx: Context) {
                 ].concat(
                     tdoc.pids.map((i, idx) => `@p ${pid(idx)},${escape(pdict[i]?.title || 'Unknown Problem')},20,0`),
                     teams.map((i, idx) => {
-                        const showName = this.user.hasPerm(PERM.PERM_VIEW_USER_PRIVATE_INFO) && udict[i.uid].displayName
+                        const showName = showPrivateInfo && udict[i.uid].displayName
                             ? udict[i.uid].displayName : udict[i.uid].uname;
-                        const displayName = `${i.rank ? '*' : ''}${escape(udict[i.uid].school || unknownSchool)}-${escape(showName)}`;
+                        const school = showPrivateInfo ? udict[i.uid].school : '';
+                        const displayName = `${i.rank ? '*' : ''}${escape(school || unknownSchool)}-${escape(showName)}`;
                         return `@t ${idx + 1},0,1,"${displayName}"`;
                     }),
                     submissions,

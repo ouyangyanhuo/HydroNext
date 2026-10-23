@@ -308,7 +308,20 @@ describe('App', () => {
             await agent.get(`/d/${b}/`).expect(200);
             assert.equal((await domain.get(b)).contestMode, undefined);
             await agent.get(`/d/${a}/p`).expect(200);
+            await domain.edit(b, { contestFocus: foreign.toHexString() });
             await contest.del(a, focus);
+            assert.equal((await domain.coll.findOne({ _id: a })).contestFocus, '', 'deleted focus is cleared persistently');
+            assert.equal((await domain.get(a)).contestMode, true, 'deleting the focus does not disable contest mode');
+            assert.equal((await domain.get(b)).contestFocus, foreign.toHexString(), 'another domain keeps its focus');
+            const replacement = await contest.add(a, 'Replacement focus', '', 2, 'acm', begin, end, []);
+            await domain.edit(a, { contestFocus: replacement.toHexString() });
+            await contest.del(a, focus);
+            assert.equal((await domain.get(a)).contestFocus, replacement.toHexString(), 'deleting an old focus preserves its replacement');
+            await contest.del(a, replacement);
+            assert.equal((await domain.coll.findOne({ _id: a })).contestFocus, '');
+            assert.equal((await domain.get(b)).contestFocus, foreign.toHexString());
+            await domain.edit(a, { contestFocus: focus.toHexString() });
+            assert.equal((await domain.get(a)).contestFocus, '', 'legacy stale focus falls back safely on reads');
             await agent.post(route).set('Accept', 'application/json').send({ contestMode: false }).expect(200);
             assert.equal((await domain.get(a)).contestFocus, '');
             const restored = getPageArgs(await agent.get(`/d/${a}/`).set('Accept', 'application/json').expect(200));
@@ -351,6 +364,59 @@ describe('App', () => {
             await contest.del(domainId, tid);
             await domain.del(domainId);
             await user.coll.deleteOne({ _id: uid });
+            user._deleteUserCache(true);
+        }
+    });
+
+    it('Scoreboard exports require actual editing rights and protect private school fields independently', async () => {
+        const { contest, domain, user } = global.Hydro.model;
+        const { PERM } = require('../packages/hydrooj/src/model/builtin');
+        const domainId = 'export-permissions-test';
+        const uid = await user.create('export-viewer@example.com', 'export-viewer', 'secret');
+        const target = await user.create('export-target@example.com', 'export-target', 'secret');
+        const base = PERM.PERM_VIEW | PERM.PERM_VIEW_CONTEST | PERM.PERM_VIEW_CONTEST_SCOREBOARD;
+        await domain.add(domainId, 2, 'Export permissions', '');
+        await domain.setRoles(domainId, {
+            guest: 0n, default: base, editor: base | PERM.PERM_EDIT_CONTEST,
+            selfEditor: base | PERM.PERM_EDIT_CONTEST_SELF,
+            privateEditor: base | PERM.PERM_EDIT_CONTEST | PERM.PERM_EDIT_CONTEST_SELF | PERM.PERM_VIEW_USER_PRIVATE_INFO,
+        });
+        await domain.setJoin(domainId, uid, true);
+        await user.setById(target, { school: 'PRIVATE_EXPORT_SCHOOL_MARKER' });
+        const now = Date.now();
+        const tid = await contest.add(domainId, 'Export permissions', '', 2, 'acm',
+            new Date(now - 60_000), new Date(now + 3600_000), []);
+        await contest.attend(domainId, tid, target);
+        const viewer = supertest.agent(require('hydrooj').httpServer);
+        await viewer.post('/login').send({ uname: 'export-viewer', password: 'secret' }).expect(302);
+        const route = `/d/${domainId}/contest/${tid}/scoreboard`;
+        const content = (response: any) => response.text || response.body.toString('utf8');
+        try {
+            assert.equal(getPageArgs(await viewer.get(route).set('Accept', 'application/json').expect(200)).canEdit, false);
+            for (const view of ['html', 'csv', 'ghost']) {
+                // eslint-disable-next-line no-await-in-loop
+                await viewer.get(`${route}/${view}`).set('Accept', 'application/json').expect(403);
+            }
+            await viewer.get(`${route}?view=csv`).set('Accept', 'application/json').expect(403);
+            await domain.setUserRole(domainId, uid, 'editor');
+            assert.equal(getPageArgs(await viewer.get(route).set('Accept', 'application/json').expect(200)).canEdit, true);
+            for (const view of ['html', 'csv', 'ghost']) {
+                // eslint-disable-next-line no-await-in-loop
+                const response = await viewer.get(`${route}/${view}`).expect(200);
+                assert.ok(!content(response).includes('PRIVATE_EXPORT_SCHOOL_MARKER'));
+            }
+            await contest.edit(domainId, tid, { owner: uid });
+            await viewer.get(`${route}/ghost`).set('Accept', 'application/json').expect(403);
+            await domain.setUserRole(domainId, uid, 'selfEditor');
+            const own = await viewer.get(`${route}/ghost`).expect(200);
+            assert.ok(!content(own).includes('PRIVATE_EXPORT_SCHOOL_MARKER'));
+            await domain.setUserRole(domainId, uid, 'privateEditor');
+            assert.ok(content(await viewer.get(`${route}/ghost`).expect(200)).includes('PRIVATE_EXPORT_SCHOOL_MARKER'));
+            assert.ok(content(await agent.get(`${route}/ghost`).expect(200)).includes('PRIVATE_EXPORT_SCHOOL_MARKER'));
+        } finally {
+            await contest.del(domainId, tid);
+            await domain.del(domainId);
+            await user.coll.deleteMany({ _id: { $in: [uid, target] } });
             user._deleteUserCache(true);
         }
     });

@@ -1,7 +1,7 @@
 import { randomInt } from 'node:crypto';
 import { Dictionary, escapeRegExp } from 'lodash';
 import { LRUCache } from 'lru-cache';
-import { Filter } from 'mongodb';
+import { Filter, ObjectId } from 'mongodb';
 import { Context } from '../context';
 import { SystemError } from '../error';
 import { DomainDoc } from '../interface';
@@ -11,6 +11,7 @@ import db from '../service/db';
 import { MaybeArray, NumberKeys } from '../typeutils';
 import { ArgMethod } from '../utils';
 import { BUILTIN_ROLES, PRIV } from './builtin';
+import * as document from './document';
 import UserModel, { deleteUserCache } from './user';
 
 const coll = db.collection('domain');
@@ -345,6 +346,19 @@ class DomainModel {
 }
 
 export async function apply(ctx: Context) {
+    ctx.on('domain/get', async (ddoc) => {
+        if (!ddoc.contestFocus) return;
+        const focus = typeof ddoc.contestFocus === 'string' && /^[a-f\d]{24}$/i.test(ddoc.contestFocus)
+            ? await document.coll.findOne({ domainId: ddoc._id, docType: document.TYPE_CONTEST, docId: new ObjectId(ddoc.contestFocus) },
+                { projection: { _id: 1 } })
+            : null;
+        // Also tolerate stale settings from older releases, without writing during reads.
+        if (!focus) ddoc.contestFocus = '';
+    });
+    ctx.on('contest/del', async (domainId, tid) => {
+        // Compare-and-set: deleting an old contest must not clear a newly selected focus.
+        await DomainModel.edit(domainId, { contestFocus: '' }, { contestFocus: tid.toHexString() });
+    });
     ctx.on('domain/delete-cache', async (domainId: string) => {
         const ddoc = await DomainModel.get(domainId);
         if (!ddoc) return;

@@ -3,7 +3,7 @@ import './ranking.css';
 import { Group, Paper, Stack, Table, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconCheck, IconTrophy } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { Button } from '@/components/common/button';
 import { ShortSelect } from '@/components/common/select';
 import { TeamIdentity } from '@/components/contest/team-identity';
@@ -23,6 +23,21 @@ import { formatUserName } from '@/utils/user-name';
 
 const EMPTY_ARRAY: any[] = [];
 const EMPTY_OBJECT: Record<string, any> = {};
+
+function readFilter() {
+  const hash = window.location.hash.slice(1);
+  return hash.startsWith('filter=') ? hash.slice(7) || 'all' : 'all';
+}
+
+function subscribeToFilter(onChange: () => void) {
+  window.addEventListener('hashchange', onChange);
+  return () => window.removeEventListener('hashchange', onChange);
+}
+
+function writeFilter(value: string) {
+  window.history.replaceState(window.history.state, '', `#filter=${value}`);
+  window.dispatchEvent(new window.HashChangeEvent('hashchange'));
+}
 
 function starKey(tdoc: any) {
   return `scoreboard-star/${tdoc.domainId}/${tdoc.docId || tdoc._id}`;
@@ -126,10 +141,7 @@ export default function ContestScoreboardPage() {
   const groups = args.groups || EMPTY_ARRAY;
   const availableViews = args.availableViews || EMPTY_OBJECT;
   const viewRoute = name === 'homework_scoreboard' ? 'homework_scoreboard_view' : 'contest_scoreboard_view';
-  const [filter, setFilter] = useState(() => {
-    const hash = window.location.hash.slice(1);
-    return hash.startsWith('filter=') ? hash.slice(7) || 'all' : 'all';
-  });
+  const filter = useSyncExternalStore(subscribeToFilter, readFilter, () => 'all');
   const [stars, setStars] = useState<number[]>(() => {
     try {
       return JSON.parse(localStorage.getItem(starKey(tdoc)) || '[]');
@@ -151,15 +163,6 @@ export default function ContestScoreboardPage() {
     return () => window.clearInterval(timer);
   }, [navigate, tdoc]);
 
-  useEffect(() => {
-    const handler = () => {
-      const hash = window.location.hash.slice(1);
-      setFilter(hash.startsWith('filter=') ? hash.slice(7) || 'all' : 'all');
-    };
-    window.addEventListener('hashchange', handler);
-    return () => window.removeEventListener('hashchange', handler);
-  }, []);
-
   const filterOptions = useMemo(() => {
     const groupOptions = new Map<string, string>();
     for (const group of groups) {
@@ -177,26 +180,31 @@ export default function ContestScoreboardPage() {
     ];
   }, [groups, t, tdoc.allowTeam, user._id]);
 
+  const activeFilter = filterOptions.some((option) => option.value === filter) ? filter : 'all';
+  useEffect(() => {
+    if (filter === activeFilter) return;
+    writeFilter(activeFilter);
+  }, [filter, activeFilter]);
+
   const visibleRows = useMemo(() => {
-    const uids = new Set(filter.split(',').map((item) => Number(item.trim())).filter(Boolean));
+    const uids = new Set(activeFilter.split(',').map((item) => Number(item.trim())).filter(Boolean));
     return bodyRows.filter((row: any[]) => {
       const userCell = row.find((cell) => cell.type === 'user');
       const rankCell = row.find((cell) => cell.type === 'rank');
       const uid = Number(userCell?.raw);
-      if (filter === 'all') return true;
-      if (filter === 'star') return stars.includes(uid);
-      if (filter === 'rank') return String(rankCell?.value) !== '0';
+      if (activeFilter === 'all') return true;
+      if (activeFilter === 'star') return stars.includes(uid);
+      if (activeFilter === 'rank') return String(rankCell?.value) !== '0';
       return uids.has(uid) || udict[uid]?.teamMembers?.some((member: number) => uids.has(member));
     });
-  }, [bodyRows, filter, stars, udict]);
+  }, [bodyRows, activeFilter, stars, udict]);
 
   const toggleStar = (uid: number) => {
     setStars((current) => current.includes(uid) ? current.filter((item) => item !== uid) : [...current, uid]);
   };
 
   const setFilterAndHash = (value: string) => {
-    setFilter(value);
-    window.history.replaceState(window.history.state, '', `#filter=${value}`);
+    writeFilter(value);
   };
 
   const unlock = async () => {
@@ -257,7 +265,7 @@ export default function ContestScoreboardPage() {
           <ShortSelect
             aria-label={t('Filter participants')}
             data={filterOptions}
-            value={filter}
+            value={activeFilter}
             onChange={(value) => setFilterAndHash(value || 'all')}
             allowDeselect={false}
             size="xs"
