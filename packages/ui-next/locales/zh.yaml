@@ -1166,7 +1166,7 @@ Your Status: 你的状态
 'Proctor session refresh is disabled.': '系统已关闭会话令牌刷新。'
 'Proctor settings': '监考设置'
 'Proctor submission lease expired. Please retry.': '监考提交锁已过期，请重试。'
-'Proctored contest': '监考比赛'
+'Proctored contest': '正在监考比赛'
 'Public keys are build-time trust anchors, not secrets. Never include either private key in the client.': '公钥是构建时注入的信任依据，不是秘密。不要将任何一组私钥放入客户端。'
 'Required client version': '指定客户端版本'
 'Requires a compatible proctor client. Final logs are required for valid results.': '需使用版本符合要求的监考客户端，最终日志成功上传后成绩才有效。'

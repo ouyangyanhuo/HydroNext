@@ -5,12 +5,13 @@ import { UserLink } from '@/components/user/user-link';
 import { useI18n } from '@/hooks/use-i18n';
 
 /** A team is a domain-scoped participant, not a profile with a negative user ID. */
-export function TeamIdentity({ id, name, members = [], udict = {}, canManage = false }: {
+export function TeamIdentity({ id, name, members = [], udict = {}, canManage = false, linkMembers = true }: {
   id: number;
   name?: string;
   members?: number[];
   udict?: Record<number, any>;
   canManage?: boolean;
+  linkMembers?: boolean;
 }) {
   const { t } = useI18n();
   const label = name || t('Team');
@@ -25,7 +26,9 @@ export function TeamIdentity({ id, name, members = [], udict = {}, canManage = f
       </Group>
       <Group gap="xs" wrap="wrap">
         <Text size="xs" c="dimmed">{t('{0} members', members.length)}</Text>
-        {members.map((uid) => <UserLink key={uid} user={udict[uid] || { _id: uid, uname: String(uid) }} size="xs" />)}
+        {members.map((uid) => (
+          <UserLink key={uid} user={udict[uid] || { _id: uid, uname: String(uid) }} size="xs" link={linkMembers} />
+        ))}
       </Group>
     </Stack>
   </Group>;

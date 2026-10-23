@@ -8,6 +8,7 @@ import { Button } from '@/components/common/button';
 import { ShortSelect } from '@/components/common/select';
 import { TeamIdentity } from '@/components/contest/team-identity';
 import { Link } from '@/components/link';
+import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -19,7 +20,6 @@ import { formatContestClock } from '@/utils/contest-problem-time';
 import { formatErrorMessage } from '@/utils/error';
 import { goBackOrFallback } from '@/utils/history-back';
 import { toBigInt } from '@/utils/permissions';
-import { formatUserName } from '@/utils/user-name';
 
 const EMPTY_ARRAY: any[] = [];
 const EMPTY_OBJECT: Record<string, any> = {};
@@ -150,7 +150,9 @@ export default function ContestScoreboardPage() {
     }
   });
   const [loading, setLoading] = useState(false);
+  const contestStarted = useDeadlinePassed(tdoc.beginAt);
   const contestEnded = useDeadlinePassed(tdoc.endAt);
+  const canViewProfiles = canEdit || !contestStarted || contestEnded;
 
   useEffect(() => {
     localStorage.setItem(starKey(tdoc), JSON.stringify(stars));
@@ -337,11 +339,14 @@ export default function ContestScoreboardPage() {
                                   name={udict[uid].displayName || cell.value}
                                   members={udict[uid].teamMembers}
                                   udict={udict}
+                                  linkMembers={canViewProfiles}
                                   canManage={args.canManageTeams === true} />
                               ) : (
-                                <Link to="user_detail" params={{ uid }} className="no-underline hover:underline">
-                                  <Text size="sm">{udict[uid] ? formatUserName(udict[uid]) : (cell.value || uid)}</Text>
-                                </Link>
+                                <UserLink
+                                  user={udict[uid] || { _id: uid, uname: String(cell.value || uid) }}
+                                  link={canViewProfiles}
+                                  size="sm"
+                                />
                               )}
                             </Group>
                           ) : (

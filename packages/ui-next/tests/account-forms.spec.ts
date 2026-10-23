@@ -130,6 +130,18 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         }).code, { module: component, exports: component.exports, require: (id: string) => mocks[id] ?? require(id) });
         mocks['@/components/common/invitation-code-input'] = component.exports;
     }
+    if (page === 'contest_scoreboard') {
+        for (const [componentId, componentPath] of [
+            ['@/components/user/user-link', '../src/components/user/user-link.tsx'],
+            ['@/components/contest/team-identity', '../src/components/contest/team-identity.tsx'],
+        ]) {
+            const component = { exports: {} as any };
+            runInNewContext(transformSync(readFileSync(new URL(componentPath, import.meta.url), 'utf8'), {
+                loader: 'tsx', format: 'cjs', jsx: 'automatic',
+            }).code, { module: component, exports: component.exports, require: (id: string) => mocks[id] ?? require(id) });
+            mocks[componentId] = component.exports;
+        }
+    }
     const module = { exports: {} as any };
     const code = transformSync(readFileSync(new URL(`../src/pages/${page}.tsx`, import.meta.url), 'utf8'), {
         loader: 'tsx', format: 'cjs', jsx: 'automatic',
@@ -373,6 +385,31 @@ test('stale scoreboard filters restore all rows and keep the displayed filter an
             assert.equal(dom.window.history.state.marker, 'keep-router-state');
         }
     } finally { await f.close(); }
+});
+
+test('live scoreboard hides user and member profile links only from ordinary contestants', async () => {
+    const now = Date.now();
+    for (const state of [{ canEdit: false, ended: false }, { canEdit: true, ended: false }, { canEdit: false, ended: true }]) {
+        // eslint-disable-next-line no-await-in-loop
+        const f = await fixture('contest_scoreboard', {}, {}, {
+            tdoc: { docId: 'profile-links', allowTeam: true, beginAt: new Date(now - 60_000).toISOString(),
+                endAt: new Date(now + (state.ended ? -1000 : 60_000)).toISOString() },
+            canEdit: state.canEdit,
+            udict: { 4: { _id: 4, uname: 'Alice' }, 5: { _id: 5, uname: 'Bob' },
+                '-1000': { isTeam: true, displayName: 'Team', teamMembers: [4, 5] } },
+            rows: [[{ type: 'user' }, { type: 'rank' }],
+                [{ type: 'user', raw: 4, value: 'Alice' }, { type: 'rank', value: 1 }],
+                [{ type: 'user', raw: 5, value: 'Bob' }, { type: 'rank', value: 2 }],
+                [{ type: 'user', raw: -1000, value: 'Team' }, { type: 'rank', value: 3 }]],
+        }, { _id: 4 });
+        try {
+            assert.equal(f.host.querySelectorAll('a[href="/user_detail"]').length, state.canEdit || state.ended ? 4 : 0);
+            assert.ok(f.host.textContent?.includes('Alice'));
+            assert.ok(f.host.textContent?.includes('Bob'));
+            assert.ok(f.host.textContent?.includes('Team'));
+        // eslint-disable-next-line no-await-in-loop
+        } finally { await f.close(); }
+    }
 });
 
 test('login shows a translated parameterized password error in its existing notification', async () => {
