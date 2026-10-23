@@ -1,4 +1,8 @@
 __flag: 🇯🇵
+'Filter participants': '参加者を絞り込む'
+'Only me': '自分のみ'
+'Ranked Users': '順位対象のユーザー'
+'Starred Users': 'フォロー中のユーザー'
 'Focus contest': '対象コンテスト'
 'No focus': '指定なし'
 'Optional. Focus top bar contest, records and ranking links on one contest. Leave empty for domain-wide links.': '任意。対象コンテストを選ぶと、上部のコンテスト・提出履歴・順位表のリンクがそのコンテストを開きます。未選択の場合はドメイン全体のリンクを維持します。'

@@ -1,4 +1,8 @@
 __flag: 🇰🇷
+'Filter participants': '참가자 필터'
+'Only me': '나만 보기'
+'Ranked Users': '순위에 포함된 사용자'
+'Starred Users': '관심 사용자'
 'Focus contest': '대상 대회'
 'No focus': '지정 안 함'
 'Optional. Focus top bar contest, records and ranking links on one contest. Leave empty for domain-wide links.': '선택 사항입니다. 대상 대회를 선택하면 상단의 대회, 제출 기록, 순위 링크가 해당 대회로 연결됩니다. 비워 두면 도메인 전체 링크를 유지합니다.'

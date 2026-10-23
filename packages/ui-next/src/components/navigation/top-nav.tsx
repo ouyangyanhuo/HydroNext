@@ -402,7 +402,10 @@ export function TopNav() {
       <div className="hydro-top-nav">
         <div className="hydro-container flex h-16 items-center justify-between">
           <Group gap="lg" wrap="nowrap">
-            <Link to={contestMode ? 'contest_main' : 'homepage'} className="group flex min-w-0 items-center gap-3 no-underline">
+            <Link
+              {...navigationTarget(contestMode ? 'contest_main' : 'homepage')}
+              className="group flex min-w-0 items-center gap-3 no-underline"
+            >
               <img src={logoUrl} alt="" className="h-11 w-11 shrink-0 object-contain" />
               <span className="hidden min-w-0 sm:block">
                 <span className="block truncate text-base font-black leading-tight text-[var(--hydro-text)]">

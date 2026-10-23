@@ -16,6 +16,7 @@ const previous = new Map<string, PropertyDescriptor | undefined>();
 for (const [key, value] of Object.entries({
     window: dom.window, document: dom.window.document, navigator: dom.window.navigator,
     HTMLElement: dom.window.HTMLElement, Element: dom.window.Element, Node: dom.window.Node,
+    Document: dom.window.Document, ShadowRoot: dom.window.ShadowRoot,
     HTMLAnchorElement: dom.window.HTMLAnchorElement,
     getComputedStyle: dom.window.getComputedStyle.bind(dom.window), IS_REACT_ACT_ENVIRONMENT: true,
     requestAnimationFrame: (callback: () => void) => setTimeout(callback, 0), cancelAnimationFrame: clearTimeout,
@@ -64,7 +65,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         '@/components/common/button': { Button: mantine.Button, ActionIcon: mantine.ActionIcon },
         '@/components/common/delete-resource-button': { DeleteResourceButton: () => null },
         '@/components/common/select': {
-            ShortSelect: () => null,
+            ShortSelect: page === 'contest_scoreboard' ? mantine.Select : () => null,
             LongSelect: ({ data, value, onChange, disabled, label }: any) => h('select', {
                 value, disabled, 'aria-label': label, onChange: (event: any) => onChange(event.target.value),
             }, data.flatMap((item: any) => item.items || [item]).map((item: any) => h('option', { key: item.value, value: item.value }, item.label))),
@@ -306,6 +307,49 @@ test('scoreboard missing edit metadata still recognizes root and ownership permi
         const f = await fixture('contest_scoreboard', {}, {}, { tdoc: { docId: 'contest', ...entry.tdoc } }, entry.user);
         try {
             assert.equal([...f.host.querySelectorAll('a')].filter((link) => link.textContent?.startsWith('Export as')).length, entry.expected);
+        // eslint-disable-next-line no-await-in-loop
+        } finally { await f.close(); }
+    }
+});
+
+test('scoreboard filters translate personal/team labels, rename the implicit UID group and preserve history state', async () => {
+    const translations = require('yaml').parse(readFileSync(new URL('../locales/zh.yaml', import.meta.url), 'utf8'));
+    for (const allowTeam of [false, true]) {
+        // eslint-disable-next-line no-await-in-loop
+        const f = await fixture('contest_scoreboard', {}, {}, {
+            tdoc: { docId: 'filter-test', allowTeam },
+            groups: [{ name: 'Study group', uids: [4, 5] }, { name: 'Duplicate group', uids: [4, 5] },
+                { name: '4', uids: [4] }, { name: 'Empty group', uids: [] }],
+            rows: [[{ type: 'user' }, { type: 'rank' }],
+                [{ type: 'user', raw: 4, value: 'Alice' }, { type: 'rank', value: 1 }],
+                [{ type: 'user', raw: 5, value: 'Bob' }, { type: 'rank', value: 0 }]],
+        }, { _id: 4 }, translations);
+        try {
+            const input = f.host.querySelector<HTMLInputElement>('input[aria-label="筛选参赛者"]')!;
+            assert.ok(input);
+            dom.window.history.replaceState({ marker: 'keep-router-state' }, '', '#filter=4');
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => dom.window.dispatchEvent(new dom.window.HashChangeEvent('hashchange')));
+            assert.equal(input.value, '仅自己');
+            assert.ok(f.host.textContent?.includes('Alice'));
+            assert.ok(!f.host.textContent?.includes('Bob'));
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => input.click());
+            const options = [...document.querySelectorAll<HTMLElement>('[role="option"]')];
+            assert.deepEqual(options.map((option) => option.textContent), [
+                allowTeam ? '所有参赛者' : '全部用户', allowTeam ? '已关注的参赛者' : '已关注的用户',
+                allowTeam ? '计入排名的参赛者' : '计入排名的用户', 'Study group', '仅自己',
+            ]);
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => options[2].click());
+            assert.equal(dom.window.location.hash, '#filter=rank');
+            assert.equal(dom.window.history.state.marker, 'keep-router-state');
+            assert.ok(!f.host.textContent?.includes('Bob'));
+            dom.window.history.replaceState(dom.window.history.state, '', dom.window.location.pathname);
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => dom.window.dispatchEvent(new dom.window.HashChangeEvent('hashchange')));
+            assert.equal(input.value, allowTeam ? '所有参赛者' : '全部用户');
+            assert.ok(f.host.textContent?.includes('Bob'));
         // eslint-disable-next-line no-await-in-loop
         } finally { await f.close(); }
     }

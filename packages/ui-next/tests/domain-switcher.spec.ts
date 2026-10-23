@@ -299,6 +299,8 @@ test('contest mode scopes desktop and mobile record/ranking links to its focus w
     const tid = '1234567890abcdef12345678';
     try {
         await f.setDomain('exam', {}, true, true, tid);
+        const logo = f.host.querySelector<HTMLAnchorElement>('a.group')!;
+        assert.equal(logo.getAttribute('href'), `/d/exam/contest/${tid}`);
         assert.ok(f.host.querySelector(`a[href="/d/exam/contest/${tid}"]`));
         assert.ok(f.host.querySelector(`a[href="/d/exam/contest/${tid}/scoreboard"]`));
         assert.ok(f.host.querySelector(`a[href="/d/exam/record?tid=${tid}"]`));
@@ -309,13 +311,16 @@ test('contest mode scopes desktop and mobile record/ranking links to its focus w
         assert.ok(f.host.querySelector(`a[href="/d/exam/record?tid=${tid}&uidOrName=7"]`));
         await act(async () => f.host.querySelector<HTMLButtonElement>('.mantine-Burger-root')!.click());
         assert.equal(document.querySelectorAll(`a[href="/d/exam/contest/${tid}/scoreboard"]`).length, 2);
-        assert.equal(document.querySelectorAll(`a[href="/d/exam/contest/${tid}"]`).length, 2);
+        assert.equal(document.querySelectorAll(`a[href="/d/exam/contest/${tid}"]`).length, 3,
+            'logo and desktop/mobile contest links share the focus');
         await f.setDomain('exam', {}, true, true, '');
+        assert.equal(logo.getAttribute('href'), '/contest_main');
         assert.ok(f.host.querySelector('a[href="/contest_main"]'));
         assert.ok(f.host.querySelector('a[href="/ranking"]'));
         assert.ok(f.host.querySelector('a[href="/record_main"]'));
         assert.equal(document.querySelector(`a[href*="${tid}"]`), null);
         await f.setDomain('practice', {}, true, false);
+        assert.equal(logo.getAttribute('href'), '/homepage');
         assert.ok(f.host.querySelector('a[href="/ranking"]'));
         assert.ok(f.host.querySelector('a[href="/record_main"]'));
         assert.equal(document.querySelector(`a[href*="${tid}"]`), null);

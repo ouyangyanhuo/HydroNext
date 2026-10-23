@@ -1,4 +1,11 @@
 __flag: 🇹🇼
+'All participants': '所有參賽者'
+'Filter participants': '篩選參賽者'
+'Only me': '僅自己'
+'Ranked Users': '計入排名的使用者'
+'Ranked participants': '計入排名的參賽者'
+'Starred Users': '已關注的使用者'
+'Starred participants': '已關注的參賽者'
 'Focus contest': '焦點比賽'
 'No focus': '不聚焦'
 'Optional. Focus top bar contest, records and ranking links on one contest. Leave empty for domain-wide links.': '選填。設定焦點比賽後，頂部比賽、提交紀錄和排名入口將指向該比賽；留空則保留全網域入口。'

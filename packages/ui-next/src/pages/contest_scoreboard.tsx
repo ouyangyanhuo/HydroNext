@@ -128,7 +128,7 @@ export default function ContestScoreboardPage() {
   const viewRoute = name === 'homework_scoreboard' ? 'homework_scoreboard_view' : 'contest_scoreboard_view';
   const [filter, setFilter] = useState(() => {
     const hash = window.location.hash.slice(1);
-    return hash.startsWith('filter=') ? hash.slice(7) : 'all';
+    return hash.startsWith('filter=') ? hash.slice(7) || 'all' : 'all';
   });
   const [stars, setStars] = useState<number[]>(() => {
     try {
@@ -154,18 +154,28 @@ export default function ContestScoreboardPage() {
   useEffect(() => {
     const handler = () => {
       const hash = window.location.hash.slice(1);
-      if (hash.startsWith('filter=')) setFilter(hash.slice(7));
+      setFilter(hash.startsWith('filter=') ? hash.slice(7) || 'all' : 'all');
     };
     window.addEventListener('hashchange', handler);
     return () => window.removeEventListener('hashchange', handler);
   }, []);
 
-  const filterOptions = useMemo(() => [
-    { value: 'all', label: t(tdoc.allowTeam ? 'All participants' : 'All Users') },
-    { value: 'star', label: t(tdoc.allowTeam ? 'Starred participants' : 'Starred Users') },
-    { value: 'rank', label: t(tdoc.allowTeam ? 'Ranked participants' : 'Ranked Users') },
-    ...groups.map((group: any) => ({ value: (group.uids || []).join(','), label: group.name })),
-  ], [groups, t, tdoc.allowTeam]);
+  const filterOptions = useMemo(() => {
+    const groupOptions = new Map<string, string>();
+    for (const group of groups) {
+      const members = group.uids || [];
+      const value = members.join(',');
+      if (!value) continue;
+      const isSelfGroup = members.length === 1 && members[0] === user._id && group.name === String(user._id);
+      if (isSelfGroup || !groupOptions.has(value)) groupOptions.set(value, isSelfGroup ? t('Only me') : group.name);
+    }
+    return [
+      { value: 'all', label: t(tdoc.allowTeam ? 'All participants' : 'All Users') },
+      { value: 'star', label: t(tdoc.allowTeam ? 'Starred participants' : 'Starred Users') },
+      { value: 'rank', label: t(tdoc.allowTeam ? 'Ranked participants' : 'Ranked Users') },
+      ...Array.from(groupOptions, ([value, label]) => ({ value, label })),
+    ];
+  }, [groups, t, tdoc.allowTeam, user._id]);
 
   const visibleRows = useMemo(() => {
     const uids = new Set(filter.split(',').map((item) => Number(item.trim())).filter(Boolean));
@@ -186,7 +196,7 @@ export default function ContestScoreboardPage() {
 
   const setFilterAndHash = (value: string) => {
     setFilter(value);
-    history.replaceState(null, '', `#filter=${value}`);
+    window.history.replaceState(window.history.state, '', `#filter=${value}`);
   };
 
   const unlock = async () => {
@@ -244,7 +254,15 @@ export default function ContestScoreboardPage() {
               {t('Back')}
             </Button>
           </Group>
-          <ShortSelect data={filterOptions} value={filter} onChange={(value) => setFilterAndHash(value || 'all')} size="xs" w={200} />
+          <ShortSelect
+            aria-label={t('Filter participants')}
+            data={filterOptions}
+            value={filter}
+            onChange={(value) => setFilterAndHash(value || 'all')}
+            allowDeselect={false}
+            size="xs"
+            w={200}
+          />
         </Stack>
       </header>
 
