@@ -192,7 +192,6 @@ export default function ContestEditPage() {
     contestDuration: tdoc.duration || '',
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [problemOptions, setProblemOptions] = useState<SearchOption[]>(
     () => splitValues(args.pids || (tdoc.pids || []).join(',')).map(
       (id) => ({ value: id, label: `ID ${id}` }),
@@ -365,7 +364,6 @@ export default function ContestEditPage() {
 
   const handleSubmit = async (clone = false) => {
     setLoading(true);
-    setError('');
     try {
       const body: any = {
         ...form,
@@ -388,7 +386,6 @@ export default function ContestEditPage() {
       const data = type.includes('json') ? await res.json() : {};
       if (!res.ok || data.error) {
         const msg = t(proctorError(data.error, 'Save failed'));
-        setError(msg);
         notifications.show({ title: msg, message: '', color: 'red' });
       } else {
         notifications.show({ title: isNew ? t('Created successfully') : t('Saved'), message: '', color: 'green' });
@@ -398,7 +395,6 @@ export default function ContestEditPage() {
       }
     } catch (err: any) {
       const msg = err?.message || t('Network error');
-      setError(msg);
       notifications.show({ title: msg, message: '', color: 'red' });
     } finally {
       setLoading(false);
@@ -426,7 +422,6 @@ export default function ContestEditPage() {
           {t('Back')}
         </Button>
       </PageHeader>
-      {error && <Text c="red" size="sm">{error}</Text>}
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <Stack gap="lg" className="min-w-0 flex-1">

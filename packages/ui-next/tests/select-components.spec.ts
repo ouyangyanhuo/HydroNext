@@ -241,15 +241,17 @@ test('multi select retains selections as pills and emits an array', async () => 
     }
 });
 
-test('contest problems load on the first dropdown open and drag order is saved without reloading labels', async () => {
+test('contest errors only notify, problems load on first open, and drag order saves without reloading labels', async () => {
     const pageModule = { exports: {} as any };
     let args: any = {};
     const requests: { url: string, body: any }[] = [];
+    const notices: { title: string, color: string }[] = [];
+    let saveFailure = '';
     let finishSave: (() => void) | undefined;
     let finishSearch: (() => void) | undefined;
     const core = require('@mantine/core');
     const mocks: Record<string, any> = {
-        '@mantine/notifications': { notifications: { show() {} } },
+        '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
         '@/components/common/select': { LongSelect, TagMultiSelect },
         '@/components/common/button': { Button: core.Button },
         '@/components/common/data-table': { DataTable: () => null },
@@ -280,6 +282,14 @@ test('contest problems load on the first dropdown open and drag order is saved w
                 return { ok: true, json: async () => [1, 2, 3].map((id) => ({ docId: id, title: `Problem ${id}` })) };
             }
             if (url.endsWith('/api/users')) return { ok: true, json: async () => [{ _id: 9, uname: 'Maintainer' }] };
+            if (saveFailure === 'network') throw new Error('Network unavailable');
+            if (saveFailure) {
+                return {
+                    ok: false,
+                    headers: new Headers({ 'content-type': 'application/json' }),
+                    json: async () => ({ error: { message: saveFailure } }),
+                };
+            }
             await new Promise<void>((resolve) => { finishSave = resolve; });
             return { ok: true, headers: new Headers({ 'content-type': 'application/json' }), json: async () => ({}) };
         },
@@ -287,6 +297,23 @@ test('contest problems load on the first dropdown open and drag order is saved w
     dom.reconfigure({ url: 'https://oj.example/d/team/contest/create' });
     const create = await mount(pageModule.exports.default, {});
     try {
+        const submit = [...create.host.querySelectorAll('button')].find((button) => button.textContent === 'Create')!;
+        assert.ok(submit);
+        saveFailure = 'Field pids validation failed.';
+        await act(async () => submit.click());
+        assert.equal(requests.at(-1)?.body.pids, '');
+        assert.equal(notices.length, 1);
+        assert.equal(notices[0].title, saveFailure);
+        assert.equal(notices[0].color, 'red');
+        assert.ok(!create.host.textContent?.includes(saveFailure), 'validation error is not repeated inline');
+        assert.equal(submit.disabled, false, 'failed submission can be retried');
+        saveFailure = 'network';
+        await act(async () => submit.click());
+        assert.equal(notices.length, 2, 'each failure produces exactly one notification');
+        assert.equal(notices[1].title, 'Network unavailable');
+        assert.ok(!create.host.textContent?.includes('Network unavailable'));
+        assert.equal(submit.disabled, false);
+        saveFailure = '';
         const input = create.host.querySelector<HTMLInputElement>('.hydro-contest-problems input[role="combobox"]')!;
         await act(async () => input.click());
         assert.equal(requests.filter((request) => request.url === '/d/team/p').length, 1);
@@ -330,7 +357,7 @@ test('contest problems load on the first dropdown open and drag order is saved w
         const update = [...view.host.querySelectorAll('button')].find((button) => button.textContent === 'Update');
         assert.ok(update);
         await act(async () => update.click());
-        const save = requests.find((request) => request.body?.operation === 'update');
+        const save = requests.findLast((request) => request.body?.operation === 'update');
         assert.equal(save?.url, 'https://oj.example/d/team/contest/contest1/edit');
         assert.equal(save?.body.pids, '2,1,3');
         assert.equal(view.host.querySelectorAll('.hydro-contest-problems [draggable="true"]').length, 0);
