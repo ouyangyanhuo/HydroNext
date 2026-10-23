@@ -462,7 +462,10 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
     dom.reconfigure({ url: `https://oj.example/d/team/p/P2${search}` });
     dom.window.history.replaceState({ retained: true }, '', dom.window.location.href);
     const updates: any[] = [];
-    args = { pdoc: { docId: 2, pid: 'P2', title: 'Problem', content: 'Statement', config: {} }, canSubmitProblem: true };
+    args = {
+        pdoc: { docId: 2, pid: 'P2', title: 'Problem', content: 'Statement', config: {} },
+        canSubmitProblem: true, canEditProblem: false,
+    };
     const Page = component('../src/pages/problem_detail.tsx', {
         '@/utils/problem-navigation': component('../src/utils/problem-navigation.ts', {}, { URLSearchParams }),
         '@/utils/lang-display': { getLangDisplay: (value: string) => value },
@@ -479,9 +482,12 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
         '@/components/common/form-dialog': { FormDialog: () => null },
         '@/components/record/record-status-badge': { RecordStatusBadge: () => null },
         '@/components/contest/contest-problem-timer': { ContestProblemTimer: () => null },
+        '@/components/markdown/markdown-renderer': { MarkdownRenderer: ({ content, enableCodeCopy }: any) => h('div', null,
+            content, enableCodeCopy ? h('button', { 'data-code-copy': true }, 'Copy code') : null) },
         '@/components/editor/submission-context': component('../src/components/editor/submission-context.ts', {}, { URLSearchParams }),
         '@/components/editor/scratchpad': {
-            Scratchpad: ({ onClose }: any) => h('section', { 'data-editor': true }, h('button', { onClick: onClose }, 'Close editor')),
+            Scratchpad: ({ onClose, statement }: any) => h('section', { 'data-editor': true },
+                statement, h('button', { onClick: onClose }, 'Close editor')),
         },
     }, { URLSearchParams, document: dom.window.document }).default;
     // Exercise the existing View Transition callback without requiring a real browser animation.
@@ -492,9 +498,21 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
     };
     const view = await mount(h(Page));
     try {
+        const hasCopyProblem = () => [...view.host.querySelectorAll('button')].some((element) => element.textContent === 'Copy');
+        assert.equal(hasCopyProblem(), false, 'being logged in does not grant permission to copy a problem');
+        args = { ...args, canEditProblem: true };
+        await view.render(h(Page));
+        assert.equal(hasCopyProblem(), true, 'problem editors retain the copy action');
+        args = { ...args, canEditProblem: false };
+        await view.render(h(Page));
+        assert.equal(hasCopyProblem(), false);
         const length = dom.window.history.length;
         await act(async () => button('Enter Online Programming Mode', view.host).click());
         assert.ok(view.host.querySelector('[data-editor]'));
+        assert.equal(view.host.querySelector('[data-code-copy]'), null, 'non-editors do not see statement code-copy controls');
+        args = { ...args, canEditProblem: true };
+        await view.render(h(Page));
+        assert.ok(view.host.querySelector('[data-code-copy]'), 'problem editors retain statement code-copy controls');
         assert.equal(dom.window.location.search, `${search}&mode=code`);
         assert.equal(dom.window.history.length, length + 1);
         assert.equal(dom.window.history.state.retained, true);

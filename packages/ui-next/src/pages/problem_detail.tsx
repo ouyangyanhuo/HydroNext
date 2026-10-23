@@ -304,7 +304,7 @@ function ProblemSidebar({
   };
 
   const handleCopy = async (target: string) => {
-    if (!target) return;
+    if (!target || !isLoggedIn || !canEdit) return;
     setCopyLoading(true);
     setCopyError('');
     try {
@@ -404,7 +404,7 @@ function ProblemSidebar({
               {t('Download')}
             </Button>
           )}
-          {isLoggedIn && (
+          {isLoggedIn && canEdit && (
             <Button variant="subtle" fullWidth size="sm" justify="flex-start" onClick={() => setCopyOpened(true)} loading={copyLoading}>
               {t('Copy')}
             </Button>
@@ -429,7 +429,7 @@ function ProblemSidebar({
         </Paper>
       )}
       <FormDialog
-        opened={copyOpened}
+        opened={copyOpened && isLoggedIn && canEdit}
         title={t('Copy Problem')}
         fields={[{
           name: 'target',
@@ -676,7 +676,7 @@ export default function ProblemDetailPage() {
           ))}
         </Group>
       )}
-      <MarkdownRenderer content={pdoc.content || ''} language={selectedLang} pid={pid} enableCodeCopy={scratchpadOpen} />
+      <MarkdownRenderer content={pdoc.content || ''} language={selectedLang} pid={pid} enableCodeCopy={scratchpadOpen && canEditProblem} />
     </Stack>
   );
 
