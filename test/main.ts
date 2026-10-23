@@ -747,6 +747,130 @@ describe('App', () => {
         }
     });
 
+    it('监考自测正确绑定比赛，提前或自然结束后仍可上传加密日志并取得回执', async () => {
+        const { contest, domain, problem, user, record, storage } = global.Hydro.model;
+        const { PERM, PRIV } = require('../packages/hydrooj/src/model/builtin');
+        const proctor = require('../packages/hydrooj/src/model/proctor');
+        const { canonical, digest, secret, signedPayload, verifyPayload } = require('../packages/hydrooj/src/lib/proctor');
+        const { constants, createCipheriv, publicEncrypt, randomBytes } = require('crypto');
+        const WebSocket = require('ws');
+        const domainId = 'proctor-pretest-finish';
+        const rateCounters = require('../packages/hydrooj/src/service/db').default.collection('opcount');
+        await rateCounters.deleteMany({ op: 'global' });
+        const previous = await proctor.getConfig();
+        const uid = await user.create('proctor-pretest@example.com', 'proctor-pretest-user', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
+        await domain.add(domainId, 2, 'Proctor pretest', '');
+        await domain.setRoles(domainId, { guest: 0n, default: PERM.PERM_VIEW | PERM.PERM_VIEW_PROBLEM
+            | PERM.PERM_VIEW_CONTEST | PERM.PERM_ATTEND_CONTEST | PERM.PERM_SUBMIT_PROBLEM });
+        await domain.setJoin(domainId, uid, true);
+        const pid = await problem.add(domainId, 'H1', 'Hidden proctored problem', 'Statement', 2);
+        await problem.edit(domainId, pid, { hidden: true });
+        const participant = supertest.agent(require('hydrooj').httpServer);
+        const login = await participant.post('/login').send({ uname: 'proctor-pretest-user', password: 'secret' }).expect(302);
+        const cookie = login.headers['set-cookie'].map((value: string) => value.split(';')[0]).join('; ');
+        const tids = [];
+        let socket;
+        try {
+            const keys = await proctor.generateKeys();
+            await proctor.saveConfig({ ...previous, enabled: true, requiredVersion: '1.0.0' });
+            for (const ending of ['early', 'natural']) {
+                const now = Date.now();
+                const tid = await contest.add(domainId, `Proctor ${ending}`, '', 2, 'oi',
+                    new Date(now - 60_000), new Date(now + 3600_000), [pid], false, { proctorEnabled: true });
+                tids.push(tid);
+                await contest.attend(domainId, tid, uid);
+                const rid = await record.add(domainId, pid, uid, '_', 'private self-test', false, { type: 'pretest', contest: tid, input: ['1'] });
+                const identityPath = `/d/${domainId}/proctor/identity`;
+                for (const request of [{ rid }, { rid, tid }]) {
+                    const identity = await participant.post(identityPath).set('Accept', 'application/json')
+                        .send({ ...request, clientNonce: secret() }).expect(200);
+                    assert.equal(identity.body.payload.tid, tid.toHexString());
+                    assert.equal(identity.body.payload.proctorEnabled, true);
+                    assert.ok(verifyPayload(identity.body.payload, identity.body.signature, keys.signingPublicKey));
+                }
+                await participant.post(identityPath).send({ rid, tid: '1234567890abcdef12345678', clientNonce: secret() }).expect(403);
+                const device = generateKeyPairSync('ed25519');
+                const fingerprint = 'c'.repeat(64);
+                const origin = 'http://localhost';
+                const challenge = await proctor.challenge({ domainId, uid, tid }, await contest.get(domainId, tid), {
+                    version: '1.0.0', fingerprint, clientNonce: secret(),
+                    publicKey: device.publicKey.export({ type: 'spki', format: 'pem' }).toString(),
+                }, origin);
+                const session = await proctor.handshake({ domainId, uid, tid }, challenge.payload.challengeId,
+                    signedPayload(challenge.payload, device.privateKey), '127.0.0.1');
+                const headers = (action: string, method: string, path: string, data: any) => {
+                    const payload = { protocol: 'hydro-proctor/1', action, method, path, tokenHash: digest(session.token),
+                        fingerprint, version: '1.0.0', payloadHash: digest(canonical(data)), timestamp: Date.now(), nonce: secret() };
+                    return { 'x-proctor-token': session.token, 'x-proctor-proof': Buffer.from(JSON.stringify({ payload,
+                        signature: signedPayload(payload, device.privateKey) })).toString('base64url') };
+                };
+                const path = `/d/${domainId}/record/${rid}`;
+                await participant.get(path).set('Accept', 'application/json').expect(403);
+                const result = await participant.get(path).set('Accept', 'application/json')
+                    .set(headers('record_view', 'GET', path, { rid: rid.toHexString() })).expect(200);
+                assert.equal(result.body.rdoc.code, 'private self-test');
+                const socketPath = `/d/${domainId}/record-detail-conn`;
+                const { port } = require('hydrooj').httpServer.address();
+                const update = await new Promise<any>((resolve, reject) => {
+                    const timer = setTimeout(() => reject(new Error('监考自测结果连接超时')), 5000);
+                    socket = new WebSocket(`ws://127.0.0.1:${port}${socketPath}?rid=${rid}&noTemplate=true`, {
+                        headers: { Cookie: cookie, ...headers('record_view', 'GET', socketPath, { rid: rid.toHexString() }) },
+                    });
+                    socket.on('error', (error: Error) => { clearTimeout(timer); reject(error); });
+                    socket.on('message', (data: Buffer) => {
+                        if (data.toString() === 'ping') return socket.send('pong');
+                        clearTimeout(timer);
+                        const body = JSON.parse(data.toString());
+                        if (body.error) reject(new Error(JSON.stringify(body.error)));
+                        else resolve(body);
+                        return undefined;
+                    });
+                });
+                assert.equal(update.rdoc.code, 'private self-test');
+                socket.terminate();
+                if (ending === 'early') {
+                    await participant.post(`/d/${domainId}/contest/${tid}`).send({ operation: 'early_end' }).expect(302);
+                } else await contest.edit(domainId, tid, { endAt: new Date(Date.now() - 1000) });
+                const submitPath = `/d/${domainId}/p/H1/submit`;
+                const submission = { pid, lang: 'cc', code: 'int main(){}', pretest: false, input: [], fileHash: '' };
+                await participant.post(`${submitPath}?tid=${tid}`).set(headers('submit', 'POST', submitPath, submission))
+                    .send({ tid, lang: submission.lang, code: submission.code }).expect(403);
+                const route = `/d/${domainId}/contest/${tid}/proctor`;
+                assert.equal((await contest.getStatus(domainId, tid, uid)).proctorLogUploaded, undefined);
+                const finished = await participant.post(route).set(headers('finish', 'POST', route, {})).send({ operation: 'finish' }).expect(200);
+                assert.equal(finished.body.logUploaded, false);
+                assert.notEqual((await contest.getStatus(domainId, tid, uid)).proctorLogUploaded, true);
+                const key = randomBytes(32);
+                const iv = randomBytes(12);
+                const cipher = createCipheriv('aes-256-gcm', key, iv);
+                cipher.setAAD(Buffer.from(`HYDRO-PROCTOR-LOG/1:${keys.keyId}`));
+                const ciphertext = Buffer.concat([cipher.update(`FINISH ${tid}\n`), cipher.final()]);
+                const header = { keyId: keys.keyId, iv: iv.toString('base64url'), tag: cipher.getAuthTag().toString('base64url'),
+                    wrappedKey: publicEncrypt({ key: keys.encryptionPublicKey, padding: constants.RSA_PKCS1_OAEP_PADDING,
+                        oaepHash: 'sha256' }, key).toString('base64url') };
+                key.fill(0);
+                const file = Buffer.concat([Buffer.from(`HYDRO-PROCTOR-LOG/1\n${JSON.stringify(header)}\n`), ciphertext]);
+                const filename = `${ending}.hplog`;
+                await participant.post(route).set(headers('upload', 'POST', route, { filename, size: file.length, sha256: digest(file) }))
+                    .field('operation', 'upload').attach('file', file, filename).expect(200);
+                const status = await participant.get(route).expect(200);
+                assert.equal(status.body.state, 'complete');
+                assert.equal(status.body.logUploaded, true);
+                assert.equal((await contest.getStatus(domainId, tid, uid)).proctorLogUploaded, true);
+            }
+        } finally {
+            socket?.terminate();
+            const logs = await proctor.logs.find({ domainId }).toArray();
+            if (logs.length) await storage.del(logs.map((entry) => entry.path), uid);
+            await proctor.logs.deleteMany({ domainId });
+            await proctor.saveConfig(previous);
+            await record.coll.deleteMany({ domainId });
+            for (const tid of tids) await contest.del(domainId, tid);
+            await domain.del(domainId);
+            await rateCounters.deleteMany({ op: 'global' });
+        }
+    });
+
     it('Team contests preserve individual records, replay permissions, timers and proctor evidence', async () => {
         const { contest, domain, problem, user, record } = global.Hydro.model;
         const { PRIV } = require('../packages/hydrooj/src/model/builtin');

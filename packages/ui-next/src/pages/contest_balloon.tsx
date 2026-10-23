@@ -129,7 +129,7 @@ export default function ContestBalloonPage() {
   };
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-contest-balloon-page">
       <PageHeader title={`${t('Balloon Status')} - ${tdoc.title}`}>
         <Group gap="xs">
           <Button size="xs" disabled={!!loading} onClick={() => { setDraft(makeBalloonDraft(tdoc)); setOpened(true); }}>{t('Set Color')}</Button>

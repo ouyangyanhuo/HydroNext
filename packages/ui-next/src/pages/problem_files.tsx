@@ -693,7 +693,7 @@ export default function ProblemFilesPage() {
   const refresh = () => navigate(window.location.href);
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-problem-files-page">
       <Group gap="sm">
         <Button
           component={Link}

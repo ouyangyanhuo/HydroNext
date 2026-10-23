@@ -7,6 +7,16 @@ export interface ProctorSubmission {
   fileHash: string;
 }
 
+export function canRequestProctorExit(): boolean {
+  return typeof window !== 'undefined' && typeof (window as any).examAPI?.requestQuit === 'function';
+}
+
+/** 网页仅请求打开客户端确认窗口；封存、上传和回执校验仍由客户端完成。 */
+export async function requestProctorExit(): Promise<void> {
+  if (!canRequestProctorExit()) throw new Error('Open this page in the proctor client to finish proctoring and upload your log.');
+  await (window as any).examAPI.requestQuit();
+}
+
 export function proctorAccessRequest(url: string, origin: string) {
   const target = new URL(url, origin);
   if (target.origin !== origin) return null;

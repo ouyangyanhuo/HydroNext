@@ -44,10 +44,19 @@ function load(path: string, mocks: Record<string, any>, globals: Record<string, 
     return module.exports;
 }
 
+const finishMocks = {
+    '@/components/common/button': { Button },
+    '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+    '@/utils/error': { formatErrorMessage: (error: any) => error.message },
+    '@/utils/proctor': load('../src/utils/proctor.ts', {}),
+};
+const finishButton = load('../src/components/contest/proctor-finish-button.tsx', finishMocks);
+
 test('global announcement modal displays escaped content, confirms one at a time and waits for server acknowledgement', async () => {
     let callbacks: any;
     const sent: any[] = [];
     const { ContestAnnouncements } = load('../src/components/contest/contest-announcements.tsx', {
+        './proctor-finish-button': finishButton,
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
         '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send: (data: any) => sent.push(data) }; } },
         '@/context/page-data': { usePageData: () => ({ args: {}, name: 'homepage', url: '/' }) },
@@ -100,6 +109,7 @@ test('ending notices refresh only their contest and return to its domain overvie
     const earlyMessage = 'Your team has ended the proctored contest early. Contest submissions are now closed.';
     const dictionary = require('js-yaml').load(readFileSync(new URL('../locales/zh.yaml', import.meta.url), 'utf8'));
     const { ContestAnnouncements } = load('../src/components/contest/contest-announcements.tsx', {
+        './proctor-finish-button': finishButton,
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key === earlyMessage ? dictionary[key] : key }) },
         '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send: (data: any) => sent.push(data) }; } },
         '@/context/page-data': { usePageData: () => ({ args: { tdoc: { docId: tid }, UiContext: { domainId: 'exam' } },
@@ -137,6 +147,60 @@ test('ending notices refresh only their contest and return to its domain overvie
     } finally {
         await act(async () => root.unmount());
         container.remove();
+    }
+});
+
+test('自然结束或提前结束的通知在断线时仍可打开客户端上传流程，取消不会确认已上传', async () => {
+    let callbacks: any;
+    let requested = 0;
+    let settle: (() => void) | undefined;
+    (dom.window as any).examAPI = { requestQuit: () => {
+        requested++;
+        return new Promise<void>((resolve) => { settle = resolve; });
+    } };
+    const navigate = async () => {};
+    const { ContestAnnouncements } = load('../src/components/contest/contest-announcements.tsx', {
+        './proctor-finish-button': finishButton,
+        '@/hooks/use-i18n': finishMocks['@/hooks/use-i18n'],
+        '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send() {} }; } },
+        '@/context/page-data': { usePageData: () => ({ args: {}, name: 'error', url: '/d/exam/p/1' }) },
+        '@/context/router': { useNavigate: () => navigate },
+        '@/hooks/use-build-url': { useBuildUrl: () => () => '/' },
+        '@/components/common/button': { Button }, '@/utils/error': finishMocks['@/utils/error'],
+    });
+    const container = dom.window.document.createElement('div');
+    dom.window.document.body.append(container);
+    const root = createRoot(container);
+    try {
+        await act(async () => root.render(h(MantineProvider, null, h(ContestAnnouncements))));
+        for (const kind of ['contest-ended', 'team-ended', 'participation-ended']) {
+            const receive = callbacks.onMessage;
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => receive({ announcements: [{
+                _id: '1234567890abcdef12345678', tid: '1234567890abcdef12345678', domainId: 'exam',
+                title: 'Exam', content: 'Closed', createdAt: new Date().toISOString(), kind, proctorEnabled: true,
+            }] }));
+            const button = Array.from(dom.window.document.querySelectorAll('button'))
+                .find((item: any) => item.textContent === 'End personal proctoring and upload log') as HTMLButtonElement;
+            assert.ok(button);
+            assert.equal(button.disabled, false, '结束入口不依赖通知连接或提交权限');
+            const before = requested;
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => {
+                button.click();
+                button.click();
+            });
+            assert.equal(requested, before + 1);
+            const complete = settle;
+            // eslint-disable-next-line no-await-in-loop
+            await act(async () => complete?.());
+            assert.equal(button.disabled, false);
+            assert.equal(dom.window.document.body.textContent?.includes('Final log uploaded'), false);
+        }
+    } finally {
+        await act(async () => root.unmount());
+        container.remove();
+        delete (dom.window as any).examAPI;
     }
 });
 

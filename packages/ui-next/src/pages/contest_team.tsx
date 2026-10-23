@@ -93,7 +93,7 @@ export default function ContestTeamPage() {
   const postInstructions = t('After joining, select Team Participation when registering for a contest that allows teams.');
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-contest-team-page">
       <PageHeader title={t('My Teams')}>
         {args.canManageTeams && <Button component={Link} to="contest_team_manage" variant="light">{t('Team management')}</Button>}
         <Button component={Link} to="contest_main" variant="subtle" leftSection={<IconArrowLeft size={16} />}>

@@ -157,7 +157,7 @@ export default function TrainingEditPage() {
   };
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-training-edit-page">
       <PageHeader title={isNew ? t('Create Training') : t('Edit Training')}>
         <Button component="a" href={buildUrl('training_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}

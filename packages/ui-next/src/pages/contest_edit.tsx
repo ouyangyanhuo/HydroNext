@@ -416,7 +416,7 @@ export default function ContestEditPage() {
   ];
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-contest-edit-page">
       <PageHeader title={isNew ? t('Create Contest') : t('Edit Contest')}>
         <Button component="a" href={buildUrl('contest_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}

@@ -62,7 +62,7 @@ export default function HomeFilesPage() {
   };
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-home-files-page">
       <PageHeader title={t('My Files')} />
       {error && <Text c="red" size="sm">{error}</Text>}
       {success && <Text c="green" size="sm">{success}</Text>}

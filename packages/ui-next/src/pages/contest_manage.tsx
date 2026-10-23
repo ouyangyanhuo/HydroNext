@@ -212,7 +212,7 @@ export default function ContestManagePage() {
   };
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-contest-manage-page">
       <PageHeader title={`${t('Manage')} - ${tdoc.title}`}>
         <Group gap="xs">
           <ContestAnnouncementComposer enabled={!!args.canSendAnnouncement} />

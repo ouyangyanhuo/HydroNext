@@ -261,7 +261,7 @@ export default function TrainingDetailPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row">
+    <div className="hydro-training-detail-page flex flex-col gap-6 lg:flex-row">
       <div className="min-w-0 flex-1">
         <Stack gap="lg">
           <Card withBorder p="xl" className="hydro-content-card">

@@ -1277,7 +1277,37 @@ a {
   margin-inline: auto;
 }
 
-:is(.hydro-problem-page, .hydro-contest-page, .hydro-training-page, .hydro-record-page, .ranking-page) {
+:is(
+  .hydro-problem-page,
+  .hydro-contest-page,
+  .hydro-training-page,
+  .hydro-record-page,
+  .ranking-page,
+  .hydro-problem-detail-page,
+  .hydro-contest-detail-page,
+  .hydro-solution-page,
+  .hydro-problem-files-page,
+  .hydro-problem-statistics,
+  .hydro-problem-edit-page,
+  .hydro-problem-config-page,
+  .hydro-contest-edit-page,
+  .hydro-contest-manage-page,
+  .hydro-training-detail-page,
+  .hydro-training-edit-page,
+  .hydro-training-files-page,
+  .hydro-home-files-page,
+  .hydro-code-replay-page,
+  .hydro-contest-clarification-page,
+  .hydro-contest-balloon-page,
+  .hydro-contest-team-page,
+  .hydro-contest-user-page,
+  .hydro-record-detail,
+  .hydro-settings-page,
+  .hydro-security-page,
+  .hydro-user-profile,
+  .hydro-domain-dashboard,
+  .hydro-doc-page
+) {
   width: min(100%, 1280px);
   margin-inline: auto;
 }
@@ -3113,7 +3143,7 @@ a {
 }
 
 .hydro-settings-page {
-  width: min(100%, 1120px);
+  width: min(100%, 1280px);
   margin-inline: auto;
 }
 
@@ -3459,7 +3489,7 @@ a {
 
 .hydro-security-page,
 .hydro-user-profile {
-  width: min(100%, 1120px);
+  width: min(100%, 1280px);
   margin-inline: auto;
 }
 
@@ -3607,7 +3637,7 @@ a {
 
 /* Domain Dashboard */
 .hydro-domain-dashboard {
-  width: min(100%, 1160px);
+  width: min(100%, 1280px);
   margin-inline: auto;
 }
 
@@ -3904,7 +3934,7 @@ a {
 
 .hydro-doc-page,
 .hydro-problem-statistics {
-  width: min(100%, 1180px);
+  width: min(100%, 1280px);
   margin-inline: auto;
 }
 

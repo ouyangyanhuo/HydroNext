@@ -229,7 +229,7 @@ export default function ProblemConfigPage() {
     : '';
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-problem-config-page">
       <PageHeader title={`${t('Judge Config')} - ${pdoc.pid}. ${pdoc.title}`}>
         <Button onClick={handleSave} loading={loading} size="xs">{t('Save')}</Button>
       </PageHeader>

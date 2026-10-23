@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { proctorAccessHeaders, proctorAccessRequest, proctorError, proctorRequest, proctorSubmissionHeaders } from '../src/utils/proctor.ts';
+import {
+    canRequestProctorExit, proctorAccessHeaders, proctorAccessRequest, proctorError, proctorRequest,
+    proctorSubmissionHeaders, requestProctorExit,
+} from '../src/utils/proctor.ts';
 
 const payload = { pid: 42, lang: 'cc.cc20', code: 'int main(){}', pretest: false, input: [], fileHash: '' };
 function withWindow(value: unknown, run: () => Promise<void>) {
@@ -11,6 +14,22 @@ function withWindow(value: unknown, run: () => Promise<void>) {
         else Reflect.deleteProperty(globalThis, 'window');
     });
 }
+
+test('网页结束监考只调用客户端确认桥，不把取消或退出当作上传成功', async () => {
+    await withWindow({}, async () => {
+        assert.equal(canRequestProctorExit(), false);
+        await assert.rejects(requestProctorExit(), /Open this page in the proctor client/);
+    });
+    let calls = 0;
+    await withWindow({ examAPI: { requestQuit: async () => { calls++; } } }, async () => {
+        assert.equal(canRequestProctorExit(), true);
+        assert.equal(await requestProctorExit(), undefined);
+        assert.equal(calls, 1);
+    });
+    await withWindow({ examAPI: { requestQuit: async () => { throw new Error('客户端暂时忙'); } } }, async () => {
+        await assert.rejects(requestProctorExit(), /客户端暂时忙/);
+    });
+});
 
 test('ordinary contests keep existing submission behavior without requiring a client bridge', async () => {
     await withWindow({}, async () => {

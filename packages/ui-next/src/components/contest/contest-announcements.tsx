@@ -8,6 +8,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { formatErrorMessage } from '@/utils/error';
+import { ProctorFinishButton } from './proctor-finish-button';
 
 interface Announcement {
   _id: string;
@@ -112,6 +113,7 @@ export function ContestAnnouncements() {
               </Text>
             )}
           </ScrollArea.Autosize>
+          {current.kind && current.proctorEnabled && <ProctorFinishButton />}
           <Group justify="space-between">
             <Text size="xs" c="dimmed">{connected ? `${items.length} ${t('Unread announcements')}` : t('Reconnecting…')}</Text>
             <Button

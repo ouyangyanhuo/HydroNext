@@ -1354,3 +1354,7 @@ Visible time on this problem; saved in this tab.: 累计停留在本题页面的
 'System Domain': '系统主域'
 'View domain members, assign roles, and manage memberships.': '查看域内成员、分配角色并管理成员身份与邀请。'
 'Visit': '访问前台'
+# 个人监考结束入口
+End personal proctoring and upload log: 结束个人监考并上传日志
+Finish proctoring: 结束监考
+Open this page in the proctor client to finish proctoring and upload your log.: 请在监考客户端中打开此页面，结束个人监考并上传日志。

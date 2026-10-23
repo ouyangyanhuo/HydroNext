@@ -571,28 +571,73 @@ test('contest proctor notice renders text reminders on left and status badge on 
     );
 });
 
-test('topbar navigation pages (problems, contests, training, records, ranking) unify content width to widest 1280px', () => {
+test('all application pages unify content width to 1280px while code editor is exempt', () => {
     const problemSource = read('../src/pages/problem_main.tsx');
     const contestSource = read('../src/pages/contest_main.tsx');
     const trainingSource = read('../src/pages/training_main.tsx');
     const recordSource = read('../src/pages/record_main.tsx');
     const rankingSource = read('../src/pages/ranking.tsx');
+    const problemDetailSource = read('../src/pages/problem_detail.tsx');
+    const contestDetailSource = read('../src/pages/contest_detail.tsx');
+    const problemSolutionSource = read('../src/pages/problem_solution.tsx');
+    const problemFilesSource = read('../src/pages/problem_files.tsx');
+    const problemStatsSource = read('../src/pages/problem_statistics.tsx');
+    const problemEditSource = read('../src/pages/problem_edit.tsx');
+    const problemConfigSource = read('../src/pages/problem_config.tsx');
+    const contestEditSource = read('../src/pages/contest_edit.tsx');
+    const contestManageSource = read('../src/pages/contest_manage.tsx');
+    const scratchpadSource = read('../src/components/editor/scratchpad.tsx');
 
-    assert.match(problemSource, /className="[^"]*hydro-problem-page[^"]*"/, 'problem page must use hydro-problem-page container');
-    assert.match(contestSource, /className="[^"]*hydro-contest-page[^"]*"/, 'contest page must use hydro-contest-page container');
-    assert.match(trainingSource, /className="[^"]*hydro-training-page[^"]*"/, 'training page must use hydro-training-page container');
-    assert.match(recordSource, /className="[^"]*hydro-record-page[^"]*"/, 'record page must use hydro-record-page container');
-    assert.match(rankingSource, /className="[^"]*ranking-page[^"]*"/, 'ranking page must use ranking-page container');
+    assert.match(problemSource, /className="[^"]*hydro-problem-page[^"]*"/);
+    assert.match(contestSource, /className="[^"]*hydro-contest-page[^"]*"/);
+    assert.match(trainingSource, /className="[^"]*hydro-training-page[^"]*"/);
+    assert.match(recordSource, /className="[^"]*hydro-record-page[^"]*"/);
+    assert.match(rankingSource, /className="[^"]*ranking-page[^"]*"/);
+    assert.match(problemDetailSource, /className="[^"]*hydro-problem-detail-page[^"]*"/);
+    assert.match(contestDetailSource, /className="[^"]*hydro-contest-detail-page[^"]*"/);
+    assert.match(problemSolutionSource, /className="[^"]*hydro-solution-page[^"]*"/);
+    assert.match(problemFilesSource, /className="[^"]*hydro-problem-files-page[^"]*"/);
+    assert.match(problemStatsSource, /className="[^"]*hydro-problem-statistics[^"]*"/);
+    assert.match(problemEditSource, /className="[^"]*hydro-problem-edit-page[^"]*"/);
+    assert.match(problemConfigSource, /className="[^"]*hydro-problem-config-page[^"]*"/);
+    assert.match(contestEditSource, /className="[^"]*hydro-contest-edit-page[^"]*"/);
+    assert.match(contestManageSource, /className="[^"]*hydro-contest-manage-page[^"]*"/);
+
+    // Scratchpad (code editor) must be exempt from 1280px and keep full width
+    assert.match(scratchpadSource, /width:\s*viewportWidth\s*\?\s*`\$\{viewportWidth\}px`\s*:\s*'100vw'/);
+    assert.match(scratchpadSource, /maxWidth:\s*'100vw'/);
 
     const tailwindCss = postcss.parse(read('../src/styles/tailwind.css'));
     const rankingCss = postcss.parse(read('../src/pages/ranking.css'));
+
+    const expectedClasses = [
+        '.hydro-problem-page',
+        '.hydro-contest-page',
+        '.hydro-training-page',
+        '.hydro-record-page',
+        '.ranking-page',
+        '.hydro-problem-detail-page',
+        '.hydro-contest-detail-page',
+        '.hydro-solution-page',
+        '.hydro-problem-files-page',
+        '.hydro-problem-statistics',
+        '.hydro-problem-edit-page',
+        '.hydro-problem-config-page',
+        '.hydro-contest-edit-page',
+        '.hydro-contest-manage-page',
+        '.hydro-settings-page',
+        '.hydro-security-page',
+        '.hydro-user-profile',
+        '.hydro-domain-dashboard',
+        '.hydro-doc-page',
+    ];
 
     const widths: Record<string, string> = {};
 
     tailwindCss.walkRules((rule) => {
         const selectors = rule.selector.split(',').map((s) => s.trim());
         for (const selector of selectors) {
-            if (['.hydro-problem-page', '.hydro-contest-page', '.hydro-training-page', '.hydro-record-page', '.ranking-page'].includes(selector)) {
+            if (expectedClasses.includes(selector)) {
                 rule.walkDecls('width', (decl) => {
                     widths[selector] = decl.value;
                 });
@@ -608,9 +653,7 @@ test('topbar navigation pages (problems, contests, training, records, ranking) u
         }
     });
 
-    assert.equal(widths['.hydro-problem-page'], 'min(100%, 1280px)');
-    assert.equal(widths['.hydro-contest-page'], 'min(100%, 1280px)');
-    assert.equal(widths['.hydro-training-page'], 'min(100%, 1280px)');
-    assert.equal(widths['.hydro-record-page'], 'min(100%, 1280px)');
-    assert.equal(widths['.ranking-page'], 'min(100%, 1280px)');
+    for (const selector of expectedClasses) {
+        assert.equal(widths[selector], 'min(100%, 1280px)', `${selector} must be unified to min(100%, 1280px)`);
+    }
 });

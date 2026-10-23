@@ -313,7 +313,7 @@ export default function ProblemEditPage() {
   const fileUrl = previewFile ? `${fileBaseUrl}/${encodeURIComponent(previewFile.name)}?type=additional_file` : '';
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-problem-edit-page">
       <PageHeader title={isNew ? t('Create Problem') : t('Edit Problem')}>
         <Button
           component="a"

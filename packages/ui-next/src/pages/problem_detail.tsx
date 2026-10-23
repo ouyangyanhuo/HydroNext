@@ -702,7 +702,7 @@ export default function ProblemDetailPage() {
   }
 
   return (
-    <div ref={workspaceRef} className="problem-workspace flex flex-col lg:flex-row gap-6">
+    <div ref={workspaceRef} className="problem-workspace hydro-problem-detail-page flex flex-col lg:flex-row gap-6">
       {contestTimer}
       <div className="flex-1 min-w-0">
         <Stack gap="lg">

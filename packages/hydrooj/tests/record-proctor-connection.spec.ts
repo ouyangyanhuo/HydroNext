@@ -27,6 +27,8 @@ function fixture(options: { pretest?: boolean, hidden?: boolean, owner?: boolean
     const calls: any[] = [];
     let expired = false;
     class Handler {
+        conn = {};
+        response = { addHeader() { throw new Error('WebSocket 升级后不能再写 HTTP 响应头'); } };
         args = { domainId: 'exam' };
         request: any = { headers: {}, path: '/record-detail-conn' };
         context = { originalPath: '/d/exam/record-detail-conn' };

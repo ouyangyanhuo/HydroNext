@@ -301,7 +301,9 @@ export class ProctorIdentityHandler extends Handler {
             const rdoc = await record.get(domainId, rid);
             if (!rdoc) throw new NotFoundError('Record');
             if (!await contest.isOwnOrTeammateRecord(domainId, rdoc, this.user._id)) this.checkPerm(PERM.PERM_VIEW_RECORD);
-            const recordTid = rdoc.contest && !rdoc.contest.toString().startsWith('0'.repeat(23)) ? rdoc.contest : undefined;
+            // 自测的 contest 是固定标识，实际比赛保存在 pretestContest；与记录读取权限使用相同归属。
+            const recordTid = record.RECORD_PRETEST.equals(rdoc.contest) ? rdoc.pretestContest
+                : rdoc.contest && !rdoc.contest.toString().startsWith('0'.repeat(23)) ? rdoc.contest : undefined;
             if (tid && !recordTid?.equals(tid)) throw new ForbiddenError('Record is outside the contest.');
             tid = recordTid;
         }

@@ -77,7 +77,7 @@ export default function ContestUserPage() {
   };
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-contest-user-page">
       <PageHeader title={`${t('Attendee Manage')} - ${tdoc.title}`}>
         <Group gap="xs">
           <Button size="xs" disabled={!!loading} onClick={() => setOpened(true)}>{t('Add User')}</Button>

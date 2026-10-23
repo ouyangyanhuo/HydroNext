@@ -82,7 +82,10 @@ function fixture(options: any = {}) {
         '../model/proctor': model,
         '../lib/proctor': { PROCTOR_PROTOCOL, proctorOrigin, signedPayload },
         '../model/system': { __esModule: true, default: { get: () => '' } },
-        '../model/record': { __esModule: true, default: { get: async () => options.missingRecord ? null : { contest: tid } } },
+        '../model/record': { __esModule: true, default: {
+            RECORD_PRETEST: new ObjectId('000000000000000000000000'),
+            get: async () => options.missingRecord ? null : options.record || { contest: tid },
+        } },
         '../model/problem': { __esModule: true, default: { get: async () => ({ docId: options.problemId || 100 }) } },
         '../model/contest': { isOwnOrTeammateRecord: async () => true, get: async () => ({ pids: [100], proctorEnabled: true }),
             getStatus: async () => ({ attend: !options.notEnrolled }),
@@ -329,4 +332,27 @@ test('记录身份由服务端绑定实际比赛和记录编号，并拒绝伪�
     await assert.rejects(handler.post('exam', 'n'.repeat(43), new ObjectId(), '', rid), /Record is outside/);
     const missing = fixture({ missingRecord: true });
     await assert.rejects(new missing.exports.ProctorIdentityHandler().post('exam', 'n'.repeat(43), undefined, '', rid));
+});
+
+test('监考自测身份使用保存的比赛归属，拒绝跨比赛且不把独立自测当作监考', async () => {
+    const rid = new ObjectId();
+    const sentinel = new ObjectId('000000000000000000000000');
+    const f = fixture({ signingPrivateKey: identityPrivateKey, record: { contest: sentinel, pretestContest: tid } });
+    for (const requested of [undefined, tid]) {
+        const handler = new f.exports.ProctorIdentityHandler();
+        // eslint-disable-next-line no-await-in-loop
+        await handler.post('exam', 'n'.repeat(43), requested, '', rid);
+        const { payload, signature } = handler.response.body;
+        assert.equal(payload.tid, tid.toHexString());
+        assert.equal(payload.proctorEnabled, true);
+        assert.equal(payload.rid, rid.toHexString());
+        assert.ok(verifyPayload(payload, signature, identityPublicKey));
+    }
+    await assert.rejects(new f.exports.ProctorIdentityHandler().post('exam', 'n'.repeat(43), new ObjectId(), '', rid), /Record is outside/);
+    const standalone = fixture({ signingPrivateKey: identityPrivateKey, record: { contest: sentinel } });
+    const handler = new standalone.exports.ProctorIdentityHandler();
+    await handler.post('exam', 'n'.repeat(43), undefined, '', rid);
+    assert.equal(handler.response.body.payload.tid, '');
+    assert.equal(handler.response.body.payload.proctorEnabled, false);
+    await assert.rejects(handler.post('exam', 'n'.repeat(43), tid, '', rid), /Record is outside/);
 });

@@ -985,3 +985,7 @@ Visible time on this problem; saved in this tab.: 累計停留在本題頁面的
 'System Domain': '系統主網域'
 'View domain members, assign roles, and manage memberships.': '檢視網域成員、指派角色並管理成員身分與邀請。'
 'Visit': '造訪前台'
+# 個人監考結束入口
+End personal proctoring and upload log: 結束個人監考並上傳日誌
+Finish proctoring: 結束監考
+Open this page in the proctor client to finish proctoring and upload your log.: 請在監考客戶端中開啟此頁面，結束個人監考並上傳日誌。

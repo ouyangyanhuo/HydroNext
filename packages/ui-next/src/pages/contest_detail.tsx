@@ -520,7 +520,7 @@ export default function ContestDetailPage() {
 
   if (name === 'contest_problemlist') {
     return (
-      <Stack gap="lg">
+      <Stack gap="lg" className="hydro-contest-detail-page">
         <Card
           withBorder
           p="xl"
@@ -617,7 +617,7 @@ export default function ContestDetailPage() {
   }
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-contest-detail-page">
       <Card
         withBorder
         p="xl"

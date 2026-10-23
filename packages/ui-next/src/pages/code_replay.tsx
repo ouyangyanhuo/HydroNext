@@ -63,7 +63,7 @@ export default function CodeReplayPage() {
   const submitter = profile && String(profile._id) === String(submitterUid) ? profile : null;
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-code-replay-page">
       <Group justify="space-between" align="center" gap="md" wrap="nowrap">
         <div className="min-w-0 flex-1">
           <Title order={1} size="h2" className="text-[var(--hydro-text)]">{t('Code Replay')}</Title>

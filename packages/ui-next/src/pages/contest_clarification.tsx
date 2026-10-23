@@ -124,7 +124,7 @@ export default function ContestClarificationPage() {
   };
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-contest-clarification-page">
       <PageHeader title={`${t('Contest Clarifications')} - ${tdoc.title}`}>
         <Group gap="xs">
           <Button size="xs" disabled={busy} onClick={chooseBroadcast}>{t('Send Broadcast Message')}</Button>
