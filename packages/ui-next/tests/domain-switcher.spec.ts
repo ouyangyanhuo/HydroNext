@@ -20,6 +20,7 @@ for (const [key, value] of Object.entries({
     Object.defineProperty(globalThis, key, { value, configurable: true, writable: true });
 }
 dom.window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+dom.window.HTMLElement.prototype.scrollIntoView = () => {};
 after(() => {
     dom.window.close();
     for (const [key, descriptor] of previous) {
@@ -417,7 +418,8 @@ test('visibility checkboxes default to visible, preview locally and submit only 
     try {
         await f.setDomain('system', {});
         await f.editVisibility();
-        assert.ok([...f.host.querySelectorAll('input')].some((input) => input.value === 'No focus'));
+        const hasNoFocusInput = () => [...f.host.querySelectorAll('input')].some((input) => input.value === 'No focus');
+        assert.equal(hasNoFocusInput(), false, 'focus contest is hidden when contest mode is disabled');
         const card = Array.from(f.host.querySelectorAll<HTMLDivElement>('[role="button"]'))
             .find((item) => item.textContent?.includes('Show Problems navigation entry'))!;
         assert.ok(card);
@@ -447,6 +449,7 @@ test('visibility checkboxes default to visible, preview locally and submit only 
         const contestModeCard = Array.from(f.host.querySelectorAll<HTMLDivElement>('[role="button"]'))
             .find((item) => item.textContent?.includes('Enable contest mode'))!;
         await act(async () => contestModeCard.click());
+        assert.ok(hasNoFocusInput(), 'focus contest appears when contest mode is enabled');
         assert.equal(f.host.querySelector('a[href="/training_main"]'), null);
         assert.ok(f.host.querySelector('a[href="/contest_main"]'));
         assert.ok(f.host.querySelector('a[href="/ranking"]'));

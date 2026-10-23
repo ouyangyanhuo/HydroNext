@@ -11,6 +11,19 @@
   content: '';
 }
 
+.hydro-contest-problem-row__link {
+  color: var(--hydro-primary);
+  text-decoration: none;
+  transition: color var(--hydro-duration-fast) var(--hydro-ease-out),
+              opacity var(--hydro-duration-fast) var(--hydro-ease-out);
+}
+
+.hydro-contest-problem-row:hover .hydro-contest-problem-row__link {
+  color: var(--hydro-primary);
+  opacity: 0.88;
+  text-decoration: underline;
+}
+
 .hydro-contest-problem-row__action {
   position: relative;
   z-index: 2;

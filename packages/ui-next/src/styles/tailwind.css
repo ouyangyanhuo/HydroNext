@@ -3287,6 +3287,112 @@ a {
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 32%, var(--hydro-surface-raised));
 }
 
+/* Feature setting layout: smoothly shrinks left card to 50% and slides in right-side options */
+.hydro-feature-setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.hydro-feature-setting-card-wrap {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hydro-feature-setting-card-wrap .hydro-setting-checkbox-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .hydro-feature-setting-row {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .hydro-feature-setting-card-wrap {
+    transition: flex 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .hydro-feature-setting-card-wrap--full {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .hydro-feature-setting-card-wrap--half {
+    flex: 1 1 calc(50% - 6px);
+    max-width: calc(50% - 6px);
+  }
+
+  .hydro-feature-setting-extra {
+    flex: 1 1 calc(50% - 6px);
+    max-width: calc(50% - 6px);
+    min-width: 0;
+  }
+
+  .hydro-feature-setting-extra--open {
+    animation: hydro-feature-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes hydro-feature-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.hydro-feature-setting-alert {
+  animation: hydro-feature-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes hydro-feature-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hydro-setting-feature-extra-card {
+  height: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-md);
+  background-color: var(--hydro-surface);
+  box-shadow: var(--hydro-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: border-color var(--hydro-transition-fast), background-color var(--hydro-transition-fast);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-setting-feature-extra-card {
+  background-color: color-mix(in srgb, var(--hydro-surface-raised) 85%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-feature-setting-card-wrap,
+  .hydro-feature-setting-extra--open,
+  .hydro-feature-setting-alert {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 .hydro-settings-form .mantine-InputWrapper-label {
   margin-bottom: 5px;
   color: var(--hydro-text);

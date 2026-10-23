@@ -474,3 +474,59 @@ test('problem select-all is placed inside toolbar before search input and remove
     assert.ok(selectAllCentered, '.hydro-problem-select-all must have align-items: center');
     assert.ok(labelCentered, '.hydro-problem-select-all__label must have align-items: center');
 });
+
+test('contest detail problem list button and problem links use primary accent color matching register button', () => {
+    const contestDetailSource = read('../src/pages/contest_detail.tsx');
+    const contestDetailCss = read('../src/pages/contest-detail.css');
+
+    assert.match(
+        contestDetailSource,
+        /<Button[^>]*to="contest_problemlist"[^>]*variant="filled"/,
+        'Problem list button in contest detail sidebar must use filled variant for primary accent color',
+    );
+
+    assert.match(
+        contestDetailCss,
+        /\.hydro-contest-problem-row__link\s*\{[^}]*color:\s*var\(--hydro-primary\)/,
+        'Contest problem row links must use var(--hydro-primary)',
+    );
+});
+
+test('domain visibility contest mode card layout shrinks to half with animated focus contest extra', () => {
+    const domainEditSource = read('../src/pages/domain_edit.tsx');
+    const settingsFormSource = read('../src/components/common/settings-form.tsx');
+    const tailwindCssSource = read('../src/styles/tailwind.css');
+
+    assert.match(
+        domainEditSource,
+        /setting_contest_mode:\s*\{\s*right:\s*\(\s*<div className="hydro-setting-feature-extra-card">/,
+        'domain_edit must configure setting_contest_mode with right extra card',
+    );
+
+    assert.match(
+        settingsFormSource,
+        /hydro-feature-setting-card-wrap--half/,
+        'settings-form must use hydro-feature-setting-card-wrap--half when contest mode is active',
+    );
+    assert.match(
+        settingsFormSource,
+        /hydro-feature-setting-card-wrap--full/,
+        'settings-form must use hydro-feature-setting-card-wrap--full when contest mode is inactive',
+    );
+    assert.match(
+        settingsFormSource,
+        /hydro-feature-setting-extra--open/,
+        'settings-form must apply hydro-feature-setting-extra--open to right-side options',
+    );
+
+    assert.match(
+        tailwindCssSource,
+        /@keyframes\s+hydro-feature-slide-in/,
+        'tailwind.css must define hydro-feature-slide-in animation for focus contest panel',
+    );
+    assert.match(
+        tailwindCssSource,
+        /\.hydro-setting-feature-extra-card/,
+        'tailwind.css must style the extra feature card',
+    );
+});

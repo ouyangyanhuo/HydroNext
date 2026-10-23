@@ -73,6 +73,13 @@ interface SettingItem {
   subType?: string;
 }
 
+export interface FamilyExtraSplit {
+  right?: ReactNode;
+  bottom?: ReactNode;
+}
+
+export type FamilyExtraItem = ReactNode | FamilyExtraSplit;
+
 interface SettingsFormProps {
   settings: SettingItem[] | Record<string, any>;
   current?: Record<string, any>;
@@ -84,7 +91,7 @@ interface SettingsFormProps {
   excludeKeys?: string[];
   variant?: 'default' | 'personal' | 'grid';
   /** Browser-local controls are rendered with a family but never added to the server payload. */
-  familyExtras?: Record<string, ReactNode>;
+  familyExtras?: Record<string, FamilyExtraItem>;
   itemIcons?: Record<string, any>;
   booleanGrid?: boolean;
   fieldsGrid?: boolean;
@@ -92,6 +99,26 @@ interface SettingsFormProps {
   invertedBooleanKeys?: readonly string[];
   /** Storage values for local previews; this callback never submits the form. */
   onValuesChange?: (values: Record<string, any>) => void;
+}
+
+function isSplitExtra(extra: unknown): extra is FamilyExtraSplit {
+  return extra != null
+    && typeof extra === 'object'
+    && !('$$typeof' in (extra as any))
+    && ('right' in (extra as any) || 'bottom' in (extra as any));
+}
+
+function renderPlainExtra(extra: FamilyExtraItem | undefined): ReactNode {
+  if (!extra) return null;
+  if (isSplitExtra(extra)) {
+    return (
+      <>
+        {extra.right}
+        {extra.bottom}
+      </>
+    );
+  }
+  return extra as ReactNode;
 }
 
 function getDomainAvatarUrl(avatar?: string) {
@@ -400,8 +427,12 @@ export function SettingsForm({
                 const label = t(setting.name || setting.key);
                 const description = setting.desc ? t(setting.desc) : '';
                 const IconComponent = itemIcons?.[setting.key];
+                const extra = familyExtras?.[family];
+                const isSplit = isSplitExtra(extra);
+                const rightExtra = isSplit ? extra.right : null;
+                const bottomExtra = isSplit ? extra.bottom : null;
 
-                return (
+                const checkboxCard = (
                   <div
                     role="button"
                     tabIndex={0}
@@ -452,10 +483,41 @@ export function SettingsForm({
                     </div>
                   </div>
                 );
+
+                if (isSplit) {
+                  const cardWrapClass = value && rightExtra
+                    ? 'hydro-feature-setting-card-wrap hydro-feature-setting-card-wrap--half'
+                    : 'hydro-feature-setting-card-wrap hydro-feature-setting-card-wrap--full';
+                  return (
+                    <div className="w-full">
+                      <div className="hydro-feature-setting-row">
+                        <div className={cardWrapClass}>
+                          {checkboxCard}
+                        </div>
+                        {value && rightExtra && (
+                          <div className="hydro-feature-setting-extra hydro-feature-setting-extra--open">
+                            {rightExtra}
+                          </div>
+                        )}
+                      </div>
+                      {value && bottomExtra && (
+                        <div className="hydro-feature-setting-alert mt-3">
+                          {bottomExtra}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div>
+                    {checkboxCard}
+                    {extra && (
+                      <div className="mt-3">{renderPlainExtra(extra)}</div>
+                    )}
+                  </div>
+                );
               })()}
-              {familyExtras?.[family] && (
-                <div className="mt-3">{familyExtras[family]}</div>
-              )}
             </div>
           ) : booleanGrid && items.length > 1 && items.every((s) => s.type === 'boolean') ? (
             <div>
@@ -519,7 +581,7 @@ export function SettingsForm({
                 })}
               </div>
               {familyExtras?.[family] && (
-                <div className="mt-3">{familyExtras[family]}</div>
+                <div className="mt-3">{renderPlainExtra(familyExtras[family])}</div>
               )}
             </div>
           ) : (
@@ -551,7 +613,7 @@ export function SettingsForm({
                 );
               })}
               {familyExtras?.[family] && (
-                <div className="hydro-settings-field hydro-settings-field--wide">{familyExtras[family]}</div>
+                <div className="hydro-settings-field hydro-settings-field--wide">{renderPlainExtra(familyExtras[family])}</div>
               )}
             </div>
           )}

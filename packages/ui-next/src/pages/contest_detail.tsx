@@ -154,7 +154,7 @@ function ContestProblemList({ tdoc, tsdoc, pdict, psdict, rdict, correction, sho
                   <Table.Td>
                     <Group justify="space-between" wrap="nowrap" gap="md">
                       <div className="min-w-0">
-                        <Link href={problemUrl} className="hydro-subtle-link hydro-contest-problem-row__link">
+                        <Link href={problemUrl} className="hydro-contest-problem-row__link">
                           <Text size="sm" fw={700} className="truncate">{alphabetic(index)}. {pdoc.title || pid}</Text>
                         </Link>
                         {pdoc.config && pdoc.config.type !== 'objective' && pdoc.config.type !== 'submit_answer' && (
@@ -715,7 +715,7 @@ export default function ContestDetailPage() {
 
             {isLoggedIn && tsdoc.attend && (
               <Tooltip label={contestNotStarted ? t('Contest has not started yet') : undefined} disabled={!contestNotStarted}>
-                <Button component={Link} to="contest_problemlist" params={{ tid }} variant="light" fullWidth disabled={!!contestNotStarted}>
+                <Button component={Link} to="contest_problemlist" params={{ tid }} variant="filled" fullWidth disabled={!!contestNotStarted}>
                   {t('Problem List')}
                 </Button>
               </Tooltip>
