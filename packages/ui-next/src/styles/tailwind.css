@@ -3238,6 +3238,7 @@ a {
 
 .hydro-setting-checkbox-card--feature {
   padding: 16px 18px;
+  min-height: 100px;
 }
 
 .hydro-setting-checkbox-card__icon {
@@ -3307,6 +3308,7 @@ a {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  min-height: 100px;
 }
 
 @media (min-width: 640px) {
@@ -3334,6 +3336,10 @@ a {
     flex: 1 1 calc(50% - 6px);
     max-width: calc(50% - 6px);
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100px;
   }
 
   .hydro-feature-setting-extra--open {
@@ -3365,23 +3371,6 @@ a {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.hydro-setting-feature-extra-card {
-  height: 100%;
-  padding: 14px 16px;
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-md);
-  background-color: var(--hydro-surface);
-  box-shadow: var(--hydro-shadow-sm);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  transition: border-color var(--hydro-transition-fast), background-color var(--hydro-transition-fast);
-}
-
-[data-mantine-color-scheme='dark'] .hydro-setting-feature-extra-card {
-  background-color: color-mix(in srgb, var(--hydro-surface-raised) 85%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

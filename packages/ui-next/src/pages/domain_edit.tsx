@@ -141,31 +141,24 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
         familyExtras={visibility ? {
           setting_contest_mode: {
             right: (
-              <div className="hydro-setting-feature-extra-card">
-                <LongSelect
-                  label={t('Focus contest')}
-                  description={t(
-                    'Optional. Focus top bar contest, records and ranking links on one contest. Leave empty for domain-wide links.',
-                  )}
-                  data={[
-                    { value: NO_FOCUS_CONTEST, label: t('No focus') },
-                    ...(args.focusContests || []).map((tdoc: any) => ({
-                      value: String(tdoc.docId),
-                      label: `${extractLocalizedContent(tdoc.title, language)} · ${tdoc.docId}`,
-                    })),
-                  ]}
-                  searchable
-                  clearable
-                  value={focusContest || NO_FOCUS_CONTEST}
-                  onChange={(value) => setFocusContest(value === NO_FOCUS_CONTEST ? '' : value || '')}
-                  disabled={loading}
-                />
-              </div>
-            ),
-            bottom: (
-              <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-                {t('Contest mode takes priority over manual hiding. Turning it off restores your manual settings.')}
-              </Alert>
+              <LongSelect
+                label={t('Focus contest')}
+                description={t(
+                  'Optional. Focus top bar contest, records and ranking links on one contest. Leave empty for domain-wide links.',
+                )}
+                data={[
+                  { value: NO_FOCUS_CONTEST, label: t('No focus') },
+                  ...(args.focusContests || []).map((tdoc: any) => ({
+                    value: String(tdoc.docId),
+                    label: `${extractLocalizedContent(tdoc.title, language)} · ${tdoc.docId}`,
+                  })),
+                ]}
+                searchable
+                clearable
+                value={focusContest || NO_FOCUS_CONTEST}
+                onChange={(value) => setFocusContest(value === NO_FOCUS_CONTEST ? '' : value || '')}
+                disabled={loading}
+              />
             ),
           },
           setting_navigation: (

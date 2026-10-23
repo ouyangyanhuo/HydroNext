@@ -13,7 +13,6 @@ __flag: 🇨🇳
 'Restore default avatar': '恢复默认头像'
 'Restores the account avatar to its registration default when saved. Honor frames are not changed.': '保存后恢复为注册时默认的邮箱头像，不影响荣誉头像框。'
 'Student ID': '学号'
-'Contest mode takes priority over manual hiding. Turning it off restores your manual settings.': '赛事模式优先于手动隐藏设置，关闭后恢复原有的手动配置。'
 'Enable contest mode': '启用赛事模式'
 'Hide Contests navigation entry': '隐藏比赛入口'
 'Hide Home navigation entry': '隐藏首页入口'

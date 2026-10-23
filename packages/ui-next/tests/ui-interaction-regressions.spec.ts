@@ -499,8 +499,18 @@ test('domain visibility contest mode card layout shrinks to half with animated f
 
     assert.match(
         domainEditSource,
-        /setting_contest_mode:\s*\{\s*right:\s*\(\s*<div className="hydro-setting-feature-extra-card">/,
-        'domain_edit must configure setting_contest_mode with right extra card',
+        /setting_contest_mode:\s*\{\s*right:\s*\(\s*<LongSelect/,
+        'domain_edit must configure setting_contest_mode with right LongSelect directly without outer card',
+    );
+    assert.doesNotMatch(
+        domainEditSource,
+        /hydro-setting-feature-extra-card/,
+        'outer card wrapper around focus contest must be deleted',
+    );
+    assert.doesNotMatch(
+        domainEditSource,
+        /Contest mode takes priority/,
+        'contest mode priority alert note must be removed',
     );
 
     assert.match(
@@ -526,7 +536,7 @@ test('domain visibility contest mode card layout shrinks to half with animated f
     );
     assert.match(
         tailwindCssSource,
-        /\.hydro-setting-feature-extra-card/,
-        'tailwind.css must style the extra feature card',
+        /\.hydro-feature-setting-card-wrap \.hydro-setting-checkbox-card\s*\{[^}]*min-height:\s*100px;/,
+        'tailwind.css must fix the card min-height to match opened state',
     );
 });
