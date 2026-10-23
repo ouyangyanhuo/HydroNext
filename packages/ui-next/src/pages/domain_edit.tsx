@@ -161,15 +161,6 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
               />
             ),
           },
-          setting_navigation: (
-            <Alert
-              icon={<IconInfoCircle size={16} />}
-              color="blue"
-              variant="light"
-            >
-              {t('These settings apply only to this domain and do not change page permissions.')}
-            </Alert>
-          ),
         } : undefined}
       />
     </Stack>

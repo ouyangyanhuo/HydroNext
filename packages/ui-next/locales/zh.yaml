@@ -27,7 +27,6 @@ __flag: 🇨🇳
 'Show Ranking navigation entry': '显示排名入口'
 'Show Records navigation entry': '显示提交记录入口'
 'Show Training navigation entry': '显示训练入口'
-'These settings apply only to this domain and do not change page permissions.': '这些设置仅在当前域生效，不改变页面访问权限。'
 'Visibility and contests': '隐藏与赛事'
 setting_contest_mode: 赛事功能
 setting_navigation: 隐藏功能
