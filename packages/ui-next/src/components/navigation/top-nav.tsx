@@ -8,7 +8,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import logoUrl from '@/assets/logo.png';
 import { ActionIcon, Button, UnstyledButton } from '@/components/common/button';
-import { ProctorFinishButton } from '@/components/contest/proctor-finish-button';
 import { Link } from '@/components/link';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
@@ -448,7 +447,6 @@ export function TopNav() {
           </Group>
 
           <Group gap="sm" wrap="nowrap">
-            <ProctorFinishButton compact clientOnly />
             <AccentColorPicker />
             <ThemeToggle />
             {isLoggedIn && <DomainSwitcher />}

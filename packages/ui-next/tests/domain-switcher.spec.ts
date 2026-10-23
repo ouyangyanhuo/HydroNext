@@ -105,9 +105,6 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
     const previewStore = load('../src/stores/domain-navigation-preview.ts').useDomainNavigationPreview;
     mocks['@/stores/domain-navigation-preview'] = { useDomainNavigationPreview: previewStore };
     mocks['@/hooks/use-navigation-motion'] = load('../src/hooks/use-navigation-motion.ts');
-    mocks['@/utils/proctor'] = load('../src/utils/proctor.ts');
-    mocks['@/utils/error'] = { formatErrorMessage: (error: any) => error.message };
-    mocks['@/components/contest/proctor-finish-button'] = load('../src/components/contest/proctor-finish-button.tsx');
     const { DomainSwitcher } = load('../src/components/navigation/domain-switcher.tsx');
     mocks['./domain-switcher'] = { DomainSwitcher };
     const Component = topNav ? load('../src/components/navigation/top-nav.tsx').TopNav : DomainSwitcher;
@@ -535,7 +532,7 @@ test('a stale opening callback cannot request domains after logout and repeated 
     } finally { await f.close(); }
 });
 
-test('比赛模式、聚焦比赛及隐藏所有导航项都保留客户端结束监考入口', async () => {
+test('顶部导航在客户端中不重复提供结束监考入口', async () => {
     let requested = 0;
     (dom.window as any).examAPI = { requestQuit: async () => { requested++; } };
     const f = await fixture(7, true);
@@ -547,12 +544,10 @@ test('比赛模式、聚焦比赛及隐藏所有导航项都保留客户端结�
             ), false, true, focus);
             assert.equal(f.host.querySelector('a[href="/problem_main"]'), null);
             const button = [...f.host.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent === 'Finish proctoring');
-            assert.ok(button);
-            // eslint-disable-next-line no-await-in-loop
-            await act(async () => button.click());
+            assert.equal(button, undefined);
         }
-        assert.equal(requested, 2);
-        assert.equal(f.calls.length, 0, '切换导航或请求客户端确认不提交代码，也不修改服务端监考状态');
+        assert.equal(requested, 0);
+        assert.equal(f.calls.length, 0, '切换导航不修改服务端监考状态');
     } finally {
         await f.close();
         delete (dom.window as any).examAPI;
