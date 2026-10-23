@@ -198,6 +198,21 @@ test('managed user names open the editor and the profile form preserves drafts, 
 });
 
 test('ordinary contestants do not see detail-page scoreboard buttons and pre-start errors offer a translated message and back action', async () => {
+    const tid = '1234567890abcdef12345678';
+    for (const state of [
+        { contestMode: true, contestFocus: tid, hidden: true },
+        { contestMode: true, contestFocus: 'other', hidden: false },
+        { contestMode: false, contestFocus: tid, hidden: false },
+    ]) {
+        // eslint-disable-next-line no-await-in-loop
+        const f = await fixture('contest_detail', { domain: state }, {}, {
+            tdoc: { docId: tid, _id: 'database-id', title: 'Focus contest' },
+        }, { _id: 2 });
+        try {
+            assert.equal(f.host.querySelector('a[href="/d/team/contest_main"]') === null, state.hidden);
+        // eslint-disable-next-line no-await-in-loop
+        } finally { await f.close(); }
+    }
     for (const canEdit of [false, true]) {
         // eslint-disable-next-line no-await-in-loop
         const f = await fixture('contest_detail', {}, {}, {

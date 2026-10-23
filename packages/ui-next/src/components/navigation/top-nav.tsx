@@ -369,6 +369,7 @@ export function TopNav() {
     && (item.to !== 'ranking' || (focusContest ? canViewContestRanking : canViewRanking))),
   [navigationHidden, canViewRanking, canViewContestRanking, contestMode, focusContest]);
   const navigationTarget = (route: typeof NAV_ITEMS[number]['to']) => {
+    if (focusContest && route === 'contest_main') return { href: buildUrl('contest_detail', { tid: focusContest }) };
     if (focusContest && route === 'ranking') return { href: buildUrl('contest_scoreboard', { tid: focusContest }) };
     if (focusContest && route === 'record_main') {
       const selfOnly = Boolean(userId) && (!canViewRecords || !canViewHiddenContestRecords);

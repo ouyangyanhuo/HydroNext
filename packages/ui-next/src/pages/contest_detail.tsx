@@ -22,6 +22,7 @@ import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { PERM, useHasPerm } from '@/hooks/use-permission';
 import { useDeadlinePassed } from '@/hooks/use-time';
+import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 
 function alphabetic(index: number) {
@@ -454,6 +455,9 @@ export default function ContestDetailPage() {
   const canDelete = Boolean(args.canDelete);
   const canViewAllRecords = Boolean(args.canViewAllRecords);
   const tid = tdoc._id || tdoc.docId;
+  const contestMode = useSessionStore((state) => state.ui.domain?.contestMode === true);
+  const contestFocus = useSessionStore((state) => state.ui.domain?.contestFocus);
+  const isFocusContest = contestMode && contestFocus === String(tdoc.docId || tdoc._id);
   const contestStarted = useDeadlinePassed(tdoc.beginAt);
   const contestEnded = useDeadlinePassed(tdoc.endAt);
   const contestNotStarted = Boolean(tdoc.beginAt) && !contestStarted;
@@ -621,9 +625,11 @@ export default function ContestDetailPage() {
         <Group justify="space-between" align="flex-start" gap="lg">
           <div className="min-w-0 flex-1">
             <Group gap="xs" mb="sm">
-              <Button component="a" href={buildUrl('contest_main')} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
-                {t('Back')}
-              </Button>
+              {!isFocusContest && (
+                <Button component="a" href={buildUrl('contest_main')} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                  {t('Back')}
+                </Button>
+              )}
               <Badge variant="light" color="hydroCopper">
                 {t('Contest')}
               </Badge>

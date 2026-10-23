@@ -57,6 +57,7 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
     }
     const buildUrl = (route?: string, params: any = {}, query: any = {}) => {
         const prefix = `/d/${store.getState().ui.domainId}`;
+        if (route === 'contest_detail') return `${prefix}/contest/${params.tid}`;
         if (route === 'contest_scoreboard') return `${prefix}/contest/${params.tid}/scoreboard`;
         if (route === 'record_main') return `${prefix}/record?${new URLSearchParams(query)}`;
         return '/d/system/home/domain';
@@ -297,6 +298,7 @@ test('contest mode scopes desktop and mobile record/ranking links to its focus w
     const tid = '1234567890abcdef12345678';
     try {
         await f.setDomain('exam', {}, true, true, tid);
+        assert.ok(f.host.querySelector(`a[href="/d/exam/contest/${tid}"]`));
         assert.ok(f.host.querySelector(`a[href="/d/exam/contest/${tid}/scoreboard"]`));
         assert.ok(f.host.querySelector(`a[href="/d/exam/record?tid=${tid}"]`));
         await f.setRecordPermission(true, false);
@@ -306,6 +308,7 @@ test('contest mode scopes desktop and mobile record/ranking links to its focus w
         assert.ok(f.host.querySelector(`a[href="/d/exam/record?tid=${tid}&uidOrName=7"]`));
         await act(async () => f.host.querySelector<HTMLButtonElement>('.mantine-Burger-root')!.click());
         assert.equal(document.querySelectorAll(`a[href="/d/exam/contest/${tid}/scoreboard"]`).length, 2);
+        assert.equal(document.querySelectorAll(`a[href="/d/exam/contest/${tid}"]`).length, 2);
         await f.setDomain('practice', {}, true, false);
         assert.ok(f.host.querySelector('a[href="/ranking"]'));
         assert.ok(f.host.querySelector('a[href="/record_main"]'));
