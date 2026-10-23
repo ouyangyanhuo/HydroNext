@@ -354,7 +354,7 @@ export default function ProblemMainPage() {
   ];
 
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" className="hydro-problem-page">
       <PageHeader
         title={t('Problems')}
         icon={<IconCode size={22} stroke={2} />}

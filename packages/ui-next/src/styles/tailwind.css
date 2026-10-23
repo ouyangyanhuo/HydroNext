@@ -1272,6 +1272,16 @@ a {
   color: var(--hydro-text);
 }
 
+.hydro-problem-page {
+  width: min(100%, 1280px);
+  margin-inline: auto;
+}
+
+:is(.hydro-problem-page, .hydro-contest-page, .hydro-training-page, .hydro-record-page, .ranking-page) {
+  width: min(100%, 1280px);
+  margin-inline: auto;
+}
+
 .hydro-category-flyout {
   border-color: color-mix(in srgb, var(--hydro-primary) 16%, var(--hydro-border));
   background-color: var(--hydro-glass-surface-strong);
@@ -1303,7 +1313,7 @@ a {
 }
 
 .hydro-contest-page {
-  width: min(100%, 1120px);
+  width: min(100%, 1280px);
   margin-inline: auto;
 }
 
@@ -1399,7 +1409,7 @@ a {
   margin-bottom: 1.5rem;
 }
 
-:is(.mantine-Stack-root, .ranking-page) > :is(.hydro-page-header, .ranking-page-header, .hydro-contest-page-header) {
+:is(.mantine-Stack-root, .ranking-page, .hydro-problem-page) > :is(.hydro-page-header, .ranking-page-header, .hydro-contest-page-header) {
   margin-bottom: 0;
 }
 
@@ -1661,7 +1671,7 @@ a {
 }
 
 .hydro-training-page {
-  width: min(100%, 1120px);
+  width: min(100%, 1280px);
   margin-inline: auto;
 }
 
@@ -2192,7 +2202,7 @@ a {
 }
 
 .hydro-record-page {
-  width: min(100%, 1200px);
+  width: min(100%, 1280px);
   margin-inline: auto;
 }
 

@@ -1,5 +1,6 @@
 .ranking-page {
-  width: 100%;
+  width: min(100%, 1280px);
+  margin-inline: auto;
 }
 
 .ranking-page-header,

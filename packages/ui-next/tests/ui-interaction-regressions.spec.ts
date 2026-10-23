@@ -570,3 +570,47 @@ test('contest proctor notice renders text reminders on left and status badge on 
         'right side must render a prominent status badge',
     );
 });
+
+test('topbar navigation pages (problems, contests, training, records, ranking) unify content width to widest 1280px', () => {
+    const problemSource = read('../src/pages/problem_main.tsx');
+    const contestSource = read('../src/pages/contest_main.tsx');
+    const trainingSource = read('../src/pages/training_main.tsx');
+    const recordSource = read('../src/pages/record_main.tsx');
+    const rankingSource = read('../src/pages/ranking.tsx');
+
+    assert.match(problemSource, /className="[^"]*hydro-problem-page[^"]*"/, 'problem page must use hydro-problem-page container');
+    assert.match(contestSource, /className="[^"]*hydro-contest-page[^"]*"/, 'contest page must use hydro-contest-page container');
+    assert.match(trainingSource, /className="[^"]*hydro-training-page[^"]*"/, 'training page must use hydro-training-page container');
+    assert.match(recordSource, /className="[^"]*hydro-record-page[^"]*"/, 'record page must use hydro-record-page container');
+    assert.match(rankingSource, /className="[^"]*ranking-page[^"]*"/, 'ranking page must use ranking-page container');
+
+    const tailwindCss = postcss.parse(read('../src/styles/tailwind.css'));
+    const rankingCss = postcss.parse(read('../src/pages/ranking.css'));
+
+    const widths: Record<string, string> = {};
+
+    tailwindCss.walkRules((rule) => {
+        const selectors = rule.selector.split(',').map((s) => s.trim());
+        for (const selector of selectors) {
+            if (['.hydro-problem-page', '.hydro-contest-page', '.hydro-training-page', '.hydro-record-page', '.ranking-page'].includes(selector)) {
+                rule.walkDecls('width', (decl) => {
+                    widths[selector] = decl.value;
+                });
+            }
+        }
+    });
+
+    rankingCss.walkRules((rule) => {
+        if (rule.selector.trim() === '.ranking-page') {
+            rule.walkDecls('width', (decl) => {
+                widths['.ranking-page'] = decl.value;
+            });
+        }
+    });
+
+    assert.equal(widths['.hydro-problem-page'], 'min(100%, 1280px)');
+    assert.equal(widths['.hydro-contest-page'], 'min(100%, 1280px)');
+    assert.equal(widths['.hydro-training-page'], 'min(100%, 1280px)');
+    assert.equal(widths['.hydro-record-page'], 'min(100%, 1280px)');
+    assert.equal(widths['.ranking-page'], 'min(100%, 1280px)');
+});
