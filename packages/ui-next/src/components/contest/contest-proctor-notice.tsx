@@ -1,7 +1,6 @@
 import { Badge, Card, Text } from '@mantine/core';
 import { IconShieldCheck } from '@tabler/icons-react';
 import { useI18n } from '@/hooks/use-i18n';
-import { ProctorFinishButton } from './proctor-finish-button';
 
 interface ProctorTeamMember {
   uid: number;
@@ -114,7 +113,6 @@ export function ContestProctorNotice({
                   {t('Team logs: {0}/{1}', team.uploaded, team.total)}
                 </Badge>
               )}
-              {!status.proctorLogUploaded && <ProctorFinishButton />}
             </>
           ) : (
             <Badge color="indigo" variant="light" size="lg" className="font-semibold">

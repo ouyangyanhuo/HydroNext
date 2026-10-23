@@ -6,7 +6,7 @@ import { formatErrorMessage } from '@/utils/error';
 import { canRequestProctorExit, requestProctorExit } from '@/utils/proctor';
 
 /** 独立于比赛提交权限和导航设置，比赛结束后仍可请求客户端处理个人日志。 */
-export function ProctorFinishButton({ compact = false, clientOnly = false }: { compact?: boolean, clientOnly?: boolean }) {
+export function ProctorFinishButton({ compact = false, clientOnly = false, label }: { compact?: boolean, clientOnly?: boolean, label?: string }) {
   const { t } = useI18n();
   const pending = useRef(false);
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,7 @@ export function ProctorFinishButton({ compact = false, clientOnly = false }: { c
         onClick={() => void finish()}
         title={t('End personal proctoring and upload log')}
       >
-        {t(compact ? 'Finish proctoring' : 'End personal proctoring and upload log')}
+        {label ?? t(compact ? 'Finish proctoring' : 'End personal proctoring and upload log')}
       </Button>
       {error && <Text size="xs" c="red" role="alert">{error}</Text>}
       {!available && !compact && (

@@ -138,7 +138,7 @@ test('ending notices refresh only their contest and return to its domain overvie
         assert.ok(dom.window.document.body.textContent?.includes('您的队伍已提前结束本次监考考试'));
         assert.ok(!dom.window.document.body.textContent?.includes('您的参赛时间已到'));
         const button = Array.from(dom.window.document.querySelectorAll('button'))
-            .find((item: any) => item.textContent === 'I understand') as HTMLButtonElement;
+            .find((item: any) => item.textContent === 'Skip upload for now') as HTMLButtonElement;
         await act(async () => button.click());
         assert.equal(sent[0].id, notice._id);
         assert.equal(navigations.length, 1);
@@ -181,7 +181,7 @@ test('自然结束或提前结束的通知在断线时仍可打开客户端上�
                 title: 'Exam', content: 'Closed', createdAt: new Date().toISOString(), kind, proctorEnabled: true,
             }] }));
             const button = Array.from(dom.window.document.querySelectorAll('button'))
-                .find((item: any) => item.textContent === 'End personal proctoring and upload log') as HTMLButtonElement;
+                .find((item: any) => item.textContent === 'End and upload') as HTMLButtonElement;
             assert.ok(button);
             assert.equal(button.disabled, false, '结束入口不依赖通知连接或提交权限');
             const before = requested;

@@ -113,20 +113,22 @@ export function ContestAnnouncements() {
               </Text>
             )}
           </ScrollArea.Autosize>
-          {current.kind && current.proctorEnabled && <ProctorFinishButton />}
           <Group justify="space-between">
             <Text size="xs" c="dimmed">{connected ? `${items.length} ${t('Unread announcements')}` : t('Reconnecting…')}</Text>
-            <Button
-              loading={confirming}
-              disabled={!connected}
-              onClick={() => {
-                returnAfterAck.current = current.kind ? current : null;
-                setConfirming(true);
-                send({ operation: 'acknowledge', id: current._id });
-              }}
-            >
-              {t('I understand')}
-            </Button>
+            <Group gap="xs" align="flex-start" wrap="nowrap">
+              <Button
+                loading={confirming}
+                disabled={!connected}
+                onClick={() => {
+                  returnAfterAck.current = current.kind ? current : null;
+                  setConfirming(true);
+                  send({ operation: 'acknowledge', id: current._id });
+                }}
+              >
+                {t(current.kind && current.proctorEnabled ? 'Skip upload for now' : 'I understand')}
+              </Button>
+              {current.kind && current.proctorEnabled && <ProctorFinishButton label={t('End and upload')} />}
+            </Group>
           </Group>
           {error && <Text size="sm" c="red" role="alert">{error}</Text>}
         </Stack>
