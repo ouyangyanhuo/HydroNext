@@ -1,7 +1,6 @@
 __flag: 🇯🇵
-'Choose a contest in this domain before enabling contest mode.': 'コンテストモードを有効にする前に、このドメインの対象コンテストを選択してください。'
 'Focus contest': '対象コンテスト'
-'In contest mode, the top bar records and ranking show this contest. Choose a contest in this domain.': 'コンテストモードでは、上部の提出履歴と順位表にこのコンテストのデータを表示します。このドメインのコンテストを選択してください。'
+'Optional. Focus top bar contest, records and ranking links on one contest. Leave empty for domain-wide links.': '任意。対象コンテストを選ぶと、上部のコンテスト・提出履歴・順位表のリンクがそのコンテストを開きます。未選択の場合はドメイン全体のリンクを維持します。'
 'The contest has not started yet and cannot be viewed.': 'コンテスト開始前のため、まだ閲覧できません。'
 'Contest resumed.': 'コンテストを再開しました。'
 'Resume': '再開'

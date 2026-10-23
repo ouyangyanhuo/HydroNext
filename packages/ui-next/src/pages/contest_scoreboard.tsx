@@ -2,7 +2,7 @@ import './ranking.css';
 
 import { Group, Paper, Stack, Table, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconCheck, IconTrophy } from '@tabler/icons-react';
+import { IconArrowLeft, IconCheck, IconTrophy } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { ShortSelect } from '@/components/common/select';
@@ -13,9 +13,12 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
+import { PERM } from '@/hooks/use-permission';
 import { useDeadlinePassed } from '@/hooks/use-time';
 import { formatContestClock } from '@/utils/contest-problem-time';
 import { formatErrorMessage } from '@/utils/error';
+import { goBackOrFallback } from '@/utils/history-back';
+import { toBigInt } from '@/utils/permissions';
 import { formatUserName } from '@/utils/user-name';
 
 const EMPTY_ARRAY: any[] = [];
@@ -111,6 +114,13 @@ export default function ContestScoreboardPage() {
   const bodyRows = useMemo(() => rows.slice(1), [rows]);
   const tdoc = args.tdoc || EMPTY_OBJECT;
   const tid = tdoc.docId || tdoc._id;
+  const ownsContest = user._id > 0 && (tdoc.owner === user._id || tdoc.maintainer?.includes(user._id));
+  const editPermission = ownsContest ? PERM.PERM_EDIT_CONTEST_SELF : PERM.PERM_EDIT_CONTEST;
+  const effectivePermissions = toBigInt(user.perm) & toBigInt(user.scope ?? PERM.PERM_ALL);
+  // Older backends may omit canEdit; mirror the edit route without bypassing a server denial.
+  const canEdit = typeof args.canEdit === 'boolean'
+    ? args.canEdit
+    : user._id > 0 && (effectivePermissions & editPermission) === editPermission;
   const udict = args.udict || EMPTY_OBJECT;
   const pdict = args.pdict || {};
   const groups = args.groups || EMPTY_ARRAY;
@@ -210,7 +220,7 @@ export default function ContestScoreboardPage() {
         </Group>
         <Stack gap="xs" align="flex-end">
           <Group gap="xs" wrap="wrap" justify="flex-end">
-            {['html', 'csv', 'ghost'].map((view) => (
+            {canEdit && ['html', 'csv', 'ghost'].map((view) => (
               <Button key={view} component={Link} href={buildUrl(viewRoute, { tid, view })} target="_blank" size="xs" variant="light">
                 {t('Export as {0}').replace('{0}', view.toUpperCase())}
               </Button>
@@ -223,6 +233,16 @@ export default function ContestScoreboardPage() {
             {tdoc.lockAt && !tdoc.unlocked && contestEnded && (
               <Button size="xs" variant="light" onClick={unlock} loading={loading}>{t('Unlock scoreboard')}</Button>
             )}
+            <Button
+              size="xs"
+              variant="subtle"
+              leftSection={<IconArrowLeft size={14} />}
+              onClick={() => goBackOrFallback(window.history, () => {
+                void navigate(buildUrl('contest_detail', { tid }), { replace: true });
+              })}
+            >
+              {t('Back')}
+            </Button>
           </Group>
           <ShortSelect data={filterOptions} value={filter} onChange={(value) => setFilterAndHash(value || 'all')} size="xs" w={200} />
         </Stack>

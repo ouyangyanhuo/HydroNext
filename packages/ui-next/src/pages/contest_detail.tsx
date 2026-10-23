@@ -451,13 +451,13 @@ export default function ContestDetailPage() {
   const udict = args.udict || {};
   const canEdit = useHasPerm(PERM.PERM_EDIT_CONTEST) || args.canEdit;
   const canCreateContest = useHasPerm(PERM.PERM_CREATE_CONTEST);
-  const showScoreboard = canEdit || canCreateContest;
   const canDelete = Boolean(args.canDelete);
   const canViewAllRecords = Boolean(args.canViewAllRecords);
   const tid = tdoc._id || tdoc.docId;
   const contestMode = useSessionStore((state) => state.ui.domain?.contestMode === true);
   const contestFocus = useSessionStore((state) => state.ui.domain?.contestFocus);
   const isFocusContest = contestMode && contestFocus === String(tdoc.docId || tdoc._id);
+  const showScoreboard = !isFocusContest || canEdit || canCreateContest;
   const contestStarted = useDeadlinePassed(tdoc.beginAt);
   const contestEnded = useDeadlinePassed(tdoc.endAt);
   const contestNotStarted = Boolean(tdoc.beginAt) && !contestStarted;

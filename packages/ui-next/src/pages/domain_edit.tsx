@@ -96,10 +96,6 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
   }, [visibility, domainId]);
 
   const handleSubmit = async (payload: Record<string, any>) => {
-    if (visibility && payload.contestMode === true && !focusContest) {
-      notifications.show({ title: t('Choose a contest in this domain before enabling contest mode.'), message: '', color: 'red' });
-      return;
-    }
     setLoading(true);
     try {
       const res = await fetch(window.location.href, {
@@ -146,7 +142,9 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
             <Stack gap="md">
               <LongSelect
                 label={t('Focus contest')}
-                description={t('In contest mode, the top bar records and ranking show this contest. Choose a contest in this domain.')}
+                description={t(
+                  'Optional. Focus top bar contest, records and ranking links on one contest. Leave empty for domain-wide links.',
+                )}
                 data={(args.focusContests || []).map((tdoc: any) => ({
                   value: String(tdoc.docId),
                   label: `${extractLocalizedContent(tdoc.title, language)} · ${tdoc.docId}`,

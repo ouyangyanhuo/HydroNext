@@ -187,7 +187,6 @@ class DomainVisibilityHandler extends DomainEditHandler {
             : Types.Boolean[0](args.contestMode);
         let focus = args.contestFocus ?? this.domain.contestFocus ?? '';
         if (typeof focus !== 'string' || (focus && !/^[a-f\d]{24}$/i.test(focus))) throw new ValidationError('contestFocus');
-        if (enabled && !focus) throw new ForbiddenError('Choose a contest in this domain before enabling contest mode.');
         if (focus) {
             const tdoc = await document.get(this.domain._id, document.TYPE_CONTEST, new ObjectId(focus));
             if (!tdoc || !contest.RULES[tdoc.rule] || contest.RULES[tdoc.rule].hidden) {

@@ -309,6 +309,11 @@ test('contest mode scopes desktop and mobile record/ranking links to its focus w
         await act(async () => f.host.querySelector<HTMLButtonElement>('.mantine-Burger-root')!.click());
         assert.equal(document.querySelectorAll(`a[href="/d/exam/contest/${tid}/scoreboard"]`).length, 2);
         assert.equal(document.querySelectorAll(`a[href="/d/exam/contest/${tid}"]`).length, 2);
+        await f.setDomain('exam', {}, true, true, '');
+        assert.ok(f.host.querySelector('a[href="/contest_main"]'));
+        assert.ok(f.host.querySelector('a[href="/ranking"]'));
+        assert.ok(f.host.querySelector('a[href="/record_main"]'));
+        assert.equal(document.querySelector(`a[href*="${tid}"]`), null);
         await f.setDomain('practice', {}, true, false);
         assert.ok(f.host.querySelector('a[href="/ranking"]'));
         assert.ok(f.host.querySelector('a[href="/record_main"]'));
@@ -438,6 +443,16 @@ test('visibility checkboxes default to visible, preview locally and submit only 
         assert.equal(payload['navigationHidden.problem_main'], true);
         assert.equal(payload['navigationHidden.contest_main'], false);
         assert.equal(payload.contestMode, false);
+        const contestModeCard = Array.from(f.host.querySelectorAll<HTMLDivElement>('[role="button"]'))
+            .find((item) => item.textContent?.includes('Enable contest mode'))!;
+        await act(async () => contestModeCard.click());
+        assert.equal(f.host.querySelector('a[href="/training_main"]'), null);
+        assert.ok(f.host.querySelector('a[href="/contest_main"]'));
+        assert.ok(f.host.querySelector('a[href="/ranking"]'));
+        await act(async () => save.click());
+        const unfocused = JSON.parse(f.calls[1].init.body as string);
+        assert.equal(unfocused.contestMode, true);
+        assert.equal(unfocused.contestFocus, '');
         await f.leaveEditor();
         assert.equal(f.previewStore.getState().preview, null);
         assert.ok(f.host.querySelector('a[href="/problem_main"]'), 'leaving discards local preview without modifying saved session data');

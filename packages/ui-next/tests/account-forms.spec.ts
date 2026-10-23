@@ -7,6 +7,7 @@ import { after, test } from 'node:test';
 import { formatErrorMessage } from '../src/utils/error.ts';
 import { goBackOrFallback } from '../src/utils/history-back.ts';
 import { INVITATION_CODE_LENGTH, isInvitationCodeComplete } from '../src/utils/invitation-code';
+import { toBigInt } from '../src/utils/permissions.ts';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -50,12 +51,14 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
     const buildUrl = (route: string, params: any = {}, query: any = {}) => {
         if (route === 'problem_detail') return `${prefix}/p/${params.pid}?${new URLSearchParams(query)}`;
         if (route === 'record_detail') return `${prefix}/record/${params.rid}`;
+        if (route === 'contest_detail') return `${prefix}/contest/${params.tid}`;
         const search = new URLSearchParams(query).toString();
         if (route === 'manage_user_edit') return `${prefix}/manage/users/${params.uid}${search ? `?${search}` : ''}`;
         return `${prefix}/${route}${search ? `?${search}` : ''}`;
     };
     const mocks: Record<string, any> = {
         './contest-detail.css': {},
+        './ranking.css': {},
         '@mantine/core': mantine,
         '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
         '@/components/common/button': { Button: mantine.Button, ActionIcon: mantine.ActionIcon },
@@ -68,6 +71,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         },
         '@/components/contest/contest-proctor-notice': { ContestProctorNotice: () => null },
         '@/components/contest/contest-timer': { ContestTimer: () => null },
+        '@/components/contest/team-identity': { TeamIdentity: () => null },
         '@/components/record/record-status-badge': { RecordStatusBadge: () => null },
         '@/components/common/page-header': { PageHeader: ({ children }: any) => h('header', null, children) },
         '@/components/common/confirm-dialog': { ConfirmDialog: ({ opened, title, message, onConfirm, loading }: any) => opened
@@ -89,13 +93,19 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => translations[key] || key }) },
         '@/hooks/use-build-url': { useBuildUrl: () => buildUrl },
         '@/hooks/use-current-user': { useCurrentUser: () => user, useIsLoggedIn: () => user._id > 0 },
-        '@/hooks/use-permission': { PERM: {}, useHasPerm: () => false, hasPermValue: () => false },
+        '@/hooks/use-permission': {
+            PERM: { PERM_EDIT_CONTEST: 1n << 50n, PERM_EDIT_CONTEST_SELF: 1n << 51n, PERM_ALL: -1n },
+            useHasPerm: () => false,
+            hasPermValue: () => false,
+        },
         '@/hooks/use-time': { useDeadlinePassed: (date: string) => new Date(date).getTime() <= Date.now() },
         '@/context/router': { useNavigate: () => (url: string) => navigations.push(url) },
         '@/context/page-data': { usePageData: () => ({ args, name: pageName }) },
         '@/stores/session': { useSessionStore: (select: any) => select({ ui, user, language: 'en' }) },
         '@/utils/error': { formatErrorMessage },
         '@/utils/history-back': { goBackOrFallback },
+        '@/utils/permissions': { toBigInt },
+        '@/utils/contest-problem-time': { formatContestClock: () => '0:00' },
         '@/utils/proctor': { proctorError: (error: any) => error.message, proctorAccessRequest: () => null },
         '@/utils/invitation-code': { INVITATION_CODE_LENGTH, isInvitationCodeComplete },
         './invitation-code-input.css': {},
@@ -125,6 +135,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
     }).code;
     runInNewContext(code, {
         module, exports: module.exports, window: dom.window, document: dom.window.document, FormData: dom.window.FormData, URL, URLSearchParams,
+        localStorage: dom.window.localStorage,
         require: (id: string) => mocks[id] ?? require(id),
         fetch: async (url: string, init: any) => {
             calls.push({ url, init });
@@ -197,12 +208,13 @@ test('managed user names open the editor and the profile form preserves drafts, 
     }
 });
 
-test('ordinary contestants do not see detail-page scoreboard buttons and pre-start errors offer a translated message and back action', async () => {
+test('only focused contests hide ordinary contestants scoreboard buttons and pre-start errors offer a back action', async () => {
     const tid = '1234567890abcdef12345678';
     for (const state of [
         { contestMode: true, contestFocus: tid, hidden: true },
         { contestMode: true, contestFocus: 'other', hidden: false },
         { contestMode: false, contestFocus: tid, hidden: false },
+        { contestMode: true, contestFocus: '', hidden: false },
     ]) {
         // eslint-disable-next-line no-await-in-loop
         const f = await fixture('contest_detail', { domain: state }, {}, {
@@ -210,13 +222,14 @@ test('ordinary contestants do not see detail-page scoreboard buttons and pre-sta
         }, { _id: 2 });
         try {
             assert.equal(f.host.querySelector('a[href="/d/team/contest_main"]') === null, state.hidden);
+            assert.equal(f.host.querySelector('a[href="/contest_scoreboard"]') === null, state.hidden);
         // eslint-disable-next-line no-await-in-loop
         } finally { await f.close(); }
     }
     for (const canEdit of [false, true]) {
         // eslint-disable-next-line no-await-in-loop
-        const f = await fixture('contest_detail', {}, {}, {
-            tdoc: { docId: 'contest', title: 'Contest' }, tsdoc: { attend: true }, canEdit,
+        const f = await fixture('contest_detail', { domain: { contestMode: true, contestFocus: tid } }, {}, {
+            tdoc: { docId: tid, title: 'Contest' }, tsdoc: { attend: true }, canEdit,
         }, { _id: 2 });
         try {
             assert.equal(!!f.host.querySelector('a[href="/contest_scoreboard"]'), canEdit);
@@ -237,6 +250,64 @@ test('ordinary contestants do not see detail-page scoreboard buttons and pre-sta
     } finally {
         await f.close();
         dom.window.history.back = oldBack;
+    }
+});
+
+test('scoreboard back uses history or a domain-scoped fallback and only editors see the three exports', async () => {
+    const originalBack = dom.window.history.back;
+    const originalLength = Object.getOwnPropertyDescriptor(dom.window.history, 'length');
+    let backCalls = 0;
+    dom.window.history.back = () => { backCalls++; };
+    try {
+        for (const domainId of ['system', 'exam']) {
+            for (const canEdit of [false, true]) {
+                // eslint-disable-next-line no-await-in-loop
+                const f = await fixture('contest_scoreboard', { domainId }, {}, {
+                    tdoc: { docId: 'contest1', domainId, title: 'Contest' }, canEdit,
+                }, { _id: 2 });
+                try {
+                    const exports = [...f.host.querySelectorAll('a')].filter((link) => link.textContent?.startsWith('Export as'));
+                    assert.equal(exports.length, canEdit ? 3 : 0);
+                    const back = [...f.host.querySelectorAll('button')].find((button) => button.textContent === 'Back')!;
+                    assert.ok(back);
+                    assert.equal(back.closest('.ranking-page-header')?.firstElementChild?.contains(back), false,
+                        'back belongs to the right-hand actions, not the title');
+                    Object.defineProperty(dom.window.history, 'length', { configurable: true, value: 2 });
+                    const before = backCalls;
+                    // eslint-disable-next-line no-await-in-loop
+                    await act(async () => back.click());
+                    assert.equal(backCalls, before + 1);
+                    assert.equal(f.navigations.length, 0);
+                    Object.defineProperty(dom.window.history, 'length', { configurable: true, value: 1 });
+                    // eslint-disable-next-line no-await-in-loop
+                    await act(async () => back.click());
+                    assert.deepEqual(f.navigations, [`${domainId === 'system' ? '' : '/d/exam'}/contest/contest1`]);
+                // eslint-disable-next-line no-await-in-loop
+                } finally { await f.close(); }
+            }
+        }
+    } finally {
+        dom.window.history.back = originalBack;
+        if (originalLength) Object.defineProperty(dom.window.history, 'length', originalLength);
+        else Reflect.deleteProperty(dom.window.history, 'length');
+    }
+});
+
+test('scoreboard missing edit metadata still recognizes root and ownership permissions without bypassing session scope', async () => {
+    for (const entry of [
+        { user: { _id: 2, perm: 'BigInt::-1', scope: 'BigInt::-1', priv: -1 }, tdoc: { owner: 7 }, expected: 3 },
+        { user: { _id: 2, perm: -1, scope: '0', priv: -1 }, tdoc: { owner: 7 }, expected: 0 },
+        { user: { _id: 2, perm: String(1n << 51n) }, tdoc: { owner: 2 }, expected: 3 },
+        { user: { _id: 2, perm: String(1n << 51n) }, tdoc: { owner: 7, maintainer: [2] }, expected: 3 },
+        { user: { _id: 2, perm: String(1n << 51n) }, tdoc: { owner: 7 }, expected: 0 },
+        { user: { _id: 2, perm: '0' }, tdoc: { owner: 7 }, expected: 0 },
+    ]) {
+        // eslint-disable-next-line no-await-in-loop
+        const f = await fixture('contest_scoreboard', {}, {}, { tdoc: { docId: 'contest', ...entry.tdoc } }, entry.user);
+        try {
+            assert.equal([...f.host.querySelectorAll('a')].filter((link) => link.textContent?.startsWith('Export as')).length, entry.expected);
+        // eslint-disable-next-line no-await-in-loop
+        } finally { await f.close(); }
     }
 });
 

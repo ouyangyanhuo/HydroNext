@@ -288,11 +288,17 @@ describe('App', () => {
             assert.equal((await domain.get(a)).navigationHidden.ranking, false);
             assert.equal((await domain.get(a)).navigationHidden.training_main, false);
             assert.equal((await domain.get(a)).navigationHidden.problem_main, true);
-            await agent.post(route).set('Accept', 'application/json').send({ contestMode: true }).expect(403);
+            await agent.post(route).set('Accept', 'application/json').send({ contestMode: true }).expect(200);
+            assert.equal((await domain.get(a)).contestMode, true);
+            assert.equal((await domain.get(a)).contestFocus, '');
             await agent.post(route).set('Accept', 'application/json').send({ contestMode: true, contestFocus: foreign.toHexString() }).expect(403);
-            assert.equal((await domain.get(a)).contestMode, undefined);
+            assert.equal((await domain.get(a)).contestFocus, '');
             await agent.post(route).set('Accept', 'application/json').send({ contestMode: true, contestFocus: focus.toHexString() }).expect(200);
             assert.equal((await domain.get(a)).contestFocus, focus.toHexString());
+            await agent.post(route).set('Accept', 'application/json').send({ contestMode: true, contestFocus: '' }).expect(200);
+            assert.equal((await domain.get(a)).contestMode, true);
+            assert.equal((await domain.get(a)).contestFocus, '');
+            await agent.post(route).set('Accept', 'application/json').send({ contestMode: true, contestFocus: focus.toHexString() }).expect(200);
             await agent.get(`/d/${a}/`).expect(302).expect('Location', `/d/${a}/contest`);
             const homepage = await agent.get(`/d/${a}/`).set('Accept', 'application/json').expect(200);
             assert.equal(homepage.body.url, `/d/${a}/contest`);
@@ -335,10 +341,12 @@ describe('App', () => {
                 .then((response) => assert.equal(response.body.error.message, 'The contest has not started yet and cannot be viewed.'));
             await contestant.get(scoreboard).set('Accept', 'application/json').expect(403)
                 .then((response) => assert.equal(response.body.error.message, 'The contest has not started yet and cannot be viewed.'));
-            await agent.get(scoreboard).set('Accept', 'application/json').expect(200);
+            const editable = getPageArgs(await agent.get(scoreboard).set('Accept', 'application/json').expect(200));
+            assert.equal(editable.canEdit, true);
             await contest.edit(domainId, tid, { beginAt: new Date(Date.now() - 60_000) });
             await contestant.get(records).set('Accept', 'application/json').expect(200);
-            await contestant.get(scoreboard).set('Accept', 'application/json').expect(200);
+            const readonly = getPageArgs(await contestant.get(scoreboard).set('Accept', 'application/json').expect(200));
+            assert.equal(readonly.canEdit, false);
         } finally {
             await contest.del(domainId, tid);
             await domain.del(domainId);

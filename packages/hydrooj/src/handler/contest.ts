@@ -1193,6 +1193,9 @@ export async function apply(ctx: Context) {
                 const availableViews = scoreboard.getAvailableViews(tdoc.rule, this);
                 this.response.body = {
                     tdoc: this.tdoc, tsdoc: this.tsdocAsPublic(), rows, udict, pdict, page_name, groups, availableViews,
+                    canEdit: this.user.own(tdoc)
+                        ? this.user.hasPerm(PERM.PERM_EDIT_CONTEST_SELF)
+                        : this.user.hasPerm(PERM.PERM_EDIT_CONTEST),
                     canManageTeams: this.user._id === this.domain.owner || this.user.hasPerm(PERM.PERM_CREATE_CONTEST),
                 };
                 this.response.pjax = 'partials/scoreboard.html';
