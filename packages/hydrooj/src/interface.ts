@@ -490,6 +490,8 @@ export interface ContestStatusDoc extends StatusDocBase, ContestStat {
     journal?: ContestJournalEntry[];
     startAt?: Date;
     endAt?: Date; // 灵活时间模式的结束时间，或者是提前结束比赛的时间
+    /** Explicit manual finish; kept separate from natural participation deadlines. */
+    earlyEndAt?: Date;
     rev?: number;
     /** Foreground problem-page time in milliseconds; independent of ranking penalties. */
     problemTimes?: Record<number, number>;

@@ -1,4 +1,8 @@
 __flag: 🇰🇷
+'You have ended your contest early. Contest submissions are now closed.': '대회 참가를 조기 종료했습니다. 더 이상 대회에 제출할 수 없습니다.'
+'You have ended your proctored contest early. Contest submissions are now closed.': '감독 대회 참가를 조기 종료했습니다. 더 이상 대회에 제출할 수 없습니다.'
+'Your team has ended the contest early. Contest submissions are now closed.': '팀이 대회 참가를 조기 종료했습니다. 팀원은 더 이상 대회에 제출할 수 없습니다.'
+'Your team has ended the proctored contest early. Contest submissions are now closed.': '팀이 감독 대회 참가를 조기 종료했습니다. 팀원은 더 이상 대회에 제출할 수 없습니다.'
 'Filter participants': '참가자 필터'
 'Only me': '나만 보기'
 'Ranked Users': '순위에 포함된 사용자'

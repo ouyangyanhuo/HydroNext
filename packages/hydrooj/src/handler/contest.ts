@@ -243,7 +243,9 @@ export class ContestDetailHandler extends ContestDetailBaseHandler {
         if (!contest.isOngoing(this.tdoc, this.tsdoc)) throw new ContestNotLiveError(domainId, tid);
         if (this.team) requireTeamCaptain(await user.getTeamById(domainId, this.team, true), this.user._id);
         const now = new Date();
-        await contest.setStatus(domainId, tid, this.team ?? this.user._id, { endAt: now, ...(!this.tsdoc.startAt ? { startAt: now } : {}) });
+        await contest.setStatus(domainId, tid, this.team ?? this.user._id, {
+            endAt: now, earlyEndAt: now, ...(!this.tsdoc.startAt ? { startAt: now } : {}),
+        });
         await ending.notifyEnded(domainId, tid, this.team ?? this.user._id);
         this.back();
     }
@@ -850,7 +852,7 @@ export class ContestUserHandler extends ContestManagementBaseHandler {
             const durationEnd = moment(tsdoc.startAt).add(this.tdoc.duration, 'hours').toDate();
             if (durationEnd <= new Date()) throw new ContestNotLiveError(domainId, tid);
         }
-        await contest.setStatus(domainId, tid, uid, null, { endAt: '' });
+        await contest.setStatus(domainId, tid, uid, null, { endAt: '', earlyEndAt: '' });
         this.back();
     }
 

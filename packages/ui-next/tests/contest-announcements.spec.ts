@@ -97,8 +97,10 @@ test('ending notices refresh only their contest and return to its domain overvie
     const sent: any[] = [];
     const tid = '1234567890abcdef12345678';
     const navigate = async (url: string) => { navigations.push(url); };
+    const earlyMessage = 'Your team has ended the proctored contest early. Contest submissions are now closed.';
+    const dictionary = require('js-yaml').load(readFileSync(new URL('../locales/zh.yaml', import.meta.url), 'utf8'));
     const { ContestAnnouncements } = load('../src/components/contest/contest-announcements.tsx', {
-        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key === earlyMessage ? dictionary[key] : key }) },
         '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send: (data: any) => sent.push(data) }; } },
         '@/context/page-data': { usePageData: () => ({ args: { tdoc: { docId: tid }, UiContext: { domainId: 'exam' } },
             name: 'problem_detail', url: '/d/exam/p/1' }) },
@@ -109,7 +111,7 @@ test('ending notices refresh only their contest and return to its domain overvie
     const container = dom.window.document.createElement('div');
     dom.window.document.body.append(container);
     const root = createRoot(container);
-    const notice = { _id: 'abcdef1234567890abcdef12', tid, domainId: 'other', title: 'Exam', content: 'Team ended',
+    const notice = { _id: 'abcdef1234567890abcdef12', tid, domainId: 'other', title: 'Exam', content: earlyMessage,
         createdAt: new Date().toISOString(), kind: 'team-ended', proctorEnabled: true };
     try {
         await act(async () => root.render(h(MantineProvider, null, h(ContestAnnouncements))));
@@ -123,6 +125,8 @@ test('ending notices refresh only their contest and return to its domain overvie
         await act(async () => callbacks.onMessage({ announcements: [{ ...notice, domainId: 'exam' }] }));
         assert.equal(navigations.length, 1);
         assert.ok(dom.window.document.body.textContent?.includes('End proctoring and upload your log'));
+        assert.ok(dom.window.document.body.textContent?.includes('您的队伍已提前结束本次监考考试'));
+        assert.ok(!dom.window.document.body.textContent?.includes('您的参赛时间已到'));
         const button = Array.from(dom.window.document.querySelectorAll('button'))
             .find((item: any) => item.textContent === 'I understand') as HTMLButtonElement;
         await act(async () => button.click());

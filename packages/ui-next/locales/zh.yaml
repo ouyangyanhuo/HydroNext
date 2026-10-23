@@ -1,4 +1,8 @@
 __flag: 🇨🇳
+'You have ended your contest early. Contest submissions are now closed.': '您已提前结束本次参赛，现已停止接收比赛提交。'
+'You have ended your proctored contest early. Contest submissions are now closed.': '您已提前结束本次监考考试，现已停止接收比赛提交。'
+'Your team has ended the contest early. Contest submissions are now closed.': '您的队伍已提前结束比赛，队员均无法再提交比赛代码。'
+'Your team has ended the proctored contest early. Contest submissions are now closed.': '您的队伍已提前结束本次监考考试，队员均无法再提交比赛代码。'
 'Filter participants': '筛选参赛者'
 'Only me': '仅自己'
 'Ranked Users': '计入排名的用户'

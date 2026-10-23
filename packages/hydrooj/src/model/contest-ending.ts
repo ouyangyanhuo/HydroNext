@@ -23,7 +23,7 @@ declare module '../service/db' {
 const jobs = db.collection('contest.end-notice');
 const scope = (domainId: string, tid: ObjectId) => ({ domainId, docType: document.TYPE_CONTEST, docId: tid });
 const jobId = (domainId: string, tid: ObjectId, uid: number) => `${domainId}/${tid}/${uid}`;
-const timeProjection = { uid: 1, attend: 1, startAt: 1, endAt: 1, members: 1 };
+const timeProjection = { uid: 1, attend: 1, startAt: 1, endAt: 1, earlyEndAt: 1, members: 1 };
 const contestProjection = { domainId: 1, docId: 1, title: 1, rule: 1, endAt: 1, duration: 1, proctorEnabled: 1 };
 
 function deadlineOf(tdoc: Tdoc, status?: ContestStatusDoc) {
@@ -82,13 +82,24 @@ export async function notifyEnded(domainId: string, tid: ObjectId, uid = 0) {
         : [status];
     const kind = globalEnd || !uid ? 'contest-ended' : status.members?.length ? 'team-ended' : 'participation-ended';
     const deadline = globalEnd ? tdoc.endAt : endAt;
+    const endedEarly = !globalEnd && status?.earlyEndAt instanceof Date && status.earlyEndAt.getTime() === deadline.getTime();
+    let content = kind === 'contest-ended' ? 'The contest has ended. Contest submissions are now closed.'
+        : kind === 'team-ended' ? 'The contest has ended for your team. Contest submissions are now closed.'
+            : 'Your contest time is up. Contest submissions are now closed.';
+    if (endedEarly) {
+        if (kind === 'team-ended') {
+            content = tdoc.proctorEnabled ? 'Your team has ended the proctored contest early. Contest submissions are now closed.'
+                : 'Your team has ended the contest early. Contest submissions are now closed.';
+        } else {
+            content = tdoc.proctorEnabled ? 'You have ended your proctored contest early. Contest submissions are now closed.'
+                : 'You have ended your contest early. Contest submissions are now closed.';
+        }
+    }
     const recipients = statuses.flatMap((entry) => entry.members?.length ? entry.members : [entry.uid]);
     if (!recipients.length) return undefined;
     await announcements.publish({
         domainId, tid, title: tdoc.title, kind, endAt: deadline, proctorEnabled: !!tdoc.proctorEnabled, createdBy: 0,
-        content: kind === 'contest-ended' ? 'The contest has ended. Contest submissions are now closed.'
-            : kind === 'team-ended' ? 'The contest has ended for your team. Contest submissions are now closed.'
-                : 'Your contest time is up. Contest submissions are now closed.',
+        content,
         recipients,
         eventKey: `end:${domainId}/${tid}/${globalEnd ? 0 : uid}/${deadline.getTime()}`,
     });

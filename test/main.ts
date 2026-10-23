@@ -893,7 +893,9 @@ describe('App', () => {
                 });
             });
             await agent.post(route).send({ operation: 'early_end' }).expect(302);
-            assert.equal((await teamEnded).proctorEnabled, true);
+            const earlyNotice = await teamEnded;
+            assert.equal(earlyNotice.proctorEnabled, true);
+            assert.equal(earlyNotice.content, 'Your team has ended the proctored contest early. Contest submissions are now closed.');
             assert.ok((await contest.getStatus(domainId, tid, team._id)).endAt <= new Date());
             assert.equal((await contest.getStatus(domainId, tid, member)).proctorLogUploaded, false);
         } finally {
@@ -1243,6 +1245,21 @@ describe('App', () => {
             await contest.edit(domainId, tid, { endAt: new Date(now + 3_600_000) });
             await ending.runDue();
             assert.equal((await announcements.pending(2)).filter((item) => item.domainId === domainId).length, 0);
+            await contest.edit(domainId, tid, { proctorEnabled: true });
+            await agent.post(`/d/${domainId}/contest/${tid}`).send({ operation: 'early_end' }).expect(302);
+            const personalEarly = (await announcements.pending(2)).find((item) => item.domainId === domainId);
+            assert.equal(personalEarly.kind, 'participation-ended');
+            assert.equal(personalEarly.content, 'You have ended your proctored contest early. Contest submissions are now closed.');
+            await announcements.acknowledge(2, personalEarly._id.toHexString());
+            await agent.post(`/d/${domainId}/contest/${tid}/user`).send({ operation: 'resume', uid: 2 }).expect(302);
+            assert.equal((await contest.getStatus(domainId, tid, 2)).earlyEndAt, undefined);
+            await contest.setStatus(domainId, tid, 2, { endAt: new Date(now - 1000) });
+            await ending.notifyEnded(domainId, tid, 2);
+            const personalTimedOut = (await announcements.pending(2)).find((item) => item.domainId === domainId);
+            assert.equal(personalTimedOut.content, 'Your contest time is up. Contest submissions are now closed.');
+            await announcements.acknowledge(2, personalTimedOut._id.toHexString());
+            await agent.post(`/d/${domainId}/contest/${tid}/user`).send({ operation: 'resume', uid: 2 }).expect(302);
+            await contest.edit(domainId, tid, { proctorEnabled: false });
             // A team finish targets its real members, not the team's negative virtual UID.
             const documents = global.Hydro.model.document;
             await documents.setStatus(domainId, documents.TYPE_CONTEST, tid, -1000,

@@ -1,4 +1,8 @@
 __flag: 🇯🇵
+'You have ended your contest early. Contest submissions are now closed.': '参加を予定より早く終了しました。コンテストへの提出は締め切られました。'
+'You have ended your proctored contest early. Contest submissions are now closed.': '監督付きコンテストへの参加を予定より早く終了しました。コンテストへの提出は締め切られました。'
+'Your team has ended the contest early. Contest submissions are now closed.': 'チームがコンテストへの参加を予定より早く終了しました。コンテストへの提出は締め切られました。'
+'Your team has ended the proctored contest early. Contest submissions are now closed.': 'チームが監督付きコンテストへの参加を予定より早く終了しました。コンテストへの提出は締め切られました。'
 'Filter participants': '参加者を絞り込む'
 'Only me': '自分のみ'
 'Ranked Users': '順位対象のユーザー'

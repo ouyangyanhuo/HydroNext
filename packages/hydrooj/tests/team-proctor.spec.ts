@@ -132,7 +132,8 @@ test('普通队员不能提前结束全队比赛，队长可结束但不改变�
     await handler.postEarlyEnd('exam', tid);
     assert.equal(writes[0][2], -101);
     assert.ok(Number.isFinite(+writes[0][3].endAt));
-    assert.deepEqual(Object.keys(writes[0][3]).sort(), ['endAt', 'startAt']);
+    assert.deepEqual(Object.keys(writes[0][3]).sort(), ['earlyEndAt', 'endAt', 'startAt']);
+    assert.equal(writes[0][3].earlyEndAt, writes[0][3].endAt);
     assert.equal(JSON.stringify(notifications), JSON.stringify([['exam', tid, -101]]));
 });
 
