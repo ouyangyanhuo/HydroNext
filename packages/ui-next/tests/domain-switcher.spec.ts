@@ -114,8 +114,8 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
     await render();
     return {
         host, calls, previewStore, store,
-        async editVisibility(current: any = { _id: 'system' }) {
-            pageArgs = { current, settings: [
+        async editVisibility(current: any = { _id: 'system' }, focusContests: any[] = []) {
+            pageArgs = { current, focusContests, settings: [
                 { key: 'contestMode', type: 'boolean', family: 'setting_contest_mode', value: false, name: 'Enable contest mode' },
                 ...['homepage', 'problem_main', 'contest_main', 'training_main', 'record_main', 'ranking'].map((key) => ({
                     key: `navigationHidden.${key}`, type: 'boolean', family: 'setting_navigation', value: false,
@@ -417,6 +417,7 @@ test('visibility checkboxes default to visible, preview locally and submit only 
     try {
         await f.setDomain('system', {});
         await f.editVisibility();
+        assert.ok([...f.host.querySelectorAll('input')].some((input) => input.value === 'No focus'));
         const card = Array.from(f.host.querySelectorAll<HTMLDivElement>('[role="button"]'))
             .find((item) => item.textContent?.includes('Show Problems navigation entry'))!;
         assert.ok(card);
@@ -456,6 +457,32 @@ test('visibility checkboxes default to visible, preview locally and submit only 
         await f.leaveEditor();
         assert.equal(f.previewStore.getState().preview, null);
         assert.ok(f.host.querySelector('a[href="/problem_main"]'), 'leaving discards local preview without modifying saved session data');
+    } finally { await f.close(); }
+});
+
+test('No focus is an explicit choice that clears a focused contest only when settings are saved', async () => {
+    const f = await fixture(7, true);
+    const tid = '1234567890abcdef12345678';
+    try {
+        await f.setDomain('system', {}, true, true, tid);
+        await f.editVisibility({ _id: 'system', contestMode: true, contestFocus: tid }, [{ docId: tid, title: 'Exam' }]);
+        const label = [...f.host.querySelectorAll('label')].find((item) => item.textContent === 'Focus contest')!;
+        const input = document.getElementById(label.htmlFor) as HTMLInputElement;
+        assert.match(input.value, /Exam/);
+        await act(async () => input.click());
+        const option = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((item) => item.textContent === 'No focus')!;
+        assert.ok(option);
+        await act(async () => option.click());
+        assert.equal(input.value, 'No focus');
+        assert.equal(f.previewStore.getState().preview.contestFocus, '');
+        assert.equal(f.store.getState().ui.domain.contestFocus, tid, 'the saved focus does not change before Save');
+        assert.equal(f.calls.length, 0);
+        f.setResponse(async () => ({ ok: true, headers: { get: () => 'application/json' }, json: async () => ({ ok: true }) }));
+        const save = [...f.host.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent === 'Save All Changes')!;
+        await act(async () => save.click());
+        const payload = JSON.parse(f.calls[0].init.body as string);
+        assert.equal(payload.contestMode, true);
+        assert.equal(payload.contestFocus, '', 'the UI-only option value must not be sent as a contest ID');
     } finally { await f.close(); }
 });
 

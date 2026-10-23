@@ -1,5 +1,6 @@
 __flag: 🇯🇵
 'Focus contest': '対象コンテスト'
+'No focus': '指定なし'
 'Optional. Focus top bar contest, records and ranking links on one contest. Leave empty for domain-wide links.': '任意。対象コンテストを選ぶと、上部のコンテスト・提出履歴・順位表のリンクがそのコンテストを開きます。未選択の場合はドメイン全体のリンクを維持します。'
 'The contest has not started yet and cannot be viewed.': 'コンテスト開始前のため、まだ閲覧できません。'
 'Contest resumed.': 'コンテストを再開しました。'

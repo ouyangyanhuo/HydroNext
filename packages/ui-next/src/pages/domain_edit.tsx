@@ -43,6 +43,7 @@ const VISIBILITY_LABELS: Record<string, string> = {
 };
 const INVERTED_KEYS = Object.keys(VISIBILITY_LABELS);
 const DOMAIN_FIELD_ORDER = ['name', 'avatar', 'share', 'langs', 'bulletin'];
+const NO_FOCUS_CONTEST = 'none';
 
 export function DomainSettingsPage({ visibility = false }: { visibility?: boolean }) {
   const { args } = usePageData();
@@ -145,14 +146,17 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
                 description={t(
                   'Optional. Focus top bar contest, records and ranking links on one contest. Leave empty for domain-wide links.',
                 )}
-                data={(args.focusContests || []).map((tdoc: any) => ({
-                  value: String(tdoc.docId),
-                  label: `${extractLocalizedContent(tdoc.title, language)} · ${tdoc.docId}`,
-                }))}
+                data={[
+                  { value: NO_FOCUS_CONTEST, label: t('No focus') },
+                  ...(args.focusContests || []).map((tdoc: any) => ({
+                    value: String(tdoc.docId),
+                    label: `${extractLocalizedContent(tdoc.title, language)} · ${tdoc.docId}`,
+                  })),
+                ]}
                 searchable
                 clearable
-                value={focusContest || null}
-                onChange={(value) => setFocusContest(value || '')}
+                value={focusContest || NO_FOCUS_CONTEST}
+                onChange={(value) => setFocusContest(value === NO_FOCUS_CONTEST ? '' : value || '')}
                 disabled={loading}
               />
               <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">

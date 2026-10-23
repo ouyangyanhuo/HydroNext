@@ -1,5 +1,6 @@
 __flag: 🇨🇳
 'Focus contest': '焦点比赛'
+'No focus': '不聚焦'
 'Optional. Focus top bar contest, records and ranking links on one contest. Leave empty for domain-wide links.': '可选。设置焦点比赛后，顶部比赛、提交记录和排名入口将指向该比赛；留空则保留全域入口。'
 'The contest has not started yet and cannot be viewed.': '比赛未开始，暂时无法查看。'
 'Contest resumed.': '比赛已恢复。'
