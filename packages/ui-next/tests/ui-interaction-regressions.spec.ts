@@ -540,3 +540,33 @@ test('domain visibility contest mode card layout shrinks to half with animated f
         'tailwind.css must fix the card min-height to match opened state',
     );
 });
+
+test('contest proctor notice renders text reminders on left and status badge on right', () => {
+    const noticeSource = read('../src/components/contest/contest-proctor-notice.tsx');
+
+    assert.match(
+        noticeSource,
+        /border-l-4 border-l-indigo-500/,
+        'proctor notice must be a Card with an indigo accent indicator',
+    );
+    assert.match(
+        noticeSource,
+        /<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">/,
+        'proctor notice must use horizontal flex layout separating left and right',
+    );
+    assert.match(
+        noticeSource,
+        /t\('Use an up-to-date proctor client to submit\.'\)/,
+        'left side must display proctor client submission reminder',
+    );
+    assert.match(
+        noticeSource,
+        /t\(\s*'Finish proctoring in the client and upload the encrypted final log\./,
+        'left side must display proctor log upload reminder',
+    );
+    assert.match(
+        noticeSource,
+        /<Badge[^>]*color=\{badgeColor\}[^>]*variant="light"[^>]*size="lg"/,
+        'right side must render a prominent status badge',
+    );
+});

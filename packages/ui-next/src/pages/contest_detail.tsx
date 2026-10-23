@@ -558,6 +558,7 @@ export default function ContestDetailPage() {
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="min-w-0 flex-1">
             <Stack gap="lg">
+              {tdoc.proctorEnabled && <ContestProctorNotice enabled status={tsdoc} />}
               <ContestProblemList
                 tdoc={tdoc}
                 tsdoc={tsdoc}

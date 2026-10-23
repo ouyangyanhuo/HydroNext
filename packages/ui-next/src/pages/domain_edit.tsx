@@ -1,4 +1,4 @@
-import { Alert, Stack } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconArrowLeft,
@@ -7,7 +7,6 @@ import {
   IconFlame,
   IconHistory,
   IconHome,
-  IconInfoCircle,
   IconSchool,
   IconTrophy,
 } from '@tabler/icons-react';
