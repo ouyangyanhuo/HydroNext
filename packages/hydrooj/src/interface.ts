@@ -331,6 +331,8 @@ export interface DomainDoc extends Record<string, any> {
     /** Navigation visibility only; these options never grant or revoke page permissions. */
     navigationHidden?: Partial<Record<'homepage' | 'problem_main' | 'contest_main' | 'training_main' | 'record_main' | 'ranking', boolean>>;
     contestMode?: boolean;
+    /** Current-domain contest ID used by contest-mode record and ranking navigation. */
+    contestFocus?: string;
     _join?: any;
     host?: string[];
 }

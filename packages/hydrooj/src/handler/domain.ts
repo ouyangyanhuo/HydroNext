@@ -1,6 +1,7 @@
 import { randomInt } from 'node:crypto';
 import { load } from 'js-yaml';
 import { Dictionary } from 'lodash';
+import { ObjectId } from 'mongodb';
 import Schema from 'schemastery';
 import type { Context } from '../context';
 import {
@@ -10,6 +11,7 @@ import {
 import type { DomainDoc } from '../interface';
 import avatar from '../lib/avatar';
 import { PERM, PERMS_BY_FAMILY, PRIV, STATUS } from '../model/builtin';
+import * as contest from '../model/contest';
 import * as discussion from '../model/discussion';
 import * as document from '../model/document';
 import domain from '../model/domain';
@@ -166,7 +168,35 @@ class DomainVisibilityHandler extends DomainEditHandler {
 
     async get() {
         await super.get();
+        const groups = (await user.listGroup(this.domain._id, this.user._id)).map((group) => group.name);
+        const rules = Object.keys(contest.RULES).filter((rule) => !contest.RULES[rule].hidden);
+        this.response.body.focusContests = await contest.getMulti(this.domain._id, {
+            rule: { $in: rules },
+            ...this.user.hasPerm(PERM.PERM_VIEW_HIDDEN_CONTEST) ? {} : {
+                $or: [{ owner: this.user._id }, { maintainer: this.user._id }, { assign: { $in: groups } }, { assign: { $size: 0 } }],
+            },
+        }).project({ docId: 1, title: 1 }).sort({ beginAt: -1, _id: -1 }).toArray();
         this.response.template = 'domain_visibility.html';
+    }
+
+    async post(args) {
+        if (args.operation) return;
+        if (args.contestMode !== undefined && !['boolean', 'string'].includes(typeof args.contestMode)) throw new ValidationError('contestMode');
+        const enabled = args.contestMode === undefined
+            ? !args.booleanKeys?.contestMode && this.domain.contestMode === true
+            : Types.Boolean[0](args.contestMode);
+        let focus = args.contestFocus ?? this.domain.contestFocus ?? '';
+        if (typeof focus !== 'string' || (focus && !/^[a-f\d]{24}$/i.test(focus))) throw new ValidationError('contestFocus');
+        if (enabled && !focus) throw new ForbiddenError('Choose a contest in this domain before enabling contest mode.');
+        if (focus) {
+            const tdoc = await document.get(this.domain._id, document.TYPE_CONTEST, new ObjectId(focus));
+            if (!tdoc || !contest.RULES[tdoc.rule] || contest.RULES[tdoc.rule].hidden) {
+                // Removing a focus contest must never prevent its domain from leaving contest mode.
+                if (!enabled && focus === this.domain.contestFocus) focus = '';
+                else throw new ValidationError('contestFocus');
+            }
+        }
+        await super.post({ ...args, contestFocus: focus.toLowerCase() });
     }
 }
 

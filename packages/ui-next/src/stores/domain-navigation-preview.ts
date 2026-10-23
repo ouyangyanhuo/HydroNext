@@ -5,6 +5,7 @@ interface NavigationPreview {
   domainId: string;
   navigationHidden: Record<string, boolean>;
   contestMode: boolean;
+  contestFocus?: string;
 }
 
 interface NavigationPreviewStore {

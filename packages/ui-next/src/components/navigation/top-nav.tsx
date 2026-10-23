@@ -11,6 +11,7 @@ import { ActionIcon, Button, UnstyledButton } from '@/components/common/button';
 import { Link } from '@/components/link';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser, useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { useNavigationMotion } from '@/hooks/use-navigation-motion';
@@ -342,21 +343,39 @@ export function TopNav() {
   const domainId = useSessionStore((s) => s.ui.domainId);
   const savedNavigationHidden = useSessionStore((s) => s.ui.domain.navigationHidden);
   const savedContestMode = useSessionStore((s) => s.ui.domain.contestMode === true);
+  const savedContestFocus = useSessionStore((s) => s.ui.domain.contestFocus);
   const preview = useDomainNavigationPreview((s) => s.preview?.domainId === domainId ? s.preview : null);
   const navigationHidden = preview ? preview.navigationHidden : savedNavigationHidden;
   const contestMode = preview ? preview.contestMode : savedContestMode;
+  const focus = preview ? preview.contestFocus : savedContestFocus;
+  const focusContest = contestMode && typeof focus === 'string' && /^[a-f\d]{24}$/i.test(focus) ? focus : '';
+  const buildUrl = useBuildUrl();
+  const userId = useSessionStore((s) => s.user._id);
   const registrationEnabled = useSessionStore((s) => s.ui.registrationEnabled !== false);
-  const { name } = usePageData();
-  const activeNav = getPageMetadata(name).nav;
+  const { name, args } = usePageData();
+  const activeNav = focusContest && name === 'contest_scoreboard' && String(args.tdoc?.docId || args.tdoc?._id) === focusContest
+    ? 'ranking' : getPageMetadata(name).nav;
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const indicatorRef = useRef<HTMLDivElement>(null);
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
   const canViewRanking = useHasPerm(PERM.PERM_VIEW_RANKING);
+  const canViewContestRanking = useHasPerm(PERM.PERM_VIEW_CONTEST_SCOREBOARD);
+  const canViewRecords = useHasPerm(PERM.PERM_VIEW_RECORD);
+  const canViewHiddenContestRecords = useHasPerm(PERM.PERM_VIEW_CONTEST_HIDDEN_SCOREBOARD);
   const visibleNavItems = useMemo(() => NAV_ITEMS.filter((item) => navigationHidden?.[item.to] !== true
     && (!contestMode || !['homepage', 'problem_main', 'training_main'].includes(item.to))
-    && (item.to !== 'ranking' || canViewRanking)), [navigationHidden, canViewRanking, contestMode]);
+    && (item.to !== 'ranking' || (focusContest ? canViewContestRanking : canViewRanking))),
+  [navigationHidden, canViewRanking, canViewContestRanking, contestMode, focusContest]);
+  const navigationTarget = (route: typeof NAV_ITEMS[number]['to']) => {
+    if (focusContest && route === 'ranking') return { href: buildUrl('contest_scoreboard', { tid: focusContest }) };
+    if (focusContest && route === 'record_main') {
+      const selfOnly = Boolean(userId) && (!canViewRecords || !canViewHiddenContestRecords);
+      return { href: buildUrl('record_main', {}, { tid: focusContest, ...(selfOnly ? { uidOrName: String(userId) } : {}) }) };
+    }
+    return { to: route };
+  };
   const navigationKey = visibleNavItems.map((item) => item.to).join('/');
   const desktopNavRef = useNavigationMotion(navigationKey, containerRef);
   const mobileNavRef = useNavigationMotion(navigationKey);
@@ -399,7 +418,7 @@ export function TopNav() {
                   key={item.to}
                   data-nav-motion-id={item.to}
                   component={Link}
-                  to={item.to}
+                  {...navigationTarget(item.to)}
                   ref={(el) => {
                     if (el) tabRefs.current.set(item.to, el);
                     else tabRefs.current.delete(item.to);
@@ -456,7 +475,7 @@ export function TopNav() {
               key={item.to}
               data-nav-motion-id={item.to}
               component={Link}
-              to={item.to}
+              {...navigationTarget(item.to)}
               variant={activeNav === item.to ? 'filled' : 'subtle'}
               fullWidth
               justify="flex-start"

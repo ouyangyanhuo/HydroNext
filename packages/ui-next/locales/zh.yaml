@@ -1,4 +1,8 @@
 __flag: 🇨🇳
+'Choose a contest in this domain before enabling contest mode.': '开启赛事模式前，请先选择当前域内的焦点比赛。'
+'Focus contest': '焦点比赛'
+'In contest mode, the top bar records and ranking show this contest. Choose a contest in this domain.': '赛事模式下，顶部提交记录和排名展示此比赛的数据。仅可选择当前域内的比赛。'
+'The contest has not started yet and cannot be viewed.': '比赛未开始，暂时无法查看。'
 'Contest resumed.': '比赛已恢复。'
 'Resume': '继续比赛'
 'Changes to this profile apply across all domains.': '此处修改的是全站用户资料，在所有域生效。'

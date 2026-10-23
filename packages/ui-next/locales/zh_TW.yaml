@@ -1,4 +1,8 @@
 __flag: 🇹🇼
+'Choose a contest in this domain before enabling contest mode.': '啟用賽事模式前，請先選擇目前網域內的焦點比賽。'
+'Focus contest': '焦點比賽'
+'In contest mode, the top bar records and ranking show this contest. Choose a contest in this domain.': '賽事模式下，頂部提交紀錄和排名顯示此比賽的資料。僅可選擇目前網域內的比賽。'
+'The contest has not started yet and cannot be viewed.': '比賽尚未開始，暫時無法查看。'
 'Contest resumed.': '比賽已恢復。'
 'Resume': '继续比赛'
 'Contest mode takes priority over manual hiding. Turning it off restores your manual settings.': '賽事模式優先於手動隱藏設定，關閉後恢復原有的手動設定。'

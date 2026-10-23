@@ -7,6 +7,7 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
+import { goBackOrFallback } from '@/utils/history-back';
 import { proctorAccessRequest, proctorError } from '@/utils/proctor';
 
 export default function ErrorPage() {
@@ -41,6 +42,9 @@ export default function ErrorPage() {
         <Title order={1} c="dimmed">{code}</Title>
         <Text size="lg">{message}</Text>
         <Group>
+          <Button onClick={() => goBackOrFallback(window.history, () => { void navigate(buildUrl('homepage'), { replace: true }); })}>
+            {t('Back')}
+          </Button>
           {canRetryProctor && <Button loading={retrying} onClick={() => void retry()}>{t('Verify client and continue')}</Button>}
           {isPermissionError && !isLoggedIn && (
             <Button component={Link} href={loginUrl}>

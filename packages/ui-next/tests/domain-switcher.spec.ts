@@ -34,6 +34,8 @@ const mantine = require('@mantine/core');
 
 async function fixture(uid = 0, topNav = false, captureMenu = false) {
     let canViewRanking = false;
+    let canViewRecords = true;
+    let canViewHiddenContestRecords = true;
     let pageArgs: any = {};
     const store = create((set: any) => ({
         user: { _id: uid, uname: `user${uid}`, priv: 0, avatar: '' },
@@ -53,7 +55,12 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
     for (const part of ['Target', 'Dropdown', 'Label', 'Item']) {
         capturedMenu[part] = ({ children }: any) => h('div', null, children);
     }
-    const buildUrl = () => '/d/system/home/domain';
+    const buildUrl = (route?: string, params: any = {}, query: any = {}) => {
+        const prefix = `/d/${store.getState().ui.domainId}`;
+        if (route === 'contest_scoreboard') return `${prefix}/contest/${params.tid}/scoreboard`;
+        if (route === 'record_main') return `${prefix}/record?${new URLSearchParams(query)}`;
+        return '/d/system/home/domain';
+    };
     const mocks: Record<string, any> = {
         '@mantine/core': captureMenu ? { ...mantine, Menu: capturedMenu } : mantine,
         '@/components/common/button': { Button: mantine.Button, ActionIcon: mantine.ActionIcon, UnstyledButton: mantine.UnstyledButton },
@@ -64,7 +71,11 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
             useCurrentUser: () => store((state: any) => state.user), useIsLoggedIn: () => store((state: any) => state.user._id > 0),
         },
         '@/context/page-data': { usePageData: () => ({ name: 'homepage', args: pageArgs }) },
-        '@/hooks/use-permission': { PRIV: {}, PERM: {}, useHasPriv: () => false, useHasPerm: () => canViewRanking },
+        '@/hooks/use-permission': { PRIV: {}, PERM: { PERM_VIEW_RECORD: 'records', PERM_VIEW_CONTEST_HIDDEN_SCOREBOARD: 'hiddenRecords' },
+            useHasPriv: () => false,
+            useHasPerm: (perm: string) => perm === 'records' ? canViewRecords
+                : perm === 'hiddenRecords' ? canViewHiddenContestRecords : canViewRanking },
+        '@/utils/i18n-content': { extractLocalizedContent: (value: string) => value },
         '@/registry/page-metadata': { getPageMetadata: () => ({ nav: 'homepage' }) },
         '@/assets/logo.png': '/logo.png',
         '@/components/user/user-avatar': { UserAvatar: () => h('span', null, 'Avatar') },
@@ -73,7 +84,8 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
             ACCENT_PRESETS: { teal: { name: 'Teal', light: { primary: '#3f879c' } } }, DEFAULT_ACCENT: 'teal', PRESET_KEYS: ['teal'],
         },
         '@/components/link': {
-            Link: forwardRef(({ children, to, params: _, ...props }: any, ref: any) => h('a', { ...props, href: `/${to}`, ref }, children)),
+            Link: forwardRef(({ children, to, href, params: _, ...props }: any, ref: any) => h('a',
+                { ...props, href: href ?? `/${to}`, ref }, children)),
         },
     };
     function load(file: string) {
@@ -117,11 +129,16 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
             await render(h(Page, { visibility: true }));
         },
         leaveEditor: () => render(),
-        async setDomain(domainId: string, navigationHidden: Record<string, boolean>, ranking = true, contestMode = false) {
+        async setDomain(domainId: string, navigationHidden: Record<string, boolean>, ranking = true, contestMode = false, contestFocus = '') {
             canViewRanking = ranking;
             await act(async () => store.setState((state: any) => ({
-                ui: { ...state.ui, domainId, domain: { name: domainId, navigationHidden, contestMode } },
+                ui: { ...state.ui, domainId, domain: { name: domainId, navigationHidden, contestMode, contestFocus } },
             })));
+        },
+        async setRecordPermission(value: boolean, hidden = value) {
+            canViewRecords = value;
+            canViewHiddenContestRecords = hidden;
+            await render();
         },
         setResponse(callback: typeof respond) { respond = callback; },
         async setRegistrationEnabled(enabled: boolean) {
@@ -272,6 +289,27 @@ test('domain navigation settings hide desktop and mobile entries without leaking
         assert.ok(document.querySelector('a[href="/problem_main"]'));
         assert.ok(document.querySelector('a[href="/training_main"]'));
         assert.equal(document.querySelector('a[href="/record_main"]'), null, 'manual hiding survives contest mode');
+    } finally { await f.close(); }
+});
+
+test('contest mode scopes desktop and mobile record/ranking links to its focus without granting record access or crossing domains', async () => {
+    const f = await fixture(7, true);
+    const tid = '1234567890abcdef12345678';
+    try {
+        await f.setDomain('exam', {}, true, true, tid);
+        assert.ok(f.host.querySelector(`a[href="/d/exam/contest/${tid}/scoreboard"]`));
+        assert.ok(f.host.querySelector(`a[href="/d/exam/record?tid=${tid}"]`));
+        await f.setRecordPermission(true, false);
+        assert.ok(f.host.querySelector(`a[href="/d/exam/record?tid=${tid}&uidOrName=7"]`),
+            'ordinary record permission does not reveal live contest records');
+        await f.setRecordPermission(false);
+        assert.ok(f.host.querySelector(`a[href="/d/exam/record?tid=${tid}&uidOrName=7"]`));
+        await act(async () => f.host.querySelector<HTMLButtonElement>('.mantine-Burger-root')!.click());
+        assert.equal(document.querySelectorAll(`a[href="/d/exam/contest/${tid}/scoreboard"]`).length, 2);
+        await f.setDomain('practice', {}, true, false);
+        assert.ok(f.host.querySelector('a[href="/ranking"]'));
+        assert.ok(f.host.querySelector('a[href="/record_main"]'));
+        assert.equal(document.querySelector(`a[href*="${tid}"]`), null);
     } finally { await f.close(); }
 });
 

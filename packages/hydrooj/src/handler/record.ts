@@ -3,7 +3,7 @@ import {
 } from 'lodash';
 import { Filter, ObjectId } from 'mongodb';
 import {
-    ContestNotFoundError, HackRejudgeFailedError,
+    ContestNotFoundError, ContestNotStartedError, HackRejudgeFailedError,
     PermissionError, PretestRejudgeFailedError, ProblemConfigError,
     RecordNotFoundError,
 } from '../error';
@@ -93,6 +93,7 @@ export class RecordListHandler extends ContestDetailBaseHandler {
             tdoc = await contest.get(domainId, tid);
             this.tdoc = tdoc;
             if (!tdoc) throw new ContestNotFoundError(domainId, pid);
+            if (contest.isNotStarted(tdoc) && !contest.canViewHiddenScoreboard.call(this, tdoc)) throw new ContestNotStartedError();
             if (!contest.canShowScoreboard.call(this, tdoc, true)) throw new PermissionError(PERM.PERM_VIEW_CONTEST_HIDDEN_SCOREBOARD);
             if (!contest[isSelfOnly || teamMembers?.length || isTeamOnly ? 'canShowSelfRecord' : 'canShowRecord'].call(this, tdoc, true)) {
                 throw new PermissionError(PERM.PERM_VIEW_CONTEST_HIDDEN_SCOREBOARD);

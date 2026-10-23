@@ -48,6 +48,7 @@ export const TeamMembershipRequiredError = Err('TeamMembershipRequiredError', Fo
 export const TeamCaptainRequiredError = Err('TeamCaptainRequiredError', ForbiddenError, 'Only the team captain can perform this operation.');
 export const TeamCaptainLeaveError = Err('TeamCaptainLeaveError', ForbiddenError, 'The captain must remove other members before leaving the team.');
 export const ContestNotLiveError = Err('ContestNotLiveError', ForbiddenError, 'This contest is not live.');
+export const ContestNotStartedError = Err('ContestNotStartedError', ForbiddenError, 'The contest has not started yet and cannot be viewed.');
 export const ProctorClientRequiredError = Err('ProctorClientRequiredError', ForbiddenError,
     'Use an up-to-date proctor client to access contest problems.');
 export const ContestAlreadyStartedError = Err('ContestAlreadyStartedError', ForbiddenError, 'This contest has already started.');

@@ -62,6 +62,7 @@ function fixture(options: any = {}) {
         } } },
         '../model/problem': { __esModule: true, default: { PROJECTION_LIST: [], PROJECTION_CONTEST_LIST: [], getList: async () => ({}) } },
         '../model/contest': { get: async () => ({ docId: 'contest', pids: [1] }), getStatus: async () => ({ attend: true }),
+            isNotStarted: () => false,
             canShowScoreboard: () => !options.hidden, canShowSelfRecord: () => true, canShowRecord: () => !options.hidden },
         '../service/server': { ConnectionHandler: Handler, param: () => () => {}, subscribe: () => () => {}, Types: {} },
         '../utils': { buildProjection: () => ({}) },

@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
 import { formatErrorMessage } from '../src/utils/error.ts';
+import { goBackOrFallback } from '../src/utils/history-back.ts';
 import { INVITATION_CODE_LENGTH, isInvitationCodeComplete } from '../src/utils/invitation-code';
 
 const require = createRequire(import.meta.url);
@@ -94,6 +95,8 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         '@/context/page-data': { usePageData: () => ({ args, name: pageName }) },
         '@/stores/session': { useSessionStore: (select: any) => select({ ui, user, language: 'en' }) },
         '@/utils/error': { formatErrorMessage },
+        '@/utils/history-back': { goBackOrFallback },
+        '@/utils/proctor': { proctorError: (error: any) => error.message, proctorAccessRequest: () => null },
         '@/utils/invitation-code': { INVITATION_CODE_LENGTH, isInvitationCodeComplete },
         './invitation-code-input.css': {},
         '@/components/common/time-display': { TimeDisplay: () => null },
@@ -191,6 +194,34 @@ test('managed user names open the editor and the profile form preserves drafts, 
             }
         // eslint-disable-next-line no-await-in-loop
         } finally { await form.close(); }
+    }
+});
+
+test('ordinary contestants do not see detail-page scoreboard buttons and pre-start errors offer a translated message and back action', async () => {
+    for (const canEdit of [false, true]) {
+        // eslint-disable-next-line no-await-in-loop
+        const f = await fixture('contest_detail', {}, {}, {
+            tdoc: { docId: 'contest', title: 'Contest' }, tsdoc: { attend: true }, canEdit,
+        }, { _id: 2 });
+        try {
+            assert.equal(!!f.host.querySelector('a[href="/contest_scoreboard"]'), canEdit);
+        // eslint-disable-next-line no-await-in-loop
+        } finally { await f.close(); }
+    }
+    const oldBack = dom.window.history.back;
+    let backCalls = 0;
+    dom.window.history.pushState({}, '', '/d/team/record?tid=contest');
+    dom.window.history.back = () => { backCalls++; };
+    const f = await fixture('error', {}, {}, {
+        code: 403, error: { name: 'ContestNotStartedError', message: 'The contest has not started yet and cannot be viewed.' },
+    }, { _id: 2 }, { 'The contest has not started yet and cannot be viewed.': '比赛未开始，暂时无法查看。' });
+    try {
+        assert.ok(f.host.textContent?.includes('比赛未开始，暂时无法查看。'));
+        await act(async () => Array.from(f.host.querySelectorAll('button')).find((button) => button.textContent === 'Back')!.click());
+        assert.equal(backCalls, 1);
+    } finally {
+        await f.close();
+        dom.window.history.back = oldBack;
     }
 });
 

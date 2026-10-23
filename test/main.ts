@@ -252,16 +252,21 @@ describe('App', () => {
     });
 
     it('Domain navigation settings persist only in their domain, preserve page permissions and reject malformed flags', async () => {
-        const { domain } = global.Hydro.model;
+        const { domain, contest } = global.Hydro.model;
         const a = 'navigation-exam';
         const b = 'navigation-practice';
         await domain.add(a, 2, 'Exam navigation', '');
         await domain.add(b, 2, 'Practice navigation', '');
+        const begin = new Date(Date.now() + 60_000);
+        const end = new Date(Date.now() + 3600_000);
+        const focus = await contest.add(a, 'Focus contest', '', 2, 'acm', begin, end, []);
+        const foreign = await contest.add(b, 'Foreign contest', '', 2, 'acm', begin, end, []);
         const route = `/d/${a}/domain/visibility`;
         try {
             const settings = getPageArgs(await agent.get(route).set('Accept', 'application/json').expect(200));
             assert.equal(settings.settings.filter((setting) => setting.family === 'setting_navigation').length, 6);
-            assert.equal(settings.settings.filter((setting) => setting.family === 'setting_contest_mode').length, 1);
+            assert.equal(settings.settings.filter((setting) => setting.family === 'setting_contest_mode').length, 2);
+            assert.deepEqual(settings.focusContests.map((tdoc) => tdoc.docId), [focus.toHexString()]);
             const general = getPageArgs(await agent.get(`/d/${a}/domain/edit`).set('Accept', 'application/json').expect(200));
             assert.ok(general.settings.every((setting) => !['setting_navigation', 'setting_contest_mode'].includes(setting.family)));
             await agent.post(route).set('Accept', 'application/json').send({
@@ -283,7 +288,11 @@ describe('App', () => {
             assert.equal((await domain.get(a)).navigationHidden.ranking, false);
             assert.equal((await domain.get(a)).navigationHidden.training_main, false);
             assert.equal((await domain.get(a)).navigationHidden.problem_main, true);
-            await agent.post(route).set('Accept', 'application/json').send({ contestMode: true }).expect(200);
+            await agent.post(route).set('Accept', 'application/json').send({ contestMode: true }).expect(403);
+            await agent.post(route).set('Accept', 'application/json').send({ contestMode: true, contestFocus: foreign.toHexString() }).expect(403);
+            assert.equal((await domain.get(a)).contestMode, undefined);
+            await agent.post(route).set('Accept', 'application/json').send({ contestMode: true, contestFocus: focus.toHexString() }).expect(200);
+            assert.equal((await domain.get(a)).contestFocus, focus.toHexString());
             await agent.get(`/d/${a}/`).expect(302).expect('Location', `/d/${a}/contest`);
             const homepage = await agent.get(`/d/${a}/`).set('Accept', 'application/json').expect(200);
             assert.equal(homepage.body.url, `/d/${a}/contest`);
@@ -293,12 +302,48 @@ describe('App', () => {
             await agent.get(`/d/${b}/`).expect(200);
             assert.equal((await domain.get(b)).contestMode, undefined);
             await agent.get(`/d/${a}/p`).expect(200);
+            await contest.del(a, focus);
             await agent.post(route).set('Accept', 'application/json').send({ contestMode: false }).expect(200);
+            assert.equal((await domain.get(a)).contestFocus, '');
             const restored = getPageArgs(await agent.get(`/d/${a}/`).set('Accept', 'application/json').expect(200));
             assert.ok(Array.isArray(restored.contents));
             assert.equal(restored.domain.navigationHidden.problem_main, true);
         } finally {
+            await Promise.all([contest.del(a, focus), contest.del(b, foreign)]);
             await Promise.all([domain.del(a), domain.del(b)]);
+        }
+    });
+
+    it('Pre-start contest records and scoreboard explain the waiting period without weakening live contest permissions', async () => {
+        const { contest, domain, user } = global.Hydro.model;
+        const { PERM } = require('../packages/hydrooj/src/model/builtin');
+        const domainId = 'contest-waiting';
+        const uid = await user.create('contest-waiting@example.com', 'contest-waiting-user', 'secret');
+        await domain.add(domainId, 2, 'Waiting contest', '');
+        await domain.setRoles(domainId, { guest: 0n, default: PERM.PERM_VIEW | PERM.PERM_VIEW_CONTEST | PERM.PERM_ATTEND_CONTEST
+            | PERM.PERM_VIEW_CONTEST_SCOREBOARD | PERM.PERM_VIEW_RECORD });
+        await domain.setJoin(domainId, uid, true);
+        const tid = await contest.add(domainId, 'Future contest', '', 2, 'acm',
+            new Date(Date.now() + 60_000), new Date(Date.now() + 3600_000), []);
+        await contest.attend(domainId, tid, uid);
+        const contestant = supertest.agent(require('hydrooj').httpServer);
+        await contestant.post('/login').send({ uname: 'contest-waiting-user', password: 'secret' }).expect(302);
+        const records = `/d/${domainId}/record?tid=${tid}&uidOrName=${uid}`;
+        const scoreboard = `/d/${domainId}/contest/${tid}/scoreboard`;
+        try {
+            await contestant.get(records).set('Accept', 'application/json').expect(403)
+                .then((response) => assert.equal(response.body.error.message, 'The contest has not started yet and cannot be viewed.'));
+            await contestant.get(scoreboard).set('Accept', 'application/json').expect(403)
+                .then((response) => assert.equal(response.body.error.message, 'The contest has not started yet and cannot be viewed.'));
+            await agent.get(scoreboard).set('Accept', 'application/json').expect(200);
+            await contest.edit(domainId, tid, { beginAt: new Date(Date.now() - 60_000) });
+            await contestant.get(records).set('Accept', 'application/json').expect(200);
+            await contestant.get(scoreboard).set('Accept', 'application/json').expect(200);
+        } finally {
+            await contest.del(domainId, tid);
+            await domain.del(domainId);
+            await user.coll.deleteOne({ _id: uid });
+            user._deleteUserCache(true);
         }
     });
 

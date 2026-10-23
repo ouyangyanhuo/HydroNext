@@ -449,6 +449,8 @@ export default function ContestDetailPage() {
   const pdict = args.pdict || {};
   const udict = args.udict || {};
   const canEdit = useHasPerm(PERM.PERM_EDIT_CONTEST) || args.canEdit;
+  const canCreateContest = useHasPerm(PERM.PERM_CREATE_CONTEST);
+  const showScoreboard = canEdit || canCreateContest;
   const canDelete = Boolean(args.canDelete);
   const canViewAllRecords = Boolean(args.canViewAllRecords);
   const tid = tdoc._id || tdoc.docId;
@@ -598,7 +600,9 @@ export default function ContestDetailPage() {
               )}
               <ContestInfoCard tdoc={tdoc} tsdoc={tsdoc} owner={owner || udict[tdoc.owner]} />
               <Button component={Link} to="contest_detail" params={{ tid }} variant="subtle" fullWidth>{t('View Contest')}</Button>
-              <Button component={Link} to="contest_scoreboard" params={{ tid }} variant="light" fullWidth>{t('Scoreboard')}</Button>
+              {showScoreboard && (
+                <Button component={Link} to="contest_scoreboard" params={{ tid }} variant="light" fullWidth>{t('Scoreboard')}</Button>
+              )}
               {canEdit && <Button component={Link} to="contest_manage" params={{ tid }} variant="subtle" fullWidth>{t('Contest Management')}</Button>}
             </Stack>
           </div>
@@ -711,7 +715,7 @@ export default function ContestDetailPage() {
               </Tooltip>
             )}
 
-            {isLoggedIn && tsdoc.attend && (
+            {showScoreboard && (
               <Button component={Link} to="contest_scoreboard" params={{ tid }} variant="light" fullWidth>
                 {t('Scoreboard')}
               </Button>

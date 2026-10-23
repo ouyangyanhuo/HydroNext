@@ -11,7 +11,7 @@ import {
 import { Context, Service } from '../context';
 import {
     BadRequestError, ContestAlreadyStartedError, ContestNotAttendedError, ContestNotEndedError,
-    ContestNotFoundError, ContestNotLiveError, ContestScoreboardHiddenError, FileLimitExceededError, FileUploadError,
+    ContestNotFoundError, ContestNotLiveError, ContestNotStartedError, ContestScoreboardHiddenError, FileLimitExceededError, FileUploadError,
     InvalidTokenError, MethodNotAllowedError, NotAssignedError, NotFoundError, PermissionError,
     ValidationError,
 } from '../error';
@@ -938,6 +938,7 @@ export class ContestScoreboardHandler extends ContestDetailBaseHandler {
             throw new ContestNotFoundError(domainId, tid);
         }
         if (!this.user.own(this.tdoc)) {
+            if (contest.isNotStarted(this.tdoc) && !contest.canViewHiddenScoreboard.call(this, this.tdoc)) throw new ContestNotStartedError();
             if (!contest.canShowScoreboard.call(this, this.tdoc, true)) throw new ContestScoreboardHiddenError(tid);
             if (contest.isNotStarted(this.tdoc)) throw new ContestNotLiveError(domainId, tid);
         }

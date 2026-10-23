@@ -14,12 +14,14 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
+import { LongSelect } from '@/components/common/select';
 import { SettingsForm } from '@/components/common/settings-form';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useDomainNavigationPreview } from '@/stores/domain-navigation-preview';
 import { formatErrorMessage } from '@/utils/error';
+import { extractLocalizedContent } from '@/utils/i18n-content';
 
 const VISIBILITY_ICONS: Record<string, any> = {
   contestMode: IconFlame,
@@ -44,14 +46,15 @@ const DOMAIN_FIELD_ORDER = ['name', 'avatar', 'share', 'langs', 'bulletin'];
 
 export function DomainSettingsPage({ visibility = false }: { visibility?: boolean }) {
   const { args } = usePageData();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const current = args.current || args.domain || args.ddoc || {};
   const domainId = String(current._id || args.UiContext?.domainId || '');
   const previewOwner = useRef(Symbol('domain-navigation-preview'));
+  const [focusContest, setFocusContest] = useState(() => String(current.contestFocus || ''));
   const settings = useMemo(() => {
     if (!Array.isArray(args.settings)) return args.settings || {};
     if (visibility) {
-      return args.settings.map((setting) => (VISIBILITY_LABELS[setting.key]
+      return args.settings.filter((setting) => setting.key !== 'contestFocus').map((setting) => (VISIBILITY_LABELS[setting.key]
         ? { ...setting, name: VISIBILITY_LABELS[setting.key] }
         : setting));
     }
@@ -82,9 +85,10 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
       owner: previewOwner.current,
       domainId,
       contestMode: values.contestMode === true,
+      contestFocus: focusContest,
       navigationHidden: Object.fromEntries(INVERTED_KEYS.map((key) => [key.slice('navigationHidden.'.length), values[key] === true])),
     });
-  }, [visibility, domainId]);
+  }, [visibility, domainId, focusContest]);
 
   useEffect(() => {
     const owner = previewOwner.current;
@@ -92,12 +96,16 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
   }, [visibility, domainId]);
 
   const handleSubmit = async (payload: Record<string, any>) => {
+    if (visibility && payload.contestMode === true && !focusContest) {
+      notifications.show({ title: t('Choose a contest in this domain before enabling contest mode.'), message: '', color: 'red' });
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(window.location.href, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(visibility ? { ...payload, contestFocus: focusContest } : payload),
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
@@ -135,13 +143,24 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
         onSubmit={handleSubmit}
         familyExtras={visibility ? {
           setting_contest_mode: (
-            <Alert
-              icon={<IconInfoCircle size={16} />}
-              color="blue"
-              variant="light"
-            >
-              {t('Contest mode takes priority over manual hiding. Turning it off restores your manual settings.')}
-            </Alert>
+            <Stack gap="md">
+              <LongSelect
+                label={t('Focus contest')}
+                description={t('In contest mode, the top bar records and ranking show this contest. Choose a contest in this domain.')}
+                data={(args.focusContests || []).map((tdoc: any) => ({
+                  value: String(tdoc.docId),
+                  label: `${extractLocalizedContent(tdoc.title, language)} · ${tdoc.docId}`,
+                }))}
+                searchable
+                clearable
+                value={focusContest || null}
+                onChange={(value) => setFocusContest(value || '')}
+                disabled={loading}
+              />
+              <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
+                {t('Contest mode takes priority over manual hiding. Turning it off restores your manual settings.')}
+              </Alert>
+            </Stack>
           ),
           setting_navigation: (
             <Alert

@@ -277,6 +277,7 @@ DomainSetting(
     Setting('setting_domain', 'langs', '', 'text', 'Allowed langs', null),
     Setting('setting_contest_mode', 'contestMode', false, 'boolean', 'Enable contest mode',
         'Hide Home, Problems and Training navigation entries and use the contest list as this domain\'s homepage.'),
+    Setting('setting_contest_mode', 'contestFocus', '', 'text', 'Focus contest'),
     Setting('setting_navigation', 'navigationHidden.homepage', false, 'boolean', 'Hide Home navigation entry'),
     Setting('setting_navigation', 'navigationHidden.problem_main', false, 'boolean', 'Hide Problems navigation entry'),
     Setting('setting_navigation', 'navigationHidden.contest_main', false, 'boolean', 'Hide Contests navigation entry'),
