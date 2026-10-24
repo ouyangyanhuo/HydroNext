@@ -1,6 +1,7 @@
-import { Alert, Card, Code, Group, Modal, NumberInput, Stack, Switch, Text, Textarea, TextInput, Title } from '@mantine/core';
+import { Alert, Card, Code, Collapse, Group, Modal, NumberInput, Stack, Switch, Text, Textarea, TextInput, Title, Transition } from '@mantine/core';
+import { useReducedMotion } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { IconAlertTriangle, IconInfoCircle } from '@tabler/icons-react';
+import { IconAlertTriangle } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
@@ -12,11 +13,21 @@ import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { proctorRequest } from '@/utils/proctor';
 import { ProctorLogsPanel } from './manage_proctor_logs';
 
+// Match the feature-setting motion on domain/visibility, including the reverse exit.
+const FEATURE_OPTIONS_TRANSITION = {
+  in: { opacity: 1, transform: 'translateX(0)' },
+  out: { opacity: 0, transform: 'translateX(18px)' },
+  transitionProperty: 'transform, opacity',
+};
+const FEATURE_OPTIONS_EASING = 'cubic-bezier(0.16, 1, 0.3, 1)';
+
 export default function ManageProctorPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const allowed = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
+  const reducedMotion = useReducedMotion();
+  const transitionDuration = reducedMotion ? 0 : 350;
   const [config, setConfig] = useState(args.config);
   const [keys, setKeys] = useState(args.keys);
   const [busy, setBusy] = useState(false);
@@ -53,59 +64,75 @@ export default function ManageProctorPage() {
   if (!allowed) return <Text>{t('Access Denied')}</Text>;
   return <Stack gap="lg">
     <PageHeader title={t('Proctor settings')} />
-    <Alert
-      color="blue"
-      icon={<IconInfoCircle size={18} />}
-      title={t('Information')}
-    >
-      {t('Generate both key pairs and inject both public keys when building the client. No manual client enrollment is required.')}
-    </Alert>
     <Card withBorder className="hydro-content-card" p="lg">
       <Stack gap="md">
         <Title order={3}>{t('Session policy')}</Title>
-        <Switch
-          label={t('Enable proctor service')}
-          disabled={busy}
-          checked={config.enabled}
-          onChange={(event) => setConfig({ ...config, enabled: event.currentTarget.checked })} />
-        <TextInput
-          label={t('Required client version')}
-          disabled={busy}
-          value={config.requiredVersion}
-          onChange={(event) => setConfig({ ...config, requiredVersion: event.currentTarget.value })}
-          maxLength={64} />
-        <Group align="flex-start" grow>
-          <NumberInput
-            label={t('Token lifetime (seconds)')}
-            disabled={busy}
-            min={60}
-            max={1800}
-            allowDecimal={false}
-            value={config.tokenTtlSeconds}
-            onChange={(value) => setConfig({ ...config, tokenTtlSeconds: value })} />
-          <NumberInput
-            label={t('Late upload window (days)')}
-            disabled={busy}
-            min={1}
-            max={365}
-            allowDecimal={false}
-            value={config.uploadGraceDays}
-            onChange={(value) => setConfig({ ...config, uploadGraceDays: value })} />
-          <NumberInput
-            label={t('Maximum log size (MiB)')}
-            disabled={busy}
-            min={1}
-            max={256}
-            allowDecimal={false}
-            value={config.maxLogMiB}
-            onChange={(value) => setConfig({ ...config, maxLogMiB: value })} />
-        </Group>
-        <Switch
-          label={t('Allow token refresh')}
-          disabled={busy}
-          checked={config.refreshEnabled}
-          onChange={(event) => setConfig({ ...config, refreshEnabled: event.currentTarget.checked })} />
-        <Text size="sm" c="dimmed">{t('Changing the required version or rotating keys invalidates current session tokens.')}</Text>
+        <Stack gap={0}>
+          <Group align="flex-start" gap="xl" wrap="nowrap">
+            <Switch
+              className="min-w-0 flex-1"
+              label={t('Enable proctor service')}
+              disabled={busy}
+              checked={config.enabled}
+              onChange={(event) => setConfig({ ...config, enabled: event.currentTarget.checked })} />
+            <Transition
+              mounted={config.enabled}
+              transition={FEATURE_OPTIONS_TRANSITION}
+              duration={transitionDuration}
+              exitDuration={transitionDuration}
+              timingFunction={FEATURE_OPTIONS_EASING}
+            >
+              {(styles) => <div className="min-w-0 flex-1" style={styles} inert={!config.enabled}>
+                <Switch
+                  label={t('Allow token refresh')}
+                  disabled={busy || !config.enabled}
+                  checked={config.refreshEnabled}
+                  onChange={(event) => setConfig({ ...config, refreshEnabled: event.currentTarget.checked })} />
+              </div>}
+            </Transition>
+          </Group>
+          <Collapse
+            expanded={config.enabled}
+            keepMounted={false}
+            transitionDuration={transitionDuration}
+            transitionTimingFunction={FEATURE_OPTIONS_EASING}
+          >
+            <Stack gap="md" pt="md">
+              <TextInput
+                label={t('Required client version')}
+                disabled={busy || !config.enabled}
+                value={config.requiredVersion}
+                onChange={(event) => setConfig({ ...config, requiredVersion: event.currentTarget.value })}
+                maxLength={64} />
+              <Group align="flex-start" grow>
+                <NumberInput
+                  label={t('Token lifetime (seconds)')}
+                  disabled={busy || !config.enabled}
+                  min={60}
+                  max={1800}
+                  allowDecimal={false}
+                  value={config.tokenTtlSeconds}
+                  onChange={(value) => setConfig({ ...config, tokenTtlSeconds: value })} />
+                <NumberInput
+                  label={t('Late upload window (days)')}
+                  disabled={busy || !config.enabled}
+                  min={1}
+                  max={365}
+                  allowDecimal={false}
+                  value={config.uploadGraceDays}
+                  onChange={(value) => setConfig({ ...config, uploadGraceDays: value })} />
+                <NumberInput
+                  label={t('Maximum log size (MiB)')}
+                  disabled={busy || !config.enabled}
+                  min={1}
+                  max={256}
+                  allowDecimal={false}
+                  value={config.maxLogMiB}
+                  onChange={(value) => setConfig({ ...config, maxLogMiB: value })} />
+              </Group>
+            </Stack>
+          </Collapse>
+        </Stack>
         <Group justify="flex-end"><Button loading={busy} onClick={() => void run({ operation: 'save', ...config })}>{t('Save')}</Button></Group>
       </Stack>
     </Card>
@@ -170,7 +197,7 @@ export default function ManageProctorPage() {
             + 'Closing this dialog clears the display.',
           )}
         </Alert>
-        <Code>{privateKeys.keyId}</Code>
+        <Text size="sm">{t('Authentication key ID')} (PROCTOR_KEY_ID): <Code>{privateKeys.keyId}</Code></Text>
         <Textarea label={t('Authentication private key')} value={privateKeys.signingPrivateKey} readOnly minRows={4} />
         <Textarea label={t('Log decryption private key')} value={privateKeys.encryptionPrivateKey} readOnly minRows={7} />
         <Group justify="flex-end"><Button variant="default" onClick={() => setPrivateKeys(null)}>{t('Close')}</Button></Group>

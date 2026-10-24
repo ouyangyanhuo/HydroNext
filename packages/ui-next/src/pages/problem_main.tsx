@@ -1,7 +1,7 @@
-import { Badge, Card, Checkbox, Group, HoverCard, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Card, Checkbox, Group, HoverCard, Stack, Text, TextInput, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconCode, IconCornerDownLeft, IconDownload, IconSearch,
+  IconCode, IconCornerDownLeft, IconDownload, IconSearch, IconTrash,
 } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
@@ -281,7 +281,16 @@ export default function ProblemMainPage() {
   const columns = [
     ...(canSelect ? [{
       key: 'select',
-      title: '',
+      title: (
+        <Tooltip label={t('Select All')} withArrow>
+          <Checkbox
+            aria-label={t('Select All')}
+            checked={allSelected}
+            indeterminate={selected.length > 0 && !allSelected}
+            onChange={(e) => toggleSelectAll(e.currentTarget.checked)}
+          />
+        </Tooltip>
+      ),
       width: 40,
       render: (p: any) => (
         <Checkbox
@@ -361,35 +370,33 @@ export default function ProblemMainPage() {
       >
         <Group gap="xs" wrap="wrap" className="hydro-problem-toolbar">
           {canCreate && selected.length > 0 && (
-            <Button
-              size="xs"
-              variant="light"
-              leftSection={<IconDownload size={15} />}
-              loading={downloading}
-              disabled={routeLoading}
-              onClick={() => void handleDownload()}
-            >
-              {t('Download Selected')} ({selected.length})
-            </Button>
+            <Tooltip label={`${t('Download Selected')} (${selected.length})`} withArrow>
+              <ActionIcon
+                size={30}
+                variant="light"
+                loading={downloading}
+                disabled={routeLoading || deleting}
+                aria-label={t('Download Selected')}
+                onClick={() => void handleDownload()}
+              >
+                <IconDownload size={16} stroke={1.8} aria-hidden="true" />
+              </ActionIcon>
+            </Tooltip>
           )}
           {canEdit && selected.length > 0 && (
-            <Button size="xs" color="red" variant="light" onClick={() => setDeleteDialogOpen(true)}>
-              {t('Delete')} ({selected.length})
-            </Button>
-          )}
-          {canSelect && pdocs.length > 0 && (
-            <label className="hydro-problem-select-all">
-              <Checkbox
-                aria-label={t('Select All')}
-                checked={allSelected}
-                indeterminate={selected.length > 0 && !allSelected}
-                onChange={(e) => toggleSelectAll(e.currentTarget.checked)}
-                size="xs"
-              />
-              <span className="hydro-problem-select-all__label">
-                {t('Select All')}
-              </span>
-            </label>
+            <Tooltip label={`${t('Delete')} (${selected.length})`} withArrow>
+              <ActionIcon
+                size={30}
+                color="red"
+                variant="light"
+                loading={deleting}
+                disabled={routeLoading || downloading}
+                aria-label={t('Delete')}
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <IconTrash size={16} stroke={1.8} aria-hidden="true" />
+              </ActionIcon>
+            </Tooltip>
           )}
           <TextInput
             placeholder={t('Search problems...')}
@@ -426,7 +433,7 @@ export default function ProblemMainPage() {
             className={`hydro-problem-list ${routeLoading ? 'hydro-problem-list--loading' : ''}`}
             aria-busy={routeLoading}
           >
-            <DataTable columns={columns} data={pdocs} emptyMessage={t('No problems found')} />
+            <DataTable columns={columns} data={pdocs} keyField="docId" emptyMessage={t('No problems found')} />
             <Paginator page={page} totalPages={ppcount} />
           </div>
         </div>

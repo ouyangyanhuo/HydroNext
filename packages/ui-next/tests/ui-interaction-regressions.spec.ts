@@ -437,42 +437,12 @@ test('problems, contests, training and records page headers align with ranking t
     assert.match(rankingSource, /className="hydro-page-title__accent"/);
 });
 
-test('problem select-all is placed inside toolbar before search input and removed from list container', () => {
+test('problem select-all belongs to its table header instead of the search toolbar', () => {
     const problemSource = read('../src/pages/problem_main.tsx');
-    const toolbarIndex = problemSource.indexOf('className="hydro-problem-toolbar"');
-    const selectAllIndex = problemSource.indexOf('className="hydro-problem-select-all"');
-    const searchIndex = problemSource.indexOf("placeholder={t('Search problems...')}");
-    const listIndex = problemSource.indexOf('className={`hydro-problem-list');
-
-    assert.ok(toolbarIndex !== -1, 'hydro-problem-toolbar must exist');
-    assert.ok(selectAllIndex !== -1, 'hydro-problem-select-all must exist');
-    assert.ok(searchIndex !== -1, 'search input must exist');
-    assert.ok(listIndex !== -1, 'hydro-problem-list must exist');
-
-    assert.ok(selectAllIndex > toolbarIndex, 'select-all must be inside or after toolbar start');
-    assert.ok(selectAllIndex < searchIndex, 'select-all must be placed before the search input');
-    assert.ok(searchIndex < listIndex, 'search input must be before list');
-
-    const listContent = problemSource.slice(listIndex);
-    assert.doesNotMatch(listContent, /hydro-problem-select-all/);
-
-    const tailwindCss = postcss.parse(read('../src/styles/tailwind.css'));
-    let selectAllCentered = false;
-    let labelCentered = false;
-    tailwindCss.walkRules((rule) => {
-        if (rule.selector === '.hydro-problem-select-all') {
-            rule.walkDecls((decl) => {
-                if (decl.prop === 'align-items' && decl.value === 'center') selectAllCentered = true;
-            });
-        }
-        if (rule.selector === '.hydro-problem-select-all__label') {
-            rule.walkDecls((decl) => {
-                if (decl.prop === 'align-items' && decl.value === 'center') labelCentered = true;
-            });
-        }
-    });
-    assert.ok(selectAllCentered, '.hydro-problem-select-all must have align-items: center');
-    assert.ok(labelCentered, '.hydro-problem-select-all__label must have align-items: center');
+    assert.match(problemSource, /key: 'select',\s*title: \([\s\S]*?<Checkbox\s*aria-label=\{t\('Select All'\)\}/);
+    const toolbar = problemSource.slice(problemSource.indexOf('className="hydro-problem-toolbar"'));
+    assert.doesNotMatch(toolbar, /Select All|hydro-problem-select-all/);
+    assert.match(read('../src/components/common/data-table.tsx'), /title: React.ReactNode/);
 });
 
 test('contest detail problem list button and problem links use primary accent color matching register button', () => {

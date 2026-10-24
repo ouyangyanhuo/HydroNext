@@ -6,7 +6,7 @@ import { EmptyState } from './empty-state';
 
 interface Column<T> {
   key: string;
-  title: string;
+  title: React.ReactNode;
   render?: (item: T) => React.ReactNode;
   width?: string | number;
   align?: 'left' | 'center' | 'right';

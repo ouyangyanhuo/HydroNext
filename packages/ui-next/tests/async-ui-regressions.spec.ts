@@ -102,7 +102,8 @@ async function mount(element: any) {
     };
 }
 function button(text: string, scope: ParentNode = document) {
-    const result = Array.from(scope.querySelectorAll('button')).find((element) => element.textContent === text);
+    const result = Array.from(scope.querySelectorAll('button')).find((element) => element.textContent === text
+        || element.getAttribute('aria-label') === text);
     assert.ok(result, `Missing button: ${text}`);
     return result;
 }
@@ -141,12 +142,8 @@ test('problem bulk download is available to creators without edit permission and
         '@/components/common/list-sort-select': { ListSortSelect: () => null },
         '@/components/common/paginator': { Paginator: () => null },
         '@/components/record/record-status-badge': { RecordStatusBadge: () => null },
-        '@/components/common/data-table': {
-            DataTable: ({ columns, data }: any) => h('div', null, ...data.map((p: any) => h(
-                'div', { key: p.docId }, columns.find((column: any) => column.key === 'select')?.render(p),
-            ))),
-        },
-        '@/components/common/button': { ...mocks['@/components/common/button'], ActionIcon: () => null },
+        '@/components/common/data-table': component('../src/components/common/data-table.tsx', { './empty-state': { EmptyState: () => null } }),
+        '@/components/common/button': { ...mocks['@/components/common/button'], ActionIcon: require('@mantine/core').ActionIcon },
     }).default;
     args = { canCreateProblem: true, canEditProblem: false, pdocs: [{ docId: 1 }, { docId: 2 }] };
     const response = deferred();
@@ -159,23 +156,41 @@ test('problem bulk download is available to creators without edit permission and
     };
     const view = await mount(h(ProblemMain));
     try {
+        const selectAll = view.host.querySelector('thead input[aria-label="Select All"]') as HTMLInputElement;
+        assert.ok(selectAll, 'select all is rendered in the table header');
+        assert.equal(view.host.querySelector('header input[type="checkbox"]'), null);
+        await act(async () => selectAll.click());
+        assert.equal((view.host.querySelector('[aria-label="1"]') as HTMLInputElement).checked, true);
+        assert.equal((view.host.querySelector('[aria-label="2"]') as HTMLInputElement).checked, true);
+        await act(async () => selectAll.click());
+        assert.equal(view.host.querySelector('button[aria-label="Download Selected"]'), null);
         await act(async () => (view.host.querySelector('[aria-label="1"]') as HTMLInputElement).click());
-        assert.ok(!view.host.textContent?.includes('Delete ('));
+        assert.equal(selectAll.indeterminate, true);
+        assert.equal(view.host.querySelector('button[aria-label="Delete"]'), null);
+        assert.equal(button('Download Selected', view.host).textContent, '');
+        assert.equal(button('Download Selected', view.host).querySelectorAll('svg').length, 1);
         await act(async () => {
-            button('Download Selected (1)', view.host).click();
-            button('Download Selected (1)', view.host).click();
+            button('Download Selected', view.host).click();
+            button('Download Selected', view.host).click();
         });
         assert.equal(calls, 1);
-        assert.equal(button('Download Selected (1)', view.host).disabled, true);
+        assert.equal(button('Download Selected', view.host).disabled, true);
         await act(async () => response.resolve({ ...failure, headers: new Headers({ 'content-type': 'application/json' }) }));
         assert.equal(notices.at(-1)?.message, 'Denied');
         domainId = 'another';
         await view.render(h(ProblemMain));
-        assert.ok(!view.host.textContent?.includes('Download Selected'));
+        assert.equal(view.host.querySelector('button[aria-label="Download Selected"]'), null);
         assert.equal((view.host.querySelector('[aria-label="1"]') as HTMLInputElement).checked, false);
-        args = { ...args, canCreateProblem: false };
+        args = { ...args, canCreateProblem: false, canEditProblem: true };
+        await view.render(h(ProblemMain));
+        await act(async () => (view.host.querySelector('[aria-label="1"]') as HTMLInputElement).click());
+        assert.equal(view.host.querySelector('button[aria-label="Download Selected"]'), null);
+        assert.equal(button('Delete', view.host).textContent, '');
+        assert.equal(button('Delete', view.host).querySelectorAll('svg').length, 1);
+        args = { ...args, canEditProblem: false };
         await view.render(h(ProblemMain));
         assert.equal(view.host.querySelector('[aria-label="1"]'), null);
+        assert.equal(view.host.querySelector('[aria-label="Select All"]'), null);
     } finally {
         await view.close();
     }

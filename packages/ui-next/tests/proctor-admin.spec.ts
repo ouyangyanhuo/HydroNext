@@ -37,10 +37,21 @@ for (const [name, tag] of Object.entries({ Thead: 'thead', Tbody: 'tbody', Tr: '
 }
 Table.ScrollContainer = box;
 let args: any;
+let reducedMotion = false;
+const policyMotion: { kind: string, visible: boolean, duration: number, easing: string, exitDuration?: number, exitTransform?: string }[] = [];
 const notices: any[] = [];
 const mocks: Record<string, any> = {
     '@mantine/core': {
         Alert: box, Card: box, Code: box, Group: box, Stack: box, Text: box, Title: box, Tooltip: box, Table,
+        Collapse: ({ expanded, children, transitionDuration, transitionTimingFunction }: any) => {
+            policyMotion.push({ kind: 'collapse', visible: expanded, duration: transitionDuration, easing: transitionTimingFunction });
+            return expanded ? h('div', null, children) : null;
+        },
+        Transition: ({ mounted, children, duration, exitDuration, transition, timingFunction }: any) => {
+            policyMotion.push({ kind: 'refresh', visible: mounted, duration, exitDuration, exitTransform: transition.out.transform,
+                easing: timingFunction });
+            return mounted ? children({}) : null;
+        },
         TextInput: fieldControl,
         NumberInput: ({ label,
             value,
@@ -67,6 +78,7 @@ const mocks: Record<string, any> = {
         Modal: ({ opened, children, onClose }: any) => opened ? h('section', { role: 'dialog' }, children,
             h('button', { onClick: onClose }, 'Dismiss modal')) : null,
     },
+    '@mantine/hooks': { useReducedMotion: () => reducedMotion },
     '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
     '@/components/common/button': { Button: ({ children, loading, disabled, onClick, type = 'button' }: any) => h('button', {
         type, disabled: loading || disabled, onClick,
@@ -137,12 +149,15 @@ test('key generation shows both public keys, private viewing is explicit and clo
     const view = await mount();
     try {
         assert.ok(!view.host.textContent?.includes('Enroll a proctor client'));
+        assert.ok(!view.host.textContent?.includes('Generate both key pairs and inject both public keys'));
+        assert.ok(!view.host.textContent?.includes('Changing the required version or rotating keys'));
         assert.ok(view.host.textContent?.includes('Proctor logs'));
         await act(async () => button(view.host, 'Generate authentication keys').click());
         await act(async () => button(view.host, 'Confirm').click());
         assert.deepEqual(Array.from(view.host.querySelectorAll('textarea')).map((field) => field.value), ['auth-public', 'log-public']);
         assert.deepEqual(operations, ['generate_keys']);
         await act(async () => button(view.host, 'View private keys').click());
+        assert.ok(view.host.querySelector('[role="dialog"]')?.textContent?.includes('Authentication key ID (PROCTOR_KEY_ID): key-id'));
         assert.ok(view.host.querySelector('textarea[value]') === null);
         assert.ok(Array.from(view.host.querySelectorAll('textarea')).some((field) => field.value === 'auth-private'));
         await act(async () => button(view.host, 'Dismiss modal').click());
@@ -209,22 +224,45 @@ test('settings submit boolean switches and only acknowledge the configuration re
     try {
         const enabled = Array.from(view.host.querySelectorAll('label')).find((label) => label.textContent === 'Enable proctor service')!
             .querySelector('input')!;
-        await act(async () => enabled.click());
         const version = Array.from(view.host.querySelectorAll('label')).find((label) => label.textContent === 'Required client version')!
             .querySelector('input')!;
         await enter(version, ' 2.0.0 ');
+        const refresh = Array.from(view.host.querySelectorAll('label')).find((label) => label.textContent === 'Allow token refresh')!;
+        assert.equal(enabled.closest('label')?.parentElement, refresh.parentElement?.parentElement, 'both switches are in the same row');
+        assert.ok(policyMotion.slice(-2).every((item) => item.visible && item.duration === 350));
+        assert.ok(policyMotion.slice(-2).every((item) => item.easing === 'cubic-bezier(0.16, 1, 0.3, 1)'));
+        await act(async () => enabled.click());
+        assert.ok(policyMotion.slice(-2).every((item) => !item.visible && item.duration === 350));
+        const refreshExit = policyMotion.slice(-2).find((item) => item.kind === 'refresh')!;
+        assert.equal(refreshExit.exitDuration, 350);
+        assert.equal(refreshExit.exitTransform, 'translateX(18px)');
+        assert.ok(!view.host.textContent?.includes('Required client version'));
+        assert.ok(!view.host.textContent?.includes('Token lifetime (seconds)'));
+        assert.ok(!view.host.textContent?.includes('Allow token refresh'));
         await act(async () => button(view.host, 'Save').click());
         assert.equal(bodies.length, 1);
         assert.equal(bodies[0].enabled, false);
         assert.equal(bodies[0].refreshEnabled, true);
         assert.equal(typeof bodies[0].tokenTtlSeconds, 'number');
-        assert.equal(version.value, '2.0.0');
+        assert.equal(bodies[0].requiredVersion, ' 2.0.0 ', 'hiding policy controls preserves their draft values');
         assert.equal(notices.at(-1).title, 'Saved');
         await act(async () => enabled.click());
+        const restoredVersion = Array.from(view.host.querySelectorAll('label')).find((label) => label.textContent === 'Required client version')!
+            .querySelector('input')!;
+        assert.equal(restoredVersion.value, '2.0.0', 'the saved server configuration restores when enabled');
+        assert.ok(view.host.textContent?.includes('Allow token refresh'));
         await act(async () => button(view.host, 'Save').click());
         assert.equal(bodies[1].enabled, true);
         assert.equal(enabled.checked, true);
-    } finally { await view.close(); }
+        reducedMotion = true;
+        await act(async () => enabled.click());
+        assert.ok(policyMotion.slice(-2).every((item) => !item.visible && item.duration === 0));
+        await act(async () => enabled.click());
+        assert.ok(policyMotion.slice(-2).every((item) => item.visible && item.duration === 0));
+    } finally {
+        reducedMotion = false;
+        await view.close();
+    }
 });
 
 test('failed settings writes and missing save acknowledgements never display Saved', async () => {
