@@ -1,8 +1,8 @@
-import { Badge, Card, Group, Modal, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Card, Group, Modal, PasswordInput, Stack, Text, TextInput, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconPlus, IconRefresh, IconSearch, IconTrash, IconUpload } from '@tabler/icons-react';
+import { IconCornerDownLeft, IconPlus, IconRefresh, IconSearch, IconTrash, IconUpload } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
-import { Button } from '@/components/common/button';
+import { ActionIcon, Button } from '@/components/common/button';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
@@ -262,18 +262,27 @@ export default function ManageUserPage() {
             <Title order={3} size="h4">{t('All Users')}</Title>
             <Text size="sm" c="dimmed">{t('Edit user profiles and manage accounts.')}</Text>
           </Stack>
-          <Group gap="xs">
+          <Group gap="xs" className="hydro-list-toolbar">
             <TextInput
+              size="xs"
               value={query}
               onChange={(e) => setQuery(e.currentTarget.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') search();
               }}
               placeholder={t('Search users by username, UID or email')}
-              leftSection={<IconSearch size={16} />}
-              w={{ base: 240, sm: 320 }}
+              aria-label={t('Search users by username, UID or email')}
+              leftSection={<IconSearch size={15} stroke={1.8} aria-hidden="true" />}
+              rightSection={(
+                <Tooltip label={t('Search')} withArrow>
+                  <ActionIcon size="xs" variant="subtle" color="gray" onClick={search} aria-label={t('Search')}>
+                    <IconCornerDownLeft size={13} stroke={1.8} aria-hidden="true" />
+                  </ActionIcon>
+                </Tooltip>
+              )}
+              rightSectionPointerEvents="auto"
+              className="w-[190px] sm:w-[260px]"
             />
-            <Button size="xs" leftSection={<IconSearch size={14} />} onClick={search}>{t('Search')}</Button>
             {initialQuery && (
               <Button component={Link} to="manage_user" size="xs" variant="default">
                 {t('Clear Search')}

@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import postcss from 'postcss';
 
 const css = postcss.parse(readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8'));
-const toolbars = ':is(.hydro-problem-toolbar, .hydro-contest-header-actions, .hydro-training-header-actions)';
+const toolbars = ':is(.hydro-problem-toolbar, .hydro-list-toolbar, .hydro-contest-header-actions, .hydro-training-header-actions)';
 
 function declarations(selector: string) {
     const values: Record<string, string> = {};
@@ -24,10 +24,13 @@ test('list toolbar fields and buttons share one explicit border-box height', () 
     }
     assert.equal(controls['box-sizing'], 'border-box');
     assert.equal(controls.transform, 'none');
-    for (const page of ['problem_main', 'contest_main', 'training_main']) {
+    for (const page of ['problem_main', 'contest_main', 'training_main', 'manage_user']) {
         const source = readFileSync(new URL(`../src/pages/${page}.tsx`, import.meta.url), 'utf8');
-        assert.match(source, /className="hydro-(problem-toolbar|contest-header-actions|training-header-actions)"/);
+        assert.match(source, /className="hydro-(problem-toolbar|list-toolbar|contest-header-actions|training-header-actions)"/);
     }
+    const input = declarations(':is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Input-input');
+    assert.equal(input.color, 'var(--hydro-text)');
+    assert.ok(input['background-color'].includes('var(--hydro-primary-soft)'));
 });
 
 test('category modal rows have a permanent theme-based surface, independent of hover', () => {
@@ -61,7 +64,7 @@ test('contest filter labels have translations in every supported locale and tool
             if (locale !== 'en') assert.notEqual(dictionary[key], key);
         }
     }
-    for (const page of ['contest_main', 'training_main', 'problem_main']) {
+    for (const page of ['contest_main', 'training_main', 'problem_main', 'manage_user']) {
         const source = readFileSync(new URL(`../src/pages/${page}.tsx`, import.meta.url), 'utf8');
         assert.ok(source.includes('rightSectionPointerEvents="auto"'), `${page} should have embedded search trigger`);
     }

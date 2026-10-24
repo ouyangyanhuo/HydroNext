@@ -1194,24 +1194,24 @@ a {
   box-shadow: inset 3px 0 0 var(--hydro-primary);
 }
 
-.hydro-problem-toolbar .mantine-Input-input,
-.hydro-problem-toolbar .mantine-Button-root {
+:is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Input-input,
+:is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Button-root {
   transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
               box-shadow var(--hydro-duration-normal) var(--hydro-ease-out);
 }
 
 /* One height contract for list toolbar inputs, selects, and buttons. */
-:is(.hydro-problem-toolbar, .hydro-contest-header-actions, .hydro-training-header-actions) {
+:is(.hydro-problem-toolbar, .hydro-list-toolbar, .hydro-contest-header-actions, .hydro-training-header-actions) {
   --hydro-toolbar-control-height: calc(1.875rem * var(--mantine-scale, 1));
 }
 
-:is(.hydro-problem-toolbar, .hydro-contest-header-actions, .hydro-training-header-actions)
+:is(.hydro-problem-toolbar, .hydro-list-toolbar, .hydro-contest-header-actions, .hydro-training-header-actions)
 :is(.mantine-Input-wrapper, .mantine-Button-root) {
   --input-height: var(--hydro-toolbar-control-height);
   --button-height: var(--hydro-toolbar-control-height);
 }
 
-:is(.hydro-problem-toolbar, .hydro-contest-header-actions, .hydro-training-header-actions)
+:is(.hydro-problem-toolbar, .hydro-list-toolbar, .hydro-contest-header-actions, .hydro-training-header-actions)
 :is(.mantine-Input-input, .mantine-Button-root) {
   box-sizing: border-box;
   height: var(--hydro-toolbar-control-height);
@@ -1220,7 +1220,7 @@ a {
   transform: none;
 }
 
-.hydro-problem-toolbar .mantine-Input-input {
+:is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Input-input {
   border-color: color-mix(in srgb, var(--hydro-primary) 18%, var(--hydro-border));
   color: var(--hydro-text);
   background-color: color-mix(
@@ -1230,7 +1230,7 @@ a {
   );
 }
 
-.hydro-problem-toolbar .mantine-Input-input:focus {
+:is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Input-input:focus {
   border-color: var(--hydro-primary);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
 }
@@ -2902,16 +2902,16 @@ a {
 
   .hydro-problem-list,
   .hydro-problem-list .hydro-data-table tbody tr,
-  .hydro-problem-toolbar .mantine-Input-input,
-  .hydro-problem-toolbar .mantine-Button-root {
+  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Input-input,
+  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Button-root {
     transition-duration: 0.01ms;
   }
 
   .hydro-problem-list--loading,
   .hydro-problem-list .hydro-data-table tbody tr:hover,
   .hydro-problem-list .hydro-data-table tbody tr:focus-within,
-  .hydro-problem-toolbar .mantine-Input-input:focus,
-  .hydro-problem-toolbar .mantine-Button-root:hover {
+  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Input-input:focus,
+  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Button-root:hover {
     transform: none;
   }
 

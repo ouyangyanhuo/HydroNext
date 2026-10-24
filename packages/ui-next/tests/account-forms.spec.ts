@@ -188,6 +188,17 @@ test('managed user names open the editor and the profile form preserves drafts, 
     try {
         assert.ok(list.host.querySelector('a[href="/d/team/manage/users/42?page=3&q=student"]'));
         assert.equal(list.host.querySelector('a[href^="/user_detail"]'), null);
+        const search = list.host.querySelector<HTMLInputElement>('input[aria-label="Search users by username, UID or email"]')!;
+        const submit = list.host.querySelector<HTMLButtonElement>('button[aria-label="Search"]')!;
+        assert.ok(search.closest('.hydro-list-toolbar'));
+        assert.ok(submit.closest('.mantine-Input-wrapper'), 'search action is embedded in the input instead of a separate text button');
+        assert.equal(submit.textContent, '');
+        await list.input(0, '  admin  ');
+        await act(async () => submit.click());
+        assert.equal(list.navigations.at(-1), '/d/team/manage_user?q=admin');
+        await list.input(0, '42');
+        await act(async () => search.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+        assert.equal(list.navigations.at(-1), '/d/team/manage_user?q=42');
     } finally { await list.close(); }
     for (const response of [{ saved: true }, { error: { message: 'Denied' } }, { url: '/d/team/user/sudo' }]) {
         // eslint-disable-next-line no-await-in-loop
