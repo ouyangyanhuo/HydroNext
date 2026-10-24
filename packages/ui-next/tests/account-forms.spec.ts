@@ -130,11 +130,13 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         }).code, { module: component, exports: component.exports, require: (id: string) => mocks[id] ?? require(id) });
         mocks['@/components/common/invitation-code-input'] = component.exports;
     }
-    if (page === 'contest_scoreboard') {
-        for (const [componentId, componentPath] of [
+    if (page === 'contest_scoreboard' || page === 'manage_setting') {
+        for (const [componentId, componentPath] of (page === 'manage_setting' ? [
+            ['@/components/common/settings-form', '../src/components/common/settings-form.tsx'],
+        ] : [
             ['@/components/user/user-link', '../src/components/user/user-link.tsx'],
             ['@/components/contest/team-identity', '../src/components/contest/team-identity.tsx'],
-        ]) {
+        ])) {
             const component = { exports: {} as any };
             runInNewContext(transformSync(readFileSync(new URL(componentPath, import.meta.url), 'utf8'), {
                 loader: 'tsx', format: 'cjs', jsx: 'automatic',
@@ -182,6 +184,59 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         async close() { await act(async () => root.unmount()); host.remove(); },
     };
 }
+
+test('system settings use compact grids, keep long fields full-width and preserve nested saves and secret placeholders', async () => {
+    const view = await fixture('manage_setting', {}, {}, {
+        settings: [
+            { family: 'server', key: 'server.name', type: 'text', name: 'Site name' },
+            { family: 'server', key: 'server.url', type: 'text', name: 'Site URL' },
+            { family: 'server', key: 'server.allowRegister', type: 'boolean', name: 'Registration' },
+            { family: 'server', key: 'server.checkUpdate', type: 'boolean', name: 'Check updates' },
+            { family: 'server', key: 'server.notice', type: 'textarea', subType: 'yaml', name: 'Notice' },
+            { family: 'server', key: 'server.password', type: 'password', name: 'Secret', flag: 4 },
+            { family: 'access', key: 'access.a', type: 'boolean', name: 'Access A' },
+            { family: 'access', key: 'access.b', type: 'boolean', name: 'Access B' },
+        ],
+        current: { 'server.name': 'HydroNext', 'server.url': '/', 'server.allowRegister': true, 'server.checkUpdate': true,
+            'server.notice': 'Long content', 'server.password': 'never-expose-this', 'access.a': true, 'access.b': false },
+    });
+    try {
+        const grid = view.host.querySelector('.hydro-settings-fields')!;
+        assert.ok(grid);
+        assert.equal(grid.querySelectorAll(':scope > .hydro-settings-field').length, 5);
+        const checkbox = grid.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
+        const toggles = checkbox.closest('.hydro-settings-fields--booleans')!;
+        assert.ok(toggles?.parentElement?.classList.contains('hydro-settings-field--wide'), 'the boolean group starts its own full row');
+        assert.equal(toggles.querySelector('textarea, input:not([type="checkbox"])'), null, 'text inputs never share the boolean grid');
+        const editor = grid.querySelector('textarea')!;
+        assert.ok(editor.closest('.hydro-settings-field--wide'), 'long content retains the full row');
+        assert.equal(editor.style.height, '240px');
+        assert.equal(editor.style.minHeight, '240px');
+        assert.equal(editor.style.maxHeight, '240px');
+        assert.equal(editor.style.overflowY, 'auto');
+        assert.equal(editor.style.resize, 'none');
+        assert.equal(editor.style.fontFamily, 'var(--hydro-font-mono)');
+        assert.equal(view.host.querySelectorAll('.hydro-setting-checkbox-card').length, 2, 'boolean-only groups use the multi-column tiles');
+        assert.equal(view.host.querySelector<HTMLInputElement>('input[type="password"]')?.value, '');
+        assert.ok(!view.host.textContent?.includes('never-expose-this'));
+        const longContent = Array.from({ length: 100 }, (_, index) => `entry_${index}: ${index}`).join('\n');
+        await act(async () => {
+            Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value')!.set!.call(editor, longContent);
+            editor.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        });
+        assert.equal(editor.value, longContent);
+        assert.equal(editor.style.height, '240px', 'long content must not increase editor height');
+        await view.input(0, 'Updated name');
+        await act(async () => checkbox.click());
+        await act(async () => view.host.querySelector<HTMLButtonElement>('.hydro-settings-save')!.click());
+        assert.deepEqual(JSON.parse(view.calls[0].init.body), {
+            server: { name: 'Updated name', url: '/', allowRegister: false, checkUpdate: true, notice: longContent, password: '' },
+            access: { a: true, b: false },
+            booleanKeys: { server: { allowRegister: true, checkUpdate: true }, access: { a: true, b: true } },
+        });
+        assert.equal(view.notices.at(-1).title, 'Saved');
+    } finally { await view.close(); }
+});
 
 test('managed user names open the editor and the profile form preserves drafts, sudo redirects and scoped back links', async () => {
     const list = await fixture('manage_user', {}, {}, { page: 3, q: 'student', udocs: [{ _id: 42, uname: 'student', canEditProfile: true }] });

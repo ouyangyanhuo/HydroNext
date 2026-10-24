@@ -95,6 +95,10 @@ interface SettingsFormProps {
   itemIcons?: Record<string, any>;
   booleanGrid?: boolean;
   fieldsGrid?: boolean;
+  /** Keep boolean controls in their own full-width group, separate from text inputs. */
+  separateBooleanFields?: boolean;
+  /** Fixed multiline editor height in pixels; omitted editors retain automatic sizing. */
+  textareaHeight?: number;
   /** Display these boolean controls positively while preserving their storage semantics. */
   invertedBooleanKeys?: readonly string[];
   /** Storage values for local previews; this callback never submits the form. */
@@ -200,10 +204,12 @@ function SettingInput({
   setting,
   value,
   onChange,
+  textareaHeight,
 }: {
   setting: SettingItem;
   value: any;
   onChange: (value: any) => void;
+  textareaHeight?: number;
 }) {
   const { t } = useI18n();
   const disabled = ((setting.flag || 0) & FLAG_DISABLED) !== 0;
@@ -312,14 +318,21 @@ function SettingInput({
         disabled={disabled}
         placeholder={secret ? t('(Not changed)') : undefined}
         minRows={setting.type === 'markdown' || setting.subType === 'yaml' ? 8 : 4}
-        autosize
+        autosize={textareaHeight === undefined}
         onChange={(e) => {
           const val = e.currentTarget.value;
           onChange(val);
         }}
-        styles={setting.subType === 'yaml' || setting.type === 'json'
-          ? { input: { fontFamily: 'var(--hydro-font-mono)', fontSize: '13px' } }
-          : undefined}
+        styles={{ input: {
+          ...(setting.subType === 'yaml' || setting.type === 'json' ? { fontFamily: 'var(--hydro-font-mono)', fontSize: '13px' } : {}),
+          ...(textareaHeight === undefined ? {} : {
+            height: textareaHeight,
+            minHeight: textareaHeight,
+            maxHeight: textareaHeight,
+            overflowY: 'auto',
+            resize: 'none',
+          }),
+        } }}
       />
     );
   }
@@ -355,6 +368,8 @@ export function SettingsForm({
   itemIcons,
   booleanGrid = false,
   fieldsGrid = false,
+  separateBooleanFields = false,
+  textareaHeight,
   invertedBooleanKeys = EMPTY_KEYS,
   onValuesChange,
 }: SettingsFormProps) {
@@ -590,7 +605,7 @@ export function SettingsForm({
                 ? 'hydro-settings-fields'
                 : 'flex flex-col gap-4'}
             >
-              {items.map((setting) => {
+              {items.filter((setting) => !separateBooleanFields || setting.type !== 'boolean').map((setting) => {
                 const isWide = setting.type === 'markdown'
                   || setting.type === 'textarea'
                   || setting.type === 'json'
@@ -607,11 +622,27 @@ export function SettingsForm({
                     <SettingInput
                       setting={setting}
                       value={values[setting.key]}
+                      textareaHeight={textareaHeight}
                       onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
                     />
                   </div>
                 );
               })}
+              {separateBooleanFields && items.some((setting) => setting.type === 'boolean') && (
+                <div className="hydro-settings-field hydro-settings-field--wide">
+                  <div className="hydro-settings-fields hydro-settings-fields--booleans">
+                    {items.filter((setting) => setting.type === 'boolean').map((setting) => (
+                      <div key={setting.key} className="hydro-settings-field">
+                        <SettingInput
+                          setting={setting}
+                          value={values[setting.key]}
+                          onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {familyExtras?.[family] && (
                 <div className="hydro-settings-field hydro-settings-field--wide">{renderPlainExtra(familyExtras[family])}</div>
               )}

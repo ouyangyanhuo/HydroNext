@@ -43,6 +43,10 @@ export default function ManageSettingPage() {
         settings={args.settings || {}}
         current={current}
         payloadMode="nested"
+        fieldsGrid
+        booleanGrid
+        separateBooleanFields
+        textareaHeight={240}
         loading={loading}
         onSubmit={handleSave}
       />
