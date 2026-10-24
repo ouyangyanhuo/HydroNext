@@ -2,10 +2,11 @@ import { Badge, Card, FileInput, Group, Radio, Stack, Switch, Text, TextInput } 
 import { notifications } from '@mantine/notifications';
 import { IconBuildingCommunity, IconSettings, IconUserCircle } from '@tabler/icons-react';
 import { useState } from 'react';
+import { SettingsNavigationExtras } from '@/components/common/addon-slots';
 import { PageHeader } from '@/components/common/page-header';
 import { SettingsForm } from '@/components/common/settings-form';
 import { Link } from '@/components/link';
-import { FramedAvatar } from '@/components/user/framed-avatar';
+import { AvatarView } from '@/components/user/avatar-view';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
@@ -136,9 +137,7 @@ export default function HomeSettingsPage() {
               <span>{label}</span>
             </Link>
           ))}
-          <Link to="home_honor_frames" className="hydro-settings-nav__item">
-            <IconUserCircle size={18} stroke={1.8} /><span>{t('Honor avatar frame')}</span>
-          </Link>
+          <SettingsNavigationExtras />
         </nav>
         <Stack gap="lg" className="hydro-settings-content">
           {category === 'account' && (
@@ -149,8 +148,8 @@ export default function HomeSettingsPage() {
                   <Badge variant="light">{avatarType}</Badge>
                 </div>
                 <Group gap="xl" align="flex-start" wrap="wrap">
-                  <FramedAvatar
-                    frame={user.honorFrame}
+                  <AvatarView
+                    user={user}
                     src={avatarPreviewUrl}
                     size={112}
                     radius="xl"

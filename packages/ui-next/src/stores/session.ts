@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { initialLang, initialPage } from '@/globals';
 import { type AccentColorValue, DEFAULT_ACCENT } from '@/styles/accent-colors';
-import type { HonorFrame } from '@/utils/honor-frame';
 
 export type ThemeMode = 'light' | 'dark';
 export type FontFamily = 'sans' | 'serif';
@@ -13,7 +12,6 @@ export interface UserContext {
   priv: number;
   perm?: number | string;
   avatar: string;
-  honorFrame?: HonorFrame | null;
   [key: string]: any;
 }
 

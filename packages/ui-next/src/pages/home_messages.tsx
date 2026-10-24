@@ -8,6 +8,7 @@ import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { getUserExtensionFields } from '@/registry/user-fields';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 import { formatUserName } from '@/utils/user-name';
@@ -42,7 +43,7 @@ function SendMessageDialog({
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
             args: { search: trimmed, limit: 10 },
-            projection: ['_id', 'uname', 'displayName', 'avatar', 'avatarUrl', 'honorFrame'],
+            projection: ['_id', 'uname', 'displayName', 'avatar', 'avatarUrl', ...getUserExtensionFields()],
           }),
           signal: controller.signal,
         });

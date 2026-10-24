@@ -1,6 +1,5 @@
 import 'allotment/dist/style.css';
 
-import type { ReplayAction } from '@hydrooj/code-replay/replay';
 import { Badge, Center, Divider, Drawer, Group, Loader, NumberInput, Paper, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -19,6 +18,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { useRecordSocket } from '@/hooks/use-record-socket';
 import { getSubmissionRecordQuery } from '@/utils/problem-navigation';
 import { proctorError, proctorSubmissionHeaders } from '@/utils/proctor';
+import { createEditorAddon, type EditorAddon } from './addons';
 import {
   CodeEditor,
   EDITOR_THEME_OPTIONS,
@@ -27,10 +27,6 @@ import {
   saveStoredEditorConfig,
 } from './code-editor';
 import { getCodeTemplate } from './code-templates';
-import {
-  continueRecording, recordAction, recordCode, recordingCheckpoint, type ReplayRecording, uploadRecordingCheckpoint,
-} from './replay-recording';
-import { memoryRecording, persistRecording, replaceRecording, replayDraftKey, restoreRecording } from './replay-storage';
 import { resolveSubmissionContext } from './submission-context';
 
 interface ScratchpadProps {
@@ -43,7 +39,6 @@ interface ScratchpadProps {
   onClose?: () => void;
   onSubmit?: (lang: string, code: string) => Promise<any>;
   submitUrl?: string;
-  codeReplaySessionUrl?: string;
   submissionDisabled?: boolean;
 }
 
@@ -81,7 +76,6 @@ export function Scratchpad({
   onClose,
   onSubmit,
   submitUrl,
-  codeReplaySessionUrl,
   submissionDisabled = false,
 }: ScratchpadProps) {
   const { t } = useI18n();
@@ -104,10 +98,10 @@ export function Scratchpad({
     () => getScratchpadCacheKey(userId, ui.domainId, pid, contestId),
     [contestId, pid, ui.domainId, userId],
   );
-  const replayStorageKey = useMemo(
-    () => replayDraftKey(`code-replay/${userId || 'guest'}/${ui.domainId || ''}/${pid}${contestId ? `@${contestId}` : ''}`),
-    [contestId, pid, ui.domainId, userId],
-  );
+  const editorAddon = useMemo(() => createEditorAddon({
+    userId, domainId: ui.domainId || '', pid, submitPid: submissionContext.pid, tid: submissionContext.tid,
+    ui: { editorAddons: ui.editorAddons }, translate: t,
+  }), [userId, ui.domainId, pid, submissionContext.pid, submissionContext.tid, ui.editorAddons, t]);
   const [lang, setLang] = useState(() => {
     const cachedLang = getStoredString(`${cacheKey}#lang`, defaultLang);
     if (cachedLang && langOptions.some((option) => option.value === cachedLang)) return cachedLang;
@@ -134,9 +128,7 @@ export function Scratchpad({
   const fontSize = Number(editorConfig.fontSize || getStoredNumber('hydro/editor/fontSize', 14));
   const tabSize = Number(editorConfig.tabSize || getStoredNumber('hydro/editor/tabSize', 4));
   const theme = editorConfig.theme || '';
-  const replayRef = useRef<ReplayRecording | null>(null);
-  const [readyReplayKey, setReadyReplayKey] = useState<string | null>(null);
-  const replayStorageWarning = useRef(false);
+  const [readyAddon, setReadyAddon] = useState<EditorAddon | null>(null);
   const judgePending = useRef(false);
   const pretestUpdate = useRecordSocket(pretestRid);
 
@@ -147,8 +139,7 @@ export function Scratchpad({
   }, [pretestUpdate?.error, t]);
 
   const resolvedSubmitUrl = submitUrl || `/p/${pid}/submit${window.location.search || ''}`;
-  const resolvedReplayUrl = codeReplaySessionUrl || ui.codeReplaySessionUrl;
-  const replayReady = !resolvedReplayUrl || !user?._id || readyReplayKey === replayStorageKey;
+  const addonReady = !editorAddon || readyAddon === editorAddon;
   const canUsePretest = useMemo(() => {
     const info = langs[lang] || {};
     if (info.pretest === false) return false;
@@ -210,49 +201,28 @@ export function Scratchpad({
     ? { ...(pretestResult || {}), ...pretestUpdate, rid: pretestRid }
     : pretestResult;
 
-  const warnReplayStorage = useCallback(() => {
-    if (replayStorageWarning.current) return;
-    replayStorageWarning.current = true;
-    notifications.show({ color: 'yellow', message: t('Replay could not be saved locally. Keep this editor open until submission.') });
-  }, [t]);
-
-  const saveReplay = useCallback((recording: ReplayRecording) => {
-    void persistRecording(replayStorageKey, recording).catch(warnReplayStorage);
-  }, [replayStorageKey, warnReplayStorage]);
-
   useEffect(() => {
+    if (!editorAddon) return undefined;
     let cancelled = false;
-    replayRef.current = null;
-    if (!resolvedReplayUrl || !userId) {
-      return undefined;
-    }
-    const initialize = async () => {
-      let recording: ReplayRecording;
-      try {
-        recording = await restoreRecording(replayStorageKey, code);
-      } catch {
-        recording = memoryRecording(replayStorageKey, code);
-        if (!cancelled) warnReplayStorage();
-      }
+    const controller = new AbortController();
+    void editorAddon.initialize(code, controller.signal).then((restoredCode) => {
       if (cancelled) return;
-      // Code and replay must come from the same atomic draft, never another tab's localStorage.
-      setCode(recording.currentCode);
-      replayRef.current = recording;
-      saveReplay(recording);
-      setReadyReplayKey(replayStorageKey);
+      setCode(restoredCode);
+      setReadyAddon(editorAddon);
+    }).catch((failure) => {
+      if (!cancelled) notifications.show({ color: 'red', message: t(failure?.message || 'Operation failed') });
+    });
+    return () => {
+      cancelled = true;
+      controller.abort();
     };
-    void initialize();
-    return () => { cancelled = true; };
-    // Code and language are initial values here; subsequent edits are captured below.
+    // Initial code is recovered once for each editor addon instance.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [replayStorageKey, resolvedReplayUrl, userId, saveReplay, warnReplayStorage]);
+  }, [editorAddon, t]);
 
-  const captureAction = useCallback((action: ReplayAction, characters?: number) => {
-    const recording = replayRef.current;
-    if (!recording) return;
-    recordAction(recording, action, lang, characters);
-    saveReplay(recording);
-  }, [lang, saveReplay]);
+  const captureAction = useCallback((action: string, characters?: number) => {
+    editorAddon?.action(action, lang, characters);
+  }, [editorAddon, lang]);
 
   const loadCodeTemplate = useCallback(() => {
     if (!selectedCodeTemplate) {
@@ -270,48 +240,15 @@ export function Scratchpad({
   }, [captureAction, selectedCodeTemplate, t]);
 
   const captureChange = useCallback((event: any, editor: any, previousValue: string) => {
-    const recording = replayRef.current;
-    if (!recording) return;
-    recordCode(recording, previousValue, lang);
-    if (recordCode(recording, editor.getValue(), lang, event.changes || [])) {
-      recording.events[recording.events.length - 1].selections = getSelections(editor);
-    }
-    saveReplay(recording);
-  }, [lang, saveReplay]);
-
-  const flushReplay = useCallback(async (finalCode: string) => {
-    if (!resolvedReplayUrl || !userId) return null;
-    const recording = replayRef.current;
-    if (!recording) throw new Error('Replay is not ready');
-    recordCode(recording, finalCode, lang);
-    const checkpoint = recordingCheckpoint(recording);
-    // Commit the local prefix before uploading it so a refresh cannot restore
-    // an older sequence than an already acknowledged server checkpoint.
-    await persistRecording(replayStorageKey, recording).catch(warnReplayStorage);
-    try {
-      const sessionId = await uploadRecordingCheckpoint(checkpoint, async (payload) => {
-        const response = await fetch(resolvedReplayUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ ...payload, pid: submissionContext.pid, tid: submissionContext.tid, lang }),
-        });
-        const data = await response.json();
-        if (!response.ok || data.error) throw new Error(data.error?.message || 'Replay upload failed');
-        return data;
-      });
-      return { sessionId, checkpoint, recording };
-    } catch (err) {
-      console.warn('Failed to upload code replay:', err);
-      throw new Error(t('Replay upload failed. Your recording is kept; please retry submission.'));
-    }
-  }, [lang, submissionContext.pid, submissionContext.tid, replayStorageKey, resolvedReplayUrl, t, userId, warnReplayStorage]);
+    editorAddon?.change(previousValue, editor.getValue(), lang, event.changes || [], getSelections(editor));
+  }, [editorAddon, lang]);
 
   const postJudge = useCallback(async (pretest: boolean) => {
     if (submissionDisabled) {
       notifications.show({ color: 'red', message: t('Contest Closed') });
       return;
     }
-    if (!replayReady || judgePending.current) return;
+    if (!addonReady || judgePending.current) return;
     const now = Date.now();
     if (now < (pretest ? cooldownUntil.pretest : cooldownUntil.submit)) return;
     setClock(now);
@@ -337,24 +274,24 @@ export function Scratchpad({
     } else setSubmitResult(null);
 
     try {
-      if (replayRef.current) recordCode(replayRef.current, code, lang);
+      editorAddon?.capture(code, lang);
       captureAction(pretest ? 'self_test' : 'submit');
       if (!pretest && onSubmit) {
         const res = await onSubmit(lang, code);
         setSubmitResult(res);
       } else {
-        const replay = pretest ? null : await flushReplay(code);
+        const addonReceipt = pretest ? null : await editorAddon?.beforeSubmit(code, lang);
         const proctorHeaders = await proctorSubmissionHeaders(proctorEnabled, resolvedSubmitUrl,
           { pid: proctorPid, lang, code, pretest, input: pretest ? [input] : [], fileHash: '' });
         const res = await fetch(resolvedSubmitUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...proctorHeaders },
           body: JSON.stringify({
+            ...addonReceipt?.fields,
             lang,
             code,
             input: pretest ? [input] : undefined,
             pretest,
-            codeReplaySessionId: replay?.sessionId,
           }),
         });
         const data = await res.json();
@@ -363,14 +300,7 @@ export function Scratchpad({
           setPretestResult(data);
           if (data.rid) setPretestRid(String(data.rid));
         } else {
-          if (data.codeReplayError) {
-            notifications.show({ color: 'yellow', message: t('Submission succeeded, but replay could not be linked. Your recording is kept.') });
-          } else if (data.codeReplayCommitted && replay && replayRef.current === replay.recording) {
-            const next = continueRecording(replay.recording, replay.checkpoint);
-            replayRef.current = next;
-            // Keep all previous events and persist in-flight edits before navigating away.
-            await replaceRecording(replayStorageKey, next).catch(warnReplayStorage);
-          }
+          await addonReceipt?.complete(data);
           if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }, getSubmissionRecordQuery(navigationSearch, args.tdoc, 'editor')));
           else setSubmitResult(data);
         }
@@ -384,8 +314,8 @@ export function Scratchpad({
       if (pretest) setPretesting(false);
       else setSubmitting(false);
     }
-  }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, flushReplay,
-    resolvedSubmitUrl, input, navigate, replayReady, replayStorageKey, warnReplayStorage, captureAction,
+  }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, editorAddon,
+    resolvedSubmitUrl, input, navigate, addonReady, captureAction,
     proctorPid, proctorEnabled, navigationSearch, args.tdoc, submissionDisabled]);
 
   const pretestCooldown = Math.max(0, Math.ceil((cooldownUntil.pretest - clock) / 1000));
@@ -503,7 +433,7 @@ export function Scratchpad({
                   </span>
                   <ShortSelect
                     data={langOptions}
-                    disabled={!replayReady}
+                    disabled={!addonReady}
                     value={lang}
                     onChange={(v) => setLang(v || '')}
                     placeholder={t('Language')}
@@ -518,7 +448,7 @@ export function Scratchpad({
                     leftSection={<IconSend size={14} />}
                     onClick={() => postJudge(false)}
                     loading={submitting}
-                    disabled={submissionDisabled || !replayReady || pretesting || submitCooldown > 0}
+                    disabled={submissionDisabled || !addonReady || pretesting || submitCooldown > 0}
                     className="hydro-scratchpad-submit-action"
                   >
                     {submitCooldown ? `${t('Submit Solution')} (${submitCooldown}s)` : t('Submit Solution')}
@@ -528,7 +458,7 @@ export function Scratchpad({
                       className="hydro-scratchpad-template-action"
                       size="input-xs"
                       variant="subtle"
-                      disabled={!replayReady}
+                      disabled={!addonReady}
                       onClick={loadCodeTemplate}
                       aria-label={t('Load Code Template')}
                     >
@@ -565,12 +495,12 @@ export function Scratchpad({
               <div className="hydro-scratchpad-editor min-h-0 flex-1">
                 <Allotment vertical>
                   <Allotment.Pane minSize={260}>
-                    {replayReady ? <CodeEditor
+                    {addonReady ? <CodeEditor
                       value={code}
                       onChange={setCode}
                       onContentChange={captureChange}
                       onPaste={(characters) => captureAction('paste', characters)}
-                      readOnly={!replayReady}
+                      readOnly={!addonReady}
                       language={lang}
                       height="100%"
                       fontSize={fontSize}
@@ -611,7 +541,7 @@ export function Scratchpad({
                               leftSection={<IconPlayerPlay size={14} />}
                               onClick={() => postJudge(true)}
                               loading={pretesting}
-                              disabled={submissionDisabled || !replayReady || submitting || pretestCooldown > 0}
+                              disabled={submissionDisabled || !addonReady || submitting || pretestCooldown > 0}
                               className="hydro-scratchpad-run-action hydro-scratchpad-console__run-action"
                             >
                               {pretestCooldown ? `${t('Run Self Test')} (${pretestCooldown}s)` : t('Run Self Test')}

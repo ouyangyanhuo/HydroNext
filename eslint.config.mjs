@@ -70,6 +70,7 @@ const config = react({
         '**/plugins/**/*.page.{ts,js,tsx,jsx}',
         'packages/ui-default/**/*.{ts,tsx,js,jsx}',
         'packages/ui-next/src/**/*.{ts,tsx,js,jsx}',
+        'packages/*/ui/**/*.{ts,tsx,js,jsx}',
     ],
 
     languageOptions: {
@@ -195,7 +196,7 @@ const config = react({
         ],
     },
 }, {
-    files: ['packages/ui-next/src/**/*.{ts,tsx}'],
+    files: ['packages/ui-next/src/**/*.{ts,tsx}', 'packages/*/ui/**/*.{ts,tsx}'],
     plugins: {
         'react-hooks': reactHooks,
     },

@@ -22,7 +22,6 @@ import { Value } from '../typeutils';
 import { ArgMethod, buildProjection, randomstring, sleep } from '../utils';
 import { PERM, PRIV } from './builtin';
 import domain from './domain';
-import { resolveFrames } from './honor-frame';
 import * as setting from './setting';
 import system from './system';
 import token from './token';
@@ -124,9 +123,6 @@ export class User {
 
     async init() {
         await bus.parallel('user/get', this);
-        // Decoration is always resolved from the global user, never domain-user.
-        const id = this._udoc.honorFrameId;
-        this.honorFrame = id ? (await resolveFrames([id]))[id] || null : null;
         return this;
     }
 
@@ -184,8 +180,7 @@ export class User {
             'regat',
             'loginat',
             'avatar',
-            'avatarUrl',
-            'honorFrame'].concat(this._publicFields);
+            'avatarUrl'].concat(this._publicFields);
         return type === 'public' ? fields : fields.concat(this._privateFields);
     }
 
@@ -519,8 +514,6 @@ class UserModel {
                 await Promise.all([
                     ...(['document.status', 'domain.user', 'record', 'record.stat', 'contest.balloon', 'task'] as const).map((name) =>
                         db.collection(name).updateMany({ domainId, uid: source._id }, { $set: { uid: target._id } })),
-                    // The optional replay addon's collection is not part of the core collection type map.
-                    db.collection('code_replay' as any).updateMany({ domainId, uid: source._id }, { $set: { uid: target._id } }),
                     db.collection('document').updateMany({ domainId, owner: source._id }, { $set: { owner: target._id } }),
                 ]);
             }
@@ -696,7 +689,7 @@ class UserModel {
             ..._extraFields,
         ]));
         const [udocs, vudocs, dudocs] = await Promise.all([
-            UserModel.getMulti({ _id: { $in: uids } }, fields.concat('honorFrameId')).toArray(),
+            UserModel.getMulti({ _id: { $in: uids } }, fields).toArray(),
             collV.find({ _id: { $in: uids } }).toArray(),
             domain.getDomainUserMulti(domainId, uids).project(buildProjection(fields.concat('uid'))).toArray(),
         ]);
@@ -706,23 +699,16 @@ class UserModel {
         for (const dudoc of dudocs) {
             Object.assign(udict[dudoc.uid] ||= { ...UserModel.defaultUser,
                 _id: dudoc.uid },
-            omit(dudoc,
-                ['_id',
-                    'uid',
-                    'honorFrame',
-                    'honorFrameId',
-                    'honorFrameIds']));
+            omit(dudoc, ['_id', 'uid']));
         }
         for (const uid of uids) udict[uid] ||= { ...UserModel.defaultUser };
-        const frames = await resolveFrames(Object.values(udict).map((doc: any) => doc.honorFrameId));
         for (const key in udict) {
-            udict[key].honorFrame = frames[udict[key].honorFrameId] || null;
-            delete udict[key].honorFrameId;
             udict[key].school ||= '';
             udict[key].studentId ||= '';
             udict[key].displayName ||= udict[key].uname;
             udict[key].avatar ||= `gravatar:${udict[key].mail}`;
         }
+        await bus.parallel('user/render', domainId, udict, uids);
         return udict as BaseUserDict;
     }
 

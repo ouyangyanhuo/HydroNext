@@ -6,6 +6,15 @@ import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
 import { contributionCalendar } from '../src/utils/contributions';
 
+const addonMocks = {
+    '@/components/common/addon-slots': {
+        AccountMenuExtras: () => null, SettingsNavigationExtras: () => null,
+        ProfileTabExtras: () => null, ProfilePanelExtras: () => null,
+        RecordActionExtras: () => null, RecordContentExtras: () => null,
+    },
+    '@/components/user/avatar-view': { AvatarView: () => null },
+    '@/registry/user-fields': { getUserExtensionFields: () => [] },
+};
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<html><body></body></html>', { url: 'https://oj.example/user/42', pretendToBeVisual: true });
@@ -45,7 +54,7 @@ function component(filename: string, mocks: Record<string, any>) {
     const module = { exports: {} as any };
     runInNewContext(code, {
         module, exports: module.exports, window: dom.window, URLSearchParams,
-        require: (name: string) => mocks[name] ?? require(name),
+        require: (name: string) => mocks[name] ?? addonMocks[name] ?? require(name),
     });
     return module.exports;
 }

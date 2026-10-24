@@ -17,7 +17,21 @@ export async function requestProctorExit(): Promise<void> {
   await (window as any).examAPI.requestQuit();
 }
 
-export function proctorAccessRequest(url: string, origin: string) {
+export interface ProctorAccessRequest {
+  action: 'problem_view' | 'record_view' | 'contest_view';
+  method: 'GET';
+  path: string;
+  payload: Record<string, string>;
+}
+
+const accessResolvers = new Set<(target: URL) => ProctorAccessRequest | null>();
+
+export function registerProctorAccessResolver(resolver: (target: URL) => ProctorAccessRequest | null) {
+  accessResolvers.add(resolver);
+  return () => { accessResolvers.delete(resolver); };
+}
+
+export function proctorAccessRequest(url: string, origin: string): ProctorAccessRequest | null {
   const target = new URL(url, origin);
   if (target.origin !== origin) return null;
   const problem = target.pathname.match(/^\/(?:d\/[^/]+\/)?p\/([^/]+)(?:\/submit|\/file\/.+)?$/);
@@ -33,13 +47,17 @@ export function proctorAccessRequest(url: string, origin: string) {
     if (Number.isSafeInteger(+pid)) pid = String(+pid);
     return { action: 'problem_view', method: 'GET', path: target.pathname, payload: { tid: tids[0].toLowerCase(), pid } };
   }
-  const record = target.pathname.match(/^\/(?:d\/[^/]+\/)?record\/([a-f0-9]{24})(?:\/replay(?:\/data)?)?$/i);
+  const record = target.pathname.match(/^\/(?:d\/[^/]+\/)?record\/([a-f0-9]{24})$/i);
   if (record) return { action: 'record_view', method: 'GET', path: target.pathname, payload: { rid: record[1].toLowerCase() } };
   const contest = target.pathname.match(
     /^\/(?:d\/[^/]+\/)?contest\/([a-f0-9]{24})\/(?:problems|print|api\/printing\/team|file\/private\/.+)$/i,
   );
-  if (!contest) return null;
-  return { action: 'contest_view', method: 'GET', path: target.pathname, payload: { tid: contest[1].toLowerCase() } };
+  if (contest) return { action: 'contest_view', method: 'GET', path: target.pathname, payload: { tid: contest[1].toLowerCase() } };
+  for (const resolve of accessResolvers) {
+    const request = resolve(target);
+    if (request?.method === 'GET' && request.path === target.pathname) return request;
+  }
+  return null;
 }
 
 /** Optional on ordinary pages; protected routes still fail closed at the server. */

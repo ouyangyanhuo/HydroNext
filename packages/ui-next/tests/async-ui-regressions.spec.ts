@@ -6,6 +6,15 @@ import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
 import { formatErrorMessage } from '../src/utils/error.ts';
 
+const addonMocks = {
+    '@/components/common/addon-slots': {
+        AccountMenuExtras: () => null, SettingsNavigationExtras: () => null,
+        ProfileTabExtras: () => null, ProfilePanelExtras: () => null,
+        RecordActionExtras: () => null, RecordContentExtras: () => null,
+    },
+    '@/components/user/avatar-view': { AvatarView: () => null },
+    '@/registry/user-fields': { getUserExtensionFields: () => [] },
+};
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<html><body></body></html>', { url: 'https://oj.example/d/team/contest/123/balloon', pretendToBeVisual: true });
@@ -80,7 +89,7 @@ function component(path: string, overrides: Record<string, any> = {}, globals: R
         module, exports: module.exports, window: dom.window, AbortController, URL,
         FormData: dom.window.FormData,
         fetch: (url: string, init: any) => request(url, init),
-        require: (id: string) => overrides[id] ?? mocks[id] ?? require(id),
+        require: (id: string) => overrides[id] ?? mocks[id] ?? addonMocks[id] ?? require(id),
         ...globals,
     });
     return module.exports;

@@ -10,6 +10,15 @@ import { after, test } from 'node:test';
 import { mergeSelectClasses, shortSelectDimension } from '../src/components/common/select-styles.ts';
 import * as trainingPlan from '../src/utils/training-plan.ts';
 
+const addonMocks = {
+    '@/components/common/addon-slots': {
+        AccountMenuExtras: () => null, SettingsNavigationExtras: () => null,
+        ProfileTabExtras: () => null, ProfilePanelExtras: () => null,
+        RecordActionExtras: () => null, RecordContentExtras: () => null,
+    },
+    '@/components/user/avatar-view': { AvatarView: () => null },
+    '@/registry/user-fields': { getUserExtensionFields: () => [] },
+};
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost/', pretendToBeVisual: true });
@@ -178,7 +187,7 @@ test('list sort uses a translated portal tooltip and preserves select interactio
     };
     runInNewContext(transformSync(readFileSync(new URL('../src/components/common/list-sort-select.tsx', import.meta.url), 'utf8'), {
         loader: 'tsx', format: 'cjs', jsx: 'automatic',
-    }).code, { module: component, exports: component.exports, require: (name: string) => mocks[name] ?? require(name) });
+    }).code, { module: component, exports: component.exports, require: (name: string) => mocks[name] ?? addonMocks[name] ?? require(name) });
     const view = await mount(component.exports.ListSortSelect, { kind: 'problem' });
     try {
         const input = view.host.querySelector<HTMLInputElement>('input[aria-label="排序方式"]')!;
@@ -271,7 +280,7 @@ test('contest errors only notify, problems load on first open, and drag order sa
     const source = readFileSync(new URL('../src/pages/contest_edit.tsx', import.meta.url), 'utf8');
     runInNewContext(transformSync(source, { loader: 'tsx', format: 'cjs', jsx: 'automatic' }).code, {
         module: pageModule, exports: pageModule.exports, window: dom.window, AbortController,
-        require: (name: string) => mocks[name] || require(name),
+        require: (name: string) => mocks[name] || addonMocks[name] || require(name),
         fetch: async (url: string, options: any) => {
             requests.push({ url, body: options.body ? JSON.parse(options.body) : undefined });
             if (url === '/d/team/p') {
@@ -409,7 +418,7 @@ test('training chapters retain titles and prerequisites while dragging problems,
     };
     runInNewContext(source('../src/pages/training_edit.tsx'), {
         module: pageModule, exports: pageModule.exports, window: dom.window, AbortController,
-        require: (name: string) => mocks[name] || require(name),
+        require: (name: string) => mocks[name] || addonMocks[name] || require(name),
         fetch: async (url: string, options: any) => {
             requests.push({ url, body: JSON.parse(options.body) });
             if (url.endsWith('/api/problems')) return { ok: false, json: async () => ({ error: 'Offline metadata' }) };

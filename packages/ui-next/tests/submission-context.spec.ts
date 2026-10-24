@@ -25,7 +25,7 @@ test('problem page and recorder share the context resolver and never read proble
     const recorder = readFileSync(new URL('../src/components/editor/scratchpad.tsx', import.meta.url), 'utf8');
     assert.match(page, /resolveSubmissionContext\(\{ pdoc, tdoc: args\.tdoc \}/);
     assert.match(recorder, /resolveSubmissionContext\(\{ pdoc: args\.pdoc, tdoc: args\.tdoc \}/);
-    assert.match(recorder, /pid: submissionContext\.pid, tid: submissionContext\.tid/);
+    assert.match(recorder, /submitPid: submissionContext\.pid, tid: submissionContext\.tid/);
     assert.doesNotMatch(recorder, /ui\.(pdoc|tdoc)/);
 });
 

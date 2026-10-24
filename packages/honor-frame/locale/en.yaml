@@ -1,0 +1,80 @@
+'Already owned': 'Already owned'
+'Already owned by: {users}. Remove these recipients before granting.': 'Already owned by: {users}. Remove these recipients before granting.'
+'An avatar frame with this name already exists.': 'An avatar frame with this name already exists.'
+'Apply this action to {count} selected users?': 'Apply this action to {count} selected users?'
+'Avatar frame management': 'Avatar frame management'
+Choose a PNG or WebP file no larger than 2 MiB.: Choose a PNG or WebP file no larger than 2 MiB.
+Choose frame (coming soon): Choose frame (coming soon)
+'Choose one artwork per shape.': 'Choose one artwork per shape.'
+'Circular': 'Circular'
+'Circular artwork': 'Circular artwork'
+'Circular artwork overlaps the avatar area. Check the preview.': 'Circular artwork overlaps the avatar area. Check the preview.'
+'Delete {name}? It will be removed from all users and cannot be restored.': 'Delete {name}? It will be removed from all users and cannot be restored.'
+'Delete frame': 'Delete frame'
+'Describe the honor and how this frame is awarded.': 'Describe the honor and how this frame is awarded.'
+'Drop artwork here or click to choose': 'Drop artwork here or click to choose'
+'Drop artwork here to replace, or click to choose': 'Drop artwork here to replace, or click to choose'
+'Edit description': 'Edit description'
+'Edit frame': 'Edit frame'
+Equip frame: Equip frame
+Equipped: Equipped
+'Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.': 'Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.'
+Frame artwork: Frame artwork
+'Frame artwork must be 512 × 512 px.': 'Frame artwork must be 512 × 512 px.'
+Frame artwork must be square, between 64 and 1024 pixels.: Frame artwork must be square, between 64 and 1024 pixels.
+'Frame description': 'Frame description'
+'Frame must contain transparent and visible pixels': 'Frame must contain transparent and visible pixels'
+Frame name: Frame name
+'Frame owners': 'Frame owners'
+Frames are global. Upload as a draft, then publish before awarding to a user.: Frames are global. Upload as a draft, then publish before awarding to a user.
+Global appearance: Global appearance
+Grant frame: Grant frame
+Grant this frame to {user}?: Grant this frame to {user}?
+Honor avatar frame: Honor avatar frame
+Honor frames are supplied by system administrators. Equipping will be available after server integration.: Honor frames are supplied by system administrators. Equipping will be available after server integration.
+Honor frames belong to your global account and remain the same in every domain.: Honor frames belong to your global account and remain the same in every domain.
+'Invalid PNG artwork. Please export a new PNG or WebP image.': 'Invalid PNG artwork. Please export a new PNG or WebP image.'
+Manage honor frames: Manage honor frames
+No available honor frames. Frames are awarded by system administrators.: No available honor frames. Frames are awarded by system administrators.
+'No description yet.': 'No description yet.'
+No honor frame equipped: No honor frame equipped
+No honor frames found.: No honor frames found.
+'One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.': 'One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.'
+'Only published frames can be awarded. Awards are global across all domains.': 'Only published frames can be awarded. Awards are global across all domains.'
+'Owned honor frames': 'Owned honor frames'
+'Owners': 'Owners'
+Preview frame artwork: Preview frame artwork
+Publish: Publish
+Publish frame (coming soon): Publish frame (coming soon)
+Publish this frame so it can be awarded?: Publish this frame so it can be awarded?
+Publishing and awarding frames will be enabled after server integration.: Publishing and awarding frames will be enabled after server integration.
+'Recipients': 'Recipients'
+'Replacing legacy artwork requires both shapes.': 'Replacing legacy artwork requires both shapes.'
+Revoke frame: Revoke frame
+Revoke this frame from {user}? It will also be unequipped.: Revoke this frame from {user}? It will also be unequipped.
+'Rounded square': 'Rounded square'
+'Rounded square artwork': 'Rounded square artwork'
+'Rounded square artwork overlaps the avatar area. Check the preview.': 'Rounded square artwork overlaps the avatar area. Check the preview.'
+'Saved, but old artwork cleanup failed.': 'Saved, but old artwork cleanup failed.'
+'Saved. Please refresh this page.': 'Saved. Please refresh this page.'
+'Search by username or user ID': 'Search by username or user ID'
+'Search by username or user ID. Up to 50 users at a time.': 'Search by username or user ID. Up to 50 users at a time.'
+Search frames: Search frames
+'Select a frame and at least one user.': 'Select a frame and at least one user.'
+Select a user by ID to grant or revoke frames.: Select a user by ID to grant or revoke frames.
+'Select current page': 'Select current page'
+'Some selected users already own this avatar frame.': 'Some selected users already own this avatar frame.'
+'Some users changed during this operation. Refresh and retry.': 'Some users changed during this operation. Refresh and retry.'
+'These avatar frame images have already been uploaded.': 'These avatar frame images have already been uploaded.'
+'This frame changed. Refresh and try again.': 'This frame changed. Refresh and try again.'
+'Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).': 'Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).'
+'Transparent center: diameter 384 px, centered at (256, 256).': 'Transparent center: diameter 384 px, centered at (256, 256).'
+Unable to process frame artwork.: Unable to process frame artwork.
+'Unchanged artwork is kept. Editing preserves ownership and publication status.': 'Unchanged artwork is kept. Editing preserves ownership and publication status.'
+Unequip frame: Unequip frame
+Unpublish: Unpublish
+Unpublish this frame? It will stop displaying for all users.: Unpublish this frame? It will stop displaying for all users.
+Upload artwork, publish frames, and manage user awards across all domains.: Upload artwork, publish frames, and manage user awards across all domains.
+'Upload both rounded square and circular artwork.': 'Upload both rounded square and circular artwork.'
+Upload frame: Upload frame
+'Uploaded frames start disabled. Publish them from the library.': 'Uploaded frames start disabled. Publish them from the library.'

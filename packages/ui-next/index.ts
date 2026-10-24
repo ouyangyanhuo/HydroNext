@@ -105,6 +105,9 @@ const federationPlugin: esbuild.Plugin = {
             react: 'React',
             'react-dom/client': 'ReactDOM',
             'react/jsx-runtime': 'jsxRuntime',
+            '@mantine/core': 'Mantine',
+            '@mantine/hooks': 'MantineHooks',
+            '@mantine/notifications': 'MantineNotifications',
         };
 
         b.onResolve({ filter: /^@hydrooj\/ui-next/ }, () => ({

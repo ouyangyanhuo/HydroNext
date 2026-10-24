@@ -7,13 +7,13 @@ import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect, TagMultiSelect } from '@/components/common/select';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
-import { FramedAvatar } from '@/components/user/framed-avatar';
+import { AvatarView } from '@/components/user/avatar-view';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useDomainId } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
-import type { HonorFrame } from '@/utils/honor-frame';
+import { getUserExtensionFields } from '@/registry/user-fields';
 import { getLangDisplay, LANG_DISPLAY } from '@/utils/lang-display';
 import { proctorError } from '@/utils/proctor';
 import { formatUserName } from '@/utils/user-name';
@@ -23,7 +23,7 @@ interface SearchOption {
   label: string;
   description?: string;
   avatarUrl?: string;
-  honorFrame?: HonorFrame | null;
+  user?: Record<string, any>;
 }
 
 const EMPTY_MARKDOWN = '<!-- empty -->';
@@ -144,7 +144,7 @@ function AsyncTagSelect({
         const item = option as SearchOption;
         return (
           <Group gap="sm" wrap="nowrap">
-            {withAvatar && <FramedAvatar src={item.avatarUrl} alt={item.label} frame={item.honorFrame} size={30} radius="xl" />}
+            {withAvatar && <AvatarView src={item.avatarUrl} alt={item.label} user={item.user} size={30} radius="xl" />}
             <div className="min-w-0">
               <Text size="sm" fw="var(--hydro-weight-semibold)" truncate>{item.label}</Text>
               {item.description && <Text size="xs" c="dimmed" truncate>{item.description}</Text>}
@@ -275,7 +275,7 @@ export default function ContestEditPage() {
     let disposed = false;
     const auto = splitValues(form.maintainer);
     if (!domainId || !auto.length) return undefined;
-    callApi(domainId, 'users', { auto }, ['_id', 'uname', 'displayName', 'avatarUrl', 'honorFrame'])
+    callApi(domainId, 'users', { auto }, ['_id', 'uname', 'displayName', 'avatarUrl', ...getUserExtensionFields()])
       .then((udocs: any[]) => {
         if (disposed) return;
         setUserOptions((current) => mergeOptions(
@@ -284,7 +284,7 @@ export default function ContestEditPage() {
             label: formatUserName(udoc),
             description: `UID = ${udoc._id}`,
             avatarUrl: udoc.avatarUrl,
-            honorFrame: udoc.honorFrame,
+            user: udoc,
           })),
           current,
         ));
@@ -343,7 +343,9 @@ export default function ContestEditPage() {
     }
     setUserSearching(true);
     try {
-      const udocs = await callApi(domainId, 'users', { search: query, limit: 10 }, ['_id', 'uname', 'displayName', 'avatarUrl', 'honorFrame']);
+      const udocs = await callApi(domainId, 'users', { search: query, limit: 10 }, [
+        '_id', 'uname', 'displayName', 'avatarUrl', ...getUserExtensionFields(),
+      ]);
       if (seq !== userSearchSeq.current) return;
       setUserOptions((current) => mergeOptions(
         udocs.map((udoc: any) => ({
@@ -351,7 +353,7 @@ export default function ContestEditPage() {
           label: formatUserName(udoc),
           description: `UID = ${udoc._id}`,
           avatarUrl: udoc.avatarUrl,
-          honorFrame: udoc.honorFrame,
+          user: udoc,
         })),
         current,
       ));

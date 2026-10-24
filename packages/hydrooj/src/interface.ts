@@ -79,8 +79,6 @@ export interface Authenticator {
 }
 
 export interface Udoc extends Record<string, any> {
-    honorFrameIds?: string[];
-    honorFrameId?: string;
     _id: number;
     mail: string;
     mailLower: string;
@@ -142,7 +140,6 @@ export type User = import('./model/user').User;
 export type Udict = Record<number, User>;
 
 export interface BaseUser {
-    honorFrame?: import('./model/honor-frame').PublicHonorFrame | null;
     _id: number;
     uname: string;
     mail: string;

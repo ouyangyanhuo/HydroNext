@@ -5,6 +5,15 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
 
+const addonMocks = {
+    '@/components/common/addon-slots': {
+        AccountMenuExtras: () => null, SettingsNavigationExtras: () => null,
+        ProfileTabExtras: () => null, ProfilePanelExtras: () => null,
+        RecordActionExtras: () => null, RecordContentExtras: () => null,
+    },
+    '@/components/user/avatar-view': { AvatarView: () => null },
+    '@/registry/user-fields': { getUserExtensionFields: () => [] },
+};
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<html><body></body></html>', { url: 'https://oj.example/d/system/p', pretendToBeVisual: true });
@@ -98,7 +107,7 @@ async function fixture(uid = 0, topNav = false, captureMenu = false) {
         runInNewContext(code, {
             module, exports: module.exports, window: dom.window, document: dom.window.document, AbortController,
             fetch: (url: string, init: RequestInit) => { calls.push({ url, init }); return respond(url, init); },
-            require: (name: string) => mocks[name] ?? require(name),
+            require: (name: string) => mocks[name] ?? addonMocks[name] ?? require(name),
         });
         return module.exports;
     }

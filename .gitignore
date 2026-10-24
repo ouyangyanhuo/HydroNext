@@ -69,6 +69,7 @@ packages/*/public/assets
 node_modules.*
 
 docs/*
+!docs/optional-user-features.md
 !docs/proctor-protocol.md
 !docs/proctor-client-changes.md
 !docs/proctor-client-updates.md

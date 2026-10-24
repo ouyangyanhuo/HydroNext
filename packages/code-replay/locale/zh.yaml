@@ -1,0 +1,15 @@
+'{0} characters': '{0} 个字符'
+Code Replay: 代码回放
+Duration: 时长
+'Loaded code template': '加载代码模板'
+No replay data is available.: 暂无回放数据。
+'Pasted code': '粘贴代码'
+Pause: 暂停
+Play: 播放
+'Recorded actions': '操作记录'
+Replay could not be saved locally. Keep this editor open until submission.: 无法在本地保存回放，请保持编辑器打开，直到完成提交。
+Replay editing process: 回放编辑过程
+Replay upload failed. Your recording is kept; please retry submission.: 回放上传失败，录制数据已保留，请重试提交。
+Submission succeeded, but replay could not be linked. Your recording is kept.: 提交成功，但回放关联失败，录制数据已保留。
+'Submitted self-test': '提交自测'
+'Submitted solution': '提交代码'

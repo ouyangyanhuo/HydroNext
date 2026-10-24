@@ -5,6 +5,15 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
 
+const addonMocks = {
+    '@/components/common/addon-slots': {
+        AccountMenuExtras: () => null, SettingsNavigationExtras: () => null,
+        ProfileTabExtras: () => null, ProfilePanelExtras: () => null,
+        RecordActionExtras: () => null, RecordContentExtras: () => null,
+    },
+    '@/components/user/avatar-view': { AvatarView: () => null },
+    '@/registry/user-fields': { getUserExtensionFields: () => [] },
+};
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<html><body></body></html>', { url: 'https://oj.example/d/team/home/preference', pretendToBeVisual: true });
@@ -37,7 +46,7 @@ function load(path: string, mocks: Record<string, any>, browser: any = dom.windo
     }).code;
     runInNewContext(code, {
         module, exports: module.exports, window: browser, document: dom.window.document,
-        require: (id: string) => Object.hasOwn(mocks, id) ? mocks[id] : id.endsWith('.css') ? {} : require(id),
+        require: (id: string) => Object.hasOwn(mocks, id) ? mocks[id] : addonMocks[id] ? addonMocks[id] : id.endsWith('.css') ? {} : require(id),
         fetch: (...args: any[]) => mocks.fetch(...args),
     });
     return module.exports;
@@ -106,7 +115,9 @@ test('display preferences apply locally, listen for system changes and exclude a
         ] } }) },
         '@/hooks/use-build-url': { useBuildUrl: () => (route: string) => `/d/team/${route}` },
         '@/hooks/use-object-url': { useObjectUrl: () => null },
+        '@/components/user/avatar-view': { AvatarView: () => null },
         '@/components/user/framed-avatar': { FramedAvatar: () => null },
+        '@/components/common/addon-slots': { SettingsNavigationExtras: () => null },
         '@/components/common/page-header': { PageHeader: () => null },
         '@/components/link': { Link: forwardRef(({ children }: any, ref: any) => h('a', { ref }, children)) },
         '@/utils/avatar': { getAvatarUrl: () => '' },

@@ -1,0 +1,13 @@
+'{0} characters': '{0} characters'
+Code Replay: Code Replay
+Duration: Duration
+'Loaded code template': 'Loaded code template'
+'Pasted code': 'Pasted code'
+Pause: Pause
+Play: Play
+'Recorded actions': 'Recorded actions'
+Replay could not be saved locally. Keep this editor open until submission.: Replay could not be saved locally. Keep this editor open until submission.
+Replay upload failed. Your recording is kept; please retry submission.: Replay upload failed. Your recording is kept; please retry submission.
+Submission succeeded, but replay could not be linked. Your recording is kept.: Submission succeeded, but replay could not be linked. Your recording is kept.
+'Submitted self-test': 'Submitted self-test'
+'Submitted solution': 'Submitted solution'

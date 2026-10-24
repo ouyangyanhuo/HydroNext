@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import {
   Avatar,
+  Badge,
   Card,
   Checkbox,
   Group,
@@ -90,6 +91,14 @@ interface SettingsFormProps {
   onSubmit: (payload: Record<string, any>) => void | Promise<void>;
   excludeKeys?: string[];
   variant?: 'default' | 'personal' | 'grid';
+  /** Display only the specified family, or all families if set to 'all' or omitted. */
+  activeFamily?: string;
+  /** Keep the save bar floating sticky at the bottom with a summary indicator. */
+  stickySaveBar?: boolean;
+  /** Optional icons for setting families. */
+  familyIcons?: Record<string, any>;
+  /** Optional description text for setting families. */
+  familyDescriptions?: Record<string, string>;
   /** Browser-local controls are rendered with a family but never added to the server payload. */
   familyExtras?: Record<string, FamilyExtraItem>;
   itemIcons?: Record<string, any>;
@@ -364,6 +373,10 @@ export function SettingsForm({
   onSubmit,
   excludeKeys = EMPTY_KEYS,
   variant = 'default',
+  activeFamily,
+  stickySaveBar = false,
+  familyIcons,
+  familyDescriptions,
   familyExtras,
   itemIcons,
   booleanGrid = false,
@@ -404,6 +417,10 @@ export function SettingsForm({
     }
     return grouped;
   }, [normalized, familyExtras]);
+  const filteredGroups = useMemo(() => {
+    if (!activeFamily || activeFamily === 'all') return groups;
+    return groups.filter(([family]) => family === activeFamily);
+  }, [groups, activeFamily]);
   const booleanKeys = useMemo(
     () => normalized
       .filter((setting) => setting.type === 'boolean' && !((setting.flag || 0) & FLAG_HIDDEN))
@@ -416,137 +433,65 @@ export function SettingsForm({
   };
 
   return (
-    <Stack gap="lg" className={variant === 'personal' ? 'hydro-settings-form' : undefined}>
-      {groups.map(([family, items]) => (
-        <Card
-          key={family}
-          withBorder
-          p="lg"
-          className={variant === 'personal' ? 'hydro-content-card hydro-settings-section' : 'hydro-content-card'}
-        >
-          {variant === 'personal' ? (
-            <div className="hydro-settings-section__header">
-              <Title order={3} size="h4">{t(family)}</Title>
-            </div>
-          ) : (
-            <Group justify="space-between" mb="md">
-              <Title order={3} size="h4">{t(family)}</Title>
-            </Group>
-          )}
-          {booleanGrid && items.length === 1 && items[0].type === 'boolean' ? (
-            <div>
-              {(() => {
-                const setting = items[0];
-                const value = !!values[setting.key];
-                const disabled = ((setting.flag || 0) & FLAG_DISABLED) !== 0;
-                const label = t(setting.name || setting.key);
-                const description = setting.desc ? t(setting.desc) : '';
-                const IconComponent = itemIcons?.[setting.key];
-                const extra = familyExtras?.[family];
-                const isSplit = isSplitExtra(extra);
-                const rightExtra = isSplit ? extra.right : null;
-                const bottomExtra = isSplit ? extra.bottom : null;
+    <Stack gap="lg" className={variant === 'personal' || stickySaveBar ? 'hydro-settings-form' : undefined}>
+      {filteredGroups.map(([family, items]) => {
+        const FamilyIcon = familyIcons?.[family];
+        const familyDesc = familyDescriptions?.[family] ? t(familyDescriptions[family]) : null;
+        const isStructured = variant === 'personal' || stickySaveBar || !!FamilyIcon || !!familyDesc;
 
-                const checkboxCard = (
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => {
-                      if (!disabled) {
-                        setValues((prev) => ({ ...prev, [setting.key]: !value }));
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if ((e.key === ' ' || e.key === 'Enter') && !disabled) {
-                        e.preventDefault();
-                        setValues((prev) => ({ ...prev, [setting.key]: !value }));
-                      }
-                    }}
-                    className={[
-                      'hydro-setting-checkbox-card hydro-setting-checkbox-card--feature',
-                      value ? 'hydro-setting-checkbox-card--checked' : '',
-                      disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
-                    ].filter(Boolean).join(' ')}
-                  >
-                    <div className="flex items-start sm:items-center justify-between gap-4">
-                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                        {IconComponent && (
-                          <div className="hydro-setting-checkbox-card__icon hydro-setting-checkbox-card__icon--feature">
-                            <IconComponent size={22} stroke={2} />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <Text size="sm" fw="var(--hydro-weight-semibold)" className="leading-snug">
-                            {label}
-                          </Text>
-                          {description ? (
-                            <Text size="xs" c="dimmed" className="mt-1 leading-normal">
-                              {description}
-                            </Text>
-                          ) : null}
-                        </div>
-                      </div>
-                      <Switch
-                        checked={value}
-                        disabled={disabled}
-                        size="md"
-                        readOnly
-                        tabIndex={-1}
-                        aria-hidden="true"
-                        className="pointer-events-none shrink-0"
-                      />
-                    </div>
-                  </div>
-                );
-
-                if (isSplit) {
-                  const cardWrapClass = value && rightExtra
-                    ? 'hydro-feature-setting-card-wrap hydro-feature-setting-card-wrap--half'
-                    : 'hydro-feature-setting-card-wrap hydro-feature-setting-card-wrap--full';
-                  return (
-                    <div className="w-full">
-                      <div className="hydro-feature-setting-row">
-                        <div className={cardWrapClass}>
-                          {checkboxCard}
-                        </div>
-                        {value && rightExtra && (
-                          <div className="hydro-feature-setting-extra hydro-feature-setting-extra--open">
-                            {rightExtra}
-                          </div>
-                        )}
-                      </div>
-                      {value && bottomExtra && (
-                        <div className="hydro-feature-setting-alert mt-3">
-                          {bottomExtra}
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
-                  <div>
-                    {checkboxCard}
-                    {extra && (
-                      <div className="mt-3">{renderPlainExtra(extra)}</div>
-                    )}
-                  </div>
-                );
-              })()}
-            </div>
-          ) : booleanGrid && items.length > 1 && items.every((s) => s.type === 'boolean') ? (
-            <div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {items.map((setting) => {
+        return (
+          <Card
+            key={family}
+            id={`setting-family-${family}`}
+            withBorder
+            p="lg"
+            className={isStructured ? 'hydro-content-card hydro-settings-section' : 'hydro-content-card'}
+          >
+            {variant === 'personal' ? (
+              <div className="hydro-settings-section__header">
+                <Title order={3} size="h4">{t(family)}</Title>
+              </div>
+            ) : isStructured ? (
+              <div className={[
+                'hydro-settings-section__header flex items-center justify-between',
+                'gap-3 pb-3.5 mb-4 border-b border-[var(--hydro-border)]',
+              ].join(' ')}
+              >
+                <div className="min-w-0">
+                  <Title order={3} size="h4" className="leading-tight">
+                    {t(family)}
+                  </Title>
+                  {familyDesc && (
+                    <Text size="xs" c="dimmed" className="mt-1 line-clamp-2">
+                      {familyDesc}
+                    </Text>
+                  )}
+                </div>
+                <Badge variant="light" size="sm" radius="sm" className="shrink-0">
+                  {items.length} {t('Settings')}
+                </Badge>
+              </div>
+            ) : (
+              <Group justify="space-between" mb="md">
+                <Title order={3} size="h4">{t(family)}</Title>
+              </Group>
+            )}
+            {booleanGrid && items.length === 1 && items[0].type === 'boolean' ? (
+              <div>
+                {(() => {
+                  const setting = items[0];
                   const value = !!values[setting.key];
                   const disabled = ((setting.flag || 0) & FLAG_DISABLED) !== 0;
                   const label = t(setting.name || setting.key);
                   const description = setting.desc ? t(setting.desc) : '';
                   const IconComponent = itemIcons?.[setting.key];
+                  const extra = familyExtras?.[family];
+                  const isSplit = isSplitExtra(extra);
+                  const rightExtra = isSplit ? extra.right : null;
+                  const bottomExtra = isSplit ? extra.bottom : null;
 
-                  return (
+                  const checkboxCard = (
                     <div
-                      key={setting.key}
                       role="button"
                       tabIndex={0}
                       onClick={() => {
@@ -561,30 +506,33 @@ export function SettingsForm({
                         }
                       }}
                       className={[
-                        'hydro-setting-checkbox-card',
+                        'hydro-setting-checkbox-card hydro-setting-checkbox-card--feature',
                         value ? 'hydro-setting-checkbox-card--checked' : '',
                         disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
                       ].filter(Boolean).join(' ')}
                     >
-                      <div className="flex items-center gap-3">
-                        {IconComponent && (
-                          <div className="hydro-setting-checkbox-card__icon">
-                            <IconComponent size={18} stroke={1.8} />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <Text size="sm" fw="var(--hydro-weight-medium)" className="leading-snug" truncate>
-                            {label}
-                          </Text>
-                          {description ? (
-                            <Text size="xs" c="dimmed" className="mt-0.5 line-clamp-2">
-                              {description}
+                      <div className="flex items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                          {IconComponent && (
+                            <div className="hydro-setting-checkbox-card__icon hydro-setting-checkbox-card__icon--feature">
+                              <IconComponent size={22} stroke={2} />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <Text size="sm" fw="var(--hydro-weight-semibold)" className="leading-snug">
+                              {label}
                             </Text>
-                          ) : null}
+                            {description ? (
+                              <Text size="xs" c="dimmed" className="mt-1 leading-normal">
+                                {description}
+                              </Text>
+                            ) : null}
+                          </div>
                         </div>
-                        <Checkbox
+                        <Switch
                           checked={value}
                           disabled={disabled}
+                          size="md"
                           readOnly
                           tabIndex={-1}
                           aria-hidden="true"
@@ -593,68 +541,164 @@ export function SettingsForm({
                       </div>
                     </div>
                   );
-                })}
-              </div>
-              {familyExtras?.[family] && (
-                <div className="mt-3">{renderPlainExtra(familyExtras[family])}</div>
-              )}
-            </div>
-          ) : (
-            <div
-              className={variant === 'personal' || variant === 'grid' || fieldsGrid
-                ? 'hydro-settings-fields'
-                : 'flex flex-col gap-4'}
-            >
-              {items.filter((setting) => !separateBooleanFields || setting.type !== 'boolean').map((setting) => {
-                const isWide = setting.type === 'markdown'
-                  || setting.type === 'textarea'
-                  || setting.type === 'json'
-                  || setting.key === 'bulletin'
-                  || (variant === 'personal' && setting.type === 'boolean');
 
-                return (
-                  <div
-                    key={setting.key}
-                    className={(variant === 'personal' || variant === 'grid' || fieldsGrid) && isWide
-                      ? 'hydro-settings-field hydro-settings-field--wide'
-                      : 'hydro-settings-field'}
-                  >
-                    <SettingInput
-                      setting={setting}
-                      value={values[setting.key]}
-                      textareaHeight={textareaHeight}
-                      onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
-                    />
-                  </div>
-                );
-              })}
-              {separateBooleanFields && items.some((setting) => setting.type === 'boolean') && (
-                <div className="hydro-settings-field hydro-settings-field--wide">
-                  <div className="hydro-settings-fields hydro-settings-fields--booleans">
-                    {items.filter((setting) => setting.type === 'boolean').map((setting) => (
-                      <div key={setting.key} className="hydro-settings-field">
-                        <SettingInput
-                          setting={setting}
-                          value={values[setting.key]}
-                          onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
-                        />
+                  if (isSplit) {
+                    const cardWrapClass = value && rightExtra
+                      ? 'hydro-feature-setting-card-wrap hydro-feature-setting-card-wrap--half'
+                      : 'hydro-feature-setting-card-wrap hydro-feature-setting-card-wrap--full';
+                    return (
+                      <div className="w-full">
+                        <div className="hydro-feature-setting-row">
+                          <div className={cardWrapClass}>
+                            {checkboxCard}
+                          </div>
+                          {value && rightExtra && (
+                            <div className="hydro-feature-setting-extra hydro-feature-setting-extra--open">
+                              {rightExtra}
+                            </div>
+                          )}
+                        </div>
+                        {value && bottomExtra && (
+                          <div className="hydro-feature-setting-alert mt-3">
+                            {bottomExtra}
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  }
+
+                  return (
+                    <div>
+                      {checkboxCard}
+                      {extra && (
+                        <div className="mt-3">{renderPlainExtra(extra)}</div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : booleanGrid && items.length > 1 && items.every((s) => s.type === 'boolean') ? (
+              <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {items.map((setting) => {
+                    const value = !!values[setting.key];
+                    const disabled = ((setting.flag || 0) & FLAG_DISABLED) !== 0;
+                    const label = t(setting.name || setting.key);
+                    const description = setting.desc ? t(setting.desc) : '';
+                    const IconComponent = itemIcons?.[setting.key];
+
+                    return (
+                      <div
+                        key={setting.key}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => {
+                          if (!disabled) {
+                            setValues((prev) => ({ ...prev, [setting.key]: !value }));
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if ((e.key === ' ' || e.key === 'Enter') && !disabled) {
+                            e.preventDefault();
+                            setValues((prev) => ({ ...prev, [setting.key]: !value }));
+                          }
+                        }}
+                        className={[
+                          'hydro-setting-checkbox-card',
+                          value ? 'hydro-setting-checkbox-card--checked' : '',
+                          disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+                        ].filter(Boolean).join(' ')}
+                      >
+                        <div className="flex items-center gap-3">
+                          {IconComponent && (
+                            <div className="hydro-setting-checkbox-card__icon">
+                              <IconComponent size={18} stroke={1.8} />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <Text size="sm" fw="var(--hydro-weight-medium)" className="leading-snug" truncate>
+                              {label}
+                            </Text>
+                            {description ? (
+                              <Text size="xs" c="dimmed" className="mt-0.5 line-clamp-2">
+                                {description}
+                              </Text>
+                            ) : null}
+                          </div>
+                          <Checkbox
+                            checked={value}
+                            disabled={disabled}
+                            readOnly
+                            tabIndex={-1}
+                            aria-hidden="true"
+                            className="pointer-events-none shrink-0"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-              {familyExtras?.[family] && (
-                <div className="hydro-settings-field hydro-settings-field--wide">{renderPlainExtra(familyExtras[family])}</div>
-              )}
-            </div>
-          )}
-        </Card>
-      ))}
+                {familyExtras?.[family] && (
+                  <div className="mt-3">{renderPlainExtra(familyExtras[family])}</div>
+                )}
+              </div>
+            ) : (
+              <div
+                className={variant === 'personal' || variant === 'grid' || fieldsGrid
+                  ? 'hydro-settings-fields'
+                  : 'flex flex-col gap-4'}
+              >
+                {items.filter((setting) => !separateBooleanFields || setting.type !== 'boolean').map((setting) => {
+                  const isWide = setting.type === 'markdown'
+                    || setting.type === 'textarea'
+                    || setting.type === 'json'
+                    || setting.key === 'bulletin'
+                    || (variant === 'personal' && setting.type === 'boolean');
+
+                  return (
+                    <div
+                      key={setting.key}
+                      className={(variant === 'personal' || variant === 'grid' || fieldsGrid) && isWide
+                        ? 'hydro-settings-field hydro-settings-field--wide'
+                        : 'hydro-settings-field'}
+                    >
+                      <SettingInput
+                        setting={setting}
+                        value={values[setting.key]}
+                        textareaHeight={textareaHeight}
+                        onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
+                      />
+                    </div>
+                  );
+                })}
+                {separateBooleanFields && items.some((setting) => setting.type === 'boolean') && (
+                  <div className="hydro-settings-field hydro-settings-field--wide">
+                    <div className="hydro-settings-fields hydro-settings-fields--booleans">
+                      {items.filter((setting) => setting.type === 'boolean').map((setting) => (
+                        <div key={setting.key} className="hydro-settings-field">
+                          <SettingInput
+                            setting={setting}
+                            value={values[setting.key]}
+                            onChange={(value) => setValues((prev) => ({ ...prev, [setting.key]: value }))}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {familyExtras?.[family] && (
+                  <div className="hydro-settings-field hydro-settings-field--wide">{renderPlainExtra(familyExtras[family])}</div>
+                )}
+              </div>
+            )}
+          </Card>
+        );
+      })}
       <Group
-        justify={variant === 'personal' ? 'space-between' : 'flex-end'}
-        className={variant === 'personal' ? 'hydro-settings-savebar' : undefined}
+        justify={variant === 'personal' || stickySaveBar ? 'space-between' : 'flex-end'}
+        className={variant === 'personal' || stickySaveBar ? 'hydro-settings-savebar' : undefined}
       >
-        {variant === 'personal' ? <Text size="xs" c="dimmed">{t('Save All Changes')}</Text> : null}
+        {variant === 'personal' || stickySaveBar ? <Text size="xs" c="dimmed">{t('Save All Changes')}</Text> : null}
         <Button onClick={handleSubmit} loading={loading} className="hydro-settings-save">
           {submitLabel || t('Save All Changes')}
         </Button>

@@ -20,7 +20,6 @@ __flag: 🇬🇧
 'Phone': 'Phone'
 'QQ': 'QQ'
 'Restore default avatar': 'Restore default avatar'
-'Restores the account avatar to its registration default when saved. Honor frames are not changed.': 'Restores the account avatar to its registration default when saved. Honor frames are not changed.'
 'Student ID': 'Student ID'
 'Enable contest mode': 'Enable contest mode'
 'Hide Contests navigation entry': 'Hide Contests navigation entry'
@@ -37,8 +36,18 @@ __flag: 🇬🇧
 'Show Records navigation entry': 'Show Records navigation entry'
 'Show Training navigation entry': 'Show Training navigation entry'
 'Visibility and contests': 'Visibility and contests'
+setting_basic: Basic Settings
+setting_basic_desc: Platform defaults, pagination, discussion categories, and homepage configuration.
 setting_contest_mode: Contest features
+setting_limits: Limit Settings
+setting_limits_desc: Resource limits, code size, upload quotas, and rate limiting rules.
 setting_navigation: Hiding features
+setting_server: Server Settings
+setting_server_desc: Host ports, reverse proxy headers, CORS, public registration, and network settings.
+setting_session: Session Settings
+setting_session_desc: Session lifetimes, authentication tokens, and cookie expiration policies.
+setting_smtp: SMTP Settings
+setting_smtp_desc: Outbound email delivery, credentials, TLS/SSL, and address verification.
 'All participants': 'All participants'
 'Created at': 'Created at'
 'Disband team': 'Disband team'
@@ -89,13 +98,7 @@ setting_navigation: Hiding features
 'Allow public registration': 'Allow public registration'
 'Public registration is disabled. Please contact a system administrator.': 'Public registration is disabled. Please contact a system administrator.'
 'server.allowRegister': 'Allow public registration'
-'{0} characters': '{0} characters'
 'Foreground problem time; saved to the contest scoreboard.': 'Foreground problem time; saved to the contest scoreboard.'
-'Loaded code template': 'Loaded code template'
-'Pasted code': 'Pasted code'
-'Recorded actions': 'Recorded actions'
-'Submitted self-test': 'Submitted self-test'
-'Submitted solution': 'Submitted solution'
 'Total problem time': 'Total problem time'
 'Add at least one chapter.': 'Add at least one chapter.'
 'Add chapter': 'Add chapter'
@@ -127,90 +130,33 @@ setting_navigation: Hiding features
 'Send to all registered participants': 'Send to all registered participants'
 'Sent to {count} participants.': 'Sent to {count} participants.'
 'Unread announcements': 'Unread announcements'
-'Already owned': 'Already owned'
-'Already owned by: {users}. Remove these recipients before granting.': 'Already owned by: {users}. Remove these recipients before granting.'
-'An avatar frame with this name already exists.': 'An avatar frame with this name already exists.'
 'Application runtime': 'Application runtime'
-'Apply this action to {count} selected users?': 'Apply this action to {count} selected users?'
-'Avatar frame management': 'Avatar frame management'
 'Based on container PID 1. Reloading the application does not reset this timer.': 'Based on container PID 1. Reloading the application does not reset this timer.'
-'Choose one artwork per shape.': 'Choose one artwork per shape.'
-'Circular': 'Circular'
-'Circular artwork': 'Circular artwork'
-'Circular artwork overlaps the avatar area. Check the preview.': 'Circular artwork overlaps the avatar area. Check the preview.'
 'Container runtime': 'Container runtime'
 'Container timing is unavailable; showing the application process instead.': 'Container timing is unavailable; showing the application process instead.'
 'Continuous uptime': 'Continuous uptime'
-'Delete frame': 'Delete frame'
-'Delete {name}? It will be removed from all users and cannot be restored.': 'Delete {name}? It will be removed from all users and cannot be restored.'
-'Describe the honor and how this frame is awarded.': 'Describe the honor and how this frame is awarded.'
 'Disabled': 'Disabled'
 'Drag selected problems to reorder, or use Alt + Left/Right.': 'Drag selected problems to reorder, or use Alt + Left/Right.'
-'Drop artwork here or click to choose': 'Drop artwork here or click to choose'
-'Drop artwork here to replace, or click to choose': 'Drop artwork here to replace, or click to choose'
-'Edit description': 'Edit description'
-'Edit frame': 'Edit frame'
-'Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.': 'Equipping replaces the current frame. Unequipping keeps ownership; revoking removes it.'
-'Frame artwork must be 512 × 512 px.': 'Frame artwork must be 512 × 512 px.'
-'Frame description': 'Frame description'
-'Frame must contain transparent and visible pixels': 'Frame must contain transparent and visible pixels'
-'Frame owners': 'Frame owners'
-'Invalid PNG artwork. Please export a new PNG or WebP image.': 'Invalid PNG artwork. Please export a new PNG or WebP image.'
 'Invalid authorization destination.': 'Invalid authorization destination.'
 'No contest introduction yet.': 'No contest introduction yet.'
-'No description yet.': 'No description yet.'
 'Not running in a container; showing the application process.': 'Not running in a container; showing the application process.'
-'One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.': 'One name, two shapes. Canvas: 512 × 512 px; avatar: 384 px; decoration margin: 64 px. Leave the center transparent, not white.'
-'Only published frames can be awarded. Awards are global across all domains.': 'Only published frames can be awarded. Awards are global across all domains.'
-'Owned honor frames': 'Owned honor frames'
-'Owners': 'Owners'
 'Page resources could not be loaded.': 'Page resources could not be loaded.'
-'Recipients': 'Recipients'
 'Reload page': 'Reload page'
-'Replacing legacy artwork requires both shapes.': 'Replacing legacy artwork requires both shapes.'
-'Rounded square': 'Rounded square'
-'Rounded square artwork': 'Rounded square artwork'
-'Rounded square artwork overlaps the avatar area. Check the preview.': 'Rounded square artwork overlaps the avatar area. Check the preview.'
 'Runtime information unavailable.': 'Runtime information unavailable.'
 'Save unfinished work before reloading.': 'Save unfinished work before reloading.'
-'Saved, but old artwork cleanup failed.': 'Saved, but old artwork cleanup failed.'
-'Search by username or user ID': 'Search by username or user ID'
-'Search by username or user ID. Up to 50 users at a time.': 'Search by username or user ID. Up to 50 users at a time.'
-'Select a frame and at least one user.': 'Select a frame and at least one user.'
-'Select current page': 'Select current page'
-'Some users changed during this operation. Refresh and retry.': 'Some users changed during this operation. Refresh and retry.'
-'Some selected users already own this avatar frame.': 'Some selected users already own this avatar frame.'
 'Started at': 'Started at'
 'The central avatar area must be transparent.': 'The central avatar area must be transparent.'
 'The frontend may have been updated. Check your connection and reload this page.': 'The frontend may have been updated. Check your connection and reload this page.'
-'These avatar frame images have already been uploaded.': 'These avatar frame images have already been uploaded.'
-'This frame changed. Refresh and try again.': 'This frame changed. Refresh and try again.'
-'Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).': 'Transparent center: 384 × 384 px, corner radius 64 px, starting at (64, 64).'
-'Transparent center: diameter 384 px, centered at (256, 256).': 'Transparent center: diameter 384 px, centered at (256, 256).'
-'Upload both rounded square and circular artwork.': 'Upload both rounded square and circular artwork.'
-'Unchanged artwork is kept. Editing preserves ownership and publication status.': 'Unchanged artwork is kept. Editing preserves ownership and publication status.'
-'Uploaded frames start disabled. Publish them from the library.': 'Uploaded frames start disabled. Publish them from the library.'
 'Use two 512 × 512 px images with a transparent 384 px center.': 'Use two 512 × 512 px images with a transparent 384 px center.'
 __id: en
 '{days}d {hours}h {minutes}m {seconds}s': '{days}d {hours}h {minutes}m {seconds}s'
-'Saved. Please refresh this page.': 'Saved. Please refresh this page.'
 'Discard changes': 'Discard changes'
 'Discard your unsaved changes?': 'Discard your unsaved changes?'
 'Failed to load file': 'Failed to load file'
 'Please select only one file.': 'Please select only one file.'
 'Unsupported file type: {name}': 'Unsupported file type: {name}'
 'Unsaved changes': 'Unsaved changes'
-Choose a PNG or WebP file no larger than 2 MiB.: Choose a PNG or WebP file no larger than 2 MiB.
-Choose frame (coming soon): Choose frame (coming soon)
-Global appearance: Global appearance
-Honor avatar frame: Honor avatar frame
-Honor frames are supplied by system administrators. Equipping will be available after server integration.: Honor frames are supplied by system administrators. Equipping will be available after server integration.
-Honor frames belong to your global account and remain the same in every domain.: Honor frames belong to your global account and remain the same in every domain.
 No domains found: No domains found
-No honor frame equipped: No honor frame equipped
-Preview frame artwork: Preview frame artwork
-Publish frame (coming soon): Publish frame (coming soon)
-Publishing and awarding frames will be enabled after server integration.: Publishing and awarding frames will be enabled after server integration.
 Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.: Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.
 __interface: yes
 __langname: English
@@ -218,42 +164,15 @@ __langname: English
 # Honor frame management
 Awarded: Awarded
 Enter a valid user ID.: Enter a valid user ID.
-Equip frame: Equip frame
-Equipped: Equipped
-Frame artwork: Frame artwork
-Frame artwork must be square, between 64 and 1024 pixels.: Frame artwork must be square, between 64 and 1024 pixels.
-Frame name: Frame name
-Frames are global. Upload as a draft, then publish before awarding to a user.: Frames are global. Upload as a draft, then publish before awarding to a user.
-Grant frame: Grant frame
-Grant this frame to {user}?: Grant this frame to {user}?
-Manage honor frames: Manage honor frames
 Managing awards for: Managing awards for
-No available honor frames. Frames are awarded by system administrators.: No available honor frames. Frames are awarded by system administrators.
-No honor frames found.: No honor frames found.
-Publish: Publish
-Publish this frame so it can be awarded?: Publish this frame so it can be awarded?
 Published: Published
 Recipient user ID: Recipient user ID
 Retry: Retry
-Revoke frame: Revoke frame
-Revoke this frame from {user}? It will also be unequipped.: Revoke this frame from {user}? It will also be unequipped.
 Saved: Saved
-Search frames: Search frames
-Select a user by ID to grant or revoke frames.: Select a user by ID to grant or revoke frames.
 Transparent square PNG or WebP, 64–1024 px, up to 2 MiB. Leave the center clear.: Transparent square PNG or WebP, 64–1024 px, up to 2 MiB. Leave the center clear.
-Unable to process frame artwork.: Unable to process frame artwork.
-Unequip frame: Unequip frame
-Unpublish: Unpublish
-Unpublish this frame? It will stop displaying for all users.: Unpublish this frame? It will stop displaying for all users.
 Unpublished: Unpublished
-Upload artwork, publish frames, and manage user awards across all domains.: Upload artwork, publish frames, and manage user awards across all domains.
-Upload frame: Upload frame
 
 # Code replay
-Replay could not be saved locally. Keep this editor open until submission.: Replay could not be saved locally. Keep this editor open until submission.
-Replay upload failed. Your recording is kept; please retry submission.: Replay upload failed. Your recording is kept; please retry submission.
-
-Submission succeeded, but replay could not be linked. Your recording is kept.: Submission succeeded, but replay could not be linked. Your recording is kept.
 
 # Code blocks
 Code copied: Code copied
@@ -290,6 +209,7 @@ Contests: Contests
 Training: Training
 Invalid: Invalid
 All Categories: All Categories
+All Settings: All Settings
 All Rules: All Rules
 All Training Plans: All Training Plans
 Records: Records
@@ -458,7 +378,6 @@ Name: Name
 Size: Size
 Date: Date
 Time: Time
-Duration: Duration
 Rule: Rule
 Start: Start
 End: End
@@ -528,9 +447,6 @@ Judging...: Judging...
 Test Cases: Test Cases
 Compiler Output: Compiler Output
 Judge Message: Judge Message
-Code Replay: Code Replay
-Play: Play
-Pause: Pause
 Reset: Reset
 
 # Contest
@@ -1027,3 +943,4 @@ End personal proctoring and upload log: End personal proctoring and upload log
 Finish proctoring: Finish proctoring
 Open this page in the proctor client to finish proctoring and upload your log.: Open this page in the proctor client to finish proctoring and upload your log.
 Skip upload for now: Skip upload for now
+'Restores the account avatar to its registration default when saved.': 'Restores the account avatar to its registration default when saved.'

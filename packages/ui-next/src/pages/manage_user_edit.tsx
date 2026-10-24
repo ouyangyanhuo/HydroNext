@@ -95,7 +95,7 @@ export default function ManageUserEditPage() {
                     }}
                   />
                   <Text size="xs" c="dimmed">
-                    {t('Restores the account avatar to its registration default when saved. Honor frames are not changed.')}
+                    {t('Restores the account avatar to its registration default when saved.')}
                   </Text>
                 </Stack>
               </Group>

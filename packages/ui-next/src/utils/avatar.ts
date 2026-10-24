@@ -101,3 +101,9 @@ export function getAvatarUrl(src: string, size = 64): string {
 
   return providers[provider](value, size);
 }
+const AVATAR_PIXEL_SIZES: Record<string, number> = { xs: 16, sm: 26, md: 38, lg: 56, xl: 84 };
+
+export function avatarPixelSize(size: string | number = 'md') {
+  if (typeof size === 'number' && Number.isFinite(size) && size > 0) return size;
+  return typeof size === 'string' ? AVATAR_PIXEL_SIZES[size] : undefined;
+}

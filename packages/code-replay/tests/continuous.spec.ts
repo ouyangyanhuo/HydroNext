@@ -40,7 +40,7 @@ class Collection {
 
     find(query: any) {
         const docs = [...this.docs.values()].filter((value) => matches(value, query));
-        const cursor = { sort: (_sort: any) => cursor, toArray: async () => docs.map((doc) => ({ ...doc })) };
+        const cursor = { sort: (_sort: any) => cursor, project: (_fields: any) => cursor, toArray: async () => docs.map((doc) => ({ ...doc })) };
         return cursor;
     }
 
@@ -73,7 +73,7 @@ async function fixture(access = async (_handler: any, _record: any) => ({ canVie
     const userLookups: any[] = [];
     const module = { exports: {} as any };
     const hydro = {
-        db: { collection: (name: string) => (name === 'code_replay' ? sessions : chunks) },
+        db: { collection: (name: string) => (name === 'vuser' ? new Collection() : name === 'code_replay' ? sessions : chunks) },
         RecordModel: { get: async (domain: string, rid: any) => {
             const record = records.get(String(rid));
             return record?.domainId === domain ? record : null;

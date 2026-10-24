@@ -1,8 +1,9 @@
 import { Badge, Group, Stack, Text, TextInput, Title } from '@mantine/core';
 import {
-  IconFilter, IconHistory, IconPlayerPlay, IconRefresh,
+  IconFilter, IconHistory, IconRefresh,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
+import { RecordRowActionExtras, useHasRecordRowActions } from '@/components/common/addon-slots';
 import { Button } from '@/components/common/button';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
@@ -14,9 +15,7 @@ import { STATUS_TEXTS } from '@/components/record/status-map';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
-import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { useSessionStore } from '@/stores/session';
 import { formatScore, mergeLiveRecord } from '@/utils/record-list';
@@ -29,9 +28,8 @@ function RecordMainContent({ args }: { args: any }) {
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const navigate = useNavigate();
-  const user = useCurrentUser();
   const domainId = useSessionStore((s) => s.ui.domainId);
-  const canViewCodeReplay = useHasPriv(PRIV.PRIV_READ_RECORD_CODE);
+  const hasRowActions = useHasRecordRowActions();
 
   const initialRdocs = useMemo(() => args.rdocs || [], [args.rdocs]);
   const initialPdict = useMemo(() => args.pdict || {}, [args.pdict]);
@@ -243,27 +241,14 @@ function RecordMainContent({ args }: { args: any }) {
         )
       ),
     },
-    {
+    ...(hasRowActions ? [{
       key: 'actions',
       title: t('Actions'),
       width: 120,
       align: 'right' as const,
-      render: (r: any) => (
-        canViewCodeReplay || r.uid === user._id ? (
-          <Button
-            component={Link}
-            href={buildUrl('code_replay', { rid: r._id })}
-            size="compact-xs"
-            variant="light"
-            leftSection={<IconPlayerPlay size={14} />}
-            className="hydro-record-replay"
-          >
-            {t('Code Replay')}
-          </Button>
-        ) : null
-      ),
-    },
-  ], [buildUrl, canViewCodeReplay, domainId, languageLabels, pdict, t, udict, user._id]);
+      render: (record: any) => <RecordRowActionExtras record={record} />,
+    }] : []),
+  ], [hasRowActions, domainId, languageLabels, pdict, t, udict]);
 
   const openRecord = useCallback((record: any) => {
     navigate(buildUrl('record_detail', { rid: record._id }));

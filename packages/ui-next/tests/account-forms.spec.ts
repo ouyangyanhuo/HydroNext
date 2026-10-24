@@ -62,7 +62,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         './ranking.css': {},
         '@mantine/core': mantine,
         '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
-        '@/components/common/button': { Button: mantine.Button, ActionIcon: mantine.ActionIcon },
+        '@/components/common/button': { Button: mantine.Button, ActionIcon: mantine.ActionIcon, UnstyledButton: mantine.UnstyledButton },
         '@/components/common/delete-resource-button': { DeleteResourceButton: () => null },
         '@/components/common/select': {
             ShortSelect: page === 'contest_scoreboard' ? mantine.Select : () => null,
@@ -235,6 +235,29 @@ test('system settings use compact grids, keep long fields full-width and preserv
             booleanKeys: { server: { allowRegister: true, checkUpdate: true }, access: { a: true, b: true } },
         });
         assert.equal(view.notices.at(-1).title, 'Saved');
+    } finally { await view.close(); }
+});
+
+test('manage_setting renders clean card layout without sidebar or icons, back link to dashboard, and sticky save bar', async () => {
+    const view = await fixture('manage_setting', {}, {}, {
+        settings: [
+            { family: 'setting_server', key: 'server.name', type: 'text', name: 'Site name' },
+            { family: 'setting_smtp', key: 'smtp.host', type: 'text', name: 'SMTP Host' },
+            { family: 'setting_limits', key: 'limit.submission', type: 'number', name: 'Rate limit' },
+        ],
+        current: { 'server.name': 'Hydro', 'smtp.host': 'mail.example.com', 'limit.submission': 60 },
+    });
+    try {
+        const page = view.host.querySelector('.hydro-settings-page')!;
+        assert.ok(page, 'wraps in .hydro-settings-page container');
+        const backLink = view.host.querySelector<HTMLAnchorElement>('a[href="/manage_dashboard"]')!;
+        assert.ok(backLink, 'provides a back button to manage_dashboard');
+        assert.equal(view.host.querySelector('.hydro-settings-nav'), null, 'does not render a sidebar navigation');
+        assert.equal(view.host.querySelectorAll('svg').length, 0, 'does not render icons');
+        assert.equal(view.host.querySelectorAll('.hydro-settings-section').length, 3, 'renders all 3 section cards');
+        const savebar = view.host.querySelector('.hydro-settings-savebar')!;
+        assert.ok(savebar, 'provides floating sticky save bar');
+        assert.ok(savebar.querySelector('.hydro-settings-save'));
     } finally { await view.close(); }
 });
 

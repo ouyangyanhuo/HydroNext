@@ -506,6 +506,12 @@ class CodeReplayDataHandler extends Handler {
 export async function apply(ctx: Context) {
     const logger = ctx.logger('code-replay');
     await CodeReplayModel.ensureIndexes();
+    // Core team migration runs before addons load. Reconcile retained mappings
+    // here so disabling this addon never makes core access its collections.
+    const migratedTeams = await db.collection('vuser').find({ _legacyTeamId: { $exists: true }, domainId: { $type: 'string' } })
+        .project({ _id: 1, _legacyTeamId: 1, domainId: 1 }).toArray();
+    await Promise.all(migratedTeams.map((team) => Promise.all([coll, collChunk].map((collection) =>
+        collection.updateMany({ domainId: team.domainId, uid: team._legacyTeamId }, { $set: { uid: team._id } })))));
     ctx.Route('code_replay_session', '/code-replay/session', CodeReplaySessionHandler, PRIV.PRIV_USER_PROFILE);
     ctx.Route('code_replay', '/record/:rid/replay', CodeReplayViewHandler);
     ctx.Route('code_replay_data', '/record/:rid/replay/data', CodeReplayDataHandler);
@@ -541,6 +547,8 @@ export async function apply(ctx: Context) {
 
     ctx.on('handler/after/ProblemDetail#get', (that) => {
         that.UiContext.codeReplaySessionUrl = domainAwareUrl(that, 'code_replay_session');
+        that.UiContext.editorAddons ||= {};
+        that.UiContext.editorAddons['code-replay'] = { sessionUrl: that.UiContext.codeReplaySessionUrl };
     });
 
     ctx.i18n.load('zh', {

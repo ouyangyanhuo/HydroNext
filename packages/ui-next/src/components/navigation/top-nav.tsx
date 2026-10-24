@@ -7,6 +7,7 @@ import type { MouseEvent } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import logoUrl from '@/assets/logo.png';
+import { AccountMenuExtras } from '@/components/common/addon-slots';
 import { ActionIcon, Button, UnstyledButton } from '@/components/common/button';
 import { Link } from '@/components/link';
 import { UserAvatar } from '@/components/user/user-avatar';
@@ -71,11 +72,7 @@ function UserMenu() {
         <Menu.Item component={Link} to="home_domain">
           {t('My Domains')}
         </Menu.Item>
-        {isSu && (
-          <Menu.Item component={Link} to="manage_honor_frames">
-            {t('Avatar frame management')}
-          </Menu.Item>
-        )}
+        <AccountMenuExtras variant="menu" />
         {isSu && (
           <Menu.Item component={Link} to="manage_dashboard">
             {t('Manage')}
@@ -515,11 +512,7 @@ export function TopNav() {
                 <Button component={Link} to="home_domain" variant="subtle" fullWidth justify="flex-start" onClick={close}>
                   {t('My Domains')}
                 </Button>
-                {isSu && (
-                  <Button component={Link} to="manage_honor_frames" variant="subtle" fullWidth justify="flex-start" onClick={close}>
-                    {t('Avatar frame management')}
-                  </Button>
-                )}
+                <AccountMenuExtras variant="mobile" onClose={close} />
                 {isSu && (
                   <Button component={Link} to="manage_dashboard" variant="subtle" fullWidth justify="flex-start" onClick={close}>
                     {t('Manage')}

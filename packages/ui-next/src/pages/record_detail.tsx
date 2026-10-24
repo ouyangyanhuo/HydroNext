@@ -2,14 +2,14 @@ import { Badge, Card, Code, Group, Stack, Table, Text, Title, Tooltip } from '@m
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
+import { RecordActionExtras, RecordContentExtras } from '@/components/common/addon-slots';
 import { Button } from '@/components/common/button';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
-import { CodeReplay } from '@/components/record/code-replay';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
-import { usePageData, useUiContext } from '@/context/page-data';
+import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -75,18 +75,6 @@ function formatStructuredText(value: any): string {
   } catch {
     return String(value);
   }
-}
-
-function normalizeReplayUrl(url?: string) {
-  if (!url) return '';
-  return url.replace(/^(\/d\/([^/]+))\/d\/\2(?=\/)/, '$1');
-}
-
-function buildReplayUrl(buildUrl: ReturnType<typeof useBuildUrl>, rid: string, injectedUrl?: string) {
-  const normalizedInjectedUrl = normalizeReplayUrl(injectedUrl);
-  if (normalizedInjectedUrl) return normalizedInjectedUrl;
-  if (!rid) return '';
-  return buildUrl('code_replay', { rid });
 }
 
 function normalizeCases(rdoc: any) {
@@ -220,13 +208,11 @@ function OutputBlock({ title, content }: { title: string, content: string }) {
 
 export default function RecordDetailPage() {
   const { args } = usePageData();
-  const ui = useUiContext();
   const buildUrl = useBuildUrl();
   const navigate = useNavigate();
   const { t, language } = useI18n();
   const user = useCurrentUser();
   const canJudge = useHasPriv(PRIV.PRIV_JUDGE) || args.canRejudge;
-  const canViewCodeReplay = useHasPriv(PRIV.PRIV_READ_RECORD_CODE) || (args.rdoc?.uid === user._id);
   const [actionLoading, setActionLoading] = useState('');
   const [error, setError] = useState('');
 
@@ -251,7 +237,6 @@ export default function RecordDetailPage() {
   const isLimitStatus = shouldShowGreaterEqual(rdoc.status);
   const peakTime = cases.length ? Math.max(...cases.map((item) => Number(item.time) || 0)) : null;
   const codeLength = rdoc.code ? formatSize(new Blob([rdoc.code]).size) : '';
-  const codeReplayUrl = buildReplayUrl(buildUrl, String(rdoc._id || ''), ui.codeReplayUrl);
   const problemTitle = extractLocalizedContent(pdoc.title, language);
   const contestTitle = extractLocalizedContent(tdoc?.title, language);
   const problemQuery = getRecordProblemQuery(window.location.search, tdoc);
@@ -338,11 +323,7 @@ export default function RecordDetailPage() {
             </Text>
           </div>
           <Group gap="sm">
-            {codeReplayUrl && canViewCodeReplay && (
-              <Button component="a" href={codeReplayUrl} size="xs" variant="light">
-                {t('Code Replay')}
-              </Button>
-            )}
+            <RecordActionExtras record={rdoc} />
           </Group>
         </Group>
         <div className="hydro-record-metrics-scroll mt-5">
@@ -389,11 +370,7 @@ export default function RecordDetailPage() {
                 <Stack gap="sm">
                   <Group justify="space-between">
                     <Text size="sm" fw={700}>{t('Source Code')}</Text>
-                    {codeReplayUrl && canViewCodeReplay && (
-                      <Button component="a" href={codeReplayUrl} size="xs" variant="light">
-                        {t('Code Replay')}
-                      </Button>
-                    )}
+                    <RecordActionExtras record={rdoc} />
                   </Group>
                   <div className="hydro-record-source" tabIndex={0} aria-label={t('Source Code')}>
                     <Code block className="min-w-max bg-transparent p-4">{rdoc.code}</Code>
@@ -402,14 +379,7 @@ export default function RecordDetailPage() {
               </Card>
             )}
 
-            {rdoc.replay && rdoc.replay.length > 0 && (
-              <Card withBorder p="lg" className="hydro-content-card">
-                <Stack gap="sm">
-                  <Text size="sm" fw={700}>{t('Code Replay')}</Text>
-                  <CodeReplay key={String(rdoc._id)} events={rdoc.replay} initialCode="" language={rdoc.lang} />
-                </Stack>
-              </Card>
-            )}
+            <RecordContentExtras record={rdoc} />
           </Stack>
         </div>
 

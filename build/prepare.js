@@ -42,7 +42,7 @@ const config = {
     ],
     files: [],
 };
-const exclude = ['**/public', '**/frontend', '**/node_modules', '**/bin', '**/dist', '**/__mocks__'];
+const exclude = ['**/public', '**/frontend', '**/ui', '**/tests', '**/node_modules', '**/bin', '**/dist', '**/__mocks__'];
 const configSrc = (name) => ({
     compilerOptions: {
         ...compilerOptionsBase,
@@ -132,7 +132,10 @@ const UINextConfig = {
     exclude: [
         '**/node_modules',
     ],
-    include: ['ts', 'tsx', 'vue', 'json'].map((ext) => `packages/ui-next/src/**/*.${ext}`),
+    include: ['ts', 'tsx', 'vue', 'json'].flatMap((ext) => [
+        `packages/ui-next/src/**/*.${ext}`,
+        `packages/*/ui/**/*.${ext}`,
+    ]).concat(['packages/code-replay/replay.ts', 'packages/code-replay/timeline.ts']),
     compilerOptions: {
         ...compilerOptionsBase,
         module: 'ESNext',

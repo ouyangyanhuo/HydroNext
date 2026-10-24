@@ -1,25 +1,24 @@
 import { Link } from '@/components/link';
-import { getAvatarUrl } from '@/utils/avatar';
-import { avatarPixelSize, type HonorFrame } from '@/utils/honor-frame';
+import { avatarPixelSize, getAvatarUrl } from '@/utils/avatar';
 import { formatUserName } from '@/utils/user-name';
-import { FramedAvatar, type FramedAvatarProps } from './framed-avatar';
+import { AvatarView, type AvatarViewProps } from './avatar-view';
 
-interface UserAvatarProps extends Omit<FramedAvatarProps, 'src' | 'frame'> {
-  user: { _id: number, uname: string, displayName?: string, avatar?: string, avatarUrl?: string, honorFrame?: HonorFrame | null };
+interface UserAvatarProps extends Omit<AvatarViewProps, 'src' | 'user'> {
+  user: { _id: number, uname: string, displayName?: string, avatar?: string, avatarUrl?: string, [key: string]: any };
   link?: boolean;
 }
 
 export function UserAvatar({ user, link = true, ...props }: UserAvatarProps) {
   const avatar = (
-    <FramedAvatar
+    <AvatarView
       src={user.avatarUrl || getAvatarUrl(user.avatar || '', Math.ceil((avatarPixelSize(props.size) || 64) * 2))}
-      frame={user.honorFrame}
+      user={user}
       alt={formatUserName(user)}
       radius="xl"
       {...props}
     >
       {user.uname?.[0]?.toUpperCase()}
-    </FramedAvatar>
+    </AvatarView>
   );
 
   if (link && user._id > 0) {

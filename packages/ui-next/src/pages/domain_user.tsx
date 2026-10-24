@@ -9,6 +9,7 @@ import { Link } from '@/components/link';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
+import { getUserExtensionFields } from '@/registry/user-fields';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 import { formatUserName } from '@/utils/user-name';
@@ -53,7 +54,6 @@ interface UserSearchItem {
   displayName?: string;
   avatar?: string;
   avatarUrl?: string;
-  honorFrame?: import('@/utils/honor-frame').HonorFrame | null;
 }
 
 function formatUserLabel(user: UserSearchItem) {
@@ -101,7 +101,7 @@ function AddUserDialogContent({
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
             args: { search: trimmed, limit: 10 },
-            projection: ['_id', 'uname', 'displayName', 'avatar', 'avatarUrl', 'honorFrame'],
+            projection: ['_id', 'uname', 'displayName', 'avatar', 'avatarUrl', ...getUserExtensionFields()],
           }),
           signal: controller.signal,
         });

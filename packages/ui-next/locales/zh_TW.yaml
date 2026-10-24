@@ -72,26 +72,12 @@ __id: zh_TW
 'Please select only one file.': '請選擇一個檔案。'
 'Unsupported file type: {name}': '不支援的檔案類型：{name}'
 'Unsaved changes': '尚未儲存的修改'
-Choose a PNG or WebP file no larger than 2 MiB.: 請選擇不超過 2 MiB 的 PNG 或 WebP 檔案。
-Choose frame (coming soon): 選擇頭像框（尚未開放）
-Global appearance: 全域外觀
-Honor avatar frame: 榮譽頭像框
-Honor frames are supplied by system administrators. Equipping will be available after server integration.: 榮譽頭像框由系統管理員提供，佩戴功能將在串接伺服器後開放。
-Honor frames belong to your global account and remain the same in every domain.: 榮譽頭像框屬於全域帳號，在所有域中保持一致。
 No domains found: 找不到域
-No honor frame equipped: 尚未佩戴榮譽頭像框
-Preview frame artwork: 預覽頭像框素材
-Publish frame (coming soon): 發布頭像框（尚未開放）
-Publishing and awarding frames will be enabled after server integration.: 發布和授予功能將在串接伺服器後開放。
 Transparent PNG or WebP, up to 2 MiB. Preview only; nothing is uploaded.: 支援透明 PNG 或 WebP，最大 2 MiB。僅在本機預覽，不會上傳。
 __interface: yes
 __langname: 繁體中文
 
 # Code replay
-Replay could not be saved locally. Keep this editor open until submission.: 無法在本機儲存回放，請保持編輯器開啟，直到完成提交。
-Replay upload failed. Your recording is kept; please retry submission.: 回放上傳失敗，錄製資料已保留，請重試提交。
-
-Submission succeeded, but replay could not be linked. Your recording is kept.: 提交成功，但回放關聯失敗，錄製資料已保留。
 
 # Code blocks
 Code copied: 程式碼已複製
@@ -331,6 +317,7 @@ Login to join training plan: 登入後加入訓練計畫
 Some problems in the training are missing or you do not have permission to view them.: 訓練中的部分題目不存在或您沒有權限檢視。
 This section cannot be challenged at present, so please complete the following sections first: 目前章節暫不可挑戰，請先完成以下章節
 All Categories: 全部分類
+All Settings: 全部設定
 All Contests: 所有比賽
 All Rules: 全部賽制
 All {0} Contests: 所有 {0} 比賽
@@ -361,7 +348,6 @@ Name: 名稱
 Size: 大小
 Date: 日期
 Time: 時間
-Duration: 時長
 Rule: 規則
 Start: 開始
 End: 結束
@@ -430,11 +416,6 @@ Judging...: 評測中...
 Test Cases: 測試點
 Compiler Output: 編譯輸出
 Judge Message: 評測訊息
-Code Replay: 程式碼回放
-Replay editing process: 回放編輯過程
-No replay data is available.: 暫無回放資料。
-Play: 播放
-Pause: 暫停
 Reset: 重置
 
 # Contest
@@ -574,16 +555,22 @@ Save All Changes: 儲存全部變更
 Config Source: 組態原始碼
 Secrets marked as hidden keep their old values when left unchanged.: 標記為隱藏的密鑰欄位留空時將保留原值。
 (Not changed): （不修改）
-setting_display: 顯示設定
-setting_usage: 使用統計
-setting_info: 站點資訊
-setting_customize: 自訂
-setting_domain: 網域設定
-setting_server: 伺服器設定
-setting_limits: 限制設定
 setting_basic: 基礎設定
+setting_basic_desc: 平台預設項、分頁數量、討論分類與首頁內容設定。
+setting_customize: 自訂
+setting_display: 顯示設定
+setting_domain: 網域設定
+setting_info: 站點資訊
+setting_limits: 限制設定
+setting_limits_desc: 程式碼長度、檔案上傳配額、比賽團隊人數與頻率速率限制。
+setting_server: 伺服器設定
+setting_server_desc: 監聽主機連接埠、反向代理請求頭、CORS、開放註冊與網路設定。
 setting_session: 工作階段設定
+setting_session_desc: 登入憑證保留期、工作階段有效期間與安全 Cookie 設定。
+setting_smtp: SMTP 設定
+setting_smtp_desc: 發信服務主機、認證憑證、TLS/SSL 安全傳輸與電子郵件驗證設定。
 setting_storage: 儲存設定
+setting_usage: 使用統計
 Run script: 執行腳本
 Params: 參數
 Run failed: 執行失敗
