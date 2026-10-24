@@ -29,8 +29,8 @@ after(() => {
 const { act, createElement: h } = require('react');
 const { createRoot } = require('react-dom/client');
 const box = ({ children }: any) => h('div', null, children);
-const fieldControl = ({ label, value, onChange, disabled, description }: any) => h('label', null, label, description,
-    h('input', { value: value ?? '', onChange, disabled }));
+const fieldControl = ({ label, value, onChange, disabled, description, rightSection, 'aria-label': name }: any) => h('label', null,
+    label, description, h('input', { value: value ?? '', onChange, disabled, 'aria-label': name }), rightSection);
 const Table: any = ({ children }: any) => h('table', null, children);
 for (const [name, tag] of Object.entries({ Thead: 'thead', Tbody: 'tbody', Tr: 'tr', Th: 'th', Td: 'td' })) {
     Table[name] = ({ children }: any) => h(tag, null, children);
@@ -40,7 +40,7 @@ let args: any;
 const notices: any[] = [];
 const mocks: Record<string, any> = {
     '@mantine/core': {
-        Alert: box, Card: box, Code: box, Group: box, Stack: box, Text: box, Title: box, Table,
+        Alert: box, Card: box, Code: box, Group: box, Stack: box, Text: box, Title: box, Tooltip: box, Table,
         TextInput: fieldControl,
         NumberInput: ({ label,
             value,
@@ -70,6 +70,9 @@ const mocks: Record<string, any> = {
     '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
     '@/components/common/button': { Button: ({ children, loading, disabled, onClick, type = 'button' }: any) => h('button', {
         type, disabled: loading || disabled, onClick,
+    }, children),
+    ActionIcon: ({ children, loading, disabled, onClick, type = 'button', 'aria-label': name }: any) => h('button', {
+        type, disabled: loading || disabled, onClick, 'aria-label': name,
     }, children) },
     '@/components/common/confirm-dialog': { ConfirmDialog: ({ opened, onConfirm, onClose }: any) => opened ? h('section', null,
         h('button', { onClick: onConfirm }, 'Confirm'), h('button', { onClick: onClose }, 'Cancel')) : null },
@@ -110,7 +113,8 @@ async function mount() {
     } };
 }
 function button(host: Element, label: string) {
-    const result = Array.from(host.querySelectorAll('button')).find((element) => element.textContent === label);
+    const result = Array.from(host.querySelectorAll('button')).find((element) => element.textContent === label
+        || element.getAttribute('aria-label') === label);
     assert.ok(result, `Missing button ${label}`);
     return result;
 }
@@ -158,12 +162,26 @@ test('log search, paging and page size use independent requests and preserve uns
         const version = Array.from(view.host.querySelectorAll('label'))
             .find((label) => label.textContent === 'Required client version')!.querySelector('input')!;
         await enter(version, '2.0.0-unsaved');
+        assert.equal(view.host.querySelector('[aria-label="Download selected"]'), null);
+        assert.equal(view.host.querySelector('[aria-label="Delete selected"]'), null);
+        assert.equal(view.host.querySelectorAll('tbody button').length, 0, 'row actions do not bypass selecting logs');
         const checkbox = view.host.querySelector('input[aria-label="Select all"]')! as HTMLInputElement;
         await act(async () => checkbox.click());
         assert.equal(checkbox.checked, true);
+        for (const label of ['Download selected', 'Delete selected']) {
+            const control = button(view.host, label);
+            assert.equal(control.textContent, '', 'batch actions are icon-only with accessible labels');
+            assert.equal(control.querySelectorAll('svg').length, 1);
+        }
+        await act(async () => button(view.host, 'Delete selected').click());
+        assert.ok(button(view.host, 'Confirm'));
+        assert.equal(urls.length, 0, 'deletion still requires confirmation');
+        await act(async () => button(view.host, 'Cancel').click());
         await act(async () => button(view.host, 'Next page').click());
         assert.equal(version.value, '2.0.0-unsaved');
         assert.equal(checkbox.checked, false);
+        assert.equal(view.host.querySelector('[aria-label="Download selected"]'), null);
+        assert.equal(view.host.querySelector('[aria-label="Delete selected"]'), null);
         assert.ok(view.host.textContent?.includes('final-2.hplog'));
         const select = view.host.querySelector('select')!;
         await act(async () => {

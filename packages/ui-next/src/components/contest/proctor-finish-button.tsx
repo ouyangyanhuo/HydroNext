@@ -35,6 +35,7 @@ export function ProctorFinishButton({ compact = false, clientOnly = false, label
       <Button
         size={compact ? 'compact-xs' : 'sm'}
         variant={compact ? 'light' : 'filled'}
+        fullWidth={!compact}
         color="orange"
         disabled={!available}
         loading={loading}
@@ -44,9 +45,6 @@ export function ProctorFinishButton({ compact = false, clientOnly = false, label
         {label ?? t(compact ? 'Finish proctoring' : 'End personal proctoring and upload log')}
       </Button>
       {error && <Text size="xs" c="red" role="alert">{error}</Text>}
-      {!available && !compact && (
-        <Text size="xs" c="dimmed">{t('Open this page in the proctor client to finish proctoring and upload your log.')}</Text>
-      )}
     </Stack>
   );
 }

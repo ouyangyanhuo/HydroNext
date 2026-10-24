@@ -139,6 +139,15 @@ test('ending notices refresh only their contest and return to its domain overvie
         assert.ok(!dom.window.document.body.textContent?.includes('您的参赛时间已到'));
         const button = Array.from(dom.window.document.querySelectorAll('button'))
             .find((item: any) => item.textContent === 'Skip upload for now') as HTMLButtonElement;
+        const upload = Array.from(dom.window.document.querySelectorAll('button'))
+            .find((item: any) => item.textContent === 'End and upload') as HTMLButtonElement;
+        assert.ok(upload);
+        assert.equal(upload.disabled, true, 'browser without the proctor bridge still cannot request an upload');
+        assert.ok(button.parentElement?.hasAttribute('data-grow'), 'both action columns share the available width equally');
+        assert.equal(upload.parentElement?.parentElement, button.parentElement);
+        assert.ok(upload.hasAttribute('data-block'), 'the upload button fills its equal-width column');
+        assert.equal(button.getAttribute('data-size'), upload.getAttribute('data-size'));
+        assert.ok(!dom.window.document.body.textContent?.includes('Open this page in the proctor client'));
         await act(async () => button.click());
         assert.equal(sent[0].id, notice._id);
         assert.equal(navigations.length, 1);

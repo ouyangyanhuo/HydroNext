@@ -1,7 +1,8 @@
-import { Card, Checkbox, Group, Pagination, Stack, Table, Text, TextInput, Title } from '@mantine/core';
+import { Card, Checkbox, Group, Pagination, Stack, Table, Text, TextInput, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconCornerDownLeft, IconDownload, IconSearch, IconTrash } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
-import { Button } from '@/components/common/button';
+import { ActionIcon, Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { ShortSelect } from '@/components/common/select';
@@ -46,7 +47,7 @@ export function ProctorLogsPanel({ args }: { args: any }) {
     }
   };
   const act = async (operation: string, ids: string[]) => {
-    if (pending.current) return;
+    if (!allowed || !ids.length || pending.current) return;
     pending.current = true;
     setBusy(true);
     try {
@@ -88,44 +89,66 @@ export function ProctorLogsPanel({ args }: { args: any }) {
   return <Stack gap="lg">
     <Card withBorder className="hydro-content-card" p="lg"><Stack gap="md">
       <Title order={3}>{t('Proctor logs')}</Title>
-      <form onSubmit={(event) => { event.preventDefault(); void load(1, q); }}>
-        <Group><TextInput
-          className="flex-1"
-          placeholder={t('Search filename, user, domain or contest')}
-          value={q}
-          disabled={busy}
-          onChange={(event) => setQ(event.currentTarget.value)}
-          maxLength={80} />
-        <Button type="submit" variant="light" loading={busy}>{t('Search')}</Button></Group>
-      </form>
-      <Group justify="space-between"><Text size="sm" c="dimmed">{t('Encrypted final logs.')} · {data.count || 0}</Text>
-        <Group
-          gap="sm"
-        ><Button
-            variant="light"
-            loading={busy}
-            disabled={!selected.length}
-            onClick={() => void act('download', selected)}
-          >
-            {t('Download selected')}
-          </Button>
-          <Button
-            color="red"
-            variant="light"
-            disabled={busy || !selected.length}
-            onClick={() => setDeleting(true)}
-          >
-            {t('Delete selected')}
-          </Button></Group>
+      <Group justify="space-between" gap="sm">
+        <Text size="sm" c="dimmed">{t('Encrypted final logs.')} · {data.count || 0}</Text>
+        <Group gap="xs" className="w-full sm:w-auto">
+          {selected.length > 0 && <>
+            <Text size="xs" c="dimmed">{t('Selected')}: {selected.length}</Text>
+            <Tooltip label={t('Download selected')} withArrow>
+              <ActionIcon
+                size={30}
+                variant="light"
+                loading={busy}
+                disabled={busy}
+                aria-label={t('Download selected')}
+                onClick={() => void act('download', selected)}
+              >
+                <IconDownload size={16} stroke={1.8} aria-hidden="true" />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={t('Delete selected')} withArrow>
+              <ActionIcon
+                size={30}
+                color="red"
+                variant="light"
+                disabled={busy}
+                aria-label={t('Delete selected')}
+                onClick={() => setDeleting(true)}
+              >
+                <IconTrash size={16} stroke={1.8} aria-hidden="true" />
+              </ActionIcon>
+            </Tooltip>
+          </>}
+          <form className="w-full min-w-0 sm:w-[280px]" onSubmit={(event) => { event.preventDefault(); void load(1, q); }}>
+            <TextInput
+              size="xs"
+              placeholder={t('Search filename, user, domain or contest')}
+              aria-label={t('Search filename, user, domain or contest')}
+              value={q}
+              disabled={busy}
+              onChange={(event) => setQ(event.currentTarget.value)}
+              maxLength={80}
+              leftSection={<IconSearch size={15} stroke={1.8} aria-hidden="true" />}
+              rightSection={(
+                <Tooltip label={t('Search')} withArrow>
+                  <ActionIcon type="submit" size="xs" variant="subtle" color="gray" disabled={busy} aria-label={t('Search')}>
+                    <IconCornerDownLeft size={13} stroke={1.8} aria-hidden="true" />
+                  </ActionIcon>
+                </Tooltip>
+              )}
+              rightSectionPointerEvents="auto"
+            />
+          </form>
+        </Group>
       </Group>
-      <Table.ScrollContainer minWidth={850}><Table highlightOnHover><Table.Thead><Table.Tr>
+      <Table.ScrollContainer minWidth={700}><Table highlightOnHover><Table.Thead><Table.Tr>
         <Table.Th><Checkbox
           aria-label={t('Select all')}
           disabled={busy || !logs.length}
           checked={!!logs.length && selected.length === logs.length}
           indeterminate={selected.length > 0 && selected.length < logs.length}
           onChange={(event) => setSelected(event.currentTarget.checked ? logs.map((log) => log._id) : [])} /></Table.Th>
-        {['Filename', 'User', 'Upload time', 'Domain', 'Contest', 'Size', 'Actions'].map((key) => <Table.Th key={key}>{t(key)}</Table.Th>)}
+        {['Filename', 'User', 'Upload time', 'Domain', 'Contest', 'Size'].map((key) => <Table.Th key={key}>{t(key)}</Table.Th>)}
       </Table.Tr></Table.Thead><Table.Tbody>{logs.map((log) => <Table.Tr key={log._id}>
         <Table.Td><Checkbox
           aria-label={`${t('Select')} ${log.filename}`}
@@ -138,26 +161,6 @@ export function ProctorLogsPanel({ args }: { args: any }) {
         <Table.Td>{log.domainName} <Text size="xs" c="dimmed">{log.domainId}</Text></Table.Td>
         <Table.Td><Link to="contest_detail" params={{ domainId: log.domainId, tid: log.tid }}>{log.contestTitle}</Link></Table.Td>
         <Table.Td>{(log.size / 1024 / 1024).toFixed(2)} MiB</Table.Td>
-        <Table.Td><Group
-          gap="xs"
-          wrap="nowrap"
-        ><Button
-            size="xs"
-            variant="light"
-            disabled={busy}
-            onClick={() => void act('download', [log._id])}
-          >
-            {t('Download')}
-          </Button>
-          <Button
-            size="xs"
-            color="red"
-            variant="subtle"
-            disabled={busy}
-            onClick={() => { setSelected([log._id]); setDeleting(true); }}
-          >
-            {t('Delete')}
-          </Button></Group></Table.Td>
       </Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer>
       {!logs.length && <Text ta="center" c="dimmed" py="xl">{t('No proctor logs yet.')}</Text>}
       <Group justify="space-between" className="hydro-paginator" wrap="wrap">

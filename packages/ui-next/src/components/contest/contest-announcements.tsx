@@ -73,6 +73,7 @@ export function ContestAnnouncements() {
     },
   });
   const current = items[0];
+  const showProctorFinish = Boolean(current?.kind && current.proctorEnabled);
   useEffect(() => {
     if (returning.current) return;
     const ended = items.filter((item) => item.kind && belongsToCurrentContest(item) && !refreshed.current.has(`${item._id}/${url}`));
@@ -107,7 +108,7 @@ export function ContestAnnouncements() {
             <Text size="sm" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
               {current.kind ? t(current.content) : current.content}
             </Text>
-            {current.kind && current.proctorEnabled && (
+            {showProctorFinish && (
               <Text size="sm" mt="sm">
                 {t('End proctoring and upload your log in the client. Ending the contest does not upload it automatically.')}
               </Text>
@@ -115,8 +116,15 @@ export function ContestAnnouncements() {
           </ScrollArea.Autosize>
           <Group justify="space-between">
             <Text size="xs" c="dimmed">{connected ? `${items.length} ${t('Unread announcements')}` : t('Reconnecting…')}</Text>
-            <Group gap="xs" align="flex-start" wrap="nowrap">
+            <Group
+              gap="xs"
+              align="flex-start"
+              wrap="nowrap"
+              grow={showProctorFinish}
+              style={showProctorFinish ? { flex: '1 1 20rem', minWidth: 0 } : undefined}
+            >
               <Button
+                size="sm"
                 loading={confirming}
                 disabled={!connected}
                 onClick={() => {
@@ -125,9 +133,9 @@ export function ContestAnnouncements() {
                   send({ operation: 'acknowledge', id: current._id });
                 }}
               >
-                {t(current.kind && current.proctorEnabled ? 'Skip upload for now' : 'I understand')}
+                {t(showProctorFinish ? 'Skip upload for now' : 'I understand')}
               </Button>
-              {current.kind && current.proctorEnabled && <ProctorFinishButton label={t('End and upload')} />}
+              {showProctorFinish && <ProctorFinishButton label={t('End and upload')} />}
             </Group>
           </Group>
           {error && <Text size="sm" c="red" role="alert">{error}</Text>}
