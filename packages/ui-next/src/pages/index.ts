@@ -81,7 +81,6 @@ registerPage('domain_join_applications', () => import('./domain_join_application
 registerPage('manage_dashboard', () => import('./manage_dashboard'), { title: 'Manage' });
 registerPage('manage_proctor', () => import('./manage_proctor'), { title: 'Proctor settings' });
 registerPage('manage_proctor_logs', () => import('./manage_proctor_logs'), { title: 'Proctor logs' });
-registerPage('manage_client_updates', () => import('./manage_client_updates'), { title: 'Update settings' });
 registerPage('manage_setting', () => import('./manage_setting'), { title: 'System Settings' });
 registerPage('manage_config', () => import('./manage_config'), { title: 'Configuration' });
 registerPage('manage_script', () => import('./manage_script'), { title: 'Scripts' });

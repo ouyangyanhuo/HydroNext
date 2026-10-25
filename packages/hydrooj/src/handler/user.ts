@@ -22,7 +22,6 @@ import * as ContestModel from '../model/contest';
 import domain from '../model/domain';
 import * as oplog from '../model/oplog';
 import problem, { ProblemDoc } from '../model/problem';
-import record from '../model/record';
 import ScheduleModel from '../model/schedule';
 import SolutionModel from '../model/solution';
 import system from '../model/system';
@@ -412,10 +411,11 @@ class UserDetailHandler extends Handler {
             return;
         }
         const isSelfProfile = this.user._id === uid;
-        const [udoc, sdoc, contributions] = await Promise.all([
+        const extensions: Record<string, unknown> = {};
+        const [udoc, sdoc] = await Promise.all([
             user.getById(domainId, uid),
             token.getMostRecentSessionByUid(uid, ['createAt', 'updateAt']),
-            record.getUserContributions(uid),
+            this.ctx.parallel('user/profile', this, uid, extensions),
         ]);
         if (!udoc) throw new UserNotFoundError(uid);
         const pdocs: ProblemDoc[] = [];
@@ -454,6 +454,7 @@ class UserDetailHandler extends Handler {
             serializedUdoc.bio = udoc.bio;
         }
         this.response.body = {
+            ...extensions,
             canViewRecords: isSelfProfile || this.user.hasPerm(PERM.PERM_VIEW_RECORD),
             isSelfProfile,
             udoc: serializedUdoc,
@@ -464,7 +465,6 @@ class UserDetailHandler extends Handler {
                 rp: udoc.rp || 0,
             },
             sdoc,
-            contributions,
             pdocs,
             tags: accepted.tags,
             acceptedPage: accepted.page,

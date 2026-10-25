@@ -28,6 +28,9 @@ RUN HYDRO_BUILD_ID="${HYDRO_BUILD_ID}" node -e "const crypto = require('crypto')
     ln -sf /hydrooj/packages/ui-next /opt/hydro-addons/ui-next && \
     ln -sf /hydrooj/packages/code-replay /opt/hydro-addons/code-replay && \
     ln -sf /hydrooj/packages/honor-frame /opt/hydro-addons/honor-frame && \
+    ln -sf /hydrooj/packages/client-updates /opt/hydro-addons/client-updates && \
+    ln -sf /hydrooj/packages/user-contributions /opt/hydro-addons/user-contributions && \
+    ln -sf /hydrooj/packages/editor-paste-guard /opt/hydro-addons/editor-paste-guard && \
     ln -sf /hydrooj/packages/hydrooj/bin/hydrooj.js /usr/local/bin/hydrooj && \
     chmod +x /root/entrypoint.sh
 

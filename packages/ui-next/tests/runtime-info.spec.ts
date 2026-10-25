@@ -114,7 +114,12 @@ test('application fallback is explicitly labelled instead of pretending to be co
 test('dashboard restricts runtime to admins and clock ticks do not rerender navigation cards', async () => {
     let admin = true;
     let pageRenders = 0;
+    const entries = load('../src/registry/manage-entries.ts', {});
+    const removeEntry = entries.registerManageEntry({
+        to: 'manage_client_updates', title: 'Update settings', desc: 'Optional updates', group: 'Configuration', order: 45,
+    });
     const { default: Dashboard } = load('../src/pages/manage_dashboard.tsx', {
+        '@/registry/manage-entries': entries,
         '@/components/manage/runtime-status-card': { RuntimeStatusCard },
         '@/components/common/button': { Button: ({ children }: any) => h('button', {}, children) },
         '@/components/common/page-header': { PageHeader: () => null },
@@ -134,10 +139,12 @@ test('dashboard restricts runtime to admins and clock ticks do not rerender navi
         monotonicNow += 1000;
         await act(async () => { for (const tick of timers.values()) tick(); });
         assert.equal(pageRenders, renders);
+        await act(async () => removeEntry());
+        assert.ok(!view.host.textContent.includes('Update settings'));
         admin = false;
         await view.render(h(Dashboard));
         assert.match(view.host.textContent || '', /Access Denied/);
         assert.doesNotMatch(view.host.textContent || '', /Container runtime/);
         assert.equal(timers.size, 0);
-    } finally { await view.close(); }
+    } finally { removeEntry(); await view.close(); }
 });

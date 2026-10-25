@@ -1,12 +1,11 @@
 import { Anchor, Card, Group, Paper, SimpleGrid, Stack, Tabs, Text, Title } from '@mantine/core';
 import { useState } from 'react';
-import { ProfilePanelExtras, ProfileTabExtras } from '@/components/common/addon-slots';
+import { ProfileContentExtras, ProfilePanelExtras, ProfileTabExtras } from '@/components/common/addon-slots';
 import { Button } from '@/components/common/button';
 import { Paginator } from '@/components/common/paginator';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
-import { ContributionCard } from '@/components/user/contribution-card';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -275,7 +274,7 @@ export default function UserDetailPage() {
           <ProfilePanelExtras user={udoc} tab={tab} />
         </Tabs>
 
-        {args.contributions && <ContributionCard key={udoc._id} history={args.contributions} />}
+        <ProfileContentExtras user={udoc} data={args} />
         {tags.length > 0 && (
           <Card withBorder p="lg" className="hydro-content-card hydro-user-profile__tags">
             <Group justify="space-between" align="flex-start" gap="md" mb="lg">

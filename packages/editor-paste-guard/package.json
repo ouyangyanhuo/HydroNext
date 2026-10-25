@@ -1,0 +1,15 @@
+{
+    "name": "@hydrooj/editor-paste-guard",
+    "version": "0.0.1",
+    "main": "index.ts",
+    "license": "AGPL-3.0-only",
+    "peerDependencies": {
+        "@hydrooj/ui-next": "*",
+        "hydrooj": "^5.0.7"
+    },
+    "peerDependenciesMeta": {
+        "@hydrooj/ui-next": {
+            "optional": true
+        }
+    }
+}

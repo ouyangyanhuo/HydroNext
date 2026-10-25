@@ -10,6 +10,7 @@ export const AccountMenuExtras = defineSlot('component:account-menu-extras', Emp
 export const SettingsNavigationExtras = defineSlot('component:settings-navigation-extras', Empty);
 export const ProfileTabExtras = defineSlot('component:profile-tab-extras', Empty);
 export const ProfilePanelExtras = defineSlot('component:profile-panel-extras', Empty);
+export const ProfileContentExtras = defineSlot('component:profile-content-extras', Empty);
 export const RecordActionExtras = defineSlot('component:record-action-extras', Empty);
 export const RecordContentExtras = defineSlot('component:record-content-extras', Empty);
 export const RecordRowActionExtras = defineSlot('component:record-row-action-extras', Empty);

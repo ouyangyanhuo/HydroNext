@@ -1,0 +1,2 @@
+'Paste limit exceeded': 'ペースト制限を超過しました'
+'Pasting more than {0} characters is not allowed (currently {1}).': '{0}文字を超える内容は貼り付けできません（現在{1}文字）。'

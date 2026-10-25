@@ -19,6 +19,20 @@ function getPageArgs(response: any) {
     return injection ? JSON.parse(injection[1]).args : response.body;
 }
 
+async function runAddonHttpTests(method: string, agent: any) {
+    const { existsSync } = require('fs');
+    const { resolve } = require('path');
+    for (const directory of Object.values(global.addons)) {
+        const entry = resolve(directory as string, 'tests/integration.ts');
+        if (!existsSync(entry)) continue;
+        const addon = require(entry);
+        if (typeof addon[method] === 'function') {
+            // eslint-disable-next-line no-await-in-loop
+            await addon[method](agent, { getPageArgs });
+        }
+    }
+}
+
 describe('App', () => {
     let agent;
     before(async () => {
@@ -47,19 +61,7 @@ describe('App', () => {
         await agent.get('/api/user?args={"id":2}&projection=uname').expect(null);
     });
 
-    it('Enabled addons pass their own HTTP regressions', async () => {
-        const { existsSync } = require('fs');
-        const { resolve } = require('path');
-        for (const directory of Object.values(global.addons)) {
-            const entry = resolve(directory as string, 'tests/integration.ts');
-            if (!existsSync(entry)) continue;
-            const addon = require(entry);
-            if (typeof addon.runHttpTests === 'function') {
-                // eslint-disable-next-line no-await-in-loop
-                await addon.runHttpTests(agent);
-            }
-        }
-    });
+    it('Enabled addons pass their own HTTP regressions', () => runAddonHttpTests('runHttpTests', agent));
 
     it('Page documents and SPA JSON at the same URL are uncacheable and vary by representation', async () => {
         for (const route of ['/p?page=1', '/d/system/p?page=1']) {
@@ -406,46 +408,7 @@ describe('App', () => {
         }
     });
 
-    it('User contributions count first solves across private domains without exposing their records', async () => {
-        const { domain, user, record } = global.Hydro.model;
-        const { ObjectId } = require('mongodb');
-        const { PERM } = require('../packages/hydrooj/src/model/builtin');
-        const uid = await user.create('contributions@example.com', 'contributions-user', 'secret');
-        const privateDomain = 'private-contribution-test';
-        await domain.add(privateDomain, 2, 'Private contribution domain', '');
-        await domain.setRoles(privateDomain, { guest: 0n, default: 0n });
-        let sequence = 0;
-        const submission = (domainId: string, pid: number, date: string, extra = {}) => ({
-            _id: new ObjectId(`${Math.floor(Date.parse(date) / 1000).toString(16)}${(++sequence).toString(16).padStart(16, '0')}`),
-            domainId, pid, uid, status: STATUS.STATUS_ACCEPTED, judgeAt: new Date(), ...extra,
-        });
-        const records = [
-            submission('system', 10001, '2025-12-31T15:00:00Z'),
-            submission('system', 10001, '2026-01-01T04:00:00Z'),
-            submission(privateDomain, 10001, '2026-01-01T16:00:00Z'),
-            submission(privateDomain, 10002, '2026-01-02T04:00:00Z'),
-            submission(privateDomain, 10002, '2025-12-01T04:00:00Z', { status: STATUS.STATUS_WRONG_ANSWER }),
-            submission(privateDomain, 10003, '2026-01-03T04:00:00Z', { contest: record.RECORD_PRETEST }),
-            submission(privateDomain, 10004, '2026-01-03T05:00:00Z', { contest: record.RECORD_GENERATE }),
-            submission(privateDomain, 10005, '2026-01-03T06:00:00Z', { uid: 2 }),
-        ];
-        await record.coll.insertMany(records);
-        const guest = supertest.agent(require('hydrooj').httpServer);
-        try {
-            assert.equal((await user.getById(privateDomain, 0)).hasPerm(PERM.PERM_VIEW), false);
-            const args = getPageArgs(await guest.get(`/user/${uid}`).set('Accept', 'application/json').expect(200));
-            assert.equal(args.canViewRecords, false);
-            assert.equal(args.contributions.summary.total, 3);
-            assert.deepEqual(args.contributions.days, [{ date: '2025-12-31', count: 1 }, { date: '2026-01-02', count: 2 }]);
-            assert.equal(args.contributions.summary.longestStreak, 1);
-            assert.doesNotMatch(JSON.stringify(args.contributions), /private-contribution-test|domainId|pid|judgeAt|code/);
-            const scoped = getPageArgs(await guest.get(`/d/system/user/${uid}`).set('Accept', 'application/json').expect(200));
-            assert.deepEqual(scoped.contributions, args.contributions);
-        } finally {
-            await record.coll.deleteMany({ _id: { $in: records.map((item) => item._id) } });
-            await domain.del(privateDomain);
-        }
-    });
+    it('Enabled addons pass profile HTTP regressions', () => runAddonHttpTests('runProfileHttpTests', agent));
 
     it('Bulk problem download uses the current domain, create permission and independent testdata access', async () => {
         const { domain, problem, user } = global.Hydro.model;
@@ -1258,34 +1221,7 @@ describe('App', () => {
         }
     });
 
-    it('Client updates are global, private before publication and use an exact public JSON manifest', async () => {
-        const updates = require('../packages/hydrooj/src/model/client-update');
-        const guest = supertest.agent(require('hydrooj').httpServer);
-        const denied = await guest.get('/manage/client-updates').set('Accept', 'application/json').expect(200);
-        assert.match(denied.body.url, /\/login\?/);
-        assert.equal(denied.body.assets, undefined);
-        await guest.post('/manage/client-updates').set('Accept', 'application/json')
-            .send({ operation: 'delete', id: '0123456789abcdef01234567', revision: 0 }).expect(200)
-            .then((response) => assert.match(response.body.url, /\/login\?/));
-        await guest.get('/client-updates/version.json').set('Accept', 'application/json').expect(404);
-        const settings = await agent.get('/d/system/manage/client-updates').set('Accept', 'application/json').expect(200);
-        assert.equal(settings.headers['cache-control'], 'no-store');
-        assert.ok(Array.isArray(settings.body.assets));
-        assert.ok(settings.body.assets.length <= 25);
-        const manifest = { version: '1.2.3', releaseDate: '2026-10-10T00:00:00.000Z', description: 'test', changelog: [] };
-        try {
-            await updates.settings.updateOne({ _id: 'settings' }, { $set: { manifest } });
-            for (const route of ['/client-updates/version.json', '/d/system/client-updates/version.json']) {
-                // eslint-disable-next-line no-await-in-loop
-                const response = await guest.get(route).set('x-hydro-inject', 'uicontext,usercontext').expect(200);
-                assert.deepEqual(response.body, manifest);
-                assert.ok(response.headers['content-type'].includes('application/json'));
-                assert.equal(response.headers['cache-control'], 'no-store');
-            }
-        } finally {
-            await updates.settings.deleteOne({ _id: 'settings' });
-        }
-    });
+    it('Enabled addons pass management HTTP regressions', () => runAddonHttpTests('runManagementHttpTests', agent));
 
     it('Solved ranking excludes domain members with zero solved problems', async () => {
         const res = await agent.get('/ranking').expect(200);

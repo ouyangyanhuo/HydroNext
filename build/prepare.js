@@ -135,7 +135,7 @@ const UINextConfig = {
     include: ['ts', 'tsx', 'vue', 'json'].flatMap((ext) => [
         `packages/ui-next/src/**/*.${ext}`,
         `packages/*/ui/**/*.${ext}`,
-    ]).concat(['packages/code-replay/replay.ts', 'packages/code-replay/timeline.ts']),
+    ]).concat(['packages/code-replay/replay.ts', 'packages/code-replay/timeline.ts', 'packages/*/types.ts']),
     compilerOptions: {
         ...compilerOptionsBase,
         module: 'ESNext',

@@ -10,7 +10,6 @@ import App from './app';
 import { PageDataProvider } from './context/page-data';
 import { RouterProvider } from './context/router';
 import { initialPage, pluginsUrl } from './globals';
-import { pasteGuardPlugin } from './plugins/paste-guard';
 import { installPlugin } from './registry';
 import { useNotificationStore } from './stores/notification';
 
@@ -23,15 +22,8 @@ declare global {
 }
 
 window.__hydroExports = api;
-// Expose notification store for plugins (e.g. paste-guard)
+// Expose the notification store for optional UI plugins.
 window.__hydroNotificationStore = useNotificationStore;
-
-// Install built-in plugins
-try {
-  installPlugin(pasteGuardPlugin);
-} catch (e) {
-  console.error(`[Hydro] Failed to install plugin ${pasteGuardPlugin.name}:`, e);
-}
 
 async function loadPlugins() {
   let plugins: api.PluginDefinition[] = [];

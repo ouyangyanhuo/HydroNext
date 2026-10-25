@@ -1,14 +1,10 @@
-import { constants, createDecipheriv, createHash, privateDecrypt } from 'crypto';
+import { constants, createDecipheriv, privateDecrypt } from 'crypto';
 import { createReadStream } from 'fs';
 import { open } from 'fs/promises';
 import { Writable } from 'stream';
 import { pipeline } from 'stream/promises';
 
-export async function hashFile(path: string): Promise<string> {
-    const hash = createHash('sha256');
-    for await (const chunk of createReadStream(path)) hash.update(chunk);
-    return hash.digest('hex');
-}
+export { hashFile } from './file-hash';
 
 function bytes(value: unknown, length: number): Buffer {
     if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value)) throw new Error('Invalid encrypted log header');

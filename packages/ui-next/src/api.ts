@@ -18,11 +18,11 @@ export { type RouterState, useNavigate, useRouterState } from './context/router'
 export { useBuildUrl } from './hooks/use-build-url';
 export { useCurrentUser, useIsLoggedIn } from './hooks/use-current-user';
 export { useDomain, useDomainId } from './hooks/use-domain';
-export { useI18n } from './hooks/use-i18n';
+export { translate, useI18n } from './hooks/use-i18n';
 export { useObjectUrl } from './hooks/use-object-url';
 
 export {
-  PERM, PRIV, useHasPerm, useHasPriv, usePermission,
+  hasPermValue, hasPrivValue, PERM, PRIV, useHasPerm, useHasPriv, usePermission,
 } from './hooks/use-permission';
 // Registry
 export type {
@@ -33,6 +33,8 @@ export type {
 export {
   after, before, defineSlot, intercept, patch, registerLayout, registerPage, replace, wrap,
 } from './registry';
+export { registerManageEntry } from './registry/manage-entries';
+export type { ManageEntry } from './registry/manage-entries';
 export { getUserExtensionFields, registerUserFields } from './registry/user-fields';
 // Stores
 export {
@@ -43,9 +45,10 @@ export { avatarPixelSize, getAvatarUrl } from './utils/avatar';
 
 export { formatErrorMessage } from './utils/error';
 export { goBackOrFallback } from './utils/history-back';
-
 export { proctorAccessHeaders, registerProctorAccessResolver } from './utils/proctor';
+
 export type { ProctorAccessRequest } from './utils/proctor';
+export { followSafeRedirect, formatRequestError, postJsonRequest } from './utils/request';
 export { formatUserName } from './utils/user-name';
 
 export * as Mantine from '@mantine/core';

@@ -1,0 +1,2 @@
+Paste limit exceeded: 粘贴内容超过限制
+'Pasting more than {0} characters is not allowed (currently {1}).': '粘贴内容不能超过 {0} 个字符（当前 {1} 个字符）。'

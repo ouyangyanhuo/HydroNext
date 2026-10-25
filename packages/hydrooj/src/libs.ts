@@ -10,6 +10,7 @@ import { Context } from './context';
 proxy(superagent);
 
 export * from './interface';
+export { hashFile } from './lib/file-hash';
 export * from './typeutils';
 export * from './utils';
 export { WebSocket, WebSocketServer } from '@hydrooj/framework';

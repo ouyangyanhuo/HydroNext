@@ -48,7 +48,7 @@ const finishMocks = {
     '@/components/common/button': { Button },
     '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
     '@/utils/error': { formatErrorMessage: (error: any) => error.message },
-    '@/utils/proctor': load('../src/utils/proctor.ts', {}),
+    '@/utils/proctor': load('../src/utils/proctor.ts', { './request': load('../src/utils/request.ts', {}) }),
 };
 const finishButton = load('../src/components/contest/proctor-finish-button.tsx', finishMocks);
 

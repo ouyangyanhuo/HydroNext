@@ -47,6 +47,8 @@ export interface EventMap {
     'user/get': (udoc: User) => void;
     /** Enrich public render dictionaries without coupling the user model to optional addons. */
     'user/render': (domainId: string, users: Record<number, any>, uids: number[]) => VoidReturn;
+    /** Load optional profile data alongside the core profile queries. */
+    'user/profile': (handler: Handler, uid: number, data: Record<string, unknown>) => VoidReturn;
     'user/delcache': (content: string | true) => void;
 
     'user/import/parse': (payload: any, messages: string[]) => VoidReturn;
