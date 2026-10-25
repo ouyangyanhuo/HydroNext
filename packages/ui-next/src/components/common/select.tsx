@@ -1,6 +1,6 @@
 import { MultiSelect, type MultiSelectProps, Select, type SelectProps } from '@mantine/core';
 import { forwardRef } from 'react';
-import { mergeSelectClasses, SELECT_CLASS_NAMES, shortSelectDimension } from './select-styles';
+import { mergeSelectClasses, SELECT_CLASS_NAMES, selectComboboxProps, shortSelectDimension } from './select-styles';
 
 export interface ShortSelectProps extends Omit<SelectProps, 'width' | 'height'> {
   /** Control width in pixels, clamped to 72–320. Existing Mantine w also works. */
@@ -30,7 +30,7 @@ export const ShortSelect = forwardRef<HTMLInputElement, ShortSelectProps>(({
     className={['hydro-select', 'hydro-select--short', className].filter(Boolean).join(' ')}
     classNames={(theme, resolvedProps, ctx) => mergeSelectClasses(SELECT_CLASS_NAMES,
       typeof classNames === 'function' ? classNames(theme, resolvedProps, ctx) : classNames)}
-    comboboxProps={{ withinPortal: true, shadow: 'md', offset: 6, ...comboboxProps }}
+    comboboxProps={selectComboboxProps(comboboxProps)}
   />
 ));
 ShortSelect.displayName = 'ShortSelect';
@@ -49,7 +49,7 @@ export const LongSelect = forwardRef<HTMLInputElement, LongSelectProps>(({
     className={['hydro-select', 'hydro-select--long', className].filter(Boolean).join(' ')}
     classNames={(theme, resolvedProps, ctx) => mergeSelectClasses(SELECT_CLASS_NAMES,
       typeof classNames === 'function' ? classNames(theme, resolvedProps, ctx) : classNames)}
-    comboboxProps={{ withinPortal: true, shadow: 'md', offset: 6, ...comboboxProps }}
+    comboboxProps={selectComboboxProps(comboboxProps)}
   />
 ));
 LongSelect.displayName = 'LongSelect';
@@ -68,7 +68,7 @@ export const TagMultiSelect = forwardRef<HTMLInputElement, TagMultiSelectProps>(
     className={['hydro-select', 'hydro-select--multi', className].filter(Boolean).join(' ')}
     classNames={(theme, resolvedProps, ctx) => mergeSelectClasses(SELECT_CLASS_NAMES,
       typeof classNames === 'function' ? classNames(theme, resolvedProps, ctx) : classNames)}
-    comboboxProps={{ withinPortal: true, shadow: 'md', offset: 6, ...comboboxProps }}
+    comboboxProps={selectComboboxProps(comboboxProps)}
   />
 ));
 TagMultiSelect.displayName = 'TagMultiSelect';

@@ -1,3 +1,36 @@
+import type { ComboboxProps } from '@mantine/core';
+
+/** Only composite opacity/transform; never animate list height or scroll position. */
+export const SELECT_DROPDOWN_TRANSITION: NonNullable<ComboboxProps['transitionProps']> = {
+  duration: 240,
+  exitDuration: 180,
+  timingFunction: 'cubic-bezier(.22, .61, .36, 1)',
+  transition: {
+    in: { opacity: 1, transform: 'translate(0, 0) scale(1)', pointerEvents: 'auto' },
+    out: {
+      opacity: 0,
+      transform: 'translate(var(--hydro-select-motion-x, 0px), var(--hydro-select-motion-y, -6px)) scale(.985)',
+      pointerEvents: 'none',
+    },
+    transitionProperty: 'opacity, transform',
+  },
+};
+
+export function selectComboboxProps(custom?: ComboboxProps): ComboboxProps {
+  return {
+    withinPortal: true,
+    shadow: 'md',
+    offset: 6,
+    ...custom,
+    transitionProps: {
+      ...SELECT_DROPDOWN_TRANSITION,
+      // A caller opting out with duration: 0 must also get an immediate exit.
+      ...(custom?.transitionProps?.duration !== undefined ? { exitDuration: custom.transitionProps.duration } : {}),
+      ...custom?.transitionProps,
+    },
+  };
+}
+
 /** Shared slots also style dropdowns rendered outside the page through a portal. */
 export const SELECT_CLASS_NAMES = {
   input: 'hydro-select__input',

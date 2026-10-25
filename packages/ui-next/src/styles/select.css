@@ -55,12 +55,31 @@
 
 /* Portalled dropdowns are not descendants of the field root. */
 .hydro-select__dropdown.mantine-Combobox-dropdown {
+  transform-origin: top center;
   padding: 6px;
   color: var(--hydro-text);
   border: 1px solid var(--hydro-border);
   border-radius: 12px;
   background: var(--hydro-surface-raised);
   box-shadow: var(--hydro-shadow-lg);
+}
+
+/* Match the actual floating placement, including automatic viewport flips. */
+.hydro-select__dropdown[data-position^='top'] {
+  --hydro-select-motion-y: 6px;
+  transform-origin: bottom center;
+}
+
+.hydro-select__dropdown[data-position^='left'] {
+  --hydro-select-motion-x: 6px;
+  --hydro-select-motion-y: 0px;
+  transform-origin: right center;
+}
+
+.hydro-select__dropdown[data-position^='right'] {
+  --hydro-select-motion-x: -6px;
+  --hydro-select-motion-y: 0px;
+  transform-origin: left center;
 }
 
 .hydro-select__option {
@@ -78,5 +97,12 @@
 @media (prefers-reduced-motion: reduce) {
   .hydro-select .mantine-Input-input.hydro-select__input {
     transition: none;
+  }
+
+  .hydro-select__dropdown.mantine-Combobox-dropdown {
+    /* Override Mantine's inline transition without adding a media-query hook per field. */
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+    transform: none !important;
   }
 }

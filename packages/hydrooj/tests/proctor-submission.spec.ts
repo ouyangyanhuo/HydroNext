@@ -5,7 +5,8 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
-import { submissionPayload } from '../src/lib/proctor.ts';
+import { Types } from '../../../framework/framework/validator.ts';
+import { canonical, digest, submissionPayload } from '../src/lib/proctor.ts';
 
 const require = createRequire(import.meta.url);
 function fixture(options: any = {}) {
@@ -92,6 +93,19 @@ test('proof includes numeric document PID and original code before normalization
     const g = fixture({ recordFailure: true });
     await assert.rejects(g.handler.post('exam', 'cc', 'code', false, [], tid));
     assert.equal(g.calls.at(-1), 'release');
+});
+
+test('self-test input is restored after parameter conversion before proof validation and reaches the judge unchanged', async () => {
+    for (const input of [[''], ['1 2\n'], ['', '3\n', '']]) {
+        const f = fixture();
+        const converted = Types.ArrayOf(Types.String, true)[0](input);
+        // eslint-disable-next-line no-await-in-loop
+        await f.handler.post('exam', 'cc', 'code', true, converted, new ObjectId());
+        const payload = f.calls[0][6];
+        assert.equal(digest(canonical(payload)), digest(canonical(submissionPayload(42, 'cc', 'code', true, input))));
+        assert.deepEqual(payload.input, input);
+        assert.deepEqual(f.calls.find((call) => call[0] === 'add')[7].input, input);
+    }
 });
 
 test('ordinary contests and non-contest submissions do not acquire monitoring dependencies', async () => {

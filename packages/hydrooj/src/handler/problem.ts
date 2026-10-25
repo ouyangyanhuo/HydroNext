@@ -589,6 +589,8 @@ export class ProblemSubmitHandler extends ProblemDetailHandler {
     @param('input', Types.ArrayOf(Types.String, true), true)
     @param('tid', Types.ObjectId, true)
     async post(domainId: string, lang: string, code: string, pretest = false, input: string[] = [], tid?: ObjectId) {
+        // Optional array entries become undefined during validation; restore the signed self-test input before hashing.
+        if (pretest) input = input.map((i) => i ?? '');
         let release: Awaited<ReturnType<typeof proctor.reserveSubmission>> | undefined;
         if (tid && this.tdoc.proctorEnabled) {
             const session = await proctor.authenticate({ uid: this.user._id, domainId, tid },
@@ -612,7 +614,6 @@ export class ProblemSubmitHandler extends ProblemDetailHandler {
                     throw new ProblemNotAllowPretestError('type');
                 }
                 if (!input.length) throw new ValidationError('input');
-                input = input.map((i) => i || '');
             }
             await this.limitRate('add_record', 60, system.get('limit.submission_user'), '{{user}}');
             await this.limitRate('add_record', 60, pretest ? system.get('limit.pretest') : system.get('limit.submission'));

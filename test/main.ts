@@ -734,6 +734,7 @@ describe('App', () => {
 
     it('监考自测正确绑定比赛，提前或自然结束后仍可上传加密日志并取得回执', async () => {
         const { contest, domain, problem, user, record, storage } = global.Hydro.model;
+        const { ObjectId } = require('mongodb');
         const { PERM, PRIV } = require('../packages/hydrooj/src/model/builtin');
         const proctor = require('../packages/hydrooj/src/model/proctor');
         const { canonical, digest, secret, signedPayload, verifyPayload } = require('../packages/hydrooj/src/lib/proctor');
@@ -749,7 +750,7 @@ describe('App', () => {
             | PERM.PERM_VIEW_CONTEST | PERM.PERM_ATTEND_CONTEST | PERM.PERM_SUBMIT_PROBLEM });
         await domain.setJoin(domainId, uid, true);
         const pid = await problem.add(domainId, 'H1', 'Hidden proctored problem', 'Statement', 2);
-        await problem.edit(domainId, pid, { hidden: true });
+        await problem.edit(domainId, pid, { hidden: true, config: 'type: default\n' });
         const participant = supertest.agent(require('hydrooj').httpServer);
         const login = await participant.post('/login').send({ uname: 'proctor-pretest-user', password: 'secret' }).expect(302);
         const cookie = login.headers['set-cookie'].map((value: string) => value.split(';')[0]).join('; ');
@@ -763,7 +764,7 @@ describe('App', () => {
                 const tid = await contest.add(domainId, `Proctor ${ending}`, '', 2, 'oi',
                     new Date(now - 60_000), new Date(now + 3600_000), [pid], false, { proctorEnabled: true });
                 tids.push(tid);
-                await contest.attend(domainId, tid, uid);
+                await contest.attend(domainId, tid, uid, { startAt: new Date(now - 1000) });
                 const rid = await record.add(domainId, pid, uid, '_', 'private self-test', false, { type: 'pretest', contest: tid, input: ['1'] });
                 const identityPath = `/d/${domainId}/proctor/identity`;
                 for (const request of [{ rid }, { rid, tid }]) {
@@ -789,6 +790,28 @@ describe('App', () => {
                     return { 'x-proctor-token': session.token, 'x-proctor-proof': Buffer.from(JSON.stringify({ payload,
                         signature: signedPayload(payload, device.privateKey) })).toString('base64url') };
                 };
+                if (ending === 'early') {
+                    const submitPath = `/d/${domainId}/p/H1/submit`;
+                    const submission = { pid, lang: 'cc', code: 'int main(){}', pretest: true, input: [''], fileHash: '' };
+                    for (const input of [[''], ['1 2\n'], ['', '3\n', '']]) {
+                        const body = { ...submission, input };
+                        const submitted = await participant.post(`${submitPath}?tid=${tid}`).set('Accept', 'application/json')
+                            .set(headers('submit', 'POST', submitPath, body)).send(body).expect(200);
+                        assert.ok(submitted.body.rid);
+                        const selfTest = await record.get(domainId, new ObjectId(submitted.body.rid));
+                        assert.deepEqual(selfTest.input, input);
+                        assert.equal(selfTest.pretestContest.toHexString(), tid.toHexString());
+                    }
+                    for (const changed of [{ input: ['changed'] }, { code: 'int main(){return 1;}' }]) {
+                        const rejected = await participant.post(`${submitPath}?tid=${tid}`).set('Accept', 'application/json')
+                            .set(headers('submit', 'POST', submitPath, submission)).send({ ...submission, ...changed }).expect(403);
+                        assert.equal(rejected.body.error.params[0], 'Invalid proctor request proof.');
+                    }
+                    const formal = { ...submission, pretest: false, input: [] };
+                    const submitted = await participant.post(`${submitPath}?tid=${tid}`).set('Accept', 'application/json')
+                        .set(headers('submit', 'POST', submitPath, formal)).send(formal).expect(200);
+                    assert.equal(submitted.body.tid, tid.toHexString());
+                }
                 const path = `/d/${domainId}/record/${rid}`;
                 await participant.get(path).set('Accept', 'application/json').expect(403);
                 const result = await participant.get(path).set('Accept', 'application/json')

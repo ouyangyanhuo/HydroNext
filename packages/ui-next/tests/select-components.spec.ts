@@ -116,6 +116,32 @@ test('callbacks, refs, controlled values, option renderers and portal configurat
     }
 });
 
+test('all shared variants animate without dropping transition overrides or caller callbacks', () => {
+    const onExited = () => {};
+    for (const Component of [ShortSelect, LongSelect, TagMultiSelect]) {
+        const defaults = Component.render({}, null).props.comboboxProps.transitionProps;
+        assert.equal(defaults.duration, 240);
+        assert.equal(defaults.exitDuration, 180);
+        assert.equal(defaults.transition.transitionProperty, 'opacity, transform');
+        assert.equal(defaults.transition.out.pointerEvents, 'none');
+        const custom = { transitionProps: { duration: 350, onExited } };
+        const merged = Component.render({ comboboxProps: custom }, null).props.comboboxProps.transitionProps;
+        assert.equal(merged.duration, 350);
+        assert.equal(merged.exitDuration, 350);
+        assert.equal(merged.onExited, onExited);
+        assert.equal(custom.transitionProps.duration, 350);
+        assert.equal(Object.hasOwn(custom.transitionProps, 'exitDuration'), false);
+        const immediate = Component.render({ comboboxProps: { transitionProps: { duration: 0 } } }, null).props.comboboxProps.transitionProps;
+        assert.equal(immediate.duration, 0);
+        assert.equal(immediate.exitDuration, 0);
+        const overridden = Component.render({
+            comboboxProps: { transitionProps: { transition: 'fade', duration: 300, exitDuration: 80 } },
+        }, null).props.comboboxProps.transitionProps;
+        assert.equal(overridden.transition, 'fade');
+        assert.equal(overridden.exitDuration, 80);
+    }
+});
+
 test('shared styles merge with object and callback overrides without mutating callers', () => {
     const custom = { input: 'custom-input', label: 'custom-label' };
     assert.deepEqual(mergeSelectClasses({ input: 'base' }, custom), { input: 'base custom-input', label: 'custom-label' });
@@ -175,6 +201,42 @@ test('short select opens portalled options and changes selection in light and da
             await view.close();
         }
     }
+});
+
+test('dropdown enters, exits, reopens during exit and releases the invisible popup', async () => {
+    const view = await mount(ShortSelect, { label: 'Motion', data: ['First', 'Second'] });
+    const settle = (ms: number) => act(async () => new Promise((resolve) => setTimeout(resolve, ms)));
+    try {
+        const input = view.host.querySelector<HTMLInputElement>('input[aria-haspopup="listbox"]')!;
+        await act(async () => input.click());
+        await settle(40);
+        const dropdown = document.querySelector<HTMLElement>('.hydro-select__dropdown')!;
+        assert.equal(input.getAttribute('aria-expanded'), 'true');
+        assert.equal(dropdown.style.transitionDuration, '240ms');
+        assert.equal(dropdown.style.pointerEvents, 'auto');
+        await act(async () => input.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+        await settle(40);
+        assert.equal(input.getAttribute('aria-expanded'), 'false');
+        assert.equal(dropdown.style.transitionDuration, '180ms');
+        assert.equal(dropdown.style.opacity, '0');
+        assert.equal(dropdown.style.pointerEvents, 'none');
+        await act(async () => input.click());
+        await settle(40);
+        assert.equal(dropdown.style.pointerEvents, 'auto');
+        assert.equal(dropdown.style.opacity, '1');
+        await act(async () => input.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+        await settle(240);
+        assert.equal(dropdown.style.display, 'none');
+    } finally {
+        await view.close();
+    }
+    const css = readFileSync(new URL('../src/styles/select.css', import.meta.url), 'utf8');
+    assert.match(css, /data-position\^='top'[\s\S]*?--hydro-select-motion-y: 6px/);
+    assert.match(css, /prefers-reduced-motion: reduce[\s\S]*?transition-duration: 0ms !important/);
+    const globalCss = readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8');
+    const opaqueOverlays = globalCss.slice(globalCss.indexOf('/* Interactive overlays must stay fully opaque'));
+    assert.match(opaqueOverlays, /\.mantine-Combobox-dropdown:not\(\.hydro-select__dropdown\)/);
+    assert.match(opaqueOverlays, /\.mantine-Popover-dropdown:not\(\.hydro-select__dropdown\)/);
 });
 
 test('list sort uses a translated portal tooltip and preserves select interaction', async () => {
