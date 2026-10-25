@@ -1,8 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Context } from '../context';
-import { PermissionError, ValidationError } from '../error';
-import bus from '../service/bus';
-import db from '../service/db';
+import { Context, db, PermissionError, ValidationError } from 'hydrooj';
 
 export interface ContestAnnouncementDoc {
     _id: ObjectId;
@@ -26,7 +23,7 @@ interface AnnouncementReceipt {
     acknowledgedAt: Date;
 }
 
-declare module '../service/db' {
+declare module 'hydrooj' {
     interface Collections {
         'contest.announcement': ContestAnnouncementDoc;
         'contest.announcement.receipt': AnnouncementReceipt;
@@ -45,18 +42,18 @@ export async function publish(payload: Omit<ContestAnnouncementDoc, '_id' | 'cre
         try {
             const result = await coll.updateOne({ eventKey: payload.eventKey }, { $setOnInsert: doc }, { upsert: true });
             if (!result.upsertedCount) {
-                bus.broadcast('contest/announcement', recipients);
+                global.app.broadcast('contest/announcement', recipients);
                 return { id: '', recipients: 0 };
             }
         } catch (error) {
             if (error?.code === 11000) {
-                bus.broadcast('contest/announcement', recipients);
+                global.app.broadcast('contest/announcement', recipients);
                 return { id: '', recipients: 0 };
             }
             throw error;
         }
     } else await coll.insertOne(doc);
-    bus.broadcast('contest/announcement', recipients);
+    global.app.broadcast('contest/announcement', recipients);
     return { id: doc._id.toHexString(), recipients: recipients.length };
 }
 
@@ -90,10 +87,10 @@ export async function acknowledge(uid: number, id: string) {
         // Two tabs can confirm simultaneously; the unique index guarantees a single receipt.
         if (error?.code !== 11000) throw error;
     }
-    bus.broadcast('contest/announcement', [uid]);
+    global.app.broadcast('contest/announcement', [uid]);
 }
 
-export async function apply(ctx: Context) {
+export async function initialize(ctx: Context) {
     await ctx.db.ensureIndexes(coll, { key: { recipients: 1, _id: 1 }, name: 'participant_announcements' });
     await ctx.db.ensureIndexes(coll, { key: { recipients: 1, kind: -1, _id: 1 }, name: 'participant_announcement_priority' });
     await ctx.db.ensureIndexes(coll, { key: { domainId: 1, tid: 1 }, name: 'contest_announcements' });
@@ -106,7 +103,7 @@ export async function apply(ctx: Context) {
         if (!docs.length) return;
         await coll.deleteMany(query);
         await receipts.deleteMany({ announcementId: { $in: docs.map((doc) => doc._id) } });
-        bus.broadcast('contest/announcement', [...new Set(docs.flatMap((doc) => doc.recipients))]);
+        global.app.broadcast('contest/announcement', [...new Set(docs.flatMap((doc) => doc.recipients))]);
     };
     ctx.on('contest/del', remove);
     ctx.on('domain/delete', (domainId) => remove(domainId));

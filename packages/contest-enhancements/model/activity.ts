@@ -1,9 +1,8 @@
 import { ObjectId } from 'mongodb';
-import { ContestNotAttendedError, ValidationError } from '../error';
-import type { ContestStatusDoc, Tdoc } from '../interface';
-import { advanceContestActivity, contestActivityBounds } from '../lib/contest-activity';
-import db from '../service/db';
-import { TYPE_CONTEST } from './document';
+import { ContestNotAttendedError, type ContestStatusDoc, db, DocumentModel, type Tdoc, ValidationError } from 'hydrooj';
+import { advanceContestActivity, contestActivityBounds } from '../lib/activity';
+
+const { TYPE_CONTEST } = DocumentModel;
 
 const statuses = db.collection('document.status');
 

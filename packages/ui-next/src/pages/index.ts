@@ -43,7 +43,6 @@ registerPage('problem_hack', () => import('./problem_hack'), { title: 'Hack', na
 registerPage('contest_detail_problem_hack', () => import('./problem_hack'), { title: 'Hack', nav: CONTESTS });
 registerPage('home_settings', () => import('./home_settings'), { title: 'Settings' });
 registerPage('home_security', () => import('./home_security'), { title: 'Security' });
-registerPage('home_messages', () => import('./home_messages'), { title: 'Messages' });
 registerPage('home_files', () => import('./home_files'), { title: 'My Files' });
 registerPage('home_domain', () => import('./home_domain'), { title: 'My Domains' });
 registerPage('contest_edit', () => import('./contest_edit'), { title: 'Edit Contest', nav: CONTESTS });

@@ -249,7 +249,6 @@ export interface RecordStatDoc {
 }
 
 export interface ScoreboardNode {
-    problemTime?: number;
     type: 'string' | 'rank' | 'user' | 'email' | 'record' | 'records' | 'problem' | 'solved' | 'time' | 'total_score';
     value: string; // 显示分数
     raw?: any;
@@ -490,11 +489,6 @@ export interface ContestStatusDoc extends StatusDocBase, ContestStat {
     /** Explicit manual finish; kept separate from natural participation deadlines. */
     earlyEndAt?: Date;
     rev?: number;
-    /** Foreground problem-page time in milliseconds; independent of ranking penalties. */
-    problemTimes?: Record<number, number>;
-    totalProblemTime?: number;
-    problemActivityRev?: number;
-    problemActivity?: { token: string, pid: number, at: number } | null;
     proctorEnded?: boolean;
     proctorLogUploaded?: boolean;
     proctorMembers?: Record<string, { proctorEnded?: boolean, proctorLogUploaded?: boolean }>;

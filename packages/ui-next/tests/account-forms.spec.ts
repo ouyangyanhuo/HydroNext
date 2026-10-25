@@ -58,6 +58,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         return `${prefix}/${route}${search ? `?${search}` : ''}`;
     };
     const mocks: Record<string, any> = {
+        '@/components/common/addon-slots': { ScoreboardCellExtras: () => null },
         './contest-detail.css': {},
         './ranking.css': {},
         '@mantine/core': mantine,

@@ -5,7 +5,8 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
-import { advanceContestActivity, appendContestActivityTimes, contestActivityBounds } from '../src/lib/contest-activity.ts';
+import { advanceContestActivity, appendContestActivityTimes, contestActivityBounds } from '../lib/activity.ts';
+import { resolveContestMock } from './mock-api';
 
 const require = createRequire(import.meta.url);
 const tid = new ObjectId('1234567890abcdef12345678');
@@ -17,7 +18,10 @@ function load(path: string, mocks: Record<string, any>, globals: Record<string, 
     const code = transformSync(readFileSync(new URL(path, import.meta.url), 'utf8'), {
         loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } },
     }).code;
-    runInNewContext(code, { module, exports: module.exports, URL, ...globals, require: (name: string) => mocks[name] ?? require(name) });
+    runInNewContext(code, {
+        module, exports: module.exports, URL, global: { app: mocks['../service/bus']?.default }, ...globals,
+        require: (name: string) => resolveContestMock(name, mocks, require),
+    });
     return module.exports;
 }
 
@@ -76,7 +80,7 @@ test('atomic status revisions prevent double counting and persist scoped per-pro
             return { ...status };
         },
     };
-    const { heartbeat } = load('../src/model/contest-activity.ts', {
+    const { heartbeat } = load('../model/activity.ts', {
         '../service/db': { __esModule: true, default: { collection: () => statuses } },
         '../error': { ContestNotAttendedError: Error, ValidationError: Error },
         './document': { TYPE_CONTEST: 30 },
@@ -122,7 +126,7 @@ test('scoreboard attaches time to the correct user/problem and exports all time 
 
 test('activity connection rejects domain overrides and cross-origin connections', async () => {
     const calls: any[] = [];
-    const { ContestActivityConnectionHandler } = load('../src/handler/contest-activity.ts', {
+    const { ContestActivityConnectionHandler } = load('../handler/activity.ts', {
         '../service/server': { ConnectionHandler: class {}, param: () => () => {}, Types: {} },
         '../context': {}, '../error': { ForbiddenError: Error, PermissionError: Error },
         '../model/builtin': { PRIV: { PRIV_USER_PROFILE: 1 }, PERM: { PERM_VIEW_CONTEST: 2 } },

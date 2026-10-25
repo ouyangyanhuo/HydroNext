@@ -1,8 +1,4 @@
 __flag: 🇨🇳
-'You have ended your contest early. Contest submissions are now closed.': '您已提前结束本次参赛，现已停止接收比赛提交。'
-'You have ended your proctored contest early. Contest submissions are now closed.': '您已提前结束本次监考考试，现已停止接收比赛提交。'
-'Your team has ended the contest early. Contest submissions are now closed.': '您的队伍已提前结束比赛，队员均无法再提交比赛代码。'
-'Your team has ended the proctored contest early. Contest submissions are now closed.': '您的队伍已提前结束本次监考考试，队员均无法再提交比赛代码。'
 'Filter participants': '筛选参赛者'
 'Only me': '仅自己'
 'Ranked Users': '计入排名的用户'
@@ -76,19 +72,15 @@ setting_navigation: 隐藏功能
 'Previous problem': '上一题'
 'Problem navigation': '题目导航'
 'This problem is no longer in the source list. Return to the list to continue.': '题目顺序或访问权限已变化，请返回来源列表后继续。'
-'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.': '作答用时未能同步，排行榜仅统计服务端确认保存的时间。'
 'Reset team invitation code': '重置队伍邀请码'
 'Resetting invalidates the old invitation code immediately. Existing members are not affected.': '重置后旧邀请码立即失效，现有成员不受影响。'
 'Team invitation code': '队伍邀请码'
 'Team is full (maximum {0} members).': '队伍已满（最多 {0} 名成员）。'
-'Timing not synced': '计时未同步'
 'You are already a member of this team.': '您已经是该队伍的成员。'
 'You are not in any team yet.': '你还没有加入任何队伍。'
 'Allow public registration': '允许用户自行注册；关闭后仅管理员可创建或导入用户。'
 'Public registration is disabled. Please contact a system administrator.': '公开注册已关闭，请联系系统管理员创建账号。'
 'server.allowRegister': '开放注册'
-'Foreground problem time; saved to the contest scoreboard.': '题目页面处于前台的用时，已保存到比赛排行榜。'
-'Total problem time': '总写题用时'
 'Add at least one chapter.': '请至少添加一个章节。'
 'Add chapter': '添加章节'
 'Advanced JSON plan': '高级 JSON 编辑'
@@ -108,17 +100,6 @@ setting_navigation: 隐藏功能
 'Problem search failed': '题目搜索失败'
 'Remove chapter': '移除章节'
 'Remove this chapter and its prerequisite references? Problems themselves will not be deleted.': '确定移除此章节，并清除其他章节对它的前置引用吗？题目本身不会被删除。'
-'Announcement content (up to 4000 characters)': '公告内容（最多 4000 个字符）'
-'Announcement sent': '公告已发送'
-'Announcements are available while the contest is running.': '仅在比赛进行中可发送公告。'
-'Contest announcement': '比赛公告'
-'Drag timer; use arrow keys to move, or Home to reset.': '拖动计时胶囊；可用方向键移动，Home 键恢复默认位置。'
-'I understand': '我已知晓'
-'Reconnecting…': '正在重新连接…'
-'Send announcement': '发送公告'
-'Send to all registered participants': '发送给所有已报名参赛者'
-'Sent to {count} participants.': '已发送给 {count} 位参赛者。'
-'Unread announcements': '条未读公告'
 'Application runtime': '应用运行时间'
 'Based on container PID 1. Reloading the application does not reset this timer.': '按容器主进程（PID 1）计算，重启应用不会重置此计时。'
 'Container runtime': '容器运行时间'
@@ -679,8 +660,6 @@ No judges connected: 无评测机连接
 # Messages
 Messages: 消息
 No messages: 暂无消息
-New Message: 新消息
-Select a conversation: 选择一个会话开始聊天
 
 # User Profile
 No bio: 暂无个人简介
@@ -802,7 +781,6 @@ Remove Selected Group: 移除选中用户组
 Search users by username or UID: 通过用户名或 UID 搜索用户
 Search users: 搜索用户
 Type to search users: 输入用户名或 UID 搜索
-Type username or UID: 输入用户名或 UID
 User search failed: 用户搜索失败
 No users found: 未找到用户
 Change: 修改
@@ -954,10 +932,6 @@ You can create your own training plans and share them with others.: 您可以创
 Go to Solve: 去做题
 Contest Closed: 比赛已结束
 The contest has ended. You can view the problems, but contest submissions are closed.: 比赛已结束。您可以查看题目，但无法再提交比赛代码。
-The contest has ended. Contest submissions are now closed.: 比赛已结束，现已停止接收比赛提交。
-The contest has ended for your team. Contest submissions are now closed.: 您所在队伍的比赛已结束，队员均无法再提交比赛代码。
-Your contest time is up. Contest submissions are now closed.: 您的参赛时间已到，现已停止接收比赛提交。
-End proctoring and upload your log in the client. Ending the contest does not upload it automatically.: 请在监考客户端中结束监考并上传日志。结束比赛不会自动上传日志。
 The contest has ended. You can view the problem, but contest submissions are closed.: 比赛已结束。您可以查看题面，但无法再提交比赛代码。
 Confirm to delete this clarification?: 确认删除这条答疑？
 Deleted: 已删除
@@ -1107,10 +1081,6 @@ Your Status: 你的状态
 'The current client does not enforce minimum versions or verify SHA-256. Installer links are for manual downloads; fallback and signature support require client changes.': '当前客户端未执行最低版本限制或 SHA-256 校验。安装包链接供手动下载；失败回退及签名校验需要客户端配合实现。'
 
 # 比赛题目计时
-Contest starts in: 距离比赛开始
-Contest time remaining: 比赛剩余时间
-Time on this problem: 本题用时
-Visible time on this problem; saved in this tab.: 累计停留在本题页面的时间，在当前标签页内保存。
 
 # User contribution history
 'Accepted Problems in This Domain': '本域中已通过题目'
@@ -1159,9 +1129,7 @@ Visible time on this problem; saved in this tab.: 累计停留在本题页面的
 'View domain members, assign roles, and manage memberships.': '查看域内成员、分配角色并管理成员身份与邀请。'
 'Visit': '访问前台'
 # 个人监考结束入口
-End and upload: 结束并上传
 End personal proctoring and upload log: 结束个人监考并上传日志
 Finish proctoring: 结束监考
 Open this page in the proctor client to finish proctoring and upload your log.: 请在监考客户端中打开此页面，结束个人监考并上传日志。
-Skip upload for now: 暂不上传
 'Restores the account avatar to its registration default when saved.': '保存后恢复为注册时默认的邮箱头像。'

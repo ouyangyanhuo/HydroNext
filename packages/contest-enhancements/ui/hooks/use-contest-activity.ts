@@ -1,6 +1,5 @@
+import { useSessionStore, useWebSocket } from '@hydrooj/ui-next';
 import { useEffect, useRef, useState } from 'react';
-import { useSessionStore } from '@/stores/session';
-import { useWebSocket } from './use-websocket';
 
 export function useContestActivity(tid: string, pid: number, enabled: boolean) {
   const domainId = useSessionStore((s) => s.ui.domainId);

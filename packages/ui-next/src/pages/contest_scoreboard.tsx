@@ -4,6 +4,7 @@ import { Group, Paper, Stack, Table, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconCheck, IconTrophy } from '@tabler/icons-react';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { ScoreboardCellExtras } from '@/components/common/addon-slots';
 import { Button } from '@/components/common/button';
 import { ShortSelect } from '@/components/common/select';
 import { TeamIdentity } from '@/components/contest/team-identity';
@@ -16,7 +17,6 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { PERM } from '@/hooks/use-permission';
 import { useDeadlinePassed } from '@/hooks/use-time';
-import { formatContestClock } from '@/utils/contest-problem-time';
 import { formatErrorMessage } from '@/utils/error';
 import { goBackOrFallback } from '@/utils/history-back';
 import { toBigInt } from '@/utils/permissions';
@@ -352,11 +352,7 @@ export default function ContestScoreboardPage() {
                           ) : (
                             <Stack gap={3} align="center" className="hydro-numeric">
                               <CellValue cell={cell} canViewRecord={canViewRecord} />
-                              {column.type === 'problem' && cell.problemTime !== undefined && (
-                                <Text size="xs" c="dimmed" title={t('Time on this problem')} className="whitespace-nowrap tabular-nums">
-                                  {t('Time on this problem')} {formatContestClock(cell.problemTime)}
-                                </Text>
-                              )}
+                              <ScoreboardCellExtras cell={cell} column={column} />
                             </Stack>
                           )}
                         </Table.Td>

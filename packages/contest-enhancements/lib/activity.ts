@@ -1,4 +1,4 @@
-import type { ContestStatusDoc, ScoreboardRow, Tdoc } from '../interface';
+import type { ContestStatusDoc, ScoreboardRow, Tdoc } from 'hydrooj';
 
 export const ACTIVITY_LEASE_MS = 30_000;
 

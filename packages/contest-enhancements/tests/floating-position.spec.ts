@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
-import { bindFloatingDrag, clampFloatingPosition, CONTEST_TIMER_POSITION_KEY, readFloatingPosition } from '../src/utils/floating-position.ts';
+import { bindFloatingDrag, clampFloatingPosition, CONTEST_TIMER_POSITION_KEY, readFloatingPosition } from '../ui/utils/floating-position.ts';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');

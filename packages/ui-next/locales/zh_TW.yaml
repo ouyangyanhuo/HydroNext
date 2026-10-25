@@ -1,9 +1,5 @@
 __flag: 🇹🇼
 'Authentication key ID': '認證金鑰 ID'
-'You have ended your contest early. Contest submissions are now closed.': '您已提前結束本次參賽，現已停止接收比賽提交。'
-'You have ended your proctored contest early. Contest submissions are now closed.': '您已提前結束本次監考考試，現已停止接收比賽提交。'
-'Your team has ended the contest early. Contest submissions are now closed.': '您的隊伍已提前結束比賽，隊員均無法再提交比賽程式碼。'
-'Your team has ended the proctored contest early. Contest submissions are now closed.': '您的隊伍已提前結束本次監考考試，隊員均無法再提交比賽程式碼。'
 'All participants': '所有參賽者'
 'Filter participants': '篩選參賽者'
 'Only me': '僅自己'
@@ -50,7 +46,6 @@ setting_navigation: 隱藏功能
 'Problem navigation': '題目導覽'
 'Retry': '重試'
 'This problem is no longer in the source list. Return to the list to continue.': '題目順序或存取權限已變更，請返回來源列表後繼續。'
-'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.': '作答用時未能同步，排行榜僅統計伺服器確認儲存的時間。'
 'Allowed langs': '域內允許使用的提交語言'
 'Domain icon': '網域圖示'
 'avatar': '網域圖示'
@@ -59,7 +54,6 @@ setting_navigation: 隱藏功能
 'Resetting invalidates the old invitation code immediately. Existing members are not affected.': '重設後舊邀請碼立即失效，現有成員不受影響。'
 'Team invitation code': '隊伍邀請碼'
 'Team is full (maximum {0} members).': '隊伍已滿（最多 {0} 名成員）。'
-'Timing not synced': '計時未同步'
 'You are already a member of this team.': '您已經是該隊伍的成員。'
 'You are not in any team yet.': '你還沒有加入任何隊伍。'
 __id: zh_TW
@@ -590,8 +584,6 @@ No judges connected: 無評測機連線
 # Messages
 Messages: 訊息
 No messages: 暫無訊息
-New Message: 新訊息
-Select a conversation: 選擇一個對話開始聊天
 
 # User Profile
 No bio: 暫無個人簡介
@@ -713,7 +705,6 @@ Remove Selected Group: 移除選取的使用者組
 Search users by username or UID: 透過使用者名稱或 UID 搜尋使用者
 Search users: 搜尋使用者
 Type to search users: 輸入使用者名稱或 UID 搜尋
-Type username or UID: 輸入使用者名稱或 UID
 User search failed: 使用者搜尋失敗
 No users found: 未找到使用者
 Change: 變更
@@ -865,10 +856,6 @@ You can create your own training plans and share them with others.: 您可以建
 Go to Solve: 去做題
 Contest Closed: 比賽已結束
 The contest has ended. You can view the problems, but contest submissions are closed.: 比賽已結束。您可以檢視題目，但無法再提交比賽程式碼。
-The contest has ended. Contest submissions are now closed.: 比賽已結束，現已停止接收比賽提交。
-The contest has ended for your team. Contest submissions are now closed.: 您所在隊伍的比賽已結束，隊員均無法再提交比賽程式碼。
-Your contest time is up. Contest submissions are now closed.: 您的參賽時間已到，現已停止接收比賽提交。
-End proctoring and upload your log in the client. Ending the contest does not upload it automatically.: 請在監考客戶端中結束監考並上傳日誌。結束比賽不會自動上傳日誌。
 The contest has ended. You can view the problem, but contest submissions are closed.: 比賽已結束。您可以檢視題面，但無法再提交比賽程式碼。
 Confirm to delete this clarification?: 確認刪除這條答疑？
 Deleted: 已刪除
@@ -924,10 +911,6 @@ Serif: 襯線體
 Your Status: 您的狀態
 
 # 比賽題目計時
-Contest starts in: 距離比賽開始
-Contest time remaining: 比賽剩餘時間
-Time on this problem: 本題用時
-Visible time on this problem; saved in this tab.: 累計停留在本題頁面的時間，於目前分頁內儲存。
 
 # 团队独立监考与提前结束比赛
 'All team logs uploaded': '全隊日誌已上傳'

@@ -21,8 +21,6 @@ import { teamProctorStatus } from '../lib/proctor-team';
 import { requireTeamCaptain, teamCaptainId } from '../lib/team-permissions';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
-import * as announcements from '../model/contest-announcement';
-import * as ending from '../model/contest-ending';
 import * as discussion from '../model/discussion';
 import * as document from '../model/document';
 import message from '../model/message';
@@ -246,7 +244,6 @@ export class ContestDetailHandler extends ContestDetailBaseHandler {
         await contest.setStatus(domainId, tid, this.team ?? this.user._id, {
             endAt: now, earlyEndAt: now, ...(!this.tsdoc.startAt ? { startAt: now } : {}),
         });
-        await ending.notifyEnded(domainId, tid, this.team ?? this.user._id);
         this.back();
     }
 }
@@ -612,23 +609,6 @@ export class ContestCodeHandler extends Handler {
 
 export class ContestManagementHandler extends ContestManagementBaseHandler {
     @param('tid', Types.ObjectId)
-    @post('content', Types.String)
-    async postAnnouncement(domainId: string, tid: ObjectId, content: string) {
-        // Never allow request-body/query overrides to borrow management permissions from another domain.
-        if (domainId !== this.domain._id) throw new PermissionError(PERM.PERM_EDIT_CONTEST);
-        this.checkPerm(PERM.PERM_EDIT_CONTEST);
-        if (!contest.isOngoing(this.tdoc)) throw new ContestNotLiveError(domainId, tid);
-        if (!content.trim() || content.trim().length > 4000) throw new ValidationError('content');
-        await this.limitRate('contest_announcement', 60, 10);
-        const statuses = await contest.getMultiStatus(domainId, { docId: tid, attend: 1 }).project({ uid: 1, members: 1 }).toArray();
-        this.response.body = await announcements.publish({
-            domainId, tid, content, title: this.tdoc.title, createdBy: this.user._id,
-            recipients: statuses.flatMap((status) => status.members?.length ? status.members : [status.uid]),
-        });
-        await oplog.log(this, 'contest.announcement', { tid });
-    }
-
-    @param('tid', Types.ObjectId)
     @param('d', Types.Range(['public', 'private']), true)
     @param('sidebar', Types.Boolean)
     async get(domainId: string, tid: ObjectId, d?: string, sidebar?: boolean) {
@@ -637,7 +617,6 @@ export class ContestManagementHandler extends ContestManagementBaseHandler {
             tsdoc: this.tsdoc,
             owner_udoc: await user.getById(domainId, this.tdoc.owner),
             pdict: await problem.getList(domainId, this.tdoc.pids, true, true, [...problem.PROJECTION_CONTEST_LIST, 'tag']),
-            canSendAnnouncement: this.user.hasPerm(PERM.PERM_EDIT_CONTEST) && contest.isOngoing(this.tdoc),
             files: sortFiles(this.tdoc.files || []),
             privateFiles: sortFiles(this.tdoc.privateFiles || []),
             urlForFile: (filename: string, type: string) => this.url('contest_file_download', { tid, filename, type }),

@@ -1,8 +1,4 @@
 __flag: 🇰🇷
-'You have ended your contest early. Contest submissions are now closed.': '대회 참가를 조기 종료했습니다. 더 이상 대회에 제출할 수 없습니다.'
-'You have ended your proctored contest early. Contest submissions are now closed.': '감독 대회 참가를 조기 종료했습니다. 더 이상 대회에 제출할 수 없습니다.'
-'Your team has ended the contest early. Contest submissions are now closed.': '팀이 대회 참가를 조기 종료했습니다. 팀원은 더 이상 대회에 제출할 수 없습니다.'
-'Your team has ended the proctored contest early. Contest submissions are now closed.': '팀이 감독 대회 참가를 조기 종료했습니다. 팀원은 더 이상 대회에 제출할 수 없습니다.'
 'Filter participants': '참가자 필터'
 'Only me': '나만 보기'
 'Ranked Users': '순위에 포함된 사용자'
@@ -47,7 +43,6 @@ __flag: 🇰🇷
 'Previous problem': '이전 문제'
 'Problem navigation': '문제 탐색'
 'This problem is no longer in the source list. Return to the list to continue.': '문제 순서나 접근 권한이 변경되었습니다. 목록으로 돌아가서 계속하세요.'
-'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.': '문제 풀이 시간이 동기화되지 않았습니다. 서버에서 확인된 시간만 순위표에 반영됩니다.'
 'Reset team invitation code': '팀 초대 코드 재설정'
 'Resetting invalidates the old invitation code immediately. Existing members are not affected.': '재설정 시 기존 초대 코드는 즉시 무효화되며 현재 팀원에게는 영향을 주지 않습니다.'
 'Team invitation code': '팀 초대 코드'
@@ -56,14 +51,11 @@ __flag: 🇰🇷
 'avatar': '도메인 아이콘'
 'Leave blank to allow all languages': '비워두면 모든 언어 허용'
 'Team is full (maximum {0} members).': '팀 정원이 찼습니다 (최대 {0}명).'
-'Timing not synced': '시간 미동기화'
 'You are already a member of this team.': '이미 이 팀의 멤버입니다.'
 'You are not in any team yet.': '아직 어떤 팀에도 가입하지 않았습니다.'
 'Allow public registration': '사용자 자체 회원가입 허용 (비활성화 시 관리자만 생성 및 가져오기 가능)'
 'Public registration is disabled. Please contact a system administrator.': '공개 회원가입이 비활성화되었습니다. 시스템 관리자에게 문의하세요.'
 'server.allowRegister': '공개 가입 허용'
-'Foreground problem time; saved to the contest scoreboard.': '문제 페이지를 열어둔 시간으로, 대회 순위표에 저장됩니다.'
-'Total problem time': '총 문제 풀이 시간'
 'Add at least one chapter.': '최소 하나의 챕터를 추가하세요.'
 'Add chapter': '챕터 추가'
 'Advanced JSON plan': '고급 JSON 편집'
@@ -83,17 +75,6 @@ __flag: 🇰🇷
 'Problem search failed': '문제 검색 실패'
 'Remove chapter': '챕터 제거'
 'Remove this chapter and its prerequisite references? Problems themselves will not be deleted.': '이 챕터와 해당 챕터를 가리키는 선수 참조를 제거할까요? 문제 자체는 삭제되지 않습니다.'
-'Announcement content (up to 4000 characters)': '공지 내용 (최대 4000자)'
-'Announcement sent': '공지 발송 완료'
-'Announcements are available while the contest is running.': '대회 진행 중에만 공지를 전송할 수 있습니다.'
-'Contest announcement': '대회 공지'
-'Drag timer; use arrow keys to move, or Home to reset.': '타이머 캡슐을 드래그하세요. 방향키로 이동하거나 Home 키로 기본 위치로 초기화할 수 있습니다.'
-'I understand': '확인했습니다'
-'Reconnecting…': '재연결 중…'
-'Send announcement': '공지 발송'
-'Send to all registered participants': '등록된 모든 참가자에게 전송'
-'Sent to {count} participants.': '{count}명의 참가자에게 전송되었습니다.'
-'Unread announcements': '개의 읽지 않은 공지'
 'Application runtime': '애플리케이션 가동 시간'
 'Based on container PID 1. Reloading the application does not reset this timer.': '컨테이너 PID 1 기준입니다. 애플리케이션을 다시 로드해도 이 타이머는 재설정되지 않습니다.'
 'Container runtime': '컨테이너 가동 시간'
@@ -652,8 +633,6 @@ __langname: 한국어
 # Messages
 'Messages': '메시지'
 'No messages': '메시지 없음'
-'New Message': '새 메시지'
-'Select a conversation': '대화할 사용자를 선택하세요'
 
 # User Profile
 'No bio': '자기소개 없음'
@@ -768,7 +747,6 @@ __langname: 한국어
 'Search users by username or UID': '사용자 이름 또는 UID로 사용자 검색'
 'Search users': '사용자 검색'
 'Type to search users': '사용자 이름 또는 UID를 입력하여 검색'
-'Type username or UID': '사용자 이름 또는 UID 입력'
 'User search failed': '사용자 검색 실패'
 'No users found': '사용자를 찾을 수 없음'
 'Change': '변경'
@@ -1069,10 +1047,6 @@ __langname: 한국어
 'The current client does not enforce minimum versions or verify SHA-256. Installer links are for manual downloads; fallback and signature support require client changes.': '현재 클라이언트는 최소 버전을 강제하거나 SHA-256을 검증하지 않습니다. 설치 프로그램 링크는 수동 다운로드용입니다. 대체 및 서명 지원에는 클라이언트 수정이 필요합니다.'
 
 # 대회 문제 타이머
-'Contest starts in': '대회 시작까지'
-'Contest time remaining': '대회 남은 시간'
-'Time on this problem': '이 문제에 사용한 시간'
-'Visible time on this problem; saved in this tab.': '이 문제 페이지를 보고 있던 누적 시간입니다. 현재 탭에 저장됩니다.'
 
 # User contribution history
 'Accepted Problems in This Domain': '이 도메인에서 정답 처리된 문제'

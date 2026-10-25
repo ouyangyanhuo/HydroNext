@@ -1,0 +1,14 @@
+Contest starts in: 距離比賽開始
+Contest time remaining: 比賽剩餘時間
+End proctoring and upload your log in the client. Ending the contest does not upload it automatically.: 請在監考客戶端中結束監考並上傳日誌。結束比賽不會自動上傳日誌。
+'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.': '作答用時未能同步，排行榜僅統計伺服器確認儲存的時間。'
+The contest has ended for your team. Contest submissions are now closed.: 您所在隊伍的比賽已結束，隊員均無法再提交比賽程式碼。
+The contest has ended. Contest submissions are now closed.: 比賽已結束，現已停止接收比賽提交。
+Time on this problem: 本題用時
+'Timing not synced': '計時未同步'
+Visible time on this problem; saved in this tab.: 累計停留在本題頁面的時間，於目前分頁內儲存。
+'You have ended your contest early. Contest submissions are now closed.': '您已提前結束本次參賽，現已停止接收比賽提交。'
+'You have ended your proctored contest early. Contest submissions are now closed.': '您已提前結束本次監考考試，現已停止接收比賽提交。'
+Your contest time is up. Contest submissions are now closed.: 您的參賽時間已到，現已停止接收比賽提交。
+'Your team has ended the contest early. Contest submissions are now closed.': '您的隊伍已提前結束比賽，隊員均無法再提交比賽程式碼。'
+'Your team has ended the proctored contest early. Contest submissions are now closed.': '您的隊伍已提前結束本次監考考試，隊員均無法再提交比賽程式碼。'

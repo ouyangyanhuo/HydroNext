@@ -1,8 +1,5 @@
-import { Context } from '../context';
-import { ForbiddenError } from '../error';
-import { PRIV } from '../model/builtin';
-import * as announcements from '../model/contest-announcement';
-import { ConnectionHandler } from '../service/server';
+import { ConnectionHandler, Context, ForbiddenError, PRIV } from 'hydrooj';
+import * as announcements from '../model/announcements';
 
 export class ContestAnnouncementConnectionHandler extends ConnectionHandler {
     noCheckPermView = true;

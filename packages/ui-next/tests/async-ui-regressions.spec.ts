@@ -505,7 +505,7 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
         '@/components/common/file-preview-modal': { FilePreviewModal: () => null },
         '@/components/common/form-dialog': { FormDialog: () => null },
         '@/components/record/record-status-badge': { RecordStatusBadge: () => null },
-        '@/components/contest/contest-problem-timer': { ContestProblemTimer: () => null },
+        '@/components/common/addon-slots': { ProblemPageExtras: () => null },
         '@/components/markdown/markdown-renderer': { MarkdownRenderer: ({ content, enableCodeCopy }: any) => h('div', null,
             content, enableCodeCopy ? h('button', { 'data-code-copy': true }, 'Copy code') : null) },
         '@/components/editor/submission-context': component('../src/components/editor/submission-context.ts', {}, { URLSearchParams }),

@@ -7,7 +7,7 @@ import { Context } from '../context';
 import type {
     BaseUserDict, ContestBalloonDoc, DiscussionDoc, DomainDoc, FileInfo,
     MessageDoc, ProblemDict, ProblemDoc, RecordDoc,
-    ScoreboardRow, Tdoc, TrainingDoc, User,
+    ScoreboardConfig, ScoreboardRow, Tdoc, TrainingDoc, User,
 } from '../interface';
 import type { DocType } from '../model/document';
 
@@ -15,7 +15,6 @@ export type Disposable = () => void;
 export type VoidReturn = Promise<any> | any;
 
 export interface EventMap {
-    'contest/announcement': (recipients: number[]) => VoidReturn;
     'app/listen': () => void;
     'app/started': () => void;
     'app/ready': () => VoidReturn;
@@ -87,11 +86,13 @@ export interface EventMap {
     'problem/delAdditionalFile': (domainId: string, docId: number, name: string[]) => VoidReturn;
 
     'contest/before-add': (payload: Partial<Tdoc>) => VoidReturn;
-    'contest/add': (payload: Partial<Tdoc>, id: ObjectId) => VoidReturn;
+    'contest/add': (payload: Partial<Tdoc>, id: ObjectId, domainId: string) => VoidReturn;
     'contest/before-edit': (tdoc: Tdoc, $set: Partial<Tdoc>) => VoidReturn;
-    'contest/edit': (payload: Tdoc) => VoidReturn;
+    'contest/edit': (payload: Tdoc, changes: Partial<Tdoc>) => VoidReturn;
+    'contest/status': (domainId: string, tid: ObjectId, uid: number, changes?: Record<string, any>, removed?: Record<string, any>) => VoidReturn;
     'contest/list': (query: Filter<Tdoc>, handler: any) => VoidReturn;
-    'contest/scoreboard': (tdoc: Tdoc, rows: ScoreboardRow[], udict: BaseUserDict, pdict: ProblemDict) => VoidReturn;
+    'contest/scoreboard': (tdoc: Tdoc, rows: ScoreboardRow[], udict: BaseUserDict, pdict: ProblemDict,
+        config: ScoreboardConfig, handler: Handler) => VoidReturn;
     'contest/balloon': (domainId: string, tid: ObjectId, bdoc: ContestBalloonDoc) => VoidReturn;
     'contest/del': (domainId: string, tid: ObjectId) => VoidReturn;
 

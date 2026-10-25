@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
+import { resolveContestMock } from './mock-api';
 
 const require = createRequire(import.meta.url);
 const id = '1234567890abcdef12345678';
@@ -15,15 +16,15 @@ function load(path: string, mocks: Record<string, any>) {
         loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } },
     }).code;
     runInNewContext(code, {
-        module, exports: module.exports, URL,
-        require: (name: string) => mocks[name] ?? (name.startsWith('../') ? {} : require(name)),
+        module, exports: module.exports, URL, global: { app: mocks['../service/bus']?.default },
+        require: (name: string) => resolveContestMock(name, mocks, require),
     });
     return module.exports;
 }
 
 test('publishes durable announcements before notifying deduplicated registered recipients', async () => {
     const calls: any[] = [];
-    const model = load('../src/model/contest-announcement.ts', {
+    const model = load('../model/announcements.ts', {
         '../error': errors,
         '../service/db': { __esModule: true, default: { collection: () => ({ insertOne: async (doc: any) => calls.push(doc) }) } },
         '../service/bus': { __esModule: true, default: { broadcast: (event: string, uids: number[]) => calls.push([event, uids]) } },
@@ -42,7 +43,7 @@ test('publishes durable announcements before notifying deduplicated registered r
 
 test('pending inbox is UID-scoped, ordered, bounded and never exposes the recipient list', async () => {
     let pipeline: any[] = [];
-    const model = load('../src/model/contest-announcement.ts', {
+    const model = load('../model/announcements.ts', {
         '../error': errors,
         '../service/db': { __esModule: true, default: { collection: (name: string) => name.endsWith('.receipt')
             ? { collectionName: 'custom.receipts' }
@@ -62,7 +63,7 @@ test('acknowledgements cannot target another user and are safe across simultaneo
     const writes: any[] = [];
     let allowed = false;
     let duplicate = false;
-    const model = load('../src/model/contest-announcement.ts', {
+    const model = load('../model/announcements.ts', {
         '../error': errors,
         '../service/bus': { __esModule: true, default: { broadcast() {} } },
         '../service/db': { __esModule: true, default: { collection: (name: string) => name.endsWith('.receipt')
@@ -89,7 +90,7 @@ test('publishing requires contest administration, an ongoing contest and the cur
     let allowed = false;
     let ongoing = true;
     const requests: any[] = [];
-    const module = load('../src/handler/contest.ts', {
+    const module = load('../handler/management.ts', {
         '../context': { Service: class {} }, '../error': errors,
         '../service/server': { Handler: class {}, param: () => () => {}, post: () => () => {}, Types: { Range: () => [], ArrayOf: () => [] } },
         '@hydrooj/utils/lib/utils': {}, '../model/builtin': { PERM: { PERM_EDIT_CONTEST: 123 }, PRIV: {}, STATUS: {} },
@@ -103,7 +104,7 @@ test('publishing requires contest administration, an ongoing contest and the cur
         '../model/contest-announcement': { publish: async (payload: any) => { requests.push(payload); return { recipients: 2 }; } },
         '../model/oplog': { log: async () => {} },
     });
-    const handler = Object.assign(Object.create(module.ContestManagementHandler.prototype), {
+    const handler = Object.assign(Object.create(module.ContestManagementExtras.prototype), {
         user: { _id: 1 }, domain: { _id: 'exam' }, tdoc: { title: 'Scoped contest' }, response: {},
         checkPerm: (perm: number) => { assert.equal(perm, 123); if (!allowed) throw new Error('Denied'); },
         limitRate: async () => {},
@@ -128,7 +129,7 @@ test('global connections authenticate, filter live recipients, recover pending a
     const calls: string[] = [];
     const sent: any[] = [];
     let acknowledged = false;
-    const module = load('../src/handler/contest-announcement.ts', {
+    const module = load('../handler/announcements.ts', {
         '../error': errors, '../model/builtin': { PRIV: { PRIV_USER_PROFILE: 1 } },
         '../service/server': { ConnectionHandler: class {} },
         '../model/contest-announcement': {

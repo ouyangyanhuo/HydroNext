@@ -1,10 +1,7 @@
+import { Button, formatErrorMessage, FormDialog, useI18n } from '@hydrooj/ui-next';
 import { notifications } from '@mantine/notifications';
 import { IconSpeakerphone } from '@tabler/icons-react';
 import { useState } from 'react';
-import { Button } from '@/components/common/button';
-import { FormDialog } from '@/components/common/form-dialog';
-import { useI18n } from '@/hooks/use-i18n';
-import { formatErrorMessage } from '@/utils/error';
 
 export function ContestAnnouncementComposer({ enabled }: { enabled: boolean }) {
   const { t } = useI18n();

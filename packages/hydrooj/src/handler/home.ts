@@ -3,12 +3,12 @@ import { generateRegistrationOptions, verifyRegistrationResponse } from '@simple
 import { isoBase64URL, isoUint8Array } from '@simplewebauthn/server/helpers';
 import * as yaml from 'js-yaml';
 import { pick } from 'lodash';
-import { Binary, ObjectId } from 'mongodb';
+import { Binary } from 'mongodb';
 import { UAParser } from 'ua-parser-js';
 import { Context } from '../context';
 import {
     AuthOperationError, BadRequestError, BlacklistedError, DomainAlreadyExistsError, InvalidTokenError,
-    NotFoundError, PermissionError, UserAlreadyExistError,
+    NotFoundError, UserAlreadyExistError,
     UserNotFoundError, ValidationError, VerifyPasswordError,
 } from '../error';
 import { DomainDoc, Setting } from '../interface';
@@ -20,7 +20,6 @@ import { PERM, PRIV } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as discussion from '../model/discussion';
 import domain from '../model/domain';
-import message from '../model/message';
 import ProblemModel from '../model/problem';
 import * as setting from '../model/setting';
 import storage from '../model/storage';
@@ -585,58 +584,6 @@ class HomeDomainCreateHandler extends Handler {
     }
 }
 
-class HomeMessagesHandler extends Handler {
-    async get() {
-        // TODO(iceboy): projection, pagination.
-        const messages = await message.getByUser(this.user._id);
-        const uids = new Set<number>([
-            ...messages.map((mdoc) => mdoc.from),
-            ...messages.flatMap((mdoc) => mdoc.to),
-        ]);
-        const udict = await user.getList('system', Array.from(uids));
-        // TODO(twd2): improve here:
-        const parsed = {};
-        for (const m of messages) {
-            const raw = m.from === this.user._id ? m.to : m.from;
-            const targetArr = Array.isArray(raw) ? raw : [raw];
-            for (const target of targetArr) {
-                const targetUser = udict[target] || { _id: target, uname: String(target), avatar: '' };
-                parsed[target] ||= {
-                    _id: target,
-                    udoc: {
-                        ...targetUser,
-                        avatarUrl: targetUser.avatar ? avatar(targetUser.avatar) : '',
-                    },
-                    messages: [],
-                };
-                parsed[target].messages.push(m);
-            }
-        }
-        await user.setById(this.user._id, { unreadMsg: 0 });
-        this.response.body = { messages: parsed };
-        this.response.template = 'home_messages.html';
-    }
-
-    @param('uid', Types.Int)
-    @param('content', Types.Content)
-    async postSend({ }, uid: number, content: string) {
-        this.checkPriv(PRIV.PRIV_SEND_MESSAGE);
-        const udoc = await user.getById('system', uid);
-        if (!udoc) throw new UserNotFoundError(uid);
-        if (udoc.avatar) udoc.avatarUrl = avatar(udoc.avatar);
-        const mdoc = await message.send(this.user._id, uid, content, message.FLAG_UNREAD);
-        this.back({ mdoc, udoc });
-    }
-
-    @param('messageId', Types.ObjectId)
-    async postDeleteMessage({ }, messageId: ObjectId) {
-        const msg = await message.get(messageId);
-        if (msg?.from === this.user._id) await message.del(messageId);
-        else throw new PermissionError();
-        this.back();
-    }
-}
-
 export const inject = ['oauth'];
 export function apply(ctx: Context) {
     ctx.Route('homepage', '/', HomeHandler);
@@ -646,7 +593,6 @@ export function apply(ctx: Context) {
     ctx.Route('home_avatar', '/home/avatar', HomeAvatarHandler, PRIV.PRIV_USER_PROFILE);
     ctx.Route('home_domain', '/home/domain', HomeDomainHandler, PRIV.PRIV_USER_PROFILE);
     ctx.Route('home_domain_create', '/home/domain/create', HomeDomainCreateHandler, PRIV.PRIV_CREATE_DOMAIN);
-    ctx.Route('home_messages', '/home/messages', HomeMessagesHandler, PRIV.PRIV_USER_PROFILE);
 
     async function notifyMessage(uid: number[], mdoc: any, h) {
         const udoc = (await user.getById('system', mdoc.from))!;

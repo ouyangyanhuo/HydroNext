@@ -1,11 +1,7 @@
 import { randomBytes } from 'crypto';
 import { ObjectId } from 'mongodb';
-import { Context } from '../context';
-import { ForbiddenError, PermissionError } from '../error';
-import { PERM, PRIV } from '../model/builtin';
-import * as contest from '../model/contest';
-import * as activity from '../model/contest-activity';
-import { ConnectionHandler, param, Types } from '../service/server';
+import { ConnectionHandler, ContestModel as contest, Context, ForbiddenError, param, PERM, PermissionError, PRIV, Types } from 'hydrooj';
+import * as activity from '../model/activity';
 
 export class ContestActivityConnectionHandler extends ConnectionHandler {
     private token = randomBytes(16).toString('hex');

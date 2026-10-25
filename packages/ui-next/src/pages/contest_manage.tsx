@@ -2,10 +2,10 @@ import { Card, Checkbox, Group, Modal, NumberInput, Paper, SimpleGrid, Stack, Ta
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
+import { ContestManageActions } from '@/components/common/addon-slots';
 import { Button } from '@/components/common/button';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { PageHeader } from '@/components/common/page-header';
-import { ContestAnnouncementComposer } from '@/components/contest/contest-announcement-composer';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -215,7 +215,7 @@ export default function ContestManagePage() {
     <Stack gap="lg" className="hydro-contest-manage-page">
       <PageHeader title={`${t('Manage')} - ${tdoc.title}`}>
         <Group gap="xs">
-          <ContestAnnouncementComposer enabled={!!args.canSendAnnouncement} />
+          <ContestManageActions data={args} />
           <Button component="a" href={buildUrl('contest_detail', { tid })} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
             {t('Back')}
           </Button>

@@ -14,7 +14,6 @@ import {
     ScoreboardRow, SubtaskResult, Tdoc,
 } from '../interface';
 import avatar from '../lib/avatar';
-import { appendContestActivityTimes } from '../lib/contest-activity';
 import { proctorRankingFilter } from '../lib/proctor';
 import { withTeamMembershipLock } from '../lib/team-membership-lock';
 import bus from '../service/bus';
@@ -22,8 +21,6 @@ import db from '../service/db';
 import type { Handler } from '../service/server';
 import { Optional } from '../typeutils';
 import { PERM, STATUS, STATUS_SHORT_TEXTS } from './builtin';
-import { getTimes } from './contest-activity';
-import * as ending from './contest-ending';
 import * as document from './document';
 import MessageModel from './message';
 import problem, { ProblemModel } from './problem';
@@ -850,8 +847,7 @@ export async function add(
     const docId = await document.add(domainId, content, owner, document.TYPE_CONTEST, null, null, null, {
         assign: [], ...data, title, rule, beginAt, endAt, pids, attend: 0, rated,
     });
-    await bus.parallel('contest/add', data, docId);
-    await ending.scheduleContest({ ...data, domainId, docId } as Tdoc);
+    await bus.parallel('contest/add', data, docId, domainId);
     return docId;
 }
 
@@ -862,8 +858,7 @@ export async function edit(domainId: string, tid: ObjectId, $set: Partial<Tdoc>)
     await bus.parallel('contest/before-edit', tdoc, $set);
     RULES[$set.rule || tdoc.rule].check(Object.assign(tdoc, $set));
     const res = await document.set(domainId, document.TYPE_CONTEST, tid, $set);
-    if (['beginAt', 'endAt', 'duration', 'rule'].some((key) => key in $set)) await ending.scheduleContest(res);
-    await bus.parallel('contest/edit', res);
+    await bus.parallel('contest/edit', res, $set);
     return res;
 }
 
@@ -1002,7 +997,7 @@ export async function attend(domainId: string, tid: ObjectId, uid: number, paylo
             throw new ContestAlreadyAttendedError(tid, uid);
         }
         await document.inc(domainId, document.TYPE_CONTEST, tid, 'attend', 1);
-        if (payload.startAt || payload.endAt) await ending.scheduleParticipant(domainId, tid, uid);
+        await bus.parallel('contest/status', domainId, tid, uid, payload);
         return {};
     });
 }
@@ -1015,9 +1010,6 @@ export async function cancelAttend(domainId: string, tid: ObjectId, uid: number)
 
 export async function setStatus(domainId: string, tid: ObjectId, uid: number, $set?: any, $unset?: any) {
     const result = await document.setStatus(domainId, document.TYPE_CONTEST, tid, uid, $set, $unset);
-    if (['startAt', 'endAt'].some((key) => ($set && key in $set) || ($unset && key in $unset))) {
-        await ending.scheduleParticipant(domainId, tid, uid);
-    }
     const evidence = ['proctorEnded', 'proctorLogUploaded'].filter((key) => $set && key in $set);
     if (uid > 0 && evidence.length) {
         const teamVid = await getTeamVid(domainId, tid, uid);
@@ -1028,6 +1020,7 @@ export async function setStatus(domainId: string, tid: ObjectId, uid: number, $s
                 Object.fromEntries(evidence.map((key) => [`proctorMembers.${uid}.${key}`, $set[key]])));
         }
     }
+    await bus.parallel('contest/status', domainId, tid, uid, $set, $unset);
     return result;
 }
 
@@ -1134,10 +1127,7 @@ export async function getScoreboard(
         config, this.translate.bind(this),
         tdoc, pdict, tsdocsCursor,
     );
-    if (tdoc.rule !== 'homework') {
-        appendContestActivityTimes(rows, await getTimes(domainId, tid), tdoc.pids, config.isExport, this.translate.bind(this));
-    }
-    await bus.parallel('contest/scoreboard', tdoc, rows, udict, pdict);
+    await bus.parallel('contest/scoreboard', tdoc, rows, udict, pdict, config, this);
     return [tdoc, rows, udict, pdict];
 }
 

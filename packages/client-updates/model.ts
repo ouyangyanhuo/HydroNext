@@ -46,7 +46,9 @@ export async function cleanupDeletedAssets(preferredId?: string) {
     await settings.updateOne({ _id: 'settings' }, { $pull: { cleanupAssets: { $in: ids.map((id) => id.toHexString()) } } });
 }
 
-export async function apply(ctx: Context) {
+// The addon entry owns initialization. Exporting `apply` here would also make
+// Hydro's model loader register the cleanup interval before loading index.ts.
+export async function initialize(ctx: Context) {
     await assets.createIndex({ uploadedAt: -1, _id: -1 });
     ctx.interval(() => cleanupDeletedAssets().catch((error) => console.error('Client update file cleanup failed:', error)), 60000);
 }

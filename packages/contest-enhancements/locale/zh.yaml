@@ -1,0 +1,29 @@
+'Announcement content (up to 4000 characters)': '公告内容（最多 4000 个字符）'
+'Announcement sent': '公告已发送'
+'Announcements are available while the contest is running.': '仅在比赛进行中可发送公告。'
+'Contest announcement': '比赛公告'
+Contest starts in: 距离比赛开始
+Contest time remaining: 比赛剩余时间
+'Drag timer; use arrow keys to move, or Home to reset.': '拖动计时胶囊；可用方向键移动，Home 键恢复默认位置。'
+End and upload: 结束并上传
+End proctoring and upload your log in the client. Ending the contest does not upload it automatically.: 请在监考客户端中结束监考并上传日志。结束比赛不会自动上传日志。
+'Foreground problem time; saved to the contest scoreboard.': '题目页面处于前台的用时，已保存到比赛排行榜。'
+'I understand': '我已知晓'
+'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.': '作答用时未能同步，排行榜仅统计服务端确认保存的时间。'
+'Reconnecting…': '正在重新连接…'
+'Send announcement': '发送公告'
+'Send to all registered participants': '发送给所有已报名参赛者'
+'Sent to {count} participants.': '已发送给 {count} 位参赛者。'
+Skip upload for now: 暂不上传
+The contest has ended for your team. Contest submissions are now closed.: 您所在队伍的比赛已结束，队员均无法再提交比赛代码。
+The contest has ended. Contest submissions are now closed.: 比赛已结束，现已停止接收比赛提交。
+Time on this problem: 本题用时
+'Timing not synced': '计时未同步'
+'Total problem time': '总写题用时'
+'Unread announcements': '条未读公告'
+Visible time on this problem; saved in this tab.: 累计停留在本题页面的时间，在当前标签页内保存。
+'You have ended your contest early. Contest submissions are now closed.': '您已提前结束本次参赛，现已停止接收比赛提交。'
+'You have ended your proctored contest early. Contest submissions are now closed.': '您已提前结束本次监考考试，现已停止接收比赛提交。'
+Your contest time is up. Contest submissions are now closed.: 您的参赛时间已到，现已停止接收比赛提交。
+'Your team has ended the contest early. Contest submissions are now closed.': '您的队伍已提前结束比赛，队员均无法再提交比赛代码。'
+'Your team has ended the proctored contest early. Contest submissions are now closed.': '您的队伍已提前结束本次监考考试，队员均无法再提交比赛代码。'

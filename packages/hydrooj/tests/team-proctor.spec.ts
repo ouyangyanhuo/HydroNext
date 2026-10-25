@@ -20,7 +20,7 @@ function evaluate(source: string, mocks: Record<string, any>, globals: Record<st
         require: (name: string) => mocks[name] ?? (name.startsWith('../') ? {} : require(name)) });
     return module.exports;
 }
-function handlers(model: any, teams: Map<number, any>, notifyEnded = async (..._args: any[]) => {}) {
+function handlers(model: any, teams: Map<number, any>) {
     class Handler {
         user: any = { _id: 7 }; domain = { _id: 'exam' };
         back() {}
@@ -34,7 +34,6 @@ function handlers(model: any, teams: Map<number, any>, notifyEnded = async (..._
         '../model/builtin': { PERM: {}, PRIV: {}, STATUS: {} },
         '../service/server': { Handler, param: () => () => {}, post: () => () => {}, Types: new Proxy({}, { get: () => () => [] }) },
         '../model/contest': model,
-        '../model/contest-ending': { notifyEnded },
         '../model/user': { __esModule: true, default: { getTeamById: async (_: string, uid: number) => teams.get(uid) } },
     });
 }
@@ -74,6 +73,7 @@ function registrations() {
     const model: any = { isDone: () => false, isOngoing: () => true };
     Object.assign(model, evaluate(attendSource, {}, {
         UserModel: users, ValidationError: errors.ValidationError, ContestAlreadyAttendedError: errors.ContestAlreadyAttendedError,
+        bus: { parallel: async () => {} },
         get: async () => ({ docId: tid, allowTeam: true }),
         getTeamVid: async (_: string, contestId: ObjectId, uid: number) => statuses.find((row) => row.members?.includes(uid))?.uid,
         withTeamMembershipLock: (_: string, action: () => Promise<any>) => {
@@ -118,23 +118,20 @@ test('并发报名只允许一个包含相同成员的参赛身份成功', async
 test('普通队员不能提前结束全队比赛，队长可结束但不改变任何个人监考日志状态', async () => {
     const f = registrations();
     const writes: any[] = [];
-    const notifications: any[] = [];
     f.model.setStatus = async (...args: any[]) => writes.push(args);
-    const handler = new (handlers(f.model, f.teams, async (...args) => { notifications.push(args); }).ContestDetailHandler)();
+    const handler = new (handlers(f.model, f.teams).ContestDetailHandler)();
     handler.team = -101;
     handler.tdoc = { rule: 'acm' };
     handler.tsdoc = { attend: 1 };
     handler.user._id = 8;
     await assert.rejects(handler.postEarlyEnd('exam', tid), /TeamCaptainRequiredError/);
     assert.equal(writes.length, 0);
-    assert.equal(notifications.length, 0);
     handler.user._id = 7;
     await handler.postEarlyEnd('exam', tid);
     assert.equal(writes[0][2], -101);
     assert.ok(Number.isFinite(+writes[0][3].endAt));
     assert.deepEqual(Object.keys(writes[0][3]).sort(), ['earlyEndAt', 'endAt', 'startAt']);
     assert.equal(writes[0][3].earlyEndAt, writes[0][3].endAt);
-    assert.equal(JSON.stringify(notifications), JSON.stringify([['exam', tid, -101]]));
 });
 
 test('全队日志进度按当前成员逐人计算，未参加监考与缺失状态均算待上传', () => {

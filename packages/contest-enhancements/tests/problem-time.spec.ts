@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createProblemTimeTracker, formatContestClock } from '../src/utils/contest-problem-time.ts';
+import { formatContestClock } from '../../ui-next/src/utils/contest-problem-time.ts';
+import { createProblemTimeTracker } from '../ui/utils/problem-time.ts';
 
 test('counts visible work across background pauses without counting hidden time', () => {
     const timer = createProblemTimeTracker({ beginAt: 0, endAt: 100_000, now: 0, elapsed: 0, visible: true });

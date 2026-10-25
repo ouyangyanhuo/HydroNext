@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
+import { resolveUiAddonMock } from '../../../test/ui-addon-mocks';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -39,7 +40,7 @@ function load(path: string, mocks: Record<string, any>, globals: Record<string, 
     }).code;
     runInNewContext(code, {
         module, exports: module.exports, window: dom.window, URL, ...globals,
-        require: (name: string) => mocks[name] || require(name),
+        require: (name: string) => resolveUiAddonMock(name, mocks, require),
     });
     return module.exports;
 }
@@ -48,15 +49,15 @@ const finishMocks = {
     '@/components/common/button': { Button },
     '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
     '@/utils/error': { formatErrorMessage: (error: any) => error.message },
-    '@/utils/proctor': load('../src/utils/proctor.ts', { './request': load('../src/utils/request.ts', {}) }),
+    '@/utils/proctor': load('../../ui-next/src/utils/proctor.ts', { './request': load('../../ui-next/src/utils/request.ts', {}) }),
 };
-const finishButton = load('../src/components/contest/proctor-finish-button.tsx', finishMocks);
+const finishButton = load('../../ui-next/src/components/contest/proctor-finish-button.tsx', finishMocks);
 
 test('global announcement modal displays escaped content, confirms one at a time and waits for server acknowledgement', async () => {
     let callbacks: any;
     const sent: any[] = [];
-    const { ContestAnnouncements } = load('../src/components/contest/contest-announcements.tsx', {
-        './proctor-finish-button': finishButton,
+    const { ContestAnnouncements } = load('../ui/components/contest-announcements.tsx', {
+        '@/components/contest/proctor-finish-button': finishButton,
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
         '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send: (data: any) => sent.push(data) }; } },
         '@/context/page-data': { usePageData: () => ({ args: {}, name: 'homepage', url: '/' }) },
@@ -107,9 +108,9 @@ test('ending notices refresh only their contest and return to its domain overvie
     const tid = '1234567890abcdef12345678';
     const navigate = async (url: string) => { navigations.push(url); };
     const earlyMessage = 'Your team has ended the proctored contest early. Contest submissions are now closed.';
-    const dictionary = require('js-yaml').load(readFileSync(new URL('../locales/zh.yaml', import.meta.url), 'utf8'));
-    const { ContestAnnouncements } = load('../src/components/contest/contest-announcements.tsx', {
-        './proctor-finish-button': finishButton,
+    const dictionary = require('js-yaml').load(readFileSync(new URL('../locale/zh.yaml', import.meta.url), 'utf8'));
+    const { ContestAnnouncements } = load('../ui/components/contest-announcements.tsx', {
+        '@/components/contest/proctor-finish-button': finishButton,
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key === earlyMessage ? dictionary[key] : key }) },
         '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send: (data: any) => sent.push(data) }; } },
         '@/context/page-data': { usePageData: () => ({ args: { tdoc: { docId: tid }, UiContext: { domainId: 'exam' } },
@@ -168,8 +169,8 @@ test('自然结束或提前结束的通知在断线时仍可打开客户端上�
         return new Promise<void>((resolve) => { settle = resolve; });
     } };
     const navigate = async () => {};
-    const { ContestAnnouncements } = load('../src/components/contest/contest-announcements.tsx', {
-        './proctor-finish-button': finishButton,
+    const { ContestAnnouncements } = load('../ui/components/contest-announcements.tsx', {
+        '@/components/contest/proctor-finish-button': finishButton,
         '@/hooks/use-i18n': finishMocks['@/hooks/use-i18n'],
         '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send() {} }; } },
         '@/context/page-data': { usePageData: () => ({ args: {}, name: 'error', url: '/d/exam/p/1' }) },
@@ -235,7 +236,7 @@ test('websocket heartbeat and domain changes keep the global announcement connec
         close() { this.readyState = FakeSocket.CLOSED; }
     }
     let ui = { ws_prefix: '/' };
-    const { useWebSocket } = load('../src/hooks/use-websocket.ts', {
+    const { useWebSocket } = load('../../ui-next/src/hooks/use-websocket.ts', {
         '@/stores/session': { useSessionStore: (selector: any) => selector({ ui }) },
     }, { WebSocket: FakeSocket, setTimeout, clearTimeout });
     const messages: any[] = [];

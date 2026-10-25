@@ -1,9 +1,6 @@
 import { ObjectId } from 'mongodb';
-import { Context } from '../context';
-import type { ContestStatusDoc, Tdoc } from '../interface';
-import db from '../service/db';
-import * as announcements from './contest-announcement';
-import * as document from './document';
+import { type ContestStatusDoc, Context, db, DocumentModel as document, type Tdoc } from 'hydrooj';
+import * as announcements from './announcements';
 
 interface EndJob {
     _id: string;
@@ -16,7 +13,7 @@ interface EndJob {
     claim?: ObjectId;
 }
 
-declare module '../service/db' {
+declare module 'hydrooj' {
     interface Collections { 'contest.end-notice': EndJob }
 }
 
@@ -134,7 +131,7 @@ export async function runDue() {
     }
 }
 
-export async function apply(ctx: Context) {
+export async function initialize(ctx: Context) {
     await ctx.db.ensureIndexes(jobs, { key: { deadline: 1, retryAt: 1, lockedUntil: 1 }, name: 'due_contest_end_notices' });
     ctx.on('contest/del', (domainId, tid) => jobs.deleteMany({ domainId, tid }));
     ctx.on('domain/delete', (domainId) => jobs.deleteMany({ domainId }));

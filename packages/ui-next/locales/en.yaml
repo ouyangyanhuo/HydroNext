@@ -1,9 +1,5 @@
 __flag: 🇬🇧
 'Authentication key ID': 'Authentication key ID'
-'You have ended your contest early. Contest submissions are now closed.': 'You have ended your contest early. Contest submissions are now closed.'
-'You have ended your proctored contest early. Contest submissions are now closed.': 'You have ended your proctored contest early. Contest submissions are now closed.'
-'Your team has ended the contest early. Contest submissions are now closed.': 'Your team has ended the contest early. Contest submissions are now closed.'
-'Your team has ended the proctored contest early. Contest submissions are now closed.': 'Your team has ended the proctored contest early. Contest submissions are now closed.'
 'Filter participants': 'Filter participants'
 'Only me': 'Only me'
 'Ranked Users': 'Ranked Users'
@@ -87,19 +83,15 @@ setting_smtp_desc: Outbound email delivery, credentials, TLS/SSL, and address ve
 'Previous problem': 'Previous problem'
 'Problem navigation': 'Problem navigation'
 'This problem is no longer in the source list. Return to the list to continue.': 'This problem is no longer in the source list. Return to the list to continue.'
-'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.': 'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.'
 'Reset team invitation code': 'Reset team invitation code'
 'Resetting invalidates the old invitation code immediately. Existing members are not affected.': 'Resetting invalidates the old invitation code immediately. Existing members are not affected.'
 'Team invitation code': 'Team invitation code'
 'Team is full (maximum {0} members).': 'Team is full (maximum {0} members).'
-'Timing not synced': 'Timing not synced'
 'You are already a member of this team.': 'You are already a member of this team.'
 'You are not in any team yet.': 'You are not in any team yet.'
 'Allow public registration': 'Allow public registration'
 'Public registration is disabled. Please contact a system administrator.': 'Public registration is disabled. Please contact a system administrator.'
 'server.allowRegister': 'Allow public registration'
-'Foreground problem time; saved to the contest scoreboard.': 'Foreground problem time; saved to the contest scoreboard.'
-'Total problem time': 'Total problem time'
 'Add at least one chapter.': 'Add at least one chapter.'
 'Add chapter': 'Add chapter'
 'Advanced JSON plan': 'Advanced JSON plan'
@@ -119,17 +111,6 @@ setting_smtp_desc: Outbound email delivery, credentials, TLS/SSL, and address ve
 'Problem search failed': 'Problem search failed'
 'Remove chapter': 'Remove chapter'
 'Remove this chapter and its prerequisite references? Problems themselves will not be deleted.': 'Remove this chapter and its prerequisite references? Problems themselves will not be deleted.'
-'Announcement content (up to 4000 characters)': 'Announcement content (up to 4000 characters)'
-'Announcement sent': 'Announcement sent'
-'Announcements are available while the contest is running.': 'Announcements are available while the contest is running.'
-'Contest announcement': 'Contest announcement'
-'Drag timer; use arrow keys to move, or Home to reset.': 'Drag timer; use arrow keys to move, or Home to reset.'
-'I understand': 'I understand'
-'Reconnecting…': 'Reconnecting…'
-'Send announcement': 'Send announcement'
-'Send to all registered participants': 'Send to all registered participants'
-'Sent to {count} participants.': 'Sent to {count} participants.'
-'Unread announcements': 'Unread announcements'
 'Application runtime': 'Application runtime'
 'Based on container PID 1. Reloading the application does not reset this timer.': 'Based on container PID 1. Reloading the application does not reset this timer.'
 'Container runtime': 'Container runtime'
@@ -557,8 +538,6 @@ No judges connected: No judges connected
 
 # Messages
 No messages: No messages
-New Message: New Message
-Select a conversation: Select a conversation to start messaging
 
 # User Profile
 No bio: No bio
@@ -671,7 +650,6 @@ Remove Selected Group: Remove Selected Group
 Search users by username or UID: Search users by username or UID
 Search users: Search users
 Type to search users: Type to search users
-Type username or UID: Type username or UID
 User search failed: User search failed
 No users found: No users found
 Change: Change
@@ -798,10 +776,6 @@ New Training Plan: New Training Plan
 Go to Solve: Go to Solve
 Contest Closed: Contest Closed
 The contest has ended. You can view the problems, but contest submissions are closed.: The contest has ended. You can view the problems, but contest submissions are closed.
-The contest has ended. Contest submissions are now closed.: The contest has ended. Contest submissions are now closed.
-The contest has ended for your team. Contest submissions are now closed.: The contest has ended for your team. Contest submissions are now closed.
-Your contest time is up. Contest submissions are now closed.: Your contest time is up. Contest submissions are now closed.
-End proctoring and upload your log in the client. Ending the contest does not upload it automatically.: End proctoring and upload your log in the client. Ending the contest does not upload it automatically.
 The contest has ended. You can view the problem, but contest submissions are closed.: The contest has ended. You can view the problem, but contest submissions are closed.
 Confirm to delete this clarification?: Confirm to delete this clarification?
 Deleted: Deleted
@@ -866,10 +840,6 @@ Serif: Serif
 Your Status: Your Status
 
 # Contest problem timer
-Contest starts in: Contest starts in
-Contest time remaining: Contest time remaining
-Time on this problem: Time on this problem
-Visible time on this problem; saved in this tab.: Visible time on this problem; saved in this tab.
 
 # User contribution history
 'Accepted Problems in This Domain': 'Accepted Problems in This Domain'
@@ -918,9 +888,7 @@ Visible time on this problem; saved in this tab.: Visible time on this problem; 
 'View domain members, assign roles, and manage memberships.': 'View domain members, assign roles, and manage memberships.'
 'Visit': 'Visit'
 # 个人监考结束入口
-End and upload: End and upload
 End personal proctoring and upload log: End personal proctoring and upload log
 Finish proctoring: Finish proctoring
 Open this page in the proctor client to finish proctoring and upload your log.: Open this page in the proctor client to finish proctoring and upload your log.
-Skip upload for now: Skip upload for now
 'Restores the account avatar to its registration default when saved.': 'Restores the account avatar to its registration default when saved.'

@@ -34,14 +34,14 @@ test('foreground activity reports focus/visibility changes, resumes on reconnect
     let callbacks: any;
     let domainId = 'team';
     const module = { exports: {} as any };
-    const code = transformSync(readFileSync(new URL('../src/hooks/use-contest-activity.ts', import.meta.url), 'utf8'), {
+    const code = transformSync(readFileSync(new URL('../ui/hooks/use-contest-activity.ts', import.meta.url), 'utf8'), {
         loader: 'ts', format: 'cjs',
     }).code;
     runInNewContext(code, {
         module, exports: module.exports, window: dom.window, document: dom.window.document,
         require: (name: string) => {
-            if (name === './use-websocket') {
-                return { useWebSocket: (options: any) => {
+            if (name === '@hydrooj/ui-next') {
+                return { useSessionStore: (select: any) => select({ ui: { domainId } }), useWebSocket: (options: any) => {
                     callbacks = options;
                     return { send };
                 } };

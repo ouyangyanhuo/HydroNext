@@ -1,17 +1,12 @@
+import './messages.css';
+
+import {
+  ActionIcon, Button, EmptyState, formatErrorMessage, formatUserName, getUserExtensionFields,
+  TimeDisplay, UnstyledButton, useBuildUrl, useI18n, usePageData, UserAvatar, useSessionStore,
+} from '@hydrooj/ui-next';
 import { Group, Loader, Modal, Paper, ScrollArea, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { IconPlus, IconSend, IconTrash } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActionIcon, Button, UnstyledButton } from '@/components/common/button';
-import { EmptyState } from '@/components/common/empty-state';
-import { TimeDisplay } from '@/components/common/time-display';
-import { UserAvatar } from '@/components/user/user-avatar';
-import { usePageData } from '@/context/page-data';
-import { useBuildUrl } from '@/hooks/use-build-url';
-import { useI18n } from '@/hooks/use-i18n';
-import { getUserExtensionFields } from '@/registry/user-fields';
-import { useSessionStore } from '@/stores/session';
-import { formatErrorMessage } from '@/utils/error';
-import { formatUserName } from '@/utils/user-name';
 
 function SendMessageDialog({
   opened,
@@ -99,7 +94,7 @@ function SendMessageDialog({
                   <UnstyledButton
                     key={u._id}
                     p="sm"
-                    className="w-full hover:bg-[var(--hydro-surface-muted)] border-b border-[var(--hydro-border)] last:border-b-0"
+                    className="hydro-messages__choice"
                     disabled={loading}
                     onClick={() => {
                       setQuery('');
@@ -210,6 +205,7 @@ export default function HomeMessagesPage() {
   const [loading, setLoading] = useState('');
   const [deletingMessageId, setDeletingMessageId] = useState('');
   const [error, setError] = useState('');
+  const sending = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const selected = useMemo(() => {
@@ -237,7 +233,11 @@ export default function HomeMessagesPage() {
         body: JSON.stringify(payload),
       });
       const type = res.headers.get('content-type') || '';
-      const data = type.includes('json') ? await res.json() : {};
+      const data = type.includes('json') ? await res.json() : null;
+      if (!data || typeof data !== 'object' || (payload.operation === 'send' && !data.mdoc && !data.error)) {
+        setError(t('Operation failed'));
+        return null;
+      }
       if (!res.ok || data.error) {
         setError(formatErrorMessage(data.error, t('Operation failed')));
         return null;
@@ -252,22 +252,18 @@ export default function HomeMessagesPage() {
   };
 
   const send = async () => {
-    if (!selectedId || !draft.trim()) return;
+    if (sending.current || loading || !selectedId || !draft.trim()) return;
+    sending.current = true;
     const content = draft.trim();
     setDraft('');
     const data = await post({ operation: 'send', uid: selectedId, content });
+    sending.current = false;
     if (data === null) {
       setDraft(content);
       return;
     }
     const targetUser = data.udoc || selected?.udoc || selectedUser || { _id: selectedId };
-    const nextMessage = data.mdoc || {
-      _id: `local-${Date.now()}`,
-      from: user?._id,
-      to: selectedId,
-      content,
-      createAt: new Date().toISOString(),
-    };
+    const nextMessage = data.mdoc;
     setSelectedUser(targetUser);
     setConversations((prev) => {
       const next = [...prev];
@@ -309,13 +305,13 @@ export default function HomeMessagesPage() {
   return (
     <main className="hydro-messages">
       <Paper className="hydro-messages__sidebar">
-        <Group justify="space-between" p="sm" className="border-b border-[var(--hydro-border)]">
+        <Group justify="space-between" p="sm" className="hydro-messages__header">
           <Text fw={700} size="sm">{t('Messages')}</Text>
-          <ActionIcon size="sm" variant="subtle" onClick={() => setDialogOpen(true)}>
+          <ActionIcon size="sm" variant="subtle" aria-label={t('New Message')} disabled={!!loading} onClick={() => setDialogOpen(true)}>
             <IconPlus size={17} />
           </ActionIcon>
         </Group>
-        <ScrollArea className="flex-1">
+        <ScrollArea className="hydro-messages__grow">
           {conversations.length === 0 ? (
             <Text c="dimmed" size="sm" p="md" ta="center">{t('No messages')}</Text>
           ) : (
@@ -329,19 +325,18 @@ export default function HomeMessagesPage() {
                   <UnstyledButton
                     key={otherId}
                     p="sm"
-                    className={[
-                      'border-b border-[var(--hydro-border)] hover:bg-[var(--hydro-surface-muted)]',
-                      isActive ? 'bg-[var(--hydro-surface-muted)]' : '',
-                    ].join(' ')}
+                    className="hydro-messages__choice"
+                    data-active={isActive || undefined}
+                    disabled={!!loading}
                     onClick={() => openConversation(otherId, other)}
                   >
                     <Group gap="sm" wrap="nowrap">
                       <UserAvatar user={other} link={false} size={40} className="hydro-message-avatar" />
-                      <div className="min-w-0 flex-1">
+                      <div className="hydro-messages__grow">
                         <Group justify="space-between">
-                          <Text size="sm" fw="var(--hydro-weight-medium)" truncate>{other.uname || otherId}</Text>
+                          <Text size="sm" fw="var(--hydro-weight-medium)" truncate>{formatUserName(other) || otherId}</Text>
                           {lastMsg && (
-                            <Text size="xs" c="dimmed" className="shrink-0">
+                            <Text size="xs" c="dimmed" style={{ flexShrink: 0 }}>
                               <TimeDisplay date={lastMsg.createAt || lastMsg._id} format="relative" size="xs" />
                             </Text>
                           )}
@@ -364,16 +359,16 @@ export default function HomeMessagesPage() {
       <section className="hydro-messages__chat">
         {selected ? (
           <>
-            <Group gap="sm" p="sm" className="border-b border-[var(--hydro-border)] shrink-0">
+            <Group gap="sm" p="sm" className="hydro-messages__header">
               <UserAvatar user={target} link={false} size={36} className="hydro-message-avatar" />
               <div>
-                <Text size="sm" fw="var(--hydro-weight-semibold)">{target.uname || targetId}</Text>
+                <Text size="sm" fw="var(--hydro-weight-semibold)">{formatUserName(target) || targetId}</Text>
                 <Text size="xs" c="dimmed">UID {targetId}</Text>
               </div>
             </Group>
 
             <div className="hydro-messages__timeline">
-              <Stack gap="sm" justify="flex-end" className="min-h-full">
+              <Stack gap="sm" justify="flex-end" style={{ minHeight: '100%' }}>
                 {(selected.messages || []).map((message: any) => {
                   const fromMe = Number(message.from) === Number(user?._id);
                   return (
@@ -381,7 +376,7 @@ export default function HomeMessagesPage() {
                       {!fromMe && (
                         <UserAvatar user={target} link={false} size={30} className="hydro-message-avatar" />
                       )}
-                      <div className={`hydro-message-content ${fromMe ? 'order-first' : ''}`}>
+                      <div className="hydro-message-content" style={fromMe ? { order: -1 } : undefined}>
                         <Paper
                           p="xs"
                           radius="md"
@@ -400,6 +395,7 @@ export default function HomeMessagesPage() {
                               loading={deletingMessageId === normalizeMessageId(message._id)}
                               aria-label={t('Delete')}
                               className="hydro-message-delete"
+                              disabled={!!loading}
                               onClick={() => deleteMessage(message._id)}
                             >
                               <IconTrash size={12} />
@@ -417,20 +413,21 @@ export default function HomeMessagesPage() {
               </Stack>
             </div>
 
-            <Group gap="xs" p="sm" className="border-t border-[var(--hydro-border)] shrink-0">
+            <Group gap="xs" p="sm" className="hydro-messages__composer">
               <Textarea
                 placeholder={t('Write a message...')}
                 value={draft}
+                disabled={!!loading}
                 minRows={1}
                 maxRows={4}
                 autosize
-                className="flex-1"
+                className="hydro-messages__grow"
                 onChange={(e) => {
                   const val = e.currentTarget.value;
                   setDraft(val);
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                     e.preventDefault();
                     send();
                   }
@@ -439,7 +436,7 @@ export default function HomeMessagesPage() {
               <Button
                 size="sm"
                 leftSection={<IconSend size={15} />}
-                disabled={!draft.trim()}
+                disabled={!!loading || !draft.trim()}
                 loading={loading === 'send'}
                 onClick={send}
               >
@@ -448,7 +445,7 @@ export default function HomeMessagesPage() {
             </Group>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="hydro-messages__empty">
             <EmptyState message={t('Select a conversation')} />
           </div>
         )}

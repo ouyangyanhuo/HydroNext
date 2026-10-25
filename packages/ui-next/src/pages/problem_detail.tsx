@@ -3,13 +3,13 @@ import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
+import { ProblemPageExtras } from '@/components/common/addon-slots';
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';
 import { ProblemNavigation } from '@/components/common/problem-navigation';
 import { TimeDisplay } from '@/components/common/time-display';
-import { ContestProblemTimer } from '@/components/contest/contest-problem-timer';
 import { Scratchpad } from '@/components/editor/scratchpad';
 import { resolveSubmissionContext } from '@/components/editor/submission-context';
 import { Link } from '@/components/link';
@@ -570,25 +570,10 @@ export default function ProblemDetailPage() {
     return deadlines.length ? Math.min(...deadlines) : undefined;
   })();
   const contestClosed = useDeadlinePassed(contestDeadline);
-  const timerKey = `hydro:contest-problem-time:v1:${JSON.stringify([
-    ui.domainId || pdoc.domainId, String(tid || ''), user._id || 0, pdoc.docId || pid,
-  ])}`;
-  const contestBeginAt = Math.max(
-    new Date(args.tdoc?.beginAt).getTime() || 0,
-    new Date(args.tsdoc?.startAt).getTime() || 0,
-  );
-  const contestTimer = tid && args.tdoc && contestDeadline !== undefined ? (
-    <ContestProblemTimer
-      key={timerKey}
-      storageKey={timerKey}
-      tid={String(tid)}
-      pid={Number(pdoc.docId)}
-      recordTime={Boolean(args.tsdoc?.attend && args.mode === 'contest')}
-      title={extractLocalizedContent(args.tdoc.title, sessionLanguage)}
-      beginAt={contestBeginAt}
-      endAt={contestDeadline}
-    />
-  ) : null;
+  const pageExtras = <ProblemPageExtras
+    deadline={contestDeadline}
+    title={args.tdoc ? extractLocalizedContent(args.tdoc.title, sessionLanguage) : ''}
+  />;
   const canSubmitProblem = Boolean(args.canSubmitProblem ?? (tid ? args.mode === 'contest' : fallbackCanSubmit));
   const canEditProblem = Boolean(args.canEditProblem ?? hasPermValue(user.perm, PERM.PERM_EDIT_PROBLEM));
   const canConfigureProblem = Boolean(args.canConfigureProblem ?? (canEditProblem && !pdoc.reference));
@@ -683,7 +668,7 @@ export default function ProblemDetailPage() {
   if (scratchpadOpen) {
     return (
       <div ref={workspaceRef} className="problem-workspace">
-        {contestTimer}
+        {pageExtras}
         <Scratchpad
           key={`${ui.domainId}/${pdoc.docId}/${tid || ''}`}
           pid={pdoc.pid || pdoc.docId}
@@ -702,7 +687,7 @@ export default function ProblemDetailPage() {
 
   return (
     <div ref={workspaceRef} className="problem-workspace hydro-problem-detail-page flex flex-col lg:flex-row gap-6">
-      {contestTimer}
+      {pageExtras}
       <div className="flex-1 min-w-0">
         <Stack gap="lg">
           <Paper withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]">

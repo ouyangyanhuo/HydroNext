@@ -1,12 +1,12 @@
+import './timer.css';
+
+import { ButtonBase, formatContestClock, Link, useI18n } from '@hydrooj/ui-next';
 import { Portal, Tooltip } from '@mantine/core';
 import { IconGripVertical, IconTrophy } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
-import { ButtonBase } from '@/components/common/button';
-import { Link } from '@/components/link';
-import { useContestActivity } from '@/hooks/use-contest-activity';
-import { useI18n } from '@/hooks/use-i18n';
-import { createProblemTimeTracker, formatContestClock } from '@/utils/contest-problem-time';
-import { bindFloatingDrag, CONTEST_TIMER_POSITION_KEY } from '@/utils/floating-position';
+import { useContestActivity } from '../hooks/use-contest-activity';
+import { bindFloatingDrag, CONTEST_TIMER_POSITION_KEY } from '../utils/floating-position';
+import { createProblemTimeTracker } from '../utils/problem-time';
 
 function readElapsed(key: string) {
   try {

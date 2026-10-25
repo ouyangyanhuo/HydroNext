@@ -1,0 +1,1 @@
+export { apply } from './handler';
