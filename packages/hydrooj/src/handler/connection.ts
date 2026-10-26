@@ -65,14 +65,15 @@ class WebsocketEventsConnectionManagerHandler extends ConnectionHandler {
     async subscribe(payload: any) {
         const accept = [];
         const reject = [];
-        const session = payload.credential
-            ? await TokenModel.get(payload.credential, TokenModel.TYPE_SESSION)
-            : null;
         const op = payload.operation || '';
         if (op === 'resume' && !this.privileged) {
             this.send({ operation: 'resume_failed' });
             return;
         }
+        // A malformed credential is unauthenticated, never a MongoDB query expression.
+        const session = op !== 'resume' && typeof payload.credential === 'string' && payload.credential
+            ? await TokenModel.get(payload.credential, TokenModel.TYPE_SESSION)
+            : null;
         const user = op === 'resume' ? null : await UserModel.getById('system', session?.uid || 0);
         for (const channel of payload.channels || []) {
             try {

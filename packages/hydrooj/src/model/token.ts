@@ -43,6 +43,8 @@ class TokenModel {
 
     @ArgMethod
     static async get(tokenId: string, tokenType: number): Promise<TokenDoc | null> {
+        // TypeScript types do not validate untrusted HTTP/WebSocket input at runtime.
+        if (typeof tokenId !== 'string' || !tokenId) return null;
         return await TokenModel.coll.findOne({ _id: tokenId, tokenType });
     }
 

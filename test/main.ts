@@ -606,6 +606,54 @@ describe('App', () => {
         }
     });
 
+    it('WebSocket rejects query-operator credentials and preserves normal message subscriptions', async () => {
+        const { token } = global.Hydro.model;
+        const WebSocket = require('ws');
+        const { port } = require('hydrooj').httpServer.address();
+        const sessionId = 'ws-security-audit-session';
+        await token.add(token.TYPE_SESSION, 60, { uid: 2 }, sessionId);
+        const socket = new WebSocket(`ws://127.0.0.1:${port}/websocket`);
+        try {
+            await new Promise<void>((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error('WebSocket open timed out')), 5000);
+                socket.once('open', () => { clearTimeout(timer); resolve(); });
+                socket.once('error', (error: Error) => { clearTimeout(timer); reject(error); });
+            });
+            const subscribe = (credential: unknown) => new Promise<any>((resolve, reject) => {
+                const timer = setTimeout(() => { cleanup(); reject(new Error('WebSocket verification timed out')); }, 5000);
+                const cleanup = () => {
+                    clearTimeout(timer);
+                    socket.off('message', onMessage);
+                    socket.off('error', onError);
+                };
+                const onError = (error: Error) => { cleanup(); reject(error); };
+                const onMessage = (data: Buffer) => {
+                    if (data.toString() === 'ping') return socket.send('pong');
+                    const payload = JSON.parse(data.toString());
+                    if (payload.operation !== 'verify' || payload.request_id !== 'security-check') return undefined;
+                    cleanup();
+                    resolve(payload);
+                    return undefined;
+                };
+                socket.on('message', onMessage);
+                socket.once('error', onError);
+                socket.send(JSON.stringify({ operation: 'subscribe', credential, channels: ['message'], request_id: 'security-check' }));
+            });
+            const injected = { $regex: '^ws-security-audit-' };
+            assert.equal((await token.coll.findOne({ _id: injected })).uid, 2);
+            assert.equal(await token.get(injected as any, token.TYPE_SESSION), null);
+            const rejected = await subscribe(injected);
+            assert.deepEqual(rejected.accept, []);
+            assert.deepEqual(rejected.reject, ['message']);
+            const accepted = await subscribe(sessionId);
+            assert.deepEqual(accepted.accept, ['message:2']);
+            assert.deepEqual(accepted.reject, []);
+        } finally {
+            socket.terminate();
+            await token.del(sessionId, token.TYPE_SESSION);
+        }
+    });
+
     it('Ordinary contestants receive private self-test output for hidden OI problems over HTTP and WebSocket', async () => {
         const { contest, domain, problem, user, record } = global.Hydro.model;
         const { PERM, PRIV } = require('../packages/hydrooj/src/model/builtin');
