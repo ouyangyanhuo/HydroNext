@@ -5,12 +5,21 @@ import { DisposableList } from 'cordis';
 import inspector from 'inspector';
 import { randomstring } from '@hydrooj/utils';
 import { Context, Service } from '../context';
+import { hasContestSecurity } from '../lib/contest-security';
+import * as contest from '../model/contest';
 import system from '../model/system';
 import db from './db';
 import storage from './storage';
 
 type ReportFunction = (message: string, ...args: any[]) => Promise<void>;
 type CheckItem = (context: any, log: ReportFunction, warn: ReportFunction, error: ReportFunction) => Promise<void>;
+
+async function missingContestSecurity() {
+    if (hasContestSecurity()) return false;
+    return contest.getMulti('', { proctorEnabled: true }).limit(1).hasNext();
+}
+const contestSecurityWarning = 'Existing contests require proctoring, but no contest security provider is loaded. '
+    + 'Enable @hydrooj/proctor and restart every backend worker. Protected operations remain blocked.';
 
 export default class CheckService extends Service {
     checkers = new DisposableList<CheckItem>();
@@ -33,6 +42,12 @@ export default class CheckService extends Service {
         this.addChecker('Storage', async (c, log, warn, error) => {
             const status = await storage.status();
             if (!status.status) error(`Connect to ${status.type} Storage ${status.bucket} Error: ${status.error}`);
+        });
+        this.addChecker('Contest security', async (c, log, warn, error) => {
+            if (await missingContestSecurity()) await error(contestSecurityWarning);
+        });
+        ctx.on('app/started', async () => {
+            if (await missingContestSecurity()) ctx.logger.warn(contestSecurityWarning);
         });
         this.addChecker('System', async (c, log, warn) => {
             const platform = os.platform();

@@ -48,5 +48,9 @@ export async function getRecordAccess(handler: Handler | ConnectionHandler, rdoc
         || handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE)
         || (handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE_ACCEPT) && self?.status === STATUS.STATUS_ACCEPTED)
         || (tdoc && (handler.user.own(tdoc) || (tdoc.allowViewCode && contest.isDone(tdoc) && !!tsdoc?.attend)));
-    return { pdoc, tdoc, tsdoc, canViewDetail, canViewCode: !!canViewCode, accessGrant };
+    return {
+        pdoc, tdoc, tsdoc, canViewDetail, canViewCode: !!canViewCode, accessGrant,
+        /** @deprecated Use accessGrant.assert(); this is an opaque grant, not a raw proctor session. */
+        proctorSession: accessGrant,
+    };
 }

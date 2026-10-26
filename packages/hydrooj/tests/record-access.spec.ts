@@ -104,6 +104,7 @@ test('teammates share record and replay code access without bypassing contest vi
     const access = await fixture({ teammate: true, contest: 'contest', attend: true, showSelf: true, permissions: [] })();
     assert.equal(access.canViewCode, true);
     assert.equal(access.canViewDetail, true);
+    assert.equal(access.proctorSession, access.accessGrant);
     await assert.rejects(fixture({ teammate: true, contest: 'contest', hidden: true, permissions: [] })(), /VIEW_PROBLEM_HIDDEN/);
     await assert.rejects(fixture({ teammate: true, contest: `${'0'.repeat(23)}1`, permissions: [] })(), /VIEW_RECORD/);
     await assert.rejects(fixture({ contest: 'other-contest', permissions: [] })(), /VIEW_RECORD/);
@@ -114,6 +115,10 @@ test('监考比赛的本人和队友记录、下载与回放必须有绑定当�
     await assert.rejects(fixture(base)());
     await assert.rejects(fixture({ ...base, owner: true })());
     await assert.rejects(fixture({ ...base, proof: true, authFailure: true })(), /认证已失效/);
+    const granted = await fixture({ ...base, proof: true })();
+    assert.ok(granted.accessGrant);
+    assert.equal(granted.proctorSession, granted.accessGrant);
+    await granted.proctorSession.assert();
     for (const path of ['/d/team/record/abcdef1234567890abcdef12', '/d/team/record/abcdef1234567890abcdef12/replay',
         '/d/team/record/abcdef1234567890abcdef12/replay/data']) {
         const calls: any[] = [];

@@ -145,17 +145,29 @@ export async function runProctorFlowHttpTests(_agent: any) {
             const finished = await participant.post(route).set(headers('finish', 'POST', route, {})).send({ operation: 'finish' }).expect(200);
             assert.equal(finished.body.logUploaded, false);
             assert.notEqual((await contest.getStatus(domainId, tid, uid)).proctorLogUploaded, true);
-            const key = randomBytes(32);
-            const iv = randomBytes(12);
-            const cipher = createCipheriv('aes-256-gcm', key, iv);
-            cipher.setAAD(Buffer.from(`HYDRO-PROCTOR-LOG/1:${keys.keyId}`));
-            const ciphertext = Buffer.concat([cipher.update(`FINISH ${tid}\n`), cipher.final()]);
-            const header = { keyId: keys.keyId, iv: iv.toString('base64url'), tag: cipher.getAuthTag().toString('base64url'),
-                wrappedKey: publicEncrypt({ key: keys.encryptionPublicKey, padding: constants.RSA_PKCS1_OAEP_PADDING,
-                    oaepHash: 'sha256' }, key).toString('base64url') };
-            key.fill(0);
-            const file = Buffer.concat([Buffer.from(`HYDRO-PROCTOR-LOG/1\n${JSON.stringify(header)}\n`), ciphertext]);
+            const binding = { origin, uid, domainId,
+                tid: tid.toHexString(), attemptId: session.payload.attemptId, fingerprint,
+                publicKey: device.publicKey.export({ type: 'spki', format: 'pem' }).toString() };
+            const encryptJournal = (identity: typeof binding) => {
+                const key = randomBytes(32);
+                const iv = randomBytes(12);
+                const cipher = createCipheriv('aes-256-gcm', key, iv);
+                cipher.setAAD(Buffer.from(`HYDRO-PROCTOR-LOG/1:${keys.keyId}`));
+                const journalHeader = { protocol: 'hydro-journal/1', binding: identity };
+                const ciphertext = Buffer.concat([cipher.update(`${JSON.stringify(journalHeader)}\nFINISH ${tid}\n`), cipher.final()]);
+                const header = { keyId: keys.keyId, iv: iv.toString('base64url'), tag: cipher.getAuthTag().toString('base64url'),
+                    wrappedKey: publicEncrypt({ key: keys.encryptionPublicKey, padding: constants.RSA_PKCS1_OAEP_PADDING,
+                        oaepHash: 'sha256' }, key).toString('base64url') };
+                key.fill(0);
+                return Buffer.concat([Buffer.from(`HYDRO-PROCTOR-LOG/1\n${JSON.stringify(header)}\n`), ciphertext]);
+            };
             const filename = `${ending}.hplog`;
+            const wrong = encryptJournal({ ...binding, domainId: 'another-domain' });
+            await participant.post(route).set(headers('upload', 'POST', route, { filename, size: wrong.length, sha256: digest(wrong) }))
+                .field('operation', 'upload').attach('file', wrong, filename).expect(403);
+            assert.notEqual((await contest.getStatus(domainId, tid, uid)).proctorLogUploaded, true);
+            assert.equal(await proctor.logs.countDocuments({ attemptId: new ObjectId(binding.attemptId) }), 0);
+            const file = encryptJournal(binding);
             await participant.post(route).set(headers('upload', 'POST', route, { filename, size: file.length, sha256: digest(file) }))
                 .field('operation', 'upload').attach('file', file, filename).expect(200);
             const status = await participant.get(route).expect(200);

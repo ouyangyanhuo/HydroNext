@@ -1,4 +1,4 @@
-.hydro-proctor-notice { overflow: hidden; border-inline-start: 4px solid var(--hydro-primary); background: var(--hydro-surface-raised); }
+.hydro-proctor-notice { overflow: hidden; background: var(--hydro-surface-raised); }
 .hydro-proctor-notice__layout { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
 .hydro-proctor-notice__body, .hydro-proctor-grow { min-width: 0; flex: 1; }
 .hydro-proctor-notice__title { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }

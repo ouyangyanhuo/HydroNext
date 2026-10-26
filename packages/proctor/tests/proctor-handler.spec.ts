@@ -46,7 +46,7 @@ function fixture(options: any = {}) {
         publicKeys: (keys: any) => ({ keyId: keys.keyId, signingPublicKey: keys.signingPublicKey, encryptionPublicKey: keys.encryptionPublicKey }),
         handshake: async (...args: any[]) => { calls.push(['handshake', ...args]); return { token: 'token' }; },
         refresh: async (...args: any[]) => { calls.push(['refresh', ...args]); return { token: 'token' }; },
-        authenticate: async () => ({ uid: 7, domainId: 'exam', tid, attemptId }),
+        authenticate: async () => ({ uid: 7, domainId: 'exam', tid, attemptId, publicKey: 'device-key', fingerprint: 'device-fingerprint' }),
         closeAttempt: async () => ({ _id: attemptId }),
         acquireLogLock: async () => ({ assert: async () => {}, release: async () => calls.push('unlock') }),
         attempts: { updateOne: async (_: any, update: any) => calls.push(['attempt', update]) },
@@ -99,7 +99,10 @@ function fixture(options: any = {}) {
             get: async (path: string) => Readable.from([Buffer.from(path)]),
         } },
         '../lib/proctor-log': { hashFile: async () => 'hash',
-            validateEncryptedLog: async () => { if (options.badEncryption) throw new Error('invalid'); } },
+            validateEncryptedLog: async (_: string, __: unknown, binding: any) => {
+                calls.push(['validate', binding]);
+                if (options.badEncryption) throw new Error('invalid');
+            } },
     };
     const module = { exports: {} as any };
     const code = transformSync(readFileSync(new URL('../handler.ts', import.meta.url), 'utf8'),
@@ -128,6 +131,10 @@ test('only registered participants in the same domain may use proctor APIs; only
 test('upload persists only metadata and ciphertext before qualifying the participant', async () => {
     const f = fixture();
     await f.handler.postUpload();
+    assert.deepEqual(JSON.parse(JSON.stringify(f.calls.find((call) => call[0] === 'validate')[1])), {
+        uid: 7, domainId: 'exam', tid: tid.toHexString(), attemptId: attemptId.toHexString(),
+        publicKey: 'device-key', fingerprint: 'device-fingerprint',
+    });
     const doc = f.calls.find((call) => call[0] === 'insert')[1];
     assert.equal(doc.username, 'alice');
     assert.equal(doc.domainId, 'exam');

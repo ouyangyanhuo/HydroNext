@@ -102,11 +102,11 @@ defineSlot('app:sidebar:bottom', MySidebar);
 
 ## 在线监考
 
-HydroNext 包含一套完整的在线监考方案：Electron 桌面客户端（`exam-proctor-client/`，产品名「在线监考客户端」）与后端 `packages/hydrooj/src/handler/proctor.ts`。协议规范见 [`docs/proctor-protocol.md`](docs/proctor-protocol.md)，要点：
+HydroNext 包含一套完整的在线监考方案：Electron 桌面客户端（`exam-proctor-client/`，产品名「在线监考客户端」）与独立监考插件 `packages/proctor`（`@hydrooj/proctor`）。启用及升级要求见[监考插件迁移说明](docs/proctor-plugin-migration.md)，协议规范见 [`docs/proctor-protocol.md`](docs/proctor-protocol.md)，要点：
 
-- 协议版本 `HydroNext-proctor/1`，要求 HTTPS；身份端点 `/proctor/identity`（按域为 `/d/<domainId>/proctor/identity`）；
+- 协议版本 `hydro-proctor/1`，要求 HTTPS；身份端点 `/proctor/identity`（按域为 `/d/<domainId>/proctor/identity`）；
 - 设备密钥由客户端在主进程自动生成（Ed25519），无需注册码；
-- 服务端使用 Ed25519 签名密钥与独立的 RSA-3072/OAEP-SHA256 日志密钥（共用同一 keyId），日志以 256-bit 不透明 token 标识并以 SHA-256 存储；
+- 服务端使用 Ed25519 签名密钥与独立的 RSA-3072/OAEP-SHA256 日志密钥（共用同一 keyId）；会话令牌为 256-bit 随机值，服务端仅保存其 SHA-256 摘要；
 - 默认策略：客户端版本精确匹配、token 有效期 300 秒（60–1800）、赛后 30 天（1–365）内可补传日志、单文件上限 64 MiB（1–256）。
 
 管理端页面：`/manage/proctor`（配置、密钥与授权）、`/manage/proctor/logs`（日志管理与成绩）、比赛中页面 `/contest/:tid/proctor`。配置与私钥查看需要 `PRIV_EDIT_SYSTEM` 权限并二次验证（sudo）。密钥默认存放于 `HYDRO_PROCTOR_KEY_DIR`（默认 `~/.hydro/proctor-keys`），Docker 部署需持久化该目录。

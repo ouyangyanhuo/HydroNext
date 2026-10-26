@@ -250,7 +250,10 @@ export class ContestProctorHandler extends ContestDetailBaseHandler {
                 await contest.setStatus(session.domainId, session.tid, session.uid, { proctorLogUploaded: false, proctorEnded: true });
             }
             try {
-                await validateEncryptedLog(file.filepath, proctor.getKeys);
+                await validateEncryptedLog(file.filepath, proctor.getKeys, {
+                    uid: session.uid, domainId: session.domainId, tid: session.tid.toHexString(),
+                    attemptId: session.attemptId.toHexString(), publicKey: session.publicKey, fingerprint: session.fingerprint,
+                });
             } catch {
                 throw new ValidationError('file', null, 'Invalid encrypted proctor log.');
             }

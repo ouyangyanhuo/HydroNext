@@ -102,11 +102,11 @@ Set the `HYDRO_UI_NEXT_DISABLE` environment variable or system setting to disabl
 
 ## Online proctoring
 
-HydroNext ships a complete proctoring solution: an Electron desktop client (`exam-proctor-client/`, product name "在线监考客户端") and the backend handler at `packages/hydrooj/src/handler/proctor.ts`. The protocol is specified in [`docs/proctor-protocol.md`](docs/proctor-protocol.md). Key points:
+HydroNext ships a complete proctoring solution: an Electron desktop client (`exam-proctor-client/`, product name "在线监考客户端") and the standalone addon `packages/proctor` (`@hydrooj/proctor`). See the [plugin migration guide](docs/proctor-plugin-migration.md) for activation and upgrade requirements and the [protocol specification](docs/proctor-protocol.md). Key points:
 
-- Protocol version `HydroNext-proctor/1`, HTTPS required; identity endpoint `/proctor/identity` (per-domain: `/d/<domainId>/proctor/identity`).
+- Protocol version `hydro-proctor/1`, HTTPS required; identity endpoint `/proctor/identity` (per-domain: `/d/<domainId>/proctor/identity`).
 - Device keys are generated automatically in the client's main process (Ed25519); no registration codes.
-- The server uses an Ed25519 signing key plus a separate RSA-3072/OAEP-SHA256 log key sharing one keyId; logs are identified by 256-bit opaque tokens stored as SHA-256.
+- The server uses an Ed25519 signing key plus a separate RSA-3072/OAEP-SHA256 log key sharing one keyId. Session tokens contain 256 random bits; the server stores only their SHA-256 digests.
 - Default policy: exact client version match, token validity 300 seconds (60–1800), 30 days (1–365) of post-contest log backfill, 64 MiB (1–256) per file.
 
 Admin pages: `/manage/proctor` (configuration, keys and grants), `/manage/proctor/logs` (log management and grading), and `/contest/:tid/proctor` during a contest. Configuration and private key access require the `PRIV_EDIT_SYSTEM` privilege plus a second-factor challenge (sudo). Keys are stored under `HYDRO_PROCTOR_KEY_DIR` (`~/.hydro/proctor-keys` by default); persist that directory when deploying with Docker.

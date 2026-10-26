@@ -55,6 +55,8 @@ ui-next 保留通用 `registerRequestSecurity`、`registerProtectedAccessResolve
 
 公共 SDK 保留 `ProctorFinishButton`、`proctorAccessHeaders`、`registerProctorAccessResolver` 和 `ProctorAccessRequest` 的兼容别名，全部转发至通用插槽或注册接口，避免已有第三方插件因导出名称改变而失效。
 
+后端 `getRecordAccess()` 保留已弃用的 `proctorSession` 字段别名，它与 `accessGrant` 指向同一个不透明授权对象，调用 `.assert()` 复核权限；不承诺保留原私有 Session 的内部字段或被移除的核心私有模块路径。
+
 前端证明只保存在请求头，不能放入 URL、localStorage、诊断日志或页面注入数据。网页结束按钮仅请求客户端确认，不宣称日志上传成功。
 
 ## 验收矩阵

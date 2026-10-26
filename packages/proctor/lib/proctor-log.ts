@@ -3,6 +3,26 @@ import { createReadStream } from 'fs';
 import { open } from 'fs/promises';
 import { Writable } from 'stream';
 import { pipeline } from 'stream/promises';
+import { normalizeClientKey } from './proctor';
+
+export interface ProctorLogBinding {
+    uid: number;
+    domainId: string;
+    tid: string;
+    attemptId: string;
+    publicKey: string;
+    fingerprint: string;
+}
+
+function verifyBinding(line: Buffer, expected: ProctorLogBinding) {
+    const header = JSON.parse(line.toString('utf8'));
+    const binding = header?.binding;
+    if (header?.protocol !== 'hydro-journal/1' || !binding || typeof binding !== 'object'
+        || ['uid', 'domainId', 'tid', 'attemptId', 'fingerprint'].some((key) => binding[key] !== expected[key])
+        || normalizeClientKey(binding.publicKey) !== normalizeClientKey(expected.publicKey)) {
+        throw new Error('Encrypted proctor log belongs to a different attempt.');
+    }
+}
 
 function bytes(value: unknown, length: number): Buffer {
     if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value)) throw new Error('Invalid encrypted log header');
@@ -11,8 +31,9 @@ function bytes(value: unknown, length: number): Buffer {
     return result;
 }
 
-// Verify ciphertext integrity without retaining, indexing or interpreting log content.
-export async function validateEncryptedLog(path: string, loadKey: (id: string) => Promise<{ encryptionPrivateKey: string }>) {
+// Inspect only the bounded identity header; event contents are discarded, never persisted as plaintext.
+export async function validateEncryptedLog(path: string, loadKey: (id: string) => Promise<{ encryptionPrivateKey: string }>,
+    expected?: ProctorLogBinding) {
     const file = await open(path, 'r');
     const prefix = Buffer.alloc(8192);
     let count: number;
@@ -36,8 +57,28 @@ export async function validateEncryptedLog(path: string, loadKey: (id: string) =
         const decipher = createDecipheriv('aes-256-gcm', key, bytes(header.iv, 12));
         decipher.setAAD(Buffer.from(`HYDRO-PROCTOR-LOG/1:${header.keyId}`));
         decipher.setAuthTag(bytes(header.tag, 16));
+        let identity = Buffer.alloc(0);
+        let checked = !expected;
         await pipeline(createReadStream(path, { start: second + 1 }), decipher,
-            new Writable({ write(chunk, encoding, callback) { callback(); } }));
+            new Writable({ write(chunk: Buffer, encoding, callback) {
+                try {
+                    if (!checked) {
+                        const end = chunk.indexOf('\n');
+                        const part = end < 0 ? chunk : chunk.subarray(0, end);
+                        if (identity.length + part.length > 16384) throw new Error('Oversized proctor log identity.');
+                        identity = Buffer.concat([identity, part]);
+                        if (end >= 0) {
+                            verifyBinding(identity, expected);
+                            identity = Buffer.alloc(0);
+                            checked = true;
+                        }
+                    }
+                    callback();
+                } catch (error) {
+                    callback(error);
+                }
+            } }));
+        if (!checked) throw new Error('Missing proctor log identity.');
     } finally {
         key.fill(0);
     }

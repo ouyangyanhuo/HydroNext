@@ -79,3 +79,5 @@ proof 包含 protocol、action、method、path、tokenHash、fingerprint、versi
 5. WebSocket 会话失效检查发生在推送之前，并非定时主动断开所有失效连接；不得把迁移结果描述为即时定时撤销机制。
 
 此基线与 [兼容契约和验收清单](./proctor-migration-contract.md)、[迁移部署说明](./proctor-plugin-migration.md) 配套。
+
+以上为迁移前基线，不是后续修复后的行为说明。迁移后审查已补充日志身份头核对与团队 RP 参数，并修复 RP 计算失败提前写入问题；详情见迁移部署说明的“迁移后审查修复”。
