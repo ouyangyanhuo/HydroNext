@@ -1,3 +1,9 @@
+name: hydro
+
+networks:
+  default:
+    name: hydro-network
+
 services:
   # Warning: mongodb here is not password-protected.
   # DO NOT EXPOSE THIS SERVICE TO THE PUBLIC.

@@ -15,11 +15,28 @@
 
 2. 启动服务。
 
-   `docker-compose up -d`
+   `docker compose up -d`
 
 在本机制作 docker 镜像耗时可能会比较长。根据网络情况，大约 5 到 30 分钟就可以自动搭建完成，全程无需人工干预。
 
 命令执行完成后运行 `docker ps -a`，当看到所有的容器的状态没有 `Exited (x) xxx` 就代表 OJ 已经启动成功。
+
+## 独立项目与网络
+
+Compose 配置固定使用项目名 `hydro` 和网络名 `hydro-network`，避免与其他同名 `docker` 目录中的项目混用网络或误报孤立容器。请使用支持顶层 `name` 的 Docker Compose V2 或更新版本，并确保没有通过 `-p` 或 `COMPOSE_PROJECT_NAME` 覆盖项目名。
+
+如果已经使用旧项目名 `docker` 启动过服务，请在 `install/docker` 目录执行以下命令迁移。迁移会短暂中断 Hydro 服务，执行前请等待正在进行的评测结束。
+
+```bash
+# 保留现有后端镜像；任一步失败都会停止后续迁移操作。
+sudo docker image tag "$(sudo docker inspect --format '{{.Image}}' oj-backend)" hydro-oj-backend:latest &&
+sudo docker compose -p docker stop oj-judge oj-backend oj-mongo &&
+sudo docker container rm oj-judge oj-backend oj-mongo &&
+sudo docker compose up -d --no-build --pull never &&
+sudo docker compose ps
+```
+
+旧的 `docker_default` 网络可能仍被其他项目使用，可以保留。不要使用 `--remove-orphans` 清理共享旧项目中的容器。
 
 ## 更新评测机
 
