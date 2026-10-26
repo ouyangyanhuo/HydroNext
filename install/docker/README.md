@@ -25,11 +25,12 @@
 
 Compose 配置固定使用项目名 `hydro` 和网络名 `hydro-network`，避免与其他同名 `docker` 目录中的项目混用网络或误报孤立容器。请使用支持顶层 `name` 的 Docker Compose V2 或更新版本，并确保没有通过 `-p` 或 `COMPOSE_PROJECT_NAME` 覆盖项目名。
 
+后端镜像名固定为 `docker-oj-backend:latest`，容器名固定为 `oj-backend`，均不随项目名变化。
+
 如果已经使用旧项目名 `docker` 启动过服务，请在 `install/docker` 目录执行以下命令迁移。迁移会短暂中断 Hydro 服务，执行前请等待正在进行的评测结束。
 
 ```bash
-# 保留现有后端镜像；任一步失败都会停止后续迁移操作。
-sudo docker image tag "$(sudo docker inspect --format '{{.Image}}' oj-backend)" hydro-oj-backend:latest &&
+# 任一步失败都会停止后续迁移操作。
 sudo docker compose -p docker stop oj-judge oj-backend oj-mongo &&
 sudo docker container rm oj-judge oj-backend oj-mongo &&
 sudo docker compose up -d --no-build --pull never &&

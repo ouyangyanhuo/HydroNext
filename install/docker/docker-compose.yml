@@ -23,6 +23,7 @@ services:
       start_period: 30s
       
   oj-backend:
+    image: docker-oj-backend:latest
     build:
       context: ../..
       dockerfile: install/docker/backend/Dockerfile

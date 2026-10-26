@@ -21,7 +21,7 @@ services:
       start_period: 30s
 
   oj-backend:
-    image: hydrooj/backend:latest  # Change this to your built backend image
+    image: docker-oj-backend:latest
     container_name: oj-backend
     restart: always
     depends_on:
