@@ -19,6 +19,7 @@ test('missing contest security blocks protected reads, submissions, rankings and
     await assert.rejects(api.requireContestAccess({}, contest), /unavailable/);
     await assert.rejects(api.requireContestRecordAccess({}, contest, {}), /unavailable/);
     await assert.rejects(api.reserveContestSubmission({}, contest, {}), /unavailable/);
+    await assert.rejects(api.resumeContestSecurity(contest, {}, async () => {}), /unavailable/);
     assert.throws(() => api.contestSecurityRankingFilter(true, true), /unavailable/);
     await assert.rejects(api.checkContestSecurityConfig(contest, false), /cannot change/);
     await assert.rejects(api.checkContestSecurityConfig(undefined, true), /unavailable/);
@@ -32,6 +33,7 @@ test('one complete provider owns authentication; unloading invalidates old socke
     let releases = 0;
     const lease = Object.assign(async () => { releases++; }, { assert: async () => {} });
     const provider = {
+        resume: async (_: any, __: any, action: any) => action(),
         checkConfig: async () => {}, requireAccess: async () => {}, teamStatus: () => ({}),
         requireRecordAccess: async () => ({ assert: async () => {} }),
         reserveSubmission: async () => lease, rankingFilter: () => ({ valid: true }),

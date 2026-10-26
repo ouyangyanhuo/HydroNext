@@ -48,8 +48,14 @@ function fixture(options: any = {}) {
         refresh: async (...args: any[]) => { calls.push(['refresh', ...args]); return { token: 'token' }; },
         authenticate: async () => ({ uid: 7, domainId: 'exam', tid, attemptId, publicKey: 'device-key', fingerprint: 'device-fingerprint' }),
         closeAttempt: async () => ({ _id: attemptId }),
+        updateEvidence: async () => {
+            const updates = calls.filter((call) => call[0] === 'attempt');
+            const state = updates.at(-1)?.[1]?.$set?.state;
+            calls.push(['status', { proctorEnded: true, proctorLogUploaded: state === 'complete' }]);
+        },
         acquireLogLock: async () => ({ assert: async () => {}, release: async () => calls.push('unlock') }),
-        attempts: { updateOne: async (_: any, update: any) => calls.push(['attempt', update]) },
+        attempts: { findOne: async () => options.attempt || null,
+            updateOne: async (_: any, update: any) => calls.push(['attempt', update]) },
         logs: {
             countDocuments: async () => rows.length,
             findOne: async () => options.existing || null,

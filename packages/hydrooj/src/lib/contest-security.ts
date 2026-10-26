@@ -16,6 +16,7 @@ export interface ContestSubmissionRequest {
     filePath?: string;
 }
 export interface ContestSecurityProvider {
+    resume(tdoc: Tdoc, status: ContestStatusDoc, action: () => Promise<unknown>): Promise<void>;
     checkConfig(tdoc: Tdoc | undefined, enabled: boolean): Promise<void>;
     requireAccess(handler: Handler, tdoc: Tdoc, pid?: string | number): Promise<void>;
     requireRecordAccess(handler: Handler | ConnectionHandler, tdoc: Tdoc, rdoc: RecordDoc): Promise<ContestAccessGrant | undefined>;
@@ -34,7 +35,7 @@ function requireProvider() {
 /** One authority per worker. Registration is owned by the addon's lifecycle. */
 export function registerContestSecurity(value: ContestSecurityProvider) {
     if (provider) throw new Error('Contest security provider is already registered.');
-    for (const key of ['checkConfig', 'requireAccess', 'requireRecordAccess', 'reserveSubmission', 'rankingFilter', 'teamStatus']) {
+    for (const key of ['resume', 'checkConfig', 'requireAccess', 'requireRecordAccess', 'reserveSubmission', 'rankingFilter', 'teamStatus']) {
         if (typeof value?.[key] !== 'function') throw new Error(`Incomplete contest security provider: ${key}`);
     }
     provider = value;
@@ -42,6 +43,19 @@ export function registerContestSecurity(value: ContestSecurityProvider) {
 }
 
 export function hasContestSecurity() { return !!provider; }
+
+/** 恢复比赛权限与监考轮次由同一个操作协调，缺少监考插件时不能单独放开比赛。 */
+export async function resumeContestSecurity(tdoc: Tdoc, status: ContestStatusDoc, action: () => Promise<unknown>) {
+    if (!tdoc.proctorEnabled) {
+        await action();
+        return;
+    }
+    const owner = requireProvider();
+    await owner.resume(tdoc, status, async () => {
+        if (provider !== owner) throw unavailable();
+        return action();
+    });
+}
 
 export async function checkContestSecurityConfig(tdoc: Tdoc | undefined, enabled: boolean) {
     if (tdoc && !!tdoc.proctorEnabled !== enabled && Date.now() >= tdoc.beginAt.getTime()) {

@@ -11,6 +11,7 @@ export async function apply(ctx: Context) {
     // Publish authentication capability only after every route is registered.
     registerRoutes(ctx);
     ctx.effect(() => registerContestSecurity({
+        resume: proctor.resumeContest,
         checkConfig: proctor.checkContestConfig,
         requireAccess: requireProctorAccess,
         async requireRecordAccess(handler, tdoc, rdoc) {

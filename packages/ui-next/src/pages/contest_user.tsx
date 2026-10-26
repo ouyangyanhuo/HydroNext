@@ -13,16 +13,8 @@ import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 import { useDeadlinePassed } from '@/hooks/use-time';
+import { canResume } from '@/utils/contest-resume';
 import { formatErrorMessage } from '@/utils/error';
-
-function canResume(tdoc: any, tsdoc: any) {
-  if (!tsdoc.endAt || !tdoc.endAt) return false;
-  const endAt = new Date(tdoc.endAt).getTime();
-  const userEndAt = new Date(tsdoc.endAt).getTime();
-  if (userEndAt >= endAt || endAt <= Date.now()) return false;
-  if (!tdoc.duration || !tsdoc.startAt) return true;
-  return new Date(tsdoc.startAt).getTime() + Number(tdoc.duration) * 3600000 > Date.now();
-}
 
 export default function ContestUserPage() {
   const { args } = usePageData();

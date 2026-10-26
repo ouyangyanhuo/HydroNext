@@ -51,7 +51,8 @@ class Collection {
     async findOne(query: any) { return this.rows.find((row) => matches(row, query)) || null; }
     async insertOne(doc: any) {
         const duplicate = this.rows.some((row) => same(row._id, doc._id)
-            || (this.name.endsWith('.attempt') && row.uid === doc.uid && row.domainId === doc.domainId && same(row.tid, doc.tid)));
+            || (this.name.endsWith('.attempt') && row.active !== false && doc.active !== false
+                && row.uid === doc.uid && row.domainId === doc.domainId && same(row.tid, doc.tid)));
         if (duplicate) throw Object.assign(new Error('duplicate'), { code: 11000 });
         this.rows.push({ ...doc });
         return { insertedId: doc._id };
@@ -83,6 +84,7 @@ class Collection {
 
     async deleteOne(query: any) { return { deletedCount: await this.findOneAndDelete(query) ? 1 : 0 }; }
     async countDocuments(query: any) { return this.rows.filter((row) => matches(row, query)).length; }
+    find(query: any) { return { toArray: async () => this.rows.filter((row) => matches(row, query)) }; }
 }
 
 function fixture(options: { missingKeys?: boolean } = {}) {
@@ -375,6 +377,80 @@ test('completed upload receipt remains recoverable after a lost response without
     assert.equal(response.completed, true);
     assert.equal(response.receipt, logId.toHexString());
     assert.equal(response.token, undefined);
+});
+
+test('管理员恢复比赛创建新轮次，保留旧回执，并允许指定旧轮次恢复回执', async () => {
+    const f = fixture();
+    const { response } = await f.start();
+    const old = f.coll('proctor.attempt').rows[0];
+    const logId = new ObjectId();
+    Object.assign(old, { state: 'complete', logId });
+    let resumed = 0;
+    const tdoc = { ...f.tdoc, domainId: identity.domainId, docId: identity.tid };
+    await f.model.resumeContest(tdoc, { uid: 7, attend: 1 }, async () => { resumed++; });
+    assert.equal(resumed, 1);
+    assert.equal(old.active, false);
+    assert.equal(old.logId, logId);
+    assert.equal(old.state, 'complete');
+    const active = await f.coll('proctor.attempt').findOne({ active: true });
+    assert.notEqual(String(active._id), String(old._id));
+    assert.equal(String(active.previousAttemptId), String(old._id));
+    const next = await f.start();
+    assert.equal(next.response.payload.attemptId, String(active._id));
+    assert.equal(f.statuses.at(-1)[3].proctorLogUploaded, false);
+    const previous = await f.model.challenge(identity, f.tdoc, { ...f.raw, attemptId: String(old._id) }, 'https://oj.example');
+    const receipt = await f.model.handshake(identity, previous.payload.challengeId,
+        cryptoHelpers.signedPayload(previous.payload, clientPrivate));
+    assert.equal(receipt.completed, true);
+    assert.equal(receipt.receipt, String(logId));
+    const oldSession = await f.coll('proctor.session').findOne({ _id: cryptoHelpers.digest(response.token) });
+    await assert.rejects(f.model.assertAccessSession(oldSession));
+    await assert.rejects(f.model.reserveSubmission(oldSession));
+    await assert.rejects(f.model.challenge({ ...identity, uid: 8 }, f.tdoc,
+        { ...f.raw, attemptId: String(old._id) }, 'https://oj.example'));
+    await f.model.resumeContest(tdoc, { uid: 7, attend: 1 }, async () => {});
+    assert.equal(f.coll('proctor.attempt').rows.length, 2, '开放轮次不因重复恢复而分裂');
+});
+
+test('历史待补传日志与当前轮次分别保留，全部日志完成才恢复成绩有效标记', async () => {
+    const f = fixture();
+    await f.start();
+    const old = f.coll('proctor.attempt').rows[0];
+    old.state = 'closing';
+    await f.model.resumeContest({ ...f.tdoc, domainId: identity.domainId, docId: identity.tid }, { uid: 7 }, async () => {});
+    const active = await f.coll('proctor.attempt').findOne({ active: true });
+    Object.assign(active, { state: 'complete', logId: new ObjectId() });
+    await f.model.updateEvidence(identity);
+    assert.equal(f.statuses.at(-1)[3].proctorLogUploaded, false);
+    Object.assign(old, { state: 'complete', logId: new ObjectId() });
+    await f.model.updateEvidence(identity);
+    assert.equal(f.statuses.at(-1)[3].proctorLogUploaded, true);
+    active.state = 'open';
+    await f.model.updateEvidence(identity);
+    assert.equal(f.statuses.at(-1)[3].proctorEnded, false, '旧轮次补传不会结束新轮次');
+});
+
+test('恢复时间权限失败会撤销新轮次；团队恢复逐人建立轮次且不影响其他成员', async () => {
+    const f = fixture();
+    await f.start();
+    const old = f.coll('proctor.attempt').rows[0];
+    Object.assign(old, { state: 'complete', logId: new ObjectId() });
+    const tdoc = { ...f.tdoc, domainId: identity.domainId, docId: identity.tid };
+    await f.coll('proctor.lease').insertOne({ _id: 'pending-submit', attemptId: old._id, expiresAt: new Date(Date.now() + 60000) });
+    await assert.rejects(f.model.resumeContest(tdoc, { uid: 7 }, async () => {}), /pending submissions/);
+    assert.equal(old.active, true);
+    await f.coll('proctor.lease').deleteOne({ _id: 'pending-submit' });
+    await assert.rejects(f.model.resumeContest(tdoc, { uid: 7 }, async () => { throw new Error('时间更新失败'); }));
+    assert.equal(f.coll('proctor.attempt').rows.length, 1);
+    assert.equal(old.active, true);
+    const other = { ...old, uid: 8, _id: new ObjectId() };
+    const outside = { ...old, uid: 9, _id: new ObjectId() };
+    await f.coll('proctor.attempt').insertOne(other);
+    await f.coll('proctor.attempt').insertOne(outside);
+    await f.model.resumeContest(tdoc, { uid: -1, members: [7, 8] }, async () => {});
+    assert.equal(f.coll('proctor.attempt').rows.filter((row) => row.active).length, 3);
+    assert.equal(f.coll('proctor.attempt').rows.filter((row) => row.active === false).length, 2);
+    assert.equal((await f.coll('proctor.attempt').findOne({ _id: outside._id })).active, true);
 });
 
 test('upload/delete locks serialize workers and stale cleanup cannot unlock a replacement', async () => {

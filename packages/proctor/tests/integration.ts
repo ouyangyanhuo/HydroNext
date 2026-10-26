@@ -26,7 +26,7 @@ export async function runProctorSudoHttpTests(_agent: any, { Root }: any) {
     assert.match(download.body.url, /\/user\/sudo$/);
 }
 
-export async function runProctorFlowHttpTests(_agent: any) {
+export async function runProctorFlowHttpTests(_agent: any, { Root }: any) {
     const { contest, domain, problem, user, record, storage } = global.Hydro.model;
     const { ObjectId } = require('mongodb');
     const { PERM, PRIV } = require('../../hydrooj/src/model/builtin');
@@ -76,7 +76,7 @@ export async function runProctorFlowHttpTests(_agent: any) {
                 version: '1.0.0', fingerprint, clientNonce: secret(),
                 publicKey: device.publicKey.export({ type: 'spki', format: 'pem' }).toString(),
             }, origin);
-            const session = await proctor.handshake({ domainId, uid, tid }, challenge.payload.challengeId,
+            let session = await proctor.handshake({ domainId, uid, tid }, challenge.payload.challengeId,
                 signedPayload(challenge.payload, device.privateKey), '127.0.0.1');
             const headers = (action: string, method: string, path: string, data: any) => {
                 const payload = { protocol: 'hydro-proctor/1', action, method, path, tokenHash: digest(session.token),
@@ -176,6 +176,50 @@ export async function runProctorFlowHttpTests(_agent: any) {
             assert.equal(status.body.state, 'complete');
             assert.equal(status.body.logUploaded, true);
             assert.equal((await contest.getStatus(domainId, tid, uid)).proctorLogUploaded, true);
+            if (ending === 'early') {
+                const oldAttemptId = session.payload.attemptId;
+                const oldLog = await proctor.logs.findOne({ attemptId: new ObjectId(oldAttemptId) });
+                // 模拟旧版本已恢复比赛时间、却仍保留监考终态的数据。
+                await contest.setStatus(domainId, tid, uid, null, { endAt: '', earlyEndAt: '' });
+                const admin = supertest.agent(require('hydrooj').httpServer);
+                await admin.post('/login').send({ uname: Root.username, password: Root.password }).expect(302);
+                const attendees = await admin.get(`/d/${domainId}/contest/${tid}/user`).set('Accept', 'application/json').expect(200);
+                assert.equal(attendees.body.tsdocs.find((row) => row.uid === uid).proctorEnded, true);
+                await admin.post(`/d/${domainId}/contest/${tid}/user`).send({ operation: 'resume', uid }).expect(302);
+                assert.equal((await contest.getStatus(domainId, tid, uid)).earlyEndAt, undefined);
+                assert.equal((await contest.getStatus(domainId, tid, uid)).proctorLogUploaded, false);
+                const identity = await participant.post(`/d/${domainId}/proctor/identity`)
+                    .send({ tid, clientNonce: secret() }).expect(200);
+                assert.notEqual(identity.body.payload.attemptId, oldAttemptId);
+                assert.ok(verifyPayload(identity.body.payload, identity.body.signature, keys.signingPublicKey));
+                const problemsPath = `/d/${domainId}/contest/${tid}/problems`;
+                await participant.get(problemsPath).set('Accept', 'application/json')
+                    .set(headers('contest_view', 'GET', problemsPath, { tid: tid.toHexString() })).expect(403);
+                const reopened = await proctor.challenge({ domainId, uid, tid }, await contest.get(domainId, tid), {
+                    version: '1.0.0', fingerprint, clientNonce: secret(), publicKey: binding.publicKey,
+                }, origin);
+                session = await proctor.handshake({ domainId, uid, tid }, reopened.payload.challengeId,
+                    signedPayload(reopened.payload, device.privateKey), '127.0.0.1');
+                assert.equal(session.payload.attemptId, identity.body.payload.attemptId);
+                await participant.get(problemsPath).set('Accept', 'application/json')
+                    .set(headers('contest_view', 'GET', problemsPath, { tid: tid.toHexString() })).expect(200);
+                await participant.post(`${submitPath}?tid=${tid}`).set('Accept', 'application/json')
+                    .set(headers('submit', 'POST', submitPath, submission))
+                    .send({ tid, lang: submission.lang, code: submission.code }).expect(200);
+                const nextBinding = { ...binding, attemptId: session.payload.attemptId };
+                const nextFile = encryptJournal(nextBinding);
+                const nextName = 'resumed.hplog';
+                await participant.post(route)
+                    .set(headers('upload', 'POST', route, { filename: nextName, size: nextFile.length, sha256: digest(nextFile) }))
+                    .set('Origin', `http://127.0.0.1:${require('hydrooj').httpServer.address().port}`)
+                    .field('operation', 'upload').attach('file', nextFile, nextName).expect(200);
+                assert.equal(await proctor.logs.countDocuments({ domainId, uid, tid }), 2);
+                assert.equal((await proctor.logs.findOne({ _id: oldLog._id })).sha256, digest(file));
+                assert.equal(await storage.exists(oldLog.path), true);
+                assert.equal((await contest.getStatus(domainId, tid, uid)).proctorLogUploaded, true);
+                const oldReceipt = await participant.get(`${route}?attemptId=${oldAttemptId}`).expect(200);
+                assert.equal(oldReceipt.body.receipt.sha256, digest(file));
+            }
         }
     } finally {
         socket?.terminate();

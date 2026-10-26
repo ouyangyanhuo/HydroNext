@@ -133,9 +133,23 @@ mocks['@/components/common/form-dialog'] = component('../src/components/common/f
 mocks['@/components/contest/team-identity'] = component('../src/components/contest/team-identity.tsx', {
     '@/components/link': { Link: ({ children, params }: any) => h('a', { href: `/d/team/contest/team/${params.vuid}` }, children) },
 });
+const { canResume } = component('../src/utils/contest-resume.ts');
+mocks['@/utils/contest-resume'] = { canResume };
 const ContestUser = component('../src/pages/contest_user.tsx').default;
 const ContestBalloon = component('../src/pages/contest_balloon.tsx').default;
 const ContestClarification = component('../src/pages/contest_clarification.tsx').default;
+
+test('管理员可恢复时间已放开但监考仍结束的参赛者，比赛或个人时限到期仍不可恢复', () => {
+    const live = { proctorEnabled: true, endAt: new Date(Date.now() + 3600000) };
+    assert.equal(canResume(live, { attend: 1, proctorEnded: true }), true);
+    assert.equal(canResume(live, { attend: 1, proctorMembers: { 7: { proctorEnded: true } } }), true);
+    assert.equal(canResume(live, { attend: 1, proctorEnded: false }), false);
+    assert.equal(canResume({ ...live, proctorEnabled: false }, { attend: 1, proctorEnded: true }), false);
+    assert.equal(canResume({ ...live, endAt: new Date(Date.now() - 1) }, { attend: 1, proctorEnded: true }), false);
+    assert.equal(canResume({ ...live, duration: 1 }, { attend: 1, proctorEnded: true,
+        startAt: new Date(Date.now() - 7200000) }), false);
+    assert.equal(canResume(live, { attend: 0, proctorEnded: true }), false);
+});
 
 test('problem bulk download is available to creators without edit permission and isolates selections by domain', async () => {
     let domainId = 'team';

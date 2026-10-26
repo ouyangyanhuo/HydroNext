@@ -106,6 +106,7 @@ Security: 安全设置
 'Use an up-to-date proctor client to submit.': '请使用版本符合要求的监考客户端提交。'
 'View private keys': '查看私钥'
 'Wait for pending submissions before finishing proctoring.': '请等待在途提交完成后再结束监考。'
+'Wait for pending submissions before resuming proctoring.': '请等待在途提交完成后再恢复监考。'
 'All team members must proctor independently and upload their own final logs.': '团队成员必须分别使用本人账号接受监考，并各自上传最终日志；全员上传后全队成绩才有效。'
 'Logs still required from: {0}': '仍缺：{0}'
 'My log pending': '本人日志待上传'

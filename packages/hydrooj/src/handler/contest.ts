@@ -18,7 +18,7 @@ import {
 import { ContestStatusDoc, FileInfo, ScoreboardConfig, Tdoc } from '../interface';
 import {
     checkContestSecurityConfig as checkContestConfig, contestSecurityTeamStatus as teamProctorStatus,
-    hasContestSecurity, requireContestAccess as requireProctorAccess,
+    hasContestSecurity, requireContestAccess as requireProctorAccess, resumeContestSecurity,
 } from '../lib/contest-security';
 import { requireTeamCaptain, teamCaptainId } from '../lib/team-permissions';
 import { PERM, PRIV, STATUS } from '../model/builtin';
@@ -781,6 +781,7 @@ export class ContestUserHandler extends ContestManagementBaseHandler {
     async get(domainId: string, tid: ObjectId) {
         const tsdocs = await contest.getMultiStatus(domainId, { docId: tid }).project({
             uid: 1, attend: 1, startAt: 1, unrank: 1, endAt: 1, displayName: 1, members: 1,
+            proctorEnded: 1, proctorLogUploaded: 1, proctorMembers: 1,
         }).toArray();
         for (const tsdoc of tsdocs) {
             if (this.tdoc.duration && tsdoc.startAt) {
@@ -833,7 +834,8 @@ export class ContestUserHandler extends ContestManagementBaseHandler {
             const durationEnd = moment(tsdoc.startAt).add(this.tdoc.duration, 'hours').toDate();
             if (durationEnd <= new Date()) throw new ContestNotLiveError(domainId, tid);
         }
-        await contest.setStatus(domainId, tid, uid, null, { endAt: '', earlyEndAt: '' });
+        await resumeContestSecurity(this.tdoc, tsdoc,
+            () => contest.setStatus(domainId, tid, uid, null, { endAt: '', earlyEndAt: '' }));
         this.back();
     }
 

@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from 'fs/promises';
 import { homedir } from 'os';
 import { join } from 'path';
 import { ObjectId } from 'mongodb';
-import { ContestModel as contest, Context, db, ForbiddenError, type Tdoc, ValidationError } from 'hydrooj';
+import { ContestModel as contest, type ContestStatusDoc, Context, db, ForbiddenError, type Tdoc, ValidationError } from 'hydrooj';
 import {
     canonical, decodeProof, digest, normalizeClientKey, PROCTOR_PROTOCOL, secret, signedPayload, validProof, verifyPayload,
 } from '../lib/proctor';
@@ -26,6 +26,7 @@ interface Challenge extends Identity {
 }
 interface Attempt extends Identity {
     _id: ObjectId; publicKey: string; fingerprint: string; createdAt: Date;
+    active?: boolean; previousAttemptId?: ObjectId;
     deviceId?: ObjectId; // Read-only compatibility with the previous enrollment protocol.
     state: 'open' | 'closing' | 'complete'; finishedAt?: Date; logId?: ObjectId;
 }
@@ -123,10 +124,61 @@ export async function checkContestConfig(tdoc: Tdoc | undefined, enabled: boolea
     }
 }
 
+// Serialize evidence changes across workers. Stale cleanup cannot release a
+// replacement owner's lock after a process failure / lease expiry.
+async function acquireLock(_id: string) {
+    const holder = secret();
+    const expiresAt = new Date(Date.now() + 15 * 60000);
+    await leases.findOneAndDelete({ _id, expiresAt: { $lte: new Date() } });
+    try {
+        await leases.insertOne({ _id, holder, expiresAt });
+    } catch (error) {
+        if (error.code === 11000) throw new ForbiddenError('Proctor log is busy. Please retry.');
+        throw error;
+    }
+    return {
+        async assert() {
+            if (!await leases.findOne({ _id, holder, expiresAt: { $gt: new Date() } })) {
+                throw new ForbiddenError('Proctor log operation timed out. Please retry.');
+            }
+        },
+        release: () => leases.deleteOne({ _id, holder }),
+    };
+}
+
+export const acquireLogLock = (attemptId: ObjectId) => acquireLock(`log:${attemptId.toHexString()}`);
+const acquireIdentityLock = (identity: Identity) => acquireLock(`attempt:${digest(canonical({
+    uid: identity.uid, domainId: identity.domainId, tid: identity.tid.toHexString(),
+}))}`);
+
+/** 旧轮次补传不能覆盖当前轮次状态，所有轮次的证据齐全才算上传完成。 */
+async function writeEvidence(identity: Identity) {
+    const rows = await attempts.find(identity).toArray();
+    const active = rows.find((row) => row.active !== false);
+    await contest.setStatus(identity.domainId, identity.tid, identity.uid, {
+        proctorEnded: !!active && active.state !== 'open',
+        proctorLogUploaded: !!rows.length && rows.every((row) => row.state === 'complete' && !!row.logId),
+    });
+}
+
+export async function updateEvidence(identity: Identity) {
+    const scope = { uid: identity.uid, domainId: identity.domainId, tid: identity.tid };
+    const lock = await acquireIdentityLock(scope);
+    try {
+        await writeEvidence(scope);
+    } finally {
+        await lock.release();
+    }
+}
+
 export async function challenge(identity: Identity, tdoc: Tdoc, raw: any, origin: string) {
     const config = await getConfig();
     if (!config.enabled || !tdoc.proctorEnabled) throw new ForbiddenError('Proctor is not configured.');
     if (raw.version !== config.requiredVersion) throw new ForbiddenError('Proctor client version mismatch.');
+    if (raw.attemptId !== undefined && !/^[a-f0-9]{24}$/.test(raw.attemptId)) throw new ValidationError('attemptId');
+    if (raw.attemptId && !await attempts.findOne({ ...identity, _id: new ObjectId(raw.attemptId) })) {
+        throw new ForbiddenError('Proctor attempt does not belong to this account.');
+    }
     if (!/^[a-f0-9]{64}$/.test(raw.fingerprint || '') || !/^[A-Za-z0-9_-]{32,100}$/.test(raw.clientNonce || '')) {
         throw new ValidationError('fingerprint');
     }
@@ -157,7 +209,7 @@ export async function challenge(identity: Identity, tdoc: Tdoc, raw: any, origin
     const payload = { protocol: PROCTOR_PROTOCOL, action: 'handshake', challengeId: _id, origin,
         uid: identity.uid, domainId: identity.domainId, tid: identity.tid.toHexString(), keyId: config.keyId,
         clientNonce: raw.clientNonce, serverNonce: secret(), publicKey, fingerprint: raw.fingerprint,
-        version: raw.version, deviceInfo, expiresAt: expiresAt.toISOString() };
+        version: raw.version, deviceInfo, ...(raw.attemptId ? { attemptId: raw.attemptId } : {}), expiresAt: expiresAt.toISOString() };
     await challenges.insertOne({ ...identity, _id, publicKey, fingerprint: raw.fingerprint, version: raw.version, deviceInfo, expiresAt, payload });
     return { payload, signature: signedPayload(payload, keys.signingPrivateKey) };
 }
@@ -175,16 +227,14 @@ async function issueSession(identity: Omit<Session, '_id' | 'expiresAt' | 'revok
     return { token, payload, signature: signedPayload(payload, keys.signingPrivateKey) };
 }
 
-export async function handshake(identity: Identity, challengeId: string, signature: string, ip = '') {
-    const config = await getConfig();
-    const doc = await challenges.findOne({ ...identity, _id: challengeId, expiresAt: { $gt: new Date() } });
-    if (!config.enabled || !doc || doc.version !== config.requiredVersion || doc.payload.keyId !== config.keyId
-        || !verifyPayload(doc.payload, signature, doc.publicKey)) throw new ForbiddenError('Invalid proctor handshake.');
-    if (!await challenges.findOneAndDelete({ ...identity, _id: challengeId, expiresAt: { $gt: new Date() } })) {
-        throw new ForbiddenError('Proctor challenge has already been used.');
-    }
-    const attempt = await attempts.findOneAndUpdate(identity, { $setOnInsert: { ...identity, _id: new ObjectId(),
-        publicKey: doc.publicKey, fingerprint: doc.fingerprint, createdAt: new Date(), state: 'open' } }, { upsert: true, returnDocument: 'after' });
+async function acceptHandshake(identity: Identity, doc: Challenge, config: Config, ip: string) {
+    const requested = doc.payload.attemptId;
+    const attempt = requested
+        ? await attempts.findOne({ ...identity, _id: new ObjectId(requested) })
+        : await attempts.findOneAndUpdate({ ...identity, active: { $ne: false } }, { $setOnInsert: { ...identity, _id: new ObjectId(),
+            active: true, publicKey: doc.publicKey, fingerprint: doc.fingerprint, createdAt: new Date(), state: 'open' } },
+        { upsert: true, returnDocument: 'after' });
+    if (!attempt) throw new ForbiddenError('Proctor attempt is unavailable.');
     if (!attempt.publicKey && attempt.deviceId) {
         const legacy = await db.collection('proctor.device').findOne({ _id: attempt.deviceId, uid: identity.uid, revoked: false });
         if (legacy?.publicKey === doc.publicKey && attempt.fingerprint === doc.fingerprint) {
@@ -202,6 +252,22 @@ export async function handshake(identity: Identity, challengeId: string, signatu
     }
     return issueSession({ ...identity, attemptId: attempt._id, publicKey: doc.publicKey, fingerprint: doc.fingerprint,
         version: doc.version, keyId: config.keyId, deviceInfo: doc.deviceInfo || {}, ip: ip.slice(0, 128) }, config);
+}
+
+export async function handshake(identity: Identity, challengeId: string, signature: string, ip = '') {
+    const config = await getConfig();
+    const doc = await challenges.findOne({ ...identity, _id: challengeId, expiresAt: { $gt: new Date() } });
+    if (!config.enabled || !doc || doc.version !== config.requiredVersion || doc.payload.keyId !== config.keyId
+        || !verifyPayload(doc.payload, signature, doc.publicKey)) throw new ForbiddenError('Invalid proctor handshake.');
+    if (!await challenges.findOneAndDelete({ ...identity, _id: challengeId, expiresAt: { $gt: new Date() } })) {
+        throw new ForbiddenError('Proctor challenge has already been used.');
+    }
+    const lock = await acquireIdentityLock(identity);
+    try {
+        return await acceptHandshake(identity, doc, config, ip);
+    } finally {
+        await lock.release();
+    }
 }
 
 export async function authenticate(
@@ -239,7 +305,8 @@ export async function assertAccessSession(session: Session) {
         throw new ForbiddenError('Proctor session expired or client version mismatch.');
     }
     const { uid, domainId, tid } = session;
-    const attempt = await attempts.findOne({ uid, domainId, tid, _id: session.attemptId, state: 'open', fingerprint: session.fingerprint });
+    const attempt = await attempts.findOne({ uid, domainId, tid, _id: session.attemptId,
+        active: { $ne: false }, state: 'open', fingerprint: session.fingerprint });
     if (!attempt) throw new ForbiddenError('Proctor session is already finished.');
     return session;
 }
@@ -262,7 +329,7 @@ export async function refresh(session: Session, ip = session.ip) {
 export async function reserveSubmission(session: Session) {
     const _id = secret();
     await leases.insertOne({ _id, attemptId: session.attemptId, expiresAt: new Date(Date.now() + 300000) });
-    const result = await attempts.updateOne({ _id: session.attemptId, state: 'open', fingerprint: session.fingerprint }, {
+    const result = await attempts.updateOne({ _id: session.attemptId, active: { $ne: false }, state: 'open', fingerprint: session.fingerprint }, {
         $set: { state: 'open' },
     });
     if (!result.matchedCount) {
@@ -305,41 +372,80 @@ export async function closeAttempt(session: Session) {
         $set: { state: 'closing', finishedAt: new Date() },
     }, { returnDocument: 'after' });
     if (!attempt) throw new ForbiddenError('Proctor session is already finished.');
-    await contest.setStatus(session.domainId, session.tid, session.uid, { proctorEnded: true });
+    await updateEvidence(session);
     if (await leases.countDocuments({ attemptId: attempt._id, expiresAt: { $gt: new Date() } })) {
         throw new ForbiddenError('Wait for pending submissions before finishing proctoring.');
     }
     return attempt;
 }
 
-// Serialize evidence changes across workers. Stale cleanup cannot release a
-// replacement owner's lock after a process failure / lease expiry.
-export async function acquireLogLock(attemptId: ObjectId) {
-    const _id = `log:${attemptId.toHexString()}`;
-    const holder = secret();
-    const expiresAt = new Date(Date.now() + 15 * 60000);
-    await leases.findOneAndDelete({ _id, expiresAt: { $lte: new Date() } });
+/** 仅管理员恢复比赛时创建新轮次；正常重启、重复握手和日志补传均不能重开考试。 */
+export async function resumeContest(tdoc: Tdoc, status: ContestStatusDoc, action: () => Promise<unknown>) {
+    const uids = status.uid < 0 ? [...new Set(status.members || [])] : [status.uid];
+    const identities = uids.sort((a, b) => a - b).map((uid) => ({ uid, domainId: tdoc.domainId, tid: tdoc.docId }));
+    const locks: Awaited<ReturnType<typeof acquireIdentityLock>>[] = [];
+    const rotated: { old: Attempt, next: Attempt }[] = [];
+    let locked = false;
     try {
-        await leases.insertOne({ _id, holder, expiresAt });
-    } catch (error) {
-        if (error.code === 11000) throw new ForbiddenError('Proctor log is busy. Please retry.');
-        throw error;
-    }
-    return {
-        async assert() {
-            if (!await leases.findOne({ _id, holder, expiresAt: { $gt: new Date() } })) {
-                throw new ForbiddenError('Proctor log operation timed out. Please retry.');
+        for (const scope of identities) {
+            // eslint-disable-next-line no-await-in-loop
+            locks.push(await acquireIdentityLock(scope));
+        }
+        locked = true;
+        for (const scope of identities) {
+            // eslint-disable-next-line no-await-in-loop
+            const old = await attempts.findOne({ ...scope, active: { $ne: false } });
+            if (!old || old.state === 'open') continue;
+            // 已开始处理的旧提交必须先结束，避免新轮次开放后旧提交仍在改变比赛结果。
+            // eslint-disable-next-line no-await-in-loop
+            if (await leases.countDocuments({ attemptId: old._id, expiresAt: { $gt: new Date() } })) {
+                throw new ForbiddenError('Wait for pending submissions before resuming proctoring.');
             }
-        },
-        release: () => leases.deleteOne({ _id, holder }),
-    };
+            const next: Attempt = { ...scope, _id: new ObjectId(), active: true, previousAttemptId: old._id,
+                publicKey: old.publicKey, fingerprint: old.fingerprint, ...(old.deviceId ? { deviceId: old.deviceId } : {}),
+                createdAt: new Date(), state: 'open' };
+            rotated.push({ old, next });
+            // eslint-disable-next-line no-await-in-loop
+            await attempts.updateOne({ _id: old._id }, { $set: { active: false } });
+            // eslint-disable-next-line no-await-in-loop
+            await attempts.insertOne(next);
+        }
+        for (const scope of identities) {
+            // eslint-disable-next-line no-await-in-loop
+            await writeEvidence(scope);
+        }
+        // 时间权限最后恢复，轮次准备失败时不会先放行题目或代码提交。
+        await action();
+    } catch (error) {
+        for (const { old, next } of rotated.reverse()) {
+            // eslint-disable-next-line no-await-in-loop
+            await attempts.deleteOne({ _id: next._id });
+            // eslint-disable-next-line no-await-in-loop
+            await attempts.updateOne({ _id: old._id }, { $set: { active: true } });
+        }
+        if (locked) {
+            for (const scope of identities) {
+                // eslint-disable-next-line no-await-in-loop
+                await writeEvidence(scope);
+            }
+        }
+        throw error;
+    } finally {
+        await Promise.all(locks.map((lock) => lock.release()));
+    }
 }
 
 export async function initialize(ctx: Context) {
     const ttl = { key: { expiresAt: 1 }, expireAfterSeconds: 0, name: 'expiry' } as const;
     await Promise.all([ctx.db.ensureIndexes(challenges, ttl),
         ctx.db.ensureIndexes(sessions, ttl), ctx.db.ensureIndexes(nonces, ttl), ctx.db.ensureIndexes(leases, ttl)]);
-    await ctx.db.ensureIndexes(attempts, { key: { domainId: 1, tid: 1, uid: 1 }, unique: true, name: 'contest_attempt' });
+    // 旧数据保持为当前轮次；先建立新的唯一约束，再移除只允许单轮次的旧索引。
+    await attempts.updateMany({ active: { $exists: false } }, { $set: { active: true } });
+    await ctx.db.ensureIndexes(attempts, { key: { domainId: 1, tid: 1, uid: 1 }, unique: true,
+        partialFilterExpression: { active: true }, name: 'contest_active_attempt' });
+    try { await attempts.dropIndex('contest_attempt'); } catch (error) {
+        if (![26, 27].includes(error.code)) throw error;
+    }
     await ctx.db.ensureIndexes(logs, { key: { uploadedAt: -1 }, name: 'recent_logs' },
         { key: { attemptId: 1 }, unique: true, name: 'final_log' });
 }

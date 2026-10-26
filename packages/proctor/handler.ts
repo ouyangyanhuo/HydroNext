@@ -150,9 +150,9 @@ export class ManageProctorLogsHandler extends Handler {
             // Removing evidence also removes qualification. Original judge records remain.
             for (const doc of docs) {
             // eslint-disable-next-line no-await-in-loop
-                await contest.setStatus(doc.domainId, doc.tid, doc.uid, { proctorLogUploaded: false, proctorEnded: true });
-                // eslint-disable-next-line no-await-in-loop
                 await proctor.attempts.updateOne({ _id: doc.attemptId }, { $set: { state: 'closing' }, $unset: { logId: '' } });
+                // eslint-disable-next-line no-await-in-loop
+                await proctor.updateEvidence(doc);
             }
             await storage.del(docs.map((doc) => doc.path), this.user._id);
             await Promise.all(locks.map((lock) => lock.assert()));
@@ -187,8 +187,10 @@ export class ContestProctorHandler extends ContestDetailBaseHandler {
             (this.context.originalPath || this.request.path).split('?')[0], payload);
     }
 
-    async get() {
-        const attempt = await proctor.attempts.findOne(this.identity());
+    @param('attemptId', Types.ObjectId, true)
+    async get(_, attemptId?: ObjectId) {
+        const attempt = await proctor.attempts.findOne({ ...this.identity(),
+            ...(attemptId ? { _id: attemptId } : { active: { $ne: false } }) });
         const log = attempt?.logId ? await proctor.logs.findOne({ _id: attempt.logId }) : null;
         this.response.body = { state: attempt?.state || 'not_started', logUploaded: !!log,
             receipt: log ? { id: log._id, filename: log.filename, uploadedAt: log.uploadedAt, sha256: log.sha256 } : null };
@@ -239,7 +241,7 @@ export class ContestProctorHandler extends ContestDetailBaseHandler {
             if (existing && await storage.exists(existing.path)) {
                 if (existing.sha256 !== sha256) throw new ForbiddenError('Final proctor log cannot be replaced.');
                 await proctor.attempts.updateOne({ _id: session.attemptId }, { $set: { state: 'complete', logId: existing._id } });
-                await contest.setStatus(session.domainId, session.tid, session.uid, { proctorLogUploaded: true, proctorEnded: true });
+                await proctor.updateEvidence(session);
                 this.response.body = { ok: true, receipt: existing._id };
                 return;
             }
@@ -247,7 +249,7 @@ export class ContestProctorHandler extends ContestDetailBaseHandler {
                 // Recover a partially deleted file without qualifying missing evidence.
                 await proctor.logs.deleteOne({ _id: existing._id });
                 await proctor.attempts.updateOne({ _id: session.attemptId }, { $set: { state: 'closing' }, $unset: { logId: '' } });
-                await contest.setStatus(session.domainId, session.tid, session.uid, { proctorLogUploaded: false, proctorEnded: true });
+                await proctor.updateEvidence(session);
             }
             try {
                 await validateEncryptedLog(file.filepath, proctor.getKeys, {
@@ -270,7 +272,7 @@ export class ContestProctorHandler extends ContestDetailBaseHandler {
                 throw error;
             }
             await proctor.attempts.updateOne({ _id: attempt._id }, { $set: { state: 'complete', logId: _id } });
-            await contest.setStatus(session.domainId, session.tid, session.uid, { proctorLogUploaded: true, proctorEnded: true });
+            await proctor.updateEvidence(session);
             this.response.body = { ok: true, receipt: _id };
         } finally {
             await lock.release();
@@ -306,6 +308,7 @@ export class ProctorIdentityHandler extends Handler {
         }
         let pid = 0;
         let proctorEnabled = false;
+        let attemptId: string | undefined;
         if (tid && this.user._id) {
             this.checkPriv(PRIV.PRIV_USER_PROFILE);
             this.checkPerm(PERM.PERM_VIEW_CONTEST);
@@ -314,6 +317,10 @@ export class ProctorIdentityHandler extends Handler {
             const status = await contest.getStatus(domainId, tid, teamVid ?? this.user._id);
             if (!tdoc || (!status?.attend && !root)) throw new ForbiddenError('Attend the contest before starting proctoring.');
             proctorEnabled = !!tdoc.proctorEnabled;
+            if (proctorEnabled) {
+                const attempt = await proctor.attempts.findOne({ uid: this.user._id, domainId, tid, active: { $ne: false } });
+                attemptId = attempt?._id.toHexString() || '';
+            }
             if (routePid) {
                 const pdoc = await problem.get(domainId, routePid);
                 if (!pdoc || !tdoc.pids.includes(pdoc.docId)) throw new ForbiddenError('Problem is outside the contest.');
@@ -324,6 +331,7 @@ export class ProctorIdentityHandler extends Handler {
         const payload = { protocol: PROCTOR_PROTOCOL, action: 'identity', keyId: keys.keyId, origin,
             clientNonce, uid: this.user._id || 0, domainId: this.domain._id, root,
             tid: tid?.toHexString() || '', ...(rid ? { rid: rid.toHexString() } : {}), routePid, pid, proctorEnabled,
+            ...(attemptId !== undefined ? { attemptId } : {}),
             expiresAt: new Date(Date.now() + 60000).toISOString() };
         this.response.body = { payload, signature: signedPayload(payload, keys.signingPrivateKey) };
     }
