@@ -19,10 +19,11 @@ import {
 import base from './base';
 import * as decorators from './decorators';
 import {
-    CsrfTokenError, HydroError, InvalidOperationError,
+    HydroError, InvalidOperationError,
     MethodNotAllowedError, NotFoundError, UserFacingError,
 } from './error';
 import type { KnownHandlers } from './interface';
+import { assertRequestOrigin, isAllowedRequestOrigin, requestSourceOrigin, requestTargetOrigin } from './request-origin';
 import { Router } from './router';
 import serializer from './serializer';
 
@@ -225,6 +226,7 @@ export class Handler extends HandlerCommon {
     loginMethods: any;
     notUsage = false;
     allowCors = false;
+    protectSafeMethod = false;
     __param: Record<string, decorators.ParamOption<any>[]>;
 
     back(body?: any) {
@@ -243,15 +245,20 @@ export class Handler extends HandlerCommon {
         this.context.holdFiles.push(name);
     }
 
+    allowUnattributedRequest() {
+        return false;
+    }
+
     async init() {
-        if (this.request.method === 'post' && this.request.headers.referer && !this.context.cors && !this.allowCors) {
-            try {
-                const host = new URL(this.request.headers.referer).host;
-                if (host !== this.request.host) throw new CsrfTokenError(host);
-            } catch (e) {
-                throw e instanceof CsrfTokenError ? e : new CsrfTokenError();
-            }
-        }
+        if (this.allowCors) return;
+        assertRequestOrigin({
+            method: this.request.method,
+            headers: this.request.headers,
+            target: requestTargetOrigin(this.context.protocol, this.request.host, this.ctx.server.config.publicOrigin),
+            cors: this.ctx.server.config.cors,
+            protectSafeMethod: this.protectSafeMethod,
+            allowUnattributed: () => this.allowUnattributedRequest(),
+        });
     }
 
     async onerror(error: HydroError) {
@@ -346,6 +353,7 @@ export class WebService extends Service<never> {
         keys: Schema.array(Schema.string()),
         proxy: Schema.boolean(),
         cors: Schema.string(),
+        publicOrigin: Schema.string(),
         upload: Schema.string(),
         port: Schema.number(),
         host: Schema.string(),
@@ -396,8 +404,10 @@ export class WebService extends Service<never> {
         this.server.use(async (c, next) => {
             if ((c.request.headers.origin || c.request.headers.referer) && this.config.cors) {
                 try {
-                    const host = new URL(c.request.headers.origin || c.request.headers.referer).host;
-                    if (host !== c.request.headers.host && `,${this.config.cors},`.includes(`,${host},`)) {
+                    const source = requestSourceOrigin(c.request.headers);
+                    const host = c.request.headers[this.config.xhost?.toLowerCase() || ''] || c.request.host;
+                    const target = requestTargetOrigin(c.protocol, host as string, this.config.publicOrigin);
+                    if (source !== target && isAllowedRequestOrigin(source, target, this.config.cors)) {
                         c.set('Access-Control-Allow-Credentials', 'true');
                         c.set('Access-Control-Allow-Headers', corsAllowHeaders);
                         if (c.request.headers.origin) {
@@ -675,6 +685,14 @@ ${c.response.status} ${endTime - startTime}ms ${c.response.length}`);
             await (this.ctx.parallel as any)('handler/create', h, 'ws');
             await (this.ctx.parallel as any)('handler/create/ws', h);
             checker.call(h);
+            assertRequestOrigin({
+                method: 'POST',
+                headers: h.request.headers,
+                target: requestTargetOrigin(ctx.protocol, h.request.host, this.config.publicOrigin),
+                cors: this.config.cors,
+                // Native WebSocket clients do not send Origin; their normal authentication still applies.
+                allowUnattributed: () => true,
+            });
             if (args.shorty) h.resetCompression();
             if (h._prepare) await h._prepare(args);
             if (h.prepare) await h.prepare(args);

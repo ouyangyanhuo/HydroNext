@@ -273,6 +273,11 @@ export async function processJudgeFileCallback(rid: ObjectId, filename: string, 
 export class JudgeFileUpdateHandler extends Handler {
     notUsage = true;
 
+    allowUnattributedRequest() {
+        // Existing judge workers upload multipart files with their session cookie, not browser headers.
+        return this.user.hasPriv(builtin.PRIV.PRIV_JUDGE);
+    }
+
     @post('rid', Types.ObjectId)
     @post('name', Types.Filename)
     async post(domainId: string, rid: ObjectId, filename: string) {

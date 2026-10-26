@@ -131,6 +131,8 @@ export class StorageHandler extends Handler {
 }
 
 export class SwitchAccountHandler extends Handler {
+    protectSafeMethod = true;
+
     @requireSudo
     @param('uid', Types.Int)
     async get({ }, uid: number) {

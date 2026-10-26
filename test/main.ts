@@ -142,6 +142,73 @@ describe('App', () => {
         await agent.get('/api/user?args={"id":2}&projection=uname').expect({ uname: 'root' });
     });
 
+    it('Request origin checks block browser forgery while forms, uploads and legacy judge calls remain usable', async () => {
+        const { domain, user, token, storage, problem, record } = global.Hydro.model;
+        const server = require('hydrooj').httpServer;
+        const origin = `http://127.0.0.1:${server.address().port}`;
+        const rateCounters = require('../packages/hydrooj/src/service/db').default.collection('opcount');
+        await rateCounters.deleteMany({ op: 'global' });
+        const uid = await user.create('origin-check@example.com', 'origin-check-user', 'secret');
+        const browser = supertest.agent(server);
+        const route = '/d/system/home/settings/account';
+        let pid;
+        let rid;
+        try {
+            await browser.post('/login').send({ uname: 'origin-check-user', password: 'secret' }).expect(302);
+            for (const source of ['https://evil.example', origin.replace('http:', 'https:'), 'null']) {
+                // eslint-disable-next-line no-await-in-loop
+                await browser.post(route).set('Accept', 'application/json').set('Origin', source).set('Referer', `${origin}/home/settings/account`)
+                    .send({ school: 'forged' }).expect(403).expect(({ body }) => assert.equal(body.error.name, 'CsrfTokenError'));
+            }
+            await browser.post(route).set('Sec-Fetch-Site', 'cross-site').send({ school: 'forged' }).expect(403);
+            await browser.post(route).type('form').send({ school: 'forged' }).expect(403);
+            await browser.post(`${route}?school=forged`).expect(403);
+            assert.notEqual((await user.coll.findOne({ _id: uid })).school, 'forged');
+            await browser.post(route).set('Origin', origin).type('form').send({ school: 'valid form' }).expect(302);
+            assert.equal((await user.coll.findOne({ _id: uid })).school, 'valid form');
+            await browser.post(route).set('Referer', `${origin}/home/settings/account`).send({ school: 'valid fallback' }).expect(302);
+            await browser.post(route).send({ school: 'valid JSON client' }).expect(302);
+            assert.equal((await user.coll.findOne({ _id: uid })).school, 'valid JSON client');
+            await browser.post('/file').field('operation', 'upload_file').field('filename', 'origin.txt')
+                .attach('file', Buffer.from('fixture'), 'origin.txt').expect(403);
+            await browser.post('/file').set('Origin', origin).field('operation', 'upload_file').field('filename', 'origin.txt')
+                .attach('file', Buffer.from('fixture'), 'origin.txt').expect(302);
+            assert.ok((await user.coll.findOne({ _id: uid }))._files.some((file) => file.name === 'origin.txt'));
+            await agent.post('/judge/files').send({ id: 'origin-check-fixture' }).expect(200)
+                .expect(({ body }) => assert.equal(typeof body.url, 'string'));
+            pid = await problem.add('system', 'CSRF1', 'Judge origin compatibility', 'Statement', 2);
+            rid = await record.add('system', pid, 2, '_', 'fixture', false);
+            await agent.post('/judge/upload').set('Origin', 'https://evil.example').field('rid', rid.toString())
+                .field('name', 'generated.in').attach('file', Buffer.from('1\n'), 'generated.in').expect(403);
+            await agent.post('/judge/upload').field('rid', rid.toString()).field('name', 'generated.in')
+                .attach('file', Buffer.from('1\n'), 'generated.in').expect(200).expect({ ok: 1 });
+            assert.ok((await problem.get('system', pid)).data.some((file) => file.name === 'generated.in'));
+            await agent.get('/account/2').set('Origin', 'https://evil.example').expect(403);
+            const WebSocket = require('ws');
+            let socket;
+            try {
+                const response = await new Promise<any>((resolve, reject) => {
+                    const timer = setTimeout(() => reject(new Error('WebSocket origin check timed out')), 5000);
+                    socket = new WebSocket(`${origin.replace('http:', 'ws:')}/websocket`, { origin: 'https://evil.example' });
+                    socket.on('error', (error: Error) => { clearTimeout(timer); reject(error); });
+                    socket.on('message', (data: Buffer) => { clearTimeout(timer); resolve(JSON.parse(data.toString())); });
+                });
+                assert.equal(response.error.name, 'CsrfTokenError');
+            } finally {
+                socket?.terminate();
+            }
+        } finally {
+            if (rid) await record.coll.deleteOne({ _id: rid });
+            if (pid) await problem.del('system', pid);
+            await storage.del([`user/${uid}/origin.txt`], uid);
+            await token.delByUid(uid);
+            await domain.collUser.deleteMany({ uid });
+            await user.coll.deleteOne({ _id: uid });
+            user._deleteUserCache(true);
+            await rateCounters.deleteMany({ op: 'global' });
+        }
+    });
+
     it('User profile administration requires system privileges and sudo, limits editable fields and invalidates domain caches', async () => {
         const { user, domain } = global.Hydro.model;
         const { PRIV } = require('../packages/hydrooj/src/model/builtin');

@@ -164,11 +164,13 @@ export async function runProctorFlowHttpTests(_agent: any) {
             const filename = `${ending}.hplog`;
             const wrong = encryptJournal({ ...binding, domainId: 'another-domain' });
             await participant.post(route).set(headers('upload', 'POST', route, { filename, size: wrong.length, sha256: digest(wrong) }))
+                .set('Origin', `http://127.0.0.1:${require('hydrooj').httpServer.address().port}`)
                 .field('operation', 'upload').attach('file', wrong, filename).expect(403);
             assert.notEqual((await contest.getStatus(domainId, tid, uid)).proctorLogUploaded, true);
             assert.equal(await proctor.logs.countDocuments({ attemptId: new ObjectId(binding.attemptId) }), 0);
             const file = encryptJournal(binding);
             await participant.post(route).set(headers('upload', 'POST', route, { filename, size: file.length, sha256: digest(file) }))
+                .set('Origin', `http://127.0.0.1:${require('hydrooj').httpServer.address().port}`)
                 .field('operation', 'upload').attach('file', file, filename).expect(200);
             const status = await participant.get(route).expect(200);
             assert.equal(status.body.state, 'complete');
