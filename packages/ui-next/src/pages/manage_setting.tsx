@@ -29,6 +29,16 @@ export default function ManageSettingPage() {
     [settings, current],
   );
 
+  const familyDescriptions = useMemo(() => {
+    const descriptions = { ...FAMILY_DESCRIPTIONS };
+    for (const { family } of normalized) {
+      if (!family || descriptions[family]) continue;
+      const key = `${family}_desc`;
+      if (t(key) !== key) descriptions[family] = key;
+    }
+    return descriptions;
+  }, [normalized, t]);
+
   const categoryCount = useMemo(() => {
     const families = new Set<string>();
     for (const item of normalized) {
@@ -102,7 +112,7 @@ export default function ManageSettingPage() {
           loading={loading}
           onSubmit={handleSave}
           stickySaveBar
-          familyDescriptions={FAMILY_DESCRIPTIONS}
+          familyDescriptions={familyDescriptions}
         />
       </div>
     </main>

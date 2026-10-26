@@ -5,3 +5,5 @@ Maximum pasted characters: 單次貼上字元上限
 Paste limit exceeded: 貼上內容超過限制
 Pasting code is disabled.: 目前不允許貼上程式碼。
 'Pasting more than {0} characters is not allowed (currently {1}).': '貼上內容不能超過 {0} 個字元（目前 {1} 個字元）。'
+setting_code_paste: 程式碼貼上限制
+setting_code_paste_desc: 線上編輯器的貼上開關、單次字元上限與不限長度模式。

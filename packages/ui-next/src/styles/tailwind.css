@@ -3103,6 +3103,11 @@ a {
   grid-column: 1 / -1;
 }
 
+/* Feature controls own a full row, including when supplied by optional plugins. */
+.hydro-settings-field:has(> .hydro-feature-setting-row) {
+  grid-column: 1 / -1;
+}
+
 .hydro-settings-field--wide:has(.mantine-Checkbox-root) {
   padding: 12px 14px;
   border: 1px solid var(--hydro-border);

@@ -251,8 +251,12 @@ test('manage_setting renders clean card layout without sidebar or icons, back li
             { family: 'setting_server', key: 'server.name', type: 'text', name: 'Site name' },
             { family: 'setting_smtp', key: 'smtp.host', type: 'text', name: 'SMTP Host' },
             { family: 'setting_limits', key: 'limit.submission', type: 'number', name: 'Rate limit' },
+            { family: 'setting_code_paste', key: 'editor-paste-guard.maxLength', type: 'number', value: 30 },
         ],
         current: { 'server.name': 'Hydro', 'smtp.host': 'mail.example.com', 'limit.submission': 60 },
+    }, { _id: 1 }, {
+        setting_code_paste: '代码粘贴限制',
+        setting_code_paste_desc: '在线编辑器的粘贴开关、单次字符上限与不限长度模式。',
     });
     try {
         const page = view.host.querySelector('.hydro-settings-page')!;
@@ -261,7 +265,13 @@ test('manage_setting renders clean card layout without sidebar or icons, back li
         assert.ok(backLink, 'provides a back button to manage_dashboard');
         assert.equal(view.host.querySelector('.hydro-settings-nav'), null, 'does not render a sidebar navigation');
         assert.equal(view.host.querySelectorAll('svg').length, 0, 'does not render icons');
-        assert.equal(view.host.querySelectorAll('.hydro-settings-section').length, 3, 'renders all 3 section cards');
+        assert.equal(view.host.querySelectorAll('.hydro-settings-section').length, 4, 'renders each category as its own section card');
+        const pasteCategory = view.host.querySelector('#setting-family-setting_code_paste')!;
+        const limitsCategory = view.host.querySelector('#setting-family-setting_limits')!;
+        assert.equal(pasteCategory.parentElement, limitsCategory.parentElement, 'paste settings are a sibling category, not nested in limits');
+        const pasteHeader = pasteCategory.querySelector('.hydro-settings-section__header')!;
+        assert.equal(pasteHeader.querySelector('h3')?.textContent, '代码粘贴限制');
+        assert.ok(pasteHeader.textContent?.includes('在线编辑器的粘贴开关、单次字符上限与不限长度模式。'));
         const savebar = view.host.querySelector('.hydro-settings-savebar')!;
         assert.ok(savebar, 'provides floating sticky save bar');
         assert.ok(savebar.querySelector('.hydro-settings-save'));

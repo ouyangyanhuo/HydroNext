@@ -13,7 +13,9 @@ export async function runManagementHttpTests(admin: any, { Root }: any) {
             await admin.post(settings.body.url).send({ password: Root.password }).expect(302);
         }
         const allowed = await admin.get(route).set('Accept', 'application/json').expect(200);
-        assert.equal(allowed.body.settings.find((setting: any) => setting.key === PASTE_LIMIT_KEY).value, 30);
+        const pasteSetting = allowed.body.settings.find((setting: any) => setting.key === PASTE_LIMIT_KEY);
+        assert.equal(pasteSetting.value, 30);
+        assert.equal(pasteSetting.family, 'setting_code_paste');
         const visitor = supertest.agent(httpServer);
         const denied = await visitor.post(route).set('Accept', 'application/json')
             .send({ 'editor-paste-guard': { maxLength: -1 } }).expect(200);

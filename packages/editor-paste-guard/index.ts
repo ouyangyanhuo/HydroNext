@@ -3,7 +3,7 @@ import { DEFAULT_PASTE_LIMIT, parsePasteLimit, PASTE_LIMIT_KEY, resolvePasteLimi
 
 /** The server distributes policy; this remains a frontend interaction restriction. */
 export function apply(ctx: Context) {
-    ctx.setting.SystemSetting(SettingModel.Setting('setting_limits', PASTE_LIMIT_KEY, DEFAULT_PASTE_LIMIT, 'number',
+    ctx.setting.SystemSetting(SettingModel.Setting('setting_code_paste', PASTE_LIMIT_KEY, DEFAULT_PASTE_LIMIT, 'number',
         'Code paste limit', 'Disable the limit to allow unrestricted pasting. Set 0 to block all pasting.',
         0, (value) => parsePasteLimit(value) !== undefined));
     ctx.on('handler/before/SystemSetting#post', (handler) => {

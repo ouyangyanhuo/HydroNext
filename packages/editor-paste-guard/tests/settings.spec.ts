@@ -18,6 +18,7 @@ test('administrator paste settings default to 30, accept -1/0, and reject malfor
     });
     module.exports.apply({ setting: { SystemSetting: (setting: any) => settings.push(setting) },
         on: (name: string, callback: any) => { hooks[name] = callback; } });
+    assert.equal(settings[0][0], 'setting_code_paste');
     assert.equal(settings[0][1], config.PASTE_LIMIT_KEY);
     assert.equal(settings[0][2], 30);
     const handler: any = { args: {}, UiContext: {} };
@@ -35,25 +36,35 @@ test('administrator paste settings default to 30, accept -1/0, and reject malfor
     }
 });
 
-test('the paste control maps its checkbox to -1 and preserves 0 when re-enabled', () => {
+test('the full-width paste feature card toggles -1, preserves 0, and hides its input when disabled', () => {
     const saved: any[] = [];
     const module = { exports: {} as any };
     runInNewContext(transformSync(readFileSync(new URL('../ui/settings.tsx', import.meta.url), 'utf8'), {
         loader: 'tsx', format: 'cjs', jsx: 'automatic',
     }).code, { module, exports: module.exports, require: (name: string) => {
         if (name === '@hydrooj/ui-next') return { useI18n: () => ({ t: (text: string) => text }) };
-        if (name === '@mantine/core') return { Stack: 'div', Text: 'span', Checkbox: 'checkbox', NumberInput: 'number' };
+        if (name === '@mantine/core') return { Text: 'span', Switch: 'switch', NumberInput: 'number' };
+        if (name === '@tabler/icons-react') return { IconClipboard: 'svg' };
         if (name === 'react') return { useState: () => [0, () => {}] };
         return name === '../config' ? config : require(name);
     } });
     const props = { setting: { key: config.PASTE_LIMIT_KEY }, value: 0, onChange: (next: any) => saved.push(next), children: null };
     const view = module.exports.PasteLimitSetting(props);
-    const checkbox = view.props.children[1];
-    assert.equal(checkbox.props.checked, true);
-    checkbox.props.onChange({ currentTarget: { checked: false } });
-    checkbox.props.onChange({ currentTarget: { checked: true } });
-    assert.deepEqual(saved, [-1, 0]);
+    assert.equal(view.props.className, 'hydro-feature-setting-row');
+    const control = view.props.children[0].props.children;
+    assert.equal(control.props['aria-checked'], true);
+    assert.match(view.props.children[0].props.className, /--half/);
+    assert.equal(view.props.children[1].props.children.props.value, 0);
+    control.props.onClick();
     const disabled = module.exports.PasteLimitSetting({ ...props, value: -1 });
-    assert.equal(disabled.props.children[2].props.disabled, true);
+    assert.match(disabled.props.children[0].props.className, /--full/);
+    assert.equal(disabled.props.children[1], false);
+    let prevented = false;
+    disabled.props.children[0].props.children.props.onKeyDown({ key: 'Enter', preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.deepEqual(saved, [-1, 0]);
+    const locked = module.exports.PasteLimitSetting({ ...props, setting: { ...props.setting, flag: 2 } });
+    locked.props.children[0].props.children.props.onClick();
+    assert.equal(saved.length, 2);
     assert.equal(module.exports.PasteLimitSetting({ ...props, setting: { key: 'other' }, children: 'Original input' }), 'Original input');
 });

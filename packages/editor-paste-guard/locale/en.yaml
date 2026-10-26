@@ -5,3 +5,5 @@ Maximum pasted characters: Maximum pasted characters
 Paste limit exceeded: Paste limit exceeded
 Pasting code is disabled.: Pasting code is disabled.
 'Pasting more than {0} characters is not allowed (currently {1}).': 'Pasting more than {0} characters is not allowed (currently {1}).'
+setting_code_paste: Code paste limit
+setting_code_paste_desc: Code editor paste controls, per-paste character limits, and unrestricted mode.
