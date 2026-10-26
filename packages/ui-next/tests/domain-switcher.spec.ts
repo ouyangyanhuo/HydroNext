@@ -6,6 +6,7 @@ import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
 
 const addonMocks = {
+    '@/registry': { defineSlot: (_name: string, component: any) => component },
     '@/components/common/addon-slots': {
         AccountMenuExtras: () => null, SettingsNavigationExtras: () => null,
         ProfileTabExtras: () => null, ProfilePanelExtras: () => null,

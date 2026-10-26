@@ -1,4 +1,6 @@
-export const CODE_PASTE_LIMIT = 30;
+import { resolvePasteLimit } from '../config';
+
+export { DEFAULT_PASTE_LIMIT as CODE_PASTE_LIMIT } from '../config';
 
 export function getPasteCharacterCount(text: string) {
   let count = 0;
@@ -9,6 +11,7 @@ export function getPasteCharacterCount(text: string) {
   return count;
 }
 
-export function isCodePasteOverLimit(text: string) {
-  return getPasteCharacterCount(text) > CODE_PASTE_LIMIT;
+export function isCodePasteOverLimit(text: string, limit?: number) {
+  const maximum = resolvePasteLimit(limit);
+  return maximum !== -1 && (maximum === 0 || getPasteCharacterCount(text) > maximum);
 }

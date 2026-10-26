@@ -1,2 +1,7 @@
+Code paste limit: 程式碼貼上限制
+Disable the limit to allow unrestricted pasting. Set 0 to block all pasting.: 取消勾選後不限制貼上長度；設為 0 時禁止貼上。
+Enable code paste limit: 啟用程式碼貼上限制
+Maximum pasted characters: 單次貼上字元上限
 Paste limit exceeded: 貼上內容超過限制
+Pasting code is disabled.: 目前不允許貼上程式碼。
 'Pasting more than {0} characters is not allowed (currently {1}).': '貼上內容不能超過 {0} 個字元（目前 {1} 個字元）。'

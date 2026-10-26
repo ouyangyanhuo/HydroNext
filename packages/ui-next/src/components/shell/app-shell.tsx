@@ -1,4 +1,5 @@
 import { ShellOverlays } from '@/components/common/addon-slots';
+import { PluginHealthNotice } from '@/components/feedback/plugin-health-notice';
 import { Footer } from '@/components/navigation/footer';
 import { TopNav } from '@/components/navigation/top-nav';
 import { usePageData } from '@/context/page-data';
@@ -27,6 +28,7 @@ export function AppShell({ children }: AppShellProps) {
       <header className="sticky top-0 z-50">
         <TopNav />
       </header>
+      <PluginHealthNotice />
       <main className="relative z-10 flex-1">
         <div
           key={name}

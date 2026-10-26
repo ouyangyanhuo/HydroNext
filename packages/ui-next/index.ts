@@ -7,12 +7,14 @@ import { lookup } from 'mime-types';
 import { createServer, type Plugin } from 'vite';
 import { HandlerCommon, serializer } from '@hydrooj/framework';
 import {
-    Context, Handler, Logger,
+    Context, FiberState, Handler, Logger,
     NotFoundError, param, SettingModel, size, Types,
 } from 'hydrooj';
 import { resolveBuildIdentifier, resolveBuildTime } from './build-identifier';
 
 const logger = new Logger('ui-next');
+export const inject = ['loader'];
+let addonLoader: Context['loader'] | undefined;
 
 const PENDING_HTML = `<html>
 <head>
@@ -46,18 +48,31 @@ function getLocaleData(lang?: string): Record<string, string> {
     return {};
 }
 
-function getAddonEntries(): Record<string, string> {
+function getAddonEntries() {
     const entries: Record<string, string> = {};
+    const failed: string[] = [];
     for (const [name, addon] of Object.entries(global.addons)) {
         const uiEntry = ['ui/index.ts', 'ui/index.tsx', 'ui/index.js', 'ui/index.jsx']
             .map((f) => path.resolve(addon as string, f))
             .find((f) => fs.existsSync(f));
         if (uiEntry) {
+            const loader = addonLoader;
+            const unavailable = loader?.failedAddons?.includes(addon as string)
+                || ['service.ts', 'service.js', 'model.ts', 'model.js', 'index.ts', 'index.js'].some((file) => {
+                    const entry = path.resolve(addon as string, file);
+                    if (!fs.existsSync(entry)) return false;
+                    const fiber = loader?.state?.[require.resolve(entry)];
+                    return fiber && fiber.state !== FiberState.ACTIVE;
+                });
+            if (unavailable) {
+                failed.push(name);
+                continue;
+            }
             logger.info('UI entry for addon %s: %s', name, uiEntry);
             entries[name] = uiEntry;
         }
     }
-    return entries;
+    return { entries, failed };
 }
 
 function getRouteMap(ctx: Context): Record<string, string> {
@@ -85,13 +100,13 @@ function hydroPlugins(): Plugin {
         },
         load(id) {
             if (id === resolvedVirtualModuleId) {
-                const entries = getAddonEntries();
-                if (!Object.keys(entries).length) return 'export default [];';
-                const imports = Object.entries(entries).map(([_, e], i) => `import * as plugin${i} from '${e}';`).join('\n');
-                const exports = `export default [${Object.entries(entries).map(([addon, _], i) => {
-                    return `{ name: '${addon}', ...plugin${i} }`;
-                }).join(', ')}];`;
-                return `${imports}\n${exports}`;
+                const { entries, failed } = getAddonEntries();
+                return `export default [${[
+                    ...Object.entries(entries).map(([name, entry]) => (
+                        `{name:${JSON.stringify(name)},load:()=>import(${JSON.stringify(entry)})}`
+                    )),
+                    ...failed.map((name) => `{name:${JSON.stringify(name)},unavailable:true}`),
+                ].join(',')}];`;
             }
             return undefined;
         },
@@ -132,6 +147,7 @@ const federationPlugin: esbuild.Plugin = {
 
 const vfs: Record<string, string | Buffer> = {};
 const hashes: Record<string, string> = {};
+const pluginAssets = new Set<string>();
 
 const applyCss = (css: string) => `
 (() => {
@@ -206,95 +222,69 @@ class UiNextConstantHandler extends Handler {
 export async function buildPlugins() {
     const start = Date.now();
     let totalSize = 0;
-    const entries = getAddonEntries();
-
-    const newPluginFiles = new Set<string>();
+    const { entries, failed } = getAddonEntries();
+    const files = new Map<string, string | Buffer>();
     const emit = (name: string, content: string | Buffer) => {
-        addFile(name, content);
-        newPluginFiles.add(name);
+        files.set(name, content);
+        totalSize += content.length;
     };
-    const purge = () => {
-        for (const key of Object.keys(vfs)) {
-            if (!newPluginFiles.has(key)) {
-                delete vfs[key];
-                delete hashes[key];
+    // Compile separately: one broken addon must not prevent healthy addons from loading.
+    const manifest = await Promise.all(Object.entries(entries).map(async ([name, entry]) => {
+        const prefix = `addon-${crypto.createHash('sha1').update(name).digest('hex').slice(0, 12)}`;
+        try {
+            const result = await esbuild.build({
+                stdin: { contents: `export * from ${JSON.stringify(entry)};`, sourcefile: `${prefix}.ts`,
+                    resolveDir: process.cwd(), loader: 'ts' },
+                bundle: true, format: 'esm', splitting: true, outdir: 'plugins-dist',
+                entryNames: prefix, chunkNames: `${prefix}-[hash]`, assetNames: `${prefix}-asset-[hash]`,
+                metafile: true, write: false, target: ['chrome90'], plugins: [federationPlugin],
+                minify: true, jsx: 'automatic', jsxImportSource: 'react',
+            });
+            const cssText = new Map<string, string>();
+            for (const file of result.outputFiles) {
+                if (file.path.endsWith('.css')) cssText.set(file.path, file.text);
             }
+            const cssForJs = new Map<string, string>();
+            const claimed = new Set<string>();
+            for (const [rel, meta] of Object.entries(result.metafile.outputs)) {
+                if (!meta.cssBundle) continue;
+                const css = path.resolve(meta.cssBundle);
+                cssForJs.set(path.resolve(rel), css);
+                claimed.add(css);
+            }
+            let unclaimedCss = '';
+            for (const [absolute, css] of cssText) if (!claimed.has(absolute)) unclaimedCss += css;
+            for (const file of result.outputFiles) {
+                if (file.path.endsWith('.css')) continue;
+                const filename = path.basename(file.path);
+                let content: string | Buffer = filename.endsWith('.js') ? file.text : Buffer.from(file.contents);
+                const css = cssText.get(cssForJs.get(file.path) ?? '');
+                if (css) content = applyCss(css) + content;
+                if (filename === `${prefix}.js` && unclaimedCss) content = applyCss(unclaimedCss) + content;
+                emit(filename, content);
+            }
+            const digest = crypto.createHash('sha1');
+            for (const file of result.outputFiles) digest.update(file.contents);
+            const revision = digest.digest('hex').slice(0, 12);
+            return `{name:${JSON.stringify(name)},load:()=>import('./${prefix}.js?v=${revision}')}`;
+        } catch (error) {
+            logger.error('UI addon %s failed to build: %o', name, error);
+            return `{name:${JSON.stringify(name)},unavailable:true}`;
         }
-    };
-
-    if (!Object.keys(entries).length) {
-        emit('plugins.js', 'window.__hydroPlugins = [];');
-        purge();
-        logger.info('No plugins to build');
-        return;
+    }));
+    manifest.push(...failed.map((name) => `{name:${JSON.stringify(name)},unavailable:true}`));
+    emit('plugins.js', `window.__hydroPlugins=[${manifest.join(',')}];`);
+    // Publish only after compilation finishes; never expose a partially built manifest.
+    for (const [name, content] of files) addFile(name, content);
+    for (const key of pluginAssets) {
+        if (!files.has(key)) {
+            delete vfs[key];
+            delete hashes[key];
+        }
     }
-
-    try {
-        const result = await esbuild.build({
-            stdin: {
-                contents: [
-                    ...Object.entries(entries).map(([_, e], i) => `import * as plugin${i} from '${e}';`),
-                    `window.__hydroPlugins = [${Object.entries(entries).map(([n], i) => `{ name: '${n}', ...plugin${i} }`).join(', ')}];`,
-                ].join('\n'),
-                sourcefile: 'plugins.ts',
-                resolveDir: process.cwd(),
-                loader: 'ts',
-            },
-            bundle: true,
-            format: 'esm',
-            splitting: true,
-            outdir: 'plugins-dist',
-            entryNames: 'plugins',
-            chunkNames: 'chunk-[hash]',
-            assetNames: 'asset-[hash]',
-            metafile: true,
-            write: false,
-            target: ['chrome90'],
-            plugins: [federationPlugin],
-            minify: true,
-            jsx: 'automatic',
-            jsxImportSource: 'react',
-        });
-        if (result.errors.length) logger.error('Plugin build errors: %o', result.errors);
-
-        const cssText = new Map<string, string>();
-        for (const f of result.outputFiles) {
-            if (f.path.endsWith('.css')) cssText.set(f.path, f.text);
-        }
-
-        const cssForJs = new Map<string, string>();
-        const claimed = new Set<string>();
-        for (const [rel, meta] of Object.entries(result.metafile.outputs)) {
-            if (!meta.cssBundle) continue;
-            const css = path.resolve(meta.cssBundle);
-            cssForJs.set(path.resolve(rel), css);
-            claimed.add(css);
-        }
-
-        let unclaimedCss = '';
-        for (const [abs, text] of cssText) {
-            if (!claimed.has(abs)) unclaimedCss += text;
-        }
-
-        for (const f of result.outputFiles) {
-            if (f.path.endsWith('.css')) continue;
-
-            const name = path.basename(f.path);
-            let content: string | Buffer = name.endsWith('.js') ? f.text : Buffer.from(f.contents);
-
-            const css = cssText.get(cssForJs.get(f.path) ?? '');
-            if (css) content = applyCss(css) + content;
-            if (name === 'plugins.js' && unclaimedCss) content = applyCss(unclaimedCss) + content;
-
-            totalSize += content.length;
-            emit(name, content);
-        }
-
-        purge();
-        logger.success('Plugins built in %dms (%d entries, %s)', Date.now() - start, Object.keys(entries).length, size(totalSize));
-    } catch (e) {
-        logger.error('Plugin build failed: %o', e);
-    }
+    pluginAssets.clear();
+    for (const name of files.keys()) pluginAssets.add(name);
+    logger.success('Plugins built in %dms (%d entries, %s)', Date.now() - start, manifest.length, size(totalSize));
 }
 
 const HASH_FALLBACK = '00000000';
@@ -310,6 +300,7 @@ const injectedScripts = (resolve: (name: string) => string, viewLang: string) =>
 
 export async function apply(ctx: Context) {
     if (process.env.HYDRO_CLI) return;
+    addonLoader = ctx.loader;
 
     // Allow disabling ui-next via system setting or env var
     const disabled = ctx.setting?.get?.('ui-next.disable') || process.env.HYDRO_UI_NEXT_DISABLE;

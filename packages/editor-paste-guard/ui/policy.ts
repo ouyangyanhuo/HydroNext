@@ -3,9 +3,8 @@
 import {
   hasPermValue, hasPrivValue, PERM, type PluginDefinition, PRIV, translate, useNotificationStore, useSessionStore,
 } from '@hydrooj/ui-next';
-import {
-  CODE_PASTE_LIMIT, getPasteCharacterCount,
-} from './limit';
+import { resolvePasteLimit } from '../config';
+import { getPasteCharacterCount } from './limit';
 
 export function canPasteCode() {
   const user = useSessionStore.getState().user;
@@ -21,13 +20,13 @@ export function isProblemCodeEditorPaste(event: Event) {
   return target instanceof Element && Boolean(target.closest('.monaco-editor'));
 }
 
-function notifyPasteBlocked(length: number) {
+function notifyPasteBlocked(length: number, limit: number) {
   try {
     useNotificationStore.getState().add({
       title: translate('Paste limit exceeded'),
-      message: translate(
+      message: limit === 0 ? translate('Pasting code is disabled.') : translate(
         'Pasting more than {0} characters is not allowed (currently {1}).',
-        CODE_PASTE_LIMIT,
+        limit,
         length,
       ),
       color: 'red',
@@ -39,12 +38,14 @@ function notifyPasteBlocked(length: number) {
 
 function blockPaste(event: ClipboardEvent) {
   if (canPasteCode() || !isProblemCodeEditorPaste(event)) return;
+  const limit = resolvePasteLimit(useSessionStore.getState().ui?.editorPasteLimit);
+  if (limit === -1) return;
   const text = event.clipboardData?.getData('text/plain') || '';
   const length = getPasteCharacterCount(text);
-  if (length <= CODE_PASTE_LIMIT) return;
+  if (limit !== 0 && length <= limit) return;
   event.preventDefault();
   event.stopImmediatePropagation();
-  notifyPasteBlocked(length);
+  notifyPasteBlocked(length, limit);
 }
 
 export function setup(_api: Parameters<PluginDefinition['setup']>[0]) {

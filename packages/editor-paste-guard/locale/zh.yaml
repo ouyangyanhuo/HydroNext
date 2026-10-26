@@ -1,2 +1,7 @@
+Code paste limit: 代码粘贴限制
+Disable the limit to allow unrestricted pasting. Set 0 to block all pasting.: 取消勾选后不限制粘贴长度；设置为 0 时禁止粘贴。
+Enable code paste limit: 启用代码粘贴限制
+Maximum pasted characters: 单次粘贴字符上限
 Paste limit exceeded: 粘贴内容超过限制
+Pasting code is disabled.: 当前不允许粘贴代码。
 'Pasting more than {0} characters is not allowed (currently {1}).': '粘贴内容不能超过 {0} 个字符（当前 {1} 个字符）。'

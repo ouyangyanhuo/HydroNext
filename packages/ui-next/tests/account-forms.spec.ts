@@ -58,6 +58,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         return `${prefix}/${route}${search ? `?${search}` : ''}`;
     };
     const mocks: Record<string, any> = {
+        '@/registry': { defineSlot: (_: string, component: any) => component },
         '@/components/common/addon-slots': {
             ScoreboardCellExtras: () => null, ContestParticipantNotice: () => null, ContestParticipationWarning: () => null,
             ContestEndMessage: ({ children }: any) => children,

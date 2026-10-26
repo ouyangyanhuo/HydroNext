@@ -947,3 +947,6 @@ Your Status: 您的狀態
 'Visit': '造訪前台'
 # 個人監考結束入口
 'Proctor service is unavailable. Contact the administrator.': '監考服務暫不可用，請聯絡管理員。'
+# Plugin health
+Some features could not be loaded. Reload the page or contact the administrator.: 部分功能未能載入，請重新整理頁面或聯絡管理員。
+Some plugins are unavailable: 部分外掛無法使用

@@ -1062,3 +1062,6 @@ Your Status: 你的状态
 # 个人监考结束入口
 'Restores the account avatar to its registration default when saved.': '保存后恢复为注册时默认的邮箱头像。'
 'Proctor service is unavailable. Contact the administrator.': '监考服务暂不可用，请联系管理员。'
+# Plugin health
+Some features could not be loaded. Reload the page or contact the administrator.: 部分功能未能加载，请刷新页面或联系管理员。
+Some plugins are unavailable: 部分插件不可用

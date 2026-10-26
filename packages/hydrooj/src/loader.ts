@@ -45,6 +45,8 @@ if (process.env.NIX_PROFILES) {
 }
 
 export class Loader extends Service {
+    /** Startup failures shared with UI discovery; paths are not exposed to browsers. */
+    public failedAddons: string[] = [];
     public state: Record<string, Fiber> = Object.create(null);
     public suspend = false;
     public cache: Record<string, string> = Object.create(null);

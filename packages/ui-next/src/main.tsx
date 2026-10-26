@@ -11,12 +11,14 @@ import { PageDataProvider } from './context/page-data';
 import { RouterProvider } from './context/router';
 import { initialPage, pluginsUrl } from './globals';
 import { installPlugin } from './registry';
+import { awaitPluginLoad, loadPluginEntries, type PluginEntry } from './registry/plugin-loader';
 import { useNotificationStore } from './stores/notification';
+import { usePluginHealth } from './stores/plugin-health';
 
 declare global {
   interface Window {
     __hydroExports: typeof api;
-    __hydroPlugins?: api.PluginDefinition[];
+    __hydroPlugins?: PluginEntry[];
     __hydroNotificationStore: typeof useNotificationStore;
   }
 }
@@ -26,26 +28,23 @@ window.__hydroExports = api;
 window.__hydroNotificationStore = useNotificationStore;
 
 async function loadPlugins() {
-  let plugins: api.PluginDefinition[] = [];
-  if (import.meta.env.DEV) {
-    const mod = await import('virtual:hydro-plugins');
-    plugins = mod.default || [];
-  } else {
-    try {
-      await import(/* @vite-ignore */ pluginsUrl || '/plugins.js');
-      plugins = window.__hydroPlugins || [];
-    } catch (e) {
-      console.warn('[Hydro] Failed to load plugins:', e);
+  let plugins: PluginEntry[] = [];
+  const failed = (name: string, error: unknown) => {
+    console.error(`[Hydro] Failed to load plugin ${name}:`, error);
+    usePluginHealth.getState().recordFailure(name);
+  };
+  try {
+    if (import.meta.env.DEV) {
+      const mod = await awaitPluginLoad(() => import('virtual:hydro-plugins'));
+      plugins = mod.default;
+    } else {
+      await awaitPluginLoad(() => import(/* @vite-ignore */ pluginsUrl || '/plugins.js'));
+      plugins = window.__hydroPlugins as PluginEntry[];
     }
-  }
-
-  for (const plugin of plugins) {
-    console.log(`[Hydro] Installing plugin: ${plugin.name}`);
-    try {
-      installPlugin(plugin);
-    } catch (e) {
-      console.error(`[Hydro] Failed to install plugin ${plugin.name}:`, e);
-    }
+    if (!Array.isArray(plugins)) throw new Error('Invalid plugin manifest.');
+    await loadPluginEntries(plugins, installPlugin, failed);
+  } catch (error) {
+    failed('Plugin loader', error);
   }
 }
 

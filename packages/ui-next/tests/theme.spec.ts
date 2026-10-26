@@ -101,6 +101,7 @@ test('display preferences apply locally, listen for system changes and exclude a
     const store = session();
     const requests: any[] = [];
     const mocks: Record<string, any> = {
+        '@/registry': { defineSlot: (_: string, component: any) => component },
         '@/stores/session': { useSessionStore: store },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
         '@/components/common/button': { Button: mantine.Button },

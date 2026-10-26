@@ -14,17 +14,18 @@ test('standalone paste policy preserves the limit and exemptions, covers contest
         url: 'https://oj.example/d/exam/p/1',
     });
     let user: any = { perm: '0', priv: 0 };
+    const ui: any = {};
     const notices: any[] = [];
     const sdk = {
         PERM: { PERM_EDIT_PROBLEM: 1n, PERM_EDIT_DOMAIN: 2n },
         PRIV: { PRIV_EDIT_SYSTEM: 4, PRIV_UNLIMITED_ACCESS: 8 },
         hasPermValue: (value: string, permission: bigint) => (BigInt(value) & permission) === permission,
         hasPrivValue: (value: number, privilege: number) => (value & privilege) === privilege,
-        useSessionStore: { getState: () => ({ user }) },
+        useSessionStore: { getState: () => ({ user, ui }) },
         useNotificationStore: { getState: () => ({ add: (notice: any) => notices.push(notice) }) },
         translate: (key: string) => key,
     };
-    const built = buildSync({ entryPoints: [fileURLToPath(new URL('../ui/index.ts', import.meta.url))],
+    const built = buildSync({ entryPoints: [fileURLToPath(new URL('../ui/policy.ts', import.meta.url))],
         bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external' });
     const module = { exports: {} as any };
     runInNewContext(built.outputFiles[0].text, {
@@ -44,6 +45,15 @@ test('standalone paste policy preserves the limit and exemptions, covers contest
         assert.equal(paste('🙂'.repeat(30)), false);
         assert.equal(paste('🙂'.repeat(31)), true);
         assert.equal(notices.length, 1);
+        ui.editorPasteLimit = 5;
+        assert.equal(paste('12345'), false);
+        assert.equal(paste('123456'), true);
+        ui.editorPasteLimit = 0;
+        assert.equal(paste('x'), true);
+        assert.equal(paste(''), true);
+        ui.editorPasteLimit = -1;
+        assert.equal(paste('x'.repeat(1000)), false);
+        delete ui.editorPasteLimit;
         for (const route of ['/p/1', '/d/exam/p/1?tid=contest', '/contest/contest/p/1', '/d/exam/contest/contest/p/1', '/p/1/submit']) {
             dom.reconfigure({ url: `https://oj.example${route}` });
             assert.equal(paste('x'.repeat(31)), true, route);

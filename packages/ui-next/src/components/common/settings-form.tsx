@@ -17,6 +17,7 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { LongSelect, TagMultiSelect } from '@/components/common/select';
 import { useI18n } from '@/hooks/use-i18n';
+import { defineSlot } from '@/registry';
 
 const FALLBACK_LANG_DISPLAY: Record<string, string> = {
   bash: 'Bash',
@@ -209,7 +210,7 @@ function optionData(range: any) {
   return Object.entries(range).map(([value, label]) => ({ value, label: String(label) }));
 }
 
-function SettingInput({
+function DefaultSettingInput({
   setting,
   value,
   onChange,
@@ -362,6 +363,8 @@ function SettingInput({
     />
   );
 }
+
+const SettingInput = defineSlot('component:setting-input', DefaultSettingInput);
 
 export function SettingsForm({
   settings,

@@ -37,6 +37,7 @@ export async function apply(ctx: Context) {
             resolve(c);
         });
     });
+    ctx.loader.failedAddons = fail;
     await ctx.plugin(require('../service/hmr').default, { watch: argv.options.watch });
     await Promise.all([
         ctx.loader.reloadPlugin(require.resolve('../service/storage'), 'file'),

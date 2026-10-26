@@ -1,2 +1,7 @@
+Code paste limit: Code paste limit
+Disable the limit to allow unrestricted pasting. Set 0 to block all pasting.: Disable the limit to allow unrestricted pasting. Set 0 to block all pasting.
+Enable code paste limit: Enable code paste limit
+Maximum pasted characters: Maximum pasted characters
 Paste limit exceeded: Paste limit exceeded
+Pasting code is disabled.: Pasting code is disabled.
 'Pasting more than {0} characters is not allowed (currently {1}).': 'Pasting more than {0} characters is not allowed (currently {1}).'

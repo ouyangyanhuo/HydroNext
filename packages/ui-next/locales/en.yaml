@@ -881,3 +881,6 @@ Your Status: Your Status
 # 个人监考结束入口
 'Restores the account avatar to its registration default when saved.': 'Restores the account avatar to its registration default when saved.'
 'Proctor service is unavailable. Contact the administrator.': 'Proctor service is unavailable. Contact the administrator.'
+# Plugin health
+Some features could not be loaded. Reload the page or contact the administrator.: Some features could not be loaded. Reload the page or contact the administrator.
+Some plugins are unavailable: Some plugins are unavailable

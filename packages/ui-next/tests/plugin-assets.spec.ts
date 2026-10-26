@@ -24,12 +24,15 @@ test('plugin split chunks, CSS and binary assets are served without corrupting H
         fs: { existsSync: () => includePlugins, readFileSync: () => '<!-- __HYDRO_INJECTION__DO_NOT_REMOVE_THIS__ -->' },
         esbuild: { build: async (value: any) => {
             options = value;
+            const entry = `/plugins-dist/${value.entryNames}.js`;
+            const css = `/plugins-dist/${value.entryNames}.css`;
+            const file = (path: string, text: string) => ({ path, text, contents: Buffer.from(text) });
             return { errors: [], outputFiles: [
-                { path: '/plugins-dist/plugins.js', text: "import './chunk-test.js';" },
-                { path: '/plugins-dist/chunk-test.js', text: 'export const value = 1;' },
-                { path: '/plugins-dist/plugins.css', text: '.plugin { color: red; }' },
+                file(entry, "import './chunk-test.js';"),
+                file('/plugins-dist/chunk-test.js', 'export const value = 1;'),
+                file(css, '.plugin { color: red; }'),
                 { path: '/plugins-dist/asset-test.png', contents: binary },
-            ], metafile: { outputs: { '/plugins-dist/plugins.js': { cssBundle: '/plugins-dist/plugins.css' } } } };
+            ], metafile: { outputs: { [entry]: { cssBundle: css } } } };
         } },
         'koa2-connect/ts': connect, vite: {},
         '@hydrooj/framework': { serializer: () => undefined },
@@ -62,8 +65,10 @@ test('plugin split chunks, CSS and binary assets are served without corrupting H
         return target.response;
     };
     const entry = await read('plugins.js');
-    assert.match(entry.body, /document.createElement\('style'\)/);
-    assert.match(entry.body, /chunk-test\.js/);
+    assert.match(entry.body, /load:\(\)=>import\('\.\/addon-.*\.js\?v=/);
+    const addon = await read(`${options.entryNames}.js`);
+    assert.match(addon.body, /document.createElement\('style'\)/);
+    assert.match(addon.body, /chunk-test\.js/);
     assert.match((await read('chunk-test.js')).body, /export const value/);
     const asset = await read('asset-test.png');
     assert.equal(asset.type, 'image/png');
