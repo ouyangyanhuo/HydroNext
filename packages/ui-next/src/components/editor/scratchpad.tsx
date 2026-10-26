@@ -17,7 +17,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useRecordSocket } from '@/hooks/use-record-socket';
 import { protectedSubmissionHeaders as proctorSubmissionHeaders } from '@/registry/request-security';
-import { getSubmissionRecordQuery } from '@/utils/problem-navigation';
+import { getProblemNavigationQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
 import { formatRequestError as proctorError } from '@/utils/request';
 import { createEditorAddon, type EditorAddon } from './addons';
 import {
@@ -28,7 +28,7 @@ import {
   saveStoredEditorConfig,
 } from './code-editor';
 import { getCodeTemplate } from './code-templates';
-import { resolveSubmissionContext } from './submission-context';
+import { getProblemSubmitUrl, resolveSubmissionContext } from './submission-context';
 
 interface ScratchpadProps {
   pid: string | number;
@@ -139,7 +139,9 @@ export function Scratchpad({
     }
   }, [pretestUpdate?.error, t]);
 
-  const resolvedSubmitUrl = submitUrl || `/p/${pid}/submit${window.location.search || ''}`;
+  const submitQuery = getProblemNavigationQuery(navigationSearch, args.tdoc);
+  const resolvedSubmitUrl = submitUrl || getProblemSubmitUrl(window.location.pathname, submitQuery)
+    || buildUrl('problem_submit', { pid: submissionContext.pid }, submitQuery);
   const addonReady = !editorAddon || readyAddon === editorAddon;
   const canUsePretest = useMemo(() => {
     const info = langs[lang] || {};

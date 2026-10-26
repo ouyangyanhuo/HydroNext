@@ -11,7 +11,7 @@ import { FormDialog } from '@/components/common/form-dialog';
 import { ProblemNavigation } from '@/components/common/problem-navigation';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Scratchpad } from '@/components/editor/scratchpad';
-import { resolveSubmissionContext } from '@/components/editor/submission-context';
+import { getProblemSubmitUrl, resolveSubmissionContext } from '@/components/editor/submission-context';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -593,7 +593,9 @@ export default function ProblemDetailPage() {
   ));
   const canViewProblemFiles = isAuthenticated && Boolean(args.canViewProblemFiles ?? (canEditProblem || canReadProblemData));
   const canDownloadProblem = isAuthenticated && Boolean(args.canDownloadProblem ?? canReadProblemData);
-  const submitUrl = buildUrl('problem_submit', { pid: submitPid }, getProblemNavigationQuery(window.location.search, args.tdoc));
+  const submitQuery = getProblemNavigationQuery(window.location.search, args.tdoc);
+  const submitUrl = getProblemSubmitUrl(window.location.pathname, submitQuery)
+    || buildUrl('problem_submit', { pid: submitPid }, submitQuery);
   const codeLang = ui.codeLang || user.codeLang;
   // Draft recovery and language-specific/personal templates are resolved in Scratchpad.
   const defaultCode = rdoc?.code || '';
