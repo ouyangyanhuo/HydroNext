@@ -1,5 +1,5 @@
 import {
-  Button, formatUserName, goBackOrFallback, proctorAccessHeaders, useBuildUrl, useI18n, useNavigate, usePageData, UserAvatar,
+  Button, formatUserName, goBackOrFallback, protectedAccessHeaders, useBuildUrl, useI18n, useNavigate, usePageData, UserAvatar,
   UserLink, useUiContext,
 } from '@hydrooj/ui-next';
 import { Card, Group, Loader, Stack, Text, Title } from '@mantine/core';
@@ -29,7 +29,7 @@ export default function CodeReplayPage() {
     if (!dataUrl) return undefined;
     let disposed = false;
     const controller = new AbortController();
-    proctorAccessHeaders(dataUrl)
+    protectedAccessHeaders(dataUrl)
       .then((headers) => fetch(dataUrl, { headers: { Accept: 'application/json', ...headers }, signal: controller.signal }))
       .then(async (res) => {
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);

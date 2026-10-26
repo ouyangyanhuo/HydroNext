@@ -10,7 +10,7 @@ const require = createRequire(import.meta.url);
 const built = buildSync({
     entryPoints: [fileURLToPath(new URL('../src/lib/record-access.ts', import.meta.url))],
     bundle: true, write: false, format: 'cjs', platform: 'node',
-    external: ['../error', '../model/builtin', '../model/contest', '../model/problem', '../model/proctor'],
+    external: ['../error', '../model/builtin', '../model/contest', '../model/problem', './contest-security'],
 });
 
 function fixture(options: any = {}) {
@@ -28,6 +28,16 @@ function fixture(options: any = {}) {
             options.onAuth?.(args);
             if (options.authFailure) throw new Error('认证已失效');
             return { uid: user._id };
+        } },
+        './contest-security': { requireContestRecordAccess: async (handler: any, tdoc: any, rdoc: any) => {
+            if (!tdoc?.proctorEnabled || Date.now() >= tdoc.endAt.getTime()
+                || handler.user.own(tdoc) || handler.user.hasPerm('EDIT_CONTEST')) return undefined;
+            const token = handler.request.headers['x-proctor-token'];
+            const proof = handler.request.headers['x-proctor-proof'];
+            if (!token || !proof) throw new Error('proof required');
+            await stubs['../model/proctor'].authenticateAccess({ uid: handler.user._id, domainId: handler.domain._id, tid: tdoc.docId },
+                token, proof, 'record_view', handler.context.originalPath, { rid: rdoc._id.toHexString() });
+            return { assert: async () => {} };
         } },
         '../model/builtin': { PERM, PRIV: { PRIV_READ_RECORD_CODE: 'global' }, STATUS: { STATUS_ACCEPTED: 1 } },
         '../model/contest': {

@@ -4,8 +4,15 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { test } from 'node:test';
 import { createEditorAddon, registerEditorAddon } from '../../ui-next/src/components/editor/addons.ts';
-import { proctorAccessRequest, registerProctorAccessResolver } from '../../ui-next/src/utils/proctor.ts';
+import {
+    registerProtectedAccessResolver as registerProctorAccessResolver,
+    resolveProtectedAccess } from '../../ui-next/src/registry/request-security.ts';
 import { replayAccessRequest } from '../ui/access.ts';
+
+const proctorAccessRequest = (value: string, origin: string) => {
+    const url = new URL(value, origin);
+    return url.origin === origin ? resolveProtectedAccess(url) : null;
+};
 
 test('optional recorder and protected replay routes are absent until registered and disappear on disposal', async () => {
     const context = { userId: 1, domainId: 'exam', pid: 'P1', submitPid: 1, ui: {}, translate: (key: string) => key };

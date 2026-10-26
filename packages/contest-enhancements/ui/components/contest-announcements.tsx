@@ -1,4 +1,4 @@
-import { Button, formatErrorMessage, ProctorFinishButton, useBuildUrl, useI18n, useNavigate, usePageData, useWebSocket } from '@hydrooj/ui-next';
+import { Button, ContestFinishAction, formatErrorMessage, useBuildUrl, useI18n, useNavigate, usePageData, useWebSocket } from '@hydrooj/ui-next';
 import { Badge, Group, Modal, ScrollArea, Stack, Text } from '@mantine/core';
 import { IconSpeakerphone } from '@tabler/icons-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -128,7 +128,7 @@ export function ContestAnnouncements() {
               >
                 {t(showProctorFinish ? 'Skip upload for now' : 'I understand')}
               </Button>
-              {showProctorFinish && <ProctorFinishButton label={t('End and upload')} />}
+              {showProctorFinish && <ContestFinishAction label={t('End and upload')} />}
             </Group>
           </Group>
           {error && <Text size="sm" c="red" role="alert">{error}</Text>}

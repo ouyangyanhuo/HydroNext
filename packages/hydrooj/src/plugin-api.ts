@@ -45,6 +45,8 @@ export { ConnectionHandler, Handler, requireSudo } from './service/server';
 export { Context, Fiber, FiberState, Service } from './context';
 export { buildContent } from './lib/content';
 export { getRecordAccess } from './lib/record-access';
+export * from './lib/contest-security';
+export { ContestDetailBaseHandler } from './handler/contest';
 export { default as mime } from './lib/mime';
 export { default as difficultyAlgorithm } from './lib/difficulty';
 export { default as rating } from './lib/rating';

@@ -4,7 +4,7 @@ import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import problem from '../model/problem';
 import type { ConnectionHandler, Handler } from '../service/server';
-import { requireProctorRecordAccess } from './proctor-record-access';
+import { requireContestRecordAccess } from './contest-security';
 
 /** Shared by record details and replay endpoints; code privileges never bypass problem visibility. */
 export async function getRecordAccess(handler: Handler | ConnectionHandler, rdoc: RecordDoc) {
@@ -30,7 +30,7 @@ export async function getRecordAccess(handler: Handler | ConnectionHandler, rdoc
             || (owner && contest.canShowSelfRecord.call(handler, tdoc, true));
         if (!canViewDetail && !owner) throw new PermissionError(rdoc._id);
     }
-    const proctorSession = await requireProctorRecordAccess(handler, tdoc, rdoc);
+    const accessGrant = await requireContestRecordAccess(handler, tdoc, rdoc);
     const teamVid = tdoc?.allowTeam ? await contest.getTeamVid(rdoc.domainId, tdoc.docId, handler.user._id) : null;
     const [pdoc, self, tsdoc] = await Promise.all([
         problem.get(rdoc.domainId, rdoc.pid, problem.PROJECTION_LIST.concat('config')),
@@ -48,5 +48,5 @@ export async function getRecordAccess(handler: Handler | ConnectionHandler, rdoc
         || handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE)
         || (handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE_ACCEPT) && self?.status === STATUS.STATUS_ACCEPTED)
         || (tdoc && (handler.user.own(tdoc) || (tdoc.allowViewCode && contest.isDone(tdoc) && !!tsdoc?.attend)));
-    return { pdoc, tdoc, tsdoc, canViewDetail, canViewCode: !!canViewCode, proctorSession };
+    return { pdoc, tdoc, tsdoc, canViewDetail, canViewCode: !!canViewCode, accessGrant };
 }

@@ -7,7 +7,8 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
-import * as cryptoHelpers from '../src/lib/proctor.ts';
+import * as cryptoHelpers from '../lib/proctor.ts';
+import { resolveProctorMock } from './mock-api';
 
 const require = createRequire(import.meta.url);
 const server = generateKeyPairSync('ed25519');
@@ -109,9 +110,9 @@ function fixture(options: { missingKeys?: boolean } = {}) {
         },
     };
     const module = { exports: {} as any };
-    const code = transformSync(readFileSync(new URL('../src/model/proctor.ts', import.meta.url), 'utf8'), { loader: 'ts', format: 'cjs' }).code;
+    const code = transformSync(readFileSync(new URL('../model/store.ts', import.meta.url), 'utf8'), { loader: 'ts', format: 'cjs' }).code;
     runInNewContext(code, { module, exports: module.exports, Buffer, process, setInterval, clearInterval,
-        require: (name: string) => mocks[name] ?? require(name) });
+        require: (name: string) => resolveProctorMock(name, mocks, require) });
     const model = module.exports;
     const tdoc = { proctorEnabled: true, beginAt: new Date(Date.now() - 1000), endAt: new Date(Date.now() + 3600000) };
     const raw = { version: '1.0.0', fingerprint, clientNonce: cryptoHelpers.secret(), publicKey: clientPublic,

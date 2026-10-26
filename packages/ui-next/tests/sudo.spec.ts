@@ -3,12 +3,12 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { test } from 'node:test';
-import { proctorError } from '../src/utils/proctor.ts';
+import { formatRequestError } from '../src/utils/request.ts';
 
 const module = { exports: {} as any };
 const code = transformSync(readFileSync(new URL('../src/utils/sudo.ts', import.meta.url), 'utf8'), { loader: 'ts', format: 'cjs' }).code;
 runInNewContext(code, { module, exports: module.exports, URL, fetch,
-    require: () => ({ proctorError }) });
+    require: () => ({ formatRequestError }) });
 const { completeSudoVerification } = module.exports;
 
 const current = 'https://oj.example/d/team/user/sudo';

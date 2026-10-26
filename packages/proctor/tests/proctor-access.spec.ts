@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
+import { resolveProctorMock } from './mock-api';
 
 const require = createRequire(import.meta.url);
 const tid = new ObjectId('1234567890abcdef12345678');
@@ -14,7 +15,7 @@ function load(path: string, mocks: Record<string, any>) {
         loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } },
     }).code;
     runInNewContext(code, { module, exports: module.exports,
-        require: (name: string) => mocks[name] ?? (name.startsWith('../') ? {} : require(name)) });
+        require: (name: string) => resolveProctorMock(name, mocks, (id) => id.startsWith('../') ? {} : require(id)) });
     return module.exports;
 }
 
@@ -56,11 +57,11 @@ function fixture(options: { proof?: boolean, rejected?: boolean, enabled?: boole
             getList: async () => { calls.push('load-list'); throw new Error('list loader reached'); },
         } },
     };
-    const access = load('../src/lib/proctor-access.ts', mocks);
+    const access = load('../lib/proctor-access.ts', mocks);
     mocks['../lib/proctor-access'] = access;
-    const contest = load('../src/handler/contest.ts', mocks);
+    const contest = load('../../hydrooj/src/handler/contest.ts', mocks);
     mocks['./contest'] = { ContestDetailBaseHandler: Handler };
-    const problem = load('../src/handler/problem.ts', mocks);
+    const problem = load('../../hydrooj/src/handler/problem.ts', mocks);
     return { access, contest, problem, Handler, calls };
 }
 

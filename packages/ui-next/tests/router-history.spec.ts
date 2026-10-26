@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
-import { proctorAccessHeaders } from '../src/utils/proctor.ts';
+import { protectedAccessHeaders, registerRequestSecurity } from '../src/registry/request-security.ts';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -45,7 +45,7 @@ function fixture(isInjected: boolean) {
             routeMapStore: { getSnapshot: () => ({ record_main: '/record', record_detail: '/record/:rid' }), set() {} },
         },
         './page-data': { useSetPageData: () => setData },
-        '../utils/proctor': { proctorAccessHeaders },
+        '../registry/request-security': { protectedAccessHeaders },
     };
     runInNewContext(code, {
         module, exports: module.exports, window: dom.window, history: dom.window.history,
@@ -176,6 +176,14 @@ test('contest problem navigation adds a fresh GET client proof without changing 
     } };
     const router = fixture(true);
     const tid = '1234567890abcdef12345678';
+    const dispose = registerRequestSecurity({
+        accessHeaders: async (value: string) => {
+            const target = new URL(value, dom.window.location.origin);
+            return (dom.window as any).examAPI.proctorHeaders({ action: 'problem_view', method: 'GET', path: target.pathname,
+                payload: { tid: target.searchParams.get('tid'), pid: target.pathname.split('/').at(-1) } });
+        },
+        submissionHeaders: async () => ({}), canRetry: () => true,
+    });
     try {
         await router.mount();
         await act(async () => router.navigate(`/d/team/p/J0002?tid=${tid}`));
@@ -192,6 +200,7 @@ test('contest problem navigation adds a fresh GET client proof without changing 
         assert.equal(new Headers(router.requests[2].options.headers).get('x-proctor-token'), null);
     } finally {
         delete (dom.window as any).examAPI;
+        dispose();
         await router.unmount();
     }
 });

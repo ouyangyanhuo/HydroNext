@@ -438,7 +438,8 @@ test('submitting and returning through record problem links retains the source n
         '@/components/user/user-link': { UserLink: () => null },
         '@/components/link': { Link: ({ href, children }: any) => h('a', { href }, children) },
         '@/utils/i18n-content': { extractLocalizedContent: (value: string) => value },
-        '@/utils/proctor': { proctorSubmissionHeaders: async () => ({}), proctorError: () => 'Failed' },
+        '@/registry/request-security': { protectedSubmissionHeaders: async () => ({}) },
+        '@/utils/request': { formatRequestError: () => 'Failed' },
     };
     const Submit = component('../src/pages/problem_submit.tsx', overrides).default;
     const Record = component('../src/pages/record_detail.tsx', overrides, { URLSearchParams }).default;

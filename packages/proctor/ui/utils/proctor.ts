@@ -1,3 +1,4 @@
+import { resolveProtectedAccess } from '@hydrooj/ui-next';
 export interface ProctorSubmission {
   pid: number;
   lang: string;
@@ -24,13 +25,6 @@ export interface ProctorAccessRequest {
   payload: Record<string, string>;
 }
 
-const accessResolvers = new Set<(target: URL) => ProctorAccessRequest | null>();
-
-export function registerProctorAccessResolver(resolver: (target: URL) => ProctorAccessRequest | null) {
-  accessResolvers.add(resolver);
-  return () => { accessResolvers.delete(resolver); };
-}
-
 export function proctorAccessRequest(url: string, origin: string): ProctorAccessRequest | null {
   const target = new URL(url, origin);
   if (target.origin !== origin) return null;
@@ -53,11 +47,7 @@ export function proctorAccessRequest(url: string, origin: string): ProctorAccess
     /^\/(?:d\/[^/]+\/)?contest\/([a-f0-9]{24})\/(?:problems|print|api\/printing\/team|file\/private\/.+)$/i,
   );
   if (contest) return { action: 'contest_view', method: 'GET', path: target.pathname, payload: { tid: contest[1].toLowerCase() } };
-  for (const resolve of accessResolvers) {
-    const request = resolve(target);
-    if (request?.method === 'GET' && request.path === target.pathname) return request;
-  }
-  return null;
+  return resolveProtectedAccess(target);
 }
 
 /** Optional on ordinary pages; protected routes still fail closed at the server. */
@@ -89,4 +79,4 @@ export async function proctorSubmissionHeaders(enabled: boolean, url: string, pa
 
 export {
   followSafeRedirect as followProctorRedirect, formatRequestError as proctorError, postJsonRequest as proctorRequest,
-} from './request';
+} from '@hydrooj/ui-next';

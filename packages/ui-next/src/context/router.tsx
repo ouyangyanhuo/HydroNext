@@ -3,7 +3,7 @@
 import { match } from 'path-to-regexp';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 import { endpoints, isInjected, routeMapStore } from '../globals';
-import { proctorAccessHeaders } from '../utils/proctor';
+import { protectedAccessHeaders as proctorAccessHeaders } from '../registry/request-security';
 import { useSetPageData } from './page-data';
 
 interface InternalState {

@@ -1,0 +1,60 @@
+'Authentication key ID': 'Authentication key ID'
+Retry: Retry
+Saved: Saved
+Invalid: Invalid
+Ranking: Ranking
+Status: Status
+Verify: Verify
+Confirm: Confirm
+Delete: Delete
+Close: Close
+Submit: Submit
+Search: Search
+Upload: Upload
+Download: Download
+Generate: Generate
+'Page {0} of {1}': 'Page {0} of {1}'
+Rows per page: Rows per page
+Error: Error
+Warning: Warning
+Configuration: Configuration
+Manage: Manage
+Access Denied: Access Denied
+Title: Title
+Content: Content
+Problem: Problem
+Contest: Contest
+Record: Record
+Domain: Domain
+Config: Config
+Color: Color
+Section: Section
+Accept: Accept
+Write: Write
+Version: Version
+Change: Change
+Select: Select
+Selected: Selected
+Continue: Continue
+files: files
+submissions: submissions
+Filename: Filename
+Target: Target
+Default: Default
+Input: Input
+Update: Update
+Operation failed: Operation failed
+Security: Security
+'All team members must proctor independently and upload their own final logs.': 'All team members must proctor independently and upload their own final logs.'
+'Logs still required from: {0}': 'Logs still required from: {0}'
+'My log pending': 'My log pending'
+'My log uploaded': 'My log uploaded'
+'Record is outside the contest.': 'Record is outside the contest.'
+'Team logs: {0}/{1}': 'Team logs: {0}/{1}'
+'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.': 'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.'
+'This ends your contest. You must still end proctoring and upload your log in the client.': 'This ends your contest. You must still end proctoring and upload your log in the client.'
+'Enabled': 'Enabled'
+'Properties': 'Properties'
+End personal proctoring and upload log: End personal proctoring and upload log
+Finish proctoring: Finish proctoring
+Open this page in the proctor client to finish proctoring and upload your log.: Open this page in the proctor client to finish proctoring and upload your log.

@@ -11,6 +11,7 @@
 | 编辑器粘贴策略 | `packages/editor-paste-guard` | 代码粘贴长度限制、权限豁免及通知 |
 | 赛事增强 | `packages/contest-enhancements` | 赛时公告、结束提醒、可拖动悬浮计时、排行榜每题用时 |
 | 私聊界面 | `packages/private-messages` | 私聊页面、发送与删除接口、会话样式与翻译 |
+| 监考系统 | `packages/proctor` | 密钥、握手、会话、请求校验、加密日志、管理页面与成绩资格过滤 |
 
 ## 开启或关闭
 
@@ -24,6 +25,7 @@ yarn hydrooj addon add /绝对路径/Hydro/packages/user-contributions
 yarn hydrooj addon add /绝对路径/Hydro/packages/editor-paste-guard
 yarn hydrooj addon add /绝对路径/Hydro/packages/contest-enhancements
 yarn hydrooj addon add /绝对路径/Hydro/packages/private-messages
+yarn hydrooj addon add /绝对路径/Hydro/packages/proctor
 ```
 
 关闭时把 `add` 改成 `remove`，路径必须与添加时完全相同。也可以直接维护运行账户的 `~/.hydro/addon.json`。保留 ui-next，按需加入功能插件路径：
@@ -37,11 +39,12 @@ yarn hydrooj addon add /绝对路径/Hydro/packages/private-messages
   "/绝对路径/Hydro/packages/user-contributions",
   "/绝对路径/Hydro/packages/editor-paste-guard",
   "/绝对路径/Hydro/packages/contest-enhancements",
-  "/绝对路径/Hydro/packages/private-messages"
+  "/绝对路径/Hydro/packages/private-messages",
+  "/绝对路径/Hydro/packages/proctor"
 ]
 ```
 
-Docker 后端镜像默认加载 ui-next 和上述七项功能，以保持升级兼容性。可在 Compose 的 `oj-backend.environment` 中设置 `HYDRO_ADDONS`，随后重新创建后端容器。例如仅保留界面、不启用这些可选功能：
+Docker 后端镜像默认加载 ui-next 和上述八项功能，以保持升级兼容性。可在 Compose 的 `oj-backend.environment` 中设置 `HYDRO_ADDONS`，随后重新创建后端容器。例如仅保留界面、不启用这些可选功能：
 
 ```yaml
 environment:
@@ -64,6 +67,8 @@ environment:
 - 粘贴上限保留拆分前代码中的 **30 个 Unicode 码点**，不改回历史的 50 字符版本；原题目/域编辑权限与系统管理员豁免不变。策略现在也覆盖比赛专用题目地址。它仅是前端交互约束，不能替代服务端鉴权或作为可信防作弊手段；停用后不注册监听器。
 
 ## 扩展边界
+
+监考迁移另见 [部署与验证](./proctor-plugin-migration.md)。自定义插件列表需要补入 `/opt/hydro-addons/proctor`。监考插件停用不删除原密钥、日志和会话；已经启用监考的比赛不会降级为普通比赛，受保护访问、提交和有效成绩查询会被拒绝。非监考业务不依赖该插件。
 
 赛事增强沿用 `contest.announcement`、`contest.announcement.receipt`、`contest.end-notice` 集合，以及参赛状态中的 `problemTimes`、`totalProblemTime` 等字段，不复制或重写历史数据。公告发布仍要求当前域的比赛编辑权限且比赛正在进行；接收与确认仍按真实参赛用户鉴权。保留 `/contest-announcements-conn`、`/contest/:tid/activity-conn` 和比赛管理页的公告操作。团队结束提醒发给真实队员，而不是负数团队 UID。
 

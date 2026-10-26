@@ -132,7 +132,7 @@ test('dashboard restricts runtime to admins and clock ticks do not rerender navi
     try {
         assert.deepEqual([...view.host.querySelectorAll('.hydro-card h3')].map((heading) => heading.textContent), [
             'User Management', 'User Privileges', 'System Data',
-            'System Settings', 'Proctor settings', 'Update settings',
+            'System Settings', 'Update settings',
             'Service Status', 'Scripts', 'Configuration',
         ]);
         const renders = pageRenders;

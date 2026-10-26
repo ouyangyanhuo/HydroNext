@@ -30,7 +30,7 @@
         "postinstall": "node build/prepare.js",
         "gen-patch": "node -r @hydrooj/register build/gen-patch.ts",
         "hydrooj": "./node_modules/.bin/hydrooj",
-        "test:unit": "node --import ./test/register-typescript.mjs --test framework/framework/tests/*.spec.ts packages/common/tests/*.spec.ts packages/code-replay/tests/*.spec.ts packages/honor-frame/tests/*.spec.ts packages/client-updates/tests/*.spec.ts packages/user-contributions/tests/*.spec.ts packages/editor-paste-guard/tests/*.spec.ts packages/contest-enhancements/tests/*.spec.ts packages/private-messages/tests/*.spec.ts packages/hydrojudge/tests/*.spec.ts packages/hydrooj/tests/*.spec.ts packages/ui-next/tests/*.spec.ts"
+        "test:unit": "node --import ./test/register-typescript.mjs --test framework/framework/tests/*.spec.ts packages/common/tests/*.spec.ts packages/code-replay/tests/*.spec.ts packages/honor-frame/tests/*.spec.ts packages/client-updates/tests/*.spec.ts packages/user-contributions/tests/*.spec.ts packages/editor-paste-guard/tests/*.spec.ts packages/contest-enhancements/tests/*.spec.ts packages/private-messages/tests/*.spec.ts packages/proctor/tests/*.spec.ts packages/hydrojudge/tests/*.spec.ts packages/hydrooj/tests/*.spec.ts packages/ui-next/tests/*.spec.ts"
     },
     "version": "1.0.0",
     "license": "AGPL-3.0-only",

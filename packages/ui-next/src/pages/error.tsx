@@ -7,8 +7,9 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
+import { canRetryProtectedAccess } from '@/registry/request-security';
 import { goBackOrFallback } from '@/utils/history-back';
-import { proctorAccessRequest, proctorError } from '@/utils/proctor';
+import { formatRequestError as proctorError } from '@/utils/request';
 
 export default function ErrorPage() {
   const { args, url } = usePageData();
@@ -24,8 +25,7 @@ export default function ErrorPage() {
     : t(error?.message || args.message || 'An error occurred', ...(error?.params || []));
   const isPermissionError = code === 401 || code === 403;
   const loginUrl = `${buildUrl('user_login')}?redirect=${encodeURIComponent(url)}`;
-  const canRetryProctor = isPermissionError && typeof (window as any).examAPI?.proctorHeaders === 'function'
-    && !!proctorAccessRequest(url, window.location.origin);
+  const canRetryProctor = isPermissionError && canRetryProtectedAccess(url);
   const retry = async () => {
     if (retrying) return;
     setRetrying(true);

@@ -16,8 +16,10 @@ import {
     ValidationError,
 } from '../error';
 import { ContestStatusDoc, FileInfo, ScoreboardConfig, Tdoc } from '../interface';
-import { requireProctorAccess } from '../lib/proctor-access';
-import { teamProctorStatus } from '../lib/proctor-team';
+import {
+    checkContestSecurityConfig as checkContestConfig, contestSecurityTeamStatus as teamProctorStatus,
+    hasContestSecurity, requireContestAccess as requireProctorAccess,
+} from '../lib/contest-security';
 import { requireTeamCaptain, teamCaptainId } from '../lib/team-permissions';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
@@ -26,7 +28,6 @@ import * as document from '../model/document';
 import message from '../model/message';
 import * as oplog from '../model/oplog';
 import problem from '../model/problem';
-import { checkContestConfig } from '../model/proctor';
 import record from '../model/record';
 import ScheduleModel from '../model/schedule';
 import storage from '../model/storage';
@@ -447,6 +448,7 @@ export class ContestEditHandler extends Handler {
             page_name: tid ? 'contest_edit' : 'contest_create',
             files: tid ? this.tdoc.files : [],
             proctorPolicyLocked: !!tid && Date.now() >= this.tdoc.beginAt.getTime(),
+            contestSecurityAvailable: hasContestSecurity(),
             urlForFile: (filename: string) => this.url('contest_file_download', { tid, filename, type: 'public' }),
         };
     }

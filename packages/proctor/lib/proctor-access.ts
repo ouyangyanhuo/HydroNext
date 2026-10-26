@@ -1,7 +1,5 @@
-import { ProctorClientRequiredError } from '../error';
-import type { Tdoc } from '../interface';
-import * as proctor from '../model/proctor';
-import type { Handler } from '../service/server';
+import { type Handler, ProctorClientRequiredError, type Tdoc } from 'hydrooj';
+import * as proctor from '../model/store';
 
 /** Protect content reads, not just submissions. Management and handshake routes stay separate. */
 export async function requireProctorAccess(handler: Handler, tdoc: Tdoc, pid?: string | number) {

@@ -58,7 +58,12 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         return `${prefix}/${route}${search ? `?${search}` : ''}`;
     };
     const mocks: Record<string, any> = {
-        '@/components/common/addon-slots': { ScoreboardCellExtras: () => null },
+        '@/components/common/addon-slots': {
+            ScoreboardCellExtras: () => null, ContestParticipantNotice: () => null, ContestParticipationWarning: () => null,
+            ContestEndMessage: ({ children }: any) => children,
+        },
+        '@/registry/request-security': { canRetryProtectedAccess: () => false },
+        '@/utils/request': { formatRequestError: (error: any) => error.message },
         './contest-detail.css': {},
         './ranking.css': {},
         '@mantine/core': mantine,

@@ -1,4 +1,4 @@
-import type { ContestStatusDoc } from '../interface';
+import type { ContestStatusDoc } from 'hydrooj';
 
 /** 全员独立监考：仅当前参赛名单内每人的最终日志都已上传，全队才完成。 */
 export function teamProctorStatus(status: Pick<ContestStatusDoc, 'members' | 'proctorMembers'>,

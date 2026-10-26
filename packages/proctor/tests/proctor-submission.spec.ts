@@ -6,7 +6,7 @@ import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
 import { Types } from '../../../framework/framework/validator.ts';
-import { canonical, digest, submissionPayload } from '../src/lib/proctor.ts';
+import { canonical, digest, submissionPayload } from '../lib/proctor.ts';
 
 const require = createRequire(import.meta.url);
 function fixture(options: any = {}) {
@@ -56,11 +56,24 @@ function fixture(options: any = {}) {
         } },
     };
     const module = { exports: {} as any };
-    const code = transformSync(readFileSync(new URL('../src/handler/problem.ts', import.meta.url), 'utf8'),
+    stubs['../lib/contest-security'] = { reserveContestSubmission: async (handler: any, tdoc: any, payload: any) => {
+        if (!tdoc.proctorEnabled) return undefined;
+        const session = await stubs['../model/proctor'].authenticate({ uid: handler.user._id, domainId: handler.domain._id, tid: tdoc.docId },
+            handler.request.headers['x-proctor-token'], handler.request.headers['x-proctor-proof'], 'submit', handler.context.originalPath,
+            submissionPayload(payload.pid, payload.lang, payload.code, payload.pretest, payload.input, ''));
+        return stubs['../model/proctor'].reserveSubmission(session);
+    } };
+    const code = transformSync(readFileSync(new URL('../../hydrooj/src/handler/problem.ts', import.meta.url), 'utf8'),
         { loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } } }).code;
     runInNewContext(code, { module, exports: module.exports, Buffer,
         require: (name: string) => stubs[name] ?? (name.startsWith('../') ? {} : require(name)) });
     const handler = new module.exports.ProblemSubmitHandler();
+    const post = handler.post.bind(handler);
+    handler.post = (domainId: string, lang: string, content: string, pretest: boolean, input: string[], tid: any) => {
+        handler.domain = { _id: domainId };
+        handler.tdoc.docId = tid;
+        return post(domainId, lang, content, pretest, input, tid);
+    };
     handler.pdoc = { docId: 42, config: { type: 'default' } };
     handler.response.body.pdoc = handler.pdoc;
     return { handler, calls, HackHandler: module.exports.ProblemHackHandler };

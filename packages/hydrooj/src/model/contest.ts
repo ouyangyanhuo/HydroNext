@@ -14,7 +14,7 @@ import {
     ScoreboardRow, SubtaskResult, Tdoc,
 } from '../interface';
 import avatar from '../lib/avatar';
-import { proctorRankingFilter } from '../lib/proctor';
+import { contestSecurityRankingFilter as proctorRankingFilter } from '../lib/contest-security';
 import { withTeamMembershipLock } from '../lib/team-membership-lock';
 import bus from '../service/bus';
 import db from '../service/db';

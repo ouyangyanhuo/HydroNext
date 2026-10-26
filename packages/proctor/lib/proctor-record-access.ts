@@ -1,8 +1,5 @@
-import { ProctorClientRequiredError } from '../error';
-import type { RecordDoc, Tdoc } from '../interface';
-import { PERM } from '../model/builtin';
-import * as proctor from '../model/proctor';
-import type { ConnectionHandler, Handler } from '../service/server';
+import { type ConnectionHandler, type Handler, PERM, ProctorClientRequiredError, type RecordDoc, type Tdoc } from 'hydrooj';
+import * as proctor from '../model/store';
 
 /** 记录详情、下载、回放和实时连接共用个人监考验证；比赛管理权限不受影响。 */
 export async function requireProctorRecordAccess(handler: Handler | ConnectionHandler, tdoc: Tdoc, rdoc: RecordDoc) {

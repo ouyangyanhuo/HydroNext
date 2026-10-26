@@ -1,16 +1,10 @@
+import { Button, ConfirmDialog, PageHeader, PRIV, useBuildUrl, useHasPriv, useI18n, usePageData } from '@hydrooj/ui-next';
 import { Alert, Card, Code, Collapse, Group, Modal, NumberInput, Stack, Switch, Text, Textarea, TextInput, Title, Transition } from '@mantine/core';
 import { useReducedMotion } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
-import { Button } from '@/components/common/button';
-import { ConfirmDialog } from '@/components/common/confirm-dialog';
-import { PageHeader } from '@/components/common/page-header';
-import { usePageData } from '@/context/page-data';
-import { useBuildUrl } from '@/hooks/use-build-url';
-import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
-import { proctorRequest } from '@/utils/proctor';
+import { proctorRequest } from '../utils/proctor';
 import { ProctorLogsPanel } from './manage_proctor_logs';
 
 // Match the feature-setting motion on domain/visibility, including the reverse exit.
@@ -70,7 +64,7 @@ export default function ManageProctorPage() {
         <Stack gap={0}>
           <Group align="flex-start" gap="xl" wrap="nowrap">
             <Switch
-              className="min-w-0 flex-1"
+              className="hydro-proctor-grow"
               label={t('Enable proctor service')}
               disabled={busy}
               checked={config.enabled}
@@ -82,7 +76,7 @@ export default function ManageProctorPage() {
               exitDuration={transitionDuration}
               timingFunction={FEATURE_OPTIONS_EASING}
             >
-              {(styles) => <div className="min-w-0 flex-1" style={styles} inert={!config.enabled}>
+              {(styles) => <div className="hydro-proctor-grow" style={styles} inert={!config.enabled}>
                 <Switch
                   label={t('Allow token refresh')}
                   disabled={busy || !config.enabled}

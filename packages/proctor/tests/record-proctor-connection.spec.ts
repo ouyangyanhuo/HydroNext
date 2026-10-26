@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
+import { resolveProctorMock } from './mock-api';
 
 const require = createRequire(import.meta.url);
 function load(path: string, mocks: Record<string, any>) {
@@ -12,7 +13,7 @@ function load(path: string, mocks: Record<string, any>) {
     runInNewContext(transformSync(readFileSync(new URL(path, import.meta.url), 'utf8'), { loader: 'ts', format: 'cjs',
         tsconfigRaw: { compilerOptions: { experimentalDecorators: true } } }).code, {
         module, exports: module.exports, setTimeout: () => 0, clearTimeout: () => {},
-        require: (id: string) => mocks[id] ?? (id.startsWith('../') || id.startsWith('./') ? {} : require(id)),
+        require: (id: string) => resolveProctorMock(id, mocks, (name) => name.startsWith('../') || name.startsWith('./') ? {} : require(name)),
     });
     return module.exports;
 }
@@ -54,10 +55,10 @@ function fixture(options: { pretest?: boolean, hidden?: boolean, owner?: boolean
             getStatus: async () => null, canViewBy: () => !options.hidden } },
         '../model/user': { __esModule: true, default: { getById: async () => ({ _id: 8, uname: 'teammate' }) } },
     };
-    mocks['../lib/proctor-record-access'] = load('../src/lib/proctor-record-access.ts', mocks);
+    mocks['../lib/proctor-record-access'] = load('../lib/proctor-record-access.ts', mocks);
     mocks['./proctor-record-access'] = mocks['../lib/proctor-record-access'];
-    mocks['../lib/record-access'] = load('../src/lib/record-access.ts', mocks);
-    return { ...load('../src/handler/record.ts', mocks), calls, rid, rdoc, expire: () => { expired = true; } };
+    mocks['../lib/record-access'] = load('../../hydrooj/src/lib/record-access.ts', mocks);
+    return { ...load('../../hydrooj/src/handler/record.ts', mocks), calls, rid, rdoc, expire: () => { expired = true; } };
 }
 
 test('ordinary participants receive their own hidden-contest pretest results, never another user’s or an unrelated hidden problem’s', async () => {

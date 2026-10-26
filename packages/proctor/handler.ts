@@ -2,20 +2,14 @@ import { PassThrough, Readable, Writable } from 'stream';
 import { ZipWriter } from '@zip.js/zip.js';
 import { escapeRegExp } from 'lodash';
 import { ObjectId } from 'mongodb';
-import { Context } from '../context';
-import { ForbiddenError, NotFoundError, ValidationError } from '../error';
-import { PROCTOR_PROTOCOL, proctorOrigin, signedPayload } from '../lib/proctor';
-import { hashFile, validateEncryptedLog } from '../lib/proctor-log';
-import { PERM, PRIV } from '../model/builtin';
-import * as contest from '../model/contest';
-import * as oplog from '../model/oplog';
-import problem from '../model/problem';
-import * as proctor from '../model/proctor';
-import record from '../model/record';
-import storage from '../model/storage';
-import system from '../model/system';
-import { Handler, param, requireSudo, Types } from '../service/server';
-import { ContestDetailBaseHandler } from './contest';
+import {
+    ContestDetailBaseHandler,
+    ContestModel as contest, Context, ForbiddenError, Handler, hashFile,
+    NotFoundError, OplogModel as oplog, param, PERM, PRIV, ProblemModel as problem, RecordModel as record,
+    requireSudo, StorageModel as storage, SystemModel as system, Types, ValidationError } from 'hydrooj';
+import { PROCTOR_PROTOCOL, proctorOrigin, signedPayload } from './lib/proctor';
+import { validateEncryptedLog } from './lib/proctor-log';
+import * as proctor from './model/store';
 
 function checkOrigin(request: Handler['request']) {
     if (!request.headers.origin) return;

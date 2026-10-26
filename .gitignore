@@ -73,6 +73,9 @@ docs/*
 !docs/proctor-protocol.md
 !docs/proctor-client-changes.md
 !docs/proctor-client-updates.md
+!docs/proctor-migration-baseline.md
+!docs/proctor-migration-contract.md
+!docs/proctor-plugin-migration.md
 install/docker/data/*
 .agents/
 .codex/

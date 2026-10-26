@@ -3,14 +3,10 @@ import { mkdir, readFile, writeFile } from 'fs/promises';
 import { homedir } from 'os';
 import { join } from 'path';
 import { ObjectId } from 'mongodb';
-import { Context } from '../context';
-import { ForbiddenError, ValidationError } from '../error';
-import { Tdoc } from '../interface';
+import { ContestModel as contest, Context, db, ForbiddenError, type Tdoc, ValidationError } from 'hydrooj';
 import {
     canonical, decodeProof, digest, normalizeClientKey, PROCTOR_PROTOCOL, secret, signedPayload, validProof, verifyPayload,
 } from '../lib/proctor';
-import db from '../service/db';
-import * as contest from './contest';
 
 interface Config {
     _id: string;
@@ -42,7 +38,7 @@ export interface ProctorLog extends Identity {
     size: number; path: string; sha256: string; contestTitle: string; domainName: string;
 }
 interface Expiring { _id: string, expiresAt: Date, attemptId?: ObjectId, holder?: string }
-declare module '../service/db' {
+declare module 'hydrooj' {
     interface Collections {
         'proctor.config': Config;
         // Legacy records are read only when upgrading an existing contest attempt.
@@ -339,7 +335,7 @@ export async function acquireLogLock(attemptId: ObjectId) {
     };
 }
 
-export async function apply(ctx: Context) {
+export async function initialize(ctx: Context) {
     const ttl = { key: { expiresAt: 1 }, expireAfterSeconds: 0, name: 'expiry' } as const;
     await Promise.all([ctx.db.ensureIndexes(challenges, ttl),
         ctx.db.ensureIndexes(sessions, ttl), ctx.db.ensureIndexes(nonces, ttl), ctx.db.ensureIndexes(leases, ttl)]);

@@ -1,3 +1,6 @@
+export { ContestFinishAction } from './components/common/addon-slots';
+/** @deprecated Use ContestFinishAction; the implementation is supplied by the proctor addon. */
+export { ContestFinishAction as ProctorFinishButton } from './components/common/addon-slots';
 export { ActionIcon, Button, ButtonBase, UnstyledButton } from './components/common/button';
 export { ConfirmDialog } from './components/common/confirm-dialog';
 export { EmptyState } from './components/common/empty-state';
@@ -6,7 +9,6 @@ export { PageHeader } from './components/common/page-header';
 export { Paginator } from './components/common/paginator';
 export { LongSelect, ShortSelect, TagMultiSelect } from './components/common/select';
 export { TimeDisplay } from './components/common/time-display';
-export { ProctorFinishButton } from './components/contest/proctor-finish-button';
 export { registerEditorAddon } from './components/editor/addons';
 export type { EditorAddon, EditorAddonContext, EditorAddonReceipt } from './components/editor/addons';
 export { CodeEditor } from './components/editor/code-editor';
@@ -39,20 +41,26 @@ export {
 } from './registry';
 export { registerManageEntry } from './registry/manage-entries';
 export type { ManageEntry } from './registry/manage-entries';
+export {
+  protectedAccessHeaders, registerProtectedAccessResolver as registerProctorAccessResolver, registerProtectedAccessResolver, registerRequestSecurity,
+  resolveProtectedAccess,
+} from './registry/request-security';
+export type { ProtectedAccessRequest, ProtectedSubmission } from './registry/request-security';
+/** @deprecated Use ProtectedAccessRequest and protectedAccessHeaders. */
+export type { ProtectedAccessRequest as ProctorAccessRequest } from './registry/request-security';
+export { protectedAccessHeaders as proctorAccessHeaders } from './registry/request-security';
 export { getUserExtensionFields, registerUserFields } from './registry/user-fields';
 // Stores
 export {
   useAppStore, useNotificationStore, useRouteStore, useSessionStore,
 } from './stores';
+
 export type { Notification, UiContext, UserContext } from './stores';
 export { avatarPixelSize, getAvatarUrl } from './utils/avatar';
-
 export { formatContestClock } from './utils/contest-problem-time';
+
 export { formatErrorMessage } from './utils/error';
 export { goBackOrFallback } from './utils/history-back';
-
-export { proctorAccessHeaders, registerProctorAccessResolver } from './utils/proctor';
-export type { ProctorAccessRequest } from './utils/proctor';
 export { followSafeRedirect, formatRequestError, postJsonRequest } from './utils/request';
 export { formatUserName } from './utils/user-name';
 

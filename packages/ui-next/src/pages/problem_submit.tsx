@@ -10,8 +10,9 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
+import { protectedSubmissionHeaders as proctorSubmissionHeaders } from '@/registry/request-security';
 import { getProblemNavigationQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
-import { proctorError, proctorSubmissionHeaders } from '@/utils/proctor';
+import { formatRequestError as proctorError } from '@/utils/request';
 
 export default function ProblemSubmitPage() {
   const { args } = usePageData();

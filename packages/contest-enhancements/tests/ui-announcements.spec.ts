@@ -49,15 +49,18 @@ const finishMocks = {
     '@/components/common/button': { Button },
     '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
     '@/utils/error': { formatErrorMessage: (error: any) => error.message },
-    '@/utils/proctor': load('../../ui-next/src/utils/proctor.ts', { './request': load('../../ui-next/src/utils/request.ts', {}) }),
+    '@/utils/proctor': {
+        canRequestProctorExit: () => typeof (dom.window as any).examAPI?.requestQuit === 'function',
+        requestProctorExit: () => (dom.window as any).examAPI.requestQuit(),
+    },
 };
-const finishButton = load('../../ui-next/src/components/contest/proctor-finish-button.tsx', finishMocks);
+const finishButton = load('../../proctor/ui/components/proctor-finish-button.tsx', finishMocks);
 
 test('global announcement modal displays escaped content, confirms one at a time and waits for server acknowledgement', async () => {
     let callbacks: any;
     const sent: any[] = [];
     const { ContestAnnouncements } = load('../ui/components/contest-announcements.tsx', {
-        '@/components/contest/proctor-finish-button': finishButton,
+        '@/components/common/addon-slots': { ContestFinishAction: finishButton.ProctorFinishButton },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
         '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send: (data: any) => sent.push(data) }; } },
         '@/context/page-data': { usePageData: () => ({ args: {}, name: 'homepage', url: '/' }) },
@@ -110,7 +113,7 @@ test('ending notices refresh only their contest and return to its domain overvie
     const earlyMessage = 'Your team has ended the proctored contest early. Contest submissions are now closed.';
     const dictionary = require('js-yaml').load(readFileSync(new URL('../locale/zh.yaml', import.meta.url), 'utf8'));
     const { ContestAnnouncements } = load('../ui/components/contest-announcements.tsx', {
-        '@/components/contest/proctor-finish-button': finishButton,
+        '@/components/common/addon-slots': { ContestFinishAction: finishButton.ProctorFinishButton },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key === earlyMessage ? dictionary[key] : key }) },
         '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send: (data: any) => sent.push(data) }; } },
         '@/context/page-data': { usePageData: () => ({ args: { tdoc: { docId: tid }, UiContext: { domainId: 'exam' } },
@@ -170,7 +173,7 @@ test('自然结束或提前结束的通知在断线时仍可打开客户端上�
     } };
     const navigate = async () => {};
     const { ContestAnnouncements } = load('../ui/components/contest-announcements.tsx', {
-        '@/components/contest/proctor-finish-button': finishButton,
+        '@/components/common/addon-slots': { ContestFinishAction: finishButton.ProctorFinishButton },
         '@/hooks/use-i18n': finishMocks['@/hooks/use-i18n'],
         '@/hooks/use-websocket': { useWebSocket: (options: any) => { callbacks = options; return { send() {} }; } },
         '@/context/page-data': { usePageData: () => ({ args: {}, name: 'error', url: '/d/exam/p/1' }) },

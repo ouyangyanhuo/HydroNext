@@ -1,17 +1,11 @@
+import {
+  ActionIcon, Button, ConfirmDialog, Link, PageHeader, PRIV, ShortSelect, useBuildUrl, useHasPriv, useI18n, usePageData,
+} from '@hydrooj/ui-next';
 import { Card, Checkbox, Group, Pagination, Stack, Table, Text, TextInput, Title, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconCornerDownLeft, IconDownload, IconSearch, IconTrash } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
-import { ActionIcon, Button } from '@/components/common/button';
-import { ConfirmDialog } from '@/components/common/confirm-dialog';
-import { PageHeader } from '@/components/common/page-header';
-import { ShortSelect } from '@/components/common/select';
-import { Link } from '@/components/link';
-import { usePageData } from '@/context/page-data';
-import { useBuildUrl } from '@/hooks/use-build-url';
-import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
-import { followProctorRedirect, proctorError, proctorRequest } from '@/utils/proctor';
+import { followProctorRedirect, proctorError, proctorRequest } from '../utils/proctor';
 
 export function ProctorLogsPanel({ args }: { args: any }) {
   const { t } = useI18n();
@@ -91,7 +85,7 @@ export function ProctorLogsPanel({ args }: { args: any }) {
       <Title order={3}>{t('Proctor logs')}</Title>
       <Group justify="space-between" gap="sm">
         <Text size="sm" c="dimmed">{t('Encrypted final logs.')} · {data.count || 0}</Text>
-        <Group gap="xs" className="w-full sm:w-auto">
+        <Group gap="xs" className="hydro-proctor-log-actions">
           {selected.length > 0 && <>
             <Text size="xs" c="dimmed">{t('Selected')}: {selected.length}</Text>
             <Tooltip label={t('Download selected')} withArrow>
@@ -119,7 +113,7 @@ export function ProctorLogsPanel({ args }: { args: any }) {
               </ActionIcon>
             </Tooltip>
           </>}
-          <form className="w-full min-w-0 sm:w-[280px]" onSubmit={(event) => { event.preventDefault(); void load(1, q); }}>
+          <form className="hydro-proctor-log-search" onSubmit={(event) => { event.preventDefault(); void load(1, q); }}>
             <TextInput
               size="xs"
               placeholder={t('Search filename, user, domain or contest')}

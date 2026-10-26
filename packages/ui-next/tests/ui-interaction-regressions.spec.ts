@@ -512,16 +512,16 @@ test('domain visibility contest mode card layout shrinks to half with animated f
 });
 
 test('contest proctor notice renders text reminders on left and status badge on right', () => {
-    const noticeSource = read('../src/components/contest/contest-proctor-notice.tsx');
+    const noticeSource = read('../../proctor/ui/components/contest-proctor-notice.tsx');
 
     assert.match(
         noticeSource,
-        /border-l-4 border-l-indigo-500/,
-        'proctor notice must be a Card with an indigo accent indicator',
+        /className="hydro-proctor-notice"/,
+        'proctor notice owns its addon styles',
     );
     assert.match(
         noticeSource,
-        /<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">/,
+        /<div className="hydro-proctor-notice__layout">/,
         'proctor notice must use horizontal flex layout separating left and right',
     );
     assert.match(

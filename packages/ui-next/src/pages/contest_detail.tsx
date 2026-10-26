@@ -4,12 +4,12 @@ import { Badge, Card, Divider, Group, Modal, Paper, Stack, Table, Text, Textarea
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconFileDescription } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
+import { ContestEndMessage, ContestParticipantNotice, ContestParticipationWarning } from '@/components/common/addon-slots';
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DeleteResourceButton } from '@/components/common/delete-resource-button';
 import { LongSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
-import { ContestProctorNotice } from '@/components/contest/contest-proctor-notice';
 import { ContestTimer } from '@/components/contest/contest-timer';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
@@ -558,7 +558,7 @@ export default function ContestDetailPage() {
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="min-w-0 flex-1">
             <Stack gap="lg">
-              {tdoc.proctorEnabled && <ContestProctorNotice enabled status={tsdoc} />}
+              {tdoc.proctorEnabled && <ContestParticipantNotice data={args} status={tsdoc} />}
               <ContestProblemList
                 tdoc={tdoc}
                 tsdoc={tsdoc}
@@ -647,7 +647,7 @@ export default function ContestDetailPage() {
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 min-w-0">
-          {tdoc.proctorEnabled && <div className="mb-4"><ContestProctorNotice enabled status={tsdoc} /></div>}
+          {tdoc.proctorEnabled && <div className="mb-4"><ContestParticipantNotice data={args} status={tsdoc} /></div>}
           <Card withBorder p="lg" mb="md" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)] shadow-[var(--hydro-shadow-sm)]">
             {hasIntroduction ? (
               <MarkdownRenderer content={tdoc.content} />
@@ -779,11 +779,9 @@ export default function ContestDetailPage() {
         onConfirm={() => void handleEarlyEnd()}
         title={t(tsdoc.members ? 'End contest for the whole team' : 'End contest early')}
         confirmLabel={t(tsdoc.members ? 'End contest for the whole team' : 'End contest early')}
-        message={tdoc.proctorEnabled ? t(tsdoc.members
-          ? 'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.'
-          : 'This ends your contest. You must still end proctoring and upload your log in the client.') : t(tsdoc.members
+        message={<ContestEndMessage data={args} status={tsdoc}>{t(tsdoc.members
           ? 'This ends the contest for every teammate. Nobody on the team will be able to submit again.'
-          : 'This ends your contest. You will not be able to submit again.')}
+          : 'This ends your contest. You will not be able to submit again.')}</ContestEndMessage>}
         loading={ending}
       />
       <Modal
@@ -810,9 +808,7 @@ export default function ContestDetailPage() {
               }] : [],
             ]}
           />
-          {tdoc.proctorEnabled && attendTeam !== 'personal' && (
-            <Text size="sm" c="dimmed">{t('All team members must proctor independently and upload their own final logs.')}</Text>
-          )}
+          <ContestParticipationWarning data={args} team={attendTeam !== 'personal'} />
           {!args.team_vdocs?.length && (
             <Text size="sm" c="dimmed">
               {t('You are not in any team yet.')}

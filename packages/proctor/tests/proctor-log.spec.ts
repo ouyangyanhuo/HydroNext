@@ -4,8 +4,9 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { digest } from '../src/lib/proctor.ts';
-import { hashFile, validateEncryptedLog } from '../src/lib/proctor-log.ts';
+import { hashFile } from '../../hydrooj/src/lib/file-hash.ts';
+import { digest } from '../lib/proctor.ts';
+import { validateEncryptedLog } from '../lib/proctor-log.ts';
 
 const keys = generateKeyPairSync('rsa', { modulusLength: 3072 });
 const privateKey = keys.privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();

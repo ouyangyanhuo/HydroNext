@@ -1,5 +1,7 @@
 # exam-proctor-client 接入实现
 
+2026-10-26 核对：当前客户端已支持构建公钥注入、身份签名、读取证明、日志封存与补传；具体实现以 [监考行为基线](./proctor-migration-baseline.md) 为准。OJ 监考插件迁移保持 `hydro-proctor/1` 协议与客户端源码。
+
 客户端已按 [proctor-protocol.md](./proctor-protocol.md) 接入。完整构建变量、GitHub Actions、平台保护边界和发行步骤见 [客户端 README](../exam-proctor-client/README.md)。客户端是独立 Git 仓库，Hydro 父仓库忽略其目录；修改需要分别保存到两个仓库。
 
 ## 模块与行为

@@ -16,8 +16,9 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useRecordSocket } from '@/hooks/use-record-socket';
+import { protectedSubmissionHeaders as proctorSubmissionHeaders } from '@/registry/request-security';
 import { getSubmissionRecordQuery } from '@/utils/problem-navigation';
-import { proctorError, proctorSubmissionHeaders } from '@/utils/proctor';
+import { formatRequestError as proctorError } from '@/utils/request';
 import { createEditorAddon, type EditorAddon } from './addons';
 import {
   CodeEditor,

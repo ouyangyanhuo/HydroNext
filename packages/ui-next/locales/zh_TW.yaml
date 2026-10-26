@@ -1,5 +1,4 @@
 __flag: 🇹🇼
-'Authentication key ID': '認證金鑰 ID'
 'All participants': '所有參賽者'
 'Filter participants': '篩選參賽者'
 'Only me': '僅自己'
@@ -914,17 +913,9 @@ Your Status: 您的狀態
 
 # 团队独立监考与提前结束比赛
 'All team logs uploaded': '全隊日誌已上傳'
-'All team members must proctor independently and upload their own final logs.': '團隊成員必須分別使用本人帳號接受監考，並各自上傳最終日誌；全員上傳後全隊成績才有效。'
 'End contest early': '提前結束比賽'
 'End contest for the whole team': '結束全隊比賽'
-'Logs still required from: {0}': '仍缺：{0}'
-'My log pending': '本人日誌待上傳'
-'My log uploaded': '本人日誌已上傳'
-'Record is outside the contest.': '該提交記錄不屬於目前比賽。'
-'Team logs: {0}/{1}': '全隊日誌：{0}/{1}'
-'This ends the contest for every teammate. Each member must still end personal proctoring and upload their own log in the client.': '這會結束所有隊員的比賽，所有人都將無法繼續提交。這不會結束個人監考；每位成員仍須在客戶端分別結束監考並上傳本人日誌。'
 'This ends the contest for every teammate. Nobody on the team will be able to submit again.': '這會結束所有隊員的比賽，全隊將無法繼續提交。'
-'This ends your contest. You must still end proctoring and upload your log in the client.': '這會提前結束你的比賽，之後無法繼續提交。若啟用了監考，仍須在客戶端結束監考並上傳日誌。'
 'This ends your contest. You will not be able to submit again.': '這會提前結束你的比賽，之後無法繼續提交。'
 
 # 队名与参赛成员冲突
@@ -955,6 +946,4 @@ Your Status: 您的狀態
 'View domain members, assign roles, and manage memberships.': '檢視網域成員、指派角色並管理成員身分與邀請。'
 'Visit': '造訪前台'
 # 個人監考結束入口
-End personal proctoring and upload log: 結束個人監考並上傳日誌
-Finish proctoring: 結束監考
-Open this page in the proctor client to finish proctoring and upload your log.: 請在監考客戶端中開啟此頁面，結束個人監考並上傳日誌。
+'Proctor service is unavailable. Contact the administrator.': '監考服務暫不可用，請聯絡管理員。'

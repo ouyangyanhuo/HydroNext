@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- Addon setup and slot definitions are registration modules. */
 import {
-  Button, Link, type PluginDefinition, PRIV, registerEditorAddon, registerProctorAccessResolver,
+  Button, Link, type PluginDefinition, PRIV, registerEditorAddon, registerProtectedAccessResolver,
   useBuildUrl, useCurrentUser, useHasPriv, useI18n, useUiContext,
 } from '@hydrooj/ui-next';
 import { Card, Stack, Text } from '@mantine/core';
@@ -49,7 +49,7 @@ export function setup(api: Parameters<PluginDefinition['setup']>[0]) {
   api.registerPage('code_replay', () => import('./pages/code_replay'), { title: 'Code Replay', nav: 'record_main' });
   const cleanups = [
     registerEditorAddon('code-replay', createRecorder),
-    registerProctorAccessResolver(replayAccessRequest),
+    registerProtectedAccessResolver(replayAccessRequest),
     api.after('component:record-action-extras', ReplayAction),
     api.after('component:record-content-extras', InlineReplay),
     api.after('component:record-row-action-extras', ReplayRowAction),

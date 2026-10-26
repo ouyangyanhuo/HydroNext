@@ -5,7 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
-import { teamProctorStatus } from '../src/lib/proctor-team.ts';
+import { teamProctorStatus } from '../../proctor/lib/proctor-team.ts';
 
 const require = createRequire(import.meta.url);
 const tid = new ObjectId('1234567890abcdef12345678');

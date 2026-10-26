@@ -2,6 +2,7 @@ import { Badge, Card, Checkbox, Group, Loader, NumberInput, SimpleGrid, Stack, T
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ContestEditFields } from '@/components/common/addon-slots';
 import { Button } from '@/components/common/button';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
@@ -15,7 +16,7 @@ import { useDomainId } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { getUserExtensionFields } from '@/registry/user-fields';
 import { getLangDisplay, LANG_DISPLAY } from '@/utils/lang-display';
-import { proctorError } from '@/utils/proctor';
+import { formatRequestError as proctorError } from '@/utils/request';
 import { formatUserName } from '@/utils/user-name';
 
 interface SearchOption {
@@ -578,15 +579,7 @@ export default function ContestEditPage() {
                   disabled={!!tdoc.allowTeam}
                   onChange={(e) => setForm({ ...form, allowTeam: e.currentTarget.checked })}
                 />
-                <Checkbox
-                  label={t('Enable contest proctoring')}
-                  description={t(args.proctorPolicyLocked
-                    ? 'Proctor policy cannot change after the contest starts.'
-                    : 'Requires a compatible proctor client. Final logs are required for valid results.')}
-                  disabled={!!args.proctorPolicyLocked}
-                  checked={form.proctorEnabled}
-                  onChange={(e) => setForm({ ...form, proctorEnabled: e.currentTarget.checked })}
-                />
+                <ContestEditFields form={form} setForm={setForm} data={args} />
                 <Checkbox
                   label={t('Rated')}
                   checked={form.rated}

@@ -4,8 +4,6 @@ import { open } from 'fs/promises';
 import { Writable } from 'stream';
 import { pipeline } from 'stream/promises';
 
-export { hashFile } from './file-hash';
-
 function bytes(value: unknown, length: number): Buffer {
     if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value)) throw new Error('Invalid encrypted log header');
     const result = Buffer.from(value, 'base64url');

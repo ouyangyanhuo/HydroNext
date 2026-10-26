@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import {
-    canRequestProctorExit, proctorAccessHeaders, proctorAccessRequest, proctorError, proctorRequest,
-    proctorSubmissionHeaders, requestProctorExit,
-} from '../src/utils/proctor.ts';
+import { proctor } from './ui-runtime';
+const { canRequestProctorExit, proctorAccessHeaders, proctorAccessRequest, proctorError, proctorRequest,
+    proctorSubmissionHeaders, requestProctorExit } = proctor;
 
 const payload = { pid: 42, lang: 'cc.cc20', code: 'int main(){}', pretest: false, input: [], fileHash: '' };
 function withWindow(value: unknown, run: () => Promise<void>) {

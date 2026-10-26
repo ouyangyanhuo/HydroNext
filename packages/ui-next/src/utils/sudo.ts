@@ -1,4 +1,4 @@
-import { proctorError } from './proctor';
+import { formatRequestError as proctorError } from './request';
 
 function sudoTarget(value: unknown, currentUrl: string): string {
   if (typeof value !== 'string' || !value || value.includes('\\')) throw new Error('Invalid authorization destination.');

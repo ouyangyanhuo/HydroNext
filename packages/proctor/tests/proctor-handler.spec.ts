@@ -7,7 +7,8 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { ObjectId } from 'mongodb';
 import { test } from 'node:test';
-import { PROCTOR_PROTOCOL, proctorOrigin, signedPayload, verifyPayload } from '../src/lib/proctor.ts';
+import { PROCTOR_PROTOCOL, proctorOrigin, signedPayload, verifyPayload } from '../lib/proctor.ts';
+import { resolveProctorMock } from './mock-api';
 
 const require = createRequire(import.meta.url);
 const { ZipReader, Uint8ArrayReader, TextWriter } = require('@zip.js/zip.js');
@@ -101,10 +102,10 @@ function fixture(options: any = {}) {
             validateEncryptedLog: async () => { if (options.badEncryption) throw new Error('invalid'); } },
     };
     const module = { exports: {} as any };
-    const code = transformSync(readFileSync(new URL('../src/handler/proctor.ts', import.meta.url), 'utf8'),
+    const code = transformSync(readFileSync(new URL('../handler.ts', import.meta.url), 'utf8'),
         { loader: 'ts', format: 'cjs', tsconfigRaw: { compilerOptions: { experimentalDecorators: true } } }).code;
     runInNewContext(code, { module, exports: module.exports, Buffer, URL, AbortController,
-        require: (name: string) => mocks[name] ?? (name.startsWith('../') ? {} : require(name)) });
+        require: (name: string) => resolveProctorMock(name, mocks, (id) => id.startsWith('../') ? {} : require(id)) });
     const handler = new module.exports.ContestProctorHandler();
     handler.request.files = { file: { size: 1024, originalFilename: 'final.hplog', filepath: '/tmp/upload' } };
     return { exports: module.exports, handler, calls };

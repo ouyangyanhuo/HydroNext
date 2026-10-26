@@ -23,17 +23,14 @@ import {
 import {
     ProblemDoc, ProblemSearchOptions, ProblemStatusDoc, RecordDoc, User,
 } from '../interface';
+import { requireContestAccess as requireProctorAccess, reserveContestSubmission } from '../lib/contest-security';
 import { LIST_SORT_MODES, type ListSortMode, PROBLEM_LIST_SORT } from '../lib/list-sort';
-import { submissionPayload } from '../lib/proctor';
-import { requireProctorAccess } from '../lib/proctor-access';
-import { hashFile } from '../lib/proctor-log';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as discussion from '../model/discussion';
 import domain from '../model/domain';
 import * as oplog from '../model/oplog';
 import problem from '../model/problem';
-import * as proctor from '../model/proctor';
 import record from '../model/record';
 import * as setting from '../model/setting';
 import solution from '../model/solution';
@@ -591,15 +588,9 @@ export class ProblemSubmitHandler extends ProblemDetailHandler {
     async post(domainId: string, lang: string, code: string, pretest = false, input: string[] = [], tid?: ObjectId) {
         // Optional array entries become undefined during validation; restore the signed self-test input before hashing.
         if (pretest) input = input.map((i) => i ?? '');
-        let release: Awaited<ReturnType<typeof proctor.reserveSubmission>> | undefined;
-        if (tid && this.tdoc.proctorEnabled) {
-            const session = await proctor.authenticate({ uid: this.user._id, domainId, tid },
-                this.request.headers['x-proctor-token'] as string, this.request.headers['x-proctor-proof'] as string,
-                'submit', (this.context.originalPath || this.request.path).split('?')[0],
-                submissionPayload(this.pdoc.docId, lang, code || '', pretest, input,
-                    this.request.files?.file ? await hashFile(this.request.files.file.filepath) : ''));
-            release = await proctor.reserveSubmission(session);
-        }
+        const release = tid ? await reserveContestSubmission(this, this.tdoc, {
+            pid: this.pdoc.docId, lang, code: code || '', pretest, input, filePath: this.request.files?.file?.filepath,
+        }) : undefined;
         try {
             const config = this.pdoc.config;
             if (typeof config === 'string' || config === null) throw new ProblemConfigError();

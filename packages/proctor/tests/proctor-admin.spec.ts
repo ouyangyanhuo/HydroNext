@@ -4,7 +4,8 @@ import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
-import * as proctor from '../src/utils/proctor.ts';
+import { resolveUiAddonMock } from '../../../test/ui-addon-mocks';
+import { proctor } from './ui-runtime';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -101,12 +102,12 @@ function component(path: string) {
     const module = { exports: {} as any };
     const code = transformSync(readFileSync(new URL(path, import.meta.url), 'utf8'), { loader: 'tsx', format: 'cjs', jsx: 'automatic' }).code;
     runInNewContext(code, { module, exports: module.exports, window: dom.window, document: dom.window.document, URL, setTimeout,
-        fetch: (url: string, init: any) => request(url, init), require: (id: string) => mocks[id] ?? require(id) });
+        fetch: (url: string, init: any) => request(url, init), require: (id: string) => resolveUiAddonMock(id, mocks, require) });
     return module.exports;
 }
 mocks['@/components/common/select'] = { ShortSelect: mocks['@mantine/core'].Select };
-mocks['./manage_proctor_logs'] = component('../src/pages/manage_proctor_logs.tsx');
-const Page = component('../src/pages/manage_proctor.tsx').default;
+mocks['./manage_proctor_logs'] = component('../ui/pages/manage_proctor_logs.tsx');
+const Page = component('../ui/pages/manage_proctor.tsx').default;
 
 function pageData(page = 1, pageSize = 25) {
     return { page, pageSize, pageCount: 3, count: 60, q: '', logs: [{ _id: `log-${page}`, filename: `final-${page}.hplog`,

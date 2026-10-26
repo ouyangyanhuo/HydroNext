@@ -14,11 +14,10 @@ const entries = [
   { to: 'manage_user_priv', title: 'User Privileges', desc: 'Inspect and edit user privilege values.', group: 'Users' },
   { to: 'manage_system_data', title: 'System Data', desc: 'View domains and additional files.', group: 'Data' },
   { to: 'manage_setting', title: 'System Settings', desc: 'Runtime settings grouped by feature.', group: 'Configuration' },
-  { to: 'manage_proctor', title: 'Proctor settings', desc: 'Manage authentication keys, session policy and encrypted logs.', group: 'Configuration' },
   { to: 'status', title: 'Service Status', desc: 'Check service health and runtime status.', group: 'Tools' },
   { to: 'manage_script', title: 'Scripts', desc: 'Run registered maintenance scripts.', group: 'Tools' },
   { to: 'manage_config', title: 'Configuration', desc: 'Edit raw YAML configuration source.', group: 'Configuration' },
-].map((entry, index) => ({ ...entry, order: index * 10 }));
+].map((entry, index) => ({ ...entry, order: (index >= 4 ? index + 1 : index) * 10 }));
 
 export default function ManageDashboardPage() {
   const { args } = usePageData();
