@@ -3,7 +3,9 @@ import * as supertest from 'supertest';
 
 export async function runManagementHttpTests(agent: any, { getPageArgs }: any) {
     const { domain, user, message } = global.Hydro.model;
-    const { PRIV } = require('hydrooj');
+    const { PRIV, SystemModel } = require('hydrooj');
+    const visibilityKey = 'private-messages.showEntry';
+    const previousVisibility = SystemModel.get(visibilityKey);
     const domainId = 'private-message-addon-test';
     const uid = await user.create('private-chat@example.com', 'private-chat', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
     await domain.add(domainId, 2, 'Private messages', '');
@@ -19,6 +21,12 @@ export async function runManagementHttpTests(agent: any, { getPageArgs }: any) {
         assert.equal(result.body.mdoc.from, 2);
         const messageId = result.body.mdoc._id;
         await visitor.post('/login').send({ uname: 'private-chat', password: 'secret' }).expect(302);
+        await SystemModel.set(visibilityKey, false);
+        const hidden = await visitor.get(route).set('Accept', 'application/json').set('x-hydro-inject', 'uicontext').expect(200);
+        assert.equal(hidden.body.UiContext.privateMessagesEntryVisible, false);
+        await SystemModel.set(visibilityKey, true);
+        const shown = await visitor.get(route).set('Accept', 'application/json').set('x-hydro-inject', 'uicontext').expect(200);
+        assert.equal(shown.body.UiContext.privateMessagesEntryVisible, true);
         const inbox = getPageArgs(await visitor.get(route).set('Accept', 'application/json').expect(200));
         assert.ok(inbox.messages[2].messages.some((entry) => entry._id === messageId));
         await visitor.post(route).set('Accept', 'application/json').send({ operation: 'delete_message', messageId }).expect(403);
@@ -27,6 +35,8 @@ export async function runManagementHttpTests(agent: any, { getPageArgs }: any) {
         assert.equal(await message.get(new ObjectId(messageId)), null);
         await agent.post(route).set('Accept', 'application/json').send({ operation: 'send', uid: -1000, content: 'blocked' }).expect(403);
     } finally {
+        if (previousVisibility === undefined) await SystemModel.del(visibilityKey);
+        else await SystemModel.set(visibilityKey, previousVisibility);
         await domain.del(domainId);
     }
 }

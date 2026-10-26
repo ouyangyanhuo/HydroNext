@@ -76,6 +76,7 @@ docs/*
 !docs/proctor-migration-baseline.md
 !docs/proctor-migration-contract.md
 !docs/proctor-plugin-migration.md
+!docs/plugin-migration-audit.md
 install/docker/data/*
 .agents/
 .codex/
