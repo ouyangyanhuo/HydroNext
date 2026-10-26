@@ -1,3 +1,5 @@
+import { ownRegistration } from '../../registry/lifecycle';
+
 export interface EditorAddonContext {
   userId?: number;
   domainId: string;
@@ -26,7 +28,7 @@ const factories = new Map<string, (context: EditorAddonContext) => EditorAddon |
 export function registerEditorAddon(name: string, factory: (context: EditorAddonContext) => EditorAddon | null) {
   if (factories.has(name)) throw new Error(`Duplicate editor addon: ${name}`);
   factories.set(name, factory);
-  return () => { if (factories.get(name) === factory) factories.delete(name); };
+  return ownRegistration(() => { if (factories.get(name) === factory) factories.delete(name); });
 }
 
 /** A missing optional addon must never prevent editing or submitting code. */

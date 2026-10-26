@@ -11,3 +11,4 @@ Replay upload failed. Your recording is kept; please retry submission.: Replay u
 Submission succeeded, but replay could not be linked. Your recording is kept.: Submission succeeded, but replay could not be linked. Your recording is kept.
 'Submitted self-test': 'Submitted self-test'
 'Submitted solution': 'Submitted solution'
+code_replay: Code Replay

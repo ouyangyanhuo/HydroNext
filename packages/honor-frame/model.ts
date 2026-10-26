@@ -66,7 +66,7 @@ export async function resolveFrames(ids: string[]): Promise<Record<string, Publi
     return Object.fromEntries(docs.map((doc) => [doc._id.toHexString(), publicFrame(doc)]));
 }
 
-export async function apply(ctx: Context) {
+export async function initialize(ctx: Context) {
     // Legacy documents without these keys stay valid; new writes are protected
     // by the database even when two workers validate simultaneously.
     await coll.createIndexes(['nameKey', 'artworkHash'].map((key) => ({

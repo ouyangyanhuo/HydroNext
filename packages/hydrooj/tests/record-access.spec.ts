@@ -62,9 +62,12 @@ function fixture(options: any = {}) {
         module, exports: module.exports, require: (name: string) => stubs[name] || require(name),
     });
     const record = { _id: new ObjectId('abcdef1234567890abcdef12'), uid: 1, domainId: 'team', pid: 1, contest: options.contest };
-    return () => module.exports.getRecordAccess({ user, domain: { _id: 'team' },
+    const handler = { user, domain: { _id: 'team' },
         response: { addHeader: () => {} }, context: { originalPath: options.path || '/d/team/record/abcdef1234567890abcdef12' },
-        request: { headers: options.proof ? { 'x-proctor-token': 'token', 'x-proctor-proof': 'proof' } : {} } }, record);
+        request: { headers: options.proof ? { 'x-proctor-token': 'token', 'x-proctor-proof': 'proof' } : {} } };
+    return Object.assign(() => module.exports.getRecordAccess(handler, record), {
+        hints: () => module.exports.getRecordAccessHints(handler, [record]),
+    });
 }
 
 test('code privileges, accepted status and ownership cannot bypass hidden problem visibility', async () => {
@@ -72,6 +75,17 @@ test('code privileges, accepted status and ownership cannot bypass hidden proble
         { permissions: ['VIEW_RECORD', 'READ_RECORD_CODE'] }, { global: true },
         { permissions: ['VIEW_RECORD', 'READ_RECORD_CODE_ACCEPT'], accepted: true }, { owner: true },
     ].map((extra) => assert.rejects(fixture({ hidden: true, ...extra })(), /VIEW_PROBLEM_HIDDEN/)));
+});
+
+test('navigation hints respect code, teammate and hidden-result policies without authorizing proctored content', async () => {
+    const id = 'abcdef1234567890abcdef12';
+    assert.equal((await fixture({ permissions: ['VIEW_RECORD', 'READ_RECORD_CODE'] }).hints())[id], true);
+    assert.equal((await fixture().hints())[id], false);
+    assert.equal((await fixture({ global: true, hidden: true }).hints())[id], false);
+    assert.equal((await fixture({ owner: true, contest: 'contest' }).hints())[id], false);
+    const team = fixture({ teammate: true, contest: 'contest', attend: true, showSelf: true, permissions: [], proctor: true });
+    assert.equal((await team.hints())[id], true);
+    await assert.rejects(team(), /proof required/);
 });
 
 test('visible problems preserve owner, domain, global and accepted-code permissions', async () => {

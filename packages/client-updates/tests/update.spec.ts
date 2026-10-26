@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import { test } from 'node:test';
 import {
-    activeUpdateAssets, buildUpdateManifest, compareUpdateBuildVersions, compareUpdateVersions, defaultDraft, inspectUpdateFile, normalizeUpdateDraft,
+    activeUpdateAssets, buildUpdateManifest, defaultDraft, inspectUpdateFile, normalizeUpdateDraft,
     updateAssetUrl, updateBuildVersion, updateUrl, updateVersion, verifyUpdateStream,
 } from '../lib/update.ts';
 
@@ -32,9 +32,7 @@ test('publication verifies actual stored bytes with a bounded streamed hash befo
 });
 
 test('version validation matches the numeric client comparison and rejects ambiguous versions', () => {
-    assert.equal(compareUpdateVersions('1.10.0', '1.9.99'), 1);
-    assert.equal(compareUpdateVersions('1.0.0', '1.0.0'), 0);
-    assert.equal(compareUpdateVersions('1.0.0', '2.0.0'), -1);
+    for (const value of ['1.10.0', '1.9.99', '1.0.0']) assert.equal(updateVersion(value), value);
     for (const value of ['v1.0.0', '1.0.0-beta', '1.0', '01.0.0', '1.0.0.0', '1.10000000.0', '', null]) {
         assert.throws(() => updateVersion(value));
     }
@@ -43,9 +41,7 @@ test('version validation matches the numeric client comparison and rejects ambig
 test('buildVersion is a string with a real calendar date and independent numeric ordering', () => {
     assert.equal(updateBuildVersion('2026101001'), '2026101001');
     assert.equal(updateBuildVersion('2024022901'), '2024022901');
-    assert.equal(compareUpdateBuildVersions('2026101002', '2026101001'), 1);
-    assert.equal(compareUpdateBuildVersions('2026101001', '2026101001'), 0);
-    assert.equal(compareUpdateBuildVersions('2026100909', '2026101001'), -1);
+    for (const value of ['2026101002', '2026101001', '2026100909']) assert.equal(updateBuildVersion(value), value);
     for (const value of [2026101001, '', null, '202610101', '20261010001', '2026022901', '2026130101', '2026000101', '2026100001']) {
         assert.throws(() => updateBuildVersion(value));
     }

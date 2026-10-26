@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'crypto';
 import {
-    Context, db, getRecordAccess, Handler, NotFoundError, ObjectId, param,
+    Context, db, getRecordAccess, getRecordAccessHints, Handler, NotFoundError, ObjectId, param,
     PERM, PermissionError, PRIV, ProblemModel, RecordModel,
     RecordNotFoundError, Types, UserModel, ValidationError,
 } from 'hydrooj';
@@ -354,12 +354,13 @@ global.Hydro.model.codeReplay = CodeReplayModel;
 
 function domainAwareUrl(handler: Handler, name: string, args: Record<string, any> = {}) {
     const url = handler.url(name, args);
-    const prefix = `/d/${handler.args.domainId}/`;
+    const domainId = args.domainId || handler.args.domainId;
+    const prefix = `/d/${domainId}/`;
     if (
-        handler.context.originalPath?.startsWith(prefix)
+        (domainId !== handler.args.domainId || handler.context.originalPath?.startsWith(prefix))
         && url.startsWith('/')
         && !url.startsWith(prefix)
-    ) return `/d/${handler.args.domainId}${url}`;
+    ) return `/d/${domainId}${url}`;
     return url;
 }
 
@@ -535,7 +536,7 @@ export async function apply(ctx: Context) {
 
     ctx.on('handler/after/RecordDetail#get', async (that) => {
         const rdoc = that.response.body?.rdoc;
-        if (!rdoc?._id || !rdoc.code) return;
+        if (!rdoc?._id || !rdoc.code || that.canViewRecordDetail === false) return;
         try {
             const replay = await CodeReplayModel.getByRid(rdoc._id);
             if (!replay) return;
@@ -545,32 +546,26 @@ export async function apply(ctx: Context) {
         }
     });
 
+    ctx.on('handler/after/RecordList#get', async (that) => {
+        const records = that.response.body?.rdocs;
+        if (!Array.isArray(records) || !records.length) return;
+        try {
+            const replays = await coll.find({ rid: { $in: records.map((record) => record._id) } }).project({ rid: 1 }).toArray();
+            const available = new Set(replays.map((replay) => String(replay.rid)));
+            const hints = await getRecordAccessHints(that, records.filter((record) => available.has(String(record._id))));
+            for (const record of records) {
+                if (hints[String(record._id)]) {
+                    record.codeReplayUrl = domainAwareUrl(that, 'code_replay', { domainId: record.domainId, rid: record._id });
+                }
+            }
+        } catch (error) {
+            logger.warn('Failed to resolve replay list entries: %o', error);
+        }
+    });
+
     ctx.on('handler/after/ProblemDetail#get', (that) => {
         that.UiContext.codeReplaySessionUrl = domainAwareUrl(that, 'code_replay_session');
         that.UiContext.editorAddons ||= {};
         that.UiContext.editorAddons['code-replay'] = { sessionUrl: that.UiContext.codeReplaySessionUrl };
-    });
-
-    ctx.i18n.load('zh', {
-        code_replay: '代码回放',
-        'Code Replay': '代码回放',
-        Editing: '编辑中',
-        'Pauses of at least {0} seconds are shown as thinking time.': '连续至少 {0} 秒没有编辑操作的区段显示为思考时间。',
-        'Replay timeline': '回放时间轴',
-        'Skip thinking time': '跳过思考时间',
-        'Thinking time': '思考时间',
-        'Replay editing process': '回放编辑过程',
-        'No replay data is available.': '没有可用的回放数据。',
-        Play: '播放',
-        Pause: '暂停',
-        Restart: '重新开始',
-        'Previous Step': '上一步',
-        'Next Step': '下一步',
-        Speed: '速度',
-        Events: '事件数',
-        Duration: '持续时间',
-    });
-    ctx.i18n.load('en', {
-        code_replay: 'Code Replay',
     });
 }

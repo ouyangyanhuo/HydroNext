@@ -170,6 +170,7 @@ export class RecordListHandler extends ContestDetailBaseHandler {
 
 export class RecordDetailHandler extends ContestDetailBaseHandler {
     rdoc: RecordDoc;
+    canViewRecordDetail = false;
 
     @param('rid', Types.ObjectId)
     async prepare(domainId: string, rid: ObjectId) {
@@ -204,6 +205,7 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
             rdoc = { ...rdoc, ...omit(await record.collHistory.findOne({ _id: rev }), ['_id']), progress: null };
         }
         const { pdoc, tdoc, tsdoc, canViewDetail, canViewCode } = await getRecordAccess(this, rdoc);
+        this.canViewRecordDetail = canViewDetail;
         this.tdoc = tdoc;
         this.tsdoc = tsdoc;
         if (this.tdoc) {

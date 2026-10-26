@@ -14,11 +14,6 @@
   to { opacity: 1; }
 }
 
-@keyframes hydro-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
 @keyframes hydro-ambient-bloom {
   0% {
     opacity: 0;

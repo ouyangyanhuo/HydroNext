@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { buildSync } from 'esbuild';
 import { test } from 'node:test';
-import { CODE_PASTE_LIMIT, getPasteCharacterCount } from '../ui/limit.ts';
+import { DEFAULT_PASTE_LIMIT } from '../config.ts';
+import { getPasteCharacterCount } from '../ui/limit.ts';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -40,7 +41,7 @@ test('standalone paste policy preserves the limit and exemptions, covers contest
     };
     const dispose = module.exports.setup({});
     try {
-        assert.equal(CODE_PASTE_LIMIT, 30, 'Keep the currently configured rule, not an older historical value.');
+        assert.equal(DEFAULT_PASTE_LIMIT, 30, 'Keep the currently configured rule, not an older historical value.');
         assert.equal(getPasteCharacterCount('🙂'.repeat(30)), 30);
         assert.equal(paste('🙂'.repeat(30)), false);
         assert.equal(paste('🙂'.repeat(31)), true);

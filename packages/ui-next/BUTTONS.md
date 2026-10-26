@@ -24,7 +24,6 @@ Markdown 代码复制按钮由 DOM 增强逻辑创建，复用同一交互样式
 - `components/common/confirm-dialog.tsx`
 - `components/common/delete-resource-button.tsx`
 - `components/common/file-preview-modal.tsx`
-- `components/common/file-uploader.tsx`
 - `components/common/form-dialog.tsx`
 - `components/common/settings-form.tsx`
 - `components/editor/scratchpad.tsx`

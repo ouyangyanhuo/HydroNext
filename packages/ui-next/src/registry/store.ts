@@ -1,3 +1,4 @@
+import { ownRegistration } from './lifecycle';
 import type {
   InterceptorEntry, InterceptorOptions, PageMetadata, SlotName,
 } from './types';
@@ -55,21 +56,24 @@ function createRegistryStore() {
 
     const list = (state.interceptors[name] ??= []);
     const idx = list.findIndex((e) => e.id === entry.id);
+    const previous = idx === -1 ? undefined : list[idx];
     if (idx !== -1) list[idx] = entry;
     else list.push(entry);
 
     list.sort((a, b) => a.priority - b.priority);
     bumpVersion(name);
 
-    return () => {
+    return ownRegistration(() => {
       const arr = state.interceptors[name];
       if (!arr) return;
-      const i = arr.findIndex((e) => e.id === entry.id);
+      const i = arr.indexOf(entry);
       if (i !== -1) {
-        arr.splice(i, 1);
+        if (previous) arr.splice(i, 1, previous);
+        else arr.splice(i, 1);
+        arr.sort((a, b) => a.priority - b.priority);
         bumpVersion(name);
       }
-    };
+    });
   }
 
   function getInterceptors(name: SlotName): InterceptorEntry[] {
@@ -77,8 +81,15 @@ function createRegistryStore() {
   }
 
   function setDefault(name: SlotName, value: React.FC<any>) {
+    const previous = state.defaults[name];
     state.defaults[name] = value;
     bumpVersion(name);
+    return ownRegistration(() => {
+      if (state.defaults[name] !== value) return;
+      if (previous) state.defaults[name] = previous;
+      else delete state.defaults[name];
+      bumpVersion(name);
+    });
   }
 
   function getDefault(name: SlotName): React.FC<any> | undefined {
@@ -86,7 +97,13 @@ function createRegistryStore() {
   }
 
   function setPageMetadata(name: string, metadata: PageMetadata) {
+    const previous = state.pages[name];
     state.pages[name] = metadata;
+    return ownRegistration(() => {
+      if (state.pages[name] !== metadata) return;
+      if (previous) state.pages[name] = previous;
+      else delete state.pages[name];
+    });
   }
 
   function getPageMetadata(name: string): PageMetadata | undefined {

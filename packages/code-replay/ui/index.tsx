@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components -- Addon setup and slot definitions are registration modules. */
 import {
-  Button, Link, type PluginDefinition, PRIV, registerEditorAddon, registerProtectedAccessResolver,
-  useBuildUrl, useCurrentUser, useHasPriv, useI18n, useUiContext,
+  Button, Link, type PluginDefinition, registerEditorAddon, registerProtectedAccessResolver,
+  useI18n, useUiContext,
 } from '@hydrooj/ui-next';
 import { Card, Stack, Text } from '@mantine/core';
 import { IconPlayerPlay } from '@tabler/icons-react';
@@ -9,25 +9,20 @@ import { replayAccessRequest } from './access';
 import { CodeReplay } from './components/record/code-replay';
 import { createRecorder } from './recorder';
 
-function ReplayAction({ record }: any) {
+function ReplayAction() {
   const { t } = useI18n();
-  const user = useCurrentUser();
   const ui = useUiContext();
-  const canRead = useHasPriv(PRIV.PRIV_READ_RECORD_CODE);
   const url = ui.codeReplayUrl;
-  if (!url || (!canRead && record.uid !== user._id)) return null;
+  if (!url) return null;
   return <Button component="a" href={url} size="xs" variant="light">{t('Code Replay')}</Button>;
 }
 
 function ReplayRowAction({ record }: any) {
   const { t } = useI18n();
-  const user = useCurrentUser();
-  const buildUrl = useBuildUrl();
-  const canRead = useHasPriv(PRIV.PRIV_READ_RECORD_CODE);
-  if (!canRead && record.uid !== user._id) return null;
+  if (!record.codeReplayUrl) return null;
   return <Button
     component={Link}
-    href={buildUrl('code_replay', { rid: record._id })}
+    href={record.codeReplayUrl}
     size="compact-xs"
     variant="light"
     leftSection={<IconPlayerPlay size={14} />}

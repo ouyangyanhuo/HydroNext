@@ -16,6 +16,7 @@ const built = buildSync({
 function databaseFixture() {
     const stores = new Map<string, Map<string, any>>();
     let failWrites = false;
+    const locks = new Map<string, symbol>();
     const db = {
         createObjectStore(name: string) { stores.set(name, new Map()); },
         transaction(_names: string[], mode: string) {
@@ -72,13 +73,24 @@ function databaseFixture() {
             return request;
         },
     };
-    function runtime(session = new Map<string, string>()) {
+    function runtime(session = new Map<string, string>(), locking = false) {
         const module = { exports: {} as any };
+        const owner = Symbol('document');
         runInNewContext(built.outputFiles[0].text, {
             module, exports: module.exports, require, crypto, Date, indexedDB,
             sessionStorage: { getItem: (key: string) => session.get(key) ?? null, setItem: (key: string, value: string) => session.set(key, value) },
             IDBKeyRange: { bound: (lower: any, upper: any) => ({ lower, upper }) },
+            navigator: locking ? { locks: { request: async (name: string, _options: any, callback: any) => {
+                if (locks.has(name)) return callback(null);
+                locks.set(name, owner);
+                try { return await callback({ name }); } finally {
+                    if (locks.get(name) === owner) locks.delete(name);
+                }
+            } } } : {},
         });
+        module.exports.destroyDocument = () => {
+            for (const [name, heldBy] of locks) if (heldBy === owner) locks.delete(name);
+        };
         return module.exports;
     }
     return { runtime, stores, failWrites: () => { failWrites = true; } };
@@ -109,6 +121,44 @@ test('fresh runtime restores IndexedDB metadata and incremental events after ref
     assert.equal(restored.events[1].changes[0].text, 'b');
     const other = await second.restoreRecording('user/another-domain/problem/tab', '');
     assert.notEqual(other.sessionId, restored.sessionId);
+});
+
+test('refresh reuses an exclusively owned full-history draft while live duplicated tabs stay isolated', async () => {
+    const fixture = databaseFixture();
+    const session = new Map<string, string>();
+    const context = 'code-replay/1/system/1';
+    let source = '';
+    for (let index = 1; index <= 4; index++) {
+        const runtime = fixture.runtime(session, true);
+        const key = runtime.replayDraftKey(context);
+        // eslint-disable-next-line no-await-in-loop
+        const recording = await runtime.restoreRecording(key, '');
+        if (source) assert.equal(recording.sessionId, source);
+        source = recording.sessionId;
+        recording.events.push({ seq: index, t: index, changes: [{ rangeOffset: index - 1, rangeLength: 0, text: 'x' }] });
+        recording.sequence = index;
+        recording.currentCode = 'x'.repeat(index);
+        // eslint-disable-next-line no-await-in-loop
+        await runtime.persistRecording(key, recording);
+        runtime.destroyDocument();
+    }
+    assert.equal(fixture.stores.get('drafts')!.size, 1);
+    assert.equal(fixture.stores.get('events')!.size, 4);
+    const first = fixture.runtime(session, true);
+    const firstKey = first.replayDraftKey(context);
+    const a = await first.restoreRecording(firstKey, '');
+    const duplicateSession = new Map(session);
+    const duplicate = fixture.runtime(duplicateSession, true);
+    const duplicateKey = duplicate.replayDraftKey(context);
+    const b = await duplicate.restoreRecording(duplicateKey, '');
+    assert.notEqual(a.sessionId, b.sessionId);
+    assert.equal(b.events.length, 4);
+    assert.equal(b.currentCode, 'xxxx');
+    await duplicate.persistRecording(duplicateKey, b);
+    assert.equal(fixture.stores.get('drafts')!.size, 2);
+    assert.equal(fixture.stores.get('events')!.size, 8, 'only a real independent tab forks the complete prefix');
+    first.destroyDocument();
+    duplicate.destroyDocument();
 });
 
 test('duplicated tabs fork both draft keys and event streams; refresh ignores another tabs cached code', async () => {

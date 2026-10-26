@@ -44,7 +44,7 @@ export { Collections } from './service/db';
 export { ConnectionHandler, Handler, requireSudo } from './service/server';
 export { Context, Fiber, FiberState, Service } from './context';
 export { buildContent } from './lib/content';
-export { getRecordAccess } from './lib/record-access';
+export { getRecordAccess, getRecordAccessHints } from './lib/record-access';
 export * from './lib/contest-security';
 export { ContestDetailBaseHandler } from './handler/contest';
 export { default as mime } from './lib/mime';

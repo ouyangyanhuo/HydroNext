@@ -295,7 +295,7 @@ test('user serialization and list rendering use global frames despite conflictin
     const plugin = load('../index.ts', {
         hydrooj: { UserModel: module.default },
         './handler': { apply() {} },
-        './model': { apply: async () => {}, resolveFrames: async (ids: string[]) => ids.includes(id) ? { [id]: frame } : {} },
+        './model': { initialize: async () => {}, resolveFrames: async (ids: string[]) => ids.includes(id) ? { [id]: frame } : {} },
     });
     await plugin.apply({ on: (event: string, listener: (...args: any[]) => any) => { listeners[event] = listener; }, effect() {} });
     await Promise.all(['a', 'b'].map(async (domainId) => {

@@ -1,5 +1,6 @@
 import { after, before, intercept, patch, replace, wrap } from './interceptors';
 import { registerLayout } from './layout';
+import { ownRegistration, registrationScope } from './lifecycle';
 import { registerPage } from './page';
 
 export interface PluginAPI {
@@ -26,7 +27,15 @@ export interface PluginDefinition {
 }
 
 export function installPlugin(plugin: PluginDefinition): () => void {
-  const api = createPluginAPI();
-  const cleanup = plugin.setup(api);
-  return () => cleanup?.();
+  const scope = registrationScope();
+  try {
+    scope.run(() => {
+      const cleanup = plugin.setup(createPluginAPI());
+      if (typeof cleanup === 'function') ownRegistration(cleanup);
+    });
+  } catch (error) {
+    scope.dispose();
+    throw error;
+  }
+  return scope.dispose;
 }

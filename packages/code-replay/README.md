@@ -72,9 +72,22 @@ session ID without its event history.
 - IndexedDB is authoritative for both code and replay history. Shared localStorage
   is only an initial fallback when no draft exists. Restoration completes before
   the editor mounts, so restoring code does not create synthetic edits.
-- Each document/context receives a fresh draft key and forks the restored event
-  stream. Even duplicated tabs with copied sessionStorage cannot overwrite each
-  other's events. The recovery pointer is published only after persistence.
+- In browsers supporting Web Locks, a refreshed document exclusively reclaims
+  its saved draft and source stream once the old document is gone. This avoids
+  copying the entire prefix again on every refresh. A still-open duplicated tab
+  cannot reclaim that writer's lock: it gets a separate draft and forks the full
+  history, so both tabs remain independently recoverable. The recovery pointer
+  is published only after persistence. Legacy drafts and browsers without usable
+  Web Locks keep the conservative fork-on-restore behavior; existing orphaned
+  drafts are not blindly deleted because an older tab may still need them.
+- None of this trims events after self-tests or formal submissions. Each formal
+  record still owns a complete immutable prefix from recording start through
+  that submission; the live recording continues to grow from the same start.
+- Replay entry visibility is supplied by the server using code-reading rights,
+  contest visibility and actual replay availability. Domain readers and eligible
+  teammates are not mistaken for users without access. Navigation hints do not
+  authenticate a protected content request; the destination still performs full
+  permission and proctor-proof checks.
 - Deploy Hydro core, code-replay, and ui-next together for these changes. No
   database version upgrade is required. Submissions that previously skipped
   binding are not automatically repaired.

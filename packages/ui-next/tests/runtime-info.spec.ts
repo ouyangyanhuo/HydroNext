@@ -114,7 +114,7 @@ test('application fallback is explicitly labelled instead of pretending to be co
 test('dashboard restricts runtime to admins and clock ticks do not rerender navigation cards', async () => {
     let admin = true;
     let pageRenders = 0;
-    const entries = load('../src/registry/manage-entries.ts', {});
+    const entries = load('../src/registry/manage-entries.ts', { './lifecycle': { ownRegistration: (dispose: any) => dispose } });
     const removeEntry = entries.registerManageEntry({
         to: 'manage_client_updates', title: 'Update settings', desc: 'Optional updates', group: 'Configuration', order: 45,
     });

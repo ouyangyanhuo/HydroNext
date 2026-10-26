@@ -29,24 +29,11 @@ export function updateBuildVersion(value: unknown): string {
     return value;
 }
 
-export function compareUpdateBuildVersions(a: string, b: string) {
-    const left = updateBuildVersion(a);
-    const right = updateBuildVersion(b);
-    return left === right ? 0 : left > right ? 1 : -1;
-}
-
 export function updateVersion(value: unknown): string {
     if (typeof value !== 'string' || !/^(?:0|[1-9]\d{0,6})\.(?:0|[1-9]\d{0,6})\.(?:0|[1-9]\d{0,6})$/.test(value)) {
         throw new Error('Use a stable numeric version, for example 1.2.3.');
     }
     return value;
-}
-
-export function compareUpdateVersions(a: string, b: string) {
-    const left = updateVersion(a).split('.').map(Number);
-    const right = updateVersion(b).split('.').map(Number);
-    for (let i = 0; i < 3; i++) if (left[i] !== right[i]) return Math.sign(left[i] - right[i]);
-    return 0;
 }
 
 export function updateUrl(value: unknown, originOnly = false): string {

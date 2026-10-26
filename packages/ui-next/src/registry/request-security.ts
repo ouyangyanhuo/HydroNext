@@ -1,3 +1,5 @@
+import { ownRegistration } from './lifecycle';
+
 export interface ProtectedAccessRequest {
   action: 'problem_view' | 'record_view' | 'contest_view';
   method: 'GET';
@@ -21,8 +23,9 @@ let provider: RequestSecurity | undefined;
 const routes = new Set<(target: URL) => ProtectedAccessRequest | null>();
 
 export function registerProtectedAccessResolver(resolver: (target: URL) => ProtectedAccessRequest | null) {
+  if (routes.has(resolver)) return () => {};
   routes.add(resolver);
-  return () => { routes.delete(resolver); };
+  return ownRegistration(() => { routes.delete(resolver); });
 }
 export function resolveProtectedAccess(target: URL) {
   for (const resolve of routes) {
@@ -34,7 +37,7 @@ export function resolveProtectedAccess(target: URL) {
 export function registerRequestSecurity(value: RequestSecurity) {
   if (provider) throw new Error('Request security provider is already registered.');
   provider = value;
-  return () => { if (provider === value) provider = undefined; };
+  return ownRegistration(() => { if (provider === value) provider = undefined; });
 }
 export async function protectedAccessHeaders(url: string) {
   return provider ? provider.accessHeaders(url) : {};

@@ -1,9 +1,9 @@
 import { Context, UserModel } from 'hydrooj';
 import { apply as registerHandlers } from './handler';
-import { apply as ensureIndexes, resolveFrames } from './model';
+import { initialize, resolveFrames } from './model';
 
 export async function apply(ctx: Context) {
-    await ensureIndexes(ctx);
+    await initialize(ctx);
     await registerHandlers(ctx);
     ctx.on('user/get', async (user) => {
         const id = user._udoc.honorFrameId;

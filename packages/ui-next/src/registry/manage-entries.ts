@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { ownRegistration } from './lifecycle';
 
 export interface ManageEntry {
   to: string;
@@ -26,11 +27,11 @@ export function registerManageEntry(entry: ManageEntry) {
   const stored = { ...entry };
   entries.set(entry.to, stored);
   publish();
-  return () => {
+  return ownRegistration(() => {
     if (entries.get(entry.to) !== stored) return;
     entries.delete(entry.to);
     publish();
-  };
+  });
 }
 
 export function useManageEntries() {
