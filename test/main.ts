@@ -217,6 +217,62 @@ describe('App', () => {
 
     it('Proctor settings and log access require sudo and return to the original scoped URL after authorization', () => runAddonHttpTests('runProctorSudoHttpTests', agent));
 
+    it('Domain join pages never disclose stored invitation codes while code validation and admin access remain intact', async () => {
+        const { domain, user, token } = global.Hydro.model;
+        const { PERM } = require('../packages/hydrooj/src/model/builtin');
+        const domainId = 'inviteSecurity';
+        const uid = await user.create('invite-reader@example.com', 'invite-reader', 'secret');
+        const linkUid = await user.create('invite-link@example.com', 'invite-link', 'secret');
+        await domain.add(domainId, 2, 'Invitation privacy', '');
+        await domain.setRoles(domainId, { guest: 0n, default: 0n, member: PERM.PERM_VIEW });
+        const code = (await domain.get(domainId))._inviteCode;
+        const policy = { method: domain.JOIN_METHOD_CODE, role: 'member', code, expire: null };
+        await domain.edit(domainId, { _join: policy });
+        const applicant = supertest.agent(require('hydrooj').httpServer);
+        const linkApplicant = supertest.agent(require('hydrooj').httpServer);
+        const mainRoute = `/domain/join?target=${domainId}`;
+        const scopedRoute = `/d/${domainId}/domain/join`;
+        try {
+            await applicant.post('/login').send({ uname: 'invite-reader', password: 'secret' }).expect(302);
+            await linkApplicant.post('/login').send({ uname: 'invite-link', password: 'secret' }).expect(302);
+            for (const route of [mainRoute, scopedRoute, `${scopedRoute}?noTemplate=true`]) {
+                // eslint-disable-next-line no-await-in-loop
+                const page = await applicant.get(route).set('Accept', 'application/json')
+                    .set('x-hydro-inject', 'uicontext,usercontext,pagename').expect(200);
+                assert.deepEqual(page.body.joinSettings, { method: domain.JOIN_METHOD_CODE });
+                assert.ok(!page.text.includes(code));
+            }
+            const document = await applicant.get(scopedRoute).set('Accept', 'text/html').expect(200);
+            assert.deepEqual(getPageArgs(document).joinSettings, { method: domain.JOIN_METHOD_CODE });
+            assert.ok(!document.text.includes(code));
+            assert.equal((await domain.get(domainId))._join.code, code, 'response filtering must not mutate the cached policy');
+            const admin = await agent.get(`/d/${domainId}/domain/join_applications`).set('Accept', 'application/json').expect(200);
+            assert.equal(admin.body.invitationCode, code);
+            assert.equal(admin.body.joinSettings.code, code);
+            await applicant.get(`/d/${domainId}/domain/join_applications`).set('Accept', 'application/json')
+                .expect(({ text }) => assert.ok(!text.includes(code)));
+            await applicant.post(mainRoute).set('Accept', 'application/json').send({}).expect(403);
+            await applicant.post(scopedRoute).set('Accept', 'application/json').send({ code: 'INVALID1' }).expect(403);
+            assert.ok(!(await domain.collUser.findOne({ domainId, uid }))?.join);
+            const confirmation = await linkApplicant.get(`/domain/join?code=${code}`).set('Accept', 'application/json').expect(200);
+            assert.equal(confirmation.body.target, domainId);
+            assert.equal(confirmation.body.code, code, 'only the caller-supplied code is echoed for confirmation');
+            assert.deepEqual(confirmation.body.joinSettings, { method: domain.JOIN_METHOD_CODE });
+            await domain.edit(domainId, { _join: { method: domain.JOIN_METHOD_NONE } });
+            await linkApplicant.post('/domain/join').set('Accept', 'application/json').send({ code }).expect(403);
+            await domain.edit(domainId, { _join: policy });
+            await applicant.post(scopedRoute).set('Accept', 'application/json').send({ code }).expect(200);
+            assert.equal((await domain.collUser.findOne({ domainId, uid })).role, 'member');
+            await linkApplicant.post('/domain/join').set('Accept', 'application/json').send({ code }).expect(200);
+            assert.equal((await domain.collUser.findOne({ domainId, uid: linkUid })).role, 'member');
+        } finally {
+            await domain.del(domainId);
+            await Promise.all([token.delByUid(uid), token.delByUid(linkUid)]);
+            await user.coll.deleteMany({ _id: { $in: [uid, linkUid] } });
+            user._deleteUserCache(true);
+        }
+    });
+
     it('Domain navigation settings persist only in their domain, preserve page permissions and reject malformed flags', async () => {
         const { domain, contest } = global.Hydro.model;
         const a = 'navigation-exam';

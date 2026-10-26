@@ -518,7 +518,8 @@ class DomainJoinHandler extends Handler {
             bulletin: ddoc.showBulletin ? ddoc.bulletin : '',
         };
         this.response.body = {
-            joinSettings: this.joinSettings,
+            // Applicants only need the join method; keep the code and role/group policy on the server.
+            joinSettings: this.joinSettings ? { method: this.joinSettings.method } : undefined,
             code,
             redirect,
             target,
