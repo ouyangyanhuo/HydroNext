@@ -4504,7 +4504,7 @@ a {
   backdrop-filter: none !important;
 }
 
-.hydro-topbar-dropdown :is(.mantine-Popover-dropdown, .mantine-Combobox-dropdown):not(.hydro-select__dropdown) {
+.hydro-topbar-dropdown :is(.mantine-Popover-dropdown, .mantine-Combobox-dropdown) {
   opacity: 1 !important;
   background-color: var(--hydro-surface-raised) !important;
   background-image: none !important;
@@ -4768,9 +4768,9 @@ a {
 .mantine-Drawer-header,
 .mantine-Modal-content,
 .mantine-Drawer-content,
-.mantine-Popover-dropdown:not(.hydro-select__dropdown),
+.mantine-Popover-dropdown,
 .mantine-Menu-dropdown,
-.mantine-Combobox-dropdown:not(.hydro-select__dropdown),
+.mantine-Combobox-dropdown,
 .mantine-Notification-root {
   opacity: 1 !important;
   background-color: var(--hydro-surface-raised) !important;

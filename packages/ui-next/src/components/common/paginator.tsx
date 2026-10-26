@@ -1,7 +1,8 @@
-import { Group, Pagination, Select, Text } from '@mantine/core';
+import { Group, Pagination, Text } from '@mantine/core';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 import { buildPaginationUrl } from '@/utils/pagination';
+import { ShortSelect } from './select';
 
 interface PaginatorProps {
   page: number;
@@ -43,14 +44,19 @@ export function Paginator({
       {showPageSize && (
         <Group gap="xs" wrap="nowrap">
           <Text size="xs" c="dimmed">{t('Rows per page')}</Text>
-          <Select
+          <ShortSelect
             aria-label={t('Rows per page')}
             value={String(pageSize)}
             data={pageSizeOptions}
             onChange={handlePageSizeChange}
             allowDeselect={false}
             size="xs"
-            w={76}
+            width={76}
+            height={30}
+            styles={{
+              input: { fontSize: 'var(--mantine-font-size-xs)', fontWeight: 'var(--hydro-weight-regular)' },
+              option: { fontSize: 'var(--mantine-font-size-xs)' },
+            }}
           />
         </Group>
       )}

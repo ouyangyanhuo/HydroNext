@@ -122,7 +122,9 @@ test('all shared variants animate without dropping transition overrides or calle
         const defaults = Component.render({}, null).props.comboboxProps.transitionProps;
         assert.equal(defaults.duration, 240);
         assert.equal(defaults.exitDuration, 180);
-        assert.equal(defaults.transition.transitionProperty, 'opacity, transform');
+        assert.equal(defaults.transition.transitionProperty, 'transform');
+        assert.equal(Object.hasOwn(defaults.transition.in, 'opacity'), false);
+        assert.equal(Object.hasOwn(defaults.transition.out, 'opacity'), false);
         assert.equal(defaults.transition.out.pointerEvents, 'none');
         const custom = { transitionProps: { duration: 350, onExited } };
         const merged = Component.render({ comboboxProps: custom }, null).props.comboboxProps.transitionProps;
@@ -218,12 +220,12 @@ test('dropdown enters, exits, reopens during exit and releases the invisible pop
         await settle(40);
         assert.equal(input.getAttribute('aria-expanded'), 'false');
         assert.equal(dropdown.style.transitionDuration, '180ms');
-        assert.equal(dropdown.style.opacity, '0');
+        assert.equal(dropdown.style.opacity, '');
         assert.equal(dropdown.style.pointerEvents, 'none');
         await act(async () => input.click());
         await settle(40);
         assert.equal(dropdown.style.pointerEvents, 'auto');
-        assert.equal(dropdown.style.opacity, '1');
+        assert.equal(dropdown.style.opacity, '');
         await act(async () => input.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
         await settle(240);
         assert.equal(dropdown.style.display, 'none');
@@ -235,8 +237,10 @@ test('dropdown enters, exits, reopens during exit and releases the invisible pop
     assert.match(css, /prefers-reduced-motion: reduce[\s\S]*?transition-duration: 0ms !important/);
     const globalCss = readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8');
     const opaqueOverlays = globalCss.slice(globalCss.indexOf('/* Interactive overlays must stay fully opaque'));
-    assert.match(opaqueOverlays, /\.mantine-Combobox-dropdown:not\(\.hydro-select__dropdown\)/);
-    assert.match(opaqueOverlays, /\.mantine-Popover-dropdown:not\(\.hydro-select__dropdown\)/);
+    assert.match(opaqueOverlays, /\.mantine-Combobox-dropdown,/);
+    assert.match(opaqueOverlays, /\.mantine-Popover-dropdown,/);
+    assert.match(opaqueOverlays, /opacity: 1 !important/);
+    assert.match(opaqueOverlays, /background-color: var\(--hydro-surface-raised\) !important/);
 });
 
 test('list sort uses a translated portal tooltip and preserves select interaction', async () => {
@@ -544,13 +548,13 @@ test('training chapters retain titles and prerequisites while dragging problems,
     }
 });
 
-test('pages use shared variants except the independently styled paginator', () => {
+test('all pages including the paginator use shared select variants', () => {
     const root = fileURLToPath(new URL('../src/', import.meta.url));
     function visit(dir: string) {
         for (const entry of readdirSync(dir, { withFileTypes: true })) {
             const path = join(dir, entry.name);
             if (entry.isDirectory()) visit(path);
-            else if (path.endsWith('.tsx') && !['select.tsx', 'paginator.tsx'].some((name) => path === join(root, 'components/common', name))) {
+            else if (path.endsWith('.tsx') && path !== join(root, 'components/common/select.tsx')) {
                 assert.doesNotMatch(readFileSync(path, 'utf8'), /<(?:Select|MultiSelect|select)\b/, path);
             }
         }
@@ -558,13 +562,45 @@ test('pages use shared variants except the independently styled paginator', () =
     visit(root);
 });
 
-test('paginator retains its dedicated small select and named font size', async () => {
+test('paginator uses the animated shared select while retaining compact dimensions and navigation', async () => {
     const source = readFileSync(new URL('../src/components/common/paginator.tsx', import.meta.url), 'utf8');
-    assert.doesNotMatch(source, /ShortSelect/);
-    assert.match(source, /<Select[\s\S]*?size="xs"[\s\S]*?w=\{76\}/);
+    const component = { exports: {} as any };
+    const destinations: string[] = [];
+    const mocks: Record<string, any> = {
+        './select': { ShortSelect },
+        '@/context/router': { useNavigate: () => (url: string) => destinations.push(url) },
+        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/utils/pagination': require('../src/utils/pagination.ts'),
+    };
+    runInNewContext(transformSync(source, { loader: 'tsx', format: 'cjs', jsx: 'automatic' }).code, {
+        module: component, exports: component.exports, window: dom.window,
+        require: (name: string) => mocks[name] || require(name),
+    });
     assert.match(source, /<Pagination[\s\S]*?size="sm"/);
-    const view = await mount(require('@mantine/core').Pagination, { size: 'sm', total: 5 });
+    const view = await mount(component.exports.Paginator, {
+        page: 2, totalPages: 5, pageSize: 25, pageSizes: [25, 50], baseUrl: '/d/team/record?uid=9&page=2',
+    });
     try {
+        const input = view.host.querySelector<HTMLInputElement>('.hydro-select--short input')!;
+        assert.ok(input);
+        assert.equal(input.style.fontSize, 'var(--mantine-font-size-xs)');
+        assert.equal(input.style.fontWeight, 'var(--hydro-weight-regular)');
+        const select = view.host.querySelector<HTMLElement>('.hydro-select--short')!;
+        assert.equal(select.style.width, 'calc(4.75rem * var(--mantine-scale))');
+        assert.equal(select.style.getPropertyValue('--hydro-short-height'), '30px');
+        await act(async () => input.click());
+        await act(async () => new Promise((resolve) => setTimeout(resolve, 40)));
+        const popup = document.querySelector<HTMLElement>('.hydro-select__dropdown')!;
+        assert.equal(popup.style.transitionDuration, '240ms');
+        assert.equal(popup.style.transitionProperty, 'transform');
+        const option = [...popup.querySelectorAll<HTMLElement>('[role="option"]')].find((item) => item.textContent === '50')!;
+        await act(async () => option.click());
+        assert.equal(destinations.length, 1);
+        const target = new URL(destinations[0], dom.window.location.origin);
+        assert.equal(target.pathname, '/d/team/record');
+        assert.equal(target.searchParams.get('uid'), '9');
+        assert.equal(target.searchParams.get('page'), '1');
+        assert.equal(target.searchParams.get('pageSize'), '50');
         const pagination = view.host.querySelector('.mantine-Pagination-root') as HTMLElement;
         assert.equal(pagination.style.getPropertyValue('--pagination-control-fz'), 'var(--mantine-font-size-sm)');
         assert.equal(pagination.style.getPropertyValue('--pagination-control-size'), 'var(--pagination-control-size-sm)');

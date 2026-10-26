@@ -1,18 +1,17 @@
 import type { ComboboxProps } from '@mantine/core';
 
-/** Only composite opacity/transform; never animate list height or scroll position. */
+/** Keep the popup opaque; only animate transform, never list height or scroll position. */
 export const SELECT_DROPDOWN_TRANSITION: NonNullable<ComboboxProps['transitionProps']> = {
   duration: 240,
   exitDuration: 180,
   timingFunction: 'cubic-bezier(.22, .61, .36, 1)',
   transition: {
-    in: { opacity: 1, transform: 'translate(0, 0) scale(1)', pointerEvents: 'auto' },
+    in: { transform: 'translate(0, 0) scale(1)', pointerEvents: 'auto' },
     out: {
-      opacity: 0,
       transform: 'translate(var(--hydro-select-motion-x, 0px), var(--hydro-select-motion-y, -6px)) scale(.985)',
       pointerEvents: 'none',
     },
-    transitionProperty: 'opacity, transform',
+    transitionProperty: 'transform',
   },
 };
 
