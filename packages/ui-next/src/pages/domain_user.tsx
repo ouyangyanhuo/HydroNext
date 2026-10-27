@@ -1,17 +1,20 @@
-import { Badge, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Badge, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Stack, Table, Text, TextInput, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconPencil } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, ButtonBase } from '@/components/common/button';
+import { ActionIcon, Button, ButtonBase } from '@/components/common/button';
+import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect, ShortSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { usePageData } from '@/context/page-data';
+import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { getUserExtensionFields } from '@/registry/user-fields';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
+import { followSafeRedirect } from '@/utils/request';
 import { formatUserName } from '@/utils/user-name';
 
 function normalizeRoles(input: any) {
@@ -243,6 +246,7 @@ export default function DomainUserPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const currentUser = useSessionStore((s) => s.user);
+  const buildUrl = useBuildUrl();
   const domainId = useSessionStore((s) => s.ui.domainId);
   const roles = useMemo(() => normalizeRoles(args.roles), [args.roles]);
   const users = useMemo(() => flattenUsers(args, roles), [args, roles]);
@@ -257,6 +261,28 @@ export default function DomainUserPage() {
   const [bulkRole, setBulkRole] = useState(roleOptions[0]?.value || 'default');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState('');
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [displayNames, setDisplayNames] = useState<Record<number, string>>({});
+
+  const saveDisplayName = async (values: Record<string, unknown>) => {
+    if (!editingUser || !args.canEditDisplayName) return;
+    try {
+      const res = await fetch(buildUrl('domain_user_display_name', { uid: editingUser._id }), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ displayName: values.displayName }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(formatErrorMessage(data.error, t('Save failed'), t));
+      followSafeRedirect(data);
+      if (!data.saved || typeof data.displayName !== 'string') throw new Error(t('Save failed'));
+      setDisplayNames((current) => ({ ...current, [editingUser._id]: data.displayName }));
+      setEditingUser(null);
+      notifications.show({ message: t('Save successfully'), color: 'green' });
+    } catch (error: any) {
+      notifications.show({ message: error?.message || t('Network error'), color: 'red' });
+    }
+  };
 
   const validBulkRole = roleOptions.some((option) => option.value === bulkRole)
     ? bulkRole
@@ -338,6 +364,7 @@ export default function DomainUserPage() {
                 </Table.Th>
                 <Table.Th>{t('User ID')}</Table.Th>
                 <Table.Th>{t('Username')}</Table.Th>
+                <Table.Th>{t('Display Name')}</Table.Th>
                 <Table.Th>{t('Role')}</Table.Th>
                 <Table.Th>{t('Status')}</Table.Th>
               </Table.Tr>
@@ -362,6 +389,23 @@ export default function DomainUserPage() {
                         <Link to="user_detail" params={{ uid: user._id }} className="no-underline hover:underline">
                           <Text size="sm">{user.uname || user._id}</Text>
                         </Link>
+                      </Group>
+                    </Table.Td>
+                    <Table.Td>
+                      <Group gap="xs" wrap="nowrap">
+                        <Text size="sm" maw={180} truncate>{displayNames[user._id] ?? user.displayName ?? '—'}</Text>
+                        {args.canEditDisplayName && user.join === true && (
+                          <Tooltip label={t('Edit display name')}>
+                            <ActionIcon
+                              size="sm"
+                              variant="subtle"
+                              aria-label={`${t('Edit display name')}: ${user.uname}`}
+                              onClick={() => setEditingUser({ ...user, displayName: displayNames[user._id] ?? user.displayName ?? '' })}
+                            >
+                              <IconPencil size={15} />
+                            </ActionIcon>
+                          </Tooltip>
+                        )}
                       </Group>
                     </Table.Td>
                     <Table.Td>
@@ -416,6 +460,17 @@ export default function DomainUserPage() {
           </Group>
         </Group>
       </Paper>
+      <FormDialog
+        opened={!!editingUser}
+        onClose={() => setEditingUser(null)}
+        title={t('Edit display name')}
+        fields={[{ name: 'displayName', label: t('Display Name'), defaultValue: editingUser?.displayName || '' }]}
+        onSubmit={saveDisplayName}
+        confirmLabel={t('Save')}
+      >
+        <Text size="sm">{editingUser?.uname} · UID = {editingUser?._id}</Text>
+        <Text size="sm" c="dimmed">{t('Only affects this domain. Leave empty to use the username.')}</Text>
+      </FormDialog>
       <AddUserDialog
         opened={dialogOpen}
         onClose={() => setDialogOpen(false)}

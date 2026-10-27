@@ -340,6 +340,72 @@ describe('App', () => {
         }
     });
 
+    it('Domain roots can edit member display names only in their domain after sudo without changing global profiles', async () => {
+        const { domain, user, token } = global.Hydro.model;
+        const { PERM } = require('../packages/hydrooj/src/model/builtin');
+        const a = 'display-name-domain';
+        const b = 'display-name-other';
+        const owner = await user.create('domain-name-root@example.com', 'domain-name-root', 'secret');
+        const uid = await user.create('domain-name-member@example.com', 'domain-name-member', 'secret');
+        const editor = await user.create('domain-name-editor@example.com', 'domain-name-editor', 'secret');
+        const admin = supertest.agent(require('hydrooj').httpServer);
+        const ordinary = supertest.agent(require('hydrooj').httpServer);
+        const limited = supertest.agent(require('hydrooj').httpServer);
+        await domain.add(a, owner, 'Display names', '');
+        await domain.add(b, 2, 'Other display names', '');
+        await domain.addRole(a, 'editor', PERM.PERM_VIEW | PERM.PERM_EDIT_DOMAIN);
+        await domain.setUserInDomain(a, uid, { join: true, role: 'default', displayName: 'Original alias' });
+        await domain.setUserInDomain(b, uid, { join: true, displayName: 'Other alias' });
+        await domain.setUserInDomain(a, editor, { join: true, role: 'editor' });
+        const route = `/d/${a}/domain/user/${uid}/display-name`;
+        try {
+            await ordinary.post('/login').send({ uname: 'domain-name-member', password: 'secret' }).expect(302);
+            await ordinary.post(route).set('Accept', 'application/json').send({ displayName: 'Forbidden' }).expect(403);
+            await limited.post('/login').send({ uname: 'domain-name-editor', password: 'secret' }).expect(302);
+            await limited.post(route).set('Accept', 'application/json').send({ displayName: 'Forbidden' }).expect(403);
+            await admin.post('/login').send({ uname: 'domain-name-root', password: 'secret' }).expect(302);
+            const pending = await admin.post(route).set('Accept', 'application/json').send({ displayName: 'Pending' }).expect(200);
+            assert.match(pending.body.url, /\/user\/sudo$/);
+            assert.equal((await domain.collUser.findOne({ domainId: a, uid })).displayName, 'Original alias');
+            await admin.post(pending.body.url).set('Accept', 'application/json').send({ password: 'secret' }).expect(200);
+            await user.getById(a, uid);
+            await user.getById(b, uid);
+            const original = await user.coll.findOne({ _id: uid });
+            await admin.post(route).set('Accept', 'application/json').send({ displayName: '  New alias  ',
+                uid: owner, role: 'root', priv: -1, join: false, uname: 'must-not-change' }).expect(200)
+                .expect(({ body }) => assert.deepEqual(body, { saved: true, displayName: 'New alias' }));
+            assert.equal((await user.getById(a, uid)).displayName, 'New alias');
+            assert.equal((await user.getById(b, uid)).displayName, 'Other alias');
+            assert.equal((await domain.collUser.findOne({ domainId: a, uid })).role, 'default');
+            assert.equal((await domain.collUser.findOne({ domainId: a, uid: owner })).displayName, undefined);
+            assert.deepEqual(await user.coll.findOne({ _id: uid }), original);
+            const page = getPageArgs(await admin.get(`/d/${a}/domain/user`).set('Accept', 'application/json').expect(200));
+            assert.equal(page.canEditDisplayName, true);
+            assert.equal(page.rudocs.default.find((item) => item._id === uid).displayName, 'New alias');
+            for (const payload of [{}, { displayName: [] }, { displayName: { $set: 'bad' } }, { displayName: 'a'.repeat(256) },
+                { displayName: 'line\nbreak' }]) {
+                // eslint-disable-next-line no-await-in-loop
+                await admin.post(route).set('Accept', 'application/json').send(payload).expect(403);
+            }
+            await admin.post(`/d/${b}/domain/user/${uid}/display-name`).set('Accept', 'application/json')
+                .send({ domainId: a, displayName: 'Cross-domain' }).expect(403);
+            await admin.post(`/d/${b}/domain/user/${uid}/display-name?domainId=${a}`).set('Accept', 'application/json')
+                .send({ displayName: 'Cross-domain' }).expect(403);
+            await admin.post(`/d/${a}/domain/user/2/display-name`).set('Accept', 'application/json')
+                .send({ displayName: 'Non-member' }).expect(404);
+            await admin.post(route).set('Accept', 'application/json').send({ displayName: '' }).expect(200);
+            assert.equal((await user.getById(a, uid)).displayName, '');
+            assert.equal((await user.getById(b, uid)).displayName, 'Other alias');
+            await domain.setJoin(a, uid, false);
+            await admin.post(route).set('Accept', 'application/json').send({ displayName: 'Former member' }).expect(404);
+        } finally {
+            await Promise.all([domain.del(a), domain.del(b)]);
+            await Promise.all([owner, uid, editor].map((id) => token.delByUid(id)));
+            await user.coll.deleteMany({ _id: { $in: [owner, uid, editor] } });
+            user._deleteUserCache(true);
+        }
+    });
+
     it('Domain navigation settings persist only in their domain, preserve page permissions and reject malformed flags', async () => {
         const { domain, contest } = global.Hydro.model;
         const a = 'navigation-exam';
@@ -387,13 +453,15 @@ describe('App', () => {
             await agent.post(route).set('Accept', 'application/json').send({ contestMode: true, contestFocus: '' }).expect(200);
             assert.equal((await domain.get(a)).contestMode, true);
             assert.equal((await domain.get(a)).contestFocus, '');
-            await agent.post(route).set('Accept', 'application/json').send({ contestMode: true, contestFocus: focus.toHexString() }).expect(200);
             await agent.get(`/d/${a}/`).expect(302).expect('Location', `/d/${a}/contest`);
+            await agent.post(route).set('Accept', 'application/json').send({ contestMode: true, contestFocus: focus.toHexString() }).expect(200);
+            await agent.get(`/d/${a}`).expect(302).expect('Location', `/d/${a}/`);
+            await agent.get(`/d/${a}/`).expect(302).expect('Location', `/d/${a}/contest/${focus}`);
             const homepage = await agent.get(`/d/${a}/`).set('Accept', 'application/json').expect(200);
-            assert.equal(homepage.body.url, `/d/${a}/contest`);
+            assert.equal(homepage.body.url, `/d/${a}/contest/${focus}`);
             assert.equal(homepage.body.contents, undefined);
             await domain.edit(a, { host: ['contest-home.example'] });
-            await agent.get('/').set('Host', 'contest-home.example').expect(302).expect('Location', '/contest');
+            await agent.get('/').set('Host', 'contest-home.example').expect(302).expect('Location', `/contest/${focus}`);
             await agent.get(`/d/${b}/`).expect(200);
             assert.equal((await domain.get(b)).contestMode, undefined);
             await agent.get(`/d/${a}/p`).expect(200);
@@ -401,6 +469,7 @@ describe('App', () => {
             await contest.del(a, focus);
             assert.equal((await domain.coll.findOne({ _id: a })).contestFocus, '', 'deleted focus is cleared persistently');
             assert.equal((await domain.get(a)).contestMode, true, 'deleting the focus does not disable contest mode');
+            await agent.get(`/d/${a}/`).expect(302).expect('Location', `/d/${a}/contest`);
             assert.equal((await domain.get(b)).contestFocus, foreign.toHexString(), 'another domain keeps its focus');
             const replacement = await contest.add(a, 'Replacement focus', '', 2, 'acm', begin, end, []);
             await domain.edit(a, { contestFocus: replacement.toHexString() });
@@ -411,6 +480,7 @@ describe('App', () => {
             assert.equal((await domain.get(b)).contestFocus, foreign.toHexString());
             await domain.edit(a, { contestFocus: focus.toHexString() });
             assert.equal((await domain.get(a)).contestFocus, '', 'legacy stale focus falls back safely on reads');
+            await agent.get(`/d/${a}/`).expect(302).expect('Location', `/d/${a}/contest`);
             await agent.post(route).set('Accept', 'application/json').send({ contestMode: false }).expect(200);
             assert.equal((await domain.get(a)).contestFocus, '');
             const restored = getPageArgs(await agent.get(`/d/${a}/`).set('Accept', 'application/json').expect(200));

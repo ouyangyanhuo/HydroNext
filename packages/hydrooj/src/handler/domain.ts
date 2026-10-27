@@ -1,4 +1,5 @@
 import { randomInt } from 'node:crypto';
+import saslPrep from '@mongodb-js/saslprep';
 import { load } from 'js-yaml';
 import { Dictionary } from 'lodash';
 import { ObjectId } from 'mongodb';
@@ -19,7 +20,7 @@ import MessageModel from '../model/message';
 import * as oplog from '../model/oplog';
 import { DOMAIN_SETTINGS, DOMAIN_SETTINGS_BY_KEY } from '../model/setting';
 import system from '../model/system';
-import user from '../model/user';
+import user, { deleteUserCache } from '../model/user';
 import {
     Handler, Mutation, param, post, Query, query, requireSudo, Types,
 } from '../service/server';
@@ -296,7 +297,7 @@ class DomainUserHandler extends ManageHandler {
         for (const role of roles) rudocs[role._id] = users.filter((udoc) => (udoc.role || 'default') === role._id);
         this.response.template = format === 'raw' ? 'domain_user_raw.html' : 'domain_user.html';
         this.response.body = {
-            roles, rudocs, domain: this.domain,
+            roles, rudocs, domain: this.domain, canEditDisplayName: this.user.role === 'root',
         };
     }
 
@@ -337,6 +338,40 @@ class DomainUserHandler extends ManageHandler {
         });
         await Promise.all(needUpdate.map((i) => MessageModel.send(1, i, msg, MessageModel.FLAG_RICHTEXT | MessageModel.FLAG_UNREAD)));
         this.back();
+    }
+}
+
+class DomainUserDisplayNameHandler extends Handler {
+    async prepare() {
+        // The request body/query must never select the domain used for authorization.
+        if (this.args.domainId !== this.domain._id) throw new ForbiddenError();
+        this.checkPerm(PERM.PERM_EDIT_DOMAIN);
+        if (this.user.role !== 'root') throw new ForbiddenError();
+    }
+
+    @requireSudo
+    @param('uid', Types.PositiveInt)
+    async post({ }, uid: number) {
+        const input = this.request.body.displayName;
+        if (typeof input !== 'string' || input.length > 255) throw new ValidationError('displayName');
+        let displayName: string;
+        try {
+            displayName = saslPrep(input.trim());
+        } catch {
+            throw new ValidationError('displayName');
+        }
+        if (displayName && !Types.ShortString[1](displayName)) throw new ValidationError('displayName');
+        const domainId = this.domain._id;
+        const [member, target] = await Promise.all([
+            domain.collUser.findOne({ domainId, uid, join: true }),
+            user.coll.findOne({ _id: uid }, { projection: { priv: 1 } }),
+        ]);
+        if (!member || !target || !(target.priv & PRIV.PRIV_USER_PROFILE)) throw new NotFoundError('User');
+        const updated = await domain.collUser.updateOne({ domainId, uid, join: true }, { $set: { displayName } });
+        if (!updated.matchedCount) throw new NotFoundError('User');
+        deleteUserCache(domainId);
+        await oplog.log(this, 'domain.setDisplayName', { uid, previous: member.displayName || '', displayName });
+        this.response.body = { saved: true, displayName };
     }
 }
 
@@ -629,6 +664,7 @@ export async function apply(ctx: Context) {
     ctx.Route('domain_edit', '/domain/edit', DomainEditHandler);
     ctx.Route('domain_visibility', '/domain/visibility', DomainVisibilityHandler);
     ctx.Route('domain_user', '/domain/user', DomainUserHandler);
+    ctx.Route('domain_user_display_name', '/domain/user/:uid/display-name', DomainUserDisplayNameHandler);
     ctx.Route('domain_permission', '/domain/permission', DomainPermissionHandler);
     ctx.Route('domain_role', '/domain/role', DomainRoleHandler);
     ctx.Route('domain_group', '/domain/group', DomainUserGroupHandler);

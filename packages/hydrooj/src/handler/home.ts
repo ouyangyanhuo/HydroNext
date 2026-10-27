@@ -145,7 +145,9 @@ export class HomeHandler extends Handler {
 
     async get({ domainId }) {
         if (this.domain.contestMode === true) {
-            this.response.redirect = this.url('contest_main');
+            this.response.redirect = this.domain.contestFocus
+                ? this.url('contest_detail', { tid: this.domain.contestFocus })
+                : this.url('contest_main');
             return;
         }
         const homepageConfig = this.ctx.setting.get('hydrooj.homepage');

@@ -1,4 +1,6 @@
 __flag: 🇨🇳
+'Edit display name': '编辑显示名'
+'Only affects this domain. Leave empty to use the username.': '仅在当前域生效，留空后使用用户名。'
 'Filter participants': '筛选参赛者'
 'Only me': '仅自己'
 'Ranked Users': '计入排名的用户'

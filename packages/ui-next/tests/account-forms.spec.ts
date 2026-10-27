@@ -8,6 +8,7 @@ import { formatErrorMessage } from '../src/utils/error.ts';
 import { goBackOrFallback } from '../src/utils/history-back.ts';
 import { INVITATION_CODE_LENGTH, isInvitationCodeComplete } from '../src/utils/invitation-code';
 import { toBigInt } from '../src/utils/permissions.ts';
+import { followSafeRedirect } from '../src/utils/request.ts';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -42,7 +43,7 @@ const mantine = require('@mantine/core');
 
 async function fixture(page: string, ui: any = {}, response: any = {}, args: any = {}, user: any = { _id: 0 }, translations = {}, pageName = page) {
     const path = page === 'contest_team' ? 'contest/team' : page === 'contest_detail' ? 'contest/123'
-        : page === 'manage_user_edit' ? 'manage/users/42?page=3&q=student' : 'register';
+        : page === 'manage_user_edit' ? 'manage/users/42?page=3&q=student' : page === 'domain_user' ? 'domain/user' : 'register';
     dom.reconfigure({ url: `https://oj.example/d/team/${path}` });
     const navigations: string[] = [];
     const notices: any[] = [];
@@ -55,6 +56,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         if (route === 'contest_detail') return `${prefix}/contest/${params.tid}`;
         const search = new URLSearchParams(query).toString();
         if (route === 'manage_user_edit') return `${prefix}/manage/users/${params.uid}${search ? `?${search}` : ''}`;
+        if (route === 'domain_user_display_name') return `${prefix}/domain/user/${params.uid}/display-name`;
         return `${prefix}/${route}${search ? `?${search}` : ''}`;
     };
     const mocks: Record<string, any> = {
@@ -64,12 +66,14 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
             ContestEndMessage: ({ children }: any) => children,
         },
         '@/registry/request-security': { canRetryProtectedAccess: () => false },
-        '@/utils/request': { formatRequestError: (error: any) => error.message },
+        '@/utils/request': { formatRequestError: (error: any) => error.message, followSafeRedirect },
+        '@/registry/user-fields': { getUserExtensionFields: () => [] },
         './contest-detail.css': {},
         './ranking.css': {},
         '@mantine/core': mantine,
         '@mantine/notifications': { notifications: { show: (notice: any) => notices.push(notice) } },
-        '@/components/common/button': { Button: mantine.Button, ActionIcon: mantine.ActionIcon, UnstyledButton: mantine.UnstyledButton },
+        '@/components/common/button': { Button: mantine.Button, ButtonBase: mantine.UnstyledButton,
+            ActionIcon: mantine.ActionIcon, UnstyledButton: mantine.UnstyledButton },
         '@/components/common/delete-resource-button': { DeleteResourceButton: () => null },
         '@/components/common/select': {
             ShortSelect: page === 'contest_scoreboard' ? mantine.Select : () => null,
@@ -137,6 +141,16 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         }).code, { module: component, exports: component.exports, require: (id: string) => mocks[id] ?? require(id) });
         mocks['@/components/common/invitation-code-input'] = component.exports;
     }
+    if (page === 'domain_user') {
+        mocks['@mantine/core'] = { ...mantine, Modal: (props: any) => h(mantine.Modal, {
+            ...props, withinPortal: false, transitionProps: { duration: 0 },
+        }) };
+        const component = { exports: {} as any };
+        runInNewContext(transformSync(readFileSync(new URL('../src/components/common/form-dialog.tsx', import.meta.url), 'utf8'), {
+            loader: 'tsx', format: 'cjs', jsx: 'automatic',
+        }).code, { module: component, exports: component.exports, require: (id: string) => mocks[id] ?? require(id) });
+        mocks['@/components/common/form-dialog'] = component.exports;
+    }
     if (page === 'contest_scoreboard' || page === 'manage_setting') {
         for (const [componentId, componentPath] of (page === 'manage_setting' ? [
             ['@/components/common/settings-form', '../src/components/common/settings-form.tsx'],
@@ -191,6 +205,37 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         async close() { await act(async () => root.unmount()); host.remove(); },
     };
 }
+
+test('domain member display-name editing uses the shared dialog and current-domain URL and hides controls without root authorization', async () => {
+    const args = { roles: [{ _id: 'default' }], rudocs: { default: [
+        { _id: 42, uname: 'student', displayName: 'Old alias', join: true },
+    ] }, canEditDisplayName: true };
+    const view = await fixture('domain_user', { domainId: 'team' }, { saved: true, displayName: 'New alias' }, args, { _id: 7 });
+    try {
+        const button = view.host.querySelector<HTMLButtonElement>('button[aria-label="Edit display name: student"]')!;
+        assert.ok(button);
+        await act(async () => button.click());
+        assert.ok(view.host.textContent?.includes('Only affects this domain. Leave empty to use the username.'));
+        const input = view.host.querySelector<HTMLInputElement>('form input')!;
+        assert.equal(input.value, 'Old alias');
+        await act(async () => {
+            Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!.call(input, 'New alias');
+            input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        });
+        await view.submit();
+        assert.equal(view.calls.length, 1);
+        assert.equal(view.calls[0].url, '/d/team/domain/user/42/display-name');
+        assert.deepEqual(JSON.parse(view.calls[0].init.body), { displayName: 'New alias' });
+        assert.ok(view.host.textContent?.includes('New alias'));
+        assert.equal(view.host.querySelector('form'), null);
+        assert.equal(view.notices[0].color, 'green');
+    } finally { await view.close(); }
+    const readOnly = await fixture('domain_user', { domainId: 'team' }, {}, { ...args, canEditDisplayName: false }, { _id: 7 });
+    try {
+        assert.equal(readOnly.host.querySelector('button[aria-label="Edit display name: student"]'), null);
+        assert.ok(readOnly.host.textContent?.includes('Old alias'));
+    } finally { await readOnly.close(); }
+});
 
 test('system settings use compact grids, keep long fields full-width and preserve nested saves and secret placeholders', async () => {
     const view = await fixture('manage_setting', {}, {}, {
