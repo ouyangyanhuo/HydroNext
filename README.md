@@ -12,7 +12,7 @@ HydroNext 是基于 [hydro-dev/Hydro](https://github.com/hydro-dev/Hydro) 的下
 上游 Hydro 是一个高效的信息学在线测评系统，HydroNext 保留了它的全部能力：模块化插件架构、单系统多域（domain）隔离、精细的权限系统、多赛制与全题型支持、一键备份导入。在此之上，HydroNext 增加了：
 
 - **全新的 React 前端 `ui-next`** —— React 19 + Vite + Mantine 构建的单页应用，页面通过注册表与后端插件对接；
-- **在线监考客户端（Electron）** —— 与后端 `HydroNext-proctor/1` 协议配套的桌面端，用于考试过程中的设备与网络管控、日志上传；
+- **在线监考客户端（Electron）** —— 与后端 `HydroNext-proctor/1` 协议配套的桌面端，用于考试过程中的设备与网络管控、日志上传，详见项目[EXAM-PROCTOR-CLIENT](https://github.com/HAS22520/exam-proctor-client)；
 - **荣誉边框** —— 512×512 可穿戴头像框，管理员上传、授予，用户自行佩戴；
 - **代码回放** —— 录制选手在编辑器中的完整作答过程，赛后按提交记录回放；
 - **团队参赛** —— 队伍创建、邀请码加入、队长管理与赛后成员归属；

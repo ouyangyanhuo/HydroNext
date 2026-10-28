@@ -12,7 +12,7 @@ HydroNext is a downstream distribution of [hydro-dev/Hydro](https://github.com/h
 Everything from upstream is preserved: a modular plugin architecture, single-instance multi-domain isolation, a fine-grained permission system, multiple contest rules, support for every problem type, and one-click backup/import. On top of that, HydroNext adds:
 
 - **A new React frontend (`ui-next`)** — a single-page app built on React 19 + Vite + Mantine, whose pages are wired to backend plugins through a registry.
-- **An online proctoring client (Electron)** — a desktop app paired with the backend's `HydroNext-proctor/1` protocol for device and network control during an exam, plus log upload.
+- **An online proctoring client (Electron)** — a desktop app paired with the backend's `HydroNext-proctor/1` protocol for device and network control during an exam, plus log upload. Please check [EXAM-PROCTOR-CLIENT](https://github.com/HAS22520/exam-proctor-client)
 - **Honor frames** — wearable 512×512 avatar frames; admins upload and grant them, users wear them on their profile.
 - **Code replay** — records a contestant's complete editing history and replays it against a submission afterwards.
 - **Team participation** — team creation, invite-code joins, captain management and post-contest member attribution.
