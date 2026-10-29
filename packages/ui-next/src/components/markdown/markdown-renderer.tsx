@@ -37,6 +37,7 @@ import markPlugin from 'markdown-it-mark';
 import { useEffect, useMemo, useRef } from 'react';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { protectedAccessHeaders } from '@/registry/request-security';
 import { useSessionStore } from '@/stores/session';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { formatUserName } from '@/utils/user-name';
@@ -281,7 +282,10 @@ function fileMediaPlugin(md: MarkdownIt) {
     const service = (tokens[idx].attrGet('service') || '').toLowerCase();
     const ext = src.split('.').pop()?.toLowerCase() || service;
     const isFile = src.startsWith('file://') || src.startsWith('./') || src.startsWith('../');
-    const displayName = src.replace(/^file:\/\//, '').replace(/^\.\//, '');
+    let displayName = src.replace(/^file:\/\//, '').replace(/^\.\//, '');
+    if (isFile) {
+      try { displayName = decodeURIComponent(displayName); } catch { /* Preserve malformed legacy references. */ }
+    }
     const icon = FILE_ICON_MAP[ext] || FILE_ICON_MAP[service] || '📎';
     const normalizedSrc = md.normalizeLink(src);
     const validExternalUrl = md.validateLink(normalizedSrc);
@@ -524,15 +528,24 @@ export function MarkdownRenderer({ content, className, language, pid, enableCode
     // Handle PDF inline viewers
     const pdfContainers = ref.current.querySelectorAll('.file-inline-viewer[data-file-ext="pdf"]');
     const domainPrefix = window.location.pathname.match(/^(\/d\/[^/]+)/)?.[0] || '';
+    const getFileUrl = (filename: string) => {
+      const query = new URLSearchParams({ type: 'additional_file' });
+      const tid = new URLSearchParams(window.location.search).get('tid');
+      if (tid) query.set('tid', tid);
+      return `${domainPrefix}/p/${pid}/file/${encodeURIComponent(filename)}?${query}`;
+    };
+    const fetchFile = async (url: string, signal: AbortSignal) => fetch(url, {
+      redirect: 'follow', signal, headers: await protectedAccessHeaders(url),
+    });
     pdfContainers.forEach((container) => {
       if ((container as any).__fileRendered) return;
       (container as any).__fileRendered = true;
       const filename = container.getAttribute('data-file-src');
       if (!filename) return;
-      const url = `${domainPrefix}/p/${pid}/file/${encodeURIComponent(filename)}?type=additional_file`;
+      const url = getFileUrl(filename);
       const controller = new AbortController();
       controllers.push(controller);
-      fetch(url, { redirect: 'follow', signal: controller.signal })
+      fetchFile(url, controller.signal)
         .then((res) => {
           if (!res.ok) throw new Error(`${res.status}`);
           return res.blob();
@@ -559,12 +572,12 @@ export function MarkdownRenderer({ content, className, language, pid, enableCode
       (container as any).__fileRendered = true;
       const filename = container.getAttribute('data-file-src');
       if (!filename) return;
-      const url = `${domainPrefix}/p/${pid}/file/${encodeURIComponent(filename)}?type=additional_file`;
+      const url = getFileUrl(filename);
       setMessage(container, 'Loading...');
       const controller = new AbortController();
       controllers.push(controller);
       import('docx-preview').then(({ renderAsync }) => (
-        fetch(url, { redirect: 'follow', signal: controller.signal })
+        fetchFile(url, controller.signal)
           .then((response) => {
             if (!response.ok) throw new Error(`${response.status}`);
             return response.arrayBuffer();

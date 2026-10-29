@@ -35,6 +35,28 @@ test('statement language aliases retain their original keys, labels and order', 
     ]));
 });
 
+test('editing preserves multiple statements, languages, attached files and whitespace-only content', () => {
+    const { initialStatements, normalizeContent, serializeStatements } = helper('problem_edit',
+        ['normalizeContent', 'initialStatements', 'serializeStatements']);
+    assert.ok(normalizeContent);
+    const original = [
+        { name: 'statement.md', lang: 'en', content: '# Statement' },
+        { name: 'notes.md', lang: 'en', content: '  ' },
+        { name: 'statement.pdf', lang: 'zh', file: '题面.pdf' },
+    ];
+    const entries = initialStatements(JSON.stringify(original), '', 'en');
+    assert.deepEqual(JSON.parse(serializeStatements(entries)), original);
+    entries[0].content = '# Updated';
+    const saved = JSON.parse(serializeStatements(entries));
+    assert.equal(saved[0].content, '# Updated');
+    assert.deepEqual(saved.slice(1), original.slice(1));
+    const legacy = initialStatements(undefined, JSON.stringify({ zh: '旧题面', en: 'Statement' }), 'zh');
+    assert.deepEqual(JSON.parse(serializeStatements(legacy)), [
+        { name: 'zh.md', lang: 'zh', content: '旧题面' },
+        { name: 'en.md', lang: 'en', content: 'Statement' },
+    ]);
+});
+
 test('printing uses text nodes, preserving code, names and filenames without interpreting user HTML', () => {
     const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>');
     const callbacks: Array<() => void> = [];

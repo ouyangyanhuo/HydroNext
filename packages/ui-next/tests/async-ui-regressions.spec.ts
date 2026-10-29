@@ -502,7 +502,14 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
     dom.window.history.replaceState({ retained: true }, '', dom.window.location.href);
     const updates: any[] = [];
     args = {
-        pdoc: { docId: 2, pid: 'P2', title: 'Problem', content: 'Statement', config: {} },
+        pdoc: { docId: 2, pid: 'P2', title: 'Problem', content: '', config: {} },
+        statements: [
+            { name: 'main.md', lang: 'en', content: 'First statement' },
+            { name: 'notes.md', lang: 'en', content: 'Additional statement' },
+            { name: 'custom.demo', lang: 'en', content: 'Raw plugin statement' },
+            { name: 'zh.md', lang: 'zh', content: '中文题面' },
+        ],
+        renderedStatements: { 'custom.demo': 'Rendered plugin statement' },
         canSubmitProblem: true, canEditProblem: false,
     };
     const Page = component('../src/pages/problem_detail.tsx', {
@@ -537,6 +544,11 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
     };
     const view = await mount(h(Page));
     try {
+        assert.match(view.host.textContent || '', /First statement/);
+        assert.match(view.host.textContent || '', /Additional statement/);
+        assert.match(view.host.textContent || '', /Rendered plugin statement/);
+        assert.doesNotMatch(view.host.textContent || '', /Raw plugin statement/);
+        assert.doesNotMatch(view.host.textContent || '', /中文题面/);
         const hasCopyProblem = () => [...view.host.querySelectorAll('button')].some((element) => element.textContent === 'Copy');
         assert.equal(hasCopyProblem(), false, 'being logged in does not grant permission to copy a problem');
         args = { ...args, canEditProblem: true };
@@ -567,6 +579,49 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
         await view.close();
         delete transitionDocument.startViewTransition;
         dom.reconfigure({ url: previousUrl });
+    }
+});
+
+test('problem editing retains unmodified statement files and languages when saving a text change', async () => {
+    const previousRequest = request;
+    const saved: any[] = [];
+    const entries = [
+        { name: 'main.md', lang: 'en', content: 'Original statement' },
+        { name: 'notes.md', lang: 'en', content: 'Extra notes' },
+        { name: 'zh.pdf', lang: 'zh', file: '题面.pdf' },
+    ];
+    args = {
+        pdoc: { docId: 2, pid: 'P2', title: 'Problem', content: '', tag: [], additional_file: [{ name: '题面.pdf' }] },
+        statementsJSON: JSON.stringify(entries), statementLangs: { en: 'English', zh: '中文' },
+    };
+    request = async (_, init) => {
+        saved.push(JSON.parse(init.body));
+        return { ok: true, json: async () => ({ redirect: '/d/team/p/P2' }) };
+    };
+    const Page = component('../src/pages/problem_edit.tsx', {
+        '@/components/common/button': { ...mocks['@/components/common/button'], ButtonBase: (props: any) => h('button', props) },
+        '@/components/common/file-dropzone': { FileDropzone: () => null },
+        '@/components/common/file-preview-modal': { FilePreviewModal: () => null },
+        '@/components/editor/markdown-editor': {
+            MarkdownEditor: ({ value, onChange }: any) => h('textarea', { value, onChange: (event: any) => onChange(event.target.value) }),
+        },
+        '@/stores/session': { useSessionStore: (select: any) => select({ language: 'en' }) },
+        '@/utils/i18n-content': { extractLocalizedContent: (value: string) => value },
+    }).default;
+    const view = await mount(h(Page));
+    try {
+        const editors = [...view.host.querySelectorAll('textarea')];
+        assert.equal(editors.length, 2);
+        assert.equal(editors[1].value, 'Extra notes');
+        await enter(editors[0], 'Updated statement');
+        await act(async () => button('Update', view.host).click());
+        assert.equal(saved.length, 1);
+        assert.deepEqual(JSON.parse(saved[0].content), [
+            { ...entries[0], content: 'Updated statement' }, entries[1], entries[2],
+        ]);
+    } finally {
+        await view.close();
+        request = previousRequest;
     }
 });
 

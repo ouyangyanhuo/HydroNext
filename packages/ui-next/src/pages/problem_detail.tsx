@@ -55,13 +55,20 @@ function parseContentObject(content: any): Record<string, any> | null {
   return null;
 }
 
-async function downloadProblemZip(pdoc: any, title: string) {
+async function downloadProblemZip(pdoc: any, title: string, statements?: any[]) {
   const [{ zipSync, strToU8 }, yaml] = await Promise.all([
     import('fflate'),
     import('js-yaml'),
   ]);
   const root = String(pdoc.docId || pdoc.pid || 'problem');
   const files: Record<string, Uint8Array> = {};
+  const manifest = statements?.map((entry) => {
+    if (typeof entry.name !== 'string' || safeFilename(entry.name) !== entry.name || /[\\/\0]/.test(entry.name)) {
+      throw new Error('Invalid statement filename');
+    }
+    if (entry.file && !pdoc.additional_file?.some((file: any) => file.name === entry.file)) throw new Error('Statement file not found');
+    return { name: entry.name, lang: entry.lang, ...(entry.file ? { file: entry.file } : { source: `problem_${entry.name}` }) };
+  });
   files[`${root}/problem.yaml`] = strToU8(yaml.dump({
     pid: pdoc.pid,
     owner: pdoc.owner,
@@ -70,10 +77,15 @@ async function downloadProblemZip(pdoc: any, title: string) {
     nSubmit: pdoc.nSubmit,
     nAccept: pdoc.nAccept,
     difficulty: pdoc.difficulty,
+    ...(manifest ? { statements: manifest } : {}),
   }));
 
   const content = parseContentObject(pdoc.content);
-  if (content) {
+  if (statements) {
+    for (const entry of statements) {
+      if (!entry.file) files[`${root}/problem_${entry.name}`] = strToU8(entry.content || '');
+    }
+  } else if (content) {
     for (const [lang, value] of Object.entries(content)) {
       files[`${root}/problem_${lang}.md`] = strToU8(typeof value === 'string' ? value : JSON.stringify(value, null, 2));
     }
@@ -89,10 +101,10 @@ async function downloadProblemZip(pdoc: any, title: string) {
       body: JSON.stringify({ operation: 'get_links', files: list.map((file) => file.name), type }),
     });
     const data = await res.json();
-    if (!data.links) return;
+    if (!res.ok || !data.links) throw new Error('Failed to download problem files');
     for (const [filename, url] of Object.entries<string>(data.links)) {
       const fileRes = await fetch(url);
-      if (!fileRes.ok) continue;
+      if (!fileRes.ok) throw new Error('Failed to download problem files');
       files[`${root}/${dirname}/${filename}`] = new Uint8Array(await fileRes.arrayBuffer());
     }
   }
@@ -231,9 +243,10 @@ function ProblemSidebar({
   pdoc, psdoc, rdoc, onToggleScratchpad, scratchpadOpen,
   contestClosed, canSubmitProblem, canEditProblem, canConfigureProblem,
   canRejudgeProblem, canViewProblemSolution, canViewProblemFiles,
-  canDownloadProblem,
+  canDownloadProblem, statements,
 }: {
   pdoc: any;
+  statements?: any[];
   psdoc?: any;
   rdoc?: any;
   onToggleScratchpad: () => void;
@@ -295,7 +308,7 @@ function ProblemSidebar({
   const handleDownload = async () => {
     setDownloadLoading(true);
     try {
-      await downloadProblemZip(pdoc, pdoc.title || String(pid));
+      await downloadProblemZip(pdoc, pdoc.title || String(pid), statements);
     } catch (err: any) {
       notifications.show({ title: err?.message || t('Download failed'), message: '', color: 'red' });
     } finally {
@@ -523,11 +536,15 @@ export default function ProblemDetailPage() {
       </Group>
     </Link>
   );
-  const langs = useMemo(() => contentLanguages(pdoc.content), [pdoc.content]);
+  const statements = Array.isArray(args.statements) ? args.statements : null;
+  const langs = useMemo(() => (statements
+    ? [...new Set<string>(statements.map((entry: any) => entry.lang).filter(Boolean))]
+    : contentLanguages(pdoc.content)), [statements, pdoc.content]);
   const [selectedLang, setSelectedLang] = useState(() => {
     const queryLang = new URLSearchParams(window.location.search).get('lang');
     return queryLang || (langs.includes(sessionLanguage) ? sessionLanguage : langs[0] || sessionLanguage);
   });
+  const activeLang = langs.includes(selectedLang) ? selectedLang : langs.find((lang) => lang.startsWith(selectedLang)) || langs[0] || selectedLang;
   const [scratchpadOpen, setScratchpadOpen] = useState(() => new URLSearchParams(window.location.search).get('mode') === 'code');
   const workspaceRef = useRef<HTMLDivElement>(null);
   const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);
@@ -650,7 +667,7 @@ export default function ProblemDetailPage() {
             <Button
               key={lang}
               size="xs"
-              variant={selectedLang === lang ? 'filled' : 'light'}
+              variant={activeLang === lang ? 'filled' : 'light'}
               onClick={() => {
                 setSelectedLang(lang);
                 const url = new URL(window.location.href);
@@ -663,7 +680,17 @@ export default function ProblemDetailPage() {
           ))}
         </Group>
       )}
-      <MarkdownRenderer content={pdoc.content || ''} language={selectedLang} pid={pid} enableCodeCopy={scratchpadOpen && canEditProblem} />
+      {statements ? statements.filter((entry: any) => !langs.length || entry.lang === activeLang).map((entry: any) => (
+        <MarkdownRenderer
+          key={entry.name}
+          content={args.renderedStatements?.[entry.name] ?? (entry.file
+            ? `@[${entry.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'file'}](file://${encodeURIComponent(entry.file)})`
+            : entry.content || '')}
+          language={activeLang}
+          pid={pid}
+          enableCodeCopy={scratchpadOpen && canEditProblem}
+        />
+      )) : <MarkdownRenderer content={pdoc.content || ''} language={activeLang} pid={pid} enableCodeCopy={scratchpadOpen && canEditProblem} />}
     </Stack>
   );
 
@@ -734,6 +761,7 @@ export default function ProblemDetailPage() {
         <Stack gap="md">
           <ProblemSidebar
             pdoc={pdoc}
+            statements={statements || undefined}
             psdoc={psdoc}
             rdoc={rdoc}
             scratchpadOpen={scratchpadOpen}

@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { PageHeader } from '@/components/common/page-header';
+import { LongSelect } from '@/components/common/select';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -69,17 +70,33 @@ function normalizeContent(content: any, defaultLang: string) {
   return { [defaultLang]: String(content) };
 }
 
-function serializeContent(content: Record<string, string>) {
-  const clean = Object.fromEntries(
-    Object.entries(content).filter(([, value]) => value.trim()),
-  );
-  return JSON.stringify(clean);
+interface StatementEntry {
+  name: string;
+  lang: string;
+  content?: string;
+  file?: string;
 }
 
-function getContentForLang(content: Record<string, string>, lang: string) {
-  if (content[lang] !== undefined) return content[lang];
-  const prefix = Object.keys(content).find((key) => key.startsWith(lang));
-  return prefix ? content[prefix] : '';
+function initialStatements(raw: unknown, legacy: unknown, defaultLang: string): StatementEntry[] {
+  try {
+    const entries = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (Array.isArray(entries)) {
+      return entries.length ? entries.map(({ name, lang, content, file }) => ({ name, lang, content, file }))
+        : [{ name: `${defaultLang}.md`, lang: defaultLang, content: '' }];
+    }
+  } catch { /* Older pages may only provide pdoc.content. */ }
+  const entries = Object.entries(normalizeContent(legacy, defaultLang))
+    .filter(([, content]) => content.length > 0)
+    .map(([lang, content]) => ({ name: `${lang}.md`, lang, content }));
+  return entries.length ? entries : [{ name: `${defaultLang}.md`, lang: defaultLang, content: '' }];
+}
+
+function serializeStatements(entries: StatementEntry[]) {
+  return JSON.stringify(entries.filter((entry) => entry.file || entry.content?.length || entry.name.toLowerCase().endsWith('.pdf')).map((entry) => ({
+    name: entry.name,
+    lang: entry.lang,
+    ...(entry.file ? { file: entry.file } : { content: entry.content }),
+  })));
 }
 
 function StatementEditor({
@@ -87,22 +104,30 @@ function StatementEditor({
   onChange,
   langs,
   initialLang,
+  files,
 }: {
-  value: Record<string, string>;
-  onChange: (value: Record<string, string>) => void;
+  value: StatementEntry[];
+  onChange: (value: StatementEntry[]) => void;
   langs: [string, string][];
   initialLang: string;
+  files: { name: string }[];
 }) {
   const { t } = useI18n();
-  const firstLang = langs.find(([lang]) => lang === initialLang)?.[0] || langs[0]?.[0] || 'zh';
+  const firstLang = value.some((entry) => entry.lang === initialLang) ? initialLang
+    : value[0]?.lang || langs.find(([lang]) => lang === initialLang)?.[0] || langs[0]?.[0] || 'zh';
   const [activeLang, setActiveLang] = useState(firstLang);
-  const editorValue = getContentForLang(value, activeLang);
-
-  const updateActiveLang = (content: string) => {
-    const next = { ...value };
-    if (content.trim()) next[activeLang] = content;
-    else delete next[activeLang];
-    onChange(next);
+  const availableLangs = [...langs, ...Array.from(new Set(value.map((entry) => entry.lang)))
+    .filter((lang) => lang && !langs.some(([key]) => key === lang)).map((lang) => [lang, lang] as [string, string])];
+  const activeEntries = value.map((entry, index) => ({ entry, index })).filter(({ entry }) => entry.lang === activeLang);
+  const updateEntry = (index: number, patch: Partial<StatementEntry>) => {
+    onChange(value.map((entry, i) => i === index ? { ...entry, ...patch } : entry));
+  };
+  const addEntry = () => {
+    let name = `${activeLang}.md`;
+    let suffix = 2;
+    const names = new Set(value.map((entry) => entry.name));
+    while (names.has(name)) name = `${activeLang}_${suffix++}.md`;
+    onChange([...value, { name, lang: activeLang, content: '' }]);
   };
 
   return (
@@ -115,21 +140,42 @@ function StatementEditor({
       </Group>
       <Tabs value={activeLang} onChange={(nextLang) => nextLang && setActiveLang(nextLang)}>
         <Tabs.List>
-          {langs.map(([lang, label]) => (
+          {availableLangs.map(([lang, label]) => (
             <Tabs.Tab key={lang} value={lang}>
               {label}
-              {value[lang]?.trim() ? <span className="ml-1 text-[var(--hydro-primary)]">•</span> : null}
+              {value.some((entry) => entry.lang === lang && (entry.file || entry.content?.trim()))
+                ? <span className="ml-1 text-[var(--hydro-primary)]">•</span> : null}
             </Tabs.Tab>
           ))}
         </Tabs.List>
       </Tabs>
-      <MarkdownEditor
-        key={activeLang}
-        value={editorValue}
-        onChange={updateActiveLang}
-        minRows={18}
-        placeholder={t('Write your content in Markdown...')}
-      />
+      {activeEntries.map(({ entry, index }) => (
+        <Paper key={index} withBorder p="sm">
+          <Stack gap="xs">
+            <Group align="end" wrap="nowrap">
+              <TextInput label={t('Filename')} value={entry.name} onChange={(event) => updateEntry(index, { name: event.currentTarget.value })} />
+              <Button variant="subtle" color="red" onClick={() => onChange(value.filter((_, i) => i !== index))}>{t('Remove')}</Button>
+            </Group>
+            {entry.file || entry.name.toLowerCase().endsWith('.pdf') ? (
+              <LongSelect
+                label={t('File')}
+                value={entry.file || null}
+                data={files.map((file) => file.name)}
+                onChange={(file) => updateEntry(index, { file: file || undefined })}
+                searchable
+              />
+            ) : (
+              <MarkdownEditor
+                value={entry.content || ''}
+                onChange={(content) => updateEntry(index, { content })}
+                minRows={18}
+                placeholder={t('Write your content in Markdown...')}
+              />
+            )}
+          </Stack>
+        </Paper>
+      ))}
+      <Button variant="light" onClick={addEntry}>+ {t('File')}</Button>
     </Stack>
   );
 }
@@ -200,7 +246,7 @@ export default function ProblemEditPage() {
   const [form, setForm] = useState({
     pid: pdoc.pid || '',
     title: extractLocalizedContent(pdoc.title || '', language),
-    content: normalizeContent(pdoc.content, initialStatementLang),
+    content: initialStatements(args.statementsJSON, pdoc.content, initialStatementLang),
     tag: (pdoc.tag || []).join(', '),
     difficulty: pdoc.difficulty || 0,
     hidden: pdoc.hidden || false,
@@ -238,7 +284,7 @@ export default function ProblemEditPage() {
       }
       body.tag &&= body.tag.split(',').map((s: string) => s.trim()).filter(Boolean).join(',');
       body.difficulty = Number(body.difficulty) || 0;
-      body.content = serializeContent(form.content);
+      body.content = serializeStatements(form.content);
       const url = window.location.href;
       const res = await fetch(url, {
         method: 'POST',
@@ -360,6 +406,7 @@ export default function ProblemEditPage() {
               onChange={(content) => setForm({ ...form, content })}
               langs={statementLangs}
               initialLang={initialStatementLang}
+              files={additionalFiles}
             />
             <TextInput
               label={t('Tags')}

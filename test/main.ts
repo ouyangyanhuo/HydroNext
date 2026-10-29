@@ -600,16 +600,27 @@ describe('App', () => {
         const p2 = await problem.add(domainId, 'EXPORT2', 'Second export', JSON.stringify({ zh: '中文题面', en: 'Statement' }), 2);
         const hidden = await problem.add(domainId, 'HIDDEN', 'Hidden export', '', 2, [], { hidden: true });
         const referenced = await problem.add(domainId, 'REFERENCE', 'Reference export', '', 2, [], { reference: { domainId: 'system', pid: 1 } });
+        const importedIds: number[] = [];
         const exporter = supertest.agent(require('hydrooj').httpServer);
         await exporter.post('/login').send({ uname: 'export-user', password: 'secret' }).expect(302);
         const route = `/d/${domainId}/p`;
+        const renderers = global.Hydro.module.contentRenderer;
+        const previousRenderer = renderers.demo;
+        renderers.demo = { render: (entry, context) => `<p>${entry.content} (${context.pdoc.docId})</p>` };
         try {
             await problem.addTestdata(domainId, p1, 'config.yaml', Buffer.from('time: 1s\nmemory: 64m\n'), uid);
             await problem.addTestdata(domainId, p1, '1.in', Buffer.from('1 2\n'), uid);
             await problem.addAdditionalFile(domainId, p2, 'readme.txt', Buffer.from('Attachment'), 2);
+            await problem.addAdditionalFile(domainId, p2, 'statement.pdf', Buffer.from('%PDF-test'), 2);
+            const originalStatements = await problem.getStatements(await problem.get(domainId, p2));
+            await problem.setStatements(domainId, p2, [...originalStatements,
+                { name: 'statement.pdf', lang: 'en', file: 'statement.pdf' },
+                { name: 'custom.demo', lang: 'en', content: 'Custom statement' }]);
             const page = getPageArgs(await exporter.get(route).set('Accept', 'application/json').expect(200));
             assert.equal(page.canCreateProblem, true);
             assert.equal(page.canEditProblem, false);
+            const detail = getPageArgs(await exporter.get(`${route}/EXPORT2`).set('Accept', 'application/json').expect(200));
+            assert.equal(detail.renderedStatements['custom.demo'], `<p>Custom statement (${p2})</p>`);
             const response = await exporter.post(route).send({ operation: 'download', pids: [p2, p1, p1] })
                 .buffer(true).parse((res, callback) => {
                     const chunks = [];
@@ -619,14 +630,50 @@ describe('App', () => {
                 }).expect(200).expect('Content-Type', /application\/zip/);
             const zip = new ZipReader(new Uint8ArrayReader(response.body));
             const entries = await zip.getEntries();
-            assert.equal(entries.length, 8);
+            assert.equal(entries.length, 10);
             const read = async (name: string) => entries.find((entry) => entry.filename === name).getData(new TextWriter());
-            assert.equal(await read(`${p1}/problem.md`), 'Plain statement');
+            const [plainStatement] = await problem.getStatements(await problem.get(domainId, p1));
+            assert.equal(await read(`${p1}/problem_${plainStatement.name}`), 'Plain statement');
             assert.equal(await read(`${p2}/problem_zh.md`), '中文题面');
+            assert.equal(await read(`${p2}/problem_en.md`), 'Statement');
+            assert.equal(await read(`${p2}/problem_custom.demo`), 'Custom statement');
             assert.equal(await read(`${p1}/testdata/1.in`), '1 2\n');
             assert.equal(await read(`${p2}/additional_file/readme.txt`), 'Attachment');
-            assert.match(await read(`${p2}/problem.yaml`), /pid: EXPORT2/);
+            assert.equal(await read(`${p2}/additional_file/statement.pdf`), '%PDF-test');
+            const manifest = require('js-yaml').load(await read(`${p2}/problem.yaml`));
+            assert.equal(manifest.pid, 'EXPORT2');
+            assert.deepEqual(manifest.statements, [
+                { name: 'zh.md', lang: 'zh', source: 'problem_zh.md' },
+                { name: 'en.md', lang: 'en', source: 'problem_en.md' },
+                { name: 'statement.pdf', lang: 'en', file: 'statement.pdf' },
+                { name: 'custom.demo', lang: 'en', source: 'problem_custom.demo' },
+            ]);
             await zip.close();
+            const fs = require('fs');
+            const path = require('path');
+            const importDir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'hydro-statement-roundtrip-'));
+            try {
+                const archive = path.join(importDir, 'problems.zip');
+                fs.writeFileSync(archive, response.body);
+                await problem.import(domainId, archive, { preferredPrefix: 'IMPORT', operator: uid });
+                const imported = await problem.get(domainId, 'IMPORT2');
+                assert.ok(imported);
+                importedIds.push(imported.docId);
+                const importedFirst = await problem.get(domainId, 'IMPORT1');
+                assert.ok(importedFirst);
+                importedIds.push(importedFirst.docId);
+                const roundtrip = await problem.getStatements(imported);
+                assert.deepEqual(roundtrip.map(({ name, lang, content, file }) => ({
+                    name, lang, ...(file ? { file } : { content }),
+                })), [
+                    { name: 'zh.md', lang: 'zh', content: '中文题面' },
+                    { name: 'en.md', lang: 'en', content: 'Statement' },
+                    { name: 'statement.pdf', lang: 'en', file: 'statement.pdf' },
+                    { name: 'custom.demo', lang: 'en', content: 'Custom statement' },
+                ]);
+            } finally {
+                fs.rmSync(importDir, { recursive: true, force: true });
+            }
             await exporter.post(route).send({ operation: 'download', pids: [p1, hidden] }).expect(404);
             await exporter.post(route).send({ operation: 'download', pids: [referenced] }).expect(400);
             await exporter.post(route).send({ operation: 'download', pids: [] }).expect(403);
@@ -636,7 +683,9 @@ describe('App', () => {
             await domain.setUserRole(domainId, uid, 'creator');
             await exporter.post(route).send({ operation: 'download', pids: [p2] }).expect(403);
         } finally {
-            await Promise.all([p1, p2, hidden, referenced].map((pid) => problem.del(domainId, pid)));
+            if (previousRenderer) renderers.demo = previousRenderer;
+            else delete renderers.demo;
+            await Promise.all([p1, p2, hidden, referenced, ...importedIds].map((pid) => problem.del(domainId, pid)));
             await domain.del(domainId);
         }
     });
