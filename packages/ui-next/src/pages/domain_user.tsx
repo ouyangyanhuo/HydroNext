@@ -14,7 +14,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { getUserExtensionFields } from '@/registry/user-fields';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
-import { followSafeRedirect } from '@/utils/request';
+import { followSafeRedirect, postJsonRequest } from '@/utils/request';
 import { formatUserName } from '@/utils/user-name';
 
 function normalizeRoles(input: any) {
@@ -288,29 +288,20 @@ export default function DomainUserPage() {
     ? bulkRole
     : (roleOptions[0]?.value || 'default');
 
-  const selectableUsers = users.filter((user: any) => user._id !== currentUser?._id);
+  const selectableUsers = users.filter((user: any) => user._id !== currentUser?._id && user._id !== args.domain?.owner);
   const allSelected = selectableUsers.length > 0 && selectableUsers.every((user: any) => selected.includes(user._id));
 
   const post = async (payload: Record<string, any>, successMessage: string, reload = true) => {
     setLoading(String(payload.operation || 'operation'));
     try {
-      const res = await fetch(window.location.href, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const type = res.headers.get('content-type') || '';
-      const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) {
-        notifications.show({ title: formatErrorMessage(data.error, t('Operation failed')), message: '', color: 'red' });
-      } else if (data.redirect) {
-        window.location.assign(data.redirect);
-      } else {
-        notifications.show({ title: successMessage, message: '', color: 'green' });
-        if (reload) window.location.reload();
-      }
+      await postJsonRequest(window.location.href, payload,
+        (error) => formatErrorMessage(error, 'Operation failed', t), { redirects: 'authorization' });
+      notifications.show({ title: successMessage, message: '', color: 'green' });
+      if (reload) window.location.reload();
+      return true;
     } catch (err: any) {
-      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
+      notifications.show({ title: t(err?.message || 'Network error'), message: '', color: 'red' });
+      return false;
     } finally {
       setLoading('');
     }
@@ -326,7 +317,7 @@ export default function DomainUserPage() {
     for (const role of roleOptions.map((option) => option.value)) {
       const uids = changed.filter((user: any) => roleDraft[user._id] === role).map((user: any) => user._id);
       if (uids.length) {
-        await post({ operation: 'set_users', uids, role, join: false }, t('Saved'), false);
+        if (!await post({ operation: 'set_users', uids, role, join: false }, t('Saved'), false)) return;
         saved = true;
       }
     }
@@ -371,7 +362,7 @@ export default function DomainUserPage() {
             </Table.Thead>
             <Table.Tbody>
               {users.map((user: any) => {
-                const disabled = user._id === currentUser?._id;
+                const disabled = user._id === currentUser?._id || user._id === args.domain?.owner;
                 return (
                   <Table.Tr key={user._id}>
                     <Table.Td>

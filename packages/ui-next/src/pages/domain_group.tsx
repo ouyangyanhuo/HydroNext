@@ -9,6 +9,7 @@ import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
+import { postJsonRequest } from '@/utils/request';
 
 function parseUids(input: string) {
   return input
@@ -32,23 +33,14 @@ export default function DomainGroupPage() {
   const post = async (payload: Record<string, any>, successMessage: string, reload = true) => {
     setLoading(String(payload.operation || 'operation'));
     try {
-      const res = await fetch(window.location.href, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const type = res.headers.get('content-type') || '';
-      const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) {
-        notifications.show({ title: formatErrorMessage(data.error, t('Operation failed')), message: '', color: 'red' });
-      } else if (data.redirect) {
-        window.location.href = data.redirect;
-      } else {
-        notifications.show({ title: successMessage, message: '', color: 'green' });
-        if (reload) window.location.reload();
-      }
+      await postJsonRequest(window.location.href, payload,
+        (error) => formatErrorMessage(error, 'Operation failed', t), { redirects: 'authorization' });
+      notifications.show({ title: successMessage, message: '', color: 'green' });
+      if (reload) window.location.reload();
+      return true;
     } catch (err: any) {
-      notifications.show({ title: err?.message || t('Network error'), message: '', color: 'red' });
+      notifications.show({ title: t(err?.message || 'Network error'), message: '', color: 'red' });
+      return false;
     } finally {
       setLoading('');
     }
@@ -63,7 +55,7 @@ export default function DomainGroupPage() {
       const next = parseUids(uidsDraft[group.name] || '');
       const current = (group.uids || []).join(',');
       if (next.join(',') !== current) {
-        await post({ operation: 'update', name: group.name, uids: next }, t('Saved'), false);
+        if (!await post({ operation: 'update', name: group.name, uids: next }, t('Saved'), false)) return;
       }
     }
     window.location.reload();
@@ -71,7 +63,7 @@ export default function DomainGroupPage() {
 
   const deleteSelected = async () => {
     for (const name of selected) {
-      await post({ operation: 'del', name }, t('Deleted'), false);
+      if (!await post({ operation: 'del', name }, t('Deleted'), false)) return;
     }
     window.location.reload();
   };
@@ -118,7 +110,10 @@ export default function DomainGroupPage() {
                     <TextInput
                       size="xs"
                       value={uidsDraft[g.name] ?? (g.uids || []).join(',')}
-                      onChange={(e) => setUidsDraft((prev) => ({ ...prev, [g.name]: e.currentTarget.value }))}
+                      onChange={(e) => {
+                        const value = e.currentTarget.value;
+                        setUidsDraft((prev) => ({ ...prev, [g.name]: value }));
+                      }}
                       placeholder="2,3,4"
                     />
                   </Table.Td>
@@ -144,11 +139,9 @@ export default function DomainGroupPage() {
           { name: 'uids', label: t('Users'), type: 'textarea', placeholder: '2,3,4' },
         ]}
         onClose={() => setDialogOpen(false)}
-        onSubmit={(values) => post({
-          operation: 'update',
-          name: values.name,
-          uids: parseUids(String(values.uids || '')),
-        }, t('Created'))}
+        onSubmit={async (values) => {
+          await post({ operation: 'update', name: values.name, uids: parseUids(String(values.uids || '')) }, t('Created'));
+        }}
         confirmLabel={t('Create')}
         cancelLabel={t('Cancel')}
         loading={loading === 'update'}

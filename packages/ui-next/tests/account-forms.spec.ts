@@ -8,7 +8,6 @@ import { formatErrorMessage } from '../src/utils/error.ts';
 import { goBackOrFallback } from '../src/utils/history-back.ts';
 import { INVITATION_CODE_LENGTH, isInvitationCodeComplete } from '../src/utils/invitation-code';
 import { toBigInt } from '../src/utils/permissions.ts';
-import { followSafeRedirect } from '../src/utils/request.ts';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -49,6 +48,25 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
     const notices: any[] = [];
     const calls: any[] = [];
     const copied: string[] = [];
+    const browserActions: string[] = [];
+    const location = { href: dom.window.location.href, origin: dom.window.location.origin,
+        assign: (url: string) => browserActions.push(url), reload: () => browserActions.push('reload') };
+    const pageWindow = page.startsWith('domain_') ? new Proxy(dom.window, {
+        get(target, key) {
+            if (key === 'location') return location;
+            const value = Reflect.get(target, key, target);
+            return typeof value === 'function' ? value.bind(target) : value;
+        },
+    }) : dom.window;
+    const request = async (url: string, init: any) => {
+        calls.push({ url, init });
+        return { ok: !response.error, headers: { get: () => 'application/json' }, json: async () => response };
+    };
+    const requests = { exports: {} as any };
+    runInNewContext(transformSync(readFileSync(new URL('../src/utils/request.ts', import.meta.url), 'utf8'), {
+        loader: 'ts', format: 'cjs',
+    }).code, { module: requests, exports: requests.exports, window: pageWindow, URL, fetch: request,
+        require: () => ({ formatErrorMessage }) });
     const prefix = ui.domainId === 'system' ? '' : `/d/${ui.domainId || 'team'}`;
     const buildUrl = (route: string, params: any = {}, query: any = {}) => {
         if (route === 'problem_detail') return `${prefix}/p/${params.pid}?${new URLSearchParams(query)}`;
@@ -66,7 +84,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
             ContestEndMessage: ({ children }: any) => children,
         },
         '@/registry/request-security': { canRetryProtectedAccess: () => false },
-        '@/utils/request': { formatRequestError: (error: any) => error.message, followSafeRedirect },
+        '@/utils/request': requests.exports,
         '@/registry/user-fields': { getUserExtensionFields: () => [] },
         './contest-detail.css': {},
         './ranking.css': {},
@@ -141,7 +159,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         }).code, { module: component, exports: component.exports, require: (id: string) => mocks[id] ?? require(id) });
         mocks['@/components/common/invitation-code-input'] = component.exports;
     }
-    if (page === 'domain_user') {
+    if (['domain_user', 'domain_group', 'domain_role'].includes(page)) {
         mocks['@mantine/core'] = { ...mantine, Modal: (props: any) => h(mantine.Modal, {
             ...props, withinPortal: false, transitionProps: { duration: 0 },
         }) };
@@ -170,20 +188,17 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         loader: 'tsx', format: 'cjs', jsx: 'automatic',
     }).code;
     runInNewContext(code, {
-        module, exports: module.exports, window: dom.window, document: dom.window.document, FormData: dom.window.FormData, URL, URLSearchParams,
+        module, exports: module.exports, window: pageWindow, document: dom.window.document, FormData: dom.window.FormData, URL, URLSearchParams,
         localStorage: dom.window.localStorage,
         require: (id: string) => mocks[id] ?? require(id),
-        fetch: async (url: string, init: any) => {
-            calls.push({ url, init });
-            return { ok: !response.error, headers: { get: () => 'application/json' }, json: async () => response };
-        },
+        fetch: request,
     });
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
     await act(async () => root.render(h(mantine.MantineProvider, null, h(module.exports.default))));
     return {
-        host, calls, navigations, notices, copied,
+        host, calls, navigations, notices, copied, browserActions,
         async input(index: number, value: string) {
             const input = host.querySelectorAll('input')[index];
             await act(async () => {
@@ -235,6 +250,47 @@ test('domain member display-name editing uses the shared dialog and current-doma
         assert.equal(readOnly.host.querySelector('button[aria-label="Edit display name: student"]'), null);
         assert.ok(readOnly.host.textContent?.includes('Old alias'));
     } finally { await readOnly.close(); }
+});
+
+test('domain administration follows sudo redirects without reporting success, and group batches stop on the first error', async () => {
+    const member = { _id: 42, uname: 'student', join: true };
+    const cases = [
+        { page: 'domain_user', args: { roles: [{ _id: 'teacher' }], rudocs: { teacher: [member] } }, action: 'Set Roles for Selected User' },
+        { page: 'domain_group', args: { groups: [{ name: 'A', uids: [42] }, { name: 'B', uids: [43] }] }, action: 'Remove Selected Group' },
+        { page: 'domain_role', args: { roles: [{ _id: 'teacher' }] }, action: 'Delete Selected Roles' },
+    ];
+    // Shared browser globals require these component fixtures to run sequentially.
+    /* eslint-disable no-await-in-loop */
+    for (const item of cases) {
+        const view = await fixture(item.page, { domainId: 'team' }, { url: '/d/team/user/sudo' }, item.args, { _id: 7 });
+        try {
+            await act(async () => view.host.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click());
+            const button = Array.from(view.host.querySelectorAll('button')).find((entry) => entry.textContent === item.action)!;
+            await act(async () => button.click());
+            assert.equal(view.calls.length, 1);
+            assert.deepEqual(view.browserActions, ['https://oj.example/d/team/user/sudo']);
+            assert.equal(view.notices.some((notice) => notice.color === 'green'), false);
+        } finally { await view.close(); }
+    }
+    /* eslint-enable no-await-in-loop */
+    const failed = await fixture('domain_group', { domainId: 'team' }, { error: { message: 'Permission denied' } }, cases[1].args);
+    try {
+        await act(async () => failed.host.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click());
+        const button = Array.from(failed.host.querySelectorAll('button')).find((entry) => entry.textContent === 'Remove Selected Group')!;
+        await act(async () => button.click());
+        assert.equal(failed.calls.length, 1, 'the second group must not be deleted after the first fails');
+        assert.deepEqual(failed.browserActions, [], 'do not discard the page state with a reload');
+        assert.equal(failed.notices[0].title, 'Permission denied');
+        assert.equal(failed.notices[0].color, 'red');
+    } finally { await failed.close(); }
+    const saved = await fixture('domain_group', { domainId: 'team' }, { url: '/d/team/domain/group' }, cases[1].args);
+    try {
+        await act(async () => saved.host.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click());
+        const button = Array.from(saved.host.querySelectorAll('button')).find((entry) => entry.textContent === 'Remove Selected Group')!;
+        await act(async () => button.click());
+        assert.equal(saved.calls.length, 2, 'normal back() responses must not interrupt a successful batch');
+        assert.deepEqual(saved.browserActions, ['reload']);
+    } finally { await saved.close(); }
 });
 
 test('system settings use compact grids, keep long fields full-width and preserve nested saves and secret placeholders', async () => {

@@ -1,12 +1,12 @@
+import { formatErrorMessage } from './error';
+
 export function formatRequestError(error: any, fallback = 'Operation failed'): string {
   if (error?.name === 'ForbiddenError' && error.params?.length === 1 && typeof error.params[0] === 'string') return error.params[0];
-  let message = error?.message || fallback;
-  for (const [index, value] of (error?.params || []).entries()) message = message.replaceAll(`{${index}}`, String(value));
-  return message;
+  return formatErrorMessage(error, fallback);
 }
 
 /** Handle sudo redirects consistently for settings, paginated logs and binary downloads. */
-export function followSafeRedirect(data: any) {
+export function followSafeRedirect(data: any, authorizationOnly = false) {
   const redirect = data?.url || data?.redirect;
   if (!redirect) return;
   if (typeof redirect !== 'string' || redirect.includes('\\')) throw new Error('Invalid authorization destination.');
@@ -14,11 +14,15 @@ export function followSafeRedirect(data: any) {
   if (target.origin !== window.location.origin || !['https:', 'http:'].includes(target.protocol)) {
     throw new Error('Invalid authorization destination.');
   }
+  // Management handlers also return their ordinary `back()` URL after a save.
+  // Batches handle that locally and must only navigate away for sudo verification.
+  if (authorizationOnly && !/^(?:\/d\/[^/]+)?\/user\/sudo\/?$/.test(target.pathname)) return;
   window.location.assign(target.href);
   throw new Error('Authorization required.');
 }
 
-export async function postJsonRequest(url: string, body: Record<string, unknown>, formatError: (error: any) => string = formatRequestError) {
+export async function postJsonRequest(url: string, body: Record<string, unknown>, formatError: (error: any) => string = formatRequestError,
+  options: { redirects?: 'all' | 'authorization' } = {}) {
   const response = await fetch(url, { method: 'POST', cache: 'no-store', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify(body) });
   const data = await response.json();
@@ -27,6 +31,6 @@ export async function postJsonRequest(url: string, body: Record<string, unknown>
     throw new Error(formatError(data.error));
   }
   // Hydro serializes response.redirect as `url`, including requireSudo responses.
-  followSafeRedirect(data);
+  followSafeRedirect(data, options.redirects === 'authorization');
   return data;
 }

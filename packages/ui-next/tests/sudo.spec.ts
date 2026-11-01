@@ -14,6 +14,14 @@ const { completeSudoVerification } = module.exports;
 const current = 'https://oj.example/d/team/user/sudo';
 const target = '/d/team/home/security?tab=authn&page=2';
 
+test('request errors keep placeholder-like parameter text literal and tolerate malformed error metadata', () => {
+    assert.equal(formatRequestError({ message: 'User {0}: {1}', params: ['name{1}$&', 'denied'] }), 'User name{1}$&: denied');
+    assert.equal(formatRequestError({ message: 'Repeated {0} / {0}', params: ['literal$&'] }), 'Repeated literal$& / literal$&');
+    assert.equal(formatRequestError({ message: 'Error {0}', params: {} }), 'Error {0}');
+    assert.equal(formatRequestError({ message: {} }, 'Fallback'), 'Fallback');
+    assert.equal(formatRequestError({ name: 'ForbiddenError', params: ['Specific reason'] }), 'Specific reason');
+});
+
 test('authorization follows the server url and preserves the domain, query and target', async () => {
     assert.equal(await completeSudoVerification({ url: target }, '/d/team/', current), target);
     assert.equal(await completeSudoVerification({ redirect: target }, undefined, current), target);

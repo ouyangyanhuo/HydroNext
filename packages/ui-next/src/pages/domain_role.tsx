@@ -8,6 +8,7 @@ import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
+import { postJsonRequest } from '@/utils/request';
 
 const BUILTIN_ROLES = new Set(['root', 'default', 'guest']);
 
@@ -30,21 +31,12 @@ export default function DomainRolePage() {
     setError('');
     setSuccess('');
     try {
-      const res = await fetch(window.location.href, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const type = res.headers.get('content-type') || '';
-      const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Operation failed')));
-      else if (data.redirect) window.location.href = data.redirect;
-      else {
-        setSuccess(successMessage);
-        window.location.reload();
-      }
+      await postJsonRequest(window.location.href, payload,
+        (requestError) => formatErrorMessage(requestError, 'Operation failed', t), { redirects: 'authorization' });
+      setSuccess(successMessage);
+      window.location.reload();
     } catch (err: any) {
-      setError(err?.message || t('Network error'));
+      setError(t(err?.message || 'Network error'));
     } finally {
       setLoading('');
     }
