@@ -467,6 +467,13 @@ test('submitting and returning through record problem links retains the source n
         dom.reconfigure({ url: `https://oj.example${recordUrl}` });
         args = { ...args, rdoc: { _id: 'rid', uid: 2, pid: 2, status: 1 } };
         await view.render(h(Record));
+        socketUpdate = { status: 0, error: { name: 'RecordConnectionError' } };
+        await view.render(h(Record));
+        assert.match(view.host.querySelector('[role="alert"]')!.textContent!, /Live results disconnected/);
+        assert.match(view.host.querySelector('[role="alert"]')!.textContent!, /last received results/);
+        socketUpdate = { status: 1 };
+        await view.render(h(Record));
+        assert.equal(view.host.querySelector('[role="alert"]'), null, '收到实时结果后清除连接中断提示');
         const links = [...view.host.querySelectorAll<HTMLAnchorElement>('a[href^="/d/team/p/P2"]')];
         assert.equal(links.length, 2, 'both the heading and information-card problem links preserve navigation');
         for (const link of links) assert.equal(link.search, search);

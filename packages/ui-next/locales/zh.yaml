@@ -1,4 +1,6 @@
 __flag: 🇨🇳
+Live results disconnected: 实时结果连接已中断
+Showing the last received results. Check your connection and proctor authentication; refresh the page if needed.: 当前显示的是最后收到的结果。请检查网络与监考认证，必要时刷新页面。
 'Edit display name': '编辑显示名'
 'Only affects this domain. Leave empty to use the username.': '仅在当前域生效，留空后使用用户名。'
 'Filter participants': '筛选参赛者'

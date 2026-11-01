@@ -241,6 +241,7 @@ test('websocket heartbeat and domain changes keep the global announcement connec
     let ui = { ws_prefix: '/' };
     const { useWebSocket } = load('../../ui-next/src/hooks/use-websocket.ts', {
         '@/stores/session': { useSessionStore: (selector: any) => selector({ ui }) },
+        '@/utils/websocket-url': load('../../ui-next/src/utils/websocket-url.ts', {}),
     }, { WebSocket: FakeSocket, setTimeout, clearTimeout });
     const messages: any[] = [];
     function Receiver() {

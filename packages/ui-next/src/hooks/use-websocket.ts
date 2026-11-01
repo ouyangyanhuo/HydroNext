@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useSessionStore } from '@/stores/session';
+import { buildWebSocketUrl } from '@/utils/websocket-url';
 
 interface WebSocketOptions {
   url: string;
   /** Explicit domain scope for domain-owned endpoints; preserves any deployment path prefix. */
   domainId?: string;
+  /** 指定实际页面的域路径，空字符串表示保留系统域或独立域名的根路径。 */
+  domainPath?: string;
   onMessage?: (data: any) => void;
   onOpen?: (send: (data: any) => void) => void;
   onClose?: (event?: CloseEvent) => void;
@@ -24,6 +27,7 @@ const duration = (value: number, fallback: number) => Number.isFinite(value) && 
 export function useWebSocket({
   url,
   domainId,
+  domainPath,
   onMessage,
   onOpen,
   onClose,
@@ -49,15 +53,7 @@ export function useWebSocket({
   useEffect(() => {
     if (!enabled) return undefined;
     canQueue.current = true;
-    const wsPrefix = ui.ws_prefix || '/';
-    const prefixUrl = new URL(wsPrefix, window.location.href);
-    prefixUrl.protocol = ['https:', 'wss:'].includes(prefixUrl.protocol) ? 'wss:' : 'ws:';
-    if (!prefixUrl.pathname.endsWith('/')) prefixUrl.pathname += '/';
-    if (domainId) {
-      const basePath = prefixUrl.pathname.replace(/\/d\/[^/]+\/$/, '/');
-      prefixUrl.pathname = `${basePath}d/${encodeURIComponent(domainId)}/`;
-    }
-    const fullUrl = url.startsWith('ws') ? url : new URL(url.replace(/^\/+/, ''), prefixUrl).toString();
+    const fullUrl = buildWebSocketUrl({ url, prefix: ui.ws_prefix, pageUrl: window.location.href, domainId, domainPath });
     const idleTimeout = duration(heartbeatTimeout, 120_000);
     const probeTimeout = duration(heartbeatProbeTimeout, 10_000);
     const openTimeout = duration(connectionTimeout, 30_000);
@@ -240,7 +236,8 @@ export function useWebSocket({
       pendingMessages.current = [];
       retire();
     };
-  }, [enabled, autoReconnect, reconnectInterval, heartbeatTimeout, heartbeatProbeTimeout, connectionTimeout, ui.ws_prefix, url, domainId]);
+  }, [enabled, autoReconnect, reconnectInterval, heartbeatTimeout, heartbeatProbeTimeout, connectionTimeout,
+    ui.ws_prefix, url, domainId, domainPath]);
 
   const send = useCallback((data: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

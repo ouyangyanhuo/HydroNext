@@ -2,6 +2,8 @@
 import assert from 'node:assert/strict';
 import { generateKeyPairSync } from 'node:crypto';
 import * as supertest from 'supertest';
+import { buildRecordSocketUrl } from '../../ui-next/src/utils/record-socket-url';
+import { buildWebSocketUrl, pageDomainPath } from '../../ui-next/src/utils/websocket-url';
 
 export async function runProctorSudoHttpTests(_agent: any, { Root }: any) {
     const admin = supertest.agent(require('hydrooj').httpServer);
@@ -30,6 +32,8 @@ export async function runProctorFlowHttpTests(_agent: any, { Root }: any) {
     const { contest, domain, problem, user, record, storage } = global.Hydro.model;
     const { ObjectId } = require('mongodb');
     const { PERM, PRIV } = require('../../hydrooj/src/model/builtin');
+    const { STATUS } = require('@hydrooj/common');
+    const bus = require('../../hydrooj/src/service/bus').default;
     const proctor = require('../model/store');
     const { canonical, digest, secret, signedPayload, verifyPayload } = require('../lib/proctor');
     const { constants, createCipheriv, publicEncrypt, randomBytes } = require('crypto');
@@ -55,7 +59,7 @@ export async function runProctorFlowHttpTests(_agent: any, { Root }: any) {
         await proctor.saveConfig({ ...previous, enabled: true, requiredVersion: '1.0.0' });
         for (const ending of ['early', 'natural']) {
             const now = Date.now();
-            const tid = await contest.add(domainId, `Proctor ${ending}`, '', 2, 'oi',
+            const tid = await contest.add(domainId, `Proctor ${ending}`, '', 2, ending === 'early' ? 'oi' : 'acm',
                 new Date(now - 60_000), new Date(now + 3600_000), [pid], false, { proctorEnabled: true });
             tids.push(tid);
             await contest.attend(domainId, tid, uid, { startAt: new Date(now - 1000) });
@@ -111,28 +115,55 @@ export async function runProctorFlowHttpTests(_agent: any, { Root }: any) {
             const result = await participant.get(path).set('Accept', 'application/json')
                 .set(headers('record_view', 'GET', path, { rid: rid.toHexString() })).expect(200);
             assert.equal(result.body.rdoc.code, 'private self-test');
-            const socketPath = `/d/${domainId}/record-detail-conn`;
             const { port } = require('hydrooj').httpServer.address();
-            const update = await new Promise<any>((resolve, reject) => {
-                const timer = setTimeout(() => reject(new Error('监考自测结果连接超时')), 5000);
-                socket = new WebSocket(`ws://127.0.0.1:${port}${socketPath}?rid=${rid}&noTemplate=true`, {
-                    headers: { Cookie: cookie, ...headers('record_view', 'GET', socketPath, { rid: rid.toHexString() }) },
+            const subscriptions = [{ rid, code: 'private self-test' }];
+            if (ending === 'natural') {
+                const formalRid = await record.add(domainId, pid, uid, '_', 'private formal submission', false, { contest: tid });
+                subscriptions.push({ rid: formalRid, code: 'private formal submission' });
+            }
+            for (const subscription of subscriptions) {
+                const pageUrl = `http://127.0.0.1:${port}/d/${domainId}/p/H1?tid=${tid}`;
+                // 使用真实网页连接构造，覆盖根 WebSocket 前缀下普通参赛者的监考证明。
+                const socketUrl = new URL(buildWebSocketUrl({
+                    url: buildRecordSocketUrl(subscription.rid.toHexString(), domainId), prefix: '/', pageUrl,
+                    domainPath: pageDomainPath(new URL(pageUrl).pathname),
+                }));
+                assert.equal(socketUrl.pathname, `/d/${domainId}/record-detail-conn`);
+                const update = await new Promise<any>((resolve, reject) => {
+                    const timer = setTimeout(() => reject(new Error('监考结果实时更新超时')), 5000);
+                    let receivedInitial = false;
+                    socket = new WebSocket(socketUrl, { headers: { Cookie: cookie,
+                        ...headers('record_view', 'GET', socketUrl.pathname, { rid: subscription.rid.toHexString() }) } });
+                    socket.on('error', (error: Error) => {
+                        clearTimeout(timer);
+                        reject(error);
+                    });
+                    socket.on('message', (data: Buffer) => {
+                        if (data.toString() === 'ping') return socket.send('pong');
+                        const body = JSON.parse(data.toString());
+                        if (body.error) {
+                            clearTimeout(timer);
+                            reject(new Error(JSON.stringify(body.error)));
+                        } else if (!receivedInitial) {
+                            receivedInitial = true;
+                            assert.equal(body.rdoc.code, subscription.code);
+                            record.update(domainId, subscription.rid, { status: STATUS.STATUS_ACCEPTED,
+                                compilerTexts: ['live result verified'], score: 100 }).then((updated) => {
+                                bus.broadcast('record/change', updated);
+                            }).catch(reject);
+                        } else if (body.rdoc.status === STATUS.STATUS_ACCEPTED) {
+                            clearTimeout(timer);
+                            resolve(body);
+                        }
+                        return undefined;
+                    });
                 });
-                socket.on('error', (error: Error) => {
-                    clearTimeout(timer);
-                    reject(error);
-                });
-                socket.on('message', (data: Buffer) => {
-                    if (data.toString() === 'ping') return socket.send('pong');
-                    clearTimeout(timer);
-                    const body = JSON.parse(data.toString());
-                    if (body.error) reject(new Error(JSON.stringify(body.error)));
-                    else resolve(body);
-                    return undefined;
-                });
-            });
-            assert.equal(update.rdoc.code, 'private self-test');
-            socket.terminate();
+                assert.equal(update.rdoc.compilerTexts[0], 'live result verified');
+                assert.equal(update.rdoc.status, STATUS.STATUS_ACCEPTED);
+                if (subscription.code === 'private self-test') assert.equal(update.rdoc.score, 100);
+                else assert.equal(update.rdoc.score, undefined, '正式记录仍遵守比赛的分数展示规则');
+                socket.terminate();
+            }
             if (ending === 'early') {
                 await participant.post(`/d/${domainId}/contest/${tid}`).send({ operation: 'early_end' }).expect(302);
             } else await contest.edit(domainId, tid, { endAt: new Date(Date.now() - 1000) });

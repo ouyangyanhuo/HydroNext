@@ -1,4 +1,4 @@
-import { Badge, Card, Code, Group, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
+import { Alert, Badge, Card, Code, Group, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
@@ -277,6 +277,11 @@ export default function RecordDetailPage() {
   return (
     <Stack gap="lg" className="hydro-record-detail">
       {error && <Text c="red" size="sm">{error}</Text>}
+      {wsUpdate?.error && (
+        <Alert color="orange" title={t('Live results disconnected')} role="alert">
+          {t('Showing the last received results. Check your connection and proctor authentication; refresh the page if needed.')}
+        </Alert>
+      )}
       <Card withBorder p="xl" className="hydro-record-hero overflow-hidden">
         <Group justify="space-between" align="center" gap="sm" mb="sm" wrap="wrap">
           <Group gap="xs">

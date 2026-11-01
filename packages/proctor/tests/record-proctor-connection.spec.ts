@@ -17,13 +17,20 @@ function load(path: string, mocks: Record<string, any>) {
     });
     return module.exports;
 }
-function fixture(options: { pretest?: boolean, hidden?: boolean, owner?: boolean, attend?: boolean, wrongProblem?: boolean } = {}) {
+function fixture(options: {
+    pretest?: boolean;
+    proctor?: boolean;
+    hidden?: boolean;
+    owner?: boolean;
+    attend?: boolean;
+    wrongProblem?: boolean;
+} = {}) {
     const rid = new ObjectId();
     const tid = new ObjectId();
     const rdoc = { _id: rid, uid: options.owner ? 7 : 8, domainId: 'exam', pid: 1,
         contest: options.pretest ? new ObjectId('000000000000000000000000') : tid,
         pretestContest: options.pretest ? tid : undefined, status: 1, code: 'secret', compilerTexts: ['private'] };
-    const tdoc = { docId: tid, pids: [options.wrongProblem ? 2 : 1], proctorEnabled: !options.pretest, allowTeam: true,
+    const tdoc = { docId: tid, pids: [options.wrongProblem ? 2 : 1], proctorEnabled: options.proctor ?? !options.pretest, allowTeam: true,
         endAt: new Date(Date.now() + 60000) };
     const calls: any[] = [];
     let expired = false;
@@ -74,6 +81,24 @@ test('ordinary participants receive their own hidden-contest pretest results, ne
         await assert.rejects(new denied.RecordDetailConnectionHandler().prepare('exam', denied.rid, true));
         assert.equal(denied.calls.some((call) => call[0] === 'send'), false);
     }
+});
+
+test('普通参赛者的监考自测必须携带个人证明，认证有效时持续返回私有结果', async () => {
+    const f = fixture({ pretest: true, proctor: true, hidden: true, owner: true });
+    await assert.rejects(new f.RecordDetailConnectionHandler().prepare('exam', f.rid, true));
+    assert.equal(f.calls.some((call) => call[0] === 'send'), false);
+    const handler = new f.RecordDetailConnectionHandler();
+    handler.request.headers = { 'x-proctor-token': 'token', 'x-proctor-proof': 'proof' };
+    await handler.prepare('exam', f.rid, true);
+    handler.throttleSend.cancel();
+    await handler.sendUpdate({ ...f.rdoc, status: 1, compilerTexts: ['latest output'] });
+    assert.equal(f.calls.find((call) => call[0] === 'auth')[5], '/d/exam/record-detail-conn');
+    assert.equal(f.calls.filter((call) => call[0] === 'send').at(-1)[1].rdoc.compilerTexts[0], 'latest output');
+    f.calls.length = 0;
+    f.expire();
+    await handler.sendUpdate(f.rdoc);
+    assert.equal(f.calls.some((call) => call[0] === 'send'), false);
+    assert.equal(f.calls[0][1], 4002);
 });
 
 test('队友实时记录连接必须先验证个人证明，推送前过期则关闭且不发送代码', async () => {

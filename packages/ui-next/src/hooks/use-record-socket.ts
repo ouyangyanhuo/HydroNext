@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useSessionStore } from '@/stores/session';
 import { buildRecordSocketUrl } from '@/utils/record-socket-url';
+import { pageDomainPath } from '@/utils/websocket-url';
 import { useWebSocket } from './use-websocket';
 
 interface RecordUpdate {
@@ -21,7 +22,8 @@ interface RecordUpdate {
  */
 export function useRecordSocket(rid: string | undefined) {
   const domainId = useSessionStore((state) => state.ui.domainId);
-  const context = `${domainId}/${rid || ''}`;
+  const domainPath = typeof window === 'undefined' ? '' : pageDomainPath(window.location.pathname);
+  const context = `${domainId}${domainPath}/${rid || ''}`;
   const [update, setUpdate] = useState<{ context: string, record: RecordUpdate } | null>(null);
   const socketUrl = buildRecordSocketUrl(rid, domainId);
 
@@ -37,18 +39,23 @@ export function useRecordSocket(rid: string | undefined) {
     });
   }, [context, rid]);
 
-  const handleClose = useCallback((event?: CloseEvent) => {
-    if (!event || ![1008, 4000, 4002].includes(event.code)) return;
+  const handleFailure = useCallback(() => {
     setUpdate((prev) => prev?.context === context && prev.record.error ? prev : {
       context,
       record: { ...(prev?.context === context ? prev.record : {}), error: { name: 'RecordConnectionError' } },
     });
   }, [context]);
 
+  const handleClose = useCallback((event?: CloseEvent) => {
+    if (event?.code !== 4001) handleFailure();
+  }, [handleFailure]);
+
   useWebSocket({
     url: socketUrl,
+    domainPath,
     onMessage: handleMessage,
     onClose: handleClose,
+    onError: handleFailure,
     // A reconnect obtains the current snapshot; terminal 4001/Ended stays closed.
     autoReconnect: true,
     reconnectInterval: 5000,

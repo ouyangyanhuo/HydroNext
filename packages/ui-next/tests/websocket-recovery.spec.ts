@@ -27,6 +27,8 @@ const { act, createElement: h, StrictMode } = require('react');
 const { createRoot } = require('react-dom/client');
 
 async function fixture(options: Record<string, any> = {}, record = false, strict = false) {
+    const previousUrl = dom.window.location.href;
+    if (options.pageUrl) dom.reconfigure({ url: options.pageUrl });
     let now = 0;
     let nextTimer = 0;
     const timers = new Map<number, { at: number, interval: number, callback: () => void }>();
@@ -74,7 +76,7 @@ async function fixture(options: Record<string, any> = {}, record = false, strict
         receive(data: string) { this.onmessage?.({ data }); }
         end(code = 1006) { this.readyState = FakeSocket.CLOSED; this.onclose?.({ code }); }
     }
-    let ui = { ws_prefix: '/d/exam/', domainId: 'exam' };
+    let ui = { ws_prefix: options.prefix ?? '/d/exam/', domainId: options.domain ?? 'exam' };
     const session = { useSessionStore: (selector: any) => selector({ ui }) };
     function load(path: string, mocks: Record<string, any>) {
         const module = { exports: {} as any };
@@ -86,10 +88,12 @@ async function fixture(options: Record<string, any> = {}, record = false, strict
         });
         return module.exports;
     }
-    const socketHook = load('../src/hooks/use-websocket.ts', { '@/stores/session': session });
+    const socketUrls = load('../src/utils/websocket-url.ts', {});
+    const socketHook = load('../src/hooks/use-websocket.ts', { '@/stores/session': session, '@/utils/websocket-url': socketUrls });
     const recordHook = load('../src/hooks/use-record-socket.ts', {
         '@/stores/session': session, './use-websocket': socketHook,
         '@/utils/record-socket-url': load('../src/utils/record-socket-url.ts', {}),
+        '@/utils/websocket-url': socketUrls,
     });
     let rid = '1234567890abcdef12345678';
     let result: any;
@@ -143,7 +147,8 @@ async function fixture(options: Record<string, any> = {}, record = false, strict
             // Drop missed interval ticks as browsers do; the next tick checks elapsed time.
             for (const entry of timers.values()) if (entry.interval) entry.at = now + entry.interval;
         },
-        async render(next: { prefix?: string, domain?: string, rid?: string, options?: Record<string, any> } = {}) {
+        async render(next: { prefix?: string, domain?: string, rid?: string, pageUrl?: string, options?: Record<string, any> } = {}) {
+            if (next.pageUrl) dom.reconfigure({ url: next.pageUrl });
             ui = { ws_prefix: next.prefix ?? ui.ws_prefix, domainId: next.domain ?? ui.domainId };
             rid = next.rid ?? rid;
             props = { ...props, ...next.options };
@@ -152,6 +157,7 @@ async function fixture(options: Record<string, any> = {}, record = false, strict
         async close() {
             await act(async () => root.unmount());
             host.remove();
+            dom.reconfigure({ url: previousUrl });
         },
     };
 }
@@ -429,7 +435,7 @@ test('record subscriptions recover their current snapshot, stop on Ended and nev
         await f.event('online');
         await f.advance(10_000);
         assert.equal(f.sockets.length, 2);
-        await f.render({ domain: 'other', prefix: '/d/other/' });
+        await f.render({ domain: 'other', prefix: '/d/other/', pageUrl: 'https://oj.example/d/other/p/1' });
         assert.equal(f.result, null);
         await f.open();
         await f.receive('{"rdoc":{"_id":"1234567890abcdef12345678","status":0}}');
@@ -442,6 +448,37 @@ test('record subscriptions recover their current snapshot, stop on Ended and nev
         assert.equal(f.result, null);
         await f.receive('{"rdoc":{"_id":"abcdef1234567890abcdef12","status":1}}');
         assert.equal(f.result.status, 1);
+    } finally { await f.close(); }
+});
+
+test('记录连接在根 WebSocket 配置下保留页面域路径，重连也沿用相同的认证路径', async () => {
+    const f = await fixture({ prefix: '/', pageUrl: 'https://oj.example/d/exam/p/1' }, true);
+    try {
+        assert.equal(new URL(f.sockets[0].url).pathname, '/d/exam/record-detail-conn');
+        await f.open();
+        await f.receive('{"rdoc":{"_id":"1234567890abcdef12345678","status":0}}');
+        await f.end();
+        assert.equal(f.result.error.name, 'RecordConnectionError');
+        await f.advance(5000);
+        assert.equal(f.sockets[1].url, f.sockets[0].url);
+        await f.open();
+        await f.receive('{"rdoc":{"_id":"1234567890abcdef12345678","status":1,"score":100}}');
+        assert.equal(f.result.score, 100);
+        assert.equal(f.result.error, undefined);
+        await f.end(4001);
+        assert.equal(f.result.error, undefined, '评测结束的正常关闭不显示断线错误');
+    } finally { await f.close(); }
+});
+
+test('握手直接失败也会显示记录连接错误，重连成功后自动清除', async () => {
+    const f = await fixture({ prefix: '/' }, true);
+    try {
+        await act(async () => f.sockets[0].onerror?.(new dom.window.Event('error')));
+        assert.equal(f.result.error.name, 'RecordConnectionError');
+        await f.advance(5000);
+        await f.open();
+        await f.receive('{"rdoc":{"_id":"1234567890abcdef12345678","status":1}}');
+        assert.equal(f.result.error, undefined);
     } finally { await f.close(); }
 });
 
