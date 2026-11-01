@@ -279,7 +279,7 @@ export default function RecordDetailPage() {
       {error && <Text c="red" size="sm">{error}</Text>}
       {wsUpdate?.error && (
         <Alert color="orange" title={t('Live results disconnected')} role="alert">
-          {t('Showing the last received results. Check your connection and proctor authentication; refresh the page if needed.')}
+          {t('Showing the last received results. Check your network connection and access permissions; refresh the page if needed.')}
         </Alert>
       )}
       <Card withBorder p="xl" className="hydro-record-hero overflow-hidden">
