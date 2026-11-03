@@ -147,7 +147,8 @@
   --hydro-scrollbar-track: transparent;
 
   /* Typography & Timing */
-  --hydro-font-serif: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, 'Source Serif 4', Georgia, serif;
+  /* Prefer the original local serif faces, with bundled Noto as the CJK fallback. */
+  --hydro-font-serif: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, 'Noto Serif SC Variable', 'Noto Serif SC', Georgia, serif;
   --hydro-font-family: var(--hydro-font-serif);
   --hydro-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   --hydro-weight-regular: 400;

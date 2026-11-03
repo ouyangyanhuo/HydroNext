@@ -29,6 +29,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource-variable/noto-serif-sc": "5.3.1",
     "@mantine/core": "^9.3.1",
     "@mantine/hooks": "^9.3.1",
     "@mantine/notifications": "^9.3.1",

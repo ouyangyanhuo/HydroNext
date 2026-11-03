@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/noto-serif-sc';
 @import './tokens.css';
 @import './select.css';
 @import './typography.css';

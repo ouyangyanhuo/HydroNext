@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { buildSync } from 'esbuild';
 import { test } from 'node:test';
@@ -45,9 +45,42 @@ test('dark medium weights are reduced while light, regular and bold weights are 
         assert.equal(tokens.get('--hydro-weight-regular'), '400');
         assert.equal(tokens.get('--hydro-weight-bold'), '700');
         assert.equal(tokens.get('--hydro-font-family'), 'var(--hydro-font-serif)');
-        assert.match(tokens.get('--hydro-font-serif')!, /Georgia, serif$/);
+        assert.equal(tokens.get('--hydro-font-serif'), [
+            "'Iowan Old Style'", "'Palatino Linotype'", "'URW Palladio L'", 'P052',
+            "'Noto Serif SC Variable'", "'Noto Serif SC'", 'Georgia', 'serif',
+        ].join(', '));
         assert.match(tokens.get('--hydro-font-mono')!, /monospace$/);
     }
+});
+
+test('the serif fallback bundles Noto for Chinese and Western glyphs without external font requests', () => {
+    const imports: string[] = [];
+    postcss.parse(readStyle('tailwind.css')).walkAtRules('import', (rule) => { imports.push(rule.params); });
+    assert.ok(imports.includes("'@fontsource-variable/noto-serif-sc'"));
+    const fontSheet = pathToFileURL(require.resolve('@fontsource-variable/noto-serif-sc/index.css'));
+    const ranges: [number, number][] = [];
+    let faces = 0;
+    postcss.parse(readFileSync(fontSheet, 'utf8')).walkAtRules('font-face', (rule) => {
+        const declarations = new Map<string, string>();
+        rule.walkDecls((decl) => { declarations.set(decl.prop, decl.value); });
+        assert.equal(declarations.get('font-family'), "'Noto Serif SC Variable'");
+        assert.equal(declarations.get('font-weight'), '200 900');
+        assert.equal(declarations.get('font-display'), 'swap');
+        const src = declarations.get('src')!.match(/url\((\.\/files\/[^)]+\.woff2)\)/)?.[1];
+        assert.ok(src, 'font files must be local, bundled WOFF2 assets');
+        assert.equal(readFileSync(new URL(src, fontSheet)).subarray(0, 4).toString(), 'wOF2');
+        for (const match of declarations.get('unicode-range')!.matchAll(/U\+([\dA-F]+)(?:-([\dA-F]+))?/gi)) {
+            ranges.push([Number.parseInt(match[1], 16), Number.parseInt(match[2] || match[1], 16)]);
+        }
+        faces++;
+    });
+    assert.ok(faces > 1, 'Chinese glyphs should be split into on-demand subsets');
+    for (const char of '中文题目训练比赛提交记录，。“”ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789éñß') {
+        const codepoint = char.codePointAt(0)!;
+        assert.ok(ranges.some(([min, max]) => codepoint >= min && codepoint <= max), `Missing glyph range: ${char}`);
+    }
+    const bundledLicense = readFileSync(new URL('../pub/fonts/noto-serif-sc-LICENSE.txt', import.meta.url), 'utf8');
+    assert.equal(bundledLicense.trim(), readFileSync(new URL('LICENSE', fontSheet), 'utf8').trim());
 });
 
 test('Tailwind utilities and both Mantine theme factories use the semantic weights', () => {
@@ -65,6 +98,8 @@ test('Tailwind utilities and both Mantine theme factories use the semantic weigh
     runInNewContext(built.outputFiles[0].text, { module, exports: module.exports, require });
     const { theme, createDynamicTheme } = module.exports;
     for (const current of [theme, createDynamicTheme('#336699').theme]) {
+        assert.equal(current.fontFamily, 'var(--hydro-font-family)');
+        assert.equal(current.headings.fontFamily, 'var(--hydro-font-family)');
         assert.equal(current.components.Button.defaultProps.fw, 'var(--hydro-weight-semibold)');
         assert.equal(current.components.Button.defaultProps.size, 'sm');
         assert.equal(current.headings.fontWeight, '700');
