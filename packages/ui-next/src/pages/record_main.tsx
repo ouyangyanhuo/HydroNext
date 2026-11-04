@@ -1,4 +1,4 @@
-import { Badge, Group, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Group, Stack, Text, Title } from '@mantine/core';
 import {
   IconFilter, IconHistory, IconRefresh,
 } from '@tabler/icons-react';
@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { ShortSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
+import { RecordFilterSelect } from '@/components/record/record-filter-select';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS_TEXTS } from '@/components/record/status-map';
 import { usePageData } from '@/context/page-data';
@@ -18,6 +19,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { useSessionStore } from '@/stores/session';
+import { recordFilterOptions, searchRecordFilterOptions } from '@/utils/record-filter-options';
 import { formatScore, mergeLiveRecord } from '@/utils/record-list';
 import { formatUserName } from '@/utils/user-name';
 
@@ -50,6 +52,18 @@ function RecordMainContent({ args }: { args: any }) {
   const [status, setStatus] = useState(
     typeof args.filterStatus === 'number' ? String(args.filterStatus) : ALL_FILTER,
   );
+  const userOptions = useMemo(() => recordFilterOptions('user', Object.values(initialUdict)), [initialUdict]);
+  const problemOptions = useMemo(() => recordFilterOptions('problem', Object.values(initialPdict)), [initialPdict]);
+  const contestOptions = useMemo(() => recordFilterOptions('contest', args.tdoc ? [args.tdoc] : []), [args.tdoc]);
+  const searchUsers = useCallback((query: string, signal: AbortSignal) => (
+    searchRecordFilterOptions('user', query, domainId, buildUrl, signal)
+  ), [buildUrl, domainId]);
+  const searchProblems = useCallback((query: string, signal: AbortSignal) => (
+    searchRecordFilterOptions('problem', query, domainId, buildUrl, signal)
+  ), [buildUrl, domainId]);
+  const searchContests = useCallback((query: string, signal: AbortSignal) => (
+    searchRecordFilterOptions('contest', query, domainId, buildUrl, signal)
+  ), [buildUrl, domainId]);
 
   const languageOptions = useMemo(() => {
     const configuredLangs = args.langs || (window as any).LANGS || {};
@@ -285,14 +299,30 @@ function RecordMainContent({ args }: { args: any }) {
           </div>
 
           <div className="hydro-record-filter__fields">
-            <TextInput
+            <RecordFilterSelect
+              key={`user-${domainId}`}
               label={t('By Username / UID')}
               value={uidOrName}
-              onChange={(event) => setUidOrName(event.currentTarget.value)}
-              autoComplete="off"
+              onChange={setUidOrName}
+              options={userOptions}
+              loadOptions={searchUsers}
             />
-            <TextInput label={t('By Problem')} value={pid} onChange={(event) => setPid(event.currentTarget.value)} />
-            <TextInput label={t('By Contest')} value={tid} onChange={(event) => setTid(event.currentTarget.value)} />
+            <RecordFilterSelect
+              key={`problem-${domainId}`}
+              label={t('By Problem')}
+              value={pid}
+              onChange={setPid}
+              options={problemOptions}
+              loadOptions={searchProblems}
+            />
+            <RecordFilterSelect
+              key={`contest-${domainId}`}
+              label={t('By Contest')}
+              value={tid}
+              onChange={setTid}
+              options={contestOptions}
+              loadOptions={searchContests}
+            />
             <ShortSelect
               w="100%"
               size="sm"
@@ -337,7 +367,9 @@ function RecordMainContent({ args }: { args: any }) {
 
 export default function RecordMainPage() {
   const { args } = usePageData();
+  const domainId = useSessionStore((s) => s.ui.domainId);
   const pageStateKey = [
+    domainId,
     args.page,
     args.limit,
     args.filterUidOrName,
