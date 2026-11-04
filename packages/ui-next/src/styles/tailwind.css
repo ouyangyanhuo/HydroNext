@@ -43,21 +43,6 @@
   }
 }
 
-@keyframes hydro-ambient-breathe-secondary {
-  0% {
-    opacity: 0.35;
-    transform: translate(-50%, -50%) scale(1) rotate(0deg);
-  }
-  50% {
-    opacity: 0.48;
-    transform: translate(-52%, -48%) scale(1.06) rotate(-4deg);
-  }
-  100% {
-    opacity: 0.35;
-    transform: translate(-50%, -50%) scale(1) rotate(0deg);
-  }
-}
-
 @keyframes hydro-ambient-ripple-wave {
   0% {
     opacity: 0;
@@ -227,11 +212,6 @@ a {
   left: clamp(220px, 72vw, calc(100vw - 90px));
 }
 
-.hydro-ambient__origin--secondary {
-  bottom: clamp(90px, 18vh, 240px);
-  left: clamp(60px, 14vw, 240px);
-}
-
 .hydro-ambient__wash {
   position: absolute;
   top: 50%;
@@ -252,18 +232,6 @@ a {
   animation:
     hydro-ambient-bloom 3.2s var(--hydro-ease-out) 120ms forwards,
     hydro-ambient-breathe-primary 10s ease-in-out 3.2s infinite;
-}
-
-.hydro-ambient__wash--secondary {
-  width: clamp(280px, 44vw, 560px);
-  aspect-ratio: 1.35;
-  background:
-    radial-gradient(circle at 48% 52%, var(--hydro-ambient-secondary), transparent 56%),
-    radial-gradient(circle at 35% 42%, var(--hydro-ambient-primary), transparent 64%);
-  transform: translate(-50%, -50%) scale(1);
-  animation:
-    hydro-ambient-bloom 3.6s var(--hydro-ease-out) 300ms forwards,
-    hydro-ambient-breathe-secondary 12s ease-in-out 3.6s infinite;
 }
 
 .hydro-ambient__ripple {
@@ -293,12 +261,6 @@ a {
   width: clamp(270px, 46vw, 600px);
   aspect-ratio: 1;
   animation: hydro-ambient-ripple-wave 6.2s var(--hydro-ease-out) 1300ms forwards;
-}
-
-.hydro-ambient__ripple--counter {
-  width: clamp(170px, 30vw, 400px);
-  aspect-ratio: 1;
-  animation: hydro-ambient-ripple-wave 6.8s var(--hydro-ease-out) 1800ms forwards;
 }
 
 .hydro-ambient__standing {
@@ -5140,16 +5102,10 @@ a {
     top: 130px;
     left: calc(100vw - 64px);
   }
-
-  .hydro-ambient__origin--secondary {
-    bottom: 60px;
-    left: 24px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hydro-ambient__wash--primary,
-  .hydro-ambient__wash--secondary {
+  .hydro-ambient__wash--primary {
     opacity: 0.42;
     transform: translate(-50%, -50%) scale(1);
     animation: none !important;

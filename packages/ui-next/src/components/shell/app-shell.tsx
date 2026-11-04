@@ -20,10 +20,6 @@ export function AppShell({ children }: AppShellProps) {
           <span className="hydro-ambient__ripple hydro-ambient__ripple--2" />
           <span className="hydro-ambient__standing" />
         </div>
-        <div className="hydro-ambient__origin hydro-ambient__origin--secondary">
-          <span className="hydro-ambient__wash hydro-ambient__wash--secondary" />
-          <span className="hydro-ambient__ripple hydro-ambient__ripple--counter" />
-        </div>
       </div>
       <header className="sticky top-0 z-50">
         <TopNav />
