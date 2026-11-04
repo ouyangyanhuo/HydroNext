@@ -45,6 +45,12 @@ test('modals in problem_detail and contest_detail do not use centered layout', (
     assert.equal(registerModalTag.includes('centered'), false);
 });
 
+test('homepage problem list box and recent contests box have consistent shadow intensity', () => {
+    const css = readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8');
+    assert.equal(css.includes('.hydro-data-panel--problems {\n  box-shadow: var(--hydro-shadow-md);'), false);
+    assert.match(css, /\.hydro-data-panel\s*\{[^}]*box-shadow:\s*var\(--hydro-shadow-sm\);/);
+});
+
 async function mountHomepage(
     args: any = {}, user: any = { _id: 0, perm: 0n }, perms: Record<string, boolean> = {}, realMenu = false, ui: any = {},
 ) {

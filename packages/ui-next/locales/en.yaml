@@ -340,6 +340,9 @@ just now: just now
 '{0}m ago': '{0}m ago'
 '{0}h ago': '{0}h ago'
 '{0}d ago': '{0}d ago'
+'in {0}m': 'in {0}m'
+'in {0}h': 'in {0}h'
+'in {0}d': 'in {0}d'
 Error: Error
 Success: Success
 Warning: Warning

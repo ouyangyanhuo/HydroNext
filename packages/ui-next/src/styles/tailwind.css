@@ -653,10 +653,6 @@ a {
   box-shadow: var(--hydro-shadow-sm);
 }
 
-.hydro-data-panel--problems {
-  box-shadow: var(--hydro-shadow-md);
-}
-
 .hydro-data-panel__header {
   display: flex;
   align-items: center;
