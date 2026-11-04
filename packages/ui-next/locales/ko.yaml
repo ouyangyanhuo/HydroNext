@@ -318,6 +318,7 @@ __langname: 한국어
 'in {0}m': '{0}분 후'
 'in {0}h': '{0}시간 후'
 'in {0}d': '{0}일 후'
+'Notifications': '알림'
 'Error': '오류'
 'Success': '성공'
 'Warning': '경고'

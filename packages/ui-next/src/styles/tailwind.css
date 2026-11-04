@@ -5113,6 +5113,173 @@ a {
   }
 }
 
+/* Stacked Collapsible Toast Notifications */
+.hydro-toast-container {
+  position: fixed;
+  top: clamp(16px, 2.5vw, 24px);
+  left: clamp(16px, 2.5vw, 24px);
+  z-index: 1000;
+  width: min(calc(100vw - 32px), 360px);
+  pointer-events: none;
+}
+
+.hydro-toast-stack {
+  position: relative;
+  width: 100%;
+}
+
+.hydro-toast-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-lg);
+  background: var(--hydro-surface);
+  box-shadow: none !important;
+  box-sizing: border-box;
+  transform-origin: top center;
+  user-select: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.2s ease;
+}
+
+.hydro-toast-card--top {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.hydro-toast-card--second {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.hydro-toast-card--third {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.hydro-toast-card--hidden {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hydro-toast-card--dismissing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none !important;
+  z-index: 15;
+}
+
+.hydro-toast-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hydro-toast-icon--green {
+  background: var(--hydro-success-soft);
+  color: var(--hydro-success);
+}
+
+.hydro-toast-icon--red {
+  background: var(--hydro-danger-soft);
+  color: var(--hydro-danger);
+}
+
+.hydro-toast-icon--yellow {
+  background: var(--hydro-warning-soft);
+  color: var(--hydro-warning);
+}
+
+.hydro-toast-icon--blue {
+  background: var(--hydro-primary-soft);
+  color: var(--hydro-primary);
+}
+
+.hydro-toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hydro-toast-title {
+  color: var(--hydro-text);
+  font-size: 0.86rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.hydro-toast-message {
+  color: var(--hydro-text-muted);
+  font-size: 0.80rem;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.hydro-toast-close {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--hydro-radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--hydro-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none !important;
+  flex-shrink: 0;
+  transition: background var(--hydro-duration-fast) var(--hydro-ease-out),
+              color var(--hydro-duration-fast) var(--hydro-ease-out);
+}
+
+.hydro-toast-close:hover {
+  background: var(--hydro-hover);
+  color: var(--hydro-text);
+}
+
+@media (max-width: 640px) {
+  .hydro-toast-container {
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-toast-container,
+  .hydro-toast-card {
+    transition: none !important;
+  }
+}
+
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .hydro-panel,
   .hydro-card,

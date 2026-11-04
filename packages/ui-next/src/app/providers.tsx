@@ -2,7 +2,6 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 
 import { MantineProvider } from '@mantine/core';
-import { Notifications } from '@mantine/notifications';
 import { useEffect, useMemo } from 'react';
 import { HydroNotifications } from '@/components/feedback/hydro-notifications';
 import { useSessionStore } from '@/stores/session';
@@ -81,7 +80,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
       cssVariablesResolver={cssResolver}
       forceColorScheme={colorScheme}
     >
-      <Notifications position="top-left" />
       <HydroNotifications />
       {children}
     </MantineProvider>

@@ -274,6 +274,7 @@ just now: 剛剛
 'in {0}m': '{0} 分鐘後'
 'in {0}h': '{0} 小時後'
 'in {0}d': '{0} 天後'
+Notifications: 通知
 Error: 錯誤
 Success: 成功
 Warning: 警告

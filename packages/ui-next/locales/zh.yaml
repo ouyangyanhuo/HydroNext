@@ -348,6 +348,7 @@ just now: 刚刚
 'in {0}m': '{0} 分钟后'
 'in {0}h': '{0} 小时后'
 'in {0}d': '{0} 天后'
+Notifications: 通知
 Error: 错误
 Success: 成功
 Warning: 警告

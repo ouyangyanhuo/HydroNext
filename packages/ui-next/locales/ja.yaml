@@ -318,6 +318,7 @@ __langname: 日本語
 'in {0}m': '{0}分後'
 'in {0}h': '{0}時間後'
 'in {0}d': '{0}日後'
+'Notifications': '通知'
 'Error': 'エラー'
 'Success': '成功'
 'Warning': '警告'
