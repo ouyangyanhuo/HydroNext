@@ -2905,6 +2905,93 @@ a {
   background: color-mix(in srgb, var(--hydro-surface-muted) 58%, transparent);
 }
 
+/* Problem quick navigation cards with directional hover glide and tactile press */
+.hydro-problem-nav-button {
+  position: relative;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--hydro-radius-md);
+  background-color: color-mix(in srgb, var(--hydro-surface-raised) 72%, var(--hydro-surface-muted));
+  color: var(--hydro-text);
+  text-align: left;
+  transition: border-color var(--hydro-duration-fast) var(--hydro-ease-out),
+              background-color var(--hydro-duration-fast) var(--hydro-ease-out),
+              transform var(--hydro-duration-fast) var(--hydro-ease-out);
+}
+
+.hydro-problem-nav-button:hover {
+  border-color: color-mix(in srgb, var(--hydro-primary) 42%, var(--hydro-border));
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 28%, var(--hydro-surface-raised));
+}
+
+.hydro-problem-nav-button:active {
+  transform: scale(0.985);
+}
+
+.hydro-problem-nav-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hydro-text-muted);
+  flex-shrink: 0;
+  transition: transform var(--hydro-duration-normal) cubic-bezier(0.16, 1, 0.3, 1),
+              color var(--hydro-duration-fast) var(--hydro-ease-out);
+}
+
+.hydro-problem-nav-button:hover .hydro-problem-nav-arrow {
+  color: var(--hydro-primary-strong);
+}
+
+.hydro-problem-nav-button--previous:hover .hydro-problem-nav-arrow--previous {
+  transform: translateX(-4px);
+}
+
+.hydro-problem-nav-button--next:hover .hydro-problem-nav-arrow--next {
+  transform: translateX(4px);
+}
+
+.hydro-problem-nav-button--previous:active .hydro-problem-nav-arrow--previous {
+  transform: translateX(-6px);
+}
+
+.hydro-problem-nav-button--next:active .hydro-problem-nav-arrow--next {
+  transform: translateX(6px);
+}
+
+.hydro-problem-nav-button__label {
+  color: var(--hydro-text);
+  transition: color var(--hydro-duration-fast) var(--hydro-ease-out);
+}
+
+.hydro-problem-nav-button:hover .hydro-problem-nav-button__label {
+  color: var(--hydro-primary-strong);
+}
+
+.hydro-problem-nav-button__target {
+  transition: color var(--hydro-duration-fast) var(--hydro-ease-out);
+}
+
+.hydro-problem-nav-button:hover .hydro-problem-nav-button__target {
+  color: var(--hydro-text-subtle);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-problem-nav-button {
+  background-color: color-mix(in srgb, var(--hydro-surface-raised) 75%, transparent);
+  border-color: var(--hydro-border);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-problem-nav-button:hover {
+  border-color: color-mix(in srgb, var(--hydro-primary) 50%, var(--hydro-border));
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 22%, var(--hydro-surface-raised));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-problem-nav-button,
+  .hydro-problem-nav-arrow {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
 .hydro-data-table__clickable-row {
   cursor: pointer;
 }

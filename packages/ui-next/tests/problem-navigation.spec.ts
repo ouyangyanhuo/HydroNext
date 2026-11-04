@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import postcss from 'postcss';
 import {
     getProblemEditorUrl, getProblemNavigationQuery, getProblemNavigationSource, getRecordProblemQuery, getRecordReturnQuery,
     getSubmissionRecordQuery, resolveProblemNavigation,
@@ -122,4 +124,29 @@ test('training navigation stays inside the specified chapter and excludes unavai
     await assert.rejects(resolveProblemNavigation(options), /no longer in the source list/);
     assert.equal(getProblemNavigationSource({ search: '?nav=training&training=https://evil.example/&chapter=2', buildUrl }), null);
     assert.equal(await resolveProblemNavigation({ ...options, search: '' }), null);
+});
+
+test('problem navigation cards use directional transition motion without shadows or breathing glow', () => {
+    const css = postcss.parse(readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8'));
+    const rules = new Map<string, Record<string, string>>();
+    css.walkRules((rule) => {
+        const values: Record<string, string> = {};
+        rule.walkDecls((decl) => { values[decl.prop] = decl.value; });
+        for (const selector of rule.selectors) rules.set(selector, { ...rules.get(selector), ...values });
+    });
+
+    assert.ok(rules.has('.hydro-problem-nav-button'));
+    assert.ok(rules.has('.hydro-problem-nav-arrow'));
+    assert.equal(rules.get('.hydro-problem-nav-button--previous:hover .hydro-problem-nav-arrow--previous')?.transform, 'translateX(-4px)');
+    assert.equal(rules.get('.hydro-problem-nav-button--next:hover .hydro-problem-nav-arrow--next')?.transform, 'translateX(4px)');
+    assert.equal(rules.get('.hydro-problem-nav-button--previous:active .hydro-problem-nav-arrow--previous')?.transform, 'translateX(-6px)');
+    assert.equal(rules.get('.hydro-problem-nav-button--next:active .hydro-problem-nav-arrow--next')?.transform, 'translateX(6px)');
+    assert.equal(rules.get('.hydro-problem-nav-button:active')?.transform, 'scale(0.985)');
+
+    for (const [selector, decls] of rules.entries()) {
+        if (selector.includes('hydro-problem-nav')) {
+            assert.equal(decls['box-shadow'], undefined, `No box-shadow allowed in ${selector}`);
+            assert.equal(Boolean(decls.animation?.includes('pulse')), false, `No pulse animations allowed in ${selector}`);
+        }
+    }
 });
