@@ -2333,6 +2333,28 @@ a {
   text-overflow: clip;
 }
 
+/* Status badge uniform equal-width benchmarked on "运行时错误" (5 CJK glyphs) */
+.hydro-record-status-badge--equal-width,
+.hydro-record-list .hydro-record-status-badge {
+  width: calc(5.2em + 2 * var(--badge-padding-x, 8px));
+  min-width: calc(5.2em + 2 * var(--badge-padding-x, 8px));
+  max-width: calc(5.2em + 2 * var(--badge-padding-x, 8px));
+  box-sizing: border-box;
+  justify-content: center;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+.hydro-record-status-badge--equal-width .mantine-Badge-label,
+.hydro-record-list .hydro-record-status-badge .mantine-Badge-label {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
 .hydro-record-list .hydro-data-table td {
   height: 56px;
   vertical-align: middle;

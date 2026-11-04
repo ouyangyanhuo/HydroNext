@@ -161,7 +161,7 @@ function RecordMainContent({ args }: { args: any }) {
       key: 'status',
       title: t('Status'),
       width: 140,
-      render: (r: any) => <RecordStatusBadge status={r.status} size="xs" />,
+      render: (r: any) => <RecordStatusBadge status={r.status} size="xs" equalWidth />,
     },
     {
       key: 'uid',

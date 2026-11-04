@@ -27,17 +27,35 @@ const STATUS_CONFIG: Record<number, { label: string, color: string }> = {
 interface RecordStatusBadgeProps {
   status?: number;
   size?: 'xs' | 'sm' | 'md' | 'lg';
+  equalWidth?: boolean;
+  className?: string;
 }
 
-export function RecordStatusBadge({ status, size = 'sm' }: RecordStatusBadgeProps) {
+export function RecordStatusBadge({
+  status,
+  size = 'sm',
+  equalWidth = false,
+  className,
+}: RecordStatusBadgeProps) {
   const { t } = useI18n();
   const config = status == null
     ? { label: 'Unknown', color: 'gray' }
     : STATUS_CONFIG[status] || { label: `Unknown(${status})`, color: 'gray' };
+  const text = t(config.label);
 
   return (
-    <Badge color={config.color} size={size} variant="light">
-      {t(config.label)}
+    <Badge
+      color={config.color}
+      size={size}
+      variant="light"
+      title={text}
+      className={[
+        'hydro-record-status-badge',
+        equalWidth ? 'hydro-record-status-badge--equal-width' : '',
+        className,
+      ].filter(Boolean).join(' ')}
+    >
+      {text}
     </Badge>
   );
 }

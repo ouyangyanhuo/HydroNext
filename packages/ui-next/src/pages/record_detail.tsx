@@ -133,7 +133,7 @@ function CaseTable({ cases, subtasks }: { cases: any[], subtasks: Record<string,
                     </Table.Td>
                     <Table.Td>
                       <Group gap="xs">
-                        {subtask?.status != null && <RecordStatusBadge status={subtask.status} size="xs" />}
+                        {subtask?.status != null && <RecordStatusBadge status={subtask.status} size="xs" equalWidth />}
                         {subtask?.score != null && <Badge variant="light">{subtask.score}</Badge>}
                       </Group>
                     </Table.Td>
@@ -152,7 +152,7 @@ function CaseTable({ cases, subtasks }: { cases: any[], subtasks: Record<string,
                       </Table.Td>
                       <Table.Td>
                         <Group gap="xs">
-                          <RecordStatusBadge status={item.status} size="xs" />
+                          <RecordStatusBadge status={item.status} size="xs" equalWidth />
                           {item.score != null && <Badge variant="light" color="gray">{item.score}</Badge>}
                         </Group>
                         <CaseMessage message={item.message} />
