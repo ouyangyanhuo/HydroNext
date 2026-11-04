@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { buildSync, transformSync } from 'esbuild';
 import { after, test } from 'node:test';
+import postcss from 'postcss';
 import { mergeSelectClasses, shortSelectDimension } from '../src/components/common/select-styles.ts';
 import * as trainingPlan from '../src/utils/training-plan.ts';
 
@@ -61,7 +62,7 @@ after(() => {
 const React = require('react');
 const { act, createElement: h } = React;
 const { createRoot } = require('react-dom/client');
-const { MantineProvider } = require('@mantine/core');
+const { MantineProvider, ScrollArea } = require('@mantine/core');
 const componentEntry = fileURLToPath(new URL('../src/components/common/select.tsx', import.meta.url));
 const built = buildSync({ entryPoints: [componentEntry], bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external' });
 const module = { exports: {} as any };
@@ -183,6 +184,86 @@ async function mount(Component: any, props: any, theme = 'light') {
         },
     };
 }
+
+test('long select values and default option labels use ellipsis without changing IDs, sizing or editable search', async () => {
+    const css = postcss.parse(readFileSync(new URL('../src/styles/select.css', import.meta.url), 'utf8'));
+    const rules = new Map<string, Record<string, string>>();
+    css.walkRules((rule) => {
+        const values: Record<string, string> = {};
+        rule.walkDecls((decl) => { values[decl.prop] = decl.value; });
+        rules.set(rule.selector, values);
+    });
+    for (const selector of ['.hydro-select input.hydro-select__input', '.hydro-select__option > span:only-of-type']) {
+        const values = rules.get(selector)!;
+        assert.equal(values['min-width'], '0');
+        assert.equal(values.overflow, 'hidden');
+        assert.equal(values['text-overflow'], 'ellipsis');
+        assert.equal(values['white-space'], 'nowrap');
+        assert.equal(values['font-size'], undefined);
+        assert.equal(values.height, undefined);
+    }
+    assert.equal(rules.get('.hydro-select__option')!.display, 'flex');
+    assert.equal(rules.get('.hydro-select__option')!['flex-wrap'], 'nowrap');
+    assert.equal(rules.get('.hydro-select__option > span:only-of-type')!.flex, '1 1 0px');
+    assert.equal(rules.get('.hydro-select__option > span:only-of-type')!.width, '0');
+    assert.equal(rules.get('.hydro-select__option > span:only-of-type')!['padding-inline-end'], '0.25em');
+    assert.equal(rules.get('.hydro-select__option > svg')!.flex, 'none');
+    const scrollSelector = '.hydro-select__dropdown.mantine-Combobox-dropdown .mantine-ScrollArea-content';
+    const scrollContent = rules.get(scrollSelector)!;
+    assert.equal(scrollContent.display, 'block');
+    assert.equal(scrollContent.width, '100%');
+    assert.equal(scrollContent['min-width'], '0');
+    assert.equal(scrollContent['max-width'], '100%');
+    let autosizeRule = '';
+    let constraintRule = '';
+    postcss.parse(readFileSync(require.resolve('@mantine/core/styles.css'), 'utf8')).walkRules((rule) => {
+        if (!rule.selector.includes(ScrollArea.classes.root) || !rule.selector.includes(ScrollArea.classes.content)) return;
+        rule.walkDecls('min-width', (decl) => { if (decl.value === 'min-content') autosizeRule = rule.toString(); });
+    });
+    css.walkRules((rule) => { if (rule.selector === scrollSelector) constraintRule = rule.toString(); });
+    assert.ok(autosizeRule, 'exercise the actual installed library rule, not a mock selector');
+    assert.ok(constraintRule);
+    const markup = `<div class="hydro-select__dropdown mantine-Combobox-dropdown">
+        <div class="${ScrollArea.classes.root}" data-autosize>
+            <div id="content" class="mantine-ScrollArea-content ${ScrollArea.classes.content}"></div>
+        </div></div>`;
+    const previousCss = '.hydro-select__dropdown .mantine-ScrollArea-content { min-width: 0; }';
+    const before = new JSDOM(`<style>${previousCss}\n${autosizeRule}</style>${markup}`);
+    try {
+        assert.equal(before.window.getComputedStyle(before.window.document.querySelector('#content')).minWidth, 'min-content');
+    } finally { before.window.close(); }
+    for (const sheet of [`${constraintRule}\n${autosizeRule}`, `${autosizeRule}\n${constraintRule}`]) {
+        const afterDom = new JSDOM(`<style>${sheet}</style>${markup}`);
+        try {
+            const computed = afterDom.window.getComputedStyle(afterDom.window.document.querySelector('#content'));
+            assert.equal(computed.minWidth, '0px', 'the constraint must survive either stylesheet loading order');
+            assert.equal(computed.display, 'block');
+            assert.equal(computed.width, '100%');
+        } finally { afterDom.window.close(); }
+    }
+    assert.equal(rules.get('.hydro-select input.hydro-select__input')!['box-sizing'], 'border-box');
+    assert.match(rules.get('.hydro-select input.hydro-select__input')!['padding-inline-end'], /var\(--input-padding-inline-end.*\+ 0.75em/);
+    assert.ok(![...rules.values()].some((values) => values['text-overflow'] === 'clip'));
+    const longLabel = '一个超过选择框宽度的题目或比赛名称 An extremely long problem or contest title';
+    for (const Component of [ShortSelect, LongSelect]) {
+        let selected = '';
+        const view = await mount(Component, {
+            w: 90, searchable: false, value: '42', data: [{ value: '42', label: longLabel }, { value: '43', label: `${longLabel} 2` }],
+            onChange: (value: string) => { selected = value; },
+        });
+        try {
+            const input = view.host.querySelector<HTMLInputElement>('input[aria-haspopup="listbox"]')!;
+            assert.equal(input.value, longLabel, 'CSS must not truncate the actual value');
+            await act(async () => input.click());
+            const options = [...document.querySelectorAll<HTMLElement>('.hydro-select__option')];
+            assert.ok(options[0].closest('.mantine-ScrollArea-content'), 'width constraint must match the actual portalled scroll content');
+            assert.equal(options[0].querySelector('span:only-of-type')?.textContent, longLabel);
+            assert.ok(options[0].querySelector('svg'), 'selected option keeps its separate check icon');
+            await act(async () => options[1].click());
+            assert.equal(selected, '43');
+        } finally { await view.close(); }
+    }
+});
 
 test('short select opens portalled options and changes selection in light and dark themes', async () => {
     for (const theme of ['light', 'dark']) {

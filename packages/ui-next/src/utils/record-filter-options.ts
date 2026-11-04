@@ -11,7 +11,7 @@ export function recordFilterOptions(kind: RecordFilterKind, documents: any[]): R
     const value = String(id);
     const label = kind === 'user' ? `${formatUserName(document)} · UID ${value}`
       : kind === 'problem' ? `${document.pid || value} · ${document.title || value}`
-        : `${document.title || value} · ${value}`;
+        : String(document.title || '—');
     options.set(value, { value, label });
   }
   return [...options.values()];

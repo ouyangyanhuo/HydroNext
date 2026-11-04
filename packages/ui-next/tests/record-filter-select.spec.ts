@@ -95,6 +95,8 @@ test('filter lookups use scoped read-only endpoints, minimal projections and can
         await searchRecordFilterOptions('contest', 'Exam', 'team', buildUrl, controller.signal);
         const contests = await searchRecordFilterOptions('contest', '6aeabd86888939840db7a9ed', 'team', buildUrl, controller.signal);
         assert.equal(contests[0].value, '6aeabd86888939840db7a9ed');
+        assert.equal(contests[0].label, 'Exam', 'contest IDs must not appear in the displayed label');
+        assert.equal(recordFilterOptions('contest', [{ docId: '6aeabd86888939840db7a9ed' }])[0].label, '—');
         assert.match(calls[3].url, /^\/d\/team\/contest\/6aeabd86888939840db7a9ed/);
         for (const call of calls) {
             assert.equal(call.init.signal, controller.signal);

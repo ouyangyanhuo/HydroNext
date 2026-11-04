@@ -23,6 +23,16 @@
   transform: none;
 }
 
+/* Truncate displayed values, not labels or the multi-select's pill container. */
+.hydro-select input.hydro-select__input {
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-inline-end: calc(var(--input-padding-inline-end, 12px) + 0.75em);
+}
+
 .hydro-select--short .hydro-select__input {
   height: min(var(--hydro-short-height, var(--input-height, 30px)), 48px);
   min-height: 24px !important;
@@ -64,6 +74,14 @@
   box-shadow: var(--hydro-shadow-lg);
 }
 
+/* Outrank ScrollArea's autosize min-content rule, regardless of stylesheet order. */
+.hydro-select__dropdown.mantine-Combobox-dropdown .mantine-ScrollArea-content {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* Match the actual floating placement, including automatic viewport flips. */
 .hydro-select__dropdown[data-position^='top'] {
   --hydro-select-motion-y: 6px;
@@ -83,9 +101,42 @@
 }
 
 .hydro-select__option {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   border-radius: 7px;
   padding: 9px 10px;
   overflow-wrap: anywhere;
+}
+
+/* Mantine's default option is a label span beside a separate check icon. */
+.hydro-select__option > span:only-of-type {
+  box-sizing: border-box;
+  display: block;
+  /* A percentage basis can fall back to text width in an intrinsic-size parent. */
+  flex: 1 1 0px;
+  width: 0;
+  min-width: 0;
+  max-width: 100%;
+  padding-inline-end: 0.25em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hydro-select__option > svg {
+  flex: none;
+}
+
+/* Custom avatar/description options retain their own truncation and layout. */
+.hydro-select__option > .mantine-Group-root {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .hydro-select__option:not([data-combobox-disabled])[data-combobox-selected],
