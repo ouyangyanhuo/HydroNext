@@ -137,6 +137,10 @@ test('problem navigation cards use directional transition motion without shadows
 
     assert.ok(rules.has('.hydro-problem-nav-button'));
     assert.ok(rules.has('.hydro-problem-nav-arrow'));
+    assert.ok(rules.has('.hydro-problem-nav-skeleton'));
+    assert.ok(rules.has('.hydro-problem-nav-button--empty'));
+    assert.ok(rules.has('.hydro-problem-nav-fade-in'));
+    assert.equal(rules.get('.hydro-problem-nav-button--empty')?.cursor, 'default');
     assert.equal(rules.get('.hydro-problem-nav-button--previous:hover .hydro-problem-nav-arrow--previous')?.transform, 'translateX(-4px)');
     assert.equal(rules.get('.hydro-problem-nav-button--next:hover .hydro-problem-nav-arrow--next')?.transform, 'translateX(4px)');
     assert.equal(rules.get('.hydro-problem-nav-button--previous:active .hydro-problem-nav-arrow--previous')?.transform, 'translateX(-6px)');

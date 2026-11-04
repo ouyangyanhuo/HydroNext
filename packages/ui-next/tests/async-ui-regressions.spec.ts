@@ -656,6 +656,7 @@ test('problem navigation aborts outgoing requests and never displays stale neigh
     });
     const view = await mount(h(ProblemNavigation));
     try {
+        assert.equal(view.host.querySelectorAll('.hydro-problem-nav-skeleton').length, 2);
         assert.doesNotMatch(view.host.textContent!, /Problem List/);
         assert.doesNotMatch(view.host.textContent!, /No other problems/);
         domainId = 'other';
@@ -666,7 +667,8 @@ test('problem navigation aborts outgoing requests and never displays stale neigh
             ok: true, json: async () => ({ pdocs: [{ docId: 2 }, { docId: 4, title: 'New target' }], ppcount: 1 }),
         }));
         assert.match(view.host.textContent!, /New target/);
-        assert.doesNotMatch(view.host.textContent!, /Previous problem/);
+        assert.match(view.host.textContent!, /No previous problem/);
+        assert.doesNotMatch(view.host.textContent!, /(?<!No )Previous problem/);
         assert.match(view.host.textContent!, /Next problem/);
         await act(async () => pending[0].response.resolve({
             ok: true, json: async () => ({ pdocs: [{ docId: 1 }, { docId: 3, title: 'Old target' }], ppcount: 1 }),
@@ -678,7 +680,8 @@ test('problem navigation aborts outgoing requests and never displays stale neigh
             ok: true, json: async () => ({ pdocs: [{ docId: 2 }, { docId: 4 }], ppcount: 1 }),
         }));
         assert.match(view.host.textContent!, /Previous problem/);
-        assert.doesNotMatch(view.host.textContent!, /Next problem/);
+        assert.match(view.host.textContent!, /No next problem/);
+        assert.doesNotMatch(view.host.textContent!, /(?<!No )Next problem/);
         args = { pdoc: { docId: 5 } };
         await view.render(h(ProblemNavigation));
         await act(async () => pending[3].response.resolve({
