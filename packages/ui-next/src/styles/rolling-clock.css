@@ -1,12 +1,22 @@
 .hydro-rolling-clock {
+  --hydro-clock-duration: 760ms;
+  --hydro-clock-easing: cubic-bezier(0.45, 0, 0.25, 1);
+  --hydro-clock-enter: 100%;
+  --hydro-clock-exit: -100%;
   vertical-align: middle;
   line-height: 1.35;
+}
+
+.hydro-rolling-clock[data-direction='down'] {
+  --hydro-clock-enter: -100%;
+  --hydro-clock-exit: 100%;
 }
 
 .hydro-rolling-clock__content {
   display: inline-flex;
   align-items: center;
   white-space: pre;
+  font-kerning: none;
 }
 
 .hydro-rolling-clock__digit {
@@ -19,8 +29,8 @@
 }
 
 .hydro-rolling-clock__digit[data-moving] {
-  -webkit-mask-image: linear-gradient(to bottom, transparent, black 23%, black 77%, transparent);
-  mask-image: linear-gradient(to bottom, transparent, black 23%, black 77%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
 }
 
 .hydro-rolling-clock__glyph {
@@ -31,23 +41,23 @@
 }
 
 .hydro-rolling-clock__glyph--in {
-  animation: hydro-clock-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: hydro-clock-in var(--hydro-clock-duration) var(--hydro-clock-easing) both;
 }
 
 .hydro-rolling-clock__glyph--out {
-  animation: hydro-clock-out 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: hydro-clock-out var(--hydro-clock-duration) var(--hydro-clock-easing) both;
 }
 
 /* Blur only the tiny moving glyphs, never the timer surface or page behind it. */
 @keyframes hydro-clock-in {
-  from { transform: translateY(100%); filter: blur(2px); opacity: 0; }
+  from { transform: translateY(var(--hydro-clock-enter)); filter: blur(1.5px); opacity: 0; }
   65% { filter: blur(0); opacity: 1; }
   to { transform: translateY(0); filter: blur(0); opacity: 1; }
 }
 
 @keyframes hydro-clock-out {
   from { transform: translateY(0); filter: blur(0); opacity: 1; }
-  to { transform: translateY(-100%); filter: blur(2px); opacity: 0; }
+  to { transform: translateY(var(--hydro-clock-exit)); filter: blur(1.5px); opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

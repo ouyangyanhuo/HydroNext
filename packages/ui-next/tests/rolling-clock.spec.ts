@@ -53,10 +53,15 @@ test('clock rolls only changed digits across carry/borrow and exposes a single a
         const first = view.host.querySelector('.hydro-rolling-clock__digit');
         now += 1000;
         await view.render('00:01:00', 60);
-        assert.equal(view.host.querySelectorAll('[data-moving]').length, 3);
+        assert.equal(view.host.querySelectorAll('[data-moving]').length, 2);
+        const seconds = view.host.querySelector('.hydro-rolling-clock__digit--group')!;
+        assert.equal((seconds as HTMLElement).style.width, '2ch');
+        assert.equal(seconds.querySelector('.hydro-rolling-clock__glyph--out')?.textContent, '59');
+        assert.equal(seconds.querySelector('.hydro-rolling-clock__glyph--in')?.textContent, '00');
         assert.equal(view.host.querySelector('.hydro-rolling-clock__digit'), first, 'unchanged columns stay mounted');
         const timer = view.host.querySelector('[role="timer"]')!;
         assert.equal(timer.getAttribute('aria-label'), '00:01:00');
+        assert.equal(timer.getAttribute('data-direction'), 'up');
         assert.equal(timer.getAttribute('aria-live'), 'off');
         assert.equal(timer.firstElementChild?.getAttribute('aria-hidden'), 'true');
         assert.equal((timer as HTMLElement).style.minInlineSize, '8ch');
@@ -66,7 +71,9 @@ test('clock rolls only changed digits across carry/borrow and exposes a single a
         assert.equal(timer.textContent, '00:01:00');
         now += 1000;
         await view.render('00:00:59', 59);
-        assert.equal(view.host.querySelectorAll('[data-moving]').length, 3);
+        assert.equal(view.host.querySelectorAll('[data-moving]').length, 2);
+        assert.equal(timer.getAttribute('data-direction'), 'down');
+        assert.equal(view.host.querySelector('.hydro-rolling-clock__digit--group .hydro-rolling-clock__glyph--in')?.textContent, '59');
         now += 1000;
         await view.render('00:00:58', 58);
         assert.equal(view.host.querySelectorAll('.hydro-rolling-clock__glyph--out').length, 1, 'interrupted transitions never accumulate');
@@ -74,6 +81,15 @@ test('clock rolls only changed digits across carry/borrow and exposes a single a
         assert.equal(view.host.querySelectorAll('[data-moving]').length, 0);
         await view.render('00:00:58', 58, true);
         assert.equal(view.host.querySelectorAll('[data-moving]').length, 0, 'restarting playback must not replay an old transition');
+        await view.render('00:59:59', 3599);
+        now += 1000;
+        await view.render('01:00:00', 3600);
+        assert.equal(view.host.querySelectorAll('[data-moving]').length, 3);
+        assert.equal(view.host.querySelectorAll('.hydro-rolling-clock__digit--group').length, 2);
+        now += 1000;
+        await view.render('00:59:59', 3599);
+        assert.equal(view.host.querySelectorAll('.hydro-rolling-clock__digit--group').length, 2);
+        assert.equal(timer.getAttribute('data-direction'), 'down');
     } finally { await view.close(); }
 });
 
@@ -113,7 +129,11 @@ test('motion styles include edge masks, local glyph blur and a no-animation redu
     const declarations: string[] = [];
     css.walkDecls((decl) => { declarations.push(`${decl.prop}:${decl.value}`); });
     assert.ok(declarations.some((value) => value.startsWith('mask-image:linear-gradient')));
-    assert.ok(declarations.includes('filter:blur(2px)'));
+    assert.ok(declarations.includes('filter:blur(1.5px)'));
+    assert.ok(declarations.includes('--hydro-clock-duration:760ms'));
+    assert.ok(declarations.includes('--hydro-clock-easing:cubic-bezier(0.45, 0, 0.25, 1)'));
+    assert.ok(declarations.includes('transform:translateY(var(--hydro-clock-enter))'));
+    assert.ok(declarations.includes('transform:translateY(var(--hydro-clock-exit))'));
     assert.ok(declarations.includes('width:1ch'));
     assert.ok(!declarations.some((value) => value.startsWith('backdrop-filter:')));
     const media = css.nodes.find((node) => node.type === 'atrule' && node.name === 'media' && node.params === '(prefers-reduced-motion: reduce)');

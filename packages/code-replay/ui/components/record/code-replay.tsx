@@ -197,7 +197,7 @@ export function CodeReplay({
               <RollingClock
                 value={formatReplayTime(cursor.time)}
                 seconds={Math.floor(cursor.time / 1000)}
-                animate={playing && Number(speed) <= 2}
+                animate={playing && Number(speed) <= 1}
                 style={clockStyle}
               />
               <span className="hydro-code-replay__total"> / {formatReplayTime(duration)}</span>
