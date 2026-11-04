@@ -230,6 +230,7 @@ __langname: 한국어
 'Passwords do not match': '비밀번호가 일치하지 않습니다'
 'Invalid email format': '올바르지 않은 이메일 형식입니다'
 'Registration failed': '등록 실패'
+'Too frequent operations of {0} (limit: {2} operations in {1} seconds).': '{0} 작업이 너무 빈번합니다 (제한: {1}초 내 {2}회).'
 'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': '이메일 발송이 너무 빈번합니다 (제한: 60초에 1회).'
 'Logging out...': '로그아웃 중...'
 'Account Deletion Pending': '계정 삭제 대기 중'

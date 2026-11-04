@@ -256,6 +256,7 @@ Send Verification Email: Send Verification Email
 Passwords do not match: Passwords do not match
 Invalid email format: Invalid email format
 Registration failed: Registration failed
+'Too frequent operations of {0} (limit: {2} operations in {1} seconds).': 'Too frequent operations of {0} (limit: {2} operations in {1} seconds).'
 'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': 'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).'
 Logging out...: Logging out...
 Account Deletion Pending: Account Deletion Pending

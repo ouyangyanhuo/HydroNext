@@ -886,6 +886,7 @@ Title: 標題
 Toggle Pretest Panel: 切換自測面板
 Toggle Preview: 切換預覽
 Toggle Records Panel: 切換評測記錄面板
+'Too frequent operations of {0} (limit: {2} operations in {1} seconds).': '{0}操作過於頻繁（限制：{1} 秒內最多 {2} 次）。'
 Total Score: 總分
 Total Time (Seconds): 總耗時 (秒)
 Total Time: 總耗時
@@ -931,6 +932,7 @@ User ID: 使用者 ID
 User will no longer be allowed to join the domain after expiration.: 過期後，使用者將不能加入此域。
 user_detail: 使用者
 user_login: 登入
+user_login_id: 登入
 user_logout: 登出
 user_lostpass: 忘記密碼
 user_register_mail_sent: 註冊郵件已傳送

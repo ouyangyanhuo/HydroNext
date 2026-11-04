@@ -230,6 +230,7 @@ __langname: 日本語
 'Passwords do not match': 'パスワードが一致しません'
 'Invalid email format': 'メールアドレスの形式が正しくありません'
 'Registration failed': '登録失敗'
+'Too frequent operations of {0} (limit: {2} operations in {1} seconds).': '{0}操作が頻繁すぎます（制限：{1}秒に{2}回まで）。'
 'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': 'メール送信が頻繁すぎます（制限：60秒に1回）。'
 'Logging out...': 'ログアウト中...'
 'Account Deletion Pending': 'アカウント削除保留中'

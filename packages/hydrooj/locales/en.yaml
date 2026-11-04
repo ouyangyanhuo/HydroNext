@@ -126,6 +126,7 @@ training_edit: Training Edit
 training_main: Training
 user_detail: User Detail
 user_login: Login
+user_login_id: Login
 user_logout: Logout
 user_lostpass: Lost Password
 user_register: Register

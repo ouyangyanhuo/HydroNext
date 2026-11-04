@@ -63,3 +63,31 @@ test('团队报名冲突指出具体成员及队伍或个人身份，队名重�
     assert.equal(formatErrorMessage({ message: 'A team named {0} already exists in this domain.',
         params: ['D'] }, 'Failed', t), '本域已存在名为“D”的队伍，请使用其他队名。');
 });
+
+test('rate limit errors format with human-readable operation names and i18n', () => {
+    const error = {
+        message: 'Too frequent operations of {0} (limit: {2} operations in {1} seconds).',
+        params: ['user_login_id', 60, 5],
+    };
+    assert.equal(formatErrorMessage(error, 'Rate limited', translator('zh')), '登录操作过于频繁（限制：60 秒内最多 5 次）。');
+    assert.equal(formatErrorMessage(error, 'Rate limited', translator('zh_TW')), '登入操作過於頻繁（限制：60 秒內最多 5 次）。');
+    assert.equal(formatErrorMessage(error, 'Rate limited', translator('ko')), '로그인 작업이 너무 빈번합니다 (제한: 60초 내 5회).');
+    assert.equal(
+        formatErrorMessage(error, 'Rate limited', (key) => key),
+        'Too frequent operations of Login (limit: 5 operations in 60 seconds).',
+    );
+    assert.equal(
+        formatErrorMessage(error, 'Rate limited'),
+        'Too frequent operations of Login (limit: 5 operations in 60 seconds).',
+    );
+
+    const mailError = {
+        message: 'Too frequent operations of {0} (limit: {2} operations in {1} seconds).',
+        params: ['send_mail', 60, 1],
+    };
+    assert.equal(formatErrorMessage(mailError, 'Rate limited', translator('zh')), '发送验证邮件操作过于频繁（限制：60 秒内最多 1 次）。');
+    assert.equal(
+        formatErrorMessage(mailError, 'Rate limited', (key) => key),
+        'Too frequent operations of Send Verification Email (limit: 1 operations in 60 seconds).',
+    );
+});

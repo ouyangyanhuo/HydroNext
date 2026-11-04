@@ -186,6 +186,7 @@ A verification link will be sent to your email.: 驗證連結將傳送至您的�
 Send Verification Email: 傳送驗證郵件
 Passwords do not match: 兩次輸入的密碼不一致
 Registration failed: 註冊失敗
+'Too frequent operations of {0} (limit: {2} operations in {1} seconds).': '{0}操作過於頻繁（限制：{1} 秒內最多 {2} 次）。'
 'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': 郵件傳送過於頻繁（限制：60秒內1次）。
 Logging out...: 正在登出...
 Account Deletion Pending: 帳號註銷待處理

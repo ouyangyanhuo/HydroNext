@@ -709,6 +709,7 @@ Title: 제목
 Toggle Pretest Panel: 프리테스트
 Toggle Preview: 미리보기
 Toggle Records Panel: 점수 목록
+'Too frequent operations of {0} (limit: {2} operations in {1} seconds).': '{0} 작업이 너무 빈번합니다 (제한: {1}초 내 {2}회).'
 Total Score: 총 점수
 Total Time (Seconds): 총 시간 (s)
 Total Time: 총 시간
@@ -746,6 +747,7 @@ User ID: 아이디
 User will no longer be allowed to join the domain after expiration.: 만료 이후, 그룹 참가는 제한됩니다.
 user_detail: 사용자 세부사항
 user_login: 로그인
+user_login_id: 로그인
 user_logout: 로그아웃
 user_lostpass: 비밀번호 분실
 user_register: 회원가입

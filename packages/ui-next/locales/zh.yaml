@@ -260,6 +260,7 @@ Send Verification Email: 发送验证邮件
 Passwords do not match: 两次输入的密码不一致
 Invalid email format: 邮箱格式不正确
 Registration failed: 注册失败
+'Too frequent operations of {0} (limit: {2} operations in {1} seconds).': '{0}操作过于频繁（限制：{1} 秒内最多 {2} 次）。'
 'Too frequent operations of send_mail (limit: 1 operations in 60 seconds).': 邮件发送过于频繁（限制：60秒内1次）。
 Logging out...: 正在退出...
 Account Deletion Pending: 账号注销待处理
