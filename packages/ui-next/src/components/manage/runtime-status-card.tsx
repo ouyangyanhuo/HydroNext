@@ -1,6 +1,7 @@
 import { Badge, Card, Group, SimpleGrid, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { IconClock, IconServer } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
+import { RollingClock } from '@/components/common/rolling-clock';
 import { useI18n } from '@/hooks/use-i18n';
 import { isRuntimeInfo, runtimeDuration } from '@/utils/runtime-info';
 
@@ -37,7 +38,10 @@ export function RuntimeStatusCard({ runtime }: { runtime: unknown }) {
         <Stack gap={6}>
           <Text size="sm" c="dimmed">{t('Continuous uptime')}</Text>
           <Text size="xl" fw={700} style={{ fontVariantNumeric: 'tabular-nums' }} data-runtime-uptime>
-            {t('{days}d {hours}h {minutes}m {seconds}s', duration)}
+            <RollingClock
+              value={t('{days}d {hours}h {minutes}m {seconds}s', duration)}
+              seconds={duration.days * 86400 + duration.hours * 3600 + duration.minutes * 60 + duration.seconds}
+            />
           </Text>
         </Stack>
         <Stack gap={6}>

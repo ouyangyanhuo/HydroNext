@@ -7,6 +7,7 @@ export { EmptyState } from './components/common/empty-state';
 export { FormDialog } from './components/common/form-dialog';
 export { PageHeader } from './components/common/page-header';
 export { Paginator } from './components/common/paginator';
+export { RollingClock, type RollingClockProps } from './components/common/rolling-clock';
 export { LongSelect, ShortSelect, TagMultiSelect } from './components/common/select';
 export { TimeDisplay } from './components/common/time-display';
 export { registerEditorAddon } from './components/editor/addons';

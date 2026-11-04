@@ -31,10 +31,15 @@ test('replay actions show relative/actual times, paste length, and seek to the c
     }
     dom.window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
     const module = { exports: {} as any };
+    const clockModule = { exports: {} as any };
+    runInNewContext(transformSync(readFileSync(new URL('../../ui-next/src/components/common/rolling-clock.tsx', import.meta.url), 'utf8'), {
+        loader: 'tsx', format: 'cjs', jsx: 'automatic',
+    }).code, { module: clockModule, exports: clockModule.exports, require, document: dom.window.document });
     const mocks: Record<string, any> = {
         '../../../replay': replay, '../../../timeline': timeline,
         '@/components/common/button': { Button, ActionIcon, ButtonBase: (props: any) => h('button', props) },
         '@/components/common/select': { ShortSelect: () => null },
+        '@/components/common/rolling-clock': clockModule.exports,
         '@/components/editor/code-editor': { CodeEditor: ({ value }: any) => h('pre', { 'data-testid': 'code' }, value) },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string, value: number) => key.replace('{0}', String(value)) }) },
         './code-replay.css': {},

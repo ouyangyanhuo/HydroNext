@@ -8,6 +8,7 @@ import {
 import { Allotment } from 'allotment';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionIcon, Button, ButtonBase } from '@/components/common/button';
+import { RollingClock } from '@/components/common/rolling-clock';
 import { LongSelect, ShortSelect } from '@/components/common/select';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { STATUS_TEXTS } from '@/components/record/status-map';
@@ -454,7 +455,8 @@ export function Scratchpad({
                     disabled={submissionDisabled || !addonReady || pretesting || submitCooldown > 0}
                     className="hydro-scratchpad-submit-action"
                   >
-                    {submitCooldown ? `${t('Submit Solution')} (${submitCooldown}s)` : t('Submit Solution')}
+                    {t('Submit Solution')}
+                    {submitCooldown > 0 && <> (<RollingClock value={`${submitCooldown}s`} seconds={submitCooldown} />)</>}
                   </Button>
                   <Tooltip label={t('Load Code Template')}>
                     <ActionIcon
@@ -547,7 +549,8 @@ export function Scratchpad({
                               disabled={submissionDisabled || !addonReady || submitting || pretestCooldown > 0}
                               className="hydro-scratchpad-run-action hydro-scratchpad-console__run-action"
                             >
-                              {pretestCooldown ? `${t('Run Self Test')} (${pretestCooldown}s)` : t('Run Self Test')}
+                              {t('Run Self Test')}
+                              {pretestCooldown > 0 && <> (<RollingClock value={`${pretestCooldown}s`} seconds={pretestCooldown} />)</>}
                             </Button>
                           ) : null}
                         </div>

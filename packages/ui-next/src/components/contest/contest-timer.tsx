@@ -1,5 +1,6 @@
 import { Badge, Group, Text } from '@mantine/core';
 import { useEffect, useState } from 'react';
+import { RollingClock } from '@/components/common/rolling-clock';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatContestClock } from '@/utils/contest-problem-time';
 
@@ -39,13 +40,13 @@ export function ContestTimer({ beginAt, endAt, onStatusChange }: ContestTimerPro
         {isRunning ? t('Running') : isUpcoming ? t('Upcoming') : t('Finished')}
       </Badge>
       {isRunning && (
-        <Text size="lg" fw={700} ff="monospace" c="green" className="hydro-clock" style={{ minInlineSize: clockWidth }} role="timer" aria-live="off">
-          {formatContestClock(end - now)}
+        <Text size="lg" fw={700} ff="monospace" c="green" style={{ minInlineSize: clockWidth }}>
+          <RollingClock value={formatContestClock(Math.ceil((end - now) / 1000) * 1000)} seconds={Math.ceil((end - now) / 1000)} />
         </Text>
       )}
       {isUpcoming && (
-        <Text size="lg" fw={700} ff="monospace" c="blue" className="hydro-clock" style={{ minInlineSize: clockWidth }} role="timer" aria-live="off">
-          {formatContestClock(begin - now)}
+        <Text size="lg" fw={700} ff="monospace" c="blue" style={{ minInlineSize: clockWidth }}>
+          <RollingClock value={formatContestClock(Math.ceil((begin - now) / 1000) * 1000)} seconds={Math.ceil((begin - now) / 1000)} />
         </Text>
       )}
     </Group>

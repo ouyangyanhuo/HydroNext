@@ -1,6 +1,6 @@
 import './code-replay.css';
 
-import { ActionIcon, Button, ButtonBase, CodeEditor, ShortSelect, useI18n } from '@hydrooj/ui-next';
+import { ActionIcon, Button, ButtonBase, CodeEditor, RollingClock, ShortSelect, useI18n } from '@hydrooj/ui-next';
 import { Badge, Group, Paper, Slider, Stack, Switch, Text, Tooltip } from '@mantine/core';
 import { IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconPlayerSkipBack, IconPlayerSkipForward, IconRotateClockwise } from '@tabler/icons-react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
@@ -71,6 +71,7 @@ export function CodeReplay({
   const timerRef = useRef<number | null>(null);
   const maxIndex = Math.max(0, states.length - 1);
   const isThinking = Boolean(thinkingRangeAt(thinkingRanges, cursor.time));
+  const clockStyle = useMemo(() => ({ minInlineSize: `${formatReplayTime(duration).length}ch` }), [duration]);
 
   const stop = () => {
     if (timerRef.current !== null) window.clearInterval(timerRef.current);
@@ -193,7 +194,12 @@ export function CodeReplay({
 
           <Group justify="space-between" gap="xs" className="hydro-code-replay__time-row">
             <Text size="sm" className="hydro-code-replay__clock">
-              <span className="hydro-clock" style={{ minInlineSize: `${formatReplayTime(duration).length}ch` }}>{formatReplayTime(cursor.time)}</span>
+              <RollingClock
+                value={formatReplayTime(cursor.time)}
+                seconds={Math.floor(cursor.time / 1000)}
+                animate={playing && Number(speed) <= 2}
+                style={clockStyle}
+              />
               <span className="hydro-code-replay__total"> / {formatReplayTime(duration)}</span>
             </Text>
             {isThinking && <Badge size="sm" variant="light" color="gray">{t('Thinking time')}</Badge>}

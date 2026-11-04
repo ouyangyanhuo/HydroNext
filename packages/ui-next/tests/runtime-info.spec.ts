@@ -57,6 +57,7 @@ function load(path: string, mocks: Record<string, any>) {
 }
 const { RuntimeStatusCard } = load('../src/components/manage/runtime-status-card.tsx', {
     '@/hooks/use-i18n': { useI18n: () => ({ t }) }, '@/utils/runtime-info': { isRuntimeInfo, runtimeDuration },
+    '@/components/common/rolling-clock': load('../src/components/common/rolling-clock.tsx', {}),
 });
 const snapshot = {
     kind: 'container' as const, startedAt: '2026-10-07T00:00:00Z', sampledAt: '2026-10-08T00:00:00Z',

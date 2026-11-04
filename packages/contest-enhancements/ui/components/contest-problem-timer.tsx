@@ -1,6 +1,6 @@
 import './timer.css';
 
-import { ButtonBase, formatContestClock, Link, useI18n } from '@hydrooj/ui-next';
+import { ButtonBase, formatContestClock, Link, RollingClock, useI18n } from '@hydrooj/ui-next';
 import { Portal, Tooltip } from '@mantine/core';
 import { IconGripVertical, IconTrophy } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -122,9 +122,12 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt, pi
           <span className="hydro-contest-problem-timer__label">
             {ended ? t('Finished') : t(upcoming ? 'Contest starts in' : 'Contest time remaining')}
           </span>
-          <span className="hydro-contest-problem-timer__value hydro-clock" style={{ minInlineSize: clockWidth }} role="timer" aria-live="off">
-            {formatContestClock(Math.ceil(remaining / 1000) * 1000)}
-          </span>
+          <RollingClock
+            className="hydro-contest-problem-timer__value"
+            style={{ minInlineSize: clockWidth }}
+            value={formatContestClock(Math.ceil(remaining / 1000) * 1000)}
+            seconds={Math.ceil(remaining / 1000)}
+          />
         </div>
         <Tooltip
           label={t(timingUnsynced ? 'Problem time is not syncing. Only server-confirmed time counts toward the scoreboard.'
@@ -141,9 +144,12 @@ export function ContestProblemTimer({ storageKey, tid, title, beginAt, endAt, pi
             <span className="hydro-contest-problem-timer__label" style={timingUnsynced ? { color: 'var(--hydro-warning)' } : undefined}>
               {t(timingUnsynced ? 'Timing not synced' : 'Time on this problem')}
             </span>
-            <span className="hydro-contest-problem-timer__value hydro-clock" style={{ minInlineSize: clockWidth }} role="timer" aria-live="off">
-              {timingUnsynced ? '—' : formatContestClock(elapsed)}
-            </span>
+            <RollingClock
+              className="hydro-contest-problem-timer__value"
+              style={{ minInlineSize: clockWidth }}
+              value={timingUnsynced ? '—' : formatContestClock(elapsed)}
+              seconds={Math.floor(elapsed / 1000)}
+            />
           </div>
         </Tooltip>
       </div>

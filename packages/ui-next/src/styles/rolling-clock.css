@@ -1,0 +1,61 @@
+.hydro-rolling-clock {
+  vertical-align: middle;
+  line-height: 1.35;
+}
+
+.hydro-rolling-clock__content {
+  display: inline-flex;
+  align-items: center;
+  white-space: pre;
+}
+
+.hydro-rolling-clock__digit {
+  position: relative;
+  display: inline-grid;
+  width: 1ch;
+  height: 1.35em;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hydro-rolling-clock__digit[data-moving] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 23%, black 77%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, black 23%, black 77%, transparent);
+}
+
+.hydro-rolling-clock__glyph {
+  grid-area: 1 / 1;
+  display: block;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.hydro-rolling-clock__glyph--in {
+  animation: hydro-clock-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hydro-rolling-clock__glyph--out {
+  animation: hydro-clock-out 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Blur only the tiny moving glyphs, never the timer surface or page behind it. */
+@keyframes hydro-clock-in {
+  from { transform: translateY(100%); filter: blur(2px); opacity: 0; }
+  65% { filter: blur(0); opacity: 1; }
+  to { transform: translateY(0); filter: blur(0); opacity: 1; }
+}
+
+@keyframes hydro-clock-out {
+  from { transform: translateY(0); filter: blur(0); opacity: 1; }
+  to { transform: translateY(-100%); filter: blur(2px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-rolling-clock__digit[data-moving] {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .hydro-rolling-clock__glyph--in { animation: none; }
+  .hydro-rolling-clock__glyph--out { display: none; animation: none; }
+}

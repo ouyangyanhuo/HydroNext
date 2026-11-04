@@ -4,6 +4,7 @@
 @import './select.css';
 @import './typography.css';
 @import './numeric.css';
+@import './rolling-clock.css';
 
 @theme inline {
   --font-weight-medium: var(--hydro-weight-medium);
