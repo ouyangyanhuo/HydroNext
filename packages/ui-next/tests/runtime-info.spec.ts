@@ -90,13 +90,13 @@ test('runtime card advances from the server baseline and cleans timers when snap
     try {
         assert.equal(view.host.querySelector('time')?.getAttribute('dateTime'), snapshot.startedAt);
         assert.match(view.host.textContent || '', /Container runtime/);
-        assert.equal(view.host.querySelector('[data-runtime-uptime]')?.textContent, '1d 0h 0m 0s');
+        assert.equal(view.host.querySelector('[data-runtime-uptime] [role="timer"]')?.getAttribute('aria-label'), '01d 00h 00m 00s');
         monotonicNow = 65000;
         await act(async () => { for (const tick of timers.values()) tick(); });
-        assert.equal(view.host.querySelector('[data-runtime-uptime]')?.textContent, '1d 0h 1m 5s');
+        assert.equal(view.host.querySelector('[data-runtime-uptime] [role="timer"]')?.getAttribute('aria-label'), '01d 00h 01m 05s');
         await view.render(h(RuntimeStatusCard, { runtime: { ...snapshot, sampledAt: '2026-10-08T00:01:00Z', uptimeSeconds: 10 } }));
         assert.equal(timers.size, 1);
-        assert.equal(view.host.querySelector('[data-runtime-uptime]')?.textContent, '0d 0h 0m 10s');
+        assert.equal(view.host.querySelector('[data-runtime-uptime] [role="timer"]')?.getAttribute('aria-label'), '00d 00h 00m 10s');
         await view.render(h(RuntimeStatusCard, { runtime: null }));
         assert.equal(timers.size, 0);
         assert.match(view.host.textContent || '', /Runtime information unavailable/);

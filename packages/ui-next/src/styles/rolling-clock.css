@@ -1,71 +1,112 @@
 .hydro-rolling-clock {
-  --hydro-clock-duration: 760ms;
-  --hydro-clock-easing: cubic-bezier(0.45, 0, 0.25, 1);
-  --hydro-clock-enter: 100%;
-  --hydro-clock-exit: -100%;
+  --hydro-clock-duration: 560ms;
+  --hydro-clock-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --hydro-clock-start: 0%;
+  --hydro-clock-end: -50%;
   vertical-align: middle;
   line-height: 1.35;
+  letter-spacing: normal;
+  font-kerning: none;
 }
 
 .hydro-rolling-clock[data-direction='down'] {
-  --hydro-clock-enter: -100%;
-  --hydro-clock-exit: 100%;
+  --hydro-clock-start: -50%;
+  --hydro-clock-end: 0%;
 }
 
 .hydro-rolling-clock__content {
   display: inline-flex;
   align-items: center;
+  vertical-align: middle;
   white-space: pre;
-  font-kerning: none;
 }
 
-.hydro-rolling-clock__digit {
+.hydro-rolling-clock__unit {
   position: relative;
   display: inline-grid;
-  width: 1ch;
+  flex: none;
+  min-width: 2ch;
   height: 1.35em;
   overflow: hidden;
-  isolation: isolate;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
-.hydro-rolling-clock__digit[data-moving] {
+/* The in-flow sizer never becomes a different set of per-digit reels. */
+.hydro-rolling-clock__sizer {
+  visibility: hidden;
+}
+
+.hydro-rolling-clock__layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hydro-rolling-clock__track {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.hydro-rolling-clock__row {
+  display: block;
+  flex: 0 0 1.35em;
+  height: 1.35em;
+  line-height: 1.35;
+  white-space: pre;
+}
+
+.hydro-rolling-clock__separator {
+  flex: none;
+}
+
+.hydro-rolling-clock__unit[data-moving] {
   -webkit-mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
   mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
 }
 
-.hydro-rolling-clock__glyph {
-  grid-area: 1 / 1;
-  display: block;
-  text-align: center;
-  line-height: 1.35;
+.hydro-rolling-clock__unit[data-moving] .hydro-rolling-clock__layer:not(.hydro-rolling-clock__layer--blurred) {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 28%, black 72%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, black 28%, black 72%, transparent);
 }
 
-.hydro-rolling-clock__glyph--in {
-  animation: hydro-clock-in var(--hydro-clock-duration) var(--hydro-clock-easing) both;
+.hydro-rolling-clock__layer--blurred {
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 32%, transparent 68%, black);
+  mask-image: linear-gradient(to bottom, black, transparent 32%, transparent 68%, black);
 }
 
-.hydro-rolling-clock__glyph--out {
-  animation: hydro-clock-out var(--hydro-clock-duration) var(--hydro-clock-easing) both;
+/* A small, constant edge-blur layer; only track transforms are animated. */
+.hydro-rolling-clock__layer--blurred .hydro-rolling-clock__row {
+  filter: blur(0.75px);
 }
 
-/* Blur only the tiny moving glyphs, never the timer surface or page behind it. */
-@keyframes hydro-clock-in {
-  from { transform: translateY(var(--hydro-clock-enter)); filter: blur(1.5px); opacity: 0; }
-  65% { filter: blur(0); opacity: 1; }
-  to { transform: translateY(0); filter: blur(0); opacity: 1; }
+.hydro-rolling-clock__unit[data-moving] .hydro-rolling-clock__track {
+  height: 200%;
+  will-change: transform;
+  animation: hydro-clock-roll var(--hydro-clock-duration) var(--hydro-clock-easing) both;
 }
 
-@keyframes hydro-clock-out {
-  from { transform: translateY(0); filter: blur(0); opacity: 1; }
-  to { transform: translateY(var(--hydro-clock-exit)); filter: blur(1.5px); opacity: 0; }
+@keyframes hydro-clock-roll {
+  from { transform: translateY(var(--hydro-clock-start)); }
+  to { transform: translateY(var(--hydro-clock-end)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hydro-rolling-clock__digit[data-moving] {
-    -webkit-mask-image: none;
-    mask-image: none;
+  .hydro-rolling-clock__unit,
+  .hydro-rolling-clock__layer {
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
   }
 
-  .hydro-rolling-clock__glyph--in { animation: none; }
-  .hydro-rolling-clock__glyph--out { display: none; animation: none; }
+  .hydro-rolling-clock__unit[data-moving] .hydro-rolling-clock__track {
+    height: 100%;
+    animation: none;
+    will-change: auto;
+  }
+
+  .hydro-rolling-clock__layer--blurred,
+  .hydro-rolling-clock__row[data-previous] { display: none; }
 }

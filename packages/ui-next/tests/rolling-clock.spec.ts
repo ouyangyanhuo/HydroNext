@@ -46,37 +46,54 @@ async function fixture(value: string, seconds: number) {
     } };
 }
 
-test('clock rolls only changed digits across carry/borrow and exposes a single accessible current value', async () => {
+function primaryTrack(host: HTMLElement, unit = 0) {
+    const layer = `[data-unit="${unit}"] .hydro-rolling-clock__layer:not(.hydro-rolling-clock__layer--blurred)`;
+    return host.querySelector(`${layer} .hydro-rolling-clock__track`)!;
+}
+
+test('clock rolls hours, minutes and seconds independently and carries on stable two-digit tracks', async () => {
     const view = await fixture('00:00:59', 59);
     try {
         assert.equal(view.host.querySelectorAll('[data-moving]').length, 0, 'initial render must not animate');
-        const first = view.host.querySelector('.hydro-rolling-clock__digit');
+        const sizer = view.host.querySelector('.hydro-rolling-clock__sizer');
+        const hourTrack = primaryTrack(view.host);
+        const separators = [...view.host.querySelectorAll('.hydro-rolling-clock__separator')];
         now += 1000;
         await view.render('00:01:00', 60);
         assert.equal(view.host.querySelectorAll('[data-moving]').length, 2);
-        const seconds = view.host.querySelector('.hydro-rolling-clock__digit--group')!;
-        assert.equal((seconds as HTMLElement).style.width, '2ch');
-        assert.equal(seconds.querySelector('.hydro-rolling-clock__glyph--out')?.textContent, '59');
-        assert.equal(seconds.querySelector('.hydro-rolling-clock__glyph--in')?.textContent, '00');
-        assert.equal(view.host.querySelector('.hydro-rolling-clock__digit'), first, 'unchanged columns stay mounted');
+        assert.equal(view.host.querySelector('.hydro-rolling-clock__sizer'), sizer);
+        assert.equal(primaryTrack(view.host), hourTrack, 'unchanged hour track stays mounted and still');
+        assert.deepEqual([...primaryTrack(view.host, 4).children].map((row) => row.textContent), ['59', '00']);
+        assert.deepEqual([...primaryTrack(view.host, 2).children].map((row) => row.textContent), ['00', '01']);
+        for (const unit of view.host.querySelectorAll<HTMLElement>('.hydro-rolling-clock__unit')) assert.equal(unit.style.width, '2ch');
+        for (const separator of separators) {
+            assert.equal(separator.parentElement?.className, 'hydro-rolling-clock__content');
+            assert.equal(separator.closest('.hydro-rolling-clock__track'), null);
+        }
         const timer = view.host.querySelector('[role="timer"]')!;
         assert.equal(timer.getAttribute('aria-label'), '00:01:00');
         assert.equal(timer.getAttribute('data-direction'), 'up');
         assert.equal(timer.getAttribute('aria-live'), 'off');
         assert.equal(timer.firstElementChild?.getAttribute('aria-hidden'), 'true');
         assert.equal((timer as HTMLElement).style.minInlineSize, '8ch');
-        const incoming = view.host.querySelector('.hydro-rolling-clock__glyph--in')!;
-        await act(async () => incoming.dispatchEvent(new dom.window.Event('animationend', { bubbles: true })));
+        const track = primaryTrack(view.host, 4);
+        await act(async () => track.dispatchEvent(new dom.window.Event('animationend', { bubbles: true })));
         assert.equal(view.host.querySelectorAll('[data-moving]').length, 0);
-        assert.equal(timer.textContent, '00:01:00');
+        assert.equal(view.host.querySelector('.hydro-rolling-clock__sizer'), sizer);
+        assert.equal(primaryTrack(view.host, 2).textContent, '01');
+        assert.equal(primaryTrack(view.host, 4).textContent, '00');
+        assert.deepEqual([...view.host.querySelectorAll('.hydro-rolling-clock__separator')], separators);
         now += 1000;
         await view.render('00:00:59', 59);
         assert.equal(view.host.querySelectorAll('[data-moving]').length, 2);
         assert.equal(timer.getAttribute('data-direction'), 'down');
-        assert.equal(view.host.querySelector('.hydro-rolling-clock__digit--group .hydro-rolling-clock__glyph--in')?.textContent, '59');
+        assert.equal(primaryTrack(view.host, 4).querySelector('[data-previous]')?.textContent, '00');
+        assert.equal(primaryTrack(view.host, 4).firstElementChild?.textContent, '59');
         now += 1000;
         await view.render('00:00:58', 58);
-        assert.equal(view.host.querySelectorAll('.hydro-rolling-clock__glyph--out').length, 1, 'interrupted transitions never accumulate');
+        assert.equal(primaryTrack(view.host, 4).children.length, 2, 'interrupted transitions never accumulate');
+        assert.equal(view.host.querySelectorAll('[data-moving]').length, 1);
+        assert.equal(view.host.querySelector('[data-moving]')?.getAttribute('data-unit'), '4');
         await view.render('00:00:58', 58, false);
         assert.equal(view.host.querySelectorAll('[data-moving]').length, 0);
         await view.render('00:00:58', 58, true);
@@ -85,10 +102,12 @@ test('clock rolls only changed digits across carry/borrow and exposes a single a
         now += 1000;
         await view.render('01:00:00', 3600);
         assert.equal(view.host.querySelectorAll('[data-moving]').length, 3);
-        assert.equal(view.host.querySelectorAll('.hydro-rolling-clock__digit--group').length, 2);
+        assert.deepEqual([...primaryTrack(view.host).children].map((row) => row.textContent), ['00', '01']);
+        assert.deepEqual([...primaryTrack(view.host, 2).children].map((row) => row.textContent), ['59', '00']);
+        assert.deepEqual([...primaryTrack(view.host, 4).children].map((row) => row.textContent), ['59', '00']);
         now += 1000;
         await view.render('00:59:59', 3599);
-        assert.equal(view.host.querySelectorAll('.hydro-rolling-clock__digit--group').length, 2);
+        assert.equal(view.host.querySelectorAll('[data-moving]').length, 3);
         assert.equal(timer.getAttribute('data-direction'), 'down');
     } finally { await view.close(); }
 });
@@ -111,30 +130,50 @@ test('clock snaps on seeks, resume, placeholders, width changes and explicit ani
         await view.render('99:59:59', 359999); check();
         await view.render('100:00:00', 360000); check();
         assert.equal(view.host.querySelector('[role="timer"]')?.getAttribute('aria-label'), '100:00:00');
+        now += 1000;
+        await view.render('99:59:59', 359999);
+        assert.equal(view.host.querySelector('[role="timer"]')?.getAttribute('aria-label'), '099:59:59');
+        assert.equal((view.host.querySelector('[data-unit="0"]') as HTMLElement).style.width, '3ch');
     } finally { await view.close(); }
 });
 
-test('localized duration labels stay still while their numeric columns roll', async () => {
-    const view = await fixture('1天 02时 03分 04秒', 93784);
+test('even unpadded localized values retain two digits and the same slots across minute carry and animation completion', async () => {
+    const view = await fixture('0分59秒', 59);
     try {
         now += 1000;
-        await view.render('1天 02时 03分 05秒', 93785);
-        assert.equal(view.host.querySelectorAll('[data-moving]').length, 1);
-        assert.equal([...view.host.querySelectorAll('.hydro-rolling-clock__separator')].map((node) => node.textContent).join(''), '天 时 分 秒');
+        const separators = [...view.host.querySelectorAll('.hydro-rolling-clock__separator')];
+        const units = [...view.host.querySelectorAll<HTMLElement>('.hydro-rolling-clock__unit')];
+        await view.render('1分0秒', 60);
+        assert.equal(view.host.querySelectorAll('[data-moving]').length, 2);
+        assert.deepEqual(units.map((unit) => unit.querySelector('.hydro-rolling-clock__sizer')?.textContent), ['01', '00']);
+        assert.deepEqual(units.map((unit) => unit.style.width), ['2ch', '2ch']);
+        const track = primaryTrack(view.host, 2);
+        assert.deepEqual([...track.children].map((row) => row.textContent), ['59', '00']);
+        assert.deepEqual([...primaryTrack(view.host).children].map((row) => row.textContent), ['00', '01']);
+        await act(async () => track.dispatchEvent(new dom.window.Event('animationend', { bubbles: true })));
+        assert.deepEqual([...view.host.querySelectorAll('.hydro-rolling-clock__unit')], units);
+        assert.equal(primaryTrack(view.host).textContent, '01');
+        assert.equal(primaryTrack(view.host, 2).textContent, '00');
+        assert.deepEqual([...view.host.querySelectorAll('.hydro-rolling-clock__separator')], separators);
+        assert.deepEqual(separators.map((separator) => separator.textContent), ['分', '秒']);
+        for (const separator of separators) assert.equal(separator.closest('.hydro-rolling-clock__unit'), null);
     } finally { await view.close(); }
 });
 
-test('motion styles include edge masks, local glyph blur and a no-animation reduced-motion fallback', () => {
+test('motion uses only track transforms, static edge blur and non-shrinking numeric slots', () => {
     const css = postcss.parse(readFileSync(new URL('../src/styles/rolling-clock.css', import.meta.url), 'utf8'));
     const declarations: string[] = [];
     css.walkDecls((decl) => { declarations.push(`${decl.prop}:${decl.value}`); });
     assert.ok(declarations.some((value) => value.startsWith('mask-image:linear-gradient')));
-    assert.ok(declarations.includes('filter:blur(1.5px)'));
-    assert.ok(declarations.includes('--hydro-clock-duration:760ms'));
-    assert.ok(declarations.includes('--hydro-clock-easing:cubic-bezier(0.45, 0, 0.25, 1)'));
-    assert.ok(declarations.includes('transform:translateY(var(--hydro-clock-enter))'));
-    assert.ok(declarations.includes('transform:translateY(var(--hydro-clock-exit))'));
-    assert.ok(declarations.includes('width:1ch'));
+    assert.ok(declarations.includes('filter:blur(0.75px)'));
+    assert.ok(declarations.includes('--hydro-clock-duration:560ms'));
+    assert.ok(declarations.includes('transform:translateY(var(--hydro-clock-start))'));
+    assert.ok(declarations.includes('transform:translateY(var(--hydro-clock-end))'));
+    assert.ok(declarations.includes('min-width:2ch'));
+    assert.ok(declarations.includes('flex:none'));
+    css.walkAtRules('keyframes', (rule) => {
+        rule.walkDecls((decl) => { assert.equal(decl.prop, 'transform'); });
+    });
     assert.ok(!declarations.some((value) => value.startsWith('backdrop-filter:')));
     const media = css.nodes.find((node) => node.type === 'atrule' && node.name === 'media' && node.params === '(prefers-reduced-motion: reduce)');
     assert.ok(media);
