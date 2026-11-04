@@ -306,6 +306,7 @@ __langname: 日本語
 'Are you sure to rename the following file?': '以下のファイルを名前変更しますか？'
 'Cannot preview this file type.': 'このファイルタイプはプレビューできません。'
 'Next': '次へ'
+'Incorrect password': 'パスワードが正しくありません'
 'Import': 'インポート'
 'Export': 'エクスポート'
 'Loading...': '読み込み中...'

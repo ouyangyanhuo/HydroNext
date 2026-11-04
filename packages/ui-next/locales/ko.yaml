@@ -306,6 +306,7 @@ __langname: 한국어
 'Are you sure to rename the following file?': '다음 파일의 이름을 변경하시겠습니까?'
 'Cannot preview this file type.': '이 파일 형식은 미리볼 수 없습니다.'
 'Next': '다음'
+'Incorrect password': '비밀번호가 올바르지 않습니다'
 'Import': '가져오기'
 'Export': '내보내기'
 'Loading...': '로딩 중...'

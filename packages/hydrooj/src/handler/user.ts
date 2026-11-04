@@ -65,7 +65,7 @@ class UserLoginHandler extends Handler {
     }
 
     @param('uname', Types.Username)
-    @param('password', Types.Password)
+    @param('password', Types.String)
     @param('rememberme', Types.Boolean)
     @param('redirect', Types.String, true)
     @param('tfa', Types.String, true)

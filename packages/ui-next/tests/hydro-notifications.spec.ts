@@ -104,15 +104,17 @@ test('HydroNotifications renders collapsed stack when multiple notifications exi
     const cards = container.querySelectorAll('.hydro-toast-card');
     assert.equal(cards.length, 3, 'Renders all 3 cards in the stack');
 
-    // Newest is index 0
-    assert.ok(cards[0].textContent?.includes('Third (newest)'), 'Newest card is front card');
+    // Active front card is first-in notification
+    assert.ok(cards[0].textContent?.includes('First (oldest)'), 'First notification is front card');
     assert.ok(cards[0].getAttribute('style')?.includes('scale(1)'), 'Front card has scale 1');
 
-    // 2nd card has scale(0.96)
-    assert.ok(cards[1].getAttribute('style')?.includes('scale(0.96)'), '2nd card is scaled down');
+    // 2nd card has scale(0.96) stacked behind
+    assert.ok(cards[1].getAttribute('style')?.includes('scale(0.96)'), '2nd card is scaled down behind');
+    assert.ok(cards[1].textContent?.includes('Second'), '2nd card is second notification');
 
-    // 3rd card has scale(0.92)
-    assert.ok(cards[2].getAttribute('style')?.includes('scale(0.92)'), '3rd card is scaled down');
+    // 3rd card has scale(0.92) stacked in the back
+    assert.ok(cards[2].getAttribute('style')?.includes('scale(0.92)'), '3rd card is scaled down in back');
+    assert.ok(cards[2].textContent?.includes('Third (newest)'), '3rd card is third notification');
 
     // Close button exists on front card only
     const closeBtn = cards[0].querySelector('.hydro-toast-close') as HTMLElement;
@@ -124,12 +126,12 @@ test('HydroNotifications renders collapsed stack when multiple notifications exi
         closeBtn.click();
     });
 
-    // Wait for the 200ms dismiss animation timeout
+    // Wait for the 220ms dismiss animation timeout
     await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 250));
+        await new Promise((resolve) => setTimeout(resolve, 260));
     });
 
-    assert.deepEqual(hidden, ['3'], 'Front card id was passed to notifications.hide');
+    assert.deepEqual(hidden, ['1'], 'Front card id was passed to notifications.hide');
 
     await act(async () => {
         root.unmount();
@@ -173,6 +175,12 @@ test('HydroNotifications styles enforce no box-shadow, no dots, and smooth trans
             foundCard = true;
             rule.walkDecls('box-shadow', (decl) => {
                 assert.ok(decl.value.includes('none'), '.hydro-toast-card must have box-shadow: none');
+            });
+            rule.walkDecls('align-items', (decl) => {
+                assert.equal(decl.value, 'center', '.hydro-toast-card must have align-items: center for vertical center alignment');
+            });
+            rule.walkDecls('animation', (decl) => {
+                assert.ok(decl.value.includes('hydro-toast-slide-down'), '.hydro-toast-card has slide-down enter animation');
             });
         }
         if (rule.selector === '.hydro-toast-container') {

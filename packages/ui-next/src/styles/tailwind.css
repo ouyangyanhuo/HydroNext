@@ -5114,6 +5114,13 @@ a {
 }
 
 /* Stacked Collapsible Toast Notifications */
+@keyframes hydro-toast-slide-down {
+  from {
+    transform: translateY(calc(-100% - 32px));
+    opacity: 0;
+  }
+}
+
 .hydro-toast-container {
   position: fixed;
   top: clamp(16px, 2.5vw, 24px);
@@ -5130,7 +5137,7 @@ a {
 
 .hydro-toast-card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   padding: 12px 14px;
   border: 1px solid var(--hydro-border);
@@ -5140,6 +5147,7 @@ a {
   box-sizing: border-box;
   transform-origin: top center;
   user-select: none;
+  animation: hydro-toast-slide-down 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
               opacity 0.2s ease;
 }
@@ -5186,7 +5194,11 @@ a {
   top: 0;
   left: 0;
   right: 0;
+  animation: none !important;
+  transform: translateX(calc(-100% - 32px)) scale(0.95) !important;
+  opacity: 0 !important;
   pointer-events: none !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease !important;
   z-index: 15;
 }
 
@@ -5225,6 +5237,7 @@ a {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 2px;
 }
 
@@ -5253,6 +5266,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   box-shadow: none !important;
   flex-shrink: 0;
   transition: background var(--hydro-duration-fast) var(--hydro-ease-out),
@@ -5276,6 +5290,7 @@ a {
 @media (prefers-reduced-motion: reduce) {
   .hydro-toast-container,
   .hydro-toast-card {
+    animation: none !important;
     transition: none !important;
   }
 }

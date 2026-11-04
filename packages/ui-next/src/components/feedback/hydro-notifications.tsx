@@ -154,7 +154,7 @@ export function HydroNotifications() {
         title: n.title,
         message: n.message,
         color: n.color,
-        autoClose: n.autoClose ?? 4000,
+        autoClose: n.autoClose ?? 2600,
         onClose: () => removeStoreNotif(n.id),
       });
     }
@@ -162,8 +162,8 @@ export function HydroNotifications() {
 
   const { notifications: list } = useNotifications(notificationsStore);
 
-  // Order with the newest notification first (index 0)
-  const items = useMemo(() => [...list].reverse(), [list]);
+  // FIFO order: active notification stays in front (index 0); newer notifications stack behind it
+  const items = list;
 
   const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set());
   const [isHovered, setIsHovered] = useState(false);
@@ -183,7 +183,7 @@ export function HydroNotifications() {
         next.delete(id);
         return next;
       });
-    }, 200);
+    }, 220);
   }, []);
 
   // Find the active (non-dismissing) top notification
@@ -196,12 +196,12 @@ export function HydroNotifications() {
   const activeTopId = activeTopItem?.id;
   const activeTopAutoClose = activeTopItem?.autoClose;
 
-  // Auto-close countdown for the front active notification
+  // Auto-close countdown for the front active notification (snappy duration)
   useEffect(() => {
     if (!activeTopId || activeTopAutoClose === false || isHovered) {
       return undefined;
     }
-    const duration = typeof activeTopAutoClose === 'number' ? activeTopAutoClose : 4000;
+    const duration = typeof activeTopAutoClose === 'number' ? activeTopAutoClose : 2600;
     const timer = setTimeout(() => {
       dismiss(activeTopId);
     }, duration);

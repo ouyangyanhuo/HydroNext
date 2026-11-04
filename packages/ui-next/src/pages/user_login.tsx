@@ -55,7 +55,14 @@ export default function UserLoginPage() {
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
       if (!res.ok || data.error) {
-        notifications.show({ title: formatErrorMessage(data.error, 'Login failed', t), message: '', color: 'red' });
+        let title = formatErrorMessage(data.error, 'Login failed', t);
+        if (
+          (data.error?.message?.includes('validation failed') && data.error?.params?.includes('password'))
+          || data.error?.message === 'Field password validation failed.'
+        ) {
+          title = t('Incorrect password');
+        }
+        notifications.show({ title, message: '', color: 'red' });
       } else {
         navigate(redirect);
       }

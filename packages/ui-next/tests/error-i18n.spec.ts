@@ -26,6 +26,13 @@ test('other parameterized authentication errors use the same translations', () =
     assert.equal(formatErrorMessage(undefined, 'Verification failed', t), '验证失败');
 });
 
+test('password field validation errors format as human-readable incorrect password', () => {
+    const t = translator('zh');
+    assert.equal(formatErrorMessage({ message: 'Field {0} validation failed.', params: ['password'] }, 'Login failed', t), '密码错误');
+    assert.equal(formatErrorMessage({ message: 'Field {0} validation failed.', params: ['password'] }, 'Login failed', translator('zh_TW')), '密碼錯誤');
+    assert.equal(formatErrorMessage({ message: 'Field {0} validation failed.', params: ['password'] }, 'Login failed'), 'Incorrect password');
+});
+
 test('translation never changes usernames, even if they are translation keys or contain placeholders', () => {
     const seen: string[] = [];
     const t = (key: string) => {
