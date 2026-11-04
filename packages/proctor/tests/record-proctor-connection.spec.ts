@@ -48,9 +48,11 @@ function fixture(options: {
     const mocks: any = {
         '../error': new Proxy({}, { get: () => Error }),
         '../model/builtin': { PERM: {}, PRIV: {}, STATUS: {} },
+        '../lib/record-filter-options': { RECORD_FILTER_KINDS: ['user', 'problem', 'contest'] },
         '../model/proctor': { authenticateAccess: async (...args: any[]) => { calls.push(['auth', ...args]); return { _id: 'session' }; },
             assertAccessSession: async () => { if (expired) throw new Error('expired'); } },
-        '../service/server': { ConnectionHandler: Handler, param: () => () => {}, subscribe: () => () => {}, Types: {} },
+        '../service/server': { Handler, ConnectionHandler: Handler, param: () => () => {}, subscribe: () => () => {},
+            Types: { Range: () => [] } },
         './contest': { ContestDetailBaseHandler: Handler },
         '../model/contest': { isOwnOrTeammateRecord: async () => true, get: async () => tdoc,
             canShowRecord: () => false, canShowSelfRecord: () => true, getTeamVid: async () => -101,

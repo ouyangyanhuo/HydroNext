@@ -1,6 +1,6 @@
 import { Loader } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ShortSelect } from '@/components/common/select';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
@@ -9,23 +9,21 @@ import type { RecordFilterOption } from '@/utils/record-filter-options';
 interface RecordFilterSelectProps {
   label: string;
   value: string;
-  options: RecordFilterOption[];
   onChange: (value: string) => void;
-  loadOptions: (query: string, signal: AbortSignal) => Promise<RecordFilterOption[]>;
+  loadOptions: (query: string, signal: AbortSignal, exact?: boolean) => Promise<RecordFilterOption[]>;
 }
 
 /** Search behavior for record filters; appearance and keyboard navigation stay in ShortSelect. */
-export function RecordFilterSelect({ label, value, options, onChange, loadOptions }: RecordFilterSelectProps) {
+export function RecordFilterSelect({ label, value, onChange, loadOptions }: RecordFilterSelectProps) {
   const { t } = useI18n();
   const [opened, setOpened] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<RecordFilterOption[]>([]);
-  const [picked, setPicked] = useState<RecordFilterOption | null>(null);
+  const [picked, setPicked] = useState<{ requestedValue: string, option: RecordFilterOption } | null>(null);
   const [loading, setLoading] = useState(false);
-  const selected = options.find((option) => option.value === value)
-    || (picked?.value === value ? picked : null)
-    || results.find((option) => option.value === value)
-    || (value ? { value, label: value } : null);
+  const [searchError, setSearchError] = useState('');
+  const selected = (picked?.requestedValue === value ? picked.option : null)
+    || results.find((option) => option.value === value) || null;
 
   useEffect(() => {
     if (!opened) return undefined;
@@ -38,7 +36,9 @@ export function RecordFilterSelect({ label, value, options, onChange, loadOption
         if (!disposed) setResults(items);
       }).catch((error) => {
         if (!disposed && !controller.signal.aborted) {
-          notifications.show({ color: 'red', title: t('Failed'), message: formatErrorMessage(error, t('Failed'), t) });
+          const message = formatErrorMessage(error, t('Failed'), t);
+          setSearchError(message);
+          notifications.show({ color: 'red', title: t('Failed'), message });
         }
       }).finally(() => { if (!disposed) setLoading(false); });
     }, 250);
@@ -50,25 +50,21 @@ export function RecordFilterSelect({ label, value, options, onChange, loadOption
 
   // Resolve labels for deep links even when the selected user/problem has no records on this page.
   useEffect(() => {
-    if (!value || options.some((option) => option.value === value) || picked?.value === value) return undefined;
+    if (!value || picked?.requestedValue === value) return undefined;
     const controller = new AbortController();
     let disposed = false;
-    void loadOptions(value, controller.signal).then((items) => {
-      const match = items.find((option) => option.value === value);
-      if (!disposed && match) setPicked(match);
+    void loadOptions(value, controller.signal, true).then((items) => {
+      const match = items.find((option) => option.value === value) || (items.length === 1 ? items[0] : null);
+      if (!disposed && match) setPicked({ requestedValue: value, option: match });
     }).catch(() => undefined);
     return () => {
       disposed = true;
       controller.abort();
     };
-  }, [loadOptions, options, picked?.value, value]);
+  }, [loadOptions, picked?.requestedValue, value]);
 
-  const matches = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase();
-    const matching = options.filter((option) => !needle
-      || option.label.toLocaleLowerCase().includes(needle) || option.value.toLocaleLowerCase().includes(needle));
-    return [...new Map([...results, ...matching].map((option) => [option.value, option])).values()].slice(0, 20);
-  }, [options, query, results]);
+  // Only the permission-checked endpoint can supply options, never record dictionaries or raw URL values.
+  const matches = results;
   const visibleValues = new Set(matches.map((option) => option.value));
   const data = selected && !visibleValues.has(selected.value) ? [selected, ...matches] : matches;
 
@@ -79,9 +75,10 @@ export function RecordFilterSelect({ label, value, options, onChange, loadOption
         size="sm"
         label={label}
         data={data}
-        value={value || null}
+        value={selected?.value || null}
         onChange={(next) => {
-          setPicked(data.find((option) => option.value === next) || null);
+          const option = data.find((item) => item.value === next);
+          setPicked(option ? { requestedValue: option.value, option } : null);
           onChange(next || '');
         }}
         searchable
@@ -94,6 +91,7 @@ export function RecordFilterSelect({ label, value, options, onChange, loadOption
           setQuery((text) => text === selected?.label || text === value ? '' : text);
           setOpened(true);
           setResults([]);
+          setSearchError('');
           setLoading(true);
         }}
         onDropdownClose={() => {
@@ -102,9 +100,10 @@ export function RecordFilterSelect({ label, value, options, onChange, loadOption
         }}
         onSearchChange={(text) => {
           setQuery(text); setResults([]);
+          setSearchError('');
           if (opened) setLoading(true);
         }}
-        nothingFoundMessage={loading ? t('Loading...') : t('No results')}
+        nothingFoundMessage={searchError || (loading ? t('Loading...') : t('No results'))}
         rightSection={loading && opened ? <Loader size={14} /> : undefined}
         filter={({ options: entries }) => entries.filter((entry) => 'value' in entry && visibleValues.has(entry.value))}
       />

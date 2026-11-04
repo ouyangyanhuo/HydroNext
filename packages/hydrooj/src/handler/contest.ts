@@ -16,6 +16,7 @@ import {
     ValidationError,
 } from '../error';
 import { ContestStatusDoc, FileInfo, ScoreboardConfig, Tdoc } from '../interface';
+import { getContestListFilter } from '../lib/contest-list';
 import {
     checkContestSecurityConfig as checkContestConfig, contestSecurityTeamStatus as teamProctorStatus,
     hasContestSecurity, requireContestAccess as requireProctorAccess, resumeContestSecurity,
@@ -42,29 +43,7 @@ export class ContestListHandler extends Handler {
     @param('page', Types.PositiveInt, true)
     @param('q', Types.String, true)
     async get(domainId: string, rule = '', group = '', page = 1, q = '') {
-        if (rule && contest.RULES[rule].hidden) throw new BadRequestError();
-        const groups = (await user.listGroup(domainId, this.user.hasPerm(PERM.PERM_VIEW_HIDDEN_CONTEST) ? undefined : this.user._id))
-            .map((i) => i.name);
-        if (group && !groups.includes(group)) throw new NotAssignedError(group);
-        const rules = Object.keys(contest.RULES).filter((i) => !contest.RULES[i].hidden);
-        const escaped = escapeRegExp(q.toLowerCase());
-        const $regex = new RegExp(q.length >= 2 ? escaped : `\\A${escaped}`, 'gim');
-        const filter = {
-            ...(this.user.hasPerm(PERM.PERM_VIEW_HIDDEN_CONTEST) && !group)
-                ? {}
-                : {
-                    $or: [
-                        { maintainer: this.user._id },
-                        { owner: this.user._id },
-                        { assign: { $in: groups } },
-                        { assign: { $size: 0 } },
-                    ],
-                },
-            ...rule ? { rule } : { rule: { $in: rules } },
-            ...group ? { assign: { $in: [group] } } : {},
-            ...q ? { title: { $regex } } : {},
-        };
-        await this.ctx.parallel('contest/list', filter, this);
+        const { filter, groups } = await getContestListFilter(this, domainId, rule, group, q);
         const cursor = contest.getMulti(domainId, filter).sort({ endAt: -1, beginAt: -1, _id: -1 });
         let qs = rule ? `rule=${rule}` : '';
         if (group) qs += qs ? `&group=${group}` : `group=${group}`;

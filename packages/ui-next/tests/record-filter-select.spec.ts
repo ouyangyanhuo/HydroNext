@@ -64,40 +64,47 @@ async function enter(input: HTMLInputElement, value: string) {
     });
 }
 
-test('filter lookups use scoped read-only endpoints, minimal projections and canonical IDs', async () => {
+test('all filter lookups use the scoped permission endpoint, including exact hydration and contest context', async () => {
     const original = globalThis.fetch;
     const calls: any[] = [];
     const answers: any[] = [
-        [{ _id: 7, uname: 'alice', displayName: '小明' }],
-        { pdocs: [{ docId: 12, pid: 'P1012', title: 'A+B' }] },
-        { tdocs: [{ docId: '6aeabd86888939840db7a9ed', title: 'Exam' }] },
-        { tdoc: { docId: '6aeabd86888939840db7a9ed', title: 'Exam' } },
+        { documents: [{ _id: 7, uname: 'alice', displayName: '小明' }] },
+        { documents: [{ docId: 12, pid: 'P1012', title: 'A+B' }] },
+        { documents: [{ docId: '6aeabd86888939840db7a9ed', title: 'Exam' }] },
+        { documents: [{ docId: '6aeabd86888939840db7a9ed', title: 'Exam' }] },
+        { documents: [{ _id: 7, uname: 'alice', displayName: '小明' }] },
     ];
     globalThis.fetch = (async (url: any, init: any) => {
         calls.push({ url, init });
         return { ok: true, json: async () => answers.shift() };
     }) as any;
     const buildUrl = (name: string, params: any = {}, query: any = {}) => {
-        const path = name === 'problem_main' ? '/p' : name === 'contest_main' ? '/contest' : `/contest/${params.tid}`;
-        return `/d/team${path}?${new URLSearchParams(query)}`;
+        assert.equal(name, 'record_filter_options');
+        assert.equal(params.domainId, 'team');
+        return `/d/team/record/filter-options?${new URLSearchParams(query)}`;
     };
     const controller = new AbortController();
     try {
         const users = await searchRecordFilterOptions('user', 'ali', 'team', buildUrl, controller.signal);
         assert.deepEqual(users, [{ value: '7', label: '小明 (alice) · UID 7' }]);
-        assert.equal(calls[0].url, '/d/team/api/users');
-        assert.deepEqual(JSON.parse(calls[0].init.body), {
-            args: { search: 'ali', limit: 10 }, projection: ['_id', 'uname', 'displayName'],
-        });
-        const problems = await searchRecordFilterOptions('problem', 'A+B', 'team', buildUrl, controller.signal);
+        assert.match(calls[0].url, /^\/d\/team\/record\/filter-options\?kind=user/);
+        assert.equal(calls[0].init.body, undefined, 'read-only search must not use a broad user API');
+        const problems = await searchRecordFilterOptions('problem', 'A+B', 'team', buildUrl, controller.signal, 'contest-context');
         assert.deepEqual(problems, [{ value: '12', label: 'P1012 · A+B' }]);
         assert.equal(new URL(calls[1].url, dom.window.location.origin).searchParams.get('q'), 'A+B');
+        assert.equal(new URL(calls[1].url, dom.window.location.origin).searchParams.get('tid'), 'contest-context');
         await searchRecordFilterOptions('contest', 'Exam', 'team', buildUrl, controller.signal);
-        const contests = await searchRecordFilterOptions('contest', '6aeabd86888939840db7a9ed', 'team', buildUrl, controller.signal);
+        const contests = await searchRecordFilterOptions('contest', '6aeabd86888939840db7a9ed', 'team', buildUrl,
+            controller.signal, 'unused-context', true);
         assert.equal(contests[0].value, '6aeabd86888939840db7a9ed');
         assert.equal(contests[0].label, 'Exam', 'contest IDs must not appear in the displayed label');
         assert.equal(recordFilterOptions('contest', [{ docId: '6aeabd86888939840db7a9ed' }])[0].label, '—');
-        assert.match(calls[3].url, /^\/d\/team\/contest\/6aeabd86888939840db7a9ed/);
+        const exact = new URL(calls[3].url, dom.window.location.origin);
+        assert.equal(exact.searchParams.get('exact'), 'true');
+        assert.equal(exact.searchParams.get('tid'), null, 'contest search must not inherit another contest as its context');
+        const initialUsers = await searchRecordFilterOptions('user', '', 'team', buildUrl, controller.signal);
+        assert.deepEqual(initialUsers, users, 'opening the user filter must request permission-scoped suggestions without a keyword');
+        assert.equal(new URL(calls[4].url, dom.window.location.origin).searchParams.get('q'), '');
         for (const call of calls) {
             assert.equal(call.init.signal, controller.signal);
             assert.equal(call.init.cache, 'no-store');
@@ -105,6 +112,65 @@ test('filter lookups use scoped read-only endpoints, minimal projections and can
         }
         assert.equal(recordFilterOptions('problem', [{ docId: 1 }, { docId: 1 }]).length, 1);
     } finally { globalThis.fetch = original; }
+});
+
+test('missing backend routes and wrong response shapes fail explicitly instead of reporting no results', async () => {
+    const original = globalThis.fetch;
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    let requests = 0;
+    globalThis.fetch = (async () => {
+        requests++;
+        return { ok: true, json: async () => ({ rdocs: [], pdict: {} }) };
+    }) as any;
+    try {
+        const signal = new AbortController().signal;
+        await assert.rejects(searchRecordFilterOptions('problem', 'A+B', 'team', () => '#', signal), /restart the backend/);
+        assert.equal(requests, 0, 'an unknown route must never request the current page');
+        await assert.rejects(searchRecordFilterOptions('contest', 'Exam', 'team', () => '/record/filter-options', signal),
+            /restart the backend/);
+        globalThis.fetch = (async () => ({ ok: true, json: async () => ({ documents: [] }) })) as any;
+        assert.deepEqual(await searchRecordFilterOptions('problem', 'hidden', 'team', () => '/record/filter-options', signal), []);
+        const loadOptions = (query: string, abort: AbortSignal) => searchRecordFilterOptions('problem', query, 'team', () => '#', abort);
+        await act(async () => root.render(h(MantineProvider, { env: 'test' },
+            h(RecordFilterSelect, { label: 'Problem', value: '', loadOptions, onChange() {} }))));
+        await act(async () => host.querySelector<HTMLInputElement>('input:not([type="hidden"])')!.focus());
+        await flushSearch();
+        assert.match(document.body.textContent || '', /restart the backend/);
+        assert.ok(!(document.body.textContent || '').includes('No results'), 'transport/configuration failures are not empty results');
+    } finally {
+        await act(async () => root.unmount()); host.remove();
+        notices.length = 0;
+        globalThis.fetch = original;
+    }
+});
+
+test('unauthorized URL selections and record dictionaries cannot populate the select; authorized aliases still resolve', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const calls: any[] = [];
+    const options = [{ value: '7', label: 'Unauthorized cached user' }];
+    const loadOptions = async (query: string, _signal: AbortSignal, exact = false) => {
+        calls.push({ query, exact });
+        return query === 'alice' && exact ? [{ value: '8', label: 'Alice · UID 8' }] : [];
+    };
+    const render = (value: string) => act(async () => root.render(h(MantineProvider, { env: 'test' },
+        h(RecordFilterSelect, { key: value, label: 'User', value, options, loadOptions, onChange() {} }))));
+    try {
+        await render('7');
+        const input = host.querySelector<HTMLInputElement>('input:not([type="hidden"])')!;
+        assert.equal(input.value, '', 'denied hydration must not echo raw URL IDs or cached names');
+        await act(async () => input.focus());
+        await flushSearch();
+        assert.equal(document.querySelectorAll('[role="option"]').length, 0);
+        assert.ok(calls.some((call) => call.query === '7' && call.exact));
+        await render('alice');
+        assert.equal(host.querySelector<HTMLInputElement>('input:not([type="hidden"])')!.value, 'Alice · UID 8');
+    } finally {
+        await act(async () => root.unmount()); host.remove();
+    }
 });
 
 test('searchable ShortSelect debounces, discards stale results and selects an ID instead of the query text', async () => {

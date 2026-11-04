@@ -11,6 +11,7 @@ import { ContestStatusDoc, RecordDoc, Tdoc } from '../interface';
 import { type ContestAccessGrant, requireContestRecordAccess } from '../lib/contest-security';
 import { getRecordAccess } from '../lib/record-access';
 import { resolveRecordUserIds } from '../lib/record-filter';
+import { getRecordFilterOptions, RECORD_FILTER_KINDS } from '../lib/record-filter-options';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import problem, { ProblemDoc } from '../model/problem';
@@ -20,7 +21,7 @@ import storage from '../model/storage';
 import TaskModel from '../model/task';
 import user from '../model/user';
 import {
-    ConnectionHandler, param, subscribe, Types,
+    ConnectionHandler, Handler, param, subscribe, Types,
 } from '../service/server';
 import { buildProjection, Time } from '../utils';
 import { ContestDetailBaseHandler } from './contest';
@@ -51,6 +52,17 @@ async function resolveRecordProblemIds(
     if (tdoc) query.docId = { $in: tdoc.pids };
     const pdocs = await problem.getMulti(domainId, query, ['docId']).toArray();
     return pdocs.map((pdoc) => pdoc.docId);
+}
+
+export class RecordFilterOptionsHandler extends Handler {
+    @param('kind', Types.Range([...RECORD_FILTER_KINDS]))
+    @param('q', Types.String, true)
+    @param('tid', Types.ObjectId, true)
+    @param('exact', Types.Boolean)
+    async get(domainId: string, kind: typeof RECORD_FILTER_KINDS[number], q = '', tid?: ObjectId, exact = false) {
+        this.response.addHeader('Cache-Control', 'private, no-store');
+        this.response.body = { documents: await getRecordFilterOptions(this, domainId, kind, q, tid, exact) };
+    }
 }
 
 export class RecordListHandler extends ContestDetailBaseHandler {
@@ -536,6 +548,7 @@ export class RecordDetailConnectionHandler extends ConnectionHandler {
 
 export async function apply(ctx) {
     ctx.Route('record_main', '/record', RecordListHandler);
+    ctx.Route('record_filter_options', '/record/filter-options', RecordFilterOptionsHandler, PERM.PERM_VIEW);
     ctx.Route('record_detail', '/record/:rid', RecordDetailHandler);
     ctx.Connection('record_conn', '/record-conn', RecordMainConnectionHandler);
     ctx.Connection('record_detail_conn', '/record-detail-conn', RecordDetailConnectionHandler);

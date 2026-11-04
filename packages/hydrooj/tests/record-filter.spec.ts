@@ -54,6 +54,7 @@ function fixture(options: any = {}) {
     const cursor = { sort: () => cursor, project: () => cursor };
     const mocks: any = {
         '../lib/record-filter': resolver.exports,
+        '../lib/record-filter-options': { RECORD_FILTER_KINDS: ['user', 'problem', 'contest'] },
         '../model/user': { __esModule: true, default: user },
         '../model/builtin': { PERM: { PERM_VIEW_RECORD: 'view-record' }, PRIV: {}, STATUS: {} },
         '../model/record': { __esModule: true, default: { PROJECTION_LIST: [], getMulti: (domainId: string, query: any) => {
@@ -64,7 +65,8 @@ function fixture(options: any = {}) {
         '../model/contest': { get: async () => ({ docId: 'contest', pids: [1] }), getStatus: async () => ({ attend: true }),
             isNotStarted: () => false,
             canShowScoreboard: () => !options.hidden, canShowSelfRecord: () => true, canShowRecord: () => !options.hidden },
-        '../service/server': { ConnectionHandler: Handler, param: () => () => {}, subscribe: () => () => {}, Types: {} },
+        '../service/server': { Handler, ConnectionHandler: Handler, param: () => () => {}, subscribe: () => () => {},
+            Types: { Range: () => [] } },
         '../utils': { buildProjection: () => ({}) },
         '../error': { PermissionError: Error },
         './contest': { ContestDetailBaseHandler: Handler },

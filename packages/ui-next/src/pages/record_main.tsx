@@ -19,7 +19,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { useSessionStore } from '@/stores/session';
-import { recordFilterOptions, searchRecordFilterOptions } from '@/utils/record-filter-options';
+import { searchRecordFilterOptions } from '@/utils/record-filter-options';
 import { formatScore, mergeLiveRecord } from '@/utils/record-list';
 import { formatUserName } from '@/utils/user-name';
 
@@ -52,17 +52,14 @@ function RecordMainContent({ args }: { args: any }) {
   const [status, setStatus] = useState(
     typeof args.filterStatus === 'number' ? String(args.filterStatus) : ALL_FILTER,
   );
-  const userOptions = useMemo(() => recordFilterOptions('user', Object.values(initialUdict)), [initialUdict]);
-  const problemOptions = useMemo(() => recordFilterOptions('problem', Object.values(initialPdict)), [initialPdict]);
-  const contestOptions = useMemo(() => recordFilterOptions('contest', args.tdoc ? [args.tdoc] : []), [args.tdoc]);
-  const searchUsers = useCallback((query: string, signal: AbortSignal) => (
-    searchRecordFilterOptions('user', query, domainId, buildUrl, signal)
-  ), [buildUrl, domainId]);
-  const searchProblems = useCallback((query: string, signal: AbortSignal) => (
-    searchRecordFilterOptions('problem', query, domainId, buildUrl, signal)
-  ), [buildUrl, domainId]);
-  const searchContests = useCallback((query: string, signal: AbortSignal) => (
-    searchRecordFilterOptions('contest', query, domainId, buildUrl, signal)
+  const searchUsers = useCallback((query: string, signal: AbortSignal, exact = false) => (
+    searchRecordFilterOptions('user', query, domainId, buildUrl, signal, tid, exact)
+  ), [buildUrl, domainId, tid]);
+  const searchProblems = useCallback((query: string, signal: AbortSignal, exact = false) => (
+    searchRecordFilterOptions('problem', query, domainId, buildUrl, signal, tid, exact)
+  ), [buildUrl, domainId, tid]);
+  const searchContests = useCallback((query: string, signal: AbortSignal, exact = false) => (
+    searchRecordFilterOptions('contest', query, domainId, buildUrl, signal, '', exact)
   ), [buildUrl, domainId]);
 
   const languageOptions = useMemo(() => {
@@ -300,19 +297,17 @@ function RecordMainContent({ args }: { args: any }) {
 
           <div className="hydro-record-filter__fields">
             <RecordFilterSelect
-              key={`user-${domainId}`}
+              key={`user-${domainId}-${tid}`}
               label={t('By Username / UID')}
               value={uidOrName}
               onChange={setUidOrName}
-              options={userOptions}
               loadOptions={searchUsers}
             />
             <RecordFilterSelect
-              key={`problem-${domainId}`}
+              key={`problem-${domainId}-${tid}`}
               label={t('By Problem')}
               value={pid}
               onChange={setPid}
-              options={problemOptions}
               loadOptions={searchProblems}
             />
             <RecordFilterSelect
@@ -320,7 +315,6 @@ function RecordMainContent({ args }: { args: any }) {
               label={t('By Contest')}
               value={tid}
               onChange={setTid}
-              options={contestOptions}
               loadOptions={searchContests}
             />
             <ShortSelect
