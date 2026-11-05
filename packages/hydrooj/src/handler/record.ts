@@ -8,7 +8,7 @@ import {
     RecordNotFoundError,
 } from '../error';
 import { ContestStatusDoc, RecordDoc, Tdoc } from '../interface';
-import { type ContestAccessGrant, requireContestRecordAccess } from '../lib/contest-security';
+import type { ContestAccessGrant } from '../lib/contest-security';
 import { getRecordAccess } from '../lib/record-access';
 import { resolveRecordUserIds } from '../lib/record-filter';
 import { getRecordFilterOptions, RECORD_FILTER_KINDS } from '../lib/record-filter-options';
@@ -183,6 +183,7 @@ export class RecordListHandler extends ContestDetailBaseHandler {
 export class RecordDetailHandler extends ContestDetailBaseHandler {
     rdoc: RecordDoc;
     canViewRecordDetail = false;
+    canViewRecordCode = false;
 
     @param('rid', Types.ObjectId)
     async prepare(domainId: string, rid: ObjectId) {
@@ -218,25 +219,34 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
         }
         const { pdoc, tdoc, tsdoc, canViewDetail, canViewCode } = await getRecordAccess(this, rdoc);
         this.canViewRecordDetail = canViewDetail;
+        this.canViewRecordCode = canViewCode;
         this.tdoc = tdoc;
         this.tsdoc = tsdoc;
+        rdoc = { ...rdoc };
         if (this.tdoc) {
             this.args.tid = this.tdoc.docId;
             if (!record.RECORD_PRETEST.equals(rdoc.contest)
                 && !this.user.own(this.tdoc) && !this.user.hasPerm(PERM.PERM_EDIT_CONTEST)) {
-                this.rdoc = contest.applyProjection(this.tdoc, this.rdoc, this.user);
+                rdoc = contest.applyProjection(this.tdoc, rdoc, this.user);
             }
         }
 
         const udoc = await user.getById(domainId, rdoc.uid);
         if (!canViewCode) {
+            Reflect.deleteProperty(rdoc, 'replay');
+            Reflect.deleteProperty(rdoc, 'codeReplayUrl');
             rdoc.code = '';
             rdoc.files = {};
             rdoc.compilerTexts = [];
-        } else if (download) return await this.download();
+        }
+        this.rdoc = rdoc;
+        if (download) {
+            if (!canViewCode) throw new PermissionError(PERM.PERM_READ_RECORD_CODE);
+            return await this.download();
+        }
         this.response.template = 'record_detail.html';
         this.response.body = {
-            udoc, rdoc: canViewDetail ? rdoc : pick(rdoc, ['_id', 'lang', 'code']), pdoc, tdoc: this.tdoc, rev, allRevs,
+            udoc, rdoc: canViewDetail ? rdoc : pick(rdoc, ['_id', 'lang', 'code']), pdoc, tdoc: this.tdoc, rev, allRevs, canViewCode,
         };
     }
 
@@ -446,6 +456,7 @@ export class RecordDetailConnectionHandler extends ConnectionHandler {
     applyProjection = false;
     noTemplate = false;
     canViewCode = false;
+    canViewRecordDetail = false;
     accessGrant?: ContestAccessGrant;
 
     @param('rid', Types.ObjectId)
@@ -453,48 +464,16 @@ export class RecordDetailConnectionHandler extends ConnectionHandler {
     async prepare(domainId: string, rid: ObjectId, noTemplate = false) {
         const rdoc = await record.get(domainId, rid);
         if (!rdoc) throw new RecordNotFoundError(rid);
-        if (record.RECORD_PRETEST.equals(rdoc.contest)) {
-            // Self-tests have a sentinel contest ID. Resolve their saved context,
-            // rather than treating an enrolled contestant as an outsider to a hidden problem.
-            const access = await getRecordAccess(this, rdoc);
-            this.pdoc = access.pdoc;
-            this.tdoc = access.tdoc;
-            this.tsdoc = access.tsdoc;
-            this.canViewCode = access.canViewCode;
-            this.accessGrant = access.accessGrant;
-            this.noTemplate = noTemplate;
-            this.throttleSend = throttle(this.sendUpdate, 1000, { trailing: true });
-            this.rid = rid.toString();
-            this.onRecordChange(rdoc);
-            return;
-        }
-        const isOwnOrTeammate = await contest.isOwnOrTeammateRecord(domainId, rdoc, this.user._id);
-        if (rdoc.contest && ![record.RECORD_GENERATE, record.RECORD_PRETEST].some((i) => i.toHexString() === rdoc.contest.toHexString())) {
-            this.tdoc = await contest.get(domainId, rdoc.contest);
-            let canView = this.user.own(this.tdoc);
-            canView ||= contest.canShowRecord.call(this, this.tdoc);
-            canView ||= isOwnOrTeammate && contest.canShowSelfRecord.call(this, this.tdoc);
-            if (!canView) throw new PermissionError(PERM.PERM_VIEW_CONTEST_HIDDEN_SCOREBOARD);
-            if (!this.user.own(this.tdoc) && !this.user.hasPerm(PERM.PERM_EDIT_CONTEST)) {
-                this.applyProjection = true;
-            }
-            this.accessGrant = await requireContestRecordAccess(this, this.tdoc, rdoc);
-            const teamVid = this.tdoc.allowTeam ? await contest.getTeamVid(domainId, this.tdoc.docId, this.user._id) : null;
-            this.tsdoc = await contest.getStatus(domainId, this.tdoc.docId, teamVid ?? this.user._id);
-        }
-        const [pdoc, self] = await Promise.all([
-            problem.get(rdoc.domainId, rdoc.pid),
-            problem.getStatus(domainId, rdoc.pid, this.user._id),
-        ]);
-
-        this.canViewCode = isOwnOrTeammate;
-        this.canViewCode ||= this.user.hasPriv(PRIV.PRIV_READ_RECORD_CODE);
-        this.canViewCode ||= this.user.hasPerm(PERM.PERM_READ_RECORD_CODE);
-        this.canViewCode ||= this.user.hasPerm(PERM.PERM_READ_RECORD_CODE_ACCEPT) && self?.status === STATUS.STATUS_ACCEPTED;
-
-        if (!this.tsdoc?.attend && pdoc && !problem.canViewBy(pdoc, this.user)) throw new PermissionError(PERM.PERM_VIEW_PROBLEM_HIDDEN);
-
-        this.pdoc = pdoc;
+        // HTTP, replay and WebSocket snapshots must use the same authority before any bytes are sent.
+        const access = await getRecordAccess(this, rdoc);
+        this.pdoc = access.pdoc;
+        this.tdoc = access.tdoc;
+        this.tsdoc = access.tsdoc;
+        this.canViewCode = access.canViewCode;
+        this.canViewRecordDetail = access.canViewDetail;
+        this.accessGrant = access.accessGrant;
+        this.applyProjection = !!this.tdoc && !record.RECORD_PRETEST.equals(rdoc.contest)
+            && !this.user.own(this.tdoc) && !this.user.hasPerm(PERM.PERM_EDIT_CONTEST);
         this.noTemplate = noTemplate;
         this.throttleSend = throttle(this.sendUpdate, 1000, { trailing: true });
         this.rid = rid.toString();
@@ -529,16 +508,18 @@ export class RecordDetailConnectionHandler extends ConnectionHandler {
             clearTimeout(this.disconnectTimeout);
             this.disconnectTimeout = null;
         }
+        rdoc = { ...rdoc };
         if (this.applyProjection) rdoc = contest.applyProjection(this.tdoc, rdoc, this.user);
         // TODO: frontend doesn't support incremental update
         // if ($set) this.send({ $set, $push });
         if (!this.canViewCode) {
-            rdoc = {
-                ...rdoc,
-                code: '',
-                compilerTexts: [],
-            };
+            Reflect.deleteProperty(rdoc, 'replay');
+            Reflect.deleteProperty(rdoc, 'codeReplayUrl');
+            rdoc.code = '';
+            rdoc.files = {};
+            rdoc.compilerTexts = [];
         }
+        if (!this.canViewRecordDetail) rdoc = pick(rdoc, ['_id', 'lang', 'code']) as RecordDoc;
         if (![STATUS.STATUS_WAITING, STATUS.STATUS_JUDGING, STATUS.STATUS_COMPILING, STATUS.STATUS_FETCHED].includes(rdoc.status)) {
             this.disconnectTimeout = setTimeout(() => this.close(4001, 'Ended'), 30000);
         }

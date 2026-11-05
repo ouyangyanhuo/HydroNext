@@ -64,7 +64,7 @@ class Collection {
     }
 }
 
-async function fixture(access = async (_handler: any, _record: any) => ({ canViewCode: true }), profile?: any) {
+async function fixture(access = async (_handler: any, _record: any) => ({ canViewCode: true, canViewDetail: true }), profile?: any) {
     const sessions = new Collection();
     const chunks = new Collection();
     const records = new Map<string, any>();

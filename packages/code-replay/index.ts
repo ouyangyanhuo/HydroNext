@@ -371,7 +371,8 @@ async function getReplayForHandler(handler: Handler, domainId: string, rid: Obje
     ]);
     if (!rdoc) throw new RecordNotFoundError(rid);
     if (!replay) throw new NotFoundError('Code replay');
-    if (!(await getRecordAccess(handler, rdoc)).canViewCode) throw new PermissionError(PERM.PERM_READ_RECORD_CODE);
+    const access = await getRecordAccess(handler, rdoc);
+    if (!access.canViewCode || !access.canViewDetail) throw new PermissionError(PERM.PERM_READ_RECORD_CODE);
     const [pdoc, udoc] = await Promise.all([
         ProblemModel.get(rdoc.domainId, rdoc.pid, ProblemModel.PROJECTION_LIST),
         UserModel.getById(rdoc.domainId, rdoc.uid),
@@ -536,7 +537,7 @@ export async function apply(ctx: Context) {
 
     ctx.on('handler/after/RecordDetail#get', async (that) => {
         const rdoc = that.response.body?.rdoc;
-        if (!rdoc?._id || !rdoc.code || that.canViewRecordDetail === false) return;
+        if (!rdoc?._id || !rdoc.code || that.canViewRecordDetail !== true || that.canViewRecordCode !== true) return;
         try {
             const replay = await CodeReplayModel.getByRid(rdoc._id);
             if (!replay) return;
@@ -549,6 +550,8 @@ export async function apply(ctx: Context) {
     ctx.on('handler/after/RecordList#get', async (that) => {
         const records = that.response.body?.rdocs;
         if (!Array.isArray(records) || !records.length) return;
+        // Never retain an old/unverified link when a hint lookup fails or permissions change.
+        for (const record of records) delete record.codeReplayUrl;
         try {
             const replays = await coll.find({ rid: { $in: records.map((record) => record._id) } }).project({ rid: 1 }).toArray();
             const available = new Set(replays.map((replay) => String(replay.rid)));

@@ -52,7 +52,8 @@ async function resolveRecordAccess(handler: Handler | ConnectionHandler, rdoc: R
         || handler.user.hasPriv(PRIV.PRIV_READ_RECORD_CODE)
         || handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE)
         || (handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE_ACCEPT) && self?.status === STATUS.STATUS_ACCEPTED)
-        || (tdoc && (handler.user.own(tdoc) || (tdoc.allowViewCode && contest.isDone(tdoc) && !!tsdoc?.attend)));
+        // Contest enrollment and the post-contest UI option are not domain code-reading permissions.
+        || (tdoc && handler.user.own(tdoc));
     return {
         pdoc, tdoc, tsdoc, canViewDetail, canViewCode: !!canViewCode, accessGrant,
         /** @deprecated Use accessGrant.assert(); this is an opaque grant, not a raw proctor session. */

@@ -102,7 +102,12 @@ test('contest restrictions remain mandatory and participants retain allowed hidd
     await assert.rejects(fixture({ contest: 'contest', global: true })());
     await assert.rejects(fixture({ contest: 'contest', hidden: true, showRecord: true, global: true })(), /VIEW_PROBLEM_HIDDEN/);
     assert.equal((await fixture({ contest: 'contest', hidden: true, showRecord: true, attend: true, global: true })()).canViewCode, true);
-    assert.equal((await fixture({ contest: 'contest', showRecord: true, attend: true, done: true, allowViewCode: true })()).canViewCode, true);
+    const released = { contest: 'contest', showRecord: true, attend: true, done: true, allowViewCode: true };
+    assert.equal((await fixture(released)()).canViewCode, false, 'post-contest options cannot grant domain code permissions');
+    assert.equal((await fixture(released).hints())['abcdef1234567890abcdef12'], false);
+    assert.equal((await fixture({ ...released, permissions: ['VIEW_RECORD', 'READ_RECORD_CODE'] })()).canViewCode, true);
+    assert.equal((await fixture({ ...released, permissions: ['VIEW_RECORD', 'READ_RECORD_CODE_ACCEPT'] })()).canViewCode, false);
+    assert.equal((await fixture({ ...released, permissions: ['VIEW_RECORD', 'READ_RECORD_CODE_ACCEPT'], accepted: true })()).canViewCode, true);
     const own = await fixture({ owner: true, contest: 'contest', hidden: true, attend: true })();
     assert.equal(own.canViewDetail, false);
     assert.equal(own.canViewCode, true);
