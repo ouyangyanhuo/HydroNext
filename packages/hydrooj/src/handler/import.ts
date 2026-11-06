@@ -30,6 +30,7 @@ class ProblemImportHydroHandler extends Handler {
         if (keepUser) this.checkPriv(PRIV.PRIV_EDIT_SYSTEM);
         if (!this.request.files.file) throw new ValidationError('file');
         if (preferredPrefix && !/^[a-zA-Z]+$/.test(preferredPrefix)) throw new ValidationError('preferredPrefix');
+        let importError: Error | undefined;
         const promise = problem.import(
             domainId, this.request.files.file.filepath,
             {
@@ -39,12 +40,16 @@ class ProblemImportHydroHandler extends Handler {
                 delSource: true,
                 hidden,
             },
-        ).catch((e) => MessageModel.send(1, this.user._id, `Import failed: ${e.message}\n${e.stack}`));
+        ).catch((e) => {
+            importError = e;
+            return MessageModel.send(1, this.user._id, `Import failed: ${e.message}\n${e.stack}`);
+        });
         let resolved = false;
         await Promise.race([
             promise.then(() => { resolved = true; }),
             sleep(5000),
         ]);
+        if (resolved && importError) throw importError;
         this.response.redirect = this.url('problem_main', resolved ? {} : { query: { showImport: 1 } });
     }
 }

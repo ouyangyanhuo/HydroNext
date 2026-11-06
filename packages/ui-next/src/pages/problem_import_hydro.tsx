@@ -111,8 +111,8 @@ export default function ProblemImportHydroPage() {
         const data = response.payload;
         if (data.error) {
           setError(formatErrorMessage(data.error, t('Import failed')));
-        } else if (data.redirect) {
-          navigate(data.redirect);
+        } else if (data.redirect || data.url) {
+          navigate(data.redirect || data.url);
         } else {
           navigate(buildUrl('problem_main'));
         }

@@ -387,15 +387,16 @@ md.renderer.rules.fence = (tokens, idx) => {
   return `<div class="code-block-wrapper">${labelHtml}<pre><code${langAttr}>${highlighted}</code></pre></div>\n`;
 };
 
-interface MarkdownRendererProps {
+export interface MarkdownRendererProps {
   content: any;
   className?: string;
   language?: string;
   pid?: string | number;
   enableCodeCopy?: boolean;
+  enhance?: (root: HTMLDivElement) => (() => void);
 }
 
-export function MarkdownRenderer({ content, className, language, pid, enableCodeCopy = false }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className, language, pid, enableCodeCopy = false, enhance }: MarkdownRendererProps) {
   const { t } = useI18n();
   const sessionLanguage = useSessionStore((s) => s.language);
   const domainId = useSessionStore((s) => s.ui.domainId);
@@ -412,6 +413,11 @@ export function MarkdownRenderer({ content, className, language, pid, enableCode
   }, [rawText, userUrlPrefix]);
 
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current) return enhance?.(ref.current);
+    return undefined;
+  }, [html, enhance]);
 
   useEffect(() => {
     if (!enableCodeCopy || !ref.current) return undefined;

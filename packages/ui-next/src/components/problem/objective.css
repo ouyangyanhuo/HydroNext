@@ -1,0 +1,75 @@
+.hydro-objective-slot {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: middle;
+  scroll-margin-block: 6rem;
+}
+
+.hydro-objective-input:not([type='radio'], [type='checkbox']) {
+  box-sizing: border-box;
+  width: 18rem;
+  max-width: 100%;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--mantine-radius-default);
+  background: var(--hydro-surface);
+  color: var(--hydro-text);
+  font: inherit;
+  text-wrap: wrap;
+}
+
+textarea.hydro-objective-input {
+  width: 36rem !important;
+  resize: vertical;
+}
+
+.hydro-objective-input:focus-visible {
+  outline: 2px solid var(--hydro-primary);
+  outline-offset: 2px;
+}
+
+.hydro-objective-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hydro-markdown ul.hydro-objective-options {
+  padding: 0;
+  list-style: none;
+}
+
+.hydro-objective-options > li > label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--hydro-border);
+  border-radius: var(--mantine-radius-default);
+  cursor: pointer;
+}
+
+.hydro-objective-options > li > label:has(:checked) {
+  border-color: var(--hydro-primary);
+  background: var(--hydro-surface-tint);
+}
+
+.hydro-objective-options > li > label > span {
+  min-width: 0;
+}
+
+.hydro-objective-input:is([type='radio'], [type='checkbox']) {
+  flex: 0 0 auto;
+  accent-color: var(--hydro-primary);
+}
+
+.hydro-objective-toolbar {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--hydro-border);
+}
+
+.hydro-objective-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

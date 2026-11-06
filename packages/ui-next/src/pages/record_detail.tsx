@@ -1,5 +1,6 @@
 import { Alert, Badge, Card, Code, Group, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
+import { load } from 'js-yaml';
 import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
 import { RecordActionExtras, RecordContentExtras } from '@/components/common/addon-slots';
@@ -18,6 +19,7 @@ import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useRecordSocket } from '@/hooks/use-record-socket';
 import { formatErrorMessage } from '@/utils/error';
 import { extractLocalizedContent } from '@/utils/i18n-content';
+import { normalizeObjectiveAnswers, objectiveCaseId } from '@/utils/objective-answers';
 import { getRecordProblemQuery, getRecordReturnQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
 
 function asArray(value: any) {
@@ -81,6 +83,7 @@ function normalizeCases(rdoc: any) {
   const list = asArray(rdoc.testCases || rdoc.cases || []);
   return list.map((item: any, index: number) => ({
     ...item,
+    questionId: objectiveCaseId(item),
     id: item.id ?? index + 1,
     subtaskId: item.subtaskId ?? item.subtask ?? 1,
   }));
@@ -105,20 +108,20 @@ function CaseMessage({ message }: { message?: any }) {
   );
 }
 
-function CaseTable({ cases, subtasks }: { cases: any[], subtasks: Record<string, any> }) {
+function CaseTable({ cases, subtasks, objective = false }: { cases: any[], subtasks: Record<string, any>, objective?: boolean }) {
   const { t } = useI18n();
   const groups = groupCases(cases);
-  const showSubtask = groups.length > 1 || groups.some((group) => group.items.length > 1);
+  const showSubtask = !objective && (groups.length > 1 || groups.some((group) => group.items.length > 1));
 
   return (
     <div className="overflow-x-auto">
       <Table striped highlightOnHover verticalSpacing="sm">
         <Table.Thead>
           <Table.Tr>
-            <Table.Th className="w-24">{t('Test Case')}</Table.Th>
+            <Table.Th className="w-24">{objective ? '#' : t('Test Case')}</Table.Th>
             <Table.Th>{t('Status')}</Table.Th>
-            <Table.Th className="w-28 text-right">{t('Time Cost')}</Table.Th>
-            <Table.Th className="w-32 text-right">{t('Memory Cost')}</Table.Th>
+            {!objective && <Table.Th className="w-28 text-right">{t('Time Cost')}</Table.Th>}
+            {!objective && <Table.Th className="w-32 text-right">{t('Memory Cost')}</Table.Th>}
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
@@ -147,7 +150,7 @@ function CaseTable({ cases, subtasks }: { cases: any[], subtasks: Record<string,
                     <Table.Tr key={`${group.id}-${item.id}-${index}`}>
                       <Table.Td>
                         <Text size="xs" fw={700}>
-                          {showSubtask ? `#${group.id}-${item.id}` : `#${index + 1}`}
+                          {objective ? `#${item.questionId}` : showSubtask ? `#${group.id}-${item.id}` : `#${index + 1}`}
                         </Text>
                       </Table.Td>
                       <Table.Td>
@@ -157,12 +160,12 @@ function CaseTable({ cases, subtasks }: { cases: any[], subtasks: Record<string,
                         </Group>
                         <CaseMessage message={item.message} />
                       </Table.Td>
-                      <Table.Td className="text-right">
+                      {!objective && <Table.Td className="text-right">
                         <Text size="xs">{prefix}{formatTime(item.time)}</Text>
-                      </Table.Td>
-                      <Table.Td className="text-right">
+                      </Table.Td>}
+                      {!objective && <Table.Td className="text-right">
                         <Text size="xs">{prefix}{formatMemory(item.memory)}</Text>
-                      </Table.Td>
+                      </Table.Td>}
                     </Table.Tr>
                   );
                 })}
@@ -206,6 +209,27 @@ function OutputBlock({ title, content }: { title: string, content: string }) {
   );
 }
 
+function ObjectiveAnswerTable({ code }: { code: string }) {
+  const { t } = useI18n();
+  let answers = {};
+  try { answers = normalizeObjectiveAnswers(load(code)); } catch { /* Keep malformed historical submissions readable. */ }
+  const entries = Object.entries(answers);
+  if (!entries.length) return <Code block>{code}</Code>;
+  return (
+    <Table style={{ tableLayout: 'fixed' }}>
+      <Table.Thead><Table.Tr><Table.Th className="w-24">#</Table.Th><Table.Th>{t('Content')}</Table.Th></Table.Tr></Table.Thead>
+      <Table.Tbody>
+        {entries.map(([id, answer]) => (
+          <Table.Tr key={id}>
+            <Table.Td>{id}</Table.Td>
+            <Table.Td className="whitespace-pre-wrap break-words">{Array.isArray(answer) ? answer.join(', ') : String(answer)}</Table.Td>
+          </Table.Tr>
+        ))}
+      </Table.Tbody>
+    </Table>
+  );
+}
+
 export default function RecordDetailPage() {
   const { args } = usePageData();
   const buildUrl = useBuildUrl();
@@ -223,6 +247,7 @@ export default function RecordDetailPage() {
   const udoc = args.udoc || {};
   const judgeUdoc = args.judge_udoc || args.judgeUdoc;
   const pdoc = args.pdoc || {};
+  const isObjective = pdoc.config?.type === 'objective';
   const tdoc = args.tdoc;
   const allRevs = args.allRevs || {};
   const rev = args.rev;
@@ -334,10 +359,12 @@ export default function RecordDetailPage() {
         <div className="hydro-record-metrics-scroll mt-5">
           <div className="hydro-record-metrics">
             <Metric label={t('Score')} value={rdoc.score ?? '-'} />
-            <Metric label={t('Total Time')} value={rdoc.time == null ? '-' : `${isLimitStatus ? '>= ' : ''}${formatTime(rdoc.time)}`} />
-            <Metric label={t('Peak Time')} value={peakTime == null ? '-' : `${isLimitStatus ? '>= ' : ''}${formatTime(peakTime)}`} />
-            <Metric label={t('Peak Memory')} value={rdoc.memory == null ? '-' : `${isLimitStatus ? '>= ' : ''}${formatMemory(rdoc.memory)}`} />
-            <Metric label={t('Language')} value={rdoc.lang || '-'} />
+            {!isObjective && <>
+              <Metric label={t('Total Time')} value={rdoc.time == null ? '-' : `${isLimitStatus ? '>= ' : ''}${formatTime(rdoc.time)}`} />
+              <Metric label={t('Peak Time')} value={peakTime == null ? '-' : `${isLimitStatus ? '>= ' : ''}${formatTime(peakTime)}`} />
+              <Metric label={t('Peak Memory')} value={rdoc.memory == null ? '-' : `${isLimitStatus ? '>= ' : ''}${formatMemory(rdoc.memory)}`} />
+              <Metric label={t('Language')} value={rdoc.lang || '-'} />
+            </>}
           </div>
         </div>
         {isJudging && (
@@ -357,7 +384,7 @@ export default function RecordDetailPage() {
                   <Badge variant="light">{cases.length}</Badge>
                 </Group>
                 <div className="border-t border-[var(--hydro-border)]">
-                  <CaseTable cases={cases} subtasks={rdoc.subtasks || {}} />
+                  <CaseTable cases={cases} subtasks={rdoc.subtasks || {}} objective={isObjective} />
                 </div>
               </Card>
             )}
@@ -374,12 +401,14 @@ export default function RecordDetailPage() {
               <Card withBorder p="lg" className="hydro-content-card hydro-record-card">
                 <Stack gap="sm">
                   <Group justify="space-between">
-                    <Text size="sm" fw={700}>{t('Source Code')}</Text>
+                    <Text size="sm" fw={700}>{t(isObjective ? 'problem_type.objective' : 'Source Code')}</Text>
                     <RecordActionExtras record={rdoc} />
                   </Group>
-                  <div className="hydro-record-source" tabIndex={0} aria-label={t('Source Code')}>
-                    <Code block className="min-w-max bg-transparent p-4">{rdoc.code}</Code>
-                  </div>
+                  {isObjective ? <ObjectiveAnswerTable code={rdoc.code} /> : (
+                    <div className="hydro-record-source" tabIndex={0} aria-label={t('Source Code')}>
+                      <Code block className="min-w-max bg-transparent p-4">{rdoc.code}</Code>
+                    </div>
+                  )}
                 </Stack>
               </Card>
             )}
@@ -430,10 +459,10 @@ export default function RecordDetailPage() {
                     </Link>
                   </InfoRow>
                 )}
-                <InfoRow label={t('Language')}>
+                {!isObjective && <InfoRow label={t('Language')}>
                   <Text size="xs">{rdoc.lang || '-'}</Text>
-                </InfoRow>
-                {codeLength && (
+                </InfoRow>}
+                {!isObjective && codeLength && (
                   <InfoRow label={t('Code Length')}>
                     <Text size="xs">{codeLength}</Text>
                   </InfoRow>

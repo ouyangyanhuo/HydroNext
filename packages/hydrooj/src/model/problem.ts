@@ -576,7 +576,8 @@ export class ProblemModel {
             preferredPrefix, progress, override = false, operator = 1,
         } = options;
         let delSource = options.delSource;
-        let problems: string[];
+        const problems: string[] = [];
+        const errors: string[] = [];
         const ddoc = await DomainModel.get(domainId);
         if (!ddoc) throw new NotFoundError(domainId);
         try {
@@ -596,12 +597,19 @@ export class ProblemModel {
             } else {
                 throw new ValidationError('file', null, 'Invalid file');
             }
-            const files = await fs.readdir(tmpdir, { withFileTypes: true });
-            if (files.find((f) => f.name === 'problem.yaml')) {
-                problems = ['.']; // special case for ICPC problem package
-            } else {
-                problems = files.filter((f) => f.isDirectory()).map((i) => i.name);
+            // Archives often retain wrapper directories (e.g. example/01-objective/).
+            // Once a package manifest is found, its data/attachments are not separate packages.
+            const directories = ['.'];
+            for (const directory of directories) {
+                const files = await fs.readdir(path.join(tmpdir, directory), { withFileTypes: true });
+                if (files.some((f) => f.name === 'problem.yaml' && f.isFile())) {
+                    problems.push(directory);
+                    continue;
+                }
+                directories.push(...files.filter((f) => f.isDirectory() && !f.name.startsWith('.') && f.name !== '__MACOSX')
+                    .map((f) => path.join(directory, f.name)));
             }
+            if (!problems.length) throw new ValidationError('file', null, 'No problem.yaml found in the archive.');
         } catch (e) {
             if (delSource) await fs.remove(tmpdir);
             throw e;
@@ -829,10 +837,16 @@ export class ProblemModel {
                 const message = `${overridePid ? 'Updated' : 'Imported'} problem ${pdoc.pid || docId} (${title})`;
                 (process.env.HYDRO_CLI ? logger.info : progress)?.(message);
             } catch (e) {
-                (process.env.HYDRO_CLI ? logger.info : progress)?.(`Error importing problem ${i}: ${e.message}`);
+                const reason = String(e.message || e).replace(/\{(\d+)\}/g, (placeholder, index) => (
+                    Array.isArray(e.params) && +index < e.params.length ? String(e.params[index]) : placeholder
+                ));
+                const message = `Error importing problem ${i}: ${reason}`;
+                errors.push(message);
+                (process.env.HYDRO_CLI ? logger.info : progress)?.(message);
             }
         }
         if (delSource) await fs.remove(tmpdir);
+        if (errors.length) throw new ValidationError('file', null, errors.join('\n'));
     }
 
     static async export(domainId: string, pidFilter = '') {

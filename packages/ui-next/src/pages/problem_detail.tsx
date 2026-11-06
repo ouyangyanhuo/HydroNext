@@ -14,6 +14,7 @@ import { Scratchpad } from '@/components/editor/scratchpad';
 import { getProblemSubmitUrl, resolveSubmissionContext } from '@/components/editor/submission-context';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
+import { ObjectiveAnswerForm, ObjectiveMarkdown } from '@/components/problem/objective-answer-form';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { UserLink } from '@/components/user/user-link';
@@ -171,8 +172,10 @@ function ProblemMeta({ pdoc, owner }: { pdoc: any, owner?: any }) {
   const { t } = useI18n();
   const primaryItems = [
     { label: 'ID', value: String(pdoc.docId || pdoc.pid || '-') },
-    { label: t('Time Limit'), value: formatTime(pdoc) },
-    { label: t('Memory Limit'), value: formatMemory(pdoc) },
+    ...(pdoc.config?.type === 'objective' ? [] : [
+      { label: t('Time Limit'), value: formatTime(pdoc) },
+      { label: t('Memory Limit'), value: formatMemory(pdoc) },
+    ]),
     { label: t('Problem Type'), value: t(`problemType::${pdoc.config?.type || 'default'}`) },
   ];
   const stats = [
@@ -370,7 +373,7 @@ function ProblemSidebar({
             </Button>
           ) : canSubmit ? (
             <Button onClick={onToggleScratchpad} variant="filled" fullWidth size="sm" justify="flex-start">
-              {scratchpadOpen ? t('Quit Scratchpad') : t('Enter Online Programming Mode')}
+              {pdoc.config?.type === 'objective' ? t('Submit') : scratchpadOpen ? t('Quit Scratchpad') : t('Enter Online Programming Mode')}
             </Button>
           ) : (
             <Button disabled fullWidth size="sm" justify="flex-start">
@@ -492,6 +495,8 @@ export default function ProblemDetailPage() {
     || buildUrl('problem_main', {}, problemListQuery);
 
   const pdoc = args.pdoc || {};
+  const isObjective = pdoc.config?.type === 'objective';
+  const StatementRenderer = isObjective ? ObjectiveMarkdown : MarkdownRenderer;
   const psdoc = args.psdoc;
   const rdoc = args.rdoc;
   const owner = args.udoc || args.owner_udoc;
@@ -545,7 +550,8 @@ export default function ProblemDetailPage() {
     return queryLang || (langs.includes(sessionLanguage) ? sessionLanguage : langs[0] || sessionLanguage);
   });
   const activeLang = langs.includes(selectedLang) ? selectedLang : langs.find((lang) => lang.startsWith(selectedLang)) || langs[0] || selectedLang;
-  const [scratchpadOpen, setScratchpadOpen] = useState(() => new URLSearchParams(window.location.search).get('mode') === 'code');
+  const [scratchpadRequested, setScratchpadOpen] = useState(() => new URLSearchParams(window.location.search).get('mode') === 'code');
+  const scratchpadOpen = !isObjective && scratchpadRequested;
   const workspaceRef = useRef<HTMLDivElement>(null);
   const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);
   const pid = pdoc.pid || pdoc.docId;
@@ -681,7 +687,7 @@ export default function ProblemDetailPage() {
         </Group>
       )}
       {statements ? statements.filter((entry: any) => !langs.length || entry.lang === activeLang).map((entry: any) => (
-        <MarkdownRenderer
+        <StatementRenderer
           key={entry.name}
           content={args.renderedStatements?.[entry.name] ?? (entry.file
             ? `@[${entry.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'file'}](file://${encodeURIComponent(entry.file)})`
@@ -690,7 +696,7 @@ export default function ProblemDetailPage() {
           pid={pid}
           enableCodeCopy={scratchpadOpen && canEditProblem}
         />
-      )) : <MarkdownRenderer content={pdoc.content || ''} language={activeLang} pid={pid} enableCodeCopy={scratchpadOpen && canEditProblem} />}
+      )) : <StatementRenderer content={pdoc.content || ''} language={activeLang} pid={pid} enableCodeCopy={scratchpadOpen && canEditProblem} />}
     </Stack>
   );
 
@@ -744,7 +750,7 @@ export default function ProblemDetailPage() {
             </div>
           </Paper>
 
-          {canViewProblemFiles && (!pdoc.data || pdoc.data.length === 0) && (
+          {canViewProblemFiles && (isObjective ? !pdoc.config?.count : !pdoc.data?.length) && (
             <Paper withBorder p="md" className="border-[var(--hydro-warning)]" style={{ background: 'rgba(233, 161, 0, 0.08)' }}>
               <Text size="sm" fw={700} c="orange">WARNING:</Text>
               <Text size="sm">{t('This problem has no testdata.')}</Text>
@@ -752,7 +758,18 @@ export default function ProblemDetailPage() {
           )}
 
           <Paper withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]">
-            {statement}
+            {isObjective ? (
+              <ObjectiveAnswerForm
+                key={`${user._id}/${ui.domainId}/${pdoc.docId}/${tid || ''}`}
+                pid={submitPid}
+                tid={tid}
+                submitUrl={submitUrl}
+                disabled={!isAuthenticated || !canSubmitProblem || Boolean(tid && contestClosed)}
+                disabledReason={t(!isAuthenticated ? 'Login to Submit' : tid && contestClosed ? 'Contest Closed' : 'No Permission to Submit')}
+              >
+                {statement}
+              </ObjectiveAnswerForm>
+            ) : statement}
           </Paper>
         </Stack>
       </div>
@@ -773,7 +790,10 @@ export default function ProblemDetailPage() {
             canViewProblemSolution={canViewProblemSolution}
             canViewProblemFiles={canViewProblemFiles}
             canDownloadProblem={canDownloadProblem}
-            onToggleScratchpad={() => switchScratchpad(true)}
+            onToggleScratchpad={() => {
+              if (isObjective) (document.getElementById('objective-answers') as HTMLFormElement | null)?.requestSubmit();
+              else switchScratchpad(true);
+            }}
           />
           {relatedCount > 0 && (
             <Paper withBorder p="md" className="hydro-panel">

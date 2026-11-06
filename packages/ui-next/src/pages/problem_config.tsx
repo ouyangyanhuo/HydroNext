@@ -92,7 +92,8 @@ export default function ProblemConfigPage() {
   const buildUrl = useBuildUrl();
   const pdoc = args.pdoc || {};
   const testdata = args.testdata || EMPTY_FILES;
-  const [config, setConfig] = useState(toText(args.config || pdoc.config || {}));
+  // pdoc.config is a public summary; it omits standard answers and is not a config.yaml source.
+  const [config, setConfig] = useState(toText(args.config ?? ''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);

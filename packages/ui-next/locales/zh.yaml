@@ -1080,3 +1080,6 @@ Your Status: 你的状态
 # Plugin health
 Some features could not be loaded. Reload the page or contact the administrator.: 部分功能未能加载，请刷新页面或联系管理员。
 Some plugins are unavailable: 部分插件不可用
+# Objective questions (reuse the existing default UI translations)
+All changes will be lost. Are you sure to clear all answers?: 所有更改将会丢失。您确定要清除所有答案吗？
+Clear answers: 清除答案

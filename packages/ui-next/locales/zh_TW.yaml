@@ -964,3 +964,6 @@ Your Status: 您的狀態
 # Plugin health
 Some features could not be loaded. Reload the page or contact the administrator.: 部分功能未能載入，請重新整理頁面或聯絡管理員。
 Some plugins are unavailable: 部分外掛無法使用
+# Objective questions (reuse the existing default UI translations)
+All changes will be lost. Are you sure to clear all answers?: 所有更改將會丟失。您確定要清除所有答案嗎？
+Clear answers: 清除答案

@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
 import { formatErrorMessage } from '../src/utils/error.ts';
+import * as objectiveAnswers from '../src/utils/objective-answers.ts';
 
 const addonMocks = {
     '@/components/common/addon-slots': {
@@ -52,7 +53,13 @@ const translate = (key: string, values: any = {}) => Object.entries(values).redu
     (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)), key,
 );
 const mocks: Record<string, any> = {
-    'js-yaml': { dump: (value: any) => require('js-yaml').dump(JSON.parse(JSON.stringify(value))) },
+    './problem_detail': { default: () => null },
+    '@/components/problem/objective-answer-form': { ObjectiveAnswerForm: () => null, ObjectiveMarkdown: () => null },
+    '@/utils/objective-answers': objectiveAnswers,
+    'js-yaml': {
+        dump: (value: any) => require('js-yaml').dump(JSON.parse(JSON.stringify(value))),
+        load: (value: string) => require('js-yaml').load(value),
+    },
     '@/hooks/use-time': { useDeadlinePassed: () => false },
     '@/hooks/use-i18n': { useI18n: () => ({ t: translate }) },
     './use-i18n': { useI18n: () => ({ t: translate }) },
@@ -456,7 +463,7 @@ test('submitting and returning through record problem links retains the source n
         '@/utils/request': { formatRequestError: () => 'Failed' },
     };
     const Submit = component('../src/pages/problem_submit.tsx', overrides).default;
-    const Record = component('../src/pages/record_detail.tsx', overrides, { URLSearchParams }).default;
+    const Record = component('../src/pages/record_detail.tsx', overrides, { URLSearchParams, Blob }).default;
     args = { pdoc: { docId: 2, pid: 'P2', title: 'Current problem' }, langs: { cc: { display: 'C++' } } };
     request = async () => ({ ok: true, json: async () => ({ rid: 'rid', redirect: '/record/rid' }) });
     const view = await mount(h(Submit));
@@ -496,6 +503,17 @@ test('submitting and returning through record problem links retains the source n
             assert.equal(target.searchParams.get('sort'), 'desc');
             assert.equal(target.searchParams.get('mode'), status === 1 ? null : 'code', 'use the latest WebSocket status, not the initial AC');
         }
+        socketUpdate = null;
+        args = { ...args, pdoc: { ...args.pdoc, config: { type: 'objective' } }, rdoc: {
+            ...args.rdoc, code: '1: "001"\n5-1: [A, C]\n',
+            testCases: [{ subtaskId: 1, id: null, status: 1, score: 20 }, { subtaskId: 5, id: 1, status: 2, score: 10 }],
+        } };
+        await view.render(h(Record));
+        assert.match(view.host.textContent!, /#1/);
+        assert.match(view.host.textContent!, /#5-1/);
+        assert.match(view.host.textContent!, /001/);
+        assert.match(view.host.textContent!, /A, C/);
+        assert.doesNotMatch(view.host.textContent!, /Source Code|Time Cost|Memory Cost|Language/);
     } finally {
         await view.close();
         dom.reconfigure({ url: previousUrl });
@@ -582,11 +600,45 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
         assert.equal(dom.window.location.search, search);
         assert.equal(view.host.querySelector('[data-editor]'), null);
         assert.ok(button('Enter Online Programming Mode', view.host));
+        args = { ...args, canViewProblemFiles: true, pdoc: { ...args.pdoc, data: [], config: { type: 'objective', count: 3 } } };
+        await view.render(h(Page, { key: 'objective' }));
+        assert.doesNotMatch(view.host.textContent!, /This problem has no testdata\./,
+            'objective questions use configured answers instead of input/output files');
+        assert.equal(view.host.querySelector('[data-editor]'), null);
+        args = { ...args, pdoc: { ...args.pdoc, config: { type: 'objective', count: 0 } } };
+        await view.render(h(Page));
+        assert.match(view.host.textContent!, /This problem has no testdata\./,
+            'an objective question with no configured answers still needs attention');
+        args = { ...args, pdoc: { ...args.pdoc, config: { type: 'default', count: 0 } } };
+        await view.render(h(Page));
+        assert.match(view.host.textContent!, /This problem has no testdata\./);
     } finally {
         await view.close();
         delete transitionDocument.startViewTransition;
         dom.reconfigure({ url: previousUrl });
     }
+});
+
+test('the config editor never substitutes the public problem summary for a missing raw config file', async () => {
+    args = {
+        pdoc: { docId: 2, pid: 'P2', config: { type: 'default', count: 0, memoryMin: 256, langs: ['cc'] } },
+        config: '', testdata: [],
+    };
+    const Page = component('../src/pages/problem_config.tsx', {
+        '@/components/common/file-dropzone': { FileDropzone: () => null },
+        '@/components/common/file-preview-modal': { FilePreviewModal: () => null },
+        '@/components/common/select': { ...mocks['@/components/common/select'], TagMultiSelect: () => null },
+        '@/components/editor/code-editor': { CodeEditor: ({ value }: any) => h('textarea', { 'data-config': true, value, readOnly: true }) },
+        '@/utils/lang-display': { getLangDisplay: (value: string) => value, LANG_DISPLAY: {} },
+    }).default;
+    const view = await mount(h(Page));
+    try {
+        assert.equal(view.host.querySelector<HTMLTextAreaElement>('[data-config]')!.value, '');
+        args = { ...args, config: 'type: objective\nanswers:\n  1: [1024, 100]\n' };
+        await view.render(h(Page, { key: 'raw-config' }));
+        assert.equal(view.host.querySelector<HTMLTextAreaElement>('[data-config]')!.value, args.config);
+        assert.doesNotMatch(view.host.querySelector<HTMLTextAreaElement>('[data-config]')!.value, /memoryMin|count:|langs:/);
+    } finally { await view.close(); }
 });
 
 test('problem editing retains unmodified statement files and languages when saving a text change', async () => {

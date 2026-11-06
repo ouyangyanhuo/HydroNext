@@ -13,8 +13,9 @@ import { useI18n } from '@/hooks/use-i18n';
 import { protectedSubmissionHeaders as proctorSubmissionHeaders } from '@/registry/request-security';
 import { getProblemNavigationQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
 import { formatRequestError as proctorError } from '@/utils/request';
+import ProblemDetailPage from './problem_detail';
 
-export default function ProblemSubmitPage() {
+function CodeSubmitPage() {
   const { args } = usePageData();
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -125,4 +126,9 @@ export default function ProblemSubmitPage() {
       </Card>
     </Stack>
   );
+}
+
+export default function ProblemSubmitPage() {
+  const { args } = usePageData();
+  return args.pdoc?.config?.type === 'objective' ? <ProblemDetailPage /> : <CodeSubmitPage />;
 }

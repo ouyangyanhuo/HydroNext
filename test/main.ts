@@ -671,6 +671,75 @@ describe('App', () => {
 
     it('Enabled addons pass profile HTTP regressions', () => runAddonHttpTests('runProfileHttpTests', agent));
 
+    /* eslint-disable no-await-in-loop -- Check each imported package before uploading the next archive. */
+    it('Objective problem packages import their statement and answer config without input/output files', async () => {
+        const { domain, problem, record } = global.Hydro.model;
+        const { ZipWriter, Uint8ArrayWriter, TextReader } = require('@zip.js/zip.js');
+        const { dump, load } = require('js-yaml');
+        const { ObjectId } = require('mongodb');
+        const fs = require('fs');
+        const path = require('path');
+        const domainId = 'objective-import-test';
+        const origin = `http://127.0.0.1:${require('hydrooj').httpServer.address().port}`;
+        await domain.add(domainId, 2, 'Objective import test', '');
+        const statement = '# Objective example\n\n{{ input(1) }}\n\n{{ select(2) }}\n- const\n- static\n- define\n- volatile\n\n'
+            + '{{ multiselect(3) }}\n- array\n- tree\n- stack\n- graph\n';
+        const answers = { 1: { 1024: 40, '2^10': 40, '1 024': 40 }, 2: ['C', 30], 3: [['A', 'C'], 30] };
+        const importDir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'hydro-objective-import-'));
+        try {
+            for (const [index, prefix] of ['', '01-objective/', 'example/01-objective/'].entries()) {
+                const pid = `OBJECTIVE${index + 1}`;
+                const zip = new ZipWriter(new Uint8ArrayWriter());
+                await zip.add(`${prefix}problem.yaml`, new TextReader(dump({ pid, title: 'Objective example', owner: 1 })));
+                await zip.add(`${prefix}problem_zh.md`, new TextReader(statement));
+                await zip.add(`${prefix}testdata/config.yaml`, new TextReader(dump({ type: 'objective', answers })));
+                const archive = path.join(importDir, `${pid}.zip`);
+                fs.writeFileSync(archive, await zip.close());
+                await agent.post(`/d/${domainId}/problem/import/hydro`).set('Accept', 'application/json').set('Origin', origin)
+                    .attach('file', archive).expect(200);
+                const imported = await problem.get(domainId, pid);
+                assert.ok(imported, 'the problem should be fully imported when the small upload finishes');
+                assert.equal(imported.config.type, 'objective');
+                assert.equal(imported.config.count, 3);
+                assert.deepEqual(imported.data.map((file) => file.name), ['config.yaml']);
+                assert.equal((await problem.getStatements(imported))[0].content, statement);
+                const detail = getPageArgs(await agent.get(`/d/${domainId}/p/${pid}`).set('Accept', 'application/json').expect(200));
+                assert.equal(detail.pdoc.config.type, 'objective');
+                assert.equal(detail.statements[0].content, statement);
+                assert.deepEqual(detail.pdoc.data.map((file) => file.name), ['config.yaml']);
+                assert.equal(detail.pdoc.config.answers, undefined, 'standard answers must stay on the server');
+                const configPage = getPageArgs(await agent.get(`/d/${domainId}/p/${pid}/config`).set('Accept', 'application/json').expect(200));
+                assert.equal(load(configPage.config).type, 'objective');
+                assert.deepEqual(load(configPage.config).answers, answers);
+                const submission = await agent.post(`/d/${domainId}/p/${pid}/submit`).set('Accept', 'application/json')
+                    .send({ lang: '_', code: dump({ 1: '1024', 2: 'C', 3: ['A', 'C'] }) }).expect(200);
+                assert.ok(submission.body.rid);
+                const rdoc = await record.get(domainId, new ObjectId(submission.body.rid));
+                assert.equal(rdoc.lang, '_');
+                assert.deepEqual(load(rdoc.code), { 1: '1024', 2: 'C', 3: ['A', 'C'] });
+            }
+            for (const manifest of [undefined, 'title: []\n']) {
+                const zip = new ZipWriter(new Uint8ArrayWriter());
+                if (manifest) await zip.add('example/01-objective/problem.yaml', new TextReader(manifest));
+                await zip.add('example/01-objective/problem_zh.md', new TextReader(statement));
+                const archive = path.join(importDir, 'invalid.zip');
+                fs.writeFileSync(archive, await zip.close());
+                const failed = await agent.post(`/d/${domainId}/problem/import/hydro`).set('Accept', 'application/json').set('Origin', origin)
+                    .attach('file', archive).expect(403);
+                assert.equal(failed.body.error.name, 'ValidationError');
+                assert.match(failed.body.error.params[2], manifest ? /Invalid title/ : /No problem.yaml/);
+                assert.equal(await problem.count(domainId, {}), 3, 'invalid archives cannot masquerade as successful imports');
+            }
+        } finally {
+            const imported = await problem.getMulti(domainId).toArray();
+            await Promise.all(imported.map((pdoc) => problem.del(domainId, pdoc.docId)));
+            await record.coll.deleteMany({ domainId });
+            await domain.del(domainId);
+            fs.rmSync(importDir, { recursive: true, force: true });
+        }
+    });
+    /* eslint-enable no-await-in-loop */
+
     it('Bulk problem download uses the current domain, create permission and independent testdata access', async () => {
         const { domain, problem, user } = global.Hydro.model;
         const { PERM, PRIV } = require('../packages/hydrooj/src/model/builtin');
