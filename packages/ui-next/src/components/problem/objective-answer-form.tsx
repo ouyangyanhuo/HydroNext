@@ -34,9 +34,13 @@ export function ObjectiveMarkdown(props: MarkdownRendererProps) {
   const enhance = useCallback((root: HTMLDivElement) => {
     const mounted = attachObjectiveInputs(root, { prefix, onChange: setAnswer });
     inputs.current = mounted;
-    mounted.update(latest.current.answers, latest.current.disabled);
+    const restore = () => mounted.update(latest.current.answers, latest.current.disabled);
+    restore();
+    // pageshow follows the browser's native form restoration, including back/forward cache restores.
+    window.addEventListener('pageshow', restore);
     register(prefix, mounted.questions);
     return () => {
+      window.removeEventListener('pageshow', restore);
       mounted.destroy();
       inputs.current = null;
       register(prefix, []);

@@ -774,7 +774,7 @@ export default function ProblemDetailPage() {
         </Stack>
       </div>
 
-      <div className="w-full lg:w-64 shrink-0">
+      <div className={`w-full lg:w-64 shrink-0${isObjective ? ' hydro-objective-sidebar' : ''}`}>
         <Stack gap="md">
           <ProblemSidebar
             pdoc={pdoc}

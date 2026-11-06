@@ -73,3 +73,14 @@ textarea.hydro-objective-input {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+@media (min-width: 64rem) {
+  .hydro-objective-sidebar {
+    position: sticky;
+    top: 5.5rem;
+    align-self: flex-start;
+    max-height: calc(100dvh - 7rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}

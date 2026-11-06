@@ -602,6 +602,7 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
         assert.ok(button('Enter Online Programming Mode', view.host));
         args = { ...args, canViewProblemFiles: true, pdoc: { ...args.pdoc, data: [], config: { type: 'objective', count: 3 } } };
         await view.render(h(Page, { key: 'objective' }));
+        assert.ok(view.host.querySelector('.hydro-objective-sidebar'), 'objective actions remain available in the sticky sidebar');
         assert.doesNotMatch(view.host.textContent!, /This problem has no testdata\./,
             'objective questions use configured answers instead of input/output files');
         assert.equal(view.host.querySelector('[data-editor]'), null);
@@ -611,6 +612,7 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
             'an objective question with no configured answers still needs attention');
         args = { ...args, pdoc: { ...args.pdoc, config: { type: 'default', count: 0 } } };
         await view.render(h(Page));
+        assert.equal(view.host.querySelector('.hydro-objective-sidebar'), null);
         assert.match(view.host.textContent!, /This problem has no testdata\./);
     } finally {
         await view.close();

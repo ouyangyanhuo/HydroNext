@@ -38,7 +38,7 @@ test('objective form restores drafts, retains answers across language changes, s
     const { MantineProvider } = require('@mantine/core');
     const tid = '0123456789abcdef01234567';
     const draftKey = drafts.objectiveDraftKey(7, 'test', 42, tid);
-    dom.window.localStorage.setItem(draftKey, JSON.stringify({ version: 1, answers: { 1: '001', 2: ['B'] } }));
+    dom.window.localStorage.setItem(draftKey, JSON.stringify({ version: 1, answers: { 1: '001', 2: ['B'], 3: 'C' } }));
     const navigations: string[] = [];
     const signed: any[] = [];
     const requests: any[] = [];
@@ -88,7 +88,7 @@ test('objective form restores drafts, retains answers across language changes, s
     mocks['@/components/markdown/markdown-renderer'] = loadComponent('../src/components/markdown/markdown-renderer.tsx');
     const { ObjectiveAnswerForm, ObjectiveMarkdown } = loadComponent('../src/components/problem/objective-answer-form.tsx');
     const root = createRoot(document.getElementById('root'));
-    const content = '{{ input(1) }}\n\n{{ multiselect(2) }}\n\n- A\n- **B**';
+    const content = '{{ input(1) }}\n\n{{ multiselect(2) }}\n\n- A\n- **B**\n\n{{ select(3) }}\n- A\n- B\n- C\n- D';
     const render = (disabled = false, language = 'en', formKey = 'first') => root.render(h(MantineProvider, {},
         h(React.StrictMode, {}, h(ObjectiveAnswerForm, {
             key: formKey, pid: 42, tid, submitUrl: `/d/test/p/P42/submit?tid=${tid}`, disabled, disabledReason: 'Contest Closed',
@@ -98,7 +98,15 @@ test('objective form restores drafts, retains answers across language changes, s
         await act(async () => render());
         assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, '001');
         assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=checkbox]')[1].checked);
-        assert.match(document.body.textContent!, /Answered: 2\/2/);
+        assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=radio]')[2].checked);
+        assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=radio]')[2].defaultChecked);
+        assert.match(document.body.textContent!, /Answered: 3\/3/);
+        await act(async () => {
+            // Native restoration can overwrite checked properties without emitting input/change.
+            document.querySelectorAll<HTMLInputElement>('input[type=radio]')[2].checked = false;
+            dom.window.dispatchEvent(new dom.window.Event('pageshow'));
+        });
+        assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=radio]')[2].checked);
         await act(async () => {
             const input = document.querySelector<HTMLInputElement>('input[type=text]')!;
             input.value = '0';
@@ -108,6 +116,9 @@ test('objective form restores drafts, retains answers across language changes, s
         await act(async () => render(false, 'zh'));
         assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, '0');
         assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=checkbox]')[1].checked);
+        assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=radio]')[2].checked);
+        await act(async () => { document.querySelectorAll<HTMLInputElement>('input[type=radio]')[1].click(); });
+        assert.equal(drafts.readObjectiveDraft(dom.window.localStorage, draftKey)['3'], 'B');
         await act(async () => render(true));
         assert.ok(document.querySelector<HTMLButtonElement>('button[type=submit]')!.disabled);
         assert.ok([...document.querySelectorAll<HTMLInputElement>('input')].every((input) => input.disabled));
@@ -123,23 +134,26 @@ test('objective form restores drafts, retains answers across language changes, s
         assert.equal(signed[0][1], requests[0].url);
         const body = JSON.parse(requests[0].body);
         assert.equal(body.lang, '_');
-        assert.deepEqual(load(body.code), { 1: '0', 2: ['B'] });
+        assert.deepEqual(load(body.code), { 1: '0', 2: ['B'], 3: 'B' });
         assert.equal(signed[0][2].code, body.code);
         assert.equal(signed[0][2].pid, 42);
         assert.equal(requests[0].headers['x-proctor-proof'], 'proof');
         await act(async () => release());
         assert.match(document.querySelector('[role=alert]')!.textContent!, /Try again/);
         assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, '0');
+        assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=radio]')[1].checked);
         failure = false;
         await act(async () => { dispatchSubmit(); });
         assert.equal(navigations.length, 1);
         assert.match(navigations[0], /record_detail\/record-id\?problemNav=/);
         await act(async () => render(false, 'en', 'remounted'));
         assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, '0');
+        assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=radio]')[1].checked, 'a full remount restores the saved single choice');
         await act(async () => { [...document.querySelectorAll('button')].find((button) => button.textContent === 'Clear answers')!.click(); });
         await act(async () => { [...document.querySelectorAll('button')].find((button) => button.textContent === 'Confirm')!.click(); });
         assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, '');
         assert.ok([...document.querySelectorAll<HTMLInputElement>('input[type=checkbox]')].every((input) => !input.checked));
+        assert.ok([...document.querySelectorAll<HTMLInputElement>('input[type=radio]')].every((input) => !input.checked));
         assert.deepEqual(drafts.readObjectiveDraft(dom.window.localStorage, draftKey), {});
         const storageDescriptor = Object.getOwnPropertyDescriptor(dom.window, 'localStorage')!;
         Object.defineProperty(dom.window, 'localStorage', { configurable: true, get() { throw new Error('Storage blocked'); } });

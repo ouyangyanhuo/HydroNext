@@ -137,9 +137,15 @@ export function attachObjectiveInputs(root: HTMLElement, { prefix, onChange }: O
         const value = answers[id];
         control.disabled = disabled;
         if (['radio', 'checkbox'].includes((control as HTMLInputElement).type)) {
-          (control as HTMLInputElement).checked = Array.isArray(value) ? value.includes(control.value) : value === control.value;
+          const checked = Array.isArray(value) ? value.includes(control.value) : value === control.value;
+          // Browser form restoration/reset must use the saved draft as its default, too.
+          (control as HTMLInputElement).defaultChecked = checked;
+          (control as HTMLInputElement).checked = checked;
         } else {
           const next = typeof value === 'string' ? value : '';
+          if (control.tagName === 'SELECT') {
+            for (const option of (control as HTMLSelectElement).options) option.defaultSelected = option.value === next;
+          } else (control as HTMLInputElement | HTMLTextAreaElement).defaultValue = next;
           if (control.value !== next) control.value = next;
         }
       }

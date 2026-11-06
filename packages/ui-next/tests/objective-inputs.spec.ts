@@ -55,6 +55,25 @@ test('all five legacy markers become accessible controls and collect the judge a
     } finally { mounted.destroy(); dom.window.close(); }
 });
 
+test('native form resets preserve restored draft values, including radio groups', () => {
+    const dom = new JSDOM(`<form><main>${markdown.render(statement)}</main></form>`);
+    const root = dom.window.document.querySelector('main');
+    const mounted = attachObjectiveInputs(root, { prefix: 'saved', onChange() { assert.fail('restoring a draft must not submit edits'); } });
+    const answers = { 1: '001', '2-1': 'Explanation', 3: 'B', 4: ['A', 'C'], 5: 'green' };
+    try {
+        mounted.update(answers, false);
+        dom.window.document.querySelector('form').reset();
+        assert.equal(root.querySelector('input[type=text]').value, '001');
+        assert.equal(root.querySelector('textarea').value, 'Explanation');
+        assert.equal(root.querySelector('select').value, 'green');
+        assert.deepEqual([...root.querySelectorAll('input[type=radio]')].map((input: any) => input.checked), [false, true]);
+        assert.deepEqual([...root.querySelectorAll('input[type=checkbox]')].map((input: any) => input.checked), [true, false, true]);
+        mounted.update({}, false);
+        dom.window.document.querySelector('form').reset();
+        assert.ok([...root.querySelectorAll('input[type=radio], input[type=checkbox]')].every((input: any) => !input.checked));
+    } finally { mounted.destroy(); dom.window.close(); }
+});
+
 test('ordinary code is preserved, explicit #input fences work, and effect cleanup supports remounting', () => {
     const dom = new JSDOM(`<main>${markdown.render([
         '`{{ input(90) }}`', '', '```cpp', '{{ input(91) }}', '```',
