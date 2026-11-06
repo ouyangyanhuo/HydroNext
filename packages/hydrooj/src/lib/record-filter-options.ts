@@ -1,5 +1,5 @@
 import { escapeRegExp, pick } from 'lodash';
-import { Filter, ObjectId } from 'mongodb';
+import { Document, Filter, ObjectId } from 'mongodb';
 import { ValidationError } from '../error';
 import { Tdoc } from '../interface';
 import { PERM } from '../model/builtin';
@@ -36,26 +36,40 @@ async function searchUsers(handler: Handler, domainId: string, q: string, exact:
     }
     if (allowed && !allowed.some((uid) => uid > RESERVED_UID_MAX)) return [];
     const numeric = /^\d+$/.test(q) && Number.isSafeInteger(+q) && +q > 0;
-    const exactUser = numeric ? await user.getById(domainId, +q) : null;
-    const named = exactUser || (q ? await user.getByUname(domainId, q) : null);
     const $regex = escapeRegExp(q.toLowerCase());
-    // Apply the permission scope before limiting/searching, not after fetching arbitrary users.
-    const uidFilter = allowed
-        ? { _id: { $in: allowed.filter((uid) => uid > RESERVED_UID_MAX) } }
-        : { _id: { $gt: RESERVED_UID_MAX } };
-    const candidates = exact ? [] : await Promise.all([
-        user.getMulti({ ...uidFilter, ...q ? { unameLower: { $regex } } : {} }, ['_id']).sort({ _id: -1 }).limit(LIMIT).toArray(),
-        domain.getMultiUserInDomain(domainId, {
-            ...allowed ? { uid: { $in: allowed.filter((uid) => uid > RESERVED_UID_MAX) } } : { uid: { $gt: RESERVED_UID_MAX } },
-            displayName: { $regex, $options: 'i' },
-        }).project({ uid: 1 }).limit(LIMIT).toArray(),
-    ]);
-    const ids = new Set<number>([
-        ...named ? [named._id] : [],
-        ...(candidates[0] || []).map((doc) => doc._id),
-        ...(candidates[1] || []).map((doc) => doc.uid),
-    ].filter((uid) => uid > RESERVED_UID_MAX && (!allowed || allowed.includes(uid))));
-    const users = await Promise.all([...ids].slice(0, LIMIT).map((uid) => user.getById(domainId, uid)));
+    // User accounts are global. Only an explicit joined membership scopes an account to this domain.
+    // Start from that scope for every lookup, including exact UID/username hydration and administrators.
+    const pipeline: Document[] = [{
+        $match: {
+            domainId,
+            join: true,
+            uid: allowed ? { $in: allowed.filter((uid) => uid > RESERVED_UID_MAX) } : { $gt: RESERVED_UID_MAX },
+        },
+    }];
+    if (!q) pipeline.push({ $sort: { uid: -1 } });
+    pipeline.push({ $project: { _id: 0, uid: 1, displayName: 1 } }, {
+        $lookup: {
+            from: user.coll.collectionName,
+            let: { uid: '$uid' },
+            pipeline: [{ $match: { $expr: { $eq: ['$_id', '$$uid'] } } }, { $project: { unameLower: 1 } }],
+            as: 'account',
+        },
+    }, { $unwind: '$account' });
+    if (q) {
+        pipeline.push({ $match: { $or: [
+            { 'account.unameLower': exact ? q.toLowerCase() : { $regex } },
+            ...exact ? [] : [{ displayName: { $regex, $options: 'i' } }],
+            ...numeric ? [{ uid: +q }] : [],
+        ] } }, {
+            $addFields: { matchPriority: { $cond: [
+                { $eq: ['$uid', numeric ? +q : null] }, 0,
+                { $cond: [{ $eq: ['$account.unameLower', q.toLowerCase()] }, 1, 2] },
+            ] } },
+        }, { $sort: { matchPriority: 1, uid: -1 } });
+    }
+    pipeline.push({ $limit: exact ? 1 : LIMIT }, { $project: { _id: 0, uid: 1 } });
+    const members = await domain.collUser.aggregate<{ uid: number }>(pipeline).toArray();
+    const users = await Promise.all(members.map(({ uid }) => user.getById(domainId, uid)));
     return users.filter(Boolean).map((doc) => pick(doc, ['_id', 'uname', 'displayName']));
 }
 
@@ -84,6 +98,8 @@ async function searchProblems(handler: Handler, domainId: string, q: string, exa
 export async function getRecordFilterOptions(
     handler: Handler, domainId: string, kind: Kind, query = '', tid?: ObjectId, exact = false,
 ) {
+    // Bind this endpoint to the domain selected by the URL/host, not a client-supplied domainId parameter.
+    if (domainId !== handler.domain._id) throw new ValidationError('domainId');
     if (query.length > 200) throw new ValidationError('q');
     const q = query.trim();
     if (exact && !q) return [];

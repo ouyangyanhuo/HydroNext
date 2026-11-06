@@ -157,6 +157,10 @@ describe('App', () => {
         await domain.setJoin(a, uid, true);
         await domain.setJoin(a, peer, true);
         await domain.setUserInDomain(a, peer, { displayName: 'Domain peer', phone: 'private-phone' });
+        await domain.setJoin(b, outsider, true);
+        await domain.setUserInDomain(b, outsider, { displayName: 'B-only alias' });
+        await domain.setJoin(b, peer, true);
+        await domain.setUserInDomain(b, peer, { displayName: 'Other-domain peer' });
         const visible = await problem.add(a, 'FILTER1', 'Filter visible', '', 2);
         const hidden = await problem.add(a, 'FILTER2', 'Filter hidden', '', 2, [], { hidden: true });
         await problem.add(b, 'FOREIGN', 'Filter foreign', '', 2);
@@ -169,8 +173,8 @@ describe('App', () => {
             new Date(Date.now() + 3600_000), [visible], false, { allowTeam: true });
         const contestant = supertest.agent(require('hydrooj').httpServer);
         await contestant.post('/login').send({ uname: 'filter-student', password: 'secret' }).expect(302);
-        const lookup = async (client: any, kind: string, q: string, extra: Record<string, any> = {}) => {
-            const response = await client.get(`/d/${a}/record/filter-options`).query({ kind, q, ...extra })
+        const lookup = async (client: any, kind: string, q: string, extra: Record<string, any> = {}, targetDomain = a) => {
+            const response = await client.get(`/d/${targetDomain}/record/filter-options`).query({ kind, q, ...extra })
                 .set('Accept', 'application/json').expect(200);
             assert.ok(response.headers['cache-control'].includes('no-store'));
             return response.body.documents;
@@ -182,6 +186,30 @@ describe('App', () => {
             assert.ok(initialUsers.some((doc) => doc._id === peer), 'administrators get initial suggestions without typing');
             assert.ok(initialUsers.length <= 20);
             assert.ok(initialUsers.every((doc) => doc._id > 2), 'reserved accounts are excluded even for administrators');
+            assert.deepEqual(new Set(initialUsers.map((doc) => doc._id)), new Set([uid, peer]),
+                'the initial list must contain joined members of A only, even for root');
+            assert.deepEqual(await lookup(agent, 'user', 'filter-outsider'), []);
+            assert.deepEqual(await lookup(agent, 'user', 'filter-outsider', { exact: true }), []);
+            assert.deepEqual(await lookup(agent, 'user', String(outsider), { exact: true }), []);
+            assert.deepEqual(await lookup(agent, 'user', 'B-only alias'), []);
+            assert.deepEqual(await lookup(agent, 'user', 'Other-domain peer'), [], 'B display names must not be searched in A');
+            const inB = await lookup(agent, 'user', String(outsider), { exact: true }, b);
+            assert.deepEqual(inB, [{ _id: outsider, uname: 'filter-outsider', displayName: 'B-only alias' }]);
+            assert.equal((await lookup(agent, 'user', String(peer), { exact: true }, b))[0].displayName, 'Other-domain peer');
+            assert.equal((await lookup(agent, 'user', String(peer), { exact: true }))[0].displayName, 'Domain peer');
+            for (const kind of ['user', 'problem', 'contest']) {
+                // eslint-disable-next-line no-await-in-loop
+                const forged = await agent.get(`/d/${a}/record/filter-options`)
+                    .query({ domainId: b, kind, q: 'filter' }).set('Accept', 'application/json').expect(403);
+                assert.deepEqual(forged.body.error.params, ['domainId'], 'query parameters cannot override the URL domain');
+            }
+            await domain.setUserInDomain(a, outsider, { displayName: 'Unjoined alias' });
+            assert.deepEqual(await lookup(agent, 'user', 'Unjoined alias'), [], 'a domain.user row alone is not membership');
+            await domain.setJoin(a, outsider, true);
+            assert.equal((await lookup(agent, 'user', String(outsider), { exact: true }))[0]._id, outsider);
+            await domain.setJoin(a, outsider, false);
+            assert.deepEqual(await lookup(agent, 'user', String(outsider), { exact: true }), [],
+                'leaving the domain invalidates cached candidates');
             assert.deepEqual(await lookup(agent, 'user', '1', { exact: true }), []);
             assert.deepEqual(await lookup(agent, 'user', '2', { exact: true }), []);
             assert.deepEqual(await lookup(agent, 'user', Root.username, { exact: true }), [],
@@ -209,6 +237,7 @@ describe('App', () => {
                 new Set([uid, peer]), 'initial suggestions must keep the same teammate-only scope');
             assert.deepEqual(await lookup(contestant, 'user', String(outsider), { exact: true, tid: liveTid.toString() }), []);
             await domain.setUserRole(a, uid, 'records');
+            assert.deepEqual(await lookup(contestant, 'user', 'filter-outsider'), [], 'view-record permissions never widen domain membership');
             const users = await lookup(contestant, 'user', 'peer');
             assert.deepEqual(users, [{ _id: peer, uname: 'filter-peer', displayName: 'Domain peer' }]);
             assert.equal((await lookup(contestant, 'user', 'Domain peer'))[0]._id, peer);
