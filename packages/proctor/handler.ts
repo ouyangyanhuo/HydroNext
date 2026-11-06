@@ -72,7 +72,7 @@ export class ManageProctorHandler extends Handler {
     async postRevealKeys() {
         await this.limitRate('proctor_private_keys', 60, 3);
         try {
-            proctorOrigin(this.context.origin, this.request.host, system.get('server.url'));
+            proctorOrigin(`${this.context.protocol}://${this.request.host}`, this.request.host, system.get('server.url'));
         } catch (error) {
             throw new ForbiddenError(error.message);
         }
@@ -200,7 +200,7 @@ export class ContestProctorHandler extends ContestDetailBaseHandler {
         await this.limitRate('proctor_handshake', 60, 10);
         let origin: string;
         try {
-            origin = proctorOrigin(this.context.origin, this.request.host, system.get('server.url'));
+            origin = proctorOrigin(`${this.context.protocol}://${this.request.host}`, this.request.host, system.get('server.url'));
         } catch (error) {
             throw new ForbiddenError(error.message);
         }
@@ -309,6 +309,7 @@ export class ProctorIdentityHandler extends Handler {
         let pid = 0;
         let proctorEnabled = false;
         let attemptId: string | undefined;
+        let beginAt: string | undefined;
         if (tid && this.user._id) {
             this.checkPriv(PRIV.PRIV_USER_PROFILE);
             this.checkPerm(PERM.PERM_VIEW_CONTEST);
@@ -318,6 +319,7 @@ export class ProctorIdentityHandler extends Handler {
             if (!tdoc || (!status?.attend && !root)) throw new ForbiddenError('Attend the contest before starting proctoring.');
             proctorEnabled = !!tdoc.proctorEnabled;
             if (proctorEnabled) {
+                beginAt = tdoc.beginAt.toISOString();
                 const attempt = await proctor.attempts.findOne({ uid: this.user._id, domainId, tid, active: { $ne: false } });
                 attemptId = attempt?._id.toHexString() || '';
             }
@@ -332,6 +334,7 @@ export class ProctorIdentityHandler extends Handler {
             clientNonce, uid: this.user._id || 0, domainId: this.domain._id, root,
             tid: tid?.toHexString() || '', ...(rid ? { rid: rid.toHexString() } : {}), routePid, pid, proctorEnabled,
             ...(attemptId !== undefined ? { attemptId } : {}),
+            ...(beginAt !== undefined ? { beginAt } : {}),
             expiresAt: new Date(Date.now() + 60000).toISOString() };
         this.response.body = { payload, signature: signedPayload(payload, keys.signingPrivateKey) };
     }

@@ -153,6 +153,20 @@ test('automatic mutual handshake issues tokens without registration and stores o
     assert.equal(f.coll('proctor.session').rows.length, 1);
 });
 
+test('赛前允许完整握手，但仍拒绝错误版本和超过补传期限的认证', async () => {
+    const f = fixture();
+    f.tdoc.beginAt = new Date(Date.now() + 60000);
+    await assert.rejects(f.model.challenge(identity, f.tdoc, { ...f.raw, version: 'wrong' }, 'https://oj.example'), /version mismatch/);
+    const { response } = await f.start();
+    assert.ok(response.token);
+    assert.equal(f.coll('proctor.attempt').rows.length, 1);
+    // 正式开赛后沿用原轮次，不额外创建日志归属。
+    f.tdoc.beginAt = new Date(Date.now() - 1000);
+    assert.equal((await f.start()).response.payload.attemptId, response.payload.attemptId);
+    f.tdoc.endAt = new Date(Date.now() - 31 * 86400000);
+    await assert.rejects(f.model.challenge(identity, f.tdoc, f.raw, 'https://oj.example'), /permitted time window/);
+});
+
 test('wrong versions, invalid keys, invalid device metadata and bad handshake signatures fail closed', async () => {
     const f = fixture();
     for (const changes of [{ version: '2.0.0' }, { fingerprint: 'invalid' }, { publicKey: 'fake' },

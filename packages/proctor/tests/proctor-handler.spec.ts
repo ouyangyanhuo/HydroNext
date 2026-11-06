@@ -21,7 +21,7 @@ function fixture(options: any = {}) {
     class Handler {
         args: any = {}; response: any = { headers: {}, addHeader(name: string, value: string) { this.headers[name] = value; } };
         request: any = { headers: {}, path: '/d/exam/contest/x/proctor', ip: '203.0.113.7', host: 'oj.example' };
-        context: any = { originalPath: this.request.path, origin: 'https://oj.example', protocol: 'https' };
+        context: any = { originalPath: this.request.path, protocol: 'https' };
         domain = { _id: 'exam', name: 'Exam Domain' };
         user = { _id: options.uid ?? 7, uname: options.uname || 'alice',
             hasPriv: (priv: number) => !options.noPrivilege && (priv !== 3 || !!options.superAdmin) };
@@ -45,6 +45,7 @@ function fixture(options: any = {}) {
             signingPublicKey: 'auth-public', encryptionPublicKey: 'log-public' }),
         publicKeys: (keys: any) => ({ keyId: keys.keyId, signingPublicKey: keys.signingPublicKey, encryptionPublicKey: keys.encryptionPublicKey }),
         handshake: async (...args: any[]) => { calls.push(['handshake', ...args]); return { token: 'token' }; },
+        challenge: async (...args: any[]) => { calls.push(['challenge', ...args]); return { ok: true }; },
         refresh: async (...args: any[]) => { calls.push(['refresh', ...args]); return { token: 'token' }; },
         authenticate: async () => ({ uid: 7, domainId: 'exam', tid, attemptId, publicKey: 'device-key', fingerprint: 'device-fingerprint' }),
         closeAttempt: async () => ({ _id: attemptId }),
@@ -94,7 +95,8 @@ function fixture(options: any = {}) {
             get: async () => options.missingRecord ? null : options.record || { contest: tid },
         } },
         '../model/problem': { __esModule: true, default: { get: async () => ({ docId: options.problemId || 100 }) } },
-        '../model/contest': { isOwnOrTeammateRecord: async () => true, get: async () => ({ pids: [100], proctorEnabled: true }),
+        '../model/contest': { isOwnOrTeammateRecord: async () => true,
+            get: async () => ({ pids: [100], proctorEnabled: true, beginAt: options.beginAt || new Date(Date.now() - 1000) }),
             getStatus: async () => ({ attend: !options.notEnrolled }),
             setStatus: async (domainId: string, contestId: ObjectId, uid: number, status: any) => calls.push(['status', status]) },
         '../model/oplog': { log: async (...args: any[]) => calls.push(['audit', ...args.slice(1)]) },
@@ -252,7 +254,7 @@ test('private key viewing is a separate sudo action with no-cache response and m
     assert.equal(h.response.headers['Cache-Control'], 'no-store');
     assert.ok(!JSON.stringify(f.calls).includes('auth-private'));
     assert.ok(!JSON.stringify(f.calls).includes('log-private'));
-    h.context.origin = 'http://oj.example';
+    h.context.protocol = 'http';
     await assert.rejects(h.postRevealKeys(), /HTTPS/);
 });
 
@@ -289,6 +291,14 @@ test('settings save requires sudo, acknowledges persisted configuration and neve
     await assert.rejects(handler.postSave(), /save failed/);
     assert.equal(handler.response.body, undefined);
     assert.ok(!failed.calls.some((call) => call[0] === 'audit'));
+});
+
+test('握手挑战使用服务端协议与主机生成地址，不依赖不存在的 context.origin', async () => {
+    const f = fixture();
+    await f.handler.postChallenge();
+    assert.equal(f.calls.find((call) => call[0] === 'challenge')[4], 'https://oj.example');
+    f.handler.context.protocol = 'http';
+    await assert.rejects(f.handler.postChallenge(), /HTTPS/);
 });
 
 test('handshake and refresh record the server-observed IP, not a client-supplied IP', async () => {
@@ -332,6 +342,19 @@ test('native identity binds contest membership and display PID to numeric PID, r
     await assert.rejects(handler.post('exam', 'bad'));
     await assert.rejects(new (fixture({ notEnrolled: true }).exports.ProctorIdentityHandler)().post('exam', 'n'.repeat(43), tid));
     await assert.rejects(new (fixture({ problemId: 101 }).exports.ProctorIdentityHandler)().post('exam', 'n'.repeat(43), tid, 'P101'));
+});
+
+test('赛前身份响应签名绑定开赛时间，且仍要求报名', async () => {
+    const beginAt = new Date(Date.now() + 60000);
+    const f = fixture({ signingPrivateKey: identityPrivateKey, beginAt });
+    const handler = new f.exports.ProctorIdentityHandler();
+    await handler.post('exam', 'n'.repeat(43), tid);
+    const { payload, signature } = handler.response.body;
+    assert.equal(payload.beginAt, beginAt.toISOString());
+    assert.ok(verifyPayload(payload, signature, identityPublicKey));
+    assert.equal(verifyPayload({ ...payload, beginAt: new Date(0).toISOString() }, signature, identityPublicKey), false);
+    const guest = fixture({ notEnrolled: true, signingPrivateKey: identityPrivateKey, beginAt });
+    await assert.rejects(new guest.exports.ProctorIdentityHandler().post('exam', 'n'.repeat(43), tid));
 });
 
 test('记录身份由服务端绑定实际比赛和记录编号，并拒绝伪造的比赛归属', async () => {

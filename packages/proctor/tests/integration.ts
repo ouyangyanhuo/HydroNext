@@ -75,13 +75,25 @@ export async function runProctorFlowHttpTests(_agent: any, { Root }: any) {
             await participant.post(identityPath).send({ rid, tid: '1234567890abcdef12345678', clientNonce: secret() }).expect(403);
             const device = generateKeyPairSync('ed25519');
             const fingerprint = 'c'.repeat(64);
-            const origin = 'http://localhost';
-            const challenge = await proctor.challenge({ domainId, uid, tid }, await contest.get(domainId, tid), {
+            if (ending === 'early') {
+                const beginAt = new Date(Date.now() + 60000);
+                await contest.edit(domainId, tid, { beginAt });
+                const identity = await participant.post(identityPath).set('Accept', 'application/json')
+                    .send({ tid, clientNonce: secret() }).expect(200);
+                assert.equal(identity.body.payload.beginAt, beginAt.toISOString());
+                assert.ok(verifyPayload(identity.body.payload, identity.body.signature, keys.signingPublicKey));
+            }
+            const route = `/d/${domainId}/contest/${tid}/proctor`;
+            const challengeReply = await participant.post(route).set('Accept', 'application/json').send({
+                operation: 'challenge',
                 version: '1.0.0', fingerprint, clientNonce: secret(),
                 publicKey: device.publicKey.export({ type: 'spki', format: 'pem' }).toString(),
-            }, origin);
-            let session = await proctor.handshake({ domainId, uid, tid }, challenge.payload.challengeId,
-                signedPayload(challenge.payload, device.privateKey), '127.0.0.1');
+            }).expect(200);
+            const challenge = challengeReply.body;
+            const origin = challenge.payload.origin;
+            const handshakeReply = await participant.post(route).set('Accept', 'application/json').send({ operation: 'handshake',
+                challengeId: challenge.payload.challengeId, signature: signedPayload(challenge.payload, device.privateKey) }).expect(200);
+            let session = handshakeReply.body;
             const headers = (action: string, method: string, path: string, data: any) => {
                 const payload = { protocol: 'hydro-proctor/1', action, method, path, tokenHash: digest(session.token),
                     fingerprint, version: '1.0.0', payloadHash: digest(canonical(data)), timestamp: Date.now(), nonce: secret() };
@@ -91,6 +103,26 @@ export async function runProctorFlowHttpTests(_agent: any, { Root }: any) {
             if (ending === 'early') {
                 const submitPath = `/d/${domainId}/p/H1/submit`;
                 const submission = { pid, lang: 'cc', code: 'int main(){}', pretest: true, input: [''], fileHash: '' };
+                const reads = [
+                    { path: `/d/${domainId}/contest/${tid}/problems`, action: 'contest_view', payload: { tid: tid.toHexString() } },
+                    { path: `/d/${domainId}/p/H1`, action: 'problem_view', payload: { tid: tid.toHexString(), pid: 'H1' } },
+                ];
+                for (const read of reads) {
+                    const denied = await participant.get(`${read.path}?tid=${tid}`).set('Accept', 'application/json')
+                        .set(headers(read.action, 'GET', read.path, read.payload)).expect(403);
+                    assert.equal(denied.body.error.name, 'ContestNotLiveError');
+                    assert.equal(denied.body.pdoc, undefined);
+                    assert.equal(denied.body.pdict, undefined);
+                }
+                for (const pretest of [true, false]) {
+                    const body = { ...submission, pretest };
+                    const denied = await participant.post(`${submitPath}?tid=${tid}`).set('Accept', 'application/json')
+                        .set(headers('submit', 'POST', submitPath, body)).send(body).expect(403);
+                    assert.equal(denied.body.error.name, 'ContestNotLiveError');
+                    assert.equal(denied.body.rid, undefined);
+                }
+                // 同一个赛前令牌在正式开赛后正常使用，不需要重新建立监考轮次。
+                await contest.edit(domainId, tid, { beginAt: new Date(now - 60000) });
                 for (const input of [[''], ['1 2\n'], ['', '3\n', '']]) {
                     const body = { ...submission, input };
                     const submitted = await participant.post(`${submitPath}?tid=${tid}`).set('Accept', 'application/json')
@@ -171,7 +203,6 @@ export async function runProctorFlowHttpTests(_agent: any, { Root }: any) {
             const submission = { pid, lang: 'cc', code: 'int main(){}', pretest: false, input: [], fileHash: '' };
             await participant.post(`${submitPath}?tid=${tid}`).set(headers('submit', 'POST', submitPath, submission))
                 .send({ tid, lang: submission.lang, code: submission.code }).expect(403);
-            const route = `/d/${domainId}/contest/${tid}/proctor`;
             assert.equal((await contest.getStatus(domainId, tid, uid)).proctorLogUploaded, undefined);
             const finished = await participant.post(route).set(headers('finish', 'POST', route, {})).send({ operation: 'finish' }).expect(200);
             assert.equal(finished.body.logUploaded, false);

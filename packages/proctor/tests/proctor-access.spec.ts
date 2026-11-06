@@ -19,7 +19,7 @@ function load(path: string, mocks: Record<string, any>) {
     return module.exports;
 }
 
-function fixture(options: { proof?: boolean, rejected?: boolean, enabled?: boolean, ended?: boolean } = {}) {
+function fixture(options: { proof?: boolean, rejected?: boolean, enabled?: boolean, ended?: boolean, waiting?: boolean } = {}) {
     const calls: any[] = [];
     class ClientRequiredError extends Error { constructor() { super('client required'); } }
     class Handler {
@@ -31,13 +31,16 @@ function fixture(options: { proof?: boolean, rejected?: boolean, enabled?: boole
         context = { originalPath: '/d/exam/p/J0002?tid=ignored' };
         response: any = { body: {}, addHeader: (name: string, value: string) => calls.push(['header', name, value]) };
         tdoc = { docId: tid, domainId: 'exam', proctorEnabled: options.enabled !== false, pids: [1], rule: 'acm',
+            beginAt: new Date(Date.now() + (options.waiting ? 60000 : -60000)),
             endAt: new Date(Date.now() + (options.ended ? -60000 : 60000)) };
 
         tsdoc = { attend: 1 };
     }
     const decorators = () => () => {};
     const mocks: any = {
-        '../error': new Proxy({ ProctorClientRequiredError: ClientRequiredError }, { get: (target: any, key) => target[key] || Error }),
+        '../error': new Proxy({ ProctorClientRequiredError: ClientRequiredError,
+            ContestNotLiveError: class extends Error { constructor() { super('contest not live'); } } },
+        { get: (target: any, key) => target[key] || Error }),
         '../model/proctor': { authenticateAccess: async (...args: any[]) => {
             calls.push(['auth', ...args]);
             if (options.rejected) throw new Error('client mismatch');
@@ -49,7 +52,7 @@ function fixture(options: { proof?: boolean, rejected?: boolean, enabled?: boole
         '../lib/list-sort': { LIST_SORT_MODES: [] },
         '../model/record': { STAT_QUERY: {} },
         '../model/builtin': { PERM: {}, PRIV: {}, STATUS: {} },
-        '../model/contest': { isNotStarted: () => false, isDone: () => !!options.ended, isOngoing: () => true,
+        '../model/contest': { isNotStarted: () => !!options.waiting, isDone: () => !!options.ended, isOngoing: () => !options.waiting,
             RULES: { acm: {} }, getMultiClarification: async () => [], setStatus: async () => calls.push('start-timer') },
         '../model/user': { __esModule: true, default: { getList: async () => ({}) } },
         '../model/problem': { __esModule: true, default: {
@@ -117,6 +120,21 @@ test('contest list, printing and private downloads refuse unauthenticated reads 
     staff.user.hasPerm = () => true;
     await staff.get();
     assert.equal(staff.response.template, 'contest_print.html');
+    assert.ok(!f.calls.some((call) => call[0] === 'auth'));
+});
+
+test('赛前持有合法令牌仍不能读取题目、打印或提交，也不启动个人计时', async () => {
+    const f = fixture({ proof: true, waiting: true });
+    const handler = new f.Handler();
+    await assert.rejects(f.access.requireProctorAccess(handler, handler.tdoc), /contest not live/);
+    await assert.rejects(new f.problem.ProblemDetailHandler()._prepare('exam', 'J0002', tid), /contest not live/);
+    const list = Object.assign(new f.contest.ContestProblemListHandler(), handler);
+    await assert.rejects(list.get('exam', tid), /contest not live/);
+    await assert.rejects(Object.assign(new f.contest.ContestPrintHandler(), handler).get(), /contest not live/);
+    await assert.rejects(new f.problem.ProblemSubmitHandler().prepare('exam', tid), /contest not live/);
+    assert.ok(!f.calls.includes('start-timer'));
+    assert.ok(!f.calls.includes('load-list'));
+    assert.ok(!f.calls.includes('load-content'));
     assert.ok(!f.calls.some((call) => call[0] === 'auth'));
 });
 

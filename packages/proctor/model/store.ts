@@ -182,7 +182,8 @@ export async function challenge(identity: Identity, tdoc: Tdoc, raw: any, origin
     if (!/^[a-f0-9]{64}$/.test(raw.fingerprint || '') || !/^[A-Za-z0-9_-]{32,100}$/.test(raw.clientNonce || '')) {
         throw new ValidationError('fingerprint');
     }
-    if (Date.now() < tdoc.beginAt.getTime() || Date.now() > tdoc.endAt.getTime() + config.uploadGraceDays * 86400000) {
+    // 允许赛前验证设备和版本；题目读取、提交仍由各自的开赛检查保护。
+    if (Date.now() > tdoc.endAt.getTime() + config.uploadGraceDays * 86400000) {
         throw new ForbiddenError('Proctor session is outside the permitted time window.');
     }
     let publicKey: string;
