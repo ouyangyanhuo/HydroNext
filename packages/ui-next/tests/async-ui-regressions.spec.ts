@@ -574,7 +574,7 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
         assert.match(view.host.textContent || '', /Rendered plugin statement/);
         assert.doesNotMatch(view.host.textContent || '', /Raw plugin statement/);
         assert.doesNotMatch(view.host.textContent || '', /中文题面/);
-        const hasCopyProblem = () => [...view.host.querySelectorAll('button')].some((element) => element.textContent === 'Copy');
+        const hasCopyProblem = () => [...document.querySelectorAll('button')].some((element) => element.textContent === 'Copy');
         assert.equal(hasCopyProblem(), false, 'being logged in does not grant permission to copy a problem');
         args = { ...args, canEditProblem: true };
         await view.render(h(Page));

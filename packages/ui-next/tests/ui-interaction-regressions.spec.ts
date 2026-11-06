@@ -627,3 +627,15 @@ test('all application pages unify content width to 1280px while code editor is e
         assert.equal(widths[selector], 'min(100%, 1280px)', `${selector} must be unified to min(100%, 1280px)`);
     }
 });
+
+test('problem detail sidebar groups management actions into a hover more-menu with permissions', () => {
+    const source = read('../src/pages/problem_detail.tsx');
+    assert.match(source, /trigger="hover"/, 'Menu must be triggered on hover');
+    assert.match(source, /position="left-start"/, 'Menu must open to the left side');
+    assert.match(source, /hasMoreActions\s*&&/, 'Menu must be guarded by hasMoreActions');
+    assert.match(source, /canViewFiles\s*&&[\s\S]*?problem_files/, 'Files link must be guarded by canViewFiles');
+    assert.match(source, /canEdit\s*&&[\s\S]*?problem_edit/, 'Edit link must be guarded by canEdit');
+    assert.match(source, /canConfigure\s*&&[\s\S]*?problem_config/, 'Config link must be guarded by canConfigure');
+    assert.match(source, /canDownload\s*&&[\s\S]*?handleDownload/, 'Download action must be guarded by canDownload');
+    assert.match(source, /isLoggedIn\s*&&\s*canEdit\s*&&[\s\S]*?setCopyOpened/, 'Copy action must be guarded by isLoggedIn and canEdit');
+});

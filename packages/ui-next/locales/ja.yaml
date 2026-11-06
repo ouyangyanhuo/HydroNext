@@ -867,6 +867,7 @@ __langname: 日本語
 'Max Passes': '最大通過回数'
 'Number of Processes': 'プロセス数'
 'More import sources can be added via plugins.': 'プラグインで追加のインポートソースを追加できます。'
+'More': 'その他'
 'Multi-file': '複数ファイル'
 'CheckerType': 'チェッカーの種類'
 'other': 'その他'

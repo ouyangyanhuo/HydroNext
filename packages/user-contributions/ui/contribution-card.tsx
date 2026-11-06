@@ -133,9 +133,9 @@ export function ContributionCard({ history }: { history: UserContributionHistory
     <Group justify="space-between" gap="sm" mt="sm">
       <Text size="xs" c="dimmed" aria-live="polite">{t('{0}: {1} problems solved', activeDate, activeDay?.count || 0)}</Text>
       <Group gap={5} className="hydro-contributions__legend" aria-label={t('Daily solved problems')}>
-        <Text size="xs" c="dimmed">{t('Less')}</Text>
+        <Text size="xs" c="dimmed">{t('Contribution Less') || t('Less')}</Text>
         {[0, 1, 2, 3, 4].map((level) => <span key={level} data-level={level} className="hydro-contributions__swatch" aria-hidden="true" />)}
-        <Text size="xs" c="dimmed">{t('More')}</Text>
+        <Text size="xs" c="dimmed">{t('Contribution More') || t('More')}</Text>
       </Group>
     </Group>
     {history.summary.total === 0 && <Text size="sm" c="dimmed" ta="center" mt="md">{t('No problems solved yet.')}</Text>}

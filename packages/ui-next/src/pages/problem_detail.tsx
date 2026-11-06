@@ -1,6 +1,6 @@
-import { Badge, Group, Modal, Paper, ScrollArea, Stack, Text, Title } from '@mantine/core';
+import { Badge, Group, Menu, Modal, Paper, ScrollArea, Stack, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconChevronLeft, IconCopy, IconDownload, IconEdit, IconFolder, IconSettings } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { ProblemPageExtras } from '@/components/common/addon-slots';
@@ -280,6 +280,7 @@ function ProblemSidebar({
   const canRejudge = canRejudgeProblem ?? fallbackCanRejudge;
   const canViewFiles = canViewProblemFiles ?? (canEdit || fallbackCanReadProblemData);
   const canDownload = canDownloadProblem ?? canViewFiles;
+  const hasMoreActions = Boolean(canViewFiles || canEdit || canConfigure || canDownload || (isLoggedIn && canEdit));
   const buildUrl = useBuildUrl();
   const pid = pdoc.pid || pdoc.docId;
   const [rejudgeLoading, setRejudgeLoading] = useState(false);
@@ -393,37 +394,81 @@ function ProblemSidebar({
             </SidebarLinkButton>
           )}
 
-          {canViewFiles && (
-            <SidebarLinkButton href={buildUrl('problem_files', { pid })}>
-              {t('Files')}
-            </SidebarLinkButton>
-          )}
           <SidebarLinkButton href={buildUrl('problem_statistics', { pid })}>
             {t('Statistics')}
           </SidebarLinkButton>
 
-          {canEdit && (
-            <>
-              <SidebarLinkButton href={buildUrl('problem_edit', { pid })}>
-                {t('Edit')}
-              </SidebarLinkButton>
-              {canConfigure && (
-                <SidebarLinkButton href={buildUrl('problem_config', { pid })}>
-                  {t('Judge Config')}
-                </SidebarLinkButton>
-              )}
-            </>
-          )}
-
-          {canDownload && (
-            <Button variant="subtle" fullWidth size="sm" justify="flex-start" onClick={handleDownload} loading={downloadLoading}>
-              {t('Download')}
-            </Button>
-          )}
-          {isLoggedIn && canEdit && (
-            <Button variant="subtle" fullWidth size="sm" justify="flex-start" onClick={() => setCopyOpened(true)} loading={copyLoading}>
-              {t('Copy')}
-            </Button>
+          {hasMoreActions && (
+            <Menu
+              position="left-start"
+              offset={8}
+              trigger="hover"
+              openDelay={100}
+              closeDelay={150}
+              shadow="md"
+              withinPortal
+              keepMounted
+              classNames={{ dropdown: 'hydro-topbar-dropdown' }}
+            >
+              <Menu.Target>
+                <Button
+                  variant="subtle"
+                  fullWidth
+                  size="sm"
+                  justify="space-between"
+                  rightSection={<IconChevronLeft size={14} className="opacity-60" />}
+                >
+                  {t('More')}
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown style={{ minWidth: 160 }}>
+                {canViewFiles && (
+                  <Menu.Item
+                    component={Link}
+                    href={buildUrl('problem_files', { pid })}
+                    leftSection={<IconFolder size={16} />}
+                  >
+                    {t('Files')}
+                  </Menu.Item>
+                )}
+                {canEdit && (
+                  <Menu.Item
+                    component={Link}
+                    href={buildUrl('problem_edit', { pid })}
+                    leftSection={<IconEdit size={16} />}
+                  >
+                    {t('Edit')}
+                  </Menu.Item>
+                )}
+                {canConfigure && (
+                  <Menu.Item
+                    component={Link}
+                    href={buildUrl('problem_config', { pid })}
+                    leftSection={<IconSettings size={16} />}
+                  >
+                    {t('Judge Config')}
+                  </Menu.Item>
+                )}
+                {canDownload && (
+                  <Menu.Item
+                    onClick={handleDownload}
+                    disabled={downloadLoading}
+                    leftSection={<IconDownload size={16} />}
+                  >
+                    {t('Download')}
+                  </Menu.Item>
+                )}
+                {isLoggedIn && canEdit && (
+                  <Menu.Item
+                    onClick={() => setCopyOpened(true)}
+                    disabled={copyLoading}
+                    leftSection={<IconCopy size={16} />}
+                  >
+                    {t('Copy')}
+                  </Menu.Item>
+                )}
+              </Menu.Dropdown>
+            </Menu>
           )}
         </Stack>
       </Paper>
