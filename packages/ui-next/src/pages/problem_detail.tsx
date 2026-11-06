@@ -367,13 +367,13 @@ function ProblemSidebar({
 
       <Paper withBorder p="md" className="hydro-panel">
         <Stack gap="xs">
-          {contestClosed ? (
+          {pdoc.config?.type === 'objective' ? null : contestClosed ? (
             <Button disabled fullWidth size="sm" justify="flex-start">
               {t('Contest Closed')}
             </Button>
           ) : canSubmit ? (
             <Button onClick={onToggleScratchpad} variant="filled" fullWidth size="sm" justify="flex-start">
-              {pdoc.config?.type === 'objective' ? t('Submit') : scratchpadOpen ? t('Quit Scratchpad') : t('Enter Online Programming Mode')}
+              {scratchpadOpen ? t('Quit Scratchpad') : t('Enter Online Programming Mode')}
             </Button>
           ) : (
             <Button disabled fullWidth size="sm" justify="flex-start">
@@ -496,6 +496,7 @@ export default function ProblemDetailPage() {
 
   const pdoc = args.pdoc || {};
   const isObjective = pdoc.config?.type === 'objective';
+  const [objectiveSidebar, setObjectiveSidebar] = useState<HTMLDivElement | null>(null);
   const StatementRenderer = isObjective ? ObjectiveMarkdown : MarkdownRenderer;
   const psdoc = args.psdoc;
   const rdoc = args.rdoc;
@@ -764,6 +765,7 @@ export default function ProblemDetailPage() {
                 pid={submitPid}
                 tid={tid}
                 submitUrl={submitUrl}
+                sidebarTarget={objectiveSidebar}
                 disabled={!isAuthenticated || !canSubmitProblem || Boolean(tid && contestClosed)}
                 disabledReason={t(!isAuthenticated ? 'Login to Submit' : tid && contestClosed ? 'Contest Closed' : 'No Permission to Submit')}
               >
@@ -776,6 +778,7 @@ export default function ProblemDetailPage() {
 
       <div className={`w-full lg:w-64 shrink-0${isObjective ? ' hydro-objective-sidebar' : ''}`}>
         <Stack gap="md">
+          {isObjective && <Paper ref={setObjectiveSidebar} withBorder p="md" className="hydro-panel" />}
           <ProblemSidebar
             pdoc={pdoc}
             statements={statements || undefined}
@@ -790,10 +793,7 @@ export default function ProblemDetailPage() {
             canViewProblemSolution={canViewProblemSolution}
             canViewProblemFiles={canViewProblemFiles}
             canDownloadProblem={canDownloadProblem}
-            onToggleScratchpad={() => {
-              if (isObjective) (document.getElementById('objective-answers') as HTMLFormElement | null)?.requestSubmit();
-              else switchScratchpad(true);
-            }}
+            onToggleScratchpad={() => switchScratchpad(true)}
           />
           {relatedCount > 0 && (
             <Paper withBorder p="md" className="hydro-panel">

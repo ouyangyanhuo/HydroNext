@@ -69,9 +69,17 @@ textarea.hydro-objective-input {
 }
 
 .hydro-objective-navigation {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.25rem;
+  width: min(100%, 14rem);
+  margin-inline: auto;
+}
+
+.hydro-objective-navigation > button {
+  width: 100%;
+  min-width: 0;
+  padding-inline: 0;
 }
 
 @media (min-width: 64rem) {

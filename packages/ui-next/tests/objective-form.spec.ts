@@ -19,7 +19,9 @@ const require = createRequire(import.meta.url);
 
 test('objective form restores drafts, retains answers across language changes, signs submissions, handles failures and clears answers', async () => {
     const { JSDOM } = require('jsdom');
-    const dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost/d/test/p/P42?tid=0123456789abcdef01234567', pretendToBeVisual: true });
+    const dom = new JSDOM('<div id="root"></div><aside id="sidebar"></aside>', {
+        url: 'http://localhost/d/test/p/P42?tid=0123456789abcdef01234567', pretendToBeVisual: true,
+    });
     const previous = new Map<string, PropertyDescriptor | undefined>();
     for (const [key, value] of Object.entries({
         window: dom.window, document: dom.window.document, navigator: dom.window.navigator,
@@ -88,10 +90,11 @@ test('objective form restores drafts, retains answers across language changes, s
     mocks['@/components/markdown/markdown-renderer'] = loadComponent('../src/components/markdown/markdown-renderer.tsx');
     const { ObjectiveAnswerForm, ObjectiveMarkdown } = loadComponent('../src/components/problem/objective-answer-form.tsx');
     const root = createRoot(document.getElementById('root'));
+    let sidebarTarget: HTMLElement | null = null;
     const content = '{{ input(1) }}\n\n{{ multiselect(2) }}\n\n- A\n- **B**\n\n{{ select(3) }}\n- A\n- B\n- C\n- D';
     const render = (disabled = false, language = 'en', formKey = 'first') => root.render(h(MantineProvider, {},
         h(React.StrictMode, {}, h(ObjectiveAnswerForm, {
-            key: formKey, pid: 42, tid, submitUrl: `/d/test/p/P42/submit?tid=${tid}`, disabled, disabledReason: 'Contest Closed',
+            key: formKey, pid: 42, tid, submitUrl: `/d/test/p/P42/submit?tid=${tid}`, disabled, disabledReason: 'Contest Closed', sidebarTarget,
         }, h(ObjectiveMarkdown, { content: language === 'en' ? content : `Translated\n\n${content}`, language })))));
     const dispatchSubmit = () => document.querySelector('form')!.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
     try {
@@ -101,6 +104,18 @@ test('objective form restores drafts, retains answers across language changes, s
         assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=radio]')[2].checked);
         assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=radio]')[2].defaultChecked);
         assert.match(document.body.textContent!, /Answered: 3\/3/);
+        const sidebar = document.getElementById('sidebar')!;
+        sidebarTarget = sidebar;
+        await act(async () => render());
+        assert.match(sidebar.textContent!, /Answered: 3\/3/);
+        assert.equal(sidebar.querySelectorAll('nav button').length, 3);
+        assert.equal(document.querySelector('form')!.querySelector('nav'), null, 'the answer card moves out of the statement');
+        assert.equal(document.querySelectorAll('button[type=submit]').length, 1, 'there is one submission action');
+        const submit = sidebar.querySelector<HTMLButtonElement>('button[type=submit]')!;
+        const clear = [...sidebar.querySelectorAll('button')].find((button) => button.textContent === 'Clear answers')!;
+        assert.equal(clear.parentElement, submit.parentElement, 'the answer actions share one row');
+        assert.ok(clear.compareDocumentPosition(submit) & 4, 'clear answers is left of submit');
+        assert.equal(submit.form, document.querySelector('form'), 'the sidebar submit button still owns the answer form');
         await act(async () => {
             // Native restoration can overwrite checked properties without emitting input/change.
             document.querySelectorAll<HTMLInputElement>('input[type=radio]')[2].checked = false;
@@ -126,7 +141,7 @@ test('objective form restores drafts, retains answers across language changes, s
         assert.equal(requests.length, 0);
         await act(async () => render());
         await act(async () => {
-            dispatchSubmit();
+            sidebar.querySelector<HTMLButtonElement>('button[type=submit]')!.click();
             dispatchSubmit();
         });
         assert.equal(requests.length, 1, 'a pending submission cannot be sent twice');
@@ -155,6 +170,7 @@ test('objective form restores drafts, retains answers across language changes, s
         assert.ok([...document.querySelectorAll<HTMLInputElement>('input[type=checkbox]')].every((input) => !input.checked));
         assert.ok([...document.querySelectorAll<HTMLInputElement>('input[type=radio]')].every((input) => !input.checked));
         assert.deepEqual(drafts.readObjectiveDraft(dom.window.localStorage, draftKey), {});
+        assert.match(sidebar.textContent!, /Answered: 0\/3/);
         const storageDescriptor = Object.getOwnPropertyDescriptor(dom.window, 'localStorage')!;
         Object.defineProperty(dom.window, 'localStorage', { configurable: true, get() { throw new Error('Storage blocked'); } });
         try {

@@ -3,6 +3,7 @@ import './objective.css';
 import { Alert, Badge, Group, Stack, Text } from '@mantine/core';
 import { dump } from 'js-yaml';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { MarkdownRenderer, type MarkdownRendererProps } from '@/components/markdown/markdown-renderer';
@@ -59,9 +60,10 @@ interface ObjectiveAnswerFormProps {
   submitUrl: string;
   disabled: boolean;
   disabledReason: string;
+  sidebarTarget?: HTMLElement | null;
 }
 
-export function ObjectiveAnswerForm({ children, pid, tid, submitUrl, disabled, disabledReason }: ObjectiveAnswerFormProps) {
+export function ObjectiveAnswerForm({ children, pid, tid, submitUrl, disabled, disabledReason, sidebarTarget }: ObjectiveAnswerFormProps) {
   const { args } = usePageData();
   const ui = useUiContext();
   const user = useUserContext();
@@ -135,50 +137,54 @@ export function ObjectiveAnswerForm({ children, pid, tid, submitUrl, disabled, d
     }
   };
 
+  const controls = (
+    <Stack gap="sm">
+      <Group justify="space-between">
+        <Text size="sm" fw={600}>{t('Answered')}: {answered}/{questions.length}</Text>
+        <Badge variant="light" color={saved ? 'green' : 'orange'}>{t(saved ? 'Saved' : 'Save failed')}</Badge>
+      </Group>
+      {questions.length > 0 && (
+        <nav aria-label={t('problem_type.objective')} className="hydro-objective-navigation">
+          {questions.map(({ id, anchor }) => (
+            <Button
+              key={id}
+              type="button"
+              size="compact-sm"
+              variant={hasObjectiveAnswer(answers[id]) ? 'filled' : 'default'}
+              aria-label={`#${id}`}
+              title={id}
+              onClick={() => {
+                const slot = document.getElementById(anchor);
+                slot?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                const input = slot?.querySelector<HTMLElement>('input, textarea, select')
+                  || slot?.closest('p')?.nextElementSibling?.querySelector<HTMLElement>('input');
+                (input || slot)?.focus({ preventScroll: true });
+              }}
+            >{id}</Button>
+          ))}
+        </nav>
+      )}
+      {error && <Alert color="red" role="alert">{error}</Alert>}
+      <Group justify="space-between" wrap="nowrap" gap="xs">
+        <Button type="button" variant="subtle" color="red" disabled={disabled || loading} onClick={() => setClearOpened(true)}>
+          {t('Clear answers')}
+        </Button>
+        <Button type="submit" form="objective-answers" loading={loading} disabled={disabled || !questions.length}>
+          {disabled ? disabledReason : t('Submit')}
+        </Button>
+      </Group>
+    </Stack>
+  );
+
   return (
     <ObjectiveContext.Provider value={value}>
       <form id="objective-answers" onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }}>
         <Stack gap="lg">
           {children}
-          <div className="hydro-objective-toolbar">
-            <Stack gap="sm">
-              <Group justify="space-between">
-                <Text size="sm" fw={600}>{t('Answered')}: {answered}/{questions.length}</Text>
-                <Badge variant="light" color={saved ? 'green' : 'orange'}>{t(saved ? 'Saved' : 'Save failed')}</Badge>
-              </Group>
-              {questions.length > 0 && (
-                <nav aria-label={t('problem_type.objective')} className="hydro-objective-navigation">
-                  {questions.map(({ id, anchor }) => (
-                    <Button
-                      key={id}
-                      type="button"
-                      size="compact-sm"
-                      variant={hasObjectiveAnswer(answers[id]) ? 'filled' : 'default'}
-                      aria-label={`#${id}`}
-                      onClick={() => {
-                        const slot = document.getElementById(anchor);
-                        slot?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                        const input = slot?.querySelector<HTMLElement>('input, textarea, select')
-                          || slot?.closest('p')?.nextElementSibling?.querySelector<HTMLElement>('input');
-                        (input || slot)?.focus({ preventScroll: true });
-                      }}
-                    >{id}</Button>
-                  ))}
-                </nav>
-              )}
-              {error && <Alert color="red" role="alert">{error}</Alert>}
-              <Group justify="space-between">
-                <Button type="button" variant="subtle" color="red" disabled={disabled || loading} onClick={() => setClearOpened(true)}>
-                  {t('Clear answers')}
-                </Button>
-                <Button type="submit" loading={loading} disabled={disabled || !questions.length}>
-                  {disabled ? disabledReason : t('Submit')}
-                </Button>
-              </Group>
-            </Stack>
-          </div>
+          {!sidebarTarget && <div className="hydro-objective-toolbar">{controls}</div>}
         </Stack>
       </form>
+      {sidebarTarget && createPortal(controls, sidebarTarget)}
       <ConfirmDialog
         opened={clearOpened}
         onClose={() => setClearOpened(false)}
