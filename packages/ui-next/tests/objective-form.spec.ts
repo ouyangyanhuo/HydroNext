@@ -191,3 +191,9 @@ test('objective form restores drafts, retains answers across language changes, s
         }
     }
 });
+
+test('objective options CSS renders options two per row via grid layout', () => {
+    const css = readFileSync(new URL('../src/components/problem/objective.css', import.meta.url), 'utf8');
+    assert.match(css, /\.hydro-markdown ul\.hydro-objective-options\s*\{[^}]*display:\s*grid/);
+    assert.match(css, /\.hydro-markdown ul\.hydro-objective-options\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+});

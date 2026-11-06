@@ -35,6 +35,16 @@ textarea.hydro-objective-input {
 }
 
 .hydro-markdown ul.hydro-objective-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.hydro-markdown ul.hydro-objective-options > li {
+  display: flex;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -42,11 +52,13 @@ textarea.hydro-objective-input {
 .hydro-objective-options > li > label {
   display: flex;
   align-items: baseline;
+  width: 100%;
   gap: 0.75rem;
   padding: 0.65rem 0.8rem;
   border: 1px solid var(--hydro-border);
   border-radius: var(--mantine-radius-default);
   cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .hydro-objective-options > li > label:has(:checked) {
@@ -54,8 +66,25 @@ textarea.hydro-objective-input {
   background: var(--hydro-surface-tint);
 }
 
+.hydro-objective-options > li > label:hover:not(:has(:disabled)) {
+  border-color: var(--hydro-primary);
+}
+
+.hydro-objective-options > li > label:has(:disabled) {
+  cursor: not-allowed;
+}
+
 .hydro-objective-options > li > label > span {
   min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.hydro-objective-options > li > label > span p:last-child {
+  margin-bottom: 0;
+}
+
+.hydro-objective-options > li > label > span p:first-child {
+  margin-top: 0;
 }
 
 .hydro-objective-input:is([type='radio'], [type='checkbox']) {
@@ -80,6 +109,12 @@ textarea.hydro-objective-input {
   width: 100%;
   min-width: 0;
   padding-inline: 0;
+}
+
+@media (max-width: 30rem) {
+  .hydro-markdown ul.hydro-objective-options {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (min-width: 64rem) {
