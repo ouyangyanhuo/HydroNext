@@ -33,16 +33,16 @@ function ContestManageSidebar({ tdoc }: { tdoc: any }) {
   ];
 
   return (
-    <Card withBorder p="md" className="hydro-panel">
+    <section className="hydro-sidebar-panel">
       <Stack gap="xs">
-        <Text size="sm" fw={800}>{t('Contest Management')}</Text>
+        <Text size="sm" fw={800} mb="xs">{t('Contest Management')}</Text>
         {items.map((item) => (
           <Button key={item.to} component={Link} to={item.to} params={{ tid }} variant="subtle" justify="flex-start" size="xs" fullWidth>
             {t(item.label)}
           </Button>
         ))}
       </Stack>
-    </Card>
+    </section>
   );
 }
 

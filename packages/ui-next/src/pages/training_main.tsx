@@ -457,7 +457,7 @@ function TrainingMainContent() {
 
         {hasSidebar && (
           <ResponsiveSidebar as="aside" className="hydro-training-sidebar" title={t('Categories')}>
-            <section className="hydro-training-enrolled-panel">
+            <section className="hydro-sidebar-panel hydro-training-enrolled-panel">
               <Group justify="space-between" align="center" mb="md">
                 <Group gap="xs"><IconFolder size={18} /><Title order={3} size="h5">{t('Categories')}</Title></Group>
                 {canCreateTraining && (
@@ -512,7 +512,7 @@ function TrainingMainContent() {
               </Stack>
             </section>
 
-            {isLoggedIn && <section className="hydro-training-enrolled-panel">
+            {isLoggedIn && <section className="hydro-sidebar-panel hydro-training-enrolled-panel">
               <Group justify="space-between" align="center" mb="md">
                 <Title order={3} size="h5">{t('Enrolled')}</Title>
                 <Badge size="xs" variant="light">{enrolledCount}</Badge>

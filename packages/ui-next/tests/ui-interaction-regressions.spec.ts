@@ -630,12 +630,24 @@ test('all application pages unify content width to 1280px while code editor is e
 
 test('problem detail sidebar groups management actions into a hover more-menu with permissions', () => {
     const source = read('../src/pages/problem_detail.tsx');
-    assert.match(source, /trigger="hover"/, 'Menu must be triggered on hover');
-    assert.match(source, /position="left-start"/, 'Menu must open to the left side');
+    assert.match(source, /trigger=(?:"hover"|\{[^}]*hover[^}]*\})/, 'Menu must support hover trigger on desktop');
+    assert.match(source, /position=(?:"left-start"|\{[^}]*left-start[^}]*\})/, 'Menu must open to the left side on desktop');
     assert.match(source, /hasMoreActions\s*&&/, 'Menu must be guarded by hasMoreActions');
     assert.match(source, /canViewFiles\s*&&[\s\S]*?problem_files/, 'Files link must be guarded by canViewFiles');
     assert.match(source, /canEdit\s*&&[\s\S]*?problem_edit/, 'Edit link must be guarded by canEdit');
     assert.match(source, /canConfigure\s*&&[\s\S]*?problem_config/, 'Config link must be guarded by canConfigure');
     assert.match(source, /canDownload\s*&&[\s\S]*?handleDownload/, 'Download action must be guarded by canDownload');
     assert.match(source, /isLoggedIn\s*&&\s*canEdit\s*&&[\s\S]*?setCopyOpened/, 'Copy action must be guarded by isLoggedIn and canEdit');
+});
+
+test('online programming mode shields footer on all viewports and locks outer scrolling', () => {
+    const css = readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8');
+    assert.match(css, /\.hydro-app-surface:has\(\.hydro-scratchpad-shell\)\s*>\s*footer[\s\S]*?display:\s*none\s*!important/);
+    assert.match(css, /body\.hydro-scratchpad-active\s+footer[\s\S]*?display:\s*none\s*!important/);
+    assert.match(css, /body\.hydro-scratchpad-active[\s\S]*?overflow:\s*hidden\s*!important/);
+    assert.match(css, /\.hydro-app-surface:has\(\.hydro-scratchpad-shell\)[\s\S]*?overflow:\s*hidden\s*!important/);
+    assert.match(css, /main\s*>\s*\.hydro-container[\s\S]*?padding-top:\s*0\s*!important/);
+
+    const problemSource = read('../src/pages/problem_detail.tsx');
+    assert.match(problemSource, /hydro-scratchpad-active/);
 });

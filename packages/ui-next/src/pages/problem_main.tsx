@@ -1,4 +1,5 @@
-import { Badge, Card, Checkbox, Group, HoverCard, Stack, Text, TextInput, Title, Tooltip } from '@mantine/core';
+import { Badge, Checkbox, Group, HoverCard, Popover, Stack, Text, TextInput, Title, Tooltip } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import {
   IconCode, IconCornerDownLeft, IconDownload, IconSearch, IconTrash,
@@ -76,13 +77,14 @@ function normalizeCategories(categories: any) {
 function ProblemSidebar({ categories, query, sort }: { categories: any, query: string, sort: string }) {
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
+  const isMobile = useMediaQuery('(max-width: 63.99em)', false);
   const groups = normalizeCategories(categories);
   const randomUrl = buildUrl('problem_random', {}, query ? { q: query } : {});
 
   return (
-    <Stack gap="md">
-      <Card withBorder p="lg" className="hydro-content-card !overflow-visible">
-        <Title order={4} mb="sm">{t('Categories')}</Title>
+    <div className="flex flex-col gap-3.5">
+      <section className="hydro-sidebar-panel !overflow-visible">
+        <Title order={4} size="h5" mb="sm">{t('Categories')}</Title>
         {groups.length ? (
           <div className="relative grid grid-cols-2 gap-1 overflow-visible">
             {groups.map(([category, children]) => {
@@ -107,6 +109,58 @@ function ProblemSidebar({ categories, query, sort }: { categories: any, query: s
               );
 
               if (!hasChildren) return <div key={category}>{categoryItem}</div>;
+
+              if (isMobile) {
+                return (
+                  <Popover
+                    key={category}
+                    width={280}
+                    position="bottom-start"
+                    offset={8}
+                    shadow="lg"
+                    radius="md"
+                    withinPortal
+                    zIndex={1200}
+                    middlewares={{ flip: true, shift: true }}
+                  >
+                    <Popover.Target>
+                      <div
+                        className={[
+                          'rounded-md border border-transparent px-2 py-1.5 transition-all duration-150 cursor-pointer select-none',
+                          'hover:border-[var(--hydro-border)] hover:bg-[var(--hydro-surface)] active:bg-[var(--hydro-surface)]',
+                        ].join(' ')}
+                      >
+                        <Group justify="space-between" gap="xs" wrap="nowrap">
+                          <Text size="sm" fw={700} truncate>{category}</Text>
+                          <Text size="xs" c="dimmed">▾</Text>
+                        </Group>
+                      </div>
+                    </Popover.Target>
+                    <Popover.Dropdown className="hydro-category-flyout" p="md">
+                      <Group justify="space-between" mb="xs">
+                        <Text size="xs" fw={800} c="dimmed">{category}</Text>
+                        <Link
+                          href={buildUrl('problem_main', {}, { q: `category:${category}`, sort })}
+                          className="no-underline"
+                        >
+                          <Badge variant="outline" size="sm">{t('All')}</Badge>
+                        </Link>
+                      </Group>
+                      <div className="flex max-h-[50vh] flex-wrap gap-1.5 overflow-y-auto">
+                        {children.map((tag) => (
+                          <Link
+                            key={tag}
+                            href={buildUrl('problem_main', {}, { q: `category:${tag}`, sort })}
+                            className="no-underline"
+                          >
+                            <Badge variant="light">{tag}</Badge>
+                          </Link>
+                        ))}
+                      </div>
+                    </Popover.Dropdown>
+                  </Popover>
+                );
+              }
 
               return (
                 <HoverCard
@@ -146,18 +200,18 @@ function ProblemSidebar({ categories, query, sort }: { categories: any, query: s
         ) : (
           <Text c="dimmed" size="sm">{t('No categories')}</Text>
         )}
-      </Card>
+      </section>
 
-      <Card withBorder p="lg" className="hydro-content-card">
-        <Title order={4} mb="xs">{t('Lucky')}</Title>
+      <section className="hydro-sidebar-panel">
+        <Title order={4} size="h5" mb="xs">{t('Lucky')}</Title>
         <Text c="dimmed" size="sm" mb="md">
           {t('Pick a problem randomly based on the current filter.')}
         </Text>
         <Button component="a" href={randomUrl} fullWidth variant="light">
           {t('Random Problem')}
         </Button>
-      </Card>
-    </Stack>
+      </section>
+    </div>
   );
 }
 

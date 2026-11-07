@@ -419,9 +419,9 @@ export default function RecordDetailPage() {
         </div>
 
         <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Submission detail') || t('Information')}>
-          <Stack gap="lg">
+          <div className="flex flex-col gap-3.5">
             {canJudge && !rdoc.files?.hack && (
-              <Card withBorder p="md" className="hydro-panel">
+              <section className="hydro-sidebar-panel">
                 <Stack gap="xs">
                   <Button size="xs" variant="light" loading={actionLoading === 'rejudge'} onClick={() => submitOperation('rejudge')}>
                     {t('Rejudge')}
@@ -430,10 +430,10 @@ export default function RecordDetailPage() {
                     {t('Cancel Score')}
                   </Button>
                 </Stack>
-              </Card>
+              </section>
             )}
 
-            <Card withBorder p="md" className="hydro-panel">
+            <section className="hydro-sidebar-panel">
               <Title order={3} size="h5" mb="sm">{t('Information')}</Title>
               <Stack gap={0}>
                 <InfoRow label={t('Submit By')}>
@@ -491,10 +491,10 @@ export default function RecordDetailPage() {
                   </InfoRow>
                 )}
               </Stack>
-            </Card>
+            </section>
 
             {Object.keys(allRevs).length > 0 && (
-              <Card withBorder p="md" className="hydro-panel">
+              <section className="hydro-sidebar-panel">
                 <Title order={3} size="h5" mb="sm">{t('History')}</Title>
                 <Stack gap={4}>
                   <Link
@@ -523,9 +523,9 @@ export default function RecordDetailPage() {
                     </a>
                   ))}
                 </Stack>
-              </Card>
+              </section>
             )}
-          </Stack>
+          </div>
         </ResponsiveSidebar>
       </div>
     </Stack>

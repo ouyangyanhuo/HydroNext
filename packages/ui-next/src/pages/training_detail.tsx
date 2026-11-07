@@ -359,8 +359,8 @@ export default function TrainingDetailPage() {
       </div>
 
       <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Information') || t('Sidebar')}>
-        <Stack gap="md">
-          <Card withBorder p="md" className="hydro-panel">
+        <div className="flex flex-col gap-3.5">
+          <section className="hydro-sidebar-panel">
             <Stack gap="xs">
               {isLoggedIn && !selfEnrolled && (
                 <Button fullWidth size="xs" onClick={enroll} loading={loading}>{t('Enroll Training')}</Button>
@@ -387,10 +387,10 @@ export default function TrainingDetailPage() {
                 />
               )}
             </Stack>
-          </Card>
+          </section>
 
           {compare && viewedUser && (
-            <Card withBorder p="md" className="hydro-panel hydro-training-viewing-panel">
+            <section className="hydro-sidebar-panel hydro-training-viewing-panel">
               <Stack gap="sm">
                 <Group justify="space-between" gap="xs">
                   <Text size="xs" c="dimmed" fw={700}>{t('Viewing progress for')}</Text>
@@ -417,11 +417,11 @@ export default function TrainingDetailPage() {
                   {t('Back to my progress')}
                 </Button>
               </Stack>
-            </Card>
+            </section>
           )}
 
           {canViewEnrolledUsers && (
-            <Card withBorder p="md" className="hydro-panel">
+            <section className="hydro-sidebar-panel">
               <Group justify="space-between" mb="sm">
                 <Title order={3} size="h5">{t('Enrolled Users')}</Title>
                 <Badge size="xs" variant="light">{enrolledUserCount}</Badge>
@@ -461,10 +461,10 @@ export default function TrainingDetailPage() {
               ) : (
                 <Text c="dimmed" ta="center" py="sm">{t('No enrolled users.')}</Text>
               )}
-            </Card>
+            </section>
           )}
 
-          <Card withBorder p="md" className="hydro-panel">
+          <section className="hydro-sidebar-panel">
             <Title order={3} size="h5" mb="sm">{t('Information')}</Title>
             <Stack gap="sm">
               {isLoggedIn && (
@@ -491,8 +491,8 @@ export default function TrainingDetailPage() {
                 {udoc ? <UserLink user={udoc} size="xs" /> : <Text size="xs">-</Text>}
               </Group>
             </Stack>
-          </Card>
-        </Stack>
+          </section>
+        </div>
       </ResponsiveSidebar>
 
       <Modal

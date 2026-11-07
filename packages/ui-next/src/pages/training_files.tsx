@@ -130,8 +130,8 @@ export default function TrainingFilesPage() {
       </div>
 
       <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Training Plan') || t('Sidebar')}>
-        <Stack gap="md">
-          <Card withBorder p="md" className="hydro-panel">
+        <div className="flex flex-col gap-3.5">
+          <section className="hydro-sidebar-panel">
             <Stack gap="xs">
               <Button component={Link} to="training_detail" params={{ tid }} fullWidth size="xs" variant="light">
                 {t('View Training')}
@@ -143,9 +143,9 @@ export default function TrainingFilesPage() {
                 {t('Help')}
               </Button>
             </Stack>
-          </Card>
+          </section>
 
-          <Card withBorder p="md" className="hydro-panel">
+          <section className="hydro-sidebar-panel">
             <Title order={3} size="h5" mb="sm">{t('Information')}</Title>
             <Stack gap="sm">
               <Group justify="space-between">
@@ -161,8 +161,8 @@ export default function TrainingFilesPage() {
                 {udoc ? <UserLink user={udoc} size="xs" /> : <Text size="xs">-</Text>}
               </Group>
             </Stack>
-          </Card>
-        </Stack>
+          </section>
+        </div>
       </ResponsiveSidebar>
       <ConfirmDialog
         opened={deleteOpened}

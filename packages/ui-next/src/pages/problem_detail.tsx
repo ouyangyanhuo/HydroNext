@@ -1,6 +1,7 @@
 import { Badge, Group, Menu, Modal, Paper, ScrollArea, Stack, Text, Title } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft, IconChevronLeft, IconCopy, IconDownload, IconEdit, IconFolder, IconSettings } from '@tabler/icons-react';
+import { IconArrowLeft, IconChevronDown, IconChevronLeft, IconCopy, IconDownload, IconEdit, IconFolder, IconSettings } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { ProblemPageExtras } from '@/components/common/addon-slots';
@@ -265,6 +266,7 @@ function ProblemSidebar({
   canDownloadProblem?: boolean;
 }) {
   const { t } = useI18n();
+  const isMobile = useMediaQuery('(max-width: 63.99em)', false);
   const isLoggedIn = useIsLoggedIn();
   const fallbackCanSubmit = useHasPerm(PERM.PERM_SUBMIT_PROBLEM);
   const canSubmit = canSubmitProblem ?? fallbackCanSubmit;
@@ -349,14 +351,14 @@ function ProblemSidebar({
   return (
     <Stack gap="md">
       {contestClosed && (
-        <Paper withBorder p="md" className="hydro-panel">
+        <Paper withBorder p="md" className="hydro-sidebar-panel">
           <Text size="sm" fw={700}>{t('Contest Closed')}</Text>
           <Text size="xs" c="dimmed" mt={4}>{t('The contest has ended. You can view the problem, but contest submissions are closed.')}</Text>
         </Paper>
       )}
 
       {psdoc && psdoc.status !== undefined && (
-        <Paper withBorder p="md" className="hydro-panel">
+        <Paper withBorder p="md" className="hydro-sidebar-panel">
           <Text size="xs" c="dimmed" mb="xs">{t('Your Status')}</Text>
           <RecordStatusBadge status={psdoc.status} />
           {psdoc.score !== undefined && (
@@ -367,7 +369,7 @@ function ProblemSidebar({
         </Paper>
       )}
 
-      <Paper withBorder p="md" className="hydro-panel">
+      <section className="hydro-sidebar-panel">
         <Stack gap="xs">
           {pdoc.config?.type === 'objective' ? null : contestClosed ? (
             <Button disabled fullWidth size="sm" justify="flex-start">
@@ -401,14 +403,15 @@ function ProblemSidebar({
 
           {hasMoreActions && (
             <Menu
-              position="left-start"
+              position={isMobile ? 'bottom-start' : 'left-start'}
               offset={8}
-              trigger="hover"
+              trigger={isMobile ? 'click' : 'hover'}
               openDelay={100}
               closeDelay={150}
               shadow="md"
               withinPortal
               keepMounted
+              zIndex={400}
               classNames={{ dropdown: 'hydro-topbar-dropdown' }}
             >
               <Menu.Target>
@@ -417,7 +420,11 @@ function ProblemSidebar({
                   fullWidth
                   size="sm"
                   justify="space-between"
-                  rightSection={<IconChevronLeft size={14} className="opacity-60" />}
+                  rightSection={(
+                    isMobile
+                      ? <IconChevronDown size={14} className="opacity-60" />
+                      : <IconChevronLeft size={14} className="opacity-60" />
+                  )}
                 >
                   {t('More')}
                 </Button>
@@ -472,12 +479,12 @@ function ProblemSidebar({
             </Menu>
           )}
         </Stack>
-      </Paper>
+      </section>
 
       <ProblemNavigation />
 
       {rdoc && (
-        <Paper withBorder p="md" className="hydro-panel">
+        <section className="hydro-sidebar-panel">
           <Text size="xs" c="dimmed" mb="xs">{t('Latest Record')}</Text>
           <Link
             href={buildUrl('record_detail', { rid: rdoc._id }, getSubmissionRecordQuery(window.location.search))}
@@ -488,7 +495,7 @@ function ProblemSidebar({
               <TimeDisplay date={rdoc.judgeAt || rdoc._id?.toString()?.substring(0, 8)} format="relative" />
             </Group>
           </Link>
-        </Paper>
+        </section>
       )}
       <FormDialog
         opened={copyOpened && isLoggedIn && canEdit}
@@ -602,6 +609,17 @@ export default function ProblemDetailPage() {
   const workspaceRef = useRef<HTMLDivElement>(null);
   const [previewFile, setPreviewFile] = useState<{ name: string, size: number } | null>(null);
   const pid = pdoc.pid || pdoc.docId;
+
+  useEffect(() => {
+    if (scratchpadOpen) {
+      document.documentElement.classList.add('hydro-scratchpad-active');
+      document.body.classList.add('hydro-scratchpad-active');
+    }
+    return () => {
+      document.documentElement.classList.remove('hydro-scratchpad-active');
+      document.body.classList.remove('hydro-scratchpad-active');
+    };
+  }, [scratchpadOpen]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -826,8 +844,8 @@ export default function ProblemDetailPage() {
         className={`w-full lg:w-64 shrink-0${isObjective ? ' hydro-objective-sidebar' : ''}`}
         title={t('Problem Actions') || t('Sidebar')}
       >
-        <Stack gap="md">
-          {isObjective && <Paper ref={setObjectiveSidebar} withBorder p="md" className="hydro-panel" />}
+        <div className="flex flex-col gap-3.5">
+          {isObjective && <div ref={setObjectiveSidebar} className="hydro-sidebar-panel" />}
           <ProblemSidebar
             pdoc={pdoc}
             statements={statements || undefined}
@@ -845,7 +863,7 @@ export default function ProblemDetailPage() {
             onToggleScratchpad={() => switchScratchpad(true)}
           />
           {relatedCount > 0 && (
-            <Paper withBorder p="md" className="hydro-panel">
+            <section className="hydro-sidebar-panel">
               <Title order={4} size="h5" mb="sm">{t('Related')}</Title>
               <Stack gap="xs">
                 {relatedContests.slice(0, 5).map((tdoc: any) => renderRelatedLink(tdoc, 'contest_detail'))}
@@ -864,9 +882,9 @@ export default function ProblemDetailPage() {
                   </Button>
                 )}
               </Stack>
-            </Paper>
+            </section>
           )}
-        </Stack>
+        </div>
       </ResponsiveSidebar>
 
       <Modal opened={relatedOpened} onClose={() => setRelatedOpenFor(null)} title={t('Related')} size="md">

@@ -1,4 +1,4 @@
-import { Group, Paper, Stack, Text } from '@mantine/core';
+import { Group, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft, IconArrowRight } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { Link } from '@/components/link';
@@ -11,6 +11,8 @@ import { extractLocalizedContent } from '@/utils/i18n-content';
 import { getProblemNavigationSource, type ProblemNavigationData, resolveProblemNavigation } from '@/utils/problem-navigation';
 import { Button } from './button';
 
+const navigationCache = new Map<string, ProblemNavigationData | null>();
+
 export function ProblemNavigation() {
   const { args } = usePageData();
   const ui = useUiContext();
@@ -19,11 +21,13 @@ export function ProblemNavigation() {
   const { t } = useI18n();
   const language = useSessionStore((s) => s.language);
   const [attempt, setAttempt] = useState(0);
-  const [result, setResult] = useState<{ key: string, data?: ProblemNavigationData | null, error?: string } | null>(null);
   const search = window.location.search;
   const source = getProblemNavigationSource({ contest: args.tdoc, search, buildUrl });
   const enabled = !!source;
   const key = JSON.stringify([ui.domainId, user._id, String(user.perm), args.pdoc?.docId, search, attempt]);
+  const [result, setResult] = useState<{ key: string, data?: ProblemNavigationData | null, error?: string } | null>(
+    () => (navigationCache.has(key) ? { key, data: navigationCache.get(key) } : null),
+  );
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -39,6 +43,7 @@ export function ProblemNavigation() {
       return data;
     };
     void resolveProblemNavigation({ problem: args.pdoc, contest: args.tdoc, search, buildUrl, load }).then((data) => {
+      navigationCache.set(key, data);
       if (!controller.signal.aborted) setResult({ key, data });
     }).catch((error) => {
       if (!controller.signal.aborted) setResult({ key, error: error.message || 'Failed' });
@@ -47,13 +52,13 @@ export function ProblemNavigation() {
   }, [enabled, key, search, buildUrl, args.pdoc, args.tdoc, t]);
 
   if (!enabled) return null;
-  const current = result?.key === key ? result : null;
+  const current = result?.key === key ? result : (navigationCache.has(key) ? { key, data: navigationCache.get(key) } : null);
   const data = current?.data;
   return (
-    <Paper withBorder p="md" className="hydro-panel hydro-problem-nav" component="nav" aria-label={t('Problem navigation')} aria-busy={!current}>
+    <section className="hydro-sidebar-panel hydro-problem-nav" aria-label={t('Problem navigation')} aria-busy={!current}>
       <Stack gap="sm">
-        <Group justify="space-between" gap="xs">
-          <Text size="sm" fw="var(--hydro-weight-semibold)">{t('Problem navigation')}</Text>
+        <Group justify="space-between" align="center" mb="xs">
+          <Title order={3} size="h5">{t('Problem navigation')}</Title>
         </Group>
         {!current && (
           <div className="hydro-problem-nav-skeletons" aria-hidden="true">
@@ -156,6 +161,6 @@ export function ProblemNavigation() {
           <Button variant="subtle" size="xs" onClick={() => setAttempt((value) => value + 1)}>{t('Retry')}</Button>
         </>}
       </Stack>
-    </Paper>
+    </section>
   );
 }

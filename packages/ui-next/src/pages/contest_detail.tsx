@@ -389,7 +389,7 @@ function ContestInfoCard({ tdoc, tsdoc, owner }: { tdoc: any, tsdoc?: any, owner
   const { t } = useI18n();
 
   return (
-    <Paper withBorder p="md" className="hydro-panel">
+    <section className="hydro-sidebar-panel">
       <Stack gap="xs">
         <Group justify="space-between" wrap="nowrap">
           <Text size="xs" c="dimmed" fw={700}>{t('Status')}</Text>
@@ -422,7 +422,7 @@ function ContestInfoCard({ tdoc, tsdoc, owner }: { tdoc: any, tsdoc?: any, owner
           </Group>
         )}
       </Stack>
-    </Paper>
+    </section>
   );
 }
 
@@ -587,9 +587,9 @@ export default function ContestDetailPage() {
           </div>
 
           <ResponsiveSidebar className="w-full shrink-0 lg:w-64" title={t('Contest Details') || t('Sidebar')}>
-            <Stack gap="md">
+            <div className="flex flex-col gap-3.5">
               {tdoc.privateFiles?.length > 0 && (
-                <Paper withBorder p="md" className="hydro-panel">
+                <section className="hydro-sidebar-panel">
                   <Text size="sm" fw={800} mb="xs">{t('Materials')}</Text>
                   <Stack gap="xs">
                     {tdoc.privateFiles.map((file: any) => (
@@ -602,15 +602,23 @@ export default function ContestDetailPage() {
                       </Link>
                     ))}
                   </Stack>
-                </Paper>
+                </section>
               )}
               <ContestInfoCard tdoc={tdoc} tsdoc={tsdoc} owner={owner || udict[tdoc.owner]} />
-              <Button component={Link} to="contest_detail" params={{ tid }} variant="subtle" fullWidth>{t('View Contest')}</Button>
-              {showScoreboard && (
-                <Button component={Link} to="contest_scoreboard" params={{ tid }} variant="light" fullWidth>{t('Scoreboard')}</Button>
-              )}
-              {canEdit && <Button component={Link} to="contest_manage" params={{ tid }} variant="subtle" fullWidth>{t('Contest Management')}</Button>}
-            </Stack>
+              <section className="hydro-sidebar-panel">
+                <Stack gap="xs">
+                  <Button component={Link} to="contest_detail" params={{ tid }} variant="subtle" fullWidth>{t('View Contest')}</Button>
+                  {showScoreboard && (
+                    <Button component={Link} to="contest_scoreboard" params={{ tid }} variant="light" fullWidth>{t('Scoreboard')}</Button>
+                  )}
+                  {canEdit && (
+                    <Button component={Link} to="contest_manage" params={{ tid }} variant="subtle" fullWidth>
+                      {t('Contest Management')}
+                    </Button>
+                  )}
+                </Stack>
+              </section>
+            </div>
           </ResponsiveSidebar>
         </div>
       </Stack>
@@ -682,96 +690,100 @@ export default function ContestDetailPage() {
         </div>
 
         <ResponsiveSidebar className="w-full lg:w-64 shrink-0" title={t('Contest Details') || t('Sidebar')}>
-          <Stack gap="md">
+          <div className="flex flex-col gap-3.5">
             <ContestInfoCard tdoc={tdoc} tsdoc={tsdoc} owner={owner} />
 
-            {isLoggedIn && !tsdoc.attend && !contestEnded && (
+            <section className="hydro-sidebar-panel">
               <Stack gap="xs">
-                {tdoc._code && (
-                  <TextInput
-                    label={t('Invitation code')}
-                    value={invitationCode}
-                    onChange={(event) => setInvitationCode(event.currentTarget.value)}
+                {isLoggedIn && !tsdoc.attend && !contestEnded && (
+                  <>
+                    {tdoc._code && (
+                      <TextInput
+                        label={t('Invitation code')}
+                        value={invitationCode}
+                        onChange={(event) => setInvitationCode(event.currentTarget.value)}
+                      />
+                    )}
+                    <Button
+                      fullWidth
+                      onClick={() => {
+                        if (attendPending.current) return;
+                        if (tdoc.allowTeam) {
+                          setAttendTeam('personal');
+                          setAttendDialogOpen(true);
+                        } else {
+                          void handleAttend();
+                        }
+                      }}
+                      loading={attending}
+                    >{t('Register Contest')}</Button>
+                  </>
+                )}
+                {isLoggedIn && !tsdoc.attend && contestEnded && (
+                  <Button fullWidth disabled>
+                    {t('Contest Closed')}
+                  </Button>
+                )}
+
+                {isLoggedIn && tsdoc.attend && (
+                  <Tooltip label={contestNotStarted ? t('Contest has not started yet') : undefined} disabled={!contestNotStarted}>
+                    <Button component={Link} to="contest_problemlist" params={{ tid }} variant="filled" fullWidth disabled={!!contestNotStarted}>
+                      {t('Problem List')}
+                    </Button>
+                  </Tooltip>
+                )}
+
+                {showScoreboard && (
+                  <Button component={Link} to="contest_scoreboard" params={{ tid }} variant="light" fullWidth>
+                    {t('Scoreboard')}
+                  </Button>
+                )}
+
+                {args.canEndContest && (
+                  <Button color="red" variant="light" fullWidth onClick={() => setEndDialogOpen(true)}>
+                    {t(tsdoc.members ? 'End contest for the whole team' : 'End contest early')}
+                  </Button>
+                )}
+
+                {canEdit && (
+                  <>
+                    <Button component={Link} to="contest_edit" params={{ tid }} variant="subtle" fullWidth>
+                      {t('Edit Contest')}
+                    </Button>
+                    <Button component={Link} to="contest_manage" params={{ tid }} variant="subtle" fullWidth>
+                      {t('Contest Management')}
+                    </Button>
+                  </>
+                )}
+
+                {canViewAllRecords && (
+                  <Button component={Link} href={buildUrl('record_main', {}, { tid: String(tid) })} variant="subtle" fullWidth>
+                    {t('All Submissions')}
+                  </Button>
+                )}
+
+                {tsdoc.attend && (
+                  <Button
+                    component={Link}
+                    href={buildUrl('record_main', {}, { tid: String(tid), uidOrName: String(user._id) })}
+                    variant="subtle"
+                    fullWidth
+                  >
+                    {t('My Submissions')}
+                  </Button>
+                )}
+
+                {canDelete && (
+                  <DeleteResourceButton
+                    actionUrl={buildUrl('contest_edit', { tid })}
+                    fallbackUrl={buildUrl('contest_main')}
+                    label={t('Delete Contest')}
+                    message={t('Confirm deleting this contest? Its files and status will be deleted as well.')}
                   />
                 )}
-                <Button
-                  fullWidth
-                  onClick={() => {
-                    if (attendPending.current) return;
-                    if (tdoc.allowTeam) {
-                      setAttendTeam('personal');
-                      setAttendDialogOpen(true);
-                    } else {
-                      void handleAttend();
-                    }
-                  }}
-                  loading={attending}
-                >{t('Register Contest')}</Button>
               </Stack>
-            )}
-            {isLoggedIn && !tsdoc.attend && contestEnded && (
-              <Button fullWidth disabled>
-                {t('Contest Closed')}
-              </Button>
-            )}
-
-            {isLoggedIn && tsdoc.attend && (
-              <Tooltip label={contestNotStarted ? t('Contest has not started yet') : undefined} disabled={!contestNotStarted}>
-                <Button component={Link} to="contest_problemlist" params={{ tid }} variant="filled" fullWidth disabled={!!contestNotStarted}>
-                  {t('Problem List')}
-                </Button>
-              </Tooltip>
-            )}
-
-            {showScoreboard && (
-              <Button component={Link} to="contest_scoreboard" params={{ tid }} variant="light" fullWidth>
-                {t('Scoreboard')}
-              </Button>
-            )}
-
-            {args.canEndContest && (
-              <Button color="red" variant="light" fullWidth onClick={() => setEndDialogOpen(true)}>
-                {t(tsdoc.members ? 'End contest for the whole team' : 'End contest early')}
-              </Button>
-            )}
-
-            {canEdit && (
-              <>
-                <Button component={Link} to="contest_edit" params={{ tid }} variant="subtle" fullWidth>
-                  {t('Edit Contest')}
-                </Button>
-                <Button component={Link} to="contest_manage" params={{ tid }} variant="subtle" fullWidth>
-                  {t('Contest Management')}
-                </Button>
-              </>
-            )}
-
-            {canViewAllRecords && (
-              <Button component={Link} href={buildUrl('record_main', {}, { tid: String(tid) })} variant="subtle" fullWidth>
-                {t('All Submissions')}
-              </Button>
-            )}
-
-            {tsdoc.attend && (
-              <Button
-                component={Link}
-                href={buildUrl('record_main', {}, { tid: String(tid), uidOrName: String(user._id) })}
-                variant="subtle"
-                fullWidth
-              >
-                {t('My Submissions')}
-              </Button>
-            )}
-
-            {canDelete && (
-              <DeleteResourceButton
-                actionUrl={buildUrl('contest_edit', { tid })}
-                fallbackUrl={buildUrl('contest_main')}
-                label={t('Delete Contest')}
-                message={t('Confirm deleting this contest? Its files and status will be deleted as well.')}
-              />
-            )}
-          </Stack>
+            </section>
+          </div>
         </ResponsiveSidebar>
       </div>
       <ConfirmDialog

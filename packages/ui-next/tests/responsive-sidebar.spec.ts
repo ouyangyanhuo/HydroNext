@@ -14,6 +14,9 @@ const previous = new Map<string, PropertyDescriptor | undefined>();
 for (const [key, value] of Object.entries({
     window: dom.window, document: dom.window.document, navigator: dom.window.navigator,
     HTMLElement: dom.window.HTMLElement, Element: dom.window.Element, getComputedStyle: dom.window.getComputedStyle,
+    HTMLAnchorElement: dom.window.HTMLAnchorElement, HTMLButtonElement: dom.window.HTMLButtonElement,
+    HTMLInputElement: dom.window.HTMLInputElement, HTMLSelectElement: dom.window.HTMLSelectElement,
+    HTMLTextAreaElement: dom.window.HTMLTextAreaElement,
     requestAnimationFrame: (callback: () => void) => setTimeout(callback, 0), cancelAnimationFrame: clearTimeout,
     IS_REACT_ACT_ENVIRONMENT: true,
 })) {
@@ -109,7 +112,8 @@ test('responsive sidebar in mobile view renders floating ball and opens action s
         ),
     );
     try {
-        const fab = view.host.querySelector('.hydro-floating-sidebar-ball') as HTMLButtonElement | null;
+        const fab = (view.host.querySelector('.hydro-floating-sidebar-ball')
+            || document.querySelector('.hydro-floating-sidebar-ball')) as HTMLButtonElement | null;
         assert.ok(fab, 'Floating action ball must be rendered');
         assert.equal(fab.getAttribute('aria-label'), 'Problem Actions');
 
@@ -144,12 +148,36 @@ test('tailwind.css defines styling for floating sidebar ball and action sheet', 
     const parsed = postcss.parse(css);
     let hasBall = false;
     let hasSheet = false;
+    let flatBottomLeft = false;
+    let flatBottomRight = false;
 
     parsed.walkRules((rule) => {
         if (rule.selector.includes('.hydro-floating-sidebar-ball')) hasBall = true;
-        if (rule.selector.includes('.hydro-action-sheet-content')) hasSheet = true;
+        if (rule.selector.includes('.hydro-action-sheet-content')) {
+            hasSheet = true;
+            rule.walkDecls((decl) => {
+                if (decl.prop === 'border-bottom-left-radius' && decl.value.includes('0')) flatBottomLeft = true;
+                if (decl.prop === 'border-bottom-right-radius' && decl.value.includes('0')) flatBottomRight = true;
+            });
+        }
     });
 
     assert.ok(hasBall, 'tailwind.css must define .hydro-floating-sidebar-ball');
     assert.ok(hasSheet, 'tailwind.css must define .hydro-action-sheet-content');
+    assert.ok(flatBottomLeft, 'Action Sheet bottom-left radius must be 0');
+    assert.ok(flatBottomRight, 'Action Sheet bottom-right radius must be 0');
+});
+
+test('responsive sidebar source implements drag handle gestures, elevated FAB, and content gap', () => {
+    const source = readFileSync(path, 'utf8');
+    assert.match(source, /onTouchStart=\{handleTouchStart\}/, 'Drag handle must listen to onTouchStart');
+    assert.match(source, /onTouchMove=\{handleTouchMove\}/, 'Drag handle must listen to onTouchMove');
+    assert.match(source, /onTouchEnd=\{handleTouchEnd\}/, 'Drag handle must listen to onTouchEnd');
+    assert.match(source, /<Portal>[\s\S]*?hydro-floating-sidebar-ball/, 'FAB must be mounted via Portal to avoid footer clipping');
+    assert.match(source, /borderBottomLeftRadius:\s*0/, 'Action sheet bottom corners must be square');
+    assert.match(source, /borderBottomRightRadius:\s*0/, 'Action sheet bottom corners must be square');
+    assert.match(source, /flex flex-col gap-/, 'Action sheet content must arrange children with vertical gap');
+    assert.match(source, /4\.25rem/, 'FAB bottom offset must be positioned at 4.25rem for ideal thumb reach');
+    assert.match(source, /IconChevronUp/, 'Default FAB icon should be sleek, flat upward chevron (IconChevronUp)');
+    assert.match(source, /inner:\s*\{[\s\S]*?translateY/, 'Drag gesture must translate drawer inner to move entire sheet box');
 });

@@ -1925,6 +1925,9 @@ a {
   margin-top: 24px;
 }
 
+.hydro-sidebar,
+.hydro-problem-sidebar,
+.hydro-contest-sidebar,
 .hydro-training-sidebar {
   position: sticky;
   top: 88px;
@@ -1957,15 +1960,32 @@ a {
 .scoreboard-record-value--green { color: var(--hydro-success); }
 .scoreboard-record-value--yellow { color: var(--hydro-warning); }
 
+.hydro-sidebar-panel,
+.hydro-training-enrolled-panel,
+:is(.hydro-sidebar, .hydro-problem-sidebar, .hydro-contest-sidebar, .hydro-training-sidebar, .hydro-action-sheet-content) :is(.hydro-sidebar-panel, .hydro-training-enrolled-panel) {
+  padding: 18px !important;
+  border: 1px solid var(--hydro-border) !important;
+  border-radius: var(--hydro-radius-lg) !important;
+  background-color: var(--hydro-glass-surface) !important;
+  box-shadow: var(--hydro-shadow-sm), inset 0 1px 0 var(--hydro-glass-highlight) !important;
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%) !important;
+  backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%) !important;
+}
+
 .hydro-training-enrolled-panel {
-  padding: 18px;
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-lg);
-  background-color: var(--hydro-glass-surface);
-  box-shadow: var(--hydro-shadow-sm), inset 0 1px 0 var(--hydro-glass-highlight);
-  -webkit-backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%);
-  backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%);
   animation: hydro-training-list-in 440ms var(--hydro-ease-out) 100ms both;
+}
+
+[data-mantine-color-scheme='dark'] :is(
+  .hydro-sidebar-panel,
+  .hydro-training-enrolled-panel,
+  :is(.hydro-sidebar, .hydro-problem-sidebar, .hydro-contest-sidebar, .hydro-training-sidebar, .hydro-action-sheet-content) :is(.hydro-sidebar-panel, .hydro-training-enrolled-panel)
+) {
+  border-color: color-mix(in srgb, var(--hydro-border) 72%, var(--hydro-glass-border)) !important;
+  background-color: var(--hydro-glass-surface) !important;
+  box-shadow: var(--hydro-shadow-sm), inset 0 1px 0 var(--hydro-glass-highlight) !important;
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%) !important;
+  backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%) !important;
 }
 
 .hydro-training-category-list {
@@ -2029,7 +2049,7 @@ a {
   transform: translateX(3px);
 }
 
-.hydro-panel.hydro-training-viewing-panel {
+:is(.hydro-panel, .hydro-sidebar-panel).hydro-training-viewing-panel {
   border-color: color-mix(in srgb, var(--hydro-primary) 30%, var(--hydro-border));
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 30%, var(--hydro-surface-raised));
   background-image: none;
@@ -2116,6 +2136,7 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   .hydro-training-list,
+  .hydro-sidebar-panel,
   .hydro-training-enrolled-panel,
   .hydro-training-item {
     animation: none;
@@ -2367,6 +2388,93 @@ a {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+/* Shield footer in online programming mode so only topbar and workspace remain */
+body.hydro-scratchpad-active footer,
+.hydro-app-surface:has(.hydro-scratchpad-shell) > footer {
+  display: none !important;
+}
+
+html.hydro-scratchpad-active,
+body.hydro-scratchpad-active,
+html:has(body.hydro-scratchpad-active),
+html:has(.hydro-scratchpad-shell),
+body:has(.hydro-scratchpad-shell) {
+  overflow: hidden !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+body.hydro-scratchpad-active .hydro-app-surface,
+.hydro-app-surface:has(.hydro-scratchpad-shell) {
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+body.hydro-scratchpad-active main,
+.hydro-app-surface:has(.hydro-scratchpad-shell) main {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+body.hydro-scratchpad-active main > .hydro-container,
+.hydro-app-surface:has(.hydro-scratchpad-shell) main > .hydro-container {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+body.hydro-scratchpad-active .problem-workspace,
+.hydro-app-surface:has(.hydro-scratchpad-shell) .problem-workspace {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+body.hydro-scratchpad-active .hydro-scratchpad-shell,
+.hydro-app-surface:has(.hydro-scratchpad-shell) .hydro-scratchpad-shell {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+body.hydro-scratchpad-active .hydro-scratchpad-frame,
+.hydro-app-surface:has(.hydro-scratchpad-shell) .hydro-scratchpad-frame {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  border-top-width: 0 !important;
+  border-bottom-width: 0 !important;
 }
 
 .hydro-scratchpad-shell {
@@ -2888,9 +2996,9 @@ a {
 /* Problem quick navigation cards with directional hover glide and tactile press */
 .hydro-problem-nav-button {
   position: relative;
-  border: 1px solid var(--hydro-border);
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 70%, transparent);
   border-radius: var(--hydro-radius-md);
-  background-color: color-mix(in srgb, var(--hydro-surface-raised) 72%, var(--hydro-surface-muted));
+  background-color: var(--hydro-glass-surface-muted);
   color: var(--hydro-text);
   text-align: left;
   transition: border-color var(--hydro-duration-fast) var(--hydro-ease-out),
@@ -2955,7 +3063,7 @@ a {
 }
 
 [data-mantine-color-scheme='dark'] .hydro-problem-nav-button {
-  background-color: color-mix(in srgb, var(--hydro-surface-raised) 75%, transparent);
+  background-color: var(--hydro-glass-surface-muted);
   border-color: var(--hydro-border);
 }
 
@@ -2976,8 +3084,8 @@ a {
   min-height: 56px;
   padding: 10px 14px;
   border-radius: var(--hydro-radius-md);
-  border: 1px solid var(--hydro-border);
-  background-color: color-mix(in srgb, var(--hydro-surface-raised) 72%, var(--hydro-surface-muted));
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 70%, transparent);
+  background-color: var(--hydro-glass-surface-muted);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3054,7 +3162,7 @@ a {
 }
 
 .hydro-problem-nav-fade-in {
-  animation: hydro-problem-nav-fade-in 180ms ease-out;
+  animation: none;
 }
 
 @keyframes hydro-problem-nav-fade-in {
@@ -5334,10 +5442,14 @@ a {
 }
 
 .hydro-action-sheet-content {
-  border-top-left-radius: 18px !important;
-  border-top-right-radius: 18px !important;
+  border-top-left-radius: 20px !important;
+  border-top-right-radius: 20px !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
   background-color: var(--hydro-surface-raised) !important;
   border-top: 1px solid var(--hydro-border);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15) !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .hydro-action-sheet-body {

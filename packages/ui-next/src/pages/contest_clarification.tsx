@@ -238,9 +238,9 @@ export default function ContestClarificationPage() {
         </div>
 
         <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Contest Management')}>
-          <Card withBorder p="md" className="hydro-panel">
+          <section className="hydro-sidebar-panel">
             <Stack gap="xs">
-              <Text size="sm" fw={800}>{t('Contest Management')}</Text>
+              <Text size="sm" fw={800} mb="xs">{t('Contest Management')}</Text>
               <Button
                 component={Link}
                 to="contest_manage"
@@ -286,7 +286,7 @@ export default function ContestClarificationPage() {
                 {t('Scoreboard')}
               </Button>
             </Stack>
-          </Card>
+          </section>
         </ResponsiveSidebar>
       </div>
       <ConfirmDialog
