@@ -81,6 +81,9 @@ const mocks: Record<string, any> = {
     '@/components/common/page-header': { PageHeader: ({ children, title }: any) => h('header', null, title, children) },
     '@/components/common/time-display': { TimeDisplay: () => null },
     '@/components/common/confirm-dialog': { ConfirmDialog: () => null },
+    '@/components/common/responsive-sidebar': {
+        ResponsiveSidebar: ({ children, className }: any) => h('div', { className }, children),
+    },
     '@/components/link': { Link: ({ children }: any) => h('span', null, children) },
     '@/components/user/user-avatar': { UserAvatar: () => null },
     '@/components/user/user-link': { UserLink: () => null },

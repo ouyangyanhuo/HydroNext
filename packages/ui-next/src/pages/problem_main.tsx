@@ -10,6 +10,7 @@ import { DataTable } from '@/components/common/data-table';
 import { ListSortSelect } from '@/components/common/list-sort-select';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
+import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { usePageData, useUiContext, useUserContext } from '@/context/page-data';
@@ -438,9 +439,9 @@ export default function ProblemMainPage() {
           </div>
         </div>
 
-        <div className="w-full shrink-0 lg:w-72">
+        <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Filter Problems') || t('Categories')}>
           <ProblemSidebar categories={categories} query={search} sort={sort} />
-        </div>
+        </ResponsiveSidebar>
       </div>
 
       <ConfirmDialog

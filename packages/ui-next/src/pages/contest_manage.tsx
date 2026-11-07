@@ -6,6 +6,7 @@ import { ContestManageActions } from '@/components/common/addon-slots';
 import { Button } from '@/components/common/button';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { PageHeader } from '@/components/common/page-header';
+import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -290,9 +291,9 @@ export default function ContestManagePage() {
           </Stack>
         </div>
 
-        <div className="w-full shrink-0 lg:w-72">
+        <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Contest Management')}>
           <ContestManageSidebar tdoc={tdoc} />
-        </div>
+        </ResponsiveSidebar>
       </div>
 
       <Modal opened={!!scoreTarget} onClose={() => setScoreTarget(null)} title={t('Set Score for Contest')}>

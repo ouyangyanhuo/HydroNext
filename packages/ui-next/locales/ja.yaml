@@ -764,6 +764,7 @@ __langname: 日本語
 'No users selected': 'ユーザーが選択されていません'
 'Select': '選択'
 'Selected': '選択済み'
+'Sidebar': 'サイドバー'
 'Remove': '削除'
 
 # Auth links

@@ -5317,3 +5317,29 @@ a {
     background-color: var(--hydro-surface-raised);
   }
 }
+
+/* Responsive mobile sidebar: Floating action ball and action sheet */
+.hydro-floating-sidebar-ball {
+  background-color: var(--hydro-primary) !important;
+  color: var(--hydro-primary-contrast, #ffffff) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-floating-sidebar-ball {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.hydro-action-sheet-content {
+  border-top-left-radius: 18px !important;
+  border-top-right-radius: 18px !important;
+  background-color: var(--hydro-surface-raised) !important;
+  border-top: 1px solid var(--hydro-border);
+}
+
+.hydro-action-sheet-body {
+  padding: 0 !important;
+}

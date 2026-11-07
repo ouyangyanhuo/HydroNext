@@ -8,6 +8,7 @@ import { ContestEndMessage, ContestParticipantNotice, ContestParticipationWarnin
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DeleteResourceButton } from '@/components/common/delete-resource-button';
+import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { LongSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
 import { ContestTimer } from '@/components/contest/contest-timer';
@@ -585,7 +586,7 @@ export default function ContestDetailPage() {
             </Stack>
           </div>
 
-          <div className="w-full shrink-0 lg:w-64">
+          <ResponsiveSidebar className="w-full shrink-0 lg:w-64" title={t('Contest Details') || t('Sidebar')}>
             <Stack gap="md">
               {tdoc.privateFiles?.length > 0 && (
                 <Paper withBorder p="md" className="hydro-panel">
@@ -610,7 +611,7 @@ export default function ContestDetailPage() {
               )}
               {canEdit && <Button component={Link} to="contest_manage" params={{ tid }} variant="subtle" fullWidth>{t('Contest Management')}</Button>}
             </Stack>
-          </div>
+          </ResponsiveSidebar>
         </div>
       </Stack>
     );
@@ -680,7 +681,7 @@ export default function ContestDetailPage() {
           )}
         </div>
 
-        <div className="w-full lg:w-64 shrink-0">
+        <ResponsiveSidebar className="w-full lg:w-64 shrink-0" title={t('Contest Details') || t('Sidebar')}>
           <Stack gap="md">
             <ContestInfoCard tdoc={tdoc} tsdoc={tsdoc} owner={owner} />
 
@@ -771,7 +772,7 @@ export default function ContestDetailPage() {
               />
             )}
           </Stack>
-        </div>
+        </ResponsiveSidebar>
       </div>
       <ConfirmDialog
         opened={endDialogOpen}

@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
+import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { LongSelect } from '@/components/common/select';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
@@ -236,7 +237,7 @@ export default function ContestClarificationPage() {
           </Stack>
         </div>
 
-        <div className="w-full shrink-0 lg:w-72">
+        <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Contest Management')}>
           <Card withBorder p="md" className="hydro-panel">
             <Stack gap="xs">
               <Text size="sm" fw={800}>{t('Contest Management')}</Text>
@@ -286,7 +287,7 @@ export default function ContestClarificationPage() {
               </Button>
             </Stack>
           </Card>
-        </div>
+        </ResponsiveSidebar>
       </div>
       <ConfirmDialog
         opened={!!deleteTarget}

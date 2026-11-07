@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
 import { RecordActionExtras, RecordContentExtras } from '@/components/common/addon-slots';
 import { Button } from '@/components/common/button';
+import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -417,7 +418,7 @@ export default function RecordDetailPage() {
           </Stack>
         </div>
 
-        <div className="w-full shrink-0 lg:w-72">
+        <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Submission detail') || t('Information')}>
           <Stack gap="lg">
             {canJudge && !rdoc.files?.hack && (
               <Card withBorder p="md" className="hydro-panel">
@@ -525,7 +526,7 @@ export default function RecordDetailPage() {
               </Card>
             )}
           </Stack>
-        </div>
+        </ResponsiveSidebar>
       </div>
     </Stack>
   );

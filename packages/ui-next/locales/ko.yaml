@@ -764,6 +764,7 @@ __langname: 한국어
 'No users selected': '선택한 사용자가 없습니다'
 'Select': '선택'
 'Selected': '선택됨'
+'Sidebar': '사이드바'
 'Remove': '제거'
 
 # Auth links

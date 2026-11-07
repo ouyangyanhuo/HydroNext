@@ -5,6 +5,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { DataTable } from '@/components/common/data-table';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { PageHeader } from '@/components/common/page-header';
+import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { Link } from '@/components/link';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
@@ -128,7 +129,7 @@ export default function TrainingFilesPage() {
         </Stack>
       </div>
 
-      <div className="w-full shrink-0 lg:w-72">
+      <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Training Plan') || t('Sidebar')}>
         <Stack gap="md">
           <Card withBorder p="md" className="hydro-panel">
             <Stack gap="xs">
@@ -162,7 +163,7 @@ export default function TrainingFilesPage() {
             </Stack>
           </Card>
         </Stack>
-      </div>
+      </ResponsiveSidebar>
       <ConfirmDialog
         opened={deleteOpened}
         onClose={() => setDeleteOpened(false)}

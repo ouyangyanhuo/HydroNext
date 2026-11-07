@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { ListSortSelect } from '@/components/common/list-sort-select';
 import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
+import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { TagMultiSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
 import { TrainingCategoryOrder } from '@/components/training/training-category-order';
@@ -455,7 +456,7 @@ function TrainingMainContent() {
         </section>
 
         {hasSidebar && (
-          <aside className="hydro-training-sidebar">
+          <ResponsiveSidebar as="aside" className="hydro-training-sidebar" title={t('Categories')}>
             <section className="hydro-training-enrolled-panel">
               <Group justify="space-between" align="center" mb="md">
                 <Group gap="xs"><IconFolder size={18} /><Title order={3} size="h5">{t('Categories')}</Title></Group>
@@ -547,7 +548,7 @@ function TrainingMainContent() {
                 </div>
               )}
             </section>}
-          </aside>
+          </ResponsiveSidebar>
         )}
       </div>
 

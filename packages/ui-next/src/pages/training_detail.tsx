@@ -6,6 +6,7 @@ import { IconArrowLeft, IconChevronRight, IconSearch, IconUsers } from '@tabler/
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { DeleteResourceButton } from '@/components/common/delete-resource-button';
+import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -357,7 +358,7 @@ export default function TrainingDetailPage() {
         </Stack>
       </div>
 
-      <div className="w-full shrink-0 lg:w-72">
+      <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Information') || t('Sidebar')}>
         <Stack gap="md">
           <Card withBorder p="md" className="hydro-panel">
             <Stack gap="xs">
@@ -492,7 +493,7 @@ export default function TrainingDetailPage() {
             </Stack>
           </Card>
         </Stack>
-      </div>
+      </ResponsiveSidebar>
 
       <Modal
         opened={enrolledUsersOpened}

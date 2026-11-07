@@ -9,6 +9,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { FormDialog } from '@/components/common/form-dialog';
 import { ProblemNavigation } from '@/components/common/problem-navigation';
+import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Scratchpad } from '@/components/editor/scratchpad';
 import { getProblemSubmitUrl, resolveSubmissionContext } from '@/components/editor/submission-context';
@@ -821,7 +822,10 @@ export default function ProblemDetailPage() {
         </Stack>
       </div>
 
-      <div className={`w-full lg:w-64 shrink-0${isObjective ? ' hydro-objective-sidebar' : ''}`}>
+      <ResponsiveSidebar
+        className={`w-full lg:w-64 shrink-0${isObjective ? ' hydro-objective-sidebar' : ''}`}
+        title={t('Problem Actions') || t('Sidebar')}
+      >
         <Stack gap="md">
           {isObjective && <Paper ref={setObjectiveSidebar} withBorder p="md" className="hydro-panel" />}
           <ProblemSidebar
@@ -863,7 +867,7 @@ export default function ProblemDetailPage() {
             </Paper>
           )}
         </Stack>
-      </div>
+      </ResponsiveSidebar>
 
       <Modal opened={relatedOpened} onClose={() => setRelatedOpenFor(null)} title={t('Related')} size="md">
         {relatedOpened && (

@@ -93,6 +93,9 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         '@/components/common/button': { Button: mantine.Button, ButtonBase: mantine.UnstyledButton,
             ActionIcon: mantine.ActionIcon, UnstyledButton: mantine.UnstyledButton },
         '@/components/common/delete-resource-button': { DeleteResourceButton: () => null },
+        '@/components/common/responsive-sidebar': {
+            ResponsiveSidebar: ({ children, className }: any) => h('div', { className }, children),
+        },
         '@/components/common/select': {
             ShortSelect: page === 'contest_scoreboard' ? mantine.Select : () => null,
             LongSelect: ({ data, value, onChange, disabled, label }: any) => h('select', {
