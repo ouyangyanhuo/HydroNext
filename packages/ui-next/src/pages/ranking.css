@@ -38,19 +38,6 @@
   line-height: 1.2;
 }
 
-.hydro-page-title__accent {
-  width: 36px;
-  height: 3px;
-  margin-top: 6px;
-  border-radius: var(--hydro-radius-full);
-  background-color: var(--hydro-primary);
-  box-shadow: 0 1px 4px color-mix(in srgb, var(--hydro-primary) 32%, transparent);
-}
-
-[data-mantine-color-scheme='dark'] .hydro-page-title__accent {
-  box-shadow: 0 1px 6px color-mix(in srgb, var(--hydro-primary) 45%, transparent);
-}
-
 .ranking-switch {
   display: flex;
   flex: none;

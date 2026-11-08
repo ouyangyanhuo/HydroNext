@@ -360,16 +360,9 @@ a {
   padding-inline: clamp(16px, 3vw, 32px);
 }
 
-.hydro-panel {
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-lg);
-  background: var(--hydro-surface);
-  box-shadow: var(--hydro-shadow-sm);
-  transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
-              box-shadow var(--hydro-duration-normal) var(--hydro-ease-out);
-}
-
-.hydro-card {
+.hydro-panel,
+.hydro-card,
+.hydro-content-card {
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-lg);
   background: var(--hydro-surface);
@@ -450,9 +443,6 @@ a {
 
 .hydro-primary-action:hover {
   transform: translateY(-2px);
-}
-
-.hydro-primary-action:hover {
   box-shadow: 0 10px 24px color-mix(in srgb, var(--hydro-primary) 24%, transparent);
 }
 
@@ -686,7 +676,8 @@ a {
   align-items: stretch;
 }
 
-.hydro-home-grid--single {
+.hydro-home-grid--single,
+.hydro-training-layout--single {
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -847,7 +838,8 @@ a {
   grid-template-columns: minmax(0, 1fr) auto auto 18px;
 }
 
-.hydro-contest-row__badges {
+.hydro-contest-row__badges,
+.hydro-contest-card-row__badges {
   flex-shrink: 0;
 }
 
@@ -893,10 +885,6 @@ a {
   width: 100%;
 }
 
-.hydro-contest-card-row__badges {
-  flex-shrink: 0;
-}
-
 .hydro-contest-card-row__time {
   display: inline-flex;
   align-items: center;
@@ -905,10 +893,6 @@ a {
   font-size: 0.74rem;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-
-.hydro-contest-card-row--running .hydro-contest-status__dot {
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--hydro-success) 15%, transparent);
 }
 
 .hydro-data-panel__empty {
@@ -1021,26 +1005,6 @@ a {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hydro-reveal {
-    animation: none;
-  }
-
-  .hydro-primary-action,
-  .hydro-stat__icon,
-  .hydro-data-row,
-  .hydro-data-row::before,
-  .hydro-data-row__arrow {
-    transition-duration: 0.01ms;
-  }
-
-  .hydro-primary-action:hover,
-  .hydro-data-row:hover,
-  .hydro-stat:hover .hydro-stat__icon {
-    transform: none;
-  }
-}
-
 .hydro-subtle-link {
   color: var(--hydro-text);
   text-decoration: none;
@@ -1140,7 +1104,7 @@ a {
   transform: translateY(4px);
 }
 
-.hydro-problem-list .mantine-ScrollArea-viewport {
+:is(.hydro-problem-list, .hydro-record-list) .mantine-ScrollArea-viewport {
   overflow-y: hidden !important;
 }
 
@@ -1231,46 +1195,50 @@ a {
   );
 }
 
-:is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Input-input:focus {
+:is(
+  .hydro-problem-toolbar,
+  .hydro-list-toolbar,
+  .hydro-contest-header-actions,
+  .hydro-training-header-actions,
+  .hydro-record-filter,
+  .hydro-scratchpad-toolbar,
+  .hydro-scratchpad-settings__form,
+  .hydro-scratchpad-input,
+  .hydro-settings-form,
+  .hydro-security-page
+) .mantine-Input-input:focus {
   border-color: var(--hydro-primary);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
 }
 
-.hydro-problem-page {
-  width: min(100%, 1280px);
-  margin-inline: auto;
-}
-
-:is(
-  .hydro-problem-page,
-  .hydro-contest-page,
-  .hydro-training-page,
-  .hydro-record-page,
-  .ranking-page,
-  .hydro-problem-detail-page,
-  .hydro-contest-detail-page,
-  .hydro-solution-page,
-  .hydro-problem-files-page,
-  .hydro-problem-statistics,
-  .hydro-problem-edit-page,
-  .hydro-problem-config-page,
-  .hydro-contest-edit-page,
-  .hydro-contest-manage-page,
-  .hydro-training-detail-page,
-  .hydro-training-edit-page,
-  .hydro-training-files-page,
-  .hydro-home-files-page,
-  .hydro-contest-clarification-page,
-  .hydro-contest-balloon-page,
-  .hydro-contest-team-page,
-  .hydro-contest-user-page,
-  .hydro-record-detail,
-  .hydro-settings-page,
-  .hydro-security-page,
-  .hydro-user-profile,
-  .hydro-domain-dashboard,
-  .hydro-doc-page
-) {
+.hydro-problem-page,
+.hydro-contest-page,
+.hydro-training-page,
+.hydro-record-page,
+.ranking-page,
+.hydro-problem-detail-page,
+.hydro-contest-detail-page,
+.hydro-solution-page,
+.hydro-problem-files-page,
+.hydro-problem-statistics,
+.hydro-problem-edit-page,
+.hydro-problem-config-page,
+.hydro-contest-edit-page,
+.hydro-contest-manage-page,
+.hydro-training-detail-page,
+.hydro-training-edit-page,
+.hydro-training-files-page,
+.hydro-home-files-page,
+.hydro-contest-clarification-page,
+.hydro-contest-balloon-page,
+.hydro-contest-team-page,
+.hydro-contest-user-page,
+.hydro-record-detail,
+.hydro-settings-page,
+.hydro-security-page,
+.hydro-user-profile,
+.hydro-domain-dashboard,
+.hydro-doc-page {
   width: min(100%, 1280px);
   margin-inline: auto;
 }
@@ -1303,11 +1271,6 @@ a {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.hydro-contest-page {
-  width: min(100%, 1280px);
-  margin-inline: auto;
 }
 
 .hydro-contest-feature-grid {
@@ -1461,18 +1424,13 @@ a {
   align-items: center;
 }
 
-.hydro-contest-header-actions .mantine-Input-input {
+:is(.hydro-contest-header-actions, .hydro-training-header-actions, .hydro-record-filter) .mantine-Input-input {
   border-color: color-mix(in srgb, var(--hydro-primary) 16%, var(--hydro-border));
   color: var(--hydro-text);
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 16%, var(--hydro-glass-surface-strong));
   transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
               box-shadow var(--hydro-duration-normal) var(--hydro-ease-out),
               transform var(--hydro-duration-normal) var(--hydro-ease-out);
-}
-
-.hydro-contest-header-actions .mantine-Input-input:focus {
-  border-color: var(--hydro-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
 }
 
 .hydro-contest-header-actions__team {
@@ -1513,15 +1471,15 @@ a {
               transform var(--hydro-duration-normal) var(--hydro-ease-out);
 }
 
-.hydro-contest-item + .hydro-contest-item {
+:is(.hydro-contest-item, .hydro-training-item) + :is(.hydro-contest-item, .hydro-training-item) {
   border-top: 1px solid color-mix(in srgb, var(--hydro-border) 78%, transparent);
 }
 
-.hydro-contest-item:nth-child(2) { animation-delay: 34ms; }
-.hydro-contest-item:nth-child(3) { animation-delay: 68ms; }
-.hydro-contest-item:nth-child(4) { animation-delay: 102ms; }
-.hydro-contest-item:nth-child(5) { animation-delay: 136ms; }
-.hydro-contest-item:nth-child(n+6) { animation-delay: 170ms; }
+:is(.hydro-contest-item, .hydro-training-item):nth-child(2) { animation-delay: 34ms; }
+:is(.hydro-contest-item, .hydro-training-item):nth-child(3) { animation-delay: 68ms; }
+:is(.hydro-contest-item, .hydro-training-item):nth-child(4) { animation-delay: 102ms; }
+:is(.hydro-contest-item, .hydro-training-item):nth-child(5) { animation-delay: 136ms; }
+:is(.hydro-contest-item, .hydro-training-item):nth-child(n+6) { animation-delay: 170ms; }
 
 .hydro-contest-item:hover,
 .hydro-contest-item:focus-visible {
@@ -1531,7 +1489,7 @@ a {
   transform: translateX(4px);
 }
 
-.hydro-contest-item:focus-visible {
+:is(.hydro-contest-item, .hydro-training-item):focus-visible {
   outline: 2px solid color-mix(in srgb, var(--hydro-primary) 58%, transparent);
   outline-offset: -2px;
 }
@@ -1561,7 +1519,7 @@ a {
   white-space: nowrap;
 }
 
-.hydro-contest-item__arrow {
+:is(.hydro-contest-item__arrow, .hydro-training-item__arrow) {
   color: var(--hydro-text-muted);
   opacity: 0;
   transform: translateX(-6px);
@@ -1590,6 +1548,7 @@ a {
   background-color: currentColor;
 }
 
+.hydro-contest-card-row--running .hydro-contest-status__dot,
 .hydro-contest-feature--running .hydro-contest-status__dot,
 .hydro-contest-item--running .hydro-contest-status__dot,
 .hydro-contest-row--running .hydro-contest-status__dot {
@@ -1633,19 +1592,15 @@ a {
     padding-inline: 16px;
   }
 
-  .hydro-contest-item,
-  .hydro-training-item {
+  .hydro-contest-item {
     padding-right: 16px;
   }
 
   .hydro-training-item {
-    padding-left: 16px;
+    padding-inline: 16px;
   }
 
-  .hydro-training-detail-card:not(.hydro-training-detail-node) {
-    padding-inline: 16px !important;
-  }
-
+  .hydro-training-detail-card:not(.hydro-training-detail-node),
   .hydro-training-detail-node__header {
     padding-inline: 16px !important;
   }
@@ -1736,11 +1691,6 @@ a {
   }
 }
 
-.hydro-training-page {
-  width: min(100%, 1280px);
-  margin-inline: auto;
-}
-
 .hydro-training-header-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1760,20 +1710,6 @@ a {
 
 .hydro-contest-header-actions__select.hydro-select--short {
   width: 100%;
-}
-
-.hydro-training-header-actions .mantine-Input-input {
-  border-color: color-mix(in srgb, var(--hydro-primary) 16%, var(--hydro-border));
-  color: var(--hydro-text);
-  background-color: color-mix(in srgb, var(--hydro-primary-soft) 16%, var(--hydro-glass-surface-strong));
-  transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
-              box-shadow var(--hydro-duration-normal) var(--hydro-ease-out),
-              transform var(--hydro-duration-normal) var(--hydro-ease-out);
-}
-
-.hydro-training-header-actions .mantine-Input-input:focus {
-  border-color: var(--hydro-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
 }
 
 .hydro-training-category-grid .hydro-training-category-item {
@@ -1888,10 +1824,6 @@ a {
   align-items: start;
 }
 
-.hydro-training-layout--single {
-  grid-template-columns: minmax(0, 1fr);
-}
-
 .hydro-training-list {
   display: flex;
   overflow: hidden;
@@ -1923,19 +1855,10 @@ a {
   --training-status: var(--hydro-primary);
 }
 
-.hydro-training-item--completed {
+.hydro-training-item--completed,
+.hydro-training-enrolled-item--completed {
   --training-status: var(--hydro-success);
 }
-
-.hydro-training-item + .hydro-training-item {
-  border-top: 1px solid color-mix(in srgb, var(--hydro-border) 78%, transparent);
-}
-
-.hydro-training-item:nth-child(2) { animation-delay: 34ms; }
-.hydro-training-item:nth-child(3) { animation-delay: 68ms; }
-.hydro-training-item:nth-child(4) { animation-delay: 102ms; }
-.hydro-training-item:nth-child(5) { animation-delay: 136ms; }
-.hydro-training-item:nth-child(n+6) { animation-delay: 170ms; }
 
 .hydro-training-item:hover,
 .hydro-training-item:focus-visible {
@@ -1943,11 +1866,6 @@ a {
   text-decoration: none;
   background-color: color-mix(in srgb, var(--training-status) 7%, var(--hydro-surface-raised));
   transform: translateX(4px);
-}
-
-.hydro-training-item:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--hydro-primary) 58%, transparent);
-  outline-offset: -2px;
 }
 
 .hydro-training-item__participants {
@@ -2022,15 +1940,6 @@ a {
 .hydro-training-item__progress .mantine-Progress-section,
 .hydro-training-enrolled-item .mantine-Progress-section {
   background-color: var(--training-status, var(--hydro-primary));
-}
-
-.hydro-training-item__arrow {
-  color: var(--hydro-text-muted);
-  opacity: 0;
-  transform: translateX(-6px);
-  transition: color var(--hydro-duration-fast) var(--hydro-ease-out),
-              opacity var(--hydro-duration-fast) var(--hydro-ease-out),
-              transform var(--hydro-duration-normal) var(--hydro-ease-out);
 }
 
 .hydro-training-item:hover .hydro-training-item__arrow,
@@ -2129,10 +2038,6 @@ a {
   text-decoration: none;
   transition: background-color var(--hydro-duration-fast) var(--hydro-ease-out),
               transform var(--hydro-duration-normal) var(--hydro-ease-out);
-}
-
-.hydro-training-enrolled-item--completed {
-  --training-status: var(--hydro-success);
 }
 
 .hydro-training-enrolled-item:hover,
@@ -2253,30 +2158,6 @@ a {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hydro-training-list,
-  .hydro-sidebar-panel,
-  .hydro-training-enrolled-panel,
-  .hydro-training-item {
-    animation: none;
-  }
-
-  .hydro-training-header-actions .mantine-Input-input,
-  .hydro-training-item,
-  .hydro-training-item__arrow,
-  .hydro-training-enrolled-item {
-    transition-duration: 0.01ms;
-  }
-
-  .hydro-training-header-actions .mantine-Input-input:focus,
-  .hydro-training-item:hover,
-  .hydro-training-item:focus-visible,
-  .hydro-training-enrolled-item:hover,
-  .hydro-training-enrolled-item:focus-visible {
-    transform: none;
-  }
-}
-
 @keyframes hydro-record-panel-in {
   from {
     opacity: 0;
@@ -2286,11 +2167,6 @@ a {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.hydro-record-page {
-  width: min(100%, 1280px);
-  margin-inline: auto;
 }
 
 .hydro-record-filter {
@@ -2334,22 +2210,11 @@ a {
   letter-spacing: 0.01em;
 }
 
-.hydro-record-filter .mantine-Input-input {
-  border-color: color-mix(in srgb, var(--hydro-primary) 16%, var(--hydro-border));
-  color: var(--hydro-text);
-  background-color: color-mix(in srgb, var(--hydro-primary-soft) 16%, var(--hydro-glass-surface-strong));
-  transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
-              box-shadow var(--hydro-duration-normal) var(--hydro-ease-out),
-              transform var(--hydro-duration-normal) var(--hydro-ease-out);
-}
-
 .hydro-record-filter .mantine-Input-input:hover {
   border-color: color-mix(in srgb, var(--hydro-primary) 34%, var(--hydro-border));
 }
 
 .hydro-record-filter .mantine-Input-input:focus {
-  border-color: var(--hydro-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
   transform: translateY(-1px);
 }
 
@@ -2359,10 +2224,6 @@ a {
 
 .hydro-record-list .hydro-table-wrap {
   box-shadow: var(--hydro-shadow-md);
-}
-
-.hydro-record-list .mantine-ScrollArea-viewport {
-  overflow-y: hidden !important;
 }
 
 .hydro-record-list .hydro-data-table {
@@ -2478,24 +2339,6 @@ a {
     grid-template-columns: 1fr;
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .hydro-record-filter,
-  .hydro-record-list,
-  .hydro-record-list .hydro-data-table tbody tr {
-    animation: none;
-  }
-
-  .hydro-record-filter .mantine-Input-input,
-  .hydro-record-list .hydro-data-table tbody tr {
-    transition-duration: 0.01ms;
-  }
-
-  .hydro-record-filter .mantine-Input-input:focus {
-    transform: none;
-  }
-}
-
 
 @keyframes hydro-scratchpad-in {
   from {
@@ -2646,7 +2489,8 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   background-color: var(--hydro-primary-soft);
 }
 
-.hydro-scratchpad-editor-pane {
+.hydro-scratchpad-editor-pane,
+.hydro-scratchpad-editor {
   background-color: var(--hydro-surface-raised);
 }
 
@@ -2678,13 +2522,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 14%, var(--hydro-glass-surface-strong));
   transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
               box-shadow var(--hydro-duration-normal) var(--hydro-ease-out);
-}
-
-.hydro-scratchpad-toolbar .mantine-Input-input:focus,
-.hydro-scratchpad-settings__form .mantine-Input-input:focus,
-.hydro-scratchpad-input .mantine-Input-input:focus {
-  border-color: var(--hydro-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
 }
 
 .hydro-scratchpad-toolbar__actions {
@@ -2727,10 +2564,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 .hydro-scratchpad-tool-action:hover {
   color: var(--hydro-primary-strong);
   background-color: var(--hydro-primary-soft);
-}
-
-.hydro-scratchpad-editor {
-  background-color: var(--hydro-surface-raised);
 }
 
 .hydro-scratchpad-console {
@@ -2777,7 +2610,8 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   cursor: pointer;
 }
 
-.hydro-scratchpad-console__tab[aria-selected='true'] {
+.hydro-scratchpad-console__tab[aria-selected='true'],
+.hydro-user-profile__tabs .mantine-Tabs-tab[data-active] {
   border-color: var(--hydro-primary);
   color: var(--hydro-primary-strong);
 }
@@ -2981,55 +2815,45 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hydro-scratchpad-shell {
-    animation: none;
-  }
-
-  .hydro-scratchpad-run-action,
-  .hydro-scratchpad-submit-action,
-  .hydro-scratchpad-template-action,
-  .hydro-scratchpad-tool-action,
-  .hydro-scratchpad-toolbar .mantine-Input-input,
-  .hydro-scratchpad-settings__form .mantine-Input-input,
-  .hydro-scratchpad-input .mantine-Input-input {
-    transition-duration: 0.01ms;
-  }
-
-  .hydro-scratchpad-run-action:hover,
-  .hydro-scratchpad-submit-action:hover,
-  .hydro-scratchpad-template-action:hover,
-  .hydro-scratchpad-tool-action:hover {
-    transform: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hydro-problem-list,
-  .hydro-problem-list .hydro-data-table tbody tr {
-    animation: none;
-  }
-
+  .hydro-reveal,
+  .hydro-training-list,
+  .hydro-sidebar-panel,
+  .hydro-training-enrolled-panel,
+  .hydro-training-item,
+  .hydro-record-filter,
+  .hydro-record-list,
+  .hydro-record-list .hydro-data-table tbody tr,
+  .hydro-scratchpad-shell,
   .hydro-problem-list,
   .hydro-problem-list .hydro-data-table tbody tr,
-  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Input-input,
-  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Button-root {
-    transition-duration: 0.01ms;
-  }
-
-  .hydro-problem-list--loading,
-  .hydro-problem-list .hydro-data-table tbody tr:hover,
-  .hydro-problem-list .hydro-data-table tbody tr:focus-within,
-  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Input-input:focus,
-  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Button-root:hover {
-    transform: none;
-  }
-
   .hydro-contest-feature-grid,
   .hydro-contest-header-actions,
   .hydro-contest-item {
     animation: none;
   }
 
+  .hydro-primary-action,
+  .hydro-stat__icon,
+  .hydro-data-row,
+  .hydro-data-row::before,
+  .hydro-data-row__arrow,
+  .hydro-training-header-actions .mantine-Input-input,
+  .hydro-training-item,
+  .hydro-training-item__arrow,
+  .hydro-training-enrolled-item,
+  .hydro-record-filter .mantine-Input-input,
+  .hydro-record-list .hydro-data-table tbody tr,
+  .hydro-scratchpad-run-action,
+  .hydro-scratchpad-submit-action,
+  .hydro-scratchpad-template-action,
+  .hydro-scratchpad-tool-action,
+  .hydro-scratchpad-toolbar .mantine-Input-input,
+  .hydro-scratchpad-settings__form .mantine-Input-input,
+  .hydro-scratchpad-input .mantine-Input-input,
+  .hydro-problem-list,
+  .hydro-problem-list .hydro-data-table tbody tr,
+  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Input-input,
+  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Button-root,
   .hydro-contest-feature,
   .hydro-contest-header-actions .mantine-Input-input,
   .hydro-contest-item,
@@ -3038,6 +2862,24 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
     transition-duration: 0.01ms;
   }
 
+  .hydro-primary-action:hover,
+  .hydro-data-row:hover,
+  .hydro-stat:hover .hydro-stat__icon,
+  .hydro-training-header-actions .mantine-Input-input:focus,
+  .hydro-training-item:hover,
+  .hydro-training-item:focus-visible,
+  .hydro-training-enrolled-item:hover,
+  .hydro-training-enrolled-item:focus-visible,
+  .hydro-record-filter .mantine-Input-input:focus,
+  .hydro-scratchpad-run-action:hover,
+  .hydro-scratchpad-submit-action:hover,
+  .hydro-scratchpad-template-action:hover,
+  .hydro-scratchpad-tool-action:hover,
+  .hydro-problem-list--loading,
+  .hydro-problem-list .hydro-data-table tbody tr:hover,
+  .hydro-problem-list .hydro-data-table tbody tr:focus-within,
+  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Input-input:focus,
+  :is(.hydro-problem-toolbar, .hydro-list-toolbar) .mantine-Button-root:hover,
   .hydro-contest-feature:hover,
   .hydro-contest-header-actions .mantine-Input-input:focus,
   .hydro-contest-item:hover,
@@ -3075,15 +2917,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   background-color: var(--hydro-surface-raised);
   background-image: none;
   box-shadow: var(--hydro-shadow-lg);
-}
-
-.hydro-content-card {
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-lg);
-  background: var(--hydro-surface);
-  box-shadow: var(--hydro-shadow-sm);
-  transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
-              box-shadow var(--hydro-duration-normal) var(--hydro-ease-out);
 }
 
 .hydro-problem-meta {
@@ -3148,7 +2981,8 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
               color var(--hydro-duration-fast) var(--hydro-ease-out);
 }
 
-.hydro-problem-nav-button:hover .hydro-problem-nav-arrow {
+.hydro-problem-nav-button:hover .hydro-problem-nav-arrow,
+.hydro-problem-nav-button:hover .hydro-problem-nav-button__label {
   color: var(--hydro-primary-strong);
 }
 
@@ -3173,10 +3007,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   transition: color var(--hydro-duration-fast) var(--hydro-ease-out);
 }
 
-.hydro-problem-nav-button:hover .hydro-problem-nav-button__label {
-  color: var(--hydro-primary-strong);
-}
-
 .hydro-problem-nav-button__target {
   transition: color var(--hydro-duration-fast) var(--hydro-ease-out);
 }
@@ -3196,7 +3026,8 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 .hydro-problem-nav-content,
-.hydro-problem-nav-skeletons {
+.hydro-problem-nav-skeletons,
+.hydro-feature-setting-row {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -3335,7 +3166,11 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 .hydro-record-accent-badge,
-.hydro-record-detail .mantine-Badge-root {
+.hydro-record-detail .mantine-Badge-root,
+.hydro-solution-count,
+.hydro-settings-nav__item[aria-current='page'],
+.hydro-settings-section__header .mantine-Badge-root,
+.hydro-settings-avatar .mantine-Badge-root {
   color: var(--hydro-primary-strong);
   background: var(--hydro-primary-soft);
 }
@@ -3376,11 +3211,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   box-shadow: var(--hydro-shadow-sm);
 }
 
-.hydro-solution-count {
-  color: var(--hydro-primary-strong);
-  background: var(--hydro-primary-soft);
-}
-
 .hydro-solution-composer {
   border-color: color-mix(in srgb, var(--hydro-primary) 32%, var(--hydro-border));
   box-shadow: inset 3px 0 0 var(--hydro-primary), var(--hydro-shadow-sm);
@@ -3413,11 +3243,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 
 .hydro-solution-fade {
   background: linear-gradient(to top, var(--hydro-surface-raised) 45%, transparent);
-}
-
-.hydro-settings-page {
-  width: min(100%, 1280px);
-  margin-inline: auto;
 }
 
 .hydro-settings-header {
@@ -3469,16 +3294,12 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   background: var(--hydro-surface-muted);
 }
 
-.hydro-settings-nav__item[aria-current='page'] {
-  color: var(--hydro-primary-strong);
-  background: var(--hydro-primary-soft);
-}
-
 .hydro-settings-content {
   min-width: 0;
 }
 
-.hydro-settings-section {
+.hydro-settings-section,
+.hydro-user-profile__hero {
   overflow: hidden;
 }
 
@@ -3492,12 +3313,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   border-bottom: 1px solid var(--hydro-border);
 }
 
-.hydro-settings-section__header .mantine-Badge-root,
-.hydro-settings-avatar .mantine-Badge-root {
-  color: var(--hydro-primary-strong);
-  background: var(--hydro-primary-soft);
-}
-
 .hydro-settings-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3508,11 +3323,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   min-width: 0;
 }
 
-.hydro-settings-field--wide {
-  grid-column: 1 / -1;
-}
-
-/* Feature controls own a full row, including when supplied by optional plugins. */
+.hydro-settings-field--wide,
 .hydro-settings-field:has(> .hydro-feature-setting-row) {
   grid-column: 1 / -1;
 }
@@ -3539,7 +3350,8 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   user-select: none;
 }
 
-.hydro-setting-checkbox-card:hover {
+.hydro-setting-checkbox-card:hover,
+.hydro-domain-switcher-trigger:hover {
   border-color: var(--hydro-border-strong);
   background-color: var(--hydro-surface-muted);
 }
@@ -3592,11 +3404,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   background-color: color-mix(in srgb, var(--hydro-surface-raised) 85%, transparent);
 }
 
-[data-mantine-color-scheme='dark'] .hydro-setting-checkbox-card:hover {
-  background-color: var(--hydro-surface-muted);
-  border-color: var(--hydro-border-strong);
-}
-
 [data-mantine-color-scheme='dark'] .hydro-setting-checkbox-card--checked {
   border-color: color-mix(in srgb, var(--hydro-primary) 55%, var(--hydro-border));
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 22%, var(--hydro-surface-raised));
@@ -3607,13 +3414,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 /* Feature setting layout: smoothly shrinks left card to 50% and slides in right-side options */
-.hydro-feature-setting-row {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-
 .hydro-feature-setting-card-wrap {
   width: 100%;
   min-width: 0;
@@ -3713,14 +3513,9 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   line-height: 1.45;
 }
 
-.hydro-settings-form .mantine-Input-input {
+:is(.hydro-settings-form, .hydro-security-page) .mantine-Input-input {
   border-color: var(--hydro-border);
   background: color-mix(in srgb, var(--hydro-bg-soft) 72%, var(--hydro-surface-raised));
-}
-
-.hydro-settings-form .mantine-Input-input:focus {
-  border-color: var(--hydro-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
 }
 
 .hydro-settings-savebar {
@@ -3763,12 +3558,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   .hydro-settings-fields { grid-template-columns: minmax(0, 1fr); }
   .hydro-settings-field--wide { grid-column: auto; }
   .hydro-settings-savebar { bottom: 8px; }
-}
-
-.hydro-security-page,
-.hydro-user-profile {
-  width: min(100%, 1280px);
-  margin-inline: auto;
 }
 
 .hydro-security-card {
@@ -3876,16 +3665,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   transition: transform var(--hydro-transition-fast);
 }
 
-.hydro-security-page .mantine-Input-input {
-  border-color: var(--hydro-border);
-  background: color-mix(in srgb, var(--hydro-bg-soft) 72%, var(--hydro-surface-raised));
-}
-
-.hydro-security-page .mantine-Input-input:focus {
-  border-color: var(--hydro-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hydro-primary) 14%, transparent);
-}
-
 .hydro-security-auth-choice {
   border: 1px solid var(--hydro-border);
   color: var(--hydro-text-muted);
@@ -3990,10 +3769,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   border-radius: var(--hydro-radius-md);
   background: color-mix(in srgb, var(--mantine-color-red-6) 14%, transparent);
   color: var(--mantine-color-red-6);
-}
-
-.hydro-user-profile__hero {
-  overflow: hidden;
 }
 
 .hydro-user-profile__cover {
@@ -4138,11 +3913,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   padding: 18px;
 }
 
-.hydro-user-profile__tabs .mantine-Tabs-tab[data-active] {
-  border-color: var(--hydro-primary);
-  color: var(--hydro-primary-strong);
-}
-
 .hydro-user-profile__problem {
   transition: border-color var(--hydro-duration-fast) ease,
               transform var(--hydro-duration-fast) ease;
@@ -4208,12 +3978,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-}
-
-.hydro-doc-page,
-.hydro-problem-statistics {
-  width: min(100%, 1280px);
-  margin-inline: auto;
 }
 
 .hydro-doc-page__description {
@@ -4413,7 +4177,8 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   gap: 6px;
 }
 
-.hydro-problem-statistics__meta-icon {
+.hydro-problem-statistics__meta-icon,
+.hydro-problem-statistics__tag-icon {
   color: var(--hydro-text-muted);
   flex-shrink: 0;
 }
@@ -4423,11 +4188,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-}
-
-.hydro-problem-statistics__tag-icon {
-  color: var(--hydro-text-muted);
-  flex-shrink: 0;
 }
 
 .hydro-problem-statistics__distribution,
@@ -4798,11 +4558,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   transition: all var(--hydro-transition-fast);
 }
 
-.hydro-domain-switcher-trigger:hover {
-  border-color: var(--hydro-border-strong);
-  background-color: var(--hydro-surface-muted);
-}
-
 .hydro-domain-switcher-trigger[data-expanded] {
   border-color: color-mix(in srgb, var(--hydro-primary) 65%, var(--hydro-border));
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 40%, var(--hydro-surface-raised));
@@ -4861,11 +4616,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   border-color: var(--hydro-border);
 }
 
-[data-mantine-color-scheme='dark'] .hydro-domain-switcher-trigger:hover {
-  background-color: var(--hydro-surface-muted);
-  border-color: var(--hydro-border-strong);
-}
-
 [data-mantine-color-scheme='dark'] .hydro-domain-switcher-trigger[data-expanded] {
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 25%, var(--hydro-surface-raised));
 }
@@ -4910,14 +4660,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   background-image: none !important;
 }
 
-.hydro-topbar-dropdown {
-  opacity: 1 !important;
-  background-color: var(--hydro-surface-raised) !important;
-  background-image: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
+.hydro-topbar-dropdown,
 .hydro-topbar-dropdown :is(.mantine-Popover-dropdown, .mantine-Combobox-dropdown) {
   opacity: 1 !important;
   background-color: var(--hydro-surface-raised) !important;
@@ -5208,7 +4951,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   padding-top: 16px !important;
 }
 
-.mantine-Drawer-body {
+:is(.mantine-Drawer-body, .hydro-nav-drawer__body) {
   padding-top: 14px !important;
 }
 
@@ -5225,10 +4968,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 .hydro-nav-drawer__header {
   border-bottom: none !important;
   padding-bottom: 6px !important;
-}
-
-.hydro-nav-drawer__body {
-  padding-top: 14px !important;
 }
 
 .mantine-Accordion-item,
@@ -5278,11 +5017,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 .hydro-training-header,
 .hydro-scratchpad-statement__header,
 .hydro-scratchpad-toolbar,
-.hydro-select__dropdown {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
+.hydro-select__dropdown,
 .hydro-panel,
 .hydro-card,
 .hydro-content-card,
@@ -5315,31 +5050,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   .hydro-scratchpad-shell {
     backface-visibility: hidden;
     transform: translateZ(0);
-  }
-}
-
-@media (max-width: 640px) {
-  :root {
-    --hydro-glass-blur: 10px;
-    --hydro-glass-blur-subtle: 6px;
-  }
-
-  .hydro-ambient__origin--primary {
-    top: 130px;
-    left: calc(100vw - 64px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hydro-ambient__wash--primary {
-    opacity: 0.42;
-    transform: translate(-50%, -50%) scale(1);
-    animation: none !important;
-  }
-
-  .hydro-ambient__ripple,
-  .hydro-ambient__standing {
-    display: none !important;
   }
 }
 
@@ -5509,6 +5219,16 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 @media (max-width: 640px) {
+  :root {
+    --hydro-glass-blur: 10px;
+    --hydro-glass-blur-subtle: 6px;
+  }
+
+  .hydro-ambient__origin--primary {
+    top: 130px;
+    left: calc(100vw - 64px);
+  }
+
   .hydro-toast-container {
     top: 14px;
     left: 14px;
@@ -5518,6 +5238,17 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hydro-ambient__wash--primary {
+    opacity: 0.42;
+    transform: translate(-50%, -50%) scale(1);
+    animation: none !important;
+  }
+
+  .hydro-ambient__ripple,
+  .hydro-ambient__standing {
+    display: none !important;
+  }
+
   .hydro-toast-container,
   .hydro-toast-card {
     animation: none !important;
