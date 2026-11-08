@@ -531,14 +531,19 @@
   background: color-mix(in srgb, var(--hydro-primary-soft) 34%, var(--hydro-surface));
 }
 
-.hydro-markdown img {
-  border: 1px solid color-mix(in srgb, var(--hydro-border) 82%, transparent);
+.hydro-markdown img,
+.hydro-markdown iframe,
+.hydro-markdown video {
   border-radius: 10px;
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--hydro-text) 7%, transparent);
   display: block;
-  height: auto;
   margin: 1.3em auto;
   max-width: 100%;
+}
+
+.hydro-markdown img {
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 82%, transparent);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--hydro-text) 7%, transparent);
+  height: auto;
 }
 
 .hydro-markdown figure {
@@ -588,10 +593,6 @@
 .hydro-markdown iframe,
 .hydro-markdown video {
   border: 1px solid var(--hydro-border);
-  border-radius: 10px;
-  display: block;
-  margin: 1.3em auto;
-  max-width: 100%;
 }
 
 .hydro-markdown .hydro-markdown-video {

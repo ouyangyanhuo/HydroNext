@@ -258,7 +258,9 @@ a {
   left: clamp(220px, 72vw, calc(100vw - 90px));
 }
 
-.hydro-ambient__wash {
+.hydro-ambient__wash,
+.hydro-ambient__ripple,
+.hydro-ambient__standing {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -281,11 +283,6 @@ a {
 }
 
 .hydro-ambient__ripple {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 50%;
-  opacity: 0;
   background:
     radial-gradient(
       circle,
@@ -293,8 +290,6 @@ a {
       var(--hydro-ripple-color) 58%,
       transparent 76%
     );
-  will-change: transform, opacity;
-  pointer-events: none;
 }
 
 .hydro-ambient__ripple--1 {
@@ -310,13 +305,8 @@ a {
 }
 
 .hydro-ambient__standing {
-  position: absolute;
-  top: 50%;
-  left: 50%;
   width: clamp(220px, 38vw, 500px);
   aspect-ratio: 1;
-  border-radius: 50%;
-  opacity: 0;
   background:
     radial-gradient(
       circle,
@@ -327,8 +317,6 @@ a {
   animation:
     hydro-ambient-standing-in 3.2s var(--hydro-ease-out) 2s forwards,
     hydro-ambient-standing-breathe 8s ease-in-out 5.2s infinite;
-  will-change: transform, opacity;
-  pointer-events: none;
 }
 
 .problem-workspace-transition .problem-workspace {
@@ -857,12 +845,16 @@ a {
   min-width: 0;
 }
 
-.hydro-contest-card-row__header {
+.hydro-contest-card-row__header,
+.hydro-contest-card-row__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   width: 100%;
+}
+
+.hydro-contest-card-row__header {
   min-width: 0;
 }
 
@@ -877,12 +869,7 @@ a {
 }
 
 .hydro-contest-card-row__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
   margin-top: 5px;
-  width: 100%;
 }
 
 .hydro-contest-card-row__time {
@@ -1445,7 +1432,8 @@ a {
   background-color: color-mix(in srgb, var(--hydro-primary) 88%, var(--hydro-text));
 }
 
-.hydro-contest-list {
+.hydro-contest-list,
+.hydro-training-list {
   display: flex;
   overflow: hidden;
   flex-direction: column;
@@ -1455,20 +1443,24 @@ a {
   box-shadow: var(--hydro-shadow-sm);
 }
 
-.hydro-contest-item {
-  --contest-status: var(--hydro-primary);
-  position: relative;
+.hydro-contest-item,
+.hydro-training-item {
   display: grid;
-  grid-template-columns: 4px minmax(0, 1fr) auto;
-  gap: 18px;
   align-items: center;
-  min-height: 124px;
-  padding: 20px 22px 20px 0;
   color: var(--hydro-text);
   text-decoration: none;
   animation: hydro-contest-item-in 400ms var(--hydro-ease-out) backwards;
   transition: background-color var(--hydro-duration-fast) var(--hydro-ease-out),
               transform var(--hydro-duration-normal) var(--hydro-ease-out);
+}
+
+.hydro-contest-item {
+  --contest-status: var(--hydro-primary);
+  position: relative;
+  grid-template-columns: 4px minmax(0, 1fr) auto;
+  gap: 18px;
+  min-height: 124px;
+  padding: 20px 22px 20px 0;
 }
 
 :is(.hydro-contest-item, .hydro-training-item) + :is(.hydro-contest-item, .hydro-training-item) {
@@ -1481,12 +1473,16 @@ a {
 :is(.hydro-contest-item, .hydro-training-item):nth-child(5) { animation-delay: 136ms; }
 :is(.hydro-contest-item, .hydro-training-item):nth-child(n+6) { animation-delay: 170ms; }
 
-.hydro-contest-item:hover,
-.hydro-contest-item:focus-visible {
+:is(.hydro-contest-item, .hydro-training-item):hover,
+:is(.hydro-contest-item, .hydro-training-item):focus-visible {
   color: var(--hydro-text);
   text-decoration: none;
-  background-color: color-mix(in srgb, var(--contest-status) 7%, var(--hydro-surface-raised));
   transform: translateX(4px);
+}
+
+.hydro-contest-item:hover,
+.hydro-contest-item:focus-visible {
+  background-color: color-mix(in srgb, var(--contest-status) 7%, var(--hydro-surface-raised));
 }
 
 :is(.hydro-contest-item, .hydro-training-item):focus-visible {
@@ -1825,30 +1821,16 @@ a {
 }
 
 .hydro-training-list {
-  display: flex;
-  overflow: hidden;
-  flex-direction: column;
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-lg);
-  background-color: var(--hydro-surface-raised);
-  box-shadow: var(--hydro-shadow-sm);
   animation: hydro-training-list-in 440ms var(--hydro-ease-out) both;
 }
 
 .hydro-training-item {
   --training-status: var(--hydro-text-muted);
-  display: grid;
   grid-template-columns: 92px minmax(0, 1fr) auto;
   gap: 20px;
-  align-items: center;
   min-height: 156px;
   padding: 22px;
-  color: var(--hydro-text);
-  text-decoration: none;
   background-color: var(--hydro-surface-raised);
-  animation: hydro-contest-item-in 400ms var(--hydro-ease-out) backwards;
-  transition: background-color var(--hydro-duration-fast) var(--hydro-ease-out),
-              transform var(--hydro-duration-normal) var(--hydro-ease-out);
 }
 
 .hydro-training-item--progress {
@@ -1862,10 +1844,7 @@ a {
 
 .hydro-training-item:hover,
 .hydro-training-item:focus-visible {
-  color: var(--hydro-text);
-  text-decoration: none;
   background-color: color-mix(in srgb, var(--training-status) 7%, var(--hydro-surface-raised));
-  transform: translateX(4px);
 }
 
 .hydro-training-item__participants {
@@ -2686,20 +2665,24 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   background: color-mix(in srgb, var(--hydro-primary-soft) 38%, var(--hydro-surface-raised));
 }
 
-.hydro-scratchpad-input {
+.hydro-scratchpad-input,
+.hydro-scratchpad-output {
   box-sizing: border-box;
-  display: block;
   width: 100%;
-  min-height: 0;
   height: 100%;
+  min-height: 0;
+  padding: 12px;
   overflow: auto !important;
   overscroll-behavior: contain;
   scrollbar-color: color-mix(in srgb, var(--hydro-primary) 48%, transparent) transparent;
-  padding: 12px;
-  border: 0;
-  border-radius: 0;
   color: var(--hydro-text);
   background: var(--hydro-bg-soft);
+}
+
+.hydro-scratchpad-input {
+  display: block;
+  border: 0;
+  border-radius: 0;
   caret-color: var(--hydro-primary);
   font-family: var(--hydro-font-mono);
   font-size: 13px;
@@ -2713,17 +2696,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 .hydro-scratchpad-output {
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  padding: 12px;
-  color: var(--hydro-text);
-  background: var(--hydro-bg-soft);
-  overflow: auto !important;
   overflow-wrap: anywhere;
-  overscroll-behavior: contain;
-  scrollbar-color: color-mix(in srgb, var(--hydro-primary) 48%, transparent) transparent;
 }
 
 .hydro-scratchpad-input::placeholder {
@@ -3034,16 +3007,20 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   width: 100%;
 }
 
-.hydro-problem-nav-skeleton {
-  min-height: 56px;
-  padding: 10px 14px;
-  border-radius: var(--hydro-radius-md);
-  border: 1px solid color-mix(in srgb, var(--hydro-border) 70%, transparent);
-  background-color: var(--hydro-glass-surface-muted);
+.hydro-problem-nav-skeleton,
+.hydro-problem-nav-button--empty {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-height: 56px;
+  padding: 10px 14px;
+  border-radius: var(--hydro-radius-md);
+}
+
+.hydro-problem-nav-skeleton {
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 70%, transparent);
+  background-color: var(--hydro-glass-surface-muted);
   user-select: none;
   pointer-events: none;
 }
@@ -3081,17 +3058,10 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 .hydro-problem-nav-button--empty {
-  min-height: 56px;
-  padding: 10px 14px;
-  border-radius: var(--hydro-radius-md);
   border: 1px dashed var(--hydro-border);
   background-color: color-mix(in srgb, var(--hydro-surface-muted) 45%, transparent);
   color: var(--hydro-text-muted);
   cursor: default;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   width: 100%;
 }
 
@@ -3128,13 +3098,15 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   }
 }
 
-[data-mantine-color-scheme='dark'] .hydro-problem-nav-skeleton {
-  background-color: color-mix(in srgb, var(--hydro-surface-raised) 75%, transparent);
+[data-mantine-color-scheme='dark'] :is(.hydro-problem-nav-skeleton, .hydro-problem-nav-button--empty) {
   border-color: var(--hydro-border);
 }
 
+[data-mantine-color-scheme='dark'] .hydro-problem-nav-skeleton {
+  background-color: color-mix(in srgb, var(--hydro-surface-raised) 75%, transparent);
+}
+
 [data-mantine-color-scheme='dark'] .hydro-problem-nav-button--empty {
-  border-color: var(--hydro-border);
   background-color: color-mix(in srgb, var(--hydro-surface-muted) 35%, transparent);
 }
 
@@ -3203,7 +3175,8 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   scrollbar-color: color-mix(in srgb, var(--hydro-primary) 52%, transparent) transparent;
 }
 
-.hydro-solution-header {
+.hydro-solution-header,
+.hydro-settings-header {
   padding: 18px 20px;
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-lg);
@@ -3247,11 +3220,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 
 .hydro-settings-header {
   margin-bottom: 20px;
-  padding: 18px 20px;
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-lg);
-  background: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
-  box-shadow: var(--hydro-shadow-sm);
 }
 
 .hydro-settings-layout {
@@ -4092,12 +4060,16 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   --stat-color: var(--hydro-primary);
 }
 
-.hydro-problem-statistics__metric {
+.hydro-problem-statistics__metric,
+.hydro-problem-statistics__metric-body {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+}
+
+.hydro-problem-statistics__metric {
   min-height: 124px;
   padding: 20px 16px;
   border: 1px solid var(--hydro-border);
@@ -4127,11 +4099,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 .hydro-problem-statistics__metric-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
   width: 100%;
 }
 
@@ -5098,17 +5065,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   pointer-events: auto;
 }
 
-.hydro-toast-card--second {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100%;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 5;
-}
-
+.hydro-toast-card--second,
 .hydro-toast-card--third {
   position: absolute;
   top: 0;
@@ -5117,6 +5074,13 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   height: 100%;
   pointer-events: none;
   overflow: hidden;
+}
+
+.hydro-toast-card--second {
+  z-index: 5;
+}
+
+.hydro-toast-card--third {
   z-index: 2;
 }
 
