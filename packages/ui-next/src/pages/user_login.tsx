@@ -113,7 +113,7 @@ export default function UserLoginPage() {
         <Stack gap="md">
           {redirect !== '/' && (
             <Alert
-              color="orange"
+              color="red"
               icon={<IconLock size={18} />}
               title={t('Permission')}
               variant="light"

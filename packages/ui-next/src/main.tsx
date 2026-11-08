@@ -1,3 +1,5 @@
+import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
 import './styles/tailwind.css';
 import './styles/markdown.css';
 import './styles/button.css';

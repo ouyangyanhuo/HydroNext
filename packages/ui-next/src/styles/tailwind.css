@@ -4987,7 +4987,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
 }
 
-.mantine-Alert-root {
+:is(.mantine-Alert-root, [data-variant].mantine-Alert-root) {
   position: relative;
   overflow: hidden;
   border-radius: var(--hydro-radius-md);
@@ -4999,18 +4999,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
               background-color var(--hydro-duration-normal) var(--hydro-ease-out);
 }
 
-.mantine-Alert-root::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 3.5px;
-  background-color: var(--alert-color, var(--hydro-primary));
-  opacity: 0.9;
-}
-
-[data-mantine-color-scheme='dark'] .mantine-Alert-root {
+[data-mantine-color-scheme='dark'] :is(.mantine-Alert-root, [data-variant].mantine-Alert-root) {
   border-color: color-mix(in srgb, var(--alert-color, var(--hydro-border)) 32%, var(--hydro-border));
   background-color: color-mix(in srgb, var(--alert-color, var(--hydro-primary)) 12%, var(--hydro-surface));
   box-shadow: 0 2px 8px rgb(0 0 0 / 22%);
