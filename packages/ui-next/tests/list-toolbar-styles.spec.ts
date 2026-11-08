@@ -10,7 +10,7 @@ const toolbars = ':is(.hydro-problem-toolbar, .hydro-list-toolbar, .hydro-contes
 function declarations(selector: string) {
     const values: Record<string, string> = {};
     css.walkRules((rule) => {
-        if (rule.selector.replace(/\s+/g, ' ') !== selector) return;
+        if (!rule.selectors.some((value) => value.replace(/\s+/g, ' ') === selector)) return;
         rule.walkDecls((declaration) => { values[declaration.prop] = declaration.value; });
     });
     return values;
@@ -38,6 +38,10 @@ test('category modal rows have a permanent theme-based surface, independent of h
     assert.equal(row.background, 'color-mix(in srgb, var(--hydro-primary) 5%, var(--hydro-surface-raised))');
     assert.equal(row.border, '1px solid var(--hydro-border)');
     assert.equal(row.padding, '6px');
+    const sortableRow = declarations('.hydro-training-category-order__item');
+    assert.equal(sortableRow.background, row.background);
+    assert.equal(sortableRow.border, row.border);
+    assert.equal(sortableRow.padding, '8px 10px');
     const source = readFileSync(new URL('../src/pages/training_main.tsx', import.meta.url), 'utf8');
     assert.match(source, /className="hydro-training-category-item" data-selected=\{selected\}/);
     assert.match(source, /<SimpleGrid[^>]+className="hydro-training-category-grid"/);

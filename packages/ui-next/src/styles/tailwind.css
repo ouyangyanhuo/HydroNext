@@ -350,13 +350,19 @@ a {
 
 .hydro-panel,
 .hydro-card,
-.hydro-content-card {
+.hydro-content-card,
+.hydro-bulletin {
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-lg);
-  background: var(--hydro-surface);
   box-shadow: var(--hydro-shadow-sm);
   transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
               box-shadow var(--hydro-duration-normal) var(--hydro-ease-out);
+}
+
+.hydro-panel,
+.hydro-card,
+.hydro-content-card {
+  background: var(--hydro-surface);
 }
 
 .hydro-card:hover {
@@ -516,12 +522,7 @@ a {
   gap: 10px;
   min-height: 48px;
   padding: 14px 18px 16px;
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-lg);
   background: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
-  box-shadow: var(--hydro-shadow-sm);
-  transition: border-color var(--hydro-duration-normal) var(--hydro-ease-out),
-              box-shadow var(--hydro-duration-normal) var(--hydro-ease-out);
 }
 
 .hydro-bulletin__header {
@@ -669,13 +670,17 @@ a {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.hydro-data-panel {
-  min-width: 0;
+.hydro-data-panel,
+.hydro-table-wrap {
   overflow: hidden;
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-lg);
-  background: var(--hydro-surface);
   box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-data-panel {
+  min-width: 0;
+  background: var(--hydro-surface);
 }
 
 .hydro-data-panel__header {
@@ -1017,11 +1022,7 @@ a {
 }
 
 .hydro-table-wrap {
-  overflow: hidden;
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-lg);
   background: var(--hydro-surface-raised);
-  box-shadow: var(--hydro-shadow-sm);
 }
 
 .hydro-data-table {
@@ -1433,14 +1434,19 @@ a {
 }
 
 .hydro-contest-list,
-.hydro-training-list {
-  display: flex;
+.hydro-training-list,
+.hydro-doc-article {
   overflow: hidden;
-  flex-direction: column;
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-lg);
   background-color: var(--hydro-surface-raised);
   box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-contest-list,
+.hydro-training-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .hydro-contest-item,
@@ -1708,12 +1714,16 @@ a {
   width: 100%;
 }
 
-.hydro-training-category-grid .hydro-training-category-item {
+.hydro-training-category-grid .hydro-training-category-item,
+.hydro-training-category-order__item {
   min-width: 0;
-  padding: 6px;
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-md);
   background: color-mix(in srgb, var(--hydro-primary) 5%, var(--hydro-surface-raised));
+}
+
+.hydro-training-category-grid .hydro-training-category-item {
+  padding: 6px;
 }
 
 .hydro-training-category-grid .hydro-training-category-item:hover,
@@ -1747,11 +1757,7 @@ a {
 .hydro-training-category-order__item {
   position: relative;
   padding: 8px 10px;
-  min-width: 0;
   flex-shrink: 0;
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-md);
-  background: color-mix(in srgb, var(--hydro-primary) 5%, var(--hydro-surface-raised));
   transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
 
@@ -2159,15 +2165,19 @@ a {
   animation: hydro-record-panel-in 420ms var(--hydro-ease-out) both;
 }
 
-.hydro-record-filter__header {
+.hydro-record-filter__header,
+.hydro-scratchpad-io-panel__header {
   display: flex;
-  gap: 12px;
   align-items: center;
   justify-content: space-between;
-  min-height: 54px;
-  padding: 10px 14px 10px 18px;
   border-bottom: 1px solid var(--hydro-border);
   color: var(--hydro-primary-strong);
+}
+
+.hydro-record-filter__header {
+  gap: 12px;
+  min-height: 54px;
+  padding: 10px 14px 10px 18px;
 }
 
 .hydro-record-filter__header h2 {
@@ -2434,17 +2444,21 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   background-color: color-mix(in srgb, var(--hydro-bg-soft) 42%, var(--hydro-surface-raised));
 }
 
+.hydro-scratchpad-statement__header,
+.hydro-scratchpad-toolbar {
+  border-bottom: 1px solid var(--hydro-border);
+  box-shadow: 0 1px 0 var(--hydro-glass-highlight);
+  -webkit-backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%);
+  backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%);
+}
+
 .hydro-scratchpad-statement__header {
   position: sticky;
   top: 0;
   z-index: 4;
   min-height: 64px;
   padding: 12px 18px;
-  border-bottom: 1px solid var(--hydro-border);
   background-color: color-mix(in srgb, var(--hydro-glass-surface-strong) 92%, transparent);
-  box-shadow: 0 1px 0 var(--hydro-glass-highlight);
-  -webkit-backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%);
-  backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%);
 }
 
 .hydro-scratchpad-statement__header h3 {
@@ -2482,11 +2496,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   align-items: center;
   min-height: 54px;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--hydro-border);
   background-color: var(--hydro-glass-surface);
-  box-shadow: 0 1px 0 var(--hydro-glass-highlight);
-  -webkit-backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%);
-  backdrop-filter: blur(var(--hydro-glass-blur)) saturate(116%);
 }
 
 .hydro-scratchpad-language-select {
@@ -2656,12 +2666,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 .hydro-scratchpad-io-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 0 12px;
-  border-bottom: 1px solid var(--hydro-border);
-  color: var(--hydro-primary-strong);
   background: color-mix(in srgb, var(--hydro-primary-soft) 38%, var(--hydro-surface-raised));
 }
 
@@ -2892,7 +2897,8 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   box-shadow: var(--hydro-shadow-lg);
 }
 
-.hydro-problem-meta {
+.hydro-problem-meta,
+.hydro-user-profile__tabs {
   overflow: hidden;
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-lg);
@@ -2923,11 +2929,15 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 /* Problem quick navigation cards with directional hover glide and tactile press */
+.hydro-problem-nav-button,
+.hydro-problem-nav-skeleton {
+  border: 1px solid color-mix(in srgb, var(--hydro-border) 70%, transparent);
+  background-color: var(--hydro-glass-surface-muted);
+}
+
 .hydro-problem-nav-button {
   position: relative;
-  border: 1px solid color-mix(in srgb, var(--hydro-border) 70%, transparent);
   border-radius: var(--hydro-radius-md);
-  background-color: var(--hydro-glass-surface-muted);
   color: var(--hydro-text);
   text-align: left;
   transition: border-color var(--hydro-duration-fast) var(--hydro-ease-out),
@@ -3019,8 +3029,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 .hydro-problem-nav-skeleton {
-  border: 1px solid color-mix(in srgb, var(--hydro-border) 70%, transparent);
-  background-color: var(--hydro-glass-surface-muted);
   user-select: none;
   pointer-events: none;
 }
@@ -3176,12 +3184,17 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 .hydro-solution-header,
-.hydro-settings-header {
-  padding: 18px 20px;
+.hydro-settings-header,
+.hydro-settings-nav {
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-lg);
   background: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
   box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-solution-header,
+.hydro-settings-header {
+  padding: 18px 20px;
 }
 
 .hydro-solution-composer {
@@ -3236,10 +3249,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   flex-direction: column;
   gap: 4px;
   padding: 8px;
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-lg);
-  background: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
-  box-shadow: var(--hydro-shadow-sm);
 }
 
 .hydro-settings-nav__item {
@@ -3543,16 +3552,20 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   border-bottom: 1px solid var(--hydro-border);
 }
 
-.hydro-security-card__icon {
+.hydro-security-card__icon,
+.hydro-domain-panel-card__icon {
   display: inline-grid;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--hydro-primary) 24%, var(--hydro-border));
   border-radius: var(--hydro-radius-md);
   color: var(--hydro-primary-strong);
   background: var(--hydro-primary-soft);
+}
+
+.hydro-security-card__icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--hydro-primary) 24%, var(--hydro-border));
 }
 
 .hydro-security-row,
@@ -3705,13 +3718,8 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 .hydro-domain-panel-card__icon {
-  display: inline-grid;
   width: 44px;
   height: 44px;
-  place-items: center;
-  border-radius: var(--hydro-radius-md);
-  background: var(--hydro-primary-soft);
-  color: var(--hydro-primary-strong);
   transition: transform var(--hydro-transition-fast);
 }
 
@@ -3865,10 +3873,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 .hydro-user-profile__tabs {
-  overflow: hidden;
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-lg);
-  background: color-mix(in srgb, var(--hydro-surface-raised) 86%, transparent);
   box-shadow: var(--hydro-shadow-sm);
 }
 
@@ -4017,14 +4021,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   outline: none;
 }
 
-.hydro-doc-article {
-  overflow: hidden;
-  border: 1px solid var(--hydro-border);
-  border-radius: var(--hydro-radius-lg);
-  background-color: var(--hydro-surface-raised);
-  box-shadow: var(--hydro-shadow-sm);
-}
-
 .hydro-doc-section {
   scroll-margin-top: 88px;
   padding: clamp(22px, 3.5vw, 38px);
@@ -4164,7 +4160,8 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   background-image: none;
 }
 
-.hydro-problem-statistics__multi-progress {
+.hydro-problem-statistics__multi-progress,
+.hydro-problem-statistics__score-track {
   overflow: hidden;
   background-color: var(--hydro-bg-soft);
   border: 1px solid color-mix(in srgb, var(--hydro-border) 60%, transparent);
@@ -4285,10 +4282,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   align-items: flex-end;
   width: 18px;
   height: 72px;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--hydro-border) 60%, transparent);
   border-radius: 4px;
-  background-color: var(--hydro-bg-soft);
 }
 
 .hydro-problem-statistics__score-bar {
@@ -4627,8 +4621,17 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   background-image: none !important;
 }
 
+/* Interactive overlays must stay fully opaque over dense page content. */
 .hydro-topbar-dropdown,
-.hydro-topbar-dropdown :is(.mantine-Popover-dropdown, .mantine-Combobox-dropdown) {
+.hydro-topbar-dropdown :is(.mantine-Popover-dropdown, .mantine-Combobox-dropdown),
+.mantine-Modal-header,
+.mantine-Drawer-header,
+.mantine-Modal-content,
+.mantine-Drawer-content,
+.mantine-Popover-dropdown,
+.mantine-Menu-dropdown,
+.mantine-Combobox-dropdown,
+.mantine-Notification-root {
   opacity: 1 !important;
   background-color: var(--hydro-surface-raised) !important;
   background-image: none !important;
@@ -4644,13 +4647,17 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 /* Top navigation: Obsidian & Aero Glass material hierarchy */
+.hydro-top-nav,
+[data-mantine-color-scheme='dark'] .hydro-top-nav {
+  background-color: var(--hydro-nav-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+
 .hydro-top-nav {
   position: relative;
   border-bottom: 1px solid var(--hydro-border);
-  background-color: var(--hydro-nav-bg);
   background-image: linear-gradient(180deg, var(--hydro-glass-highlight), transparent 70%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
   box-shadow: 0 1px 2px rgb(0 0 0 / 3%),
               inset 0 1px 0 0 var(--hydro-glass-highlight);
   transition: background-color var(--hydro-duration-normal) var(--hydro-ease-out),
@@ -4660,10 +4667,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 
 [data-mantine-color-scheme='dark'] .hydro-top-nav {
   border-bottom-color: color-mix(in srgb, var(--hydro-border) 75%, transparent);
-  background-color: var(--hydro-nav-bg);
   background-image: linear-gradient(180deg, color-mix(in srgb, var(--hydro-glass-highlight) 85%, transparent), transparent 72%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
   box-shadow: 0 8px 30px rgb(0 0 0 / 25%),
               inset 0 1px 0 0 color-mix(in srgb, var(--hydro-glass-highlight) 60%, transparent);
 }
@@ -4812,12 +4816,20 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 }
 
 .mantine-Button-root[data-variant='default'],
-.mantine-ActionIcon-root[data-variant='default'] {
-  border-color: color-mix(in srgb, var(--hydro-border) 78%, var(--hydro-glass-border));
+.mantine-ActionIcon-root[data-variant='default'],
+.mantine-Accordion-item,
+.mantine-Blockquote-root,
+.mantine-Code-root,
+.mantine-Kbd-root {
   background-color: var(--hydro-glass-surface-muted);
   box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
   -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
   backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
+}
+
+.mantine-Button-root[data-variant='default'],
+.mantine-ActionIcon-root[data-variant='default'] {
+  border-color: color-mix(in srgb, var(--hydro-border) 78%, var(--hydro-glass-border));
 }
 
 :is(.mantine-Alert-root, [data-variant].mantine-Alert-root) {
@@ -4876,22 +4888,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   color: var(--hydro-text);
 }
 
-/* Interactive overlays must stay fully opaque over dense page content. */
-.mantine-Modal-header,
-.mantine-Drawer-header,
-.mantine-Modal-content,
-.mantine-Drawer-content,
-.mantine-Popover-dropdown,
-.mantine-Menu-dropdown,
-.mantine-Combobox-dropdown,
-.mantine-Notification-root {
-  opacity: 1 !important;
-  background-color: var(--hydro-surface-raised) !important;
-  background-image: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
 /* Match sticky headers to their dialog, with a clear gap before the content. */
 .mantine-Modal-header {
   color: var(--hydro-text);
@@ -4942,11 +4938,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 .mantine-Code-root,
 .mantine-Kbd-root {
   border-color: color-mix(in srgb, var(--hydro-border) 76%, var(--hydro-glass-border));
-  background-color: var(--hydro-glass-surface-muted);
   background-image: none;
-  box-shadow: inset 0 1px 0 var(--hydro-glass-highlight);
-  -webkit-backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
-  backdrop-filter: blur(var(--hydro-glass-blur-subtle)) saturate(110%);
 }
 
 .mantine-Tooltip-tooltip {

@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, beforeEach, test } from 'node:test';
+import postcss from 'postcss';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -46,9 +47,16 @@ test('modals in problem_detail and contest_detail do not use centered layout', (
 });
 
 test('homepage problem list box and recent contests box have consistent shadow intensity', () => {
-    const css = readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8');
-    assert.equal(css.includes('.hydro-data-panel--problems {\n  box-shadow: var(--hydro-shadow-md);'), false);
-    assert.match(css, /\.hydro-data-panel\s*\{[^}]*box-shadow:\s*var\(--hydro-shadow-sm\);/);
+    const css = postcss.parse(readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8'));
+    const shadows = new Map<string, string>();
+    css.walkRules((rule) => {
+        if (rule.parent?.type !== 'root') return;
+        rule.walkDecls('box-shadow', (declaration) => {
+            for (const selector of rule.selectors) shadows.set(selector, declaration.value);
+        });
+    });
+    assert.equal(shadows.get('.hydro-data-panel'), 'var(--hydro-shadow-sm)');
+    assert.equal(shadows.get('.hydro-data-panel--problems') ?? shadows.get('.hydro-data-panel'), 'var(--hydro-shadow-sm)');
 });
 
 async function mountHomepage(
