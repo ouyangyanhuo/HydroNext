@@ -465,7 +465,9 @@ export function TopNav() {
         onClose={close}
         title={serverName || 'HydroNext'}
         size="xs"
+        className="hydro-nav-drawer"
         classNames={{
+          content: 'hydro-nav-drawer__content',
           header: 'hydro-nav-drawer__header',
           body: 'hydro-nav-drawer__body',
         }}

@@ -40,7 +40,7 @@ function DataTableComponent<T extends Record<string, any>>({
 
   return (
     <div className="hydro-table-wrap">
-      <ScrollArea type="auto">
+      <ScrollArea type="auto" scrollbarSize={8}>
         <Table
           striped={striped}
           highlightOnHover={highlightOnHover}

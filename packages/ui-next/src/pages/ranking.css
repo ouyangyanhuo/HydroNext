@@ -279,7 +279,7 @@
 
 .ranking-table-user:hover { text-decoration: underline; }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .ranking-page-header,
   .ranking-list-header {
     align-items: flex-start;
@@ -287,8 +287,40 @@
   }
 
   .ranking-switch,
-  .ranking-search { width: 100%; }
-  .ranking-switch .mantine-Button-root { flex: 1; min-width: 0; }
+  .ranking-search {
+    width: 100%;
+  }
+
+  .ranking-switch .mantine-Button-root {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ranking-list {
+    margin-inline: calc(-1 * clamp(16px, 3vw, 32px));
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
+    box-shadow: none;
+    padding-inline: 0 !important;
+    padding-bottom: 0;
+  }
+
+  .ranking-list-header {
+    padding-inline: clamp(16px, 3vw, 32px);
+  }
+
+  .ranking-table-scroll {
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-radius: 0 !important;
+  }
+
+  .ranking-podium-card:hover,
+  .ranking-podium-card:focus-visible {
+    transform: none;
+  }
 }
 
 @media (max-width: 560px) {
@@ -303,7 +335,7 @@
   .ranking-podium-card--3 { grid-column: 2; grid-row: 2; }
   .ranking-podium-spacer { display: none; }
   .ranking-podium-card { padding-inline: 0.45rem; }
-  .ranking-list { padding: 0.7rem; }
+  .ranking-list { padding-block: 0.7rem 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -86,7 +86,7 @@ function TrainingProblemTable({
 
   return (
     <div className="overflow-x-auto">
-      <Table striped highlightOnHover verticalSpacing="sm">
+      <Table striped highlightOnHover verticalSpacing="sm" className="hydro-training-detail-table">
         <Table.Thead>
           <Table.Tr>
             {enrolled && <Table.Th className="w-28">{t('Status')}</Table.Th>}
@@ -288,17 +288,32 @@ export default function TrainingDetailPage() {
           {error && <Text c="red" size="sm">{error}</Text>}
 
           {!isLoggedIn && (
-            <Card withBorder p="md" className="border-[var(--hydro-warning)]" style={{ background: 'rgba(233, 161, 0, 0.08)' }}>
+            <Card
+              withBorder
+              p="md"
+              className="border-[var(--hydro-warning)]"
+              style={{ background: 'rgba(233, 161, 0, 0.08)' }}
+            >
               <Text size="sm">{t('Login to join training plan')}</Text>
             </Card>
           )}
           {isLoggedIn && !enrolled && (
-            <Card withBorder p="md" className="border-[var(--hydro-warning)]" style={{ background: 'rgba(233, 161, 0, 0.08)' }}>
+            <Card
+              withBorder
+              p="md"
+              className="border-[var(--hydro-warning)]"
+              style={{ background: 'rgba(233, 161, 0, 0.08)' }}
+            >
               <Text size="sm">{t('page.training_detail.invalid_when_not_enrolled')}</Text>
             </Card>
           )}
           {missing.length > 0 && (
-            <Card withBorder p="md" className="border-[var(--hydro-warning)]" style={{ background: 'rgba(233, 161, 0, 0.08)' }}>
+            <Card
+              withBorder
+              p="md"
+              className="border-[var(--hydro-warning)]"
+              style={{ background: 'rgba(233, 161, 0, 0.08)' }}
+            >
               <Text size="sm" fw={700}>{t('Some problems in the training are missing or you do not have permission to view them.')}</Text>
               <Text size="sm" c="dimmed">{missing.join(', ')}</Text>
             </Card>
@@ -316,8 +331,18 @@ export default function TrainingDetailPage() {
             const invalid = state.isInvalid || (!enrolled && isLoggedIn);
             const titleLines = String(node.title || '').split('\n');
             return (
-              <Card key={node._id || index} withBorder p={0} className="hydro-content-card overflow-hidden">
-                <Group justify="space-between" align="flex-start" p="lg" className="border-b border-[var(--hydro-border)]">
+              <Card
+                key={node._id || index}
+                withBorder
+                p={0}
+                className="hydro-content-card hydro-training-detail-card hydro-training-detail-node overflow-hidden"
+              >
+                <Group
+                  justify="space-between"
+                  align="flex-start"
+                  p="lg"
+                  className="hydro-training-detail-node__header border-b border-[var(--hydro-border)]"
+                >
                   <div className="min-w-0">
                     <Title order={2} size="h4">
                       {t('Section')} {node._id || index + 1}. {titleLines[0] || `${t('Section')} ${index + 1}`}
