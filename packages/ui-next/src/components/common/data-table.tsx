@@ -4,6 +4,9 @@ import { memo } from 'react';
 import { useI18n } from '@/hooks/use-i18n';
 import { EmptyState } from './empty-state';
 
+const INTERACTIVE_SELECTOR = 'a, button, input, select, textarea, label, '
+  + '[role="button"], [role="checkbox"], [role="combobox"], [contenteditable="true"]';
+
 interface Column<T> {
   key: string;
   title: React.ReactNode;
@@ -59,27 +62,32 @@ function DataTableComponent<T extends Record<string, any>>({
           </Table.Thead>
           <Table.Tbody>
             {data.map((item) => {
-              const activate = (event: MouseEvent<HTMLTableRowElement> | KeyboardEvent<HTMLTableRowElement>) => {
-                const target = event.target as HTMLElement;
-                const interactive = 'a, button, input, select, textarea, label, '
-                  + '[role="button"], [role="checkbox"], [role="combobox"], [contenteditable="true"]';
-                if (target.closest(interactive)) return;
-                onRowClick?.(item);
-              };
+              const handleRowClick = onRowClick
+                ? (event: MouseEvent<HTMLTableRowElement>) => {
+                  if ((event.target as HTMLElement).closest(INTERACTIVE_SELECTOR)) return;
+                  onRowClick(item);
+                }
+                : undefined;
+
+              const handleRowKeyDown = onRowClick
+                ? (event: KeyboardEvent<HTMLTableRowElement>) => {
+                  if (event.target !== event.currentTarget) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    if ((event.target as HTMLElement).closest(INTERACTIVE_SELECTOR)) return;
+                    event.preventDefault();
+                    onRowClick(item);
+                  }
+                }
+                : undefined;
+
               return (
                 <Table.Tr
                   key={item[keyField]}
                   className={onRowClick ? 'hydro-data-table__clickable-row' : undefined}
                   tabIndex={onRowClick ? 0 : undefined}
                   aria-label={onRowClick ? rowLabel?.(item) : undefined}
-                  onClick={onRowClick ? activate : undefined}
-                  onKeyDown={onRowClick ? (event) => {
-                    if (event.target !== event.currentTarget) return;
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      activate(event);
-                    }
-                  } : undefined}
+                  onClick={handleRowClick}
+                  onKeyDown={handleRowKeyDown}
                 >
                   {columns.map((col) => (
                     <Table.Td key={col.key} style={{ textAlign: col.align }}>
