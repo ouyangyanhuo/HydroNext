@@ -58,20 +58,28 @@ textarea.hydro-objective-input {
   border: 1px solid var(--hydro-border);
   border-radius: var(--mantine-radius-default);
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hydro-objective-options > li > label:hover:not(:has(:disabled)) {
+  border-color: color-mix(in srgb, var(--hydro-primary) 65%, var(--hydro-border));
+  background: color-mix(in srgb, var(--hydro-primary-soft) 22%, var(--hydro-surface));
 }
 
 .hydro-objective-options > li > label:has(:checked) {
   border-color: var(--hydro-primary);
-  background: var(--hydro-surface-tint);
+  background: color-mix(in srgb, var(--hydro-primary-soft) 42%, var(--hydro-surface));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--hydro-primary) 35%, transparent);
 }
 
-.hydro-objective-options > li > label:hover:not(:has(:disabled)) {
-  border-color: var(--hydro-primary);
+.hydro-objective-options > li > label:has(:checked):hover:not(:has(:disabled)) {
+  border-color: var(--hydro-primary-strong);
+  background: color-mix(in srgb, var(--hydro-primary-soft) 60%, var(--hydro-surface));
 }
 
 .hydro-objective-options > li > label:has(:disabled) {
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .hydro-objective-options > li > label > span {
@@ -90,6 +98,27 @@ textarea.hydro-objective-input {
 .hydro-objective-input:is([type='radio'], [type='checkbox']) {
   flex: 0 0 auto;
   accent-color: var(--hydro-primary);
+  cursor: pointer;
+}
+
+.hydro-objective-input:is([type='radio'], [type='checkbox']):disabled {
+  cursor: not-allowed;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-objective-options > li > label:hover:not(:has(:disabled)) {
+  border-color: color-mix(in srgb, var(--hydro-primary) 70%, var(--hydro-border));
+  background: color-mix(in srgb, var(--hydro-primary-soft) 18%, var(--hydro-surface-raised));
+}
+
+[data-mantine-color-scheme='dark'] .hydro-objective-options > li > label:has(:checked) {
+  border-color: var(--hydro-primary);
+  background: color-mix(in srgb, var(--hydro-primary-soft) 26%, var(--hydro-surface-raised));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--hydro-primary) 40%, transparent);
+}
+
+[data-mantine-color-scheme='dark'] .hydro-objective-options > li > label:has(:checked):hover:not(:has(:disabled)) {
+  border-color: var(--hydro-primary-strong);
+  background: color-mix(in srgb, var(--hydro-primary-soft) 36%, var(--hydro-surface-raised));
 }
 
 .hydro-objective-toolbar {

@@ -1,5 +1,5 @@
-import { Alert, Badge, Center, Group, Loader, Modal, ScrollArea, Stack, Text } from '@mantine/core';
-import { Button } from '@/components/common/button';
+import { Alert, Badge, Center, Loader, Modal, ScrollArea, Stack, Text } from '@mantine/core';
+import { Button, UnstyledButton } from '@/components/common/button';
 import { useI18n } from '@/hooks/use-i18n';
 import { objectiveCaseId } from '@/utils/objective-answers';
 import { RecordStatusBadge } from './record-status-badge';
@@ -39,20 +39,19 @@ export function SubmissionResultModal({ opened, record, onClose, onViewDetails, 
       classNames={{ content: 'hydro-submission-result', body: 'hydro-submission-result__body' }}
       closeButtonProps={{ 'aria-label': t('Close') }}
     >
-      <Group justify="space-between" wrap="wrap" gap="sm" aria-live="polite" aria-atomic="true">
-        <Group gap="xs">
+      <div className="hydro-submission-result__summary" aria-live="polite" aria-atomic="true">
+        <div className="hydro-submission-result__summary-status">
           {pending && <Loader size="xs" aria-hidden="true" />}
           <RecordStatusBadge status={record.status} size="lg" />
-        </Group>
-        <Group gap="xs">
-          <Text size="sm" c="dimmed">{t('Score')}</Text>
-          <Text size="xl" fw={700} className="hydro-numeric">{record.score ?? '—'}</Text>
-        </Group>
-      </Group>
-      <Group gap="xs">
+        </div>
+        <div className="hydro-submission-result__summary-score">
+          <Text size="sm" c="dimmed">{t('Score')}</Text><Text size="xl" fw={700} className="hydro-numeric">{record.score ?? '—'}</Text>
+        </div>
+      </div>
+      <div className="hydro-submission-result__subheading">
         <Text size="sm" fw={600}>{t('Test Cases')}</Text>
-        <Badge variant="light">{cases.length}</Badge>
-      </Group>
+        <Badge variant="light" size="sm">{cases.length}</Badge>
+      </div>
       <ScrollArea
         className="hydro-submission-result__cases"
         type="auto"
@@ -77,17 +76,25 @@ export function SubmissionResultModal({ opened, record, onClose, onViewDetails, 
             ))}
           </ul>
         ) : (
-          <Center mih={120}>
+          <Center mih={140} className="hydro-submission-result__empty">
             <Stack gap="xs" align="center">
+              {pending && <Loader size="sm" color="var(--hydro-primary)" />}
               <Text size="sm" c="dimmed">{t(pending ? 'Waiting for judging results' : 'No test cases to display')}</Text>
             </Stack>
           </Center>
         )}
       </ScrollArea>
-      <Group justify="flex-end" gap="sm" className="hydro-submission-result__actions">
-        <Button variant="default" onClick={onClose}>{t('Close')}</Button>
-        <Button onClick={onViewDetails}>{t('Judging details')}</Button>
-      </Group>
+      <div className="hydro-submission-result__actions">
+        <UnstyledButton
+          className="hydro-submission-result__details-link"
+          onClick={onViewDetails}
+        >
+          {t('Judging details')}
+        </UnstyledButton>
+        <Button variant="default" onClick={onClose} className="hydro-submission-result__close-btn">
+          {t('Close')}
+        </Button>
+      </div>
     </Modal>
   );
 }
