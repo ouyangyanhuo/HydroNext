@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import postcss from 'postcss';
 import * as submissionContext from '../src/components/editor/submission-context.ts';
 import * as statuses from '../src/components/record/status-map.ts';
+import { objectiveCaseId } from '../src/utils/objective-answers.ts';
 import * as navigation from '../src/utils/problem-navigation.ts';
 
 const require = createRequire(import.meta.url);
@@ -82,6 +83,7 @@ test('formal editor submissions stay in a compact live modal and close according
             protectedSubmissionHeaders: async (...values: any[]) => { signed.push(values); return { 'x-proctor-proof': 'signed' }; },
         },
         '@/utils/problem-navigation': navigation,
+        '@/utils/objective-answers': { objectiveCaseId },
         '@/utils/request': { formatRequestError: (error: any) => error.message },
         './addons': { createEditorAddon: () => addon },
         './code-templates': { getCodeTemplate: () => 'int main() {}' },

@@ -8,10 +8,13 @@ import { Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { MarkdownRenderer, type MarkdownRendererProps } from '@/components/markdown/markdown-renderer';
 import { attachObjectiveInputs, type ObjectiveQuestion } from '@/components/markdown/objective-inputs';
+import { STATUS } from '@/components/record/status-map';
+import { SubmissionResultModal } from '@/components/record/submission-result-modal';
 import { usePageData, useUiContext, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
+import { useRecordSocket } from '@/hooks/use-record-socket';
 import { protectedSubmissionHeaders } from '@/registry/request-security';
 import { hasObjectiveAnswer, type ObjectiveAnswers, objectiveDraftKey, readObjectiveDraft } from '@/utils/objective-answers';
 import { getSubmissionRecordQuery } from '@/utils/problem-navigation';
@@ -83,6 +86,10 @@ export function ObjectiveAnswerForm({ children, pid, tid, submitUrl, disabled, d
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(true);
   const [clearOpened, setClearOpened] = useState(false);
+  const [submitResult, setSubmitResult] = useState<any>(null);
+  const [resultOpened, setResultOpened] = useState(false);
+  const update = useRecordSocket(submitResult?.rid ? String(submitResult.rid) : undefined);
+  const displayedResult = submitResult ? { ...submitResult, ...update } : null;
 
   const register = useCallback((section: string, questions: ObjectiveQuestion[]) => {
     setSections((previous) => {
@@ -114,6 +121,8 @@ export function ObjectiveAnswerForm({ children, pid, tid, submitUrl, disabled, d
     pending.current = true;
     setLoading(true);
     setError('');
+    setSubmitResult(null);
+    setResultOpened(false);
     try {
       const code = dump(answers, { lineWidth: -1, noRefs: true });
       const payload = { pid: Number(pid), lang: '_', code, pretest: false, input: [], fileHash: '' };
@@ -125,8 +134,10 @@ export function ObjectiveAnswerForm({ children, pid, tid, submitUrl, disabled, d
       });
       const data = await response.json();
       if (!response.ok || data.error) throw new Error(formatRequestError(data.error, 'Submission failed'));
-      if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }, getSubmissionRecordQuery(window.location.search, args.tdoc)));
-      else if (data.redirect || data.url) navigate(data.redirect || data.url);
+      if (data.rid) {
+        setSubmitResult({ status: STATUS.STATUS_WAITING, ...data });
+        setResultOpened(true);
+      } else if (data.redirect || data.url) navigate(data.redirect || data.url);
       else if (data.tid) navigate(buildUrl(args.tdoc?.rule === 'homework' ? 'homework_detail' : 'contest_problemlist', { tid: data.tid }));
       else throw new Error('Submission failed');
     } catch (err: any) {
@@ -185,6 +196,17 @@ export function ObjectiveAnswerForm({ children, pid, tid, submitUrl, disabled, d
         </Stack>
       </form>
       {sidebarTarget && createPortal(controls, sidebarTarget)}
+      {displayedResult && (
+        <SubmissionResultModal
+          opened={resultOpened}
+          record={displayedResult}
+          objective
+          onClose={() => setResultOpened(false)}
+          onViewDetails={() => {
+            void navigate(buildUrl('record_detail', { rid: displayedResult.rid }, getSubmissionRecordQuery(window.location.search, args.tdoc)));
+          }}
+        />
+      )}
       <ConfirmDialog
         opened={clearOpened}
         onClose={() => setClearOpened(false)}

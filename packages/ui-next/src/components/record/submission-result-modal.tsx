@@ -1,6 +1,7 @@
 import { Alert, Badge, Center, Group, Loader, Modal, ScrollArea, Stack, Text } from '@mantine/core';
 import { Button } from '@/components/common/button';
 import { useI18n } from '@/hooks/use-i18n';
+import { objectiveCaseId } from '@/utils/objective-answers';
 import { RecordStatusBadge } from './record-status-badge';
 import { STATUS } from './status-map';
 
@@ -17,10 +18,11 @@ interface SubmissionResultModalProps {
   record: SubmissionResult;
   onClose: () => void;
   onViewDetails: () => void;
+  objective?: boolean;
 }
 
 /** A compact view of the existing permission-filtered record stream, not a second record page. */
-export function SubmissionResultModal({ opened, record, onClose, onViewDetails }: SubmissionResultModalProps) {
+export function SubmissionResultModal({ opened, record, onClose, onViewDetails, objective = false }: SubmissionResultModalProps) {
   const { t } = useI18n();
   const pending = record.status != null && [
     STATUS.STATUS_WAITING, STATUS.STATUS_JUDGING, STATUS.STATUS_COMPILING, STATUS.STATUS_FETCHED,
@@ -67,7 +69,8 @@ export function SubmissionResultModal({ opened, record, onClose, onViewDetails }
             {cases.map((item, index) => (
               <li key={`${item.subtaskId ?? ''}-${item.id ?? index}-${index}`} className="hydro-submission-result__case">
                 <Text size="sm" className="hydro-numeric">
-                  {t('Test Case')} #{item.subtaskId != null ? `${item.subtaskId}-` : ''}{item.id ?? index + 1}
+                  {objective ? `#${objectiveCaseId(item)}`
+                    : `${t('Test Case')} #${item.subtaskId != null ? `${item.subtaskId}-` : ''}${item.id ?? index + 1}`}
                 </Text>
                 <RecordStatusBadge status={item.status} />
               </li>

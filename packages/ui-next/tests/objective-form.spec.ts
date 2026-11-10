@@ -10,6 +10,7 @@ import { markdownXssPlugin } from '../src/components/markdown/markdown-xss.ts';
 import { attachObjectiveInputs } from '../src/components/markdown/objective-inputs.ts';
 import { sampleIOPlugin } from '../src/components/markdown/sample-io.ts';
 import { tableCompatibilityPlugin } from '../src/components/markdown/table-compat.ts';
+import * as statuses from '../src/components/record/status-map.ts';
 import { extractLocalizedContent } from '../src/utils/i18n-content.ts';
 import * as drafts from '../src/utils/objective-answers.ts';
 import { getSubmissionRecordQuery } from '../src/utils/problem-navigation.ts';
@@ -26,6 +27,8 @@ test('objective form restores drafts, retains answers across language changes, s
     for (const [key, value] of Object.entries({
         window: dom.window, document: dom.window.document, navigator: dom.window.navigator,
         HTMLElement: dom.window.HTMLElement, Element: dom.window.Element, getComputedStyle: dom.window.getComputedStyle,
+        Node: dom.window.Node, ShadowRoot: dom.window.ShadowRoot, Document: dom.window.Document,
+        ResizeObserver: class { observe() {} unobserve() {} disconnect() {} },
         localStorage: dom.window.localStorage, IS_REACT_ACT_ENVIRONMENT: true,
         requestAnimationFrame: dom.window.requestAnimationFrame.bind(dom.window),
         cancelAnimationFrame: dom.window.cancelAnimationFrame.bind(dom.window),
@@ -44,6 +47,8 @@ test('objective form restores drafts, retains answers across language changes, s
     const navigations: string[] = [];
     const signed: any[] = [];
     const requests: any[] = [];
+    const updates = new Map<string, any>();
+    let successCount = 0;
     let failure = true;
     let release!: () => void;
     const pending = new Promise<void>((resolve) => { release = resolve; });
@@ -58,11 +63,14 @@ test('objective form restores drafts, retains answers across language changes, s
         '@/context/router': { useNavigate: () => (url: string) => navigations.push(url) },
         '@/hooks/use-build-url': { useBuildUrl: () => buildUrl },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/hooks/use-record-socket': { useRecordSocket: (rid?: string) => updates.get(rid || '') || null },
         '@/stores/session': { useSessionStore: (selector: any) => selector({ language: 'en', ui: { domainId: 'test' } }) },
         '@/registry/request-security': {
             protectedSubmissionHeaders: async (...args: any[]) => { signed.push(args); return { 'x-proctor-proof': 'proof' }; },
         },
         '@/utils/objective-answers': drafts,
+        '@/components/record/status-map': statuses,
+        './status-map': statuses,
         '@/utils/i18n-content': { extractLocalizedContent },
         '@/utils/user-name': { formatUserName },
         '@/utils/problem-navigation': { getSubmissionRecordQuery },
@@ -81,18 +89,23 @@ test('objective form restores drafts, retains answers across language changes, s
             fetch: async (url: string, options: any) => {
                 requests.push({ url, ...options });
                 await pending;
-                return { ok: !failure, json: async () => failure ? { error: { message: 'Try again' } } : { rid: 'record-id' } };
+                return {
+                    ok: !failure,
+                    json: async () => failure ? { error: { message: 'Try again' } } : { rid: `record-id-${++successCount}` },
+                };
             },
         });
         return module.exports;
     };
     mocks['@/components/common/confirm-dialog'] = loadComponent('../src/components/common/confirm-dialog.tsx');
     mocks['@/components/markdown/markdown-renderer'] = loadComponent('../src/components/markdown/markdown-renderer.tsx');
+    mocks['./record-status-badge'] = loadComponent('../src/components/record/record-status-badge.tsx');
+    mocks['@/components/record/submission-result-modal'] = loadComponent('../src/components/record/submission-result-modal.tsx');
     const { ObjectiveAnswerForm, ObjectiveMarkdown } = loadComponent('../src/components/problem/objective-answer-form.tsx');
     const root = createRoot(document.getElementById('root'));
     let sidebarTarget: HTMLElement | null = null;
     const content = '{{ input(1) }}\n\n{{ multiselect(2) }}\n\n- A\n- **B**\n\n{{ select(3) }}\n- A\n- B\n- C\n- D';
-    const render = (disabled = false, language = 'en', formKey = 'first') => root.render(h(MantineProvider, {},
+    const render = (disabled = false, language = 'en', formKey = 'first') => root.render(h(MantineProvider, { env: 'test' },
         h(React.StrictMode, {}, h(ObjectiveAnswerForm, {
             key: formKey, pid: 42, tid, submitUrl: `/d/test/p/P42/submit?tid=${tid}`, disabled, disabledReason: 'Contest Closed', sidebarTarget,
         }, h(ObjectiveMarkdown, { content: language === 'en' ? content : `Translated\n\n${content}`, language })))));
@@ -155,12 +168,60 @@ test('objective form restores drafts, retains answers across language changes, s
         assert.equal(requests[0].headers['x-proctor-proof'], 'proof');
         await act(async () => release());
         assert.match(document.querySelector('[role=alert]')!.textContent!, /Try again/);
+        assert.equal(document.querySelector('[role=dialog]'), null, 'failed requests must not open a result dialog');
         assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, '0');
         assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=radio]')[1].checked);
         failure = false;
         await act(async () => { dispatchSubmit(); });
+        assert.equal(navigations.length, 0, 'objective submissions now stay on the answer page');
+        assert.match(document.querySelector('[role=dialog]')!.textContent!, /Waiting/);
+        updates.set('record-id-1', {
+            status: 2, score: 25, time: 99, memory: 88, code: 'SECRET_ANSWERS', lang: 'SECRET_LANGUAGE',
+            testCases: [{ subtaskId: 1, status: 1 }, { subtaskId: 2, id: 3, status: 2 }],
+        });
+        await act(async () => render());
+        const firstDialog = document.querySelector('[role=dialog]')!;
+        assert.match(firstDialog.textContent!, /Wrong Answer/);
+        assert.match(firstDialog.textContent!, /Score25/);
+        const labels = [...firstDialog.querySelectorAll('li')].map((item) => item.textContent);
+        assert.deepEqual(labels, ['#1Accepted', '#2-3Wrong Answer'], 'use objective question IDs, including grouped questions');
+        assert.doesNotMatch(firstDialog.textContent!, /SECRET|Total Time|Peak Time|Peak Memory|Language|99ms/);
+        assert.ok(firstDialog.querySelector('.mantine-ScrollArea-viewport'));
+        await act(async () => { firstDialog.querySelector<HTMLButtonElement>('[aria-label=Close]')!.click(); });
+        assert.equal(document.querySelector('[role=dialog]'), null);
+        assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, '0');
+        assert.ok(!document.querySelector<HTMLInputElement>('input[type=text]')!.disabled, 'failed answers remain editable');
+
+        await act(async () => { dispatchSubmit(); });
+        assert.match(document.querySelector('[role=dialog]')!.textContent!, /Waiting/);
+        assert.equal(document.querySelector('[role=dialog]')!.querySelectorAll('li').length, 0, 'new submissions cannot reuse old cases');
+        await act(async () => {
+            document.querySelector('[role=dialog]')!.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        });
+        updates.set('record-id-2', { status: 1, score: 100 });
+        await act(async () => render());
+        assert.equal(document.querySelector('[role=dialog]'), null, 'late results must not reopen the dialog');
+        assert.equal(navigations.length, 0);
+
+        await act(async () => { dispatchSubmit(); });
+        updates.set('record-id-3', { status: 1, score: 100, testCases: [{ subtaskId: 1, status: 1 }] });
+        await act(async () => render());
+        assert.match(document.querySelector('[role=dialog]')!.textContent!, /Accepted/);
+        await act(async () => { document.querySelector<HTMLButtonElement>('[role=dialog] [aria-label=Close]')!.click(); });
+        assert.equal(document.querySelector('[role=dialog]'), null);
+        assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, '0', 'accepted answers are not cleared on dismissal');
+        assert.equal(navigations.length, 0, 'the objective statement is already the answer page');
+
+        await act(async () => { dispatchSubmit(); });
+        await act(async () => {
+            [...document.querySelectorAll<HTMLButtonElement>('[role=dialog] button')]
+                .find((button) => button.textContent === 'Judging details')!.click();
+        });
         assert.equal(navigations.length, 1);
-        assert.match(navigations[0], /record_detail\/record-id\?problemNav=/);
+        assert.match(navigations[0], /record_detail\/record-id-4\?problemNav=/);
+        const detailQuery = new URL(navigations[0], window.location.href).searchParams;
+        assert.equal(new URLSearchParams(detailQuery.get('problemNav')!).get('tid'), tid);
+        assert.equal(detailQuery.has('submissionSource'), false, 'returning must not open the code editor for objective answers');
         await act(async () => render(false, 'en', 'remounted'));
         assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, '0');
         assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=radio]')[1].checked, 'a full remount restores the saved single choice');
