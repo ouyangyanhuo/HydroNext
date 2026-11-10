@@ -68,7 +68,9 @@ test('formal submissions and self-tests preserve the full timeline, while older 
     assert.match(source, /pretest \? null : await editorAddon\?\.beforeSubmit\(code, lang\)/);
     assert.match(recorder, /result\.codeReplayCommitted && recording === current/);
     assert.ok(recorder.indexOf('result.codeReplayError') < recorder.indexOf('result.codeReplayCommitted'));
-    assert.ok(source.indexOf('await addonReceipt?.complete(data)') < source.indexOf('if (data.rid) navigate'));
+    const associateReplay = source.indexOf('await addonReceipt?.complete(data)');
+    const showResult = source.indexOf('setSubmitResultOpened(!!data.rid)');
+    assert.ok(associateReplay >= 0 && showResult > associateReplay, 'associate the replay before opening the judging result');
     assert.doesNotMatch(source, /resetReplaySession/);
 });
 

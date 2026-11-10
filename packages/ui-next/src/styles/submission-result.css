@@ -1,0 +1,59 @@
+.hydro-submission-result {
+  display: flex;
+  flex-direction: column;
+  height: 560px;
+  max-height: calc(100dvh - 40px);
+  overflow: hidden;
+}
+
+.hydro-submission-result .mantine-Modal-header {
+  flex: 0 0 auto;
+}
+
+.hydro-submission-result__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.hydro-submission-result__cases {
+  flex: 1;
+  min-height: 0;
+  border-block: 1px solid var(--hydro-border);
+}
+
+.hydro-submission-result__list {
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hydro-submission-result__case {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px;
+  border-bottom: 1px solid var(--hydro-border);
+}
+
+.hydro-submission-result__case:nth-child(odd) {
+  background: var(--hydro-surface-tint);
+}
+
+.hydro-submission-result__case:last-child {
+  border-bottom: 0;
+}
+
+.hydro-submission-result__actions {
+  flex-shrink: 0;
+}
+
+.hydro-submission-result__actions > button {
+  flex: 1;
+}

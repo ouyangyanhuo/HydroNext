@@ -11,14 +11,15 @@ import { ActionIcon, Button, ButtonBase } from '@/components/common/button';
 import { RollingClock } from '@/components/common/rolling-clock';
 import { LongSelect, ShortSelect } from '@/components/common/select';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
-import { STATUS_TEXTS } from '@/components/record/status-map';
+import { STATUS, STATUS_TEXTS } from '@/components/record/status-map';
+import { SubmissionResultModal } from '@/components/record/submission-result-modal';
 import { usePageData, useUiContext, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useRecordSocket } from '@/hooks/use-record-socket';
 import { protectedSubmissionHeaders as proctorSubmissionHeaders } from '@/registry/request-security';
-import { getProblemNavigationQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
+import { getProblemEditorUrl, getProblemNavigationQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
 import { formatRequestError as proctorError } from '@/utils/request';
 import { createEditorAddon, type EditorAddon } from './addons';
 import {
@@ -118,6 +119,7 @@ export function Scratchpad({
   const [submitting, setSubmitting] = useState(false);
   const [pretesting, setPretesting] = useState(false);
   const [submitResult, setSubmitResult] = useState<any>(null);
+  const [submitResultOpened, setSubmitResultOpened] = useState(false);
   const [pretestResult, setPretestResult] = useState<any>(null);
   const [pretestRid, setPretestRid] = useState<string>();
   const [error, setError] = useState('');
@@ -133,6 +135,10 @@ export function Scratchpad({
   const [readyAddon, setReadyAddon] = useState<EditorAddon | null>(null);
   const judgePending = useRef(false);
   const pretestUpdate = useRecordSocket(pretestRid);
+  const submitUpdate = useRecordSocket(submitResult?.rid ? String(submitResult.rid) : undefined);
+  const displayedSubmitResult = submitResult
+    ? { ...submitResult, ...submitUpdate }
+    : null;
 
   useEffect(() => {
     if (pretestUpdate?.error) {
@@ -282,7 +288,8 @@ export function Scratchpad({
       captureAction(pretest ? 'self_test' : 'submit');
       if (!pretest && onSubmit) {
         const res = await onSubmit(lang, code);
-        setSubmitResult(res);
+        setSubmitResult({ status: STATUS.STATUS_WAITING, ...res });
+        setSubmitResultOpened(!!res?.rid);
       } else {
         const addonReceipt = pretest ? null : await editorAddon?.beforeSubmit(code, lang);
         const proctorHeaders = await proctorSubmissionHeaders(proctorEnabled, resolvedSubmitUrl,
@@ -305,8 +312,8 @@ export function Scratchpad({
           if (data.rid) setPretestRid(String(data.rid));
         } else {
           await addonReceipt?.complete(data);
-          if (data.rid) navigate(buildUrl('record_detail', { rid: data.rid }, getSubmissionRecordQuery(navigationSearch, args.tdoc, 'editor')));
-          else setSubmitResult(data);
+          setSubmitResult({ status: STATUS.STATUS_WAITING, ...data });
+          setSubmitResultOpened(!!data.rid);
         }
       }
     } catch (err: any) {
@@ -318,9 +325,8 @@ export function Scratchpad({
       if (pretest) setPretesting(false);
       else setSubmitting(false);
     }
-  }, [buildUrl, cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, editorAddon,
-    resolvedSubmitUrl, input, navigate, addonReady, captureAction,
-    proctorPid, proctorEnabled, navigationSearch, args.tdoc, submissionDisabled]);
+  }, [cooldownUntil.pretest, cooldownUntil.submit, lang, code, t, onSubmit, editorAddon,
+    resolvedSubmitUrl, input, addonReady, captureAction, proctorPid, proctorEnabled, submissionDisabled]);
 
   const pretestCooldown = Math.max(0, Math.ceil((cooldownUntil.pretest - clock) / 1000));
   const submitCooldown = Math.max(0, Math.ceil((cooldownUntil.submit - clock) / 1000));
@@ -341,7 +347,8 @@ export function Scratchpad({
             <Button
               variant="subtle"
               size="xs"
-              onClick={() => navigate(buildUrl('record_detail', { rid: result.rid }, getSubmissionRecordQuery(navigationSearch, args.tdoc)))}
+              onClick={() => navigate(buildUrl('record_detail', { rid: result.rid },
+                getSubmissionRecordQuery(navigationSearch, args.tdoc, 'editor')))}
             >
               {t('View Record')}
             </Button>
@@ -557,7 +564,7 @@ export function Scratchpad({
                         <div className="hydro-scratchpad-console__body">
                           {activePanel === 'records' ? (
                             <div className="hydro-scratchpad-console__panel">
-                              {renderResult(submitResult, t('No records found'))}
+                              {renderResult(displayedSubmitResult, t('No records found'))}
                             </div>
                           ) : (
                             <div className="hydro-scratchpad-io-grid">
@@ -608,6 +615,24 @@ export function Scratchpad({
           </Allotment.Pane>
         </Allotment>
       </Paper>
+
+      {displayedSubmitResult && (
+        <SubmissionResultModal
+          opened={submitResultOpened}
+          record={displayedSubmitResult}
+          onClose={() => {
+            setSubmitResultOpened(false);
+            if (displayedSubmitResult.status === STATUS.STATUS_ACCEPTED) {
+              if (onClose) onClose();
+              else void navigate(getProblemEditorUrl(window.location.href, false), { replace: true });
+            }
+          }}
+          onViewDetails={() => {
+            void navigate(buildUrl('record_detail', { rid: displayedSubmitResult.rid },
+              getSubmissionRecordQuery(navigationSearch, args.tdoc, 'editor')));
+          }}
+        />
+      )}
 
       <Drawer
         opened={settingsOpened}
