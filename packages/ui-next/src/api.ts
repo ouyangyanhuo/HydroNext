@@ -16,7 +16,7 @@ export { CodeEditor } from './components/editor/code-editor';
 // Components
 export { Link, type LinkProps } from './components/link';
 export { UserAvatar } from './components/user/user-avatar';
-export { UserLink } from './components/user/user-link';
+export { UserLink, type UserLinkProps } from './components/user/user-link';
 // Context
 export { type PageData, usePageData, useSetPageData, useUiContext, useUserContext } from './context/page-data';
 export { type RouterState, useNavigate, useRouterState } from './context/router';

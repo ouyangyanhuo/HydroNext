@@ -198,7 +198,7 @@ function ProblemMeta({ pdoc, owner }: { pdoc: any, owner?: any }) {
       </div>
       <div className="hydro-problem-meta__secondary">
         {stats.map((item) => (
-          <Group key={item.label} gap={6} wrap="nowrap">
+          <Group key={item.label} gap={6} wrap="nowrap" className="shrink-0">
             <Text size="xs" c="dimmed">{item.label}</Text>
             <Text size="xs" fw={750}>{item.value}</Text>
           </Group>
@@ -206,9 +206,9 @@ function ProblemMeta({ pdoc, owner }: { pdoc: any, owner?: any }) {
         {owner && (
           <div className="ml-auto flex min-w-0 items-center gap-2">
             <UserAvatar user={owner} size={24} link={false} />
-            <div className="min-w-0">
-              <Text size="xs" c="dimmed" fw={700}>{t('Uploaded By')}</Text>
-              <UserLink user={owner} size="sm" />
+            <div className="min-w-0 max-w-[110px] sm:max-w-[160px] md:max-w-[220px]">
+              <Text size="xs" c="dimmed" fw={700} truncate>{t('Uploaded By')}</Text>
+              <UserLink user={owner} size="sm" truncate />
             </div>
           </div>
         )}
