@@ -685,7 +685,7 @@ export default function ProblemDetailPage() {
   const submitQuery = getProblemNavigationQuery(window.location.search, args.tdoc);
   const submitUrl = getProblemSubmitUrl(window.location.pathname, submitQuery)
     || buildUrl('problem_submit', { pid: submitPid }, submitQuery);
-  const codeLang = ui.codeLang || user.codeLang;
+  const codeLang = user.codeLang || ui.codeLang;
   // Draft recovery and language-specific/personal templates are resolved in Scratchpad.
   const defaultCode = rdoc?.code || '';
   const switchScratchpad = (open: boolean) => {
@@ -774,7 +774,7 @@ export default function ProblemDetailPage() {
           key={`${ui.domainId}/${pdoc.docId}/${tid || ''}`}
           pid={pdoc.pid || pdoc.docId}
           langs={scratchpadLangs}
-          defaultLang={rdoc?.lang || codeLang}
+          defaultLang={codeLang || rdoc?.lang}
           defaultCode={defaultCode}
           statement={statement}
           title={`${pdoc.pid || pdoc.docId}. ${title}`}

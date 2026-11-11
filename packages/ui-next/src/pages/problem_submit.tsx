@@ -111,6 +111,7 @@ function CodeSubmitPage() {
           />
 
           <CodeEditor
+            documentOnlySuggestions
             value={code}
             onChange={setCode}
             language={lang}

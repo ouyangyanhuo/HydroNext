@@ -539,6 +539,7 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
             { name: 'zh.md', lang: 'zh', content: '中文题面' },
         ],
         renderedStatements: { 'custom.demo': 'Rendered plugin statement' },
+        rdoc: { _id: '1234567890abcdef12345678', lang: 'cc', code: 'old C++ submission', status: 1 },
         canSubmitProblem: true, canEditProblem: false,
     };
     const Page = component('../src/pages/problem_detail.tsx', {
@@ -549,7 +550,8 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
         '@/hooks/use-permission': { PERM: {}, PRIV: {}, hasPermValue: () => false, hasPrivValue: () => false, useHasPerm: () => false },
         '@/stores/session': { useSessionStore: (select: any) => select({ language: 'en' }) },
         '@/context/page-data': {
-            usePageData: () => ({ args }), useUiContext: () => ({ domainId: 'team' }), useUserContext: () => ({ _id: viewerId }),
+            usePageData: () => ({ args }), useUiContext: () => ({ domainId: 'team', codeLang: 'cc' }),
+            useUserContext: () => ({ _id: viewerId, codeLang: 'py' }),
             useSetPageData: () => (update: any, preserve: boolean) => updates.push({ data: update({ args }), preserve }),
         },
         '@/components/common/problem-navigation': { ProblemNavigation: () => null },
@@ -561,7 +563,7 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
             content, enableCodeCopy ? h('button', { 'data-code-copy': true }, 'Copy code') : null) },
         '@/components/editor/submission-context': component('../src/components/editor/submission-context.ts', {}, { URLSearchParams }),
         '@/components/editor/scratchpad': {
-            Scratchpad: ({ onClose, statement }: any) => h('section', { 'data-editor': true },
+            Scratchpad: ({ onClose, statement, defaultLang }: any) => h('section', { 'data-editor': true, 'data-default-lang': defaultLang },
                 statement, h('button', { onClick: onClose }, 'Close editor')),
         },
     }, { URLSearchParams, document: dom.window.document }).default;
@@ -589,6 +591,8 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
         const length = dom.window.history.length;
         await act(async () => button('Enter Online Programming Mode', view.host).click());
         assert.ok(view.host.querySelector('[data-editor]'));
+        assert.equal(view.host.querySelector('[data-editor]')!.getAttribute('data-default-lang'), 'py',
+            'fresh user preferences take priority over stale UiContext defaults');
         assert.equal(view.host.querySelectorAll('[data-code-copy]').length, 3,
             'ordinary submitters can copy statement code without problem edit permission');
         args = { ...args, canSubmitProblem: false };

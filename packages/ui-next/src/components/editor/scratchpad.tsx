@@ -30,6 +30,7 @@ import {
   saveStoredEditorConfig,
 } from './code-editor';
 import { getCodeTemplate } from './code-templates';
+import { resolveLanguagePreference } from './editor-language';
 import { getProblemSubmitUrl, resolveSubmissionContext } from './submission-context';
 
 interface ScratchpadProps {
@@ -105,12 +106,21 @@ export function Scratchpad({
     userId, domainId: ui.domainId || '', pid, submitPid: submissionContext.pid, tid: submissionContext.tid,
     ui: { editorAddons: ui.editorAddons }, translate: t,
   }), [userId, ui.domainId, pid, submissionContext.pid, submissionContext.tid, ui.editorAddons, t]);
-  const [lang, setLang] = useState(() => {
-    const cachedLang = getStoredString(`${cacheKey}#lang`, defaultLang);
-    if (cachedLang && langOptions.some((option) => option.value === cachedLang)) return cachedLang;
-    if (defaultLang && langOptions.some((option) => option.value === defaultLang)) return defaultLang;
-    return langOptions[0]?.value || '';
+  const preferredLanguage = resolveLanguagePreference(langOptions.map((option) => option.value), defaultLang || user.codeLang || ui.codeLang || '');
+  const [languageSelection, setLanguageSelection] = useState(() => {
+    const cachedLang = getStoredString(`${cacheKey}#lang`, '');
+    const cachedPreference = getStoredString(`${cacheKey}#defaultLang`, '');
+    const cachedAllowed = langOptions.some((option) => option.value === cachedLang);
+    const value = preferredLanguage && cachedPreference !== preferredLanguage ? preferredLanguage
+      : cachedAllowed ? cachedLang : preferredLanguage || langOptions[0]?.value || '';
+    return { value, preference: preferredLanguage };
   });
+  const lang = languageSelection.value;
+  if (languageSelection.preference !== preferredLanguage) {
+    // Apply a saved external preference before committing the child editor; do not change its code.
+    setLanguageSelection({ value: preferredLanguage || lang, preference: preferredLanguage });
+  }
+  const setLang = (value: string) => setLanguageSelection({ value, preference: preferredLanguage });
   const [code, setCode] = useState(() => {
     const cached = localStorage.getItem(cacheKey);
     return cached ?? (defaultCode || getCodeTemplate(lang, user.codeTemplate) || '');
@@ -205,7 +215,8 @@ export function Scratchpad({
 
   useEffect(() => {
     if (lang) localStorage.setItem(`${cacheKey}#lang`, lang);
-  }, [cacheKey, lang]);
+    localStorage.setItem(`${cacheKey}#defaultLang`, preferredLanguage);
+  }, [cacheKey, lang, preferredLanguage]);
 
   const displayedPretestResult = pretestUpdate
     ? { ...(pretestResult || {}), ...pretestUpdate, rid: pretestRid }
@@ -508,6 +519,7 @@ export function Scratchpad({
                 <Allotment vertical>
                   <Allotment.Pane minSize={260}>
                     {addonReady ? <CodeEditor
+                      documentOnlySuggestions
                       value={code}
                       onChange={setCode}
                       onContentChange={captureChange}

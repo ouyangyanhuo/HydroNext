@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { test } from 'node:test';
 import postcss from 'postcss';
+import { resolveLanguagePreference } from '../src/components/editor/editor-language.ts';
 import * as submissionContext from '../src/components/editor/submission-context.ts';
 import * as statuses from '../src/components/record/status-map.ts';
 import { objectiveCaseId } from '../src/utils/objective-answers.ts';
@@ -33,6 +34,7 @@ test('formal editor submissions stay in a compact live modal and close according
         Object.defineProperty(globalThis, key, { value, configurable: true, writable: true });
     }
     dom.window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+    dom.window.HTMLElement.prototype.scrollIntoView = () => {};
     const { act, createElement: h, StrictMode } = require('react');
     const { createRoot } = require('react-dom/client');
     const mantine = require('@mantine/core');
@@ -56,7 +58,7 @@ test('formal editor submissions stay in a compact live modal and close according
     const notices: any[] = [];
     const navigated: string[] = [];
     const updates = new Map<string, any>();
-    const user = { _id: 7 };
+    const user: { _id: number, codeLang?: string } = { _id: 7 };
     const ui = { domainId: 'team' };
     const args = { pdoc: { docId: 42, config: { type: 'default' } }, tdoc: { docId: tid, proctorEnabled: true } };
     const addon = {
@@ -88,9 +90,10 @@ test('formal editor submissions stay in a compact live modal and close according
         './addons': { createEditorAddon: () => addon },
         './code-templates': { getCodeTemplate: () => 'int main() {}' },
         './submission-context': submissionContext,
+        './editor-language': { resolveLanguagePreference },
         './code-editor': {
-            CodeEditor: ({ value, onChange }: any) => h('textarea', {
-                'aria-label': 'Code', value, onChange: (event: any) => onChange(event.target.value),
+            CodeEditor: ({ value, onChange, documentOnlySuggestions }: any) => h('textarea', {
+                'aria-label': 'Code', 'data-document-only': documentOnlySuggestions, value, onChange: (event: any) => onChange(event.target.value),
             }),
             loadStoredEditorConfig: () => ({}), saveStoredEditorConfig() {}, EDITOR_THEME_OPTIONS: [],
         },
@@ -117,7 +120,7 @@ test('formal editor submissions stay in a compact live modal and close according
     mocks['@/components/record/submission-result-modal'] = loadComponent('../src/components/record/submission-result-modal.tsx');
     const { Scratchpad } = loadComponent('../src/components/editor/scratchpad.tsx');
     const root = createRoot(document.getElementById('root'));
-    const langs = { cc: { display: 'C++', pretest: true } };
+    const langs = { cc: { display: 'C++', pretest: true }, py: { display: 'Python' }, js: { display: 'NodeJS' } };
     const render = async (key = 'first') => {
         await act(async () => root.render(h(mantine.MantineProvider, { env: 'test' }, h(StrictMode, {}, h(Scratchpad, {
             key, pid: 'P42', langs, onClose: () => { quitCount++; },
@@ -135,6 +138,7 @@ test('formal editor submissions stay in a compact live modal and close according
     };
     try {
         await render();
+        assert.equal(document.querySelector('[aria-label=Code]')!.getAttribute('data-document-only'), 'true');
         await submit();
         assert.equal(navigated.length, 0, 'formal submissions must not leave the editor');
         assert.deepEqual(completed, ['record-1'], 'replay association is retained');
@@ -202,6 +206,32 @@ test('formal editor submissions stay in a compact live modal and close according
         await submit();
         assert.equal(document.querySelector('[role=dialog]'), null, 'failed submit requests must not open a fabricated result');
         assert.equal(notices.at(-1).message, 'Denied');
+
+        const cacheKey = `7/team/P42@${tid}`;
+        const preservedCode = 'int mySolve() { return 42; }';
+        localStorage.setItem(cacheKey, preservedCode);
+        localStorage.setItem(`${cacheKey}#lang`, 'cc');
+        localStorage.removeItem(`${cacheKey}#defaultLang`);
+        user.codeLang = 'py';
+        await render('preferred-python');
+        assert.equal(localStorage.getItem(`${cacheKey}#lang`), 'py', 'a new preference replaces legacy automatic language caches');
+        assert.equal(document.querySelector<HTMLTextAreaElement>('[aria-label=Code]')!.value, preservedCode,
+            'changing the preferred language must not overwrite existing code');
+        const languageInput = () => document.querySelector<HTMLInputElement>('.hydro-scratchpad-language-select input')!;
+        assert.equal(languageInput().value, 'Python');
+        await act(async () => { languageInput().click(); });
+        await act(async () => {
+            [...document.querySelectorAll<HTMLElement>('[role=option]')].find((option) => option.textContent === 'C++')!.click();
+        });
+        await render('manual-selection');
+        assert.equal(languageInput().value, 'C++', 'manual selections persist until the default preference changes again');
+        user.codeLang = 'js';
+        await render('manual-selection');
+        assert.equal(languageInput().value, 'NodeJS', 'a changed default also updates an already mounted editor');
+        assert.equal(document.querySelector<HTMLTextAreaElement>('[aria-label=Code]')!.value, preservedCode);
+        user.codeLang = 'java';
+        await render('disallowed-preference');
+        assert.equal(languageInput().value, 'NodeJS', 'a disallowed preference cannot add a language outside the problem allowlist');
     } finally {
         await act(async () => root.unmount());
         dom.window.close();

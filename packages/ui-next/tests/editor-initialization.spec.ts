@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { buildSync } from 'esbuild';
@@ -33,39 +34,65 @@ test('editor uses updated readOnly, language and value when Monaco finishes load
         .replace(/async function getMonaco\(\) \{[\s\S]*?\n\}\n\ninterface CodeEditorProps/,
             'async function getMonaco() { return globalThis.__loadMonaco(); }\n\ninterface CodeEditorProps');
     const built = buildSync({
-        stdin: { contents: source, sourcefile: sourcePath, loader: 'tsx', resolveDir: process.cwd() },
+        stdin: { contents: source, sourcefile: sourcePath, loader: 'tsx', resolveDir: dirname(sourcePath) },
         bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', jsx: 'automatic',
     });
     const module = { exports: {} as any };
     runInNewContext(built.outputFiles[0].text, {
-        module, exports: module.exports, require, document, localStorage, __loadMonaco: () => monacoReady,
+        module, exports: module.exports, require, document, window, localStorage, __loadMonaco: () => monacoReady,
     });
     const root = createRoot(document.getElementById('root'));
     let pasted: any;
     const pasteCounts: number[] = [];
-    const model = { language: '', getValueInRange: () => '🙂abc' };
+    let modelDisposed = false;
+    const selectors: any[] = [];
+    const model = {
+        language: '', value: '', getValueInRange: () => '🙂abc', getValue() { return this.value; },
+        updateOptions() {}, dispose() { modelDisposed = true; },
+    };
     const options: any = {};
     const editor = {
         value: '', getValue() { return this.value; }, setValue(value: string) { this.value = value; },
         updateOptions(next: any) { Object.assign(options, next); }, getModel: () => model, dispose() {},
         onDidPaste(callback: any) { pasted = callback; },
     };
-    const render = (props: any) => root.render(h(MantineProvider, {}, h(module.exports.CodeEditor, props)));
+    const render = (props: any) => root.render(h(MantineProvider, {}, h(module.exports.CodeEditor, { ...props, documentOnlySuggestions: true })));
     try {
         await act(async () => render({ value: '', language: 'c', readOnly: true }));
         await act(async () => render({
             value: 'int main() {}', language: 'cc', readOnly: false, fontSize: 16, onPaste: (count: number) => pasteCounts.push(count),
         }));
-        await act(async () => release({ editor: {
+        await act(async () => release({ Uri: { parse: (value: string) => ({ scheme: value.split(':')[0] }) }, languages: {
+            getLanguages: () => [{ id: 'c' }, { id: 'cpp' }, { id: 'python' }],
+            setMonarchTokensProvider() {}, setLanguageConfiguration() {},
+            registerCompletionItemProvider(selector: any) { selectors.push(selector); }, CompletionItemKind: {},
+        }, editor: {
+            createModel: (value: string, language: string) => {
+                model.value = value;
+                model.language = language;
+                return model;
+            },
             create: (_element: any, initial: any) => {
                 Object.assign(options, initial);
-                editor.value = initial.value;
+                editor.value = initial.model?.getValue() ?? initial.value;
                 return editor;
             },
             setTheme() {}, setModelLanguage: (_model: any, language: string) => { model.language = language; },
         } }));
         assert.equal(options.readOnly, false);
         assert.equal(options.fontSize, 16);
+        assert.equal(options.quickSuggestions.other, true);
+        assert.equal(options.quickSuggestions.comments, false);
+        assert.equal(options.quickSuggestions.strings, false);
+        assert.equal(options.wordBasedSuggestions, 'off');
+        assert.equal(options.snippetSuggestions, 'none');
+        assert.equal(options.inlineSuggest.enabled, false);
+        assert.equal(options.suggestOnTriggerCharacters, false);
+        assert.equal(options.tabCompletion, 'on');
+        assert.equal(options.acceptSuggestionOnEnter, 'off');
+        assert.equal(selectors.length, 1);
+        assert.equal(selectors[0].exclusive, true);
+        assert.equal(selectors[0].scheme, 'hydro-user-code');
         assert.equal(editor.getValue(), 'int main() {}');
         assert.equal(model.language, 'cpp');
         pasted({ range: {} });
@@ -75,8 +102,13 @@ test('editor uses updated readOnly, language and value when Monaco finishes load
         assert.equal(options.readOnly, true);
         await act(async () => render({ value: 'editable', language: 'c', readOnly: false }));
         assert.equal(options.readOnly, false);
+        dom.window.HydroCodeLangs = { custom: { monaco: 'python' } };
+        await act(async () => render({ value: 'print(1)', language: 'custom', readOnly: false }));
+        assert.equal(model.language, 'python', 'use the server-provided editor mode, not the compiler ID');
+        assert.equal(editor.getValue(), 'print(1)');
     } finally {
         await act(async () => root.unmount());
+        assert.equal(modelDisposed, true, 'user-code models are owned and disposed with their editor');
         dom.window.close();
         for (const [key, descriptor] of previous) {
             if (descriptor) Object.defineProperty(globalThis, key, descriptor);

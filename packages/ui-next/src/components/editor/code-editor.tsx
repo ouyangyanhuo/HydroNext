@@ -2,37 +2,14 @@
 import { Center, Loader } from '@mantine/core';
 import themeList from 'monaco-themes/themes/themelist.json';
 import { useEffect, useRef, useState } from 'react';
-
-const LANG_MAP: Record<string, string> = {
-  bash: 'shell',
-  c: 'c',
-  cc: 'cpp', 'cc.cc98': 'cpp', 'cc.cc98o2': 'cpp',
-  'cc.cc11': 'cpp', 'cc.cc11o2': 'cpp',
-  'cc.cc14': 'cpp', 'cc.cc14o2': 'cpp',
-  'cc.cc17': 'cpp', 'cc.cc17o2': 'cpp',
-  'cc.cc20': 'cpp', 'cc.cc20o2': 'cpp',
-  cs: 'csharp',
-  go: 'go',
-  hs: 'haskell',
-  java: 'java',
-  js: 'javascript',
-  kt: 'kotlin', 'kt.jvm': 'kotlin',
-  pas: 'pascal',
-  php: 'php',
-  py: 'python', 'py.py2': 'python', 'py.py3': 'python', 'py.pypy3': 'python',
-  r: 'r',
-  rb: 'ruby',
-  rs: 'rust',
-  ts: 'typescript',
-};
-
-function resolveMonacoLang(lang: string): string {
-  return LANG_MAP[lang] || lang || 'plaintext';
-}
+import { CODE_MODEL_SCHEME, installDocumentCompletions } from './document-completions';
+import { resolveEditorLanguage } from './editor-language';
+import { ensureEditorLanguage } from './language-support';
 
 let monacoInstance: typeof import('monaco-editor') | null = null;
 const themeModules = import.meta.glob('../../../../../node_modules/monaco-themes/themes/*.json');
 const loadedThemes: Record<string, boolean> = {};
+let modelSequence = 0;
 
 export const EDITOR_THEME_OPTIONS = [
   { value: '', label: 'Default' },
@@ -60,7 +37,6 @@ export function saveStoredEditorConfig(config: EditorConfig) {
 
 async function getMonaco() {
   if (monacoInstance) return monacoInstance;
-  const m = await import('monaco-editor');
   (self as any).MonacoEnvironment = {
     getWorker(_: any, label: string) {
       const lang = label.toLowerCase();
@@ -79,6 +55,7 @@ async function getMonaco() {
       return import('monaco-editor/editor/editor.worker.js?worker').then(({ default: Worker }) => new Worker());
     },
   };
+  const m = await import('monaco-editor');
   monacoInstance = m;
   return m;
 }
@@ -97,6 +74,7 @@ interface CodeEditorProps {
   theme?: string;
   minimap?: boolean;
   wordWrap?: 'on' | 'off';
+  documentOnlySuggestions?: boolean;
 }
 
 function getDefaultTheme(theme?: string) {
@@ -140,6 +118,7 @@ export function CodeEditor({
   theme,
   minimap = false,
   wordWrap = 'on',
+  documentOnlySuggestions = false,
 }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<any>(null);
@@ -164,14 +143,20 @@ export function CodeEditor({
 
   useEffect(() => {
     let disposed = false;
+    let ownedModel: import('monaco-editor').editor.ITextModel | undefined;
     getMonaco().then((monaco) => {
       if (disposed || !containerRef.current) return;
       // Monaco loads asynchronously; use the latest committed props, not mount-time readOnly.
       const initial = optionsRef.current;
       monacoRef.current = monaco;
+      if (documentOnlySuggestions) {
+        installDocumentCompletions(monaco);
+        ownedModel = monaco.editor.createModel(initial.value, resolveEditorLanguage(initial.language),
+          monaco.Uri.parse(`${CODE_MODEL_SCHEME}:///model/${++modelSequence}`));
+        ownedModel.updateOptions({ tabSize: initial.tabSize, insertSpaces: true });
+      }
       const editor = monaco.editor.create(containerRef.current, {
-        value: initial.value,
-        language: resolveMonacoLang(initial.language),
+        ...(ownedModel ? { model: ownedModel } : { value: initial.value, language: resolveEditorLanguage(initial.language) }),
         readOnly: initial.readOnly,
         minimap: { enabled: initial.minimap },
         scrollBeyondLastLine: false,
@@ -181,6 +166,17 @@ export function CodeEditor({
         tabSize: initial.tabSize,
         insertSpaces: true,
         wordWrap: initial.wordWrap,
+        quickSuggestions: { other: true, comments: false, strings: false },
+        suggestOnTriggerCharacters: !documentOnlySuggestions,
+        wordBasedSuggestions: documentOnlySuggestions ? 'off' : 'currentDocument',
+        ...(documentOnlySuggestions ? {
+          tabCompletion: 'on',
+          snippetSuggestions: 'none',
+          inlineSuggest: { enabled: false },
+          parameterHints: { enabled: false },
+          acceptSuggestionOnEnter: 'off',
+          suggest: { showSnippets: false, showWords: true, showInlineDetails: false },
+        } as const : {}),
         theme: getDefaultTheme(initial.theme || loadStoredEditorConfig().theme),
       });
       editorRef.current = editor;
@@ -205,10 +201,11 @@ export function CodeEditor({
     return () => {
       disposed = true;
       editorRef.current?.dispose();
+      ownedModel?.dispose();
       editorRef.current = null;
       monacoRef.current = null;
     };
-  }, []);
+  }, [documentOnlySuggestions]);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -237,8 +234,19 @@ export function CodeEditor({
     const editor = editorRef.current;
     const monaco = monacoRef.current;
     const model = editor?.getModel();
-    if (!editor || !monaco || !model) return;
-    monaco.editor.setModelLanguage(model, resolveMonacoLang(language));
+    if (!editor || !monaco || !model) return undefined;
+    const languageId = resolveEditorLanguage(language);
+    monaco.editor.setModelLanguage(model, languageId);
+    // Providers are shared and installed once, without changing the model or its replay history.
+    let active = true;
+    void ensureEditorLanguage(monaco, languageId).then(() => {
+      if (active && editorRef.current === editor && editor.getModel() === model && model.getLanguageId?.() !== languageId) {
+        monaco.editor.setModelLanguage(model, languageId);
+      }
+    }).catch((error) => {
+      if (active) console.warn('Failed to load editor language hints', languageId, error);
+    });
+    return () => { active = false; };
   }, [language, loading]);
 
   return (
