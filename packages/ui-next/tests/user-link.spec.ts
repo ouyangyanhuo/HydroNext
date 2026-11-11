@@ -101,11 +101,13 @@ test('UserLink supports truncate and title tooltip', async () => {
     const a = view.host.querySelector('a');
     assert.ok(a);
     assert.ok(a.className.includes('truncate'));
+    assert.ok(a.className.includes('whitespace-nowrap'));
     assert.ok(a.className.includes('inline-block'));
     assert.equal(a.getAttribute('title'), 'admin123 (adm)');
     const text = a.querySelector('.mantine-Text-root');
     assert.ok(text);
     assert.ok(text.className.includes('truncate'));
+    assert.ok(text.className.includes('whitespace-nowrap'));
     assert.ok(text.className.includes('max-w-[110px]'));
     await view.close();
 });

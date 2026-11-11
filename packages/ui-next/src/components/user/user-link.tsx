@@ -46,7 +46,7 @@ export function UserLink({
       title={truncate ? fullName : undefined}
       className={[
         link ? 'hover:underline' : '',
-        truncate ? 'truncate' : '',
+        truncate ? 'truncate whitespace-nowrap' : '',
         className || '',
       ].filter(Boolean).join(' ')}
     >
@@ -58,7 +58,7 @@ export function UserLink({
     <Link
       to="user_detail"
       params={{ uid: user._id }}
-      className={`no-underline${truncate ? ' inline-block max-w-full truncate align-bottom' : ''}`}
+      className={`no-underline${truncate ? ' inline-block max-w-full truncate whitespace-nowrap align-bottom' : ''}`}
       title={fullName}
     >
       {text}

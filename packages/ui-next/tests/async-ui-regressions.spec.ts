@@ -529,6 +529,7 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
     dom.reconfigure({ url: `https://oj.example/d/team/p/P2${search}` });
     dom.window.history.replaceState({ retained: true }, '', dom.window.location.href);
     const updates: any[] = [];
+    let viewerId = 7;
     args = {
         pdoc: { docId: 2, pid: 'P2', title: 'Problem', content: '', config: {} },
         statements: [
@@ -544,11 +545,11 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
         '@/utils/problem-navigation': component('../src/utils/problem-navigation.ts', {}, { URLSearchParams }),
         '@/utils/lang-display': { getLangDisplay: (value: string) => value },
         '@/utils/i18n-content': { extractLocalizedContent: (value: string) => value },
-        '@/hooks/use-current-user': { useIsLoggedIn: () => true },
+        '@/hooks/use-current-user': { useIsLoggedIn: () => viewerId > 0 },
         '@/hooks/use-permission': { PERM: {}, PRIV: {}, hasPermValue: () => false, hasPrivValue: () => false, useHasPerm: () => false },
         '@/stores/session': { useSessionStore: (select: any) => select({ language: 'en' }) },
         '@/context/page-data': {
-            usePageData: () => ({ args }), useUiContext: () => ({ domainId: 'team' }), useUserContext: () => ({ _id: 2 }),
+            usePageData: () => ({ args }), useUiContext: () => ({ domainId: 'team' }), useUserContext: () => ({ _id: viewerId }),
             useSetPageData: () => (update: any, preserve: boolean) => updates.push({ data: update({ args }), preserve }),
         },
         '@/components/common/problem-navigation': { ProblemNavigation: () => null },
@@ -588,10 +589,27 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
         const length = dom.window.history.length;
         await act(async () => button('Enter Online Programming Mode', view.host).click());
         assert.ok(view.host.querySelector('[data-editor]'));
-        assert.equal(view.host.querySelector('[data-code-copy]'), null, 'non-editors do not see statement code-copy controls');
+        assert.equal(view.host.querySelectorAll('[data-code-copy]').length, 3,
+            'ordinary submitters can copy statement code without problem edit permission');
+        args = { ...args, canSubmitProblem: false };
+        await view.render(h(Page));
+        assert.equal(view.host.querySelector('[data-code-copy]'), null, 'viewing a statement alone does not grant the copy control');
         args = { ...args, canEditProblem: true };
         await view.render(h(Page));
-        assert.ok(view.host.querySelector('[data-code-copy]'), 'problem editors retain statement code-copy controls');
+        assert.equal(view.host.querySelector('[data-code-copy]'), null, 'edit permission cannot replace submission permission');
+        args = { ...args, canSubmitProblem: true };
+        await view.render(h(Page));
+        assert.ok(view.host.querySelector('[data-code-copy]'), 'editors with submission permission retain the copy control');
+        viewerId = 0;
+        await view.render(h(Page));
+        assert.equal(view.host.querySelector('[data-code-copy]'), null, 'guests cannot inherit a copy control from stale page permissions');
+        viewerId = 7;
+        const originalStatements = args.statements;
+        args = { ...args, canEditProblem: false, statements: undefined, pdoc: { ...args.pdoc, content: 'Legacy statement' } };
+        await view.render(h(Page));
+        assert.equal(view.host.querySelectorAll('[data-code-copy]').length, 1, 'legacy statement content uses the same submission gate');
+        args = { ...args, statements: originalStatements };
+        await view.render(h(Page));
         assert.equal(dom.window.location.search, `${search}&mode=code`);
         assert.equal(dom.window.history.length, length + 1);
         assert.equal(dom.window.history.state.retained, true);
@@ -602,6 +620,7 @@ test('problem editor mode survives remount and its entry/exit preserve URL conte
         await act(async () => button('Close editor', view.host).click());
         assert.equal(dom.window.location.search, search);
         assert.equal(view.host.querySelector('[data-editor]'), null);
+        assert.equal(view.host.querySelector('[data-code-copy]'), null, 'copy controls remain scoped to online programming mode');
         assert.ok(button('Enter Online Programming Mode', view.host));
         args = { ...args, canViewProblemFiles: true, pdoc: { ...args.pdoc, data: [], config: { type: 'objective', count: 3 } } };
         await view.render(h(Page, { key: 'objective' }));

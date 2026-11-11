@@ -196,18 +196,18 @@ function ProblemMeta({ pdoc, owner }: { pdoc: any, owner?: any }) {
           </div>
         ))}
       </div>
-      <div className="hydro-problem-meta__secondary">
+      <div className="hydro-problem-meta__secondary flex-nowrap">
         {stats.map((item) => (
-          <Group key={item.label} gap={6} wrap="nowrap" className="shrink-0">
-            <Text size="xs" c="dimmed">{item.label}</Text>
-            <Text size="xs" fw={750}>{item.value}</Text>
+          <Group key={item.label} gap={4} wrap="nowrap" className="shrink-0">
+            <Text size="xs" c="dimmed" className="whitespace-nowrap">{item.label}</Text>
+            <Text size="xs" fw={750} className="whitespace-nowrap">{item.value}</Text>
           </Group>
         ))}
         {owner && (
-          <div className="ml-auto flex min-w-0 items-center gap-2">
-            <UserAvatar user={owner} size={24} link={false} />
-            <div className="min-w-0 max-w-[110px] sm:max-w-[160px] md:max-w-[220px]">
-              <Text size="xs" c="dimmed" fw={700} truncate>{t('Uploaded By')}</Text>
+          <div className="ml-auto flex min-w-0 shrink items-center gap-1.5">
+            <UserAvatar user={owner} size={24} link={false} className="shrink-0" />
+            <div className="min-w-0 max-w-[120px] sm:max-w-[180px] md:max-w-[240px]">
+              <Text size="xs" c="dimmed" fw={700} truncate className="whitespace-nowrap leading-tight">{t('Uploaded By')}</Text>
               <UserLink user={owner} size="sm" truncate />
             </div>
           </div>
@@ -663,6 +663,7 @@ export default function ProblemDetailPage() {
     title={args.tdoc ? extractLocalizedContent(args.tdoc.title, sessionLanguage) : ''}
   />;
   const canSubmitProblem = Boolean(args.canSubmitProblem ?? (tid ? args.mode === 'contest' : fallbackCanSubmit));
+  const canCopyStatementCode = scratchpadOpen && isAuthenticated && canSubmitProblem;
   const canEditProblem = Boolean(args.canEditProblem ?? hasPermValue(user.perm, PERM.PERM_EDIT_PROBLEM));
   const canConfigureProblem = Boolean(args.canConfigureProblem ?? (canEditProblem && !pdoc.reference));
   const canRejudgeProblem = Boolean(args.canRejudgeProblem ?? hasPermValue(user.perm, PERM.PERM_REJUDGE_PROBLEM));
@@ -759,9 +760,9 @@ export default function ProblemDetailPage() {
             : entry.content || '')}
           language={activeLang}
           pid={pid}
-          enableCodeCopy={scratchpadOpen && canEditProblem}
+          enableCodeCopy={canCopyStatementCode}
         />
-      )) : <StatementRenderer content={pdoc.content || ''} language={activeLang} pid={pid} enableCodeCopy={scratchpadOpen && canEditProblem} />}
+      )) : <StatementRenderer content={pdoc.content || ''} language={activeLang} pid={pid} enableCodeCopy={canCopyStatementCode} />}
     </Stack>
   );
 

@@ -2910,6 +2910,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 
 .hydro-problem-meta__secondary {
   display: flex;
+  flex-wrap: nowrap;
   min-height: 36px;
   gap: 18px;
   align-items: center;
@@ -4459,7 +4460,7 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   .hydro-problem-meta__primary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hydro-problem-meta__item:nth-child(2) { border-right: 0; }
   .hydro-problem-meta__item:nth-child(-n+2) { border-bottom: 1px solid var(--hydro-border); }
-  .hydro-problem-meta__secondary { flex-wrap: wrap; gap: 8px 16px; }
+  .hydro-problem-meta__secondary { flex-wrap: nowrap; gap: 8px 12px; }
 }
 
 .hydro-top-nav :is(.mantine-Button-root, .mantine-ActionIcon-root, .mantine-UnstyledButton-root) {
