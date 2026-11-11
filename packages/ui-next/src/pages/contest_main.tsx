@@ -261,9 +261,7 @@ export default function ContestMainPage() {
               component={Link}
               to="contest_team"
               size="xs"
-              variant="filled"
               leftSection={<IconUsers size={15} stroke={1.9} />}
-              className="hydro-contest-header-actions__team"
             >
               {t('My Teams')}
             </Button>

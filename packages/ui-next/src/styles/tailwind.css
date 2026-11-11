@@ -1422,17 +1422,6 @@ a {
               transform var(--hydro-duration-normal) var(--hydro-ease-out);
 }
 
-.hydro-contest-header-actions__team {
-  border-color: var(--hydro-primary);
-  color: var(--hydro-surface-raised);
-  background-color: var(--hydro-primary);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--hydro-primary) 22%, transparent);
-}
-
-.hydro-contest-header-actions__team:hover:not(:disabled, [data-disabled], [data-loading], [aria-disabled='true']) {
-  border-color: color-mix(in srgb, var(--hydro-primary) 82%, var(--hydro-text));
-  background-color: color-mix(in srgb, var(--hydro-primary) 88%, var(--hydro-text));
-}
 
 .hydro-contest-list,
 .hydro-training-list,
