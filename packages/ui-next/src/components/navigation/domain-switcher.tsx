@@ -119,6 +119,7 @@ function AuthenticatedDomainSwitcher({ uid }: { uid: number }) {
       onChange={handleOpenedChange}
       position="bottom-end"
       classNames={{ dropdown: 'hydro-topbar-dropdown' }}
+      menuItemTabIndex={0}
     >
       <Menu.Target>
         <Button
@@ -163,7 +164,15 @@ function AuthenticatedDomainSwitcher({ uid }: { uid: number }) {
           <div
             className="px-1.5 pb-2"
             onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const firstItem = e.currentTarget.parentElement?.querySelector<HTMLElement>('[data-menu-item]');
+                firstItem?.focus();
+              } else {
+                e.stopPropagation();
+              }
+            }}
           >
             <TextInput
               size="xs"
@@ -173,7 +182,7 @@ function AuthenticatedDomainSwitcher({ uid }: { uid: number }) {
               onChange={(e) => setSearch(e.currentTarget.value)}
               rightSection={
                 search ? (
-                  <ActionIcon size="xs" variant="subtle" color="gray" onClick={() => setSearch('')}>
+                  <ActionIcon size="xs" variant="subtle" color="gray" tabIndex={-1} aria-label={t('Clear search')} onClick={() => setSearch('')}>
                     <IconX size={12} />
                   </ActionIcon>
                 ) : null
@@ -187,12 +196,13 @@ function AuthenticatedDomainSwitcher({ uid }: { uid: number }) {
             <Loader size="sm" />
           </Group>
         ) : (
-          <ScrollArea.Autosize mah={280}>
+          <ScrollArea.Autosize mah={280} viewportProps={{ tabIndex: -1 }}>
             <div className="hydro-domain-menu-list flex flex-col gap-1 p-0.5">
               {systemMatches && (
                 <Menu.Item
                   onClick={() => switchDomain('system')}
                   className={`hydro-domain-menu-item ${domainId === 'system' ? 'hydro-domain-menu-item--active' : ''}`}
+                  onFocus={(e) => e.currentTarget.scrollIntoView({ block: 'nearest' })}
                   rightSection={
                     domainId === 'system' ? (
                       <IconCheck size={16} stroke={2.5} className="text-[var(--hydro-primary-strong)]" />
@@ -220,6 +230,7 @@ function AuthenticatedDomainSwitcher({ uid }: { uid: number }) {
                     key={d._id}
                     onClick={() => switchDomain(d._id)}
                     className={`hydro-domain-menu-item ${isSelected ? 'hydro-domain-menu-item--active' : ''}`}
+                    onFocus={(e) => e.currentTarget.scrollIntoView({ block: 'nearest' })}
                     rightSection={
                       isSelected ? (
                         <IconCheck size={16} stroke={2.5} className="text-[var(--hydro-primary-strong)]" />
@@ -261,6 +272,8 @@ function AuthenticatedDomainSwitcher({ uid }: { uid: number }) {
         <Menu.Item
           component={Link}
           to="home_domain"
+          className="hydro-domain-menu-item"
+          onFocus={(e) => e.currentTarget.scrollIntoView({ block: 'nearest' })}
           leftSection={<IconBuildingCommunity size={16} className="text-[var(--hydro-text-muted)]" />}
         >
           <Text size="xs" fw="var(--hydro-weight-medium)">

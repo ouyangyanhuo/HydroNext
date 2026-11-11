@@ -578,3 +578,17 @@ test('account changes clear cached domains and load only the new account list', 
         assert.equal(document.body.textContent?.includes('My Team'), false);
     } finally { await f.close(); }
 });
+
+test('domain switcher supports keyboard tab navigation into each domain item', async () => {
+    const f = await fixture(7);
+    try {
+        await f.clickDomain();
+        const menuItems = document.querySelectorAll<HTMLElement>('[data-menu-item]');
+        assert.ok(menuItems.length >= 2, 'dropdown renders domain menu items');
+        for (const item of menuItems) {
+            assert.equal(item.tabIndex, 0, 'each domain item is reachable via Tab key');
+        }
+        const viewport = document.querySelector<HTMLElement>('.mantine-ScrollArea-viewport');
+        assert.equal(viewport?.getAttribute('tabindex'), '-1', 'scroll area container is excluded from tab stops to avoid selecting the whole box');
+    } finally { await f.close(); }
+});

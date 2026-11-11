@@ -4520,6 +4520,11 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   transition: all var(--hydro-transition-fast);
 }
 
+.hydro-domain-switcher-trigger:focus-visible {
+  outline: 2px solid var(--hydro-primary);
+  outline-offset: 2px;
+}
+
 .hydro-domain-switcher-trigger[data-expanded] {
   border-color: color-mix(in srgb, var(--hydro-primary) 65%, var(--hydro-border));
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 40%, var(--hydro-surface-raised));
@@ -4552,11 +4557,18 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   margin: 0 !important;
   padding: 8px 10px;
   border-radius: var(--hydro-radius-md);
-  transition: background-color var(--hydro-transition-fast), color var(--hydro-transition-fast);
+  scroll-margin: 4px;
+  transition: background-color var(--hydro-transition-fast), color var(--hydro-transition-fast), outline-color var(--hydro-transition-fast);
 }
 
 .hydro-domain-menu-item:hover,
 .hydro-domain-menu-item[data-menu-active] {
+  background-color: var(--hydro-surface-muted);
+}
+
+.hydro-domain-menu-item:focus-visible {
+  outline: 2px solid var(--hydro-primary);
+  outline-offset: -1px;
   background-color: var(--hydro-surface-muted);
 }
 
@@ -4566,6 +4578,12 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 
 .hydro-domain-menu-item--active:hover,
 .hydro-domain-menu-item--active[data-menu-active] {
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 72%, var(--hydro-surface-muted)) !important;
+}
+
+.hydro-domain-menu-item--active:focus-visible {
+  outline: 2px solid var(--hydro-primary);
+  outline-offset: -1px;
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 72%, var(--hydro-surface-muted)) !important;
 }
 
@@ -4582,12 +4600,22 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 25%, var(--hydro-surface-raised));
 }
 
+[data-mantine-color-scheme='dark'] .hydro-domain-menu-item:focus-visible {
+  outline-color: var(--hydro-primary);
+  background-color: color-mix(in srgb, var(--hydro-surface-muted) 80%, transparent);
+}
+
 [data-mantine-color-scheme='dark'] .hydro-domain-menu-item--active {
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 28%, var(--hydro-surface-muted)) !important;
 }
 
 [data-mantine-color-scheme='dark'] .hydro-domain-menu-item--active:hover,
 [data-mantine-color-scheme='dark'] .hydro-domain-menu-item--active[data-menu-active] {
+  background-color: color-mix(in srgb, var(--hydro-primary-soft) 40%, var(--hydro-surface-muted)) !important;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-domain-menu-item--active:focus-visible {
+  outline-color: var(--hydro-primary);
   background-color: color-mix(in srgb, var(--hydro-primary-soft) 40%, var(--hydro-surface-muted)) !important;
 }
 
