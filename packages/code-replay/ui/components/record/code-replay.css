@@ -1,53 +1,49 @@
 .hydro-code-replay {
+  --replay-kind-template: var(--hydro-text-muted);
+  --replay-kind-paste: var(--hydro-accent);
+  --replay-kind-self_test: var(--hydro-judge-pending);
+  --replay-kind-submit: var(--hydro-judge-ac);
+  --replay-editor-height: clamp(320px, 58vh, 680px);
   min-width: 0;
   overflow: hidden;
   container-type: inline-size;
 }
 
+/* Controls: transport, clock and preferences share one row above the timeline. */
 .hydro-code-replay__controls {
-  padding: 18px 20px 12px;
+  display: grid;
+  gap: 12px;
+  padding: 16px 20px 12px;
   border-bottom: 1px solid var(--hydro-border);
 }
 
-.hydro-code-replay__toolbar,
-.hydro-code-replay__preferences,
-.hydro-code-replay__statusbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
 .hydro-code-replay__toolbar {
+  display: flex;
   flex-wrap: wrap;
-  margin-bottom: 18px;
-}
-
-.hydro-code-replay__preferences {
-  flex-wrap: wrap;
+  align-items: center;
   gap: 12px 20px;
 }
 
-.hydro-code-replay__preferences .mantine-Switch-label {
-  font-size: var(--mantine-font-size-xs);
-  white-space: nowrap;
-}
-
 .hydro-code-replay__play {
-  min-width: 100px;
+  min-width: 96px;
 }
 
-.hydro-code-replay__time-row {
-  min-height: 24px;
+.hydro-code-replay__time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
 }
 
 .hydro-code-replay__clock,
-.hydro-code-replay__event-count {
+.hydro-code-replay__event-count,
+.hydro-code-replay__log-count {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .hydro-code-replay__clock {
+  font-size: var(--mantine-font-size-md);
   font-weight: var(--hydro-weight-semibold);
 }
 
@@ -56,8 +52,69 @@
   font-weight: 400;
 }
 
-.hydro-code-replay__statusbar {
+.hydro-code-replay__preferences {
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  margin-inline-start: auto;
+}
+
+.hydro-code-replay__preferences .mantine-Switch-label {
+  font-size: var(--mantine-font-size-xs);
+  white-space: nowrap;
+}
+
+/* Timeline: painted track below a transparent slider, action markers underneath. */
+.hydro-code-replay__timeline {
+  position: relative;
+  padding: 8px 0 12px;
+}
+
+.hydro-code-replay__track {
+  position: absolute;
+  top: calc(50% - 2px);
+  right: 0;
+  left: 0;
+  height: 10px;
+  overflow: hidden;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: var(--mantine-primary-color-filled);
+  pointer-events: none;
+}
+
+.hydro-code-replay__thinking {
+  position: absolute;
+  height: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--hydro-border);
+  background: var(--hydro-surface);
+}
+
+.hydro-code-replay__marker {
+  position: absolute;
+  bottom: 0;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  transform: translateX(-50%);
+  border: 2px solid var(--hydro-surface);
+  border-radius: 50%;
+  background: var(--replay-kind, var(--mantine-primary-color-filled));
+  cursor: pointer;
+  transition: transform var(--hydro-duration-fast) var(--hydro-ease-out);
+}
+
+.hydro-code-replay__marker[data-active] {
+  transform: translateX(-50%) scale(1.4);
+}
+
+.hydro-code-replay__statusbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 6px 16px;
 }
 
@@ -82,64 +139,144 @@
   margin-inline-start: 6px;
 }
 
-.hydro-code-replay__editor {
-  height: clamp(320px, 58vh, 680px);
+/* Body: editor with the action log beside it on wide cards, below it on narrow ones. */
+.hydro-code-replay__body {
+  display: grid;
   min-width: 0;
 }
 
-.hydro-code-replay__marker {
-  position: absolute;
-  bottom: -2px;
-  width: 12px;
-  height: 12px;
-  padding: 0;
-  transform: translateX(-50%);
-  border: 2px solid var(--hydro-surface);
-  border-radius: 50%;
-  background: var(--mantine-primary-color-filled);
-  cursor: pointer;
+.hydro-code-replay__editor {
+  height: var(--replay-editor-height);
+  min-width: 0;
+}
+
+.hydro-code-replay__log {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-top: 1px solid var(--hydro-border);
+  background: var(--hydro-bg-soft);
+}
+
+.hydro-code-replay__log-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px 8px;
 }
 
 .hydro-code-replay__actions {
-  max-height: 180px;
-  overflow-y: auto;
-  margin-top: 12px;
+  position: relative; /* offsetTop of the items is measured against the list */
   display: grid;
-  gap: 4px;
+  align-content: start;
+  gap: 2px;
+  max-height: 240px;
+  margin: 0;
+  padding: 0 8px 12px;
+  overflow-y: auto;
+  list-style: none;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
 }
 
 .hydro-code-replay__action {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  padding: 7px 10px;
-  border: 1px solid var(--hydro-border);
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
   border-radius: 8px;
-  background: var(--hydro-surface);
   color: var(--hydro-text);
   font-size: var(--mantine-font-size-xs);
   text-align: start;
   cursor: pointer;
+  transition: background-color var(--hydro-duration-fast) var(--hydro-ease-out),
+              opacity var(--hydro-duration-fast) var(--hydro-ease-out);
 }
 
-.hydro-code-replay__action:hover,
-.hydro-code-replay__action[data-current] {
+.hydro-code-replay__action:hover {
+  background: var(--hydro-surface-muted);
+}
+
+.hydro-code-replay__action[data-state='future'] {
+  opacity: 0.6;
+}
+
+.hydro-code-replay__action[data-state='current'] {
   background: var(--hydro-primary-soft);
+  box-shadow: inset 3px 0 0 var(--mantine-primary-color-filled);
+}
+
+.hydro-code-replay__action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--replay-kind) 14%, transparent);
+  color: var(--replay-kind);
+}
+
+.hydro-code-replay [data-kind='template'] { --replay-kind: var(--replay-kind-template); }
+.hydro-code-replay [data-kind='paste'] { --replay-kind: var(--replay-kind-paste); }
+.hydro-code-replay [data-kind='self_test'] { --replay-kind: var(--replay-kind-self_test); }
+.hydro-code-replay [data-kind='submit'] { --replay-kind: var(--replay-kind-submit); }
+
+.hydro-code-replay__action-main,
+.hydro-code-replay__action-times {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.hydro-code-replay__action-label {
+  overflow: hidden;
+  font-weight: var(--hydro-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hydro-code-replay__action-times {
+  justify-items: end;
+  font-variant-numeric: tabular-nums;
 }
 
 .hydro-code-replay__action-time {
-  color: var(--mantine-primary-color-filled);
-  font-variant-numeric: tabular-nums;
+  color: var(--hydro-text);
+  font-family: var(--hydro-font-mono);
 }
 
 .hydro-code-replay__action-detail,
 .hydro-code-replay__action-wall-time {
+  overflow: hidden;
   color: var(--hydro-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.hydro-code-replay__action-wall-time {
-  margin-inline-start: auto;
+@container (min-width: 860px) {
+  .hydro-code-replay__body[data-has-actions] {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    height: var(--replay-editor-height);
+  }
+
+  .hydro-code-replay__body[data-has-actions] .hydro-code-replay__editor {
+    height: 100%;
+  }
+
+  .hydro-code-replay__log {
+    border-top: 0;
+    border-inline-start: 1px solid var(--hydro-border);
+  }
+
+  .hydro-code-replay__actions {
+    flex: 1;
+    max-height: none;
+  }
 }
 
 @container (max-width: 620px) {
@@ -147,22 +284,40 @@
     padding: 14px 14px 10px;
   }
 
-  .hydro-code-replay__transport,
-  .hydro-code-replay__preferences {
+  .hydro-code-replay__transport {
     width: 100%;
-  }
-
-  .hydro-code-replay__toolbar {
-    gap: 12px;
-    margin-bottom: 14px;
   }
 
   .hydro-code-replay__play {
     flex: 1;
   }
+
+  .hydro-code-replay__preferences {
+    width: 100%;
+    margin-inline-start: 0;
+  }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .hydro-code-replay__actions {
+    scroll-behavior: auto;
+  }
+
+  .hydro-code-replay__marker,
+  .hydro-code-replay__action {
+    transition: none;
+  }
+}
+
 .hydro-code-replay-page {
   width: min(100%, 1280px);
   margin-inline: auto;
 }
 
+.hydro-code-replay-page__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}

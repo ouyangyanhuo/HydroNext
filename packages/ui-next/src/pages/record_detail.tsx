@@ -9,7 +9,7 @@ import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
-import { STATUS } from '@/components/record/status-map';
+import { getScoreTone, judgeBadgeStyle, STATUS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -259,7 +259,7 @@ export default function RecordDetailPage() {
   const submitAt = objectIdDate(rdoc._id);
   const isJudging = rdoc.status === STATUS.STATUS_JUDGING || rdoc.status === STATUS.STATUS_COMPILING || rdoc.status === STATUS.STATUS_FETCHED;
   const recordId = String(rdoc._id || '').slice(-6);
-  const scoreColor = rdoc.score === 100 ? 'green' : rdoc.score ? 'yellow' : 'gray';
+  const scoreTone = getScoreTone(rdoc.score ?? 0) ?? 'neutral';
   const isLimitStatus = shouldShowGreaterEqual(rdoc.status);
   const peakTime = cases.length ? Math.max(...cases.map((item) => Number(item.time) || 0)) : null;
   const codeLength = rdoc.code ? formatSize(new Blob([rdoc.code]).size) : '';
@@ -327,7 +327,7 @@ export default function RecordDetailPage() {
           <Group gap="sm">
             <RecordStatusBadge status={rdoc.status} size="lg" />
             {rdoc.score != null && (
-              <Badge variant="light" color={scoreColor} size="lg" className="hydro-numeric">
+              <Badge variant="light" style={judgeBadgeStyle(scoreTone)} size="lg" className="hydro-numeric">
                 {rdoc.score}
               </Badge>
             )}

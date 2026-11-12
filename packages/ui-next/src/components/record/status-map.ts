@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 // Hydro STATUS constants (matching @hydrooj/common/status.ts)
 export enum STATUS {
   STATUS_WAITING = 0,
@@ -42,3 +44,49 @@ export const STATUS_TEXTS: Record<number, string> = {
   [STATUS.STATUS_HACK_SUCCESSFUL]: 'Hack Successful',
   [STATUS.STATUS_HACK_UNSUCCESSFUL]: 'Hack Unsuccessful',
 };
+
+/** Judge colour families; each maps to the --hydro-judge-<tone> token set. */
+export type JudgeTone = 'ac' | 'wa' | 'tle' | 'pending' | 'neutral';
+
+export const STATUS_TONES: Record<number, JudgeTone> = {
+  [STATUS.STATUS_WAITING]: 'pending',
+  [STATUS.STATUS_ACCEPTED]: 'ac',
+  [STATUS.STATUS_WRONG_ANSWER]: 'wa',
+  [STATUS.STATUS_TIME_LIMIT_EXCEEDED]: 'tle',
+  [STATUS.STATUS_MEMORY_LIMIT_EXCEEDED]: 'tle',
+  [STATUS.STATUS_OUTPUT_LIMIT_EXCEEDED]: 'tle',
+  [STATUS.STATUS_RUNTIME_ERROR]: 'wa',
+  [STATUS.STATUS_COMPILE_ERROR]: 'wa',
+  [STATUS.STATUS_SYSTEM_ERROR]: 'wa',
+  [STATUS.STATUS_CANCELED]: 'neutral',
+  [STATUS.STATUS_ETC]: 'wa',
+  [STATUS.STATUS_HACKED]: 'wa',
+  [STATUS.STATUS_JUDGING]: 'pending',
+  [STATUS.STATUS_COMPILING]: 'pending',
+  [STATUS.STATUS_FETCHED]: 'pending',
+  [STATUS.STATUS_IGNORED]: 'neutral',
+  [STATUS.STATUS_FORMAT_ERROR]: 'wa',
+  [STATUS.STATUS_HACK_SUCCESSFUL]: 'ac',
+  [STATUS.STATUS_HACK_UNSUCCESSFUL]: 'neutral',
+};
+
+export function getStatusTone(status?: number | null): JudgeTone {
+  return status == null ? 'neutral' : STATUS_TONES[status] ?? 'neutral';
+}
+
+/** Full marks read as accepted, partial credit as a limit verdict, zero as neutral. */
+export function getScoreTone(score: unknown): JudgeTone | undefined {
+  const value = Number(score);
+  if (score == null || score === '' || !Number.isFinite(value)) return undefined;
+  if (value >= 100) return 'ac';
+  if (value > 0) return 'tle';
+  return 'neutral';
+}
+
+/** Mantine Badge colours; the style prop overrides the variables Mantine resolves from `color`. */
+export function judgeBadgeStyle(tone: JudgeTone): CSSProperties {
+  return {
+    '--badge-bg': `var(--hydro-judge-${tone}-soft)`,
+    '--badge-color': `var(--hydro-judge-${tone}-text)`,
+  } as CSSProperties;
+}

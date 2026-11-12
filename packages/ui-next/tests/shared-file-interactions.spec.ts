@@ -149,6 +149,7 @@ test('save failure keeps the draft, blocks repeated requests, and asks before di
 
 const { DataTable } = component('../src/components/common/data-table.tsx', {
     './empty-state': { EmptyState: ({ message }: any) => h('div', null, message) },
+    '@/utils/stagger': { siblingIndexStyle: () => undefined },
 });
 
 test('row keyboard navigation does not steal key events from buttons and links inside cells', async () => {

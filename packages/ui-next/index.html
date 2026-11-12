@@ -1,14 +1,176 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>Hydro</title>
     <!-- __HYDRO_INJECTION__DO_NOT_REMOVE_THIS__ -->
+    <script>
+      // Runs before first paint and must stay ES5: it is the only code old browsers can execute.
+      (function () {
+        var root = document.documentElement;
+        function read(storage, key) {
+          try { return window[storage].getItem(key); } catch (e) { return null; }
+        }
+
+        // Mirror the session store's initial theme so the boot skeleton is painted in the right scheme.
+        var auto = read('localStorage', 'hydro-ui-auto-theme');
+        var stored = read('localStorage', 'hydro-ui-theme');
+        if (stored === 'paper') stored = 'light';
+        var theme = stored === 'dark' || stored === 'light' ? stored : null;
+        if (auto === null || auto === 'true') {
+          try {
+            theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          } catch (e) {
+            theme = 'light';
+          }
+        }
+        if (theme) root.setAttribute('data-mantine-color-scheme', theme);
+
+        // The stylesheet depends on color-mix(), the newest feature it cannot do without.
+        var supported = false;
+        try {
+          supported = !!(window.CSS && CSS.supports && CSS.supports('color', 'color-mix(in srgb, red, blue)'));
+        } catch (e) {
+          supported = false;
+        }
+        if (supported || read('sessionStorage', 'hydro-ui-outdated-dismissed')) return;
+
+        function showNotice() {
+          var locale = window.HydroLocale || {};
+          var message = 'Your browser is too old to display this site correctly. Please upgrade to the latest Chrome, Edge, Firefox or Safari.';
+          var notice = document.createElement('div');
+          notice.id = 'hydro-outdated-browser';
+          notice.setAttribute('role', 'alert');
+          notice.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 16px;'
+            + 'background:#fff4d6;color:#4a3500;border-bottom:1px solid #e9c46a;'
+            + 'font:14px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;';
+          var text = document.createElement('span');
+          text.style.cssText = 'flex:1;';
+          text.appendChild(document.createTextNode(locale[message] || message));
+          var close = document.createElement('button');
+          close.type = 'button';
+          close.style.cssText = 'padding:4px 12px;border:1px solid #c79a2e;border-radius:6px;'
+            + 'background:#fff;color:#4a3500;font:inherit;cursor:pointer;';
+          close.appendChild(document.createTextNode(locale.Close || 'Close'));
+          close.onclick = function () {
+            try { window.sessionStorage.setItem('hydro-ui-outdated-dismissed', '1'); } catch (e) { /* ignore */ }
+            notice.parentNode.removeChild(notice);
+          };
+          notice.appendChild(text);
+          notice.appendChild(close);
+          document.body.insertBefore(notice, document.body.firstChild);
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', showNotice);
+        else showNotice();
+      })();
+    </script>
+    <style>
+      /* Boot skeleton: painted until React mounts and replaces #root, so it must not depend on app CSS. */
+      .hydro-boot {
+        --boot-bg: #eef3f6;
+        --boot-surface: #ffffff;
+        --boot-block: #e2e9ec;
+        --boot-line: #d9e2e5;
+        min-height: 100vh;
+        background: var(--boot-bg);
+      }
+
+      :root[data-mantine-color-scheme='dark'] .hydro-boot {
+        --boot-bg: #090d11;
+        --boot-surface: #11161d;
+        --boot-block: #1c222b;
+        --boot-line: #212833;
+      }
+
+      .hydro-boot__nav {
+        height: 56px;
+        border-bottom: 1px solid var(--boot-line);
+        background: var(--boot-surface);
+      }
+
+      .hydro-boot__body {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 28px 16px;
+        /* Fast loads swap the skeleton out before it ever shows, avoiding a flash. */
+        animation: hydro-boot-in 200ms ease-out 180ms both;
+      }
+
+      .hydro-boot__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+      }
+
+      .hydro-boot__block {
+        height: 120px;
+        border-radius: 12px;
+        background: var(--boot-block);
+        animation: hydro-boot-pulse 1.2s ease-in-out infinite alternate;
+      }
+
+      .hydro-boot__block--title {
+        width: min(360px, 60%);
+        height: 32px;
+        border-radius: 8px;
+      }
+
+      .hydro-boot__block--wide {
+        height: 280px;
+        margin-top: 16px;
+      }
+
+      .hydro-boot__label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      @keyframes hydro-boot-in {
+        from { opacity: 0; }
+      }
+
+      @keyframes hydro-boot-pulse {
+        to { opacity: 0.55; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .hydro-boot__block {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="hydro-boot" aria-busy="true">
+        <div class="hydro-boot__nav"></div>
+        <div class="hydro-boot__body">
+          <div class="hydro-boot__block hydro-boot__block--title"></div>
+          <div class="hydro-boot__grid">
+            <div class="hydro-boot__block"></div>
+            <div class="hydro-boot__block"></div>
+            <div class="hydro-boot__block"></div>
+          </div>
+          <div class="hydro-boot__block hydro-boot__block--wide"></div>
+        </div>
+        <span class="hydro-boot__label" role="status">Loading...</span>
+      </div>
+    </div>
+    <script>
+      (function () {
+        var label = document.querySelector('.hydro-boot__label');
+        var text = window.HydroLocale && window.HydroLocale['Loading...'];
+        if (label && text) label.textContent = text;
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

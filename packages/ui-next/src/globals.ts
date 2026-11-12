@@ -88,6 +88,7 @@ export const initialPage: PageData = {
   url: (injectionData.url as string) || (window.location.pathname + window.location.search),
 };
 
-// Locale data injected by the backend renderer
-export const localeData: Record<string, string> = injectionData.locale || {};
+// Locale data comes from the cacheable lang-*.js script, which runs before this module.
+// The inline `locale` field is only kept for pages rendered by an older backend.
+export const localeData: Record<string, string> = injectionData.locale || (window as any).HydroLocale || {};
 export const initialLang: string = injectionData.lang || 'zh';

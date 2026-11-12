@@ -77,6 +77,20 @@ test('replay actions show relative/actual times, paste length, and seek to the c
         await act(async () => actions[3].click());
         assert.equal(dom.window.document.querySelector('[data-testid="code"]')?.textContent, 'done');
         assert.equal(dom.window.document.querySelectorAll('.hydro-code-replay__marker').length, 4);
+
+        // Between two actions the earlier one stays current, in the list and on the timeline.
+        const current = () => actions.findIndex((action) => action.getAttribute('aria-current') === 'step');
+        await act(async () => actions[2].click());
+        assert.equal(current(), 2);
+        const previousStep = dom.window.document.querySelector<HTMLButtonElement>('[aria-label="Previous Step"]')!;
+        await act(async () => previousStep.click());
+        assert.equal(current(), 1);
+        await act(async () => previousStep.click());
+        assert.equal(current(), 0, 'an edit after the template keeps the template current');
+        assert.equal(actions[0].dataset.state, 'current');
+        assert.equal(actions[3].dataset.state, 'future');
+        const markers = [...dom.window.document.querySelectorAll<HTMLElement>('.hydro-code-replay__marker')];
+        assert.deepEqual(markers.map((marker) => marker.hasAttribute('data-active')), [true, false, false, false]);
     } finally {
         await act(async () => root.unmount());
         dom.window.close();

@@ -175,7 +175,9 @@ test('problem bulk download is available to creators without edit permission and
         '@/components/common/list-sort-select': { ListSortSelect: () => null },
         '@/components/common/paginator': { Paginator: () => null },
         '@/components/record/record-status-badge': { RecordStatusBadge: () => null },
-        '@/components/common/data-table': component('../src/components/common/data-table.tsx', { './empty-state': { EmptyState: () => null } }),
+        '@/components/common/data-table': component('../src/components/common/data-table.tsx', {
+            './empty-state': { EmptyState: () => null }, '@/utils/stagger': { siblingIndexStyle: () => undefined },
+        }),
         '@/components/common/button': { ...mocks['@/components/common/button'], ActionIcon: require('@mantine/core').ActionIcon },
     }).default;
     args = { canCreateProblem: true, canEditProblem: false, pdocs: [{ docId: 1 }, { docId: 2 }] };

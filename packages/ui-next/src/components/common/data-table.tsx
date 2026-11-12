@@ -2,6 +2,7 @@ import { ScrollArea, Table } from '@mantine/core';
 import type { KeyboardEvent, MouseEvent } from 'react';
 import { memo } from 'react';
 import { useI18n } from '@/hooks/use-i18n';
+import { siblingIndexStyle } from '@/utils/stagger';
 import { EmptyState } from './empty-state';
 
 const INTERACTIVE_SELECTOR = 'a, button, input, select, textarea, label, '
@@ -61,7 +62,7 @@ function DataTableComponent<T extends Record<string, any>>({
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {data.map((item) => {
+            {data.map((item, index) => {
               const handleRowClick = onRowClick
                 ? (event: MouseEvent<HTMLTableRowElement>) => {
                   if ((event.target as HTMLElement).closest(INTERACTIVE_SELECTOR)) return;
@@ -84,6 +85,7 @@ function DataTableComponent<T extends Record<string, any>>({
                 <Table.Tr
                   key={item[keyField]}
                   className={onRowClick ? 'hydro-data-table__clickable-row' : undefined}
+                  style={siblingIndexStyle(index)}
                   tabIndex={onRowClick ? 0 : undefined}
                   aria-label={onRowClick ? rowLabel?.(item) : undefined}
                   onClick={handleRowClick}

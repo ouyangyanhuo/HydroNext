@@ -387,13 +387,14 @@ a {
   padding: clamp(20px, 3vw, 34px) clamp(4px, 1vw, 12px);
 }
 
+/* Isolate here, not on the title: the title's glow must stay below the lead text too. */
 .hydro-home-hero__copy {
   position: relative;
+  isolation: isolate;
 }
 
 .hydro-home-title {
   position: relative;
-  isolation: isolate;
   max-width: 620px;
   color: var(--hydro-text);
   font-size: clamp(2.35rem, 4vw, 3.65rem);
@@ -1120,17 +1121,13 @@ a {
 
 .hydro-problem-list .hydro-data-table tbody tr {
   animation: hydro-problem-row-in 360ms var(--hydro-ease-out) backwards;
+  /* Rows 1-7 step in by 28ms; later rows share the last delay. --sibling-index is the JS fallback. */
+  animation-delay: calc((min(var(--sibling-index, 1), 7) - 1) * 28ms);
+  animation-delay: calc((min(sibling-index(), 7) - 1) * 28ms);
   transition: background-color var(--hydro-duration-fast) var(--hydro-ease-out),
               box-shadow var(--hydro-duration-fast) var(--hydro-ease-out),
               transform var(--hydro-duration-normal) var(--hydro-ease-out);
 }
-
-.hydro-problem-list .hydro-data-table tbody tr:nth-child(2) { animation-delay: 28ms; }
-.hydro-problem-list .hydro-data-table tbody tr:nth-child(3) { animation-delay: 56ms; }
-.hydro-problem-list .hydro-data-table tbody tr:nth-child(4) { animation-delay: 84ms; }
-.hydro-problem-list .hydro-data-table tbody tr:nth-child(5) { animation-delay: 112ms; }
-.hydro-problem-list .hydro-data-table tbody tr:nth-child(6) { animation-delay: 140ms; }
-.hydro-problem-list .hydro-data-table tbody tr:nth-child(n+7) { animation-delay: 168ms; }
 
 .hydro-problem-list .hydro-data-table tbody tr:hover,
 .hydro-problem-list .hydro-data-table tbody tr:focus-within {
@@ -1463,11 +1460,11 @@ a {
   border-top: 1px solid color-mix(in srgb, var(--hydro-border) 78%, transparent);
 }
 
-:is(.hydro-contest-item, .hydro-training-item):nth-child(2) { animation-delay: 34ms; }
-:is(.hydro-contest-item, .hydro-training-item):nth-child(3) { animation-delay: 68ms; }
-:is(.hydro-contest-item, .hydro-training-item):nth-child(4) { animation-delay: 102ms; }
-:is(.hydro-contest-item, .hydro-training-item):nth-child(5) { animation-delay: 136ms; }
-:is(.hydro-contest-item, .hydro-training-item):nth-child(n+6) { animation-delay: 170ms; }
+:is(.hydro-contest-item, .hydro-training-item) {
+  /* Items 1-6 step in by 34ms; later items share the last delay. --sibling-index is the JS fallback. */
+  animation-delay: calc((min(var(--sibling-index, 1), 6) - 1) * 34ms);
+  animation-delay: calc((min(sibling-index(), 6) - 1) * 34ms);
+}
 
 :is(.hydro-contest-item, .hydro-training-item):hover,
 :is(.hydro-contest-item, .hydro-training-item):focus-visible {
@@ -2038,8 +2035,9 @@ a {
   text-align: center;
 }
 
-.scoreboard-record-value--green { color: var(--hydro-success); }
-.scoreboard-record-value--yellow { color: var(--hydro-warning); }
+.scoreboard-record-value--ac { color: var(--hydro-judge-ac-text); }
+.scoreboard-record-value--tle { color: var(--hydro-judge-tle-text); }
+.scoreboard-record-value--neutral { color: var(--hydro-judge-neutral-text); }
 
 .hydro-sidebar-panel,
 .hydro-training-enrolled-panel,
@@ -2295,14 +2293,11 @@ a {
 
 .hydro-record-list .hydro-data-table tbody tr {
   animation: hydro-problem-row-in 340ms var(--hydro-ease-out) backwards;
+  /* Rows 1-6 step in by 26ms; later rows share the last delay. --sibling-index is the JS fallback. */
+  animation-delay: calc((min(var(--sibling-index, 1), 6) - 1) * 26ms);
+  animation-delay: calc((min(sibling-index(), 6) - 1) * 26ms);
   transition: background-color var(--hydro-duration-fast) var(--hydro-ease-out);
 }
-
-.hydro-record-list .hydro-data-table tbody tr:nth-child(2) { animation-delay: 26ms; }
-.hydro-record-list .hydro-data-table tbody tr:nth-child(3) { animation-delay: 52ms; }
-.hydro-record-list .hydro-data-table tbody tr:nth-child(4) { animation-delay: 78ms; }
-.hydro-record-list .hydro-data-table tbody tr:nth-child(5) { animation-delay: 104ms; }
-.hydro-record-list .hydro-data-table tbody tr:nth-child(n+6) { animation-delay: 130ms; }
 
 .hydro-record-list .hydro-data-table tbody tr:hover,
 .hydro-record-list .hydro-data-table tbody tr:focus-within {
@@ -3820,6 +3815,22 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   position: relative;
   height: 148px;
   overflow: hidden;
+}
+
+/* The URLs arrive as custom properties, so an unsupported image-set() would void the declaration
+ * instead of falling back to the JPEG; gate it with @supports. */
+.hydro-user-profile__cover-image {
+  background-image: var(--hydro-cover-jpg);
+}
+
+@supports (background-image: image-set(url("a.avif") type("image/avif") 1x)) {
+  .hydro-user-profile__cover-image {
+    background-image: image-set(
+      var(--hydro-cover-avif) type("image/avif"),
+      var(--hydro-cover-webp) type("image/webp"),
+      var(--hydro-cover-jpg) type("image/jpeg")
+    );
+  }
 }
 
 .hydro-user-profile__cover-overlay {

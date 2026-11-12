@@ -14,6 +14,7 @@ import { usePageData, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
+import { siblingIndexStyle } from '@/utils/stagger';
 
 const ALL_FILTER = '__all__';
 
@@ -88,7 +89,7 @@ function ContestMeta({ tdoc, featured = false }: { tdoc: any, featured?: boolean
   );
 }
 
-function ContestCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
+function ContestCard({ tdoc, tsdoc, index }: { tdoc: any, tsdoc?: any, index: number }) {
   const { t } = useI18n();
   const state = getContestState(tdoc);
   const tid = tdoc.docId || tdoc._id;
@@ -98,6 +99,7 @@ function ContestCard({ tdoc, tsdoc }: { tdoc: any, tsdoc?: any }) {
       to="contest_detail"
       params={{ tid }}
       className={`hydro-contest-item hydro-contest-item--${state}`}
+      style={siblingIndexStyle(index)}
     >
       <span className="hydro-contest-item__rail" aria-hidden="true" />
       <div className="hydro-contest-item__content">
@@ -292,9 +294,10 @@ export default function ContestMainPage() {
           <EmptyState message={t('No contests found')} />
         ) : (
           <div key={listKey} className="hydro-contest-list">
-            {sortedTdocs.map((tdoc: any) => (
+            {sortedTdocs.map((tdoc: any, index: number) => (
               <ContestCard
                 key={tdoc.docId || tdoc._id}
+                index={index}
                 tdoc={tdoc}
                 tsdoc={tsdict[tdoc.docId || tdoc._id]}
               />

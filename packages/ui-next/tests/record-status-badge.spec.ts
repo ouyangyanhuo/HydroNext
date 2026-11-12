@@ -111,3 +111,19 @@ test('equal-width badge CSS defines fixed 5-glyph width, centered alignment and 
     assert.equal(labelRule['text-align'], 'center');
     assert.equal(labelRule['overflow'], 'hidden');
 });
+
+test('record status badges take their colours from the --hydro-judge tokens', async () => {
+    for (const [status, tone] of [[1, 'ac'], [2, 'wa'], [3, 'tle'], [0, 'pending'], [20, 'pending'], [9, 'neutral'], [999, 'neutral']] as const) {
+        // Mount one badge at a time: each view owns the shared document body.
+        // eslint-disable-next-line no-await-in-loop
+        const view = await mount(h(RecordStatusBadge, { status }));
+        try {
+            const badge = view.host.querySelector('.hydro-record-status-badge') as HTMLElement;
+            assert.equal(badge.style.getPropertyValue('--badge-bg'), `var(--hydro-judge-${tone}-soft)`, `status ${status}`);
+            assert.equal(badge.style.getPropertyValue('--badge-color'), `var(--hydro-judge-${tone}-text)`, `status ${status}`);
+        } finally {
+            // eslint-disable-next-line no-await-in-loop
+            await view.close();
+        }
+    }
+});

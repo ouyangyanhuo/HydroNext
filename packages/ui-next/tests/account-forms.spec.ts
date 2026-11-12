@@ -178,6 +178,7 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         ] : [
             ['@/components/user/user-link', '../src/components/user/user-link.tsx'],
             ['@/components/contest/team-identity', '../src/components/contest/team-identity.tsx'],
+            ['@/components/record/status-map', '../src/components/record/status-map.ts'],
         ])) {
             const component = { exports: {} as any };
             runInNewContext(transformSync(readFileSync(new URL(componentPath, import.meta.url), 'utf8'), {

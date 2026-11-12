@@ -167,7 +167,8 @@ async function buildI18n() {
     for (const lang in global.Hydro.locales) {
         if (!/^[a-zA-Z_]+$/.test(lang)) continue;
         if (!global.Hydro.locales[lang].__interface) continue;
-        addFile(`lang-${lang}.js`, `window.HydroLocale=${JSON.stringify(global.Hydro.locales[lang][Symbol.for('iterate')])};`);
+        // Ship the same en → base → exact fallback chain the page used to inline, so the HTML stays small.
+        addFile(`lang-${lang}.js`, `window.HydroLocale=${JSON.stringify(getLocaleData(lang))};`);
         const id = global.Hydro.locales[lang].__id;
         if (id) localeList[id] = { name: global.Hydro.locales[lang].__langname, flag: global.Hydro.locales[lang].__flag };
     }
@@ -289,7 +290,20 @@ export async function buildPlugins() {
 
 const HASH_FALLBACK = '00000000';
 
-const getViewLang = (handler: HandlerCommon) => handler.user?.viewLang || handler.session?.viewLang || 'zh';
+// Only languages with a built locale file can be served; anything else falls back to Chinese.
+const getViewLang = (handler: HandlerCommon) => {
+    const lang = handler.user?.viewLang || handler.session?.viewLang || 'zh';
+    return `lang-${lang}.js` in vfs ? lang : 'zh';
+};
+
+/** Hydro locale ids (zh, zh_TW, en) to BCP 47 tags; a bare `zh` is Simplified Chinese. */
+export function toHtmlLang(lang: string) {
+    const [base, region] = lang.split(/[-_]/);
+    if (region) return `${base}-${region.toUpperCase()}`;
+    return base === 'zh' ? 'zh-CN' : base;
+}
+
+const applyHtmlLang = (html: string, viewLang: string) => html.replace(/<html lang="[^"]*">/, `<html lang="${toHtmlLang(viewLang)}">`);
 
 const injectedScripts = (resolve: (name: string) => string, viewLang: string) => [
     'code-langs.js',
@@ -369,16 +383,16 @@ export async function apply(ctx: Context) {
                     endpoint: ctx.setting.get('server.url') || undefined,
                     build_id: buildIdentifier,
                     build_time: buildTime,
-                    locale: getLocaleData(userLang),
                     lang: userLang || 'zh',
                 }, serializer(false, context.handler));
                 const ts = Date.now();
                 const devAssetUrl = (assetName: string) => `/plugins/0/${assetName}?_=${ts}`;
+                const viewLang = getViewLang(context.handler);
                 const injectHtml = [
                     buildInject(serialized),
-                    ...injectedScripts(devAssetUrl, getViewLang(context.handler)),
+                    ...injectedScripts(devAssetUrl, viewLang),
                 ].join('\n');
-                const htmlToRender = html.replace(INJECT_MARKER, injectHtml);
+                const htmlToRender = applyHtmlLang(html, viewLang).replace(INJECT_MARKER, injectHtml);
                 return await vite.transformIndexHtml(context.handler.context.req.url!, htmlToRender);
             },
         });
@@ -410,6 +424,7 @@ export async function apply(ctx: Context) {
                 if (!fs.existsSync(indexHtml)) return PENDING_HTML;
                 const html = fs.readFileSync(indexHtml, 'utf-8');
                 const userLang = context.UserContext?.viewLang || context.handler.session?.viewLang;
+                const pluginsUrl = `/plugins/${hashes['plugins.js'] || HASH_FALLBACK}/plugins.js`;
                 const serialized = JSON.stringify({
                     HYDRO_INJECTED: true,
                     name: name === 'error.html' ? 'error'
@@ -426,16 +441,18 @@ export async function apply(ctx: Context) {
                     endpoint: ctx.setting.get('server.url') || undefined,
                     build_id: buildIdentifier,
                     build_time: buildTime,
-                    plugins_url: `/plugins/${hashes['plugins.js'] || '00000000'}/plugins.js`,
-                    locale: getLocaleData(userLang),
+                    plugins_url: pluginsUrl,
                     lang: userLang || 'zh',
                 }, serializer(false, context.handler));
                 const prodAssetUrl = (assetName: string) => `/plugins/${hashes[assetName] || HASH_FALLBACK}/${assetName}`;
+                const viewLang = getViewLang(context.handler);
                 const injectHtml = [
                     buildInject(serialized),
-                    ...injectedScripts(prodAssetUrl, getViewLang(context.handler)),
+                    // The app awaits plugins before its first render; fetch them alongside the entry chunk.
+                    `<link rel="modulepreload" href="${pluginsUrl}">`,
+                    ...injectedScripts(prodAssetUrl, viewLang),
                 ].join('\n');
-                return html.replace(INJECT_MARKER, injectHtml);
+                return applyHtmlLang(html, viewLang).replace(INJECT_MARKER, injectHtml);
             },
         });
         const debouncedBuild = ctx.debounce(build, 2000);
