@@ -359,7 +359,7 @@ export async function runProctorTeamHttpTests(agent: any, { getPageArgs, runAddo
         await memberAgent.post(route).send({ operation: 'early_end' }).expect(403);
         await memberAgent.get(`/d/${domainId}/record/${rid}`).set('Accept', 'application/json').expect(403);
         await memberAgent.get(`/d/${domainId}/record/${rid}?download=true`).expect(403);
-        // 使用真实握手、签名与 MongoDB 会话验证普通成员读取队友代码。
+        // 真实监考认证不能替代源码权限：队友源码不可见，本人源码仍可读取。
         await proctor.generateKeys();
         await proctor.saveConfig({ ...previousProctorConfig, enabled: true, requiredVersion: '1.0.0' });
         const client = generateKeyPairSync('ed25519');
@@ -383,11 +383,17 @@ export async function runProctorTeamHttpTests(agent: any, { getPageArgs, runAddo
         };
         const once = headers(sharedPath);
         const shared = await memberAgent.get(sharedPath).set('Accept', 'application/json').set(once).expect(200);
-        assert.equal(shared.body.rdoc.code, 'shared teammate code');
+        assert.equal(shared.body.canViewCode, false);
+        assert.equal(shared.body.rdoc.code, '');
         await memberAgent.get(sharedPath).set(once).expect(403);
         await memberAgent.get(sharedPath).set(headers(sharedPath, rid)).expect(403);
-        const download = await memberAgent.get(`${sharedPath}?download=true`).set(headers(sharedPath)).expect(200);
-        assert.equal(download.text, 'shared teammate code');
+        await memberAgent.get(`${sharedPath}?download=true`).set(headers(sharedPath)).expect(403);
+        const ownPath = `/d/${domainId}/record/${rid}`;
+        const own = await memberAgent.get(ownPath).set('Accept', 'application/json').set(headers(ownPath, rid)).expect(200);
+        assert.equal(own.body.canViewCode, true);
+        assert.equal(own.body.rdoc.code, 'team code');
+        const download = await memberAgent.get(`${ownPath}?download=true`).set(headers(ownPath, rid)).expect(200);
+        assert.equal(download.text, 'team code');
         await proctor.closeAttempt(await proctor.sessions.findOne({ _id: digest(session.token) }));
         await memberAgent.get(sharedPath).set(headers(sharedPath)).expect(403);
 

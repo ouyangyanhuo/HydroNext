@@ -77,25 +77,26 @@ test('code privileges, accepted status and ownership cannot bypass hidden proble
     ].map((extra) => assert.rejects(fixture({ hidden: true, ...extra })(), /VIEW_PROBLEM_HIDDEN/)));
 });
 
-test('navigation hints respect code, teammate and hidden-result policies without authorizing proctored content', async () => {
+test('navigation hints respect explicit code and hidden-result policies without authorizing proctored content', async () => {
     const id = 'abcdef1234567890abcdef12';
     assert.equal((await fixture({ permissions: ['VIEW_RECORD', 'READ_RECORD_CODE'] }).hints())[id], true);
     assert.equal((await fixture().hints())[id], false);
     assert.equal((await fixture({ global: true, hidden: true }).hints())[id], false);
     assert.equal((await fixture({ owner: true, contest: 'contest' }).hints())[id], false);
     const team = fixture({ teammate: true, contest: 'contest', attend: true, showSelf: true, permissions: [], proctor: true });
-    assert.equal((await team.hints())[id], true);
+    assert.equal((await team.hints())[id], false);
     await assert.rejects(team(), /proof required/);
 });
 
-test('visible problems preserve owner, domain, global and accepted-code permissions', async () => {
+test('visible problems grant code only to the submitter or explicit all-code readers', async () => {
     await Promise.all([
         { permissions: ['VIEW_RECORD', 'READ_RECORD_CODE'] }, { global: true },
-        { permissions: ['VIEW_RECORD', 'READ_RECORD_CODE_ACCEPT'], accepted: true }, { owner: true },
+        { owner: true },
         { hidden: true, permissions: ['VIEW_RECORD', 'VIEW_PROBLEM_HIDDEN', 'READ_RECORD_CODE'] },
     ].map(async (extra) => assert.equal((await fixture(extra)()).canViewCode, true)));
     assert.equal((await fixture()()).canViewCode, false);
     assert.equal((await fixture({ permissions: ['VIEW_RECORD', 'READ_RECORD_CODE_ACCEPT'] })()).canViewCode, false);
+    assert.equal((await fixture({ permissions: ['VIEW_RECORD', 'READ_RECORD_CODE_ACCEPT'], accepted: true })()).canViewCode, false);
 });
 
 test('contest restrictions remain mandatory and participants retain allowed hidden-problem access', async () => {
@@ -107,7 +108,9 @@ test('contest restrictions remain mandatory and participants retain allowed hidd
     assert.equal((await fixture(released).hints())['abcdef1234567890abcdef12'], false);
     assert.equal((await fixture({ ...released, permissions: ['VIEW_RECORD', 'READ_RECORD_CODE'] })()).canViewCode, true);
     assert.equal((await fixture({ ...released, permissions: ['VIEW_RECORD', 'READ_RECORD_CODE_ACCEPT'] })()).canViewCode, false);
-    assert.equal((await fixture({ ...released, permissions: ['VIEW_RECORD', 'READ_RECORD_CODE_ACCEPT'], accepted: true })()).canViewCode, true);
+    assert.equal((await fixture({ ...released, permissions: ['VIEW_RECORD', 'READ_RECORD_CODE_ACCEPT'], accepted: true })()).canViewCode, false);
+    assert.equal((await fixture({ ...released, contestOwner: true })()).canViewCode, false);
+    assert.equal((await fixture({ ...released, contestOwner: true }).hints())['abcdef1234567890abcdef12'], false);
     const own = await fixture({ owner: true, contest: 'contest', hidden: true, attend: true })();
     assert.equal(own.canViewDetail, false);
     assert.equal(own.canViewCode, true);
@@ -119,17 +122,19 @@ test('nonowners still need record visibility and cannot read another users prete
     await assert.rejects(fixture({ contest: 'contest', deletedContest: true })());
 });
 
-test('teammates share record and replay code access without bypassing contest visibility', async () => {
+test('teammates share contest results but not another submitter\'s code or replay', async () => {
     const access = await fixture({ teammate: true, contest: 'contest', attend: true, showSelf: true, permissions: [] })();
-    assert.equal(access.canViewCode, true);
+    assert.equal(access.canViewCode, false);
     assert.equal(access.canViewDetail, true);
     assert.equal(access.proctorSession, access.accessGrant);
+    assert.equal((await fixture({ teammate: true, contest: 'contest', attend: true, showSelf: true,
+        permissions: ['READ_RECORD_CODE'] })()).canViewCode, true);
     await assert.rejects(fixture({ teammate: true, contest: 'contest', hidden: true, permissions: [] })(), /VIEW_PROBLEM_HIDDEN/);
     await assert.rejects(fixture({ teammate: true, contest: `${'0'.repeat(23)}1`, permissions: [] })(), /VIEW_RECORD/);
     await assert.rejects(fixture({ contest: 'other-contest', permissions: [] })(), /VIEW_RECORD/);
 });
 
-test('监考比赛的本人和队友记录、下载与回放必须有绑定当前用户和记录的读取证明', async () => {
+test('监考认证不替代源码权限，本人记录、下载与回放仍需绑定当前用户和记录的读取证明', async () => {
     const base = { teammate: true, contest: 'contest', attend: true, showSelf: true, permissions: [], proctor: true };
     await assert.rejects(fixture(base)());
     await assert.rejects(fixture({ ...base, owner: true })());
@@ -142,14 +147,15 @@ test('监考比赛的本人和队友记录、下载与回放必须有绑定当�
         '/d/team/record/abcdef1234567890abcdef12/replay/data']) {
         const calls: any[] = [];
         // eslint-disable-next-line no-await-in-loop
-        assert.equal((await fixture({ ...base, proof: true, path, onAuth: (args: any[]) => calls.push(args) })()).canViewCode, true);
+        assert.equal((await fixture({ ...base, owner: true, proof: true, path, onAuth: (args: any[]) => calls.push(args) })()).canViewCode, true);
         assert.equal(calls.length, 1);
-        assert.equal(calls[0][0].uid, 2);
+        assert.equal(calls[0][0].uid, 1);
         assert.equal(calls[0][0].domainId, 'team');
         assert.equal(calls[0][3], 'record_view');
         assert.equal(calls[0][4], path);
         assert.equal(calls[0][5].rid, 'abcdef1234567890abcdef12');
     }
-    assert.equal((await fixture({ ...base, done: true })()).canViewCode, true);
-    assert.equal((await fixture({ ...base, contestOwner: true })()).canViewCode, true);
+    assert.equal((await fixture({ ...base, proof: true })()).canViewCode, false);
+    assert.equal((await fixture({ ...base, done: true })()).canViewCode, false);
+    assert.equal((await fixture({ ...base, contestOwner: true })()).canViewCode, false);
 });

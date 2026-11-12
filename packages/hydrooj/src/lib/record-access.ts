@@ -1,6 +1,6 @@
 import { ContestNotAttendedError, ContestNotFoundError, PermissionError } from '../error';
 import type { RecordDoc, Tdoc } from '../interface';
-import { PERM, PRIV, STATUS } from '../model/builtin';
+import { PERM, PRIV } from '../model/builtin';
 import * as contest from '../model/contest';
 import problem from '../model/problem';
 import type { ConnectionHandler, Handler } from '../service/server';
@@ -36,9 +36,8 @@ async function resolveRecordAccess(handler: Handler | ConnectionHandler, rdoc: R
     const accessGrant = authorizeContent ? await requireContestRecordAccess(handler, tdoc, rdoc) : undefined;
     const teamVid = tdoc?.allowTeam
         ? await read(key('team', tdoc.docId), () => contest.getTeamVid(rdoc.domainId, tdoc.docId, handler.user._id)) : null;
-    const [pdoc, self, tsdoc] = await Promise.all([
+    const [pdoc, tsdoc] = await Promise.all([
         read(key('problem', rdoc.pid), () => problem.get(rdoc.domainId, rdoc.pid, problem.PROJECTION_LIST.concat('config'))),
-        read(key('self', rdoc.pid), () => problem.getStatus(rdoc.domainId, rdoc.pid, handler.user._id)),
         tdoc ? read(key('status', tdoc.docId), () => contest.getStatus(rdoc.domainId, tdoc.docId, teamVid ?? handler.user._id))
             : Promise.resolve(null),
     ]);
@@ -48,12 +47,11 @@ async function resolveRecordAccess(handler: Handler | ConnectionHandler, rdoc: R
     if ((!tdoc || !tsdoc?.attend) && pdoc && !problem.canViewBy(pdoc, handler.user)) {
         throw new PermissionError(PERM.PERM_VIEW_PROBLEM_HIDDEN);
     }
-    const canViewCode = owner
+    // Team membership only grants access to contest results, not another submitter's source.
+    // Accepted status, contest ownership and allowViewCode must not grant code/replay access.
+    const canViewCode = ownSubmission
         || handler.user.hasPriv(PRIV.PRIV_READ_RECORD_CODE)
-        || handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE)
-        || (handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE_ACCEPT) && self?.status === STATUS.STATUS_ACCEPTED)
-        // Contest enrollment and the post-contest UI option are not domain code-reading permissions.
-        || (tdoc && handler.user.own(tdoc));
+        || handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE);
     return {
         pdoc, tdoc, tsdoc, canViewDetail, canViewCode: !!canViewCode, accessGrant,
         /** @deprecated Use accessGrant.assert(); this is an opaque grant, not a raw proctor session. */

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import * as supertest from 'supertest';
 
 export async function runContestHttpTests() {
-    const { ContestModel: contest, DomainModel: domain, UserModel: user, ProblemModel: problem, RecordModel: record,
+    const { ContestModel: contest, DocumentModel: document, DomainModel: domain, UserModel: user, ProblemModel: problem, RecordModel: record,
         PRIV, PERM, httpServer } = require('hydrooj');
     const { CodeReplayModel: replay } = require('../index');
     const domainId = 'replay-navigation-permissions';
@@ -10,7 +10,8 @@ export async function runContestHttpTests() {
     const viewer = await user.create('replay-viewer@example.com', 'replay-viewer', 'secret', undefined, '127.0.0.1', PRIV.PRIV_DEFAULT);
     await domain.add(domainId, 2, 'Replay permission test', '');
     const base = PERM.PERM_VIEW | PERM.PERM_VIEW_PROBLEM | PERM.PERM_VIEW_RECORD | PERM.PERM_VIEW_CONTEST;
-    await domain.setRoles(domainId, { default: base, reader: base | PERM.PERM_READ_RECORD_CODE });
+    await domain.setRoles(domainId, { default: base, reader: base | PERM.PERM_READ_RECORD_CODE,
+        accepted: base | PERM.PERM_READ_RECORD_CODE_ACCEPT });
     await domain.setJoin(domainId, owner, true);
     await domain.setUserRole(domainId, viewer, 'reader', true);
     const pid = await problem.add(domainId, 'R1', 'Replay navigation', 'Statement', 2);
@@ -96,6 +97,33 @@ export async function runContestHttpTests() {
     assert.deepEqual(deniedSnapshot.files, {});
     assert.deepEqual(deniedSnapshot.compilerTexts, []);
     assert.equal(deniedSnapshot.replay, undefined);
+    await document.setStatus(domainId, document.TYPE_PROBLEM, pid, viewer, { status: 1 });
+    await domain.setUserRole(domainId, viewer, 'accepted');
+    for (const contestOwner of [2, viewer]) {
+        // Accepted-code permission and contest ownership must not add a third code-reading policy.
+        // eslint-disable-next-line no-await-in-loop
+        await contest.edit(domainId, tid, { owner: contestOwner });
+        // eslint-disable-next-line no-await-in-loop
+        const response = await agent.get(detailUrl).set('Accept', 'application/json').set('x-hydro-inject', 'uicontext').expect(200);
+        assert.equal(response.body.canViewCode, false);
+        assert.equal(response.body.rdoc.code, '');
+        assert.equal(response.body.rdoc.replay, undefined);
+        assert.equal(response.body.UiContext.codeReplayUrl, undefined);
+        // eslint-disable-next-line no-await-in-loop
+        assert.equal((await snapshot()).code, '');
+        // eslint-disable-next-line no-await-in-loop
+        const entries = await agent.get(filteredUrl).set('Accept', 'application/json').expect(200);
+        assert.ok(entries.body.rdocs.every((doc: any) => doc.codeReplayUrl === undefined));
+        // eslint-disable-next-line no-await-in-loop
+        await agent.get(`${detailUrl}?download=true`).expect(403);
+        // eslint-disable-next-line no-await-in-loop
+        await agent.get(replayUrl).set('Accept', 'application/json').expect(403);
+        // eslint-disable-next-line no-await-in-loop
+        await agent.get(`${replayUrl}/data`).set('Accept', 'application/json').expect(403);
+        // eslint-disable-next-line no-await-in-loop
+        await agent.get(`/d/${domainId}/contest/${tid}/code`).expect(403);
+    }
+    await contest.edit(domainId, tid, { owner: 2 });
     await domain.setUserRole(domainId, viewer, 'reader');
     const allowed = await agent.get(detailUrl).set('Accept', 'application/json').set('x-hydro-inject', 'uicontext').expect(200);
     assert.equal(allowed.body.rdoc.code, secret);
@@ -103,8 +131,11 @@ export async function runContestHttpTests() {
     assert.equal((await snapshot()).code, secret, 'HTTP and WebSocket grant the same explicit code permissions');
     await agent.get(replayUrl).set('Accept', 'application/json').expect(200);
     await agent.get(`${replayUrl}/data`).set('Accept', 'application/json').expect(200);
+    await agent.get(`/d/${domainId}/contest/${tid}/code`).expect(200);
     const ownAgent = supertest.agent(httpServer);
     await ownAgent.post('/login').send({ uname: 'replay-owner', password: 'secret' }).expect(302);
     const own = await ownAgent.get(detailUrl).set('Accept', 'application/json').expect(200);
     assert.equal(own.body.rdoc.code, secret, 'submitters keep access to their own source');
+    await ownAgent.get(replayUrl).set('Accept', 'application/json').expect(200);
+    await ownAgent.get(`${replayUrl}/data`).set('Accept', 'application/json').expect(200);
 }

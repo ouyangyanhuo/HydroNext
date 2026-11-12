@@ -63,8 +63,12 @@ session ID without its event history.
 ### Access control, private contest records, and draft recovery
 
 - Record details and both replay endpoints use Hydro's shared `getRecordAccess`
-  policy. Code-reading privileges do not bypass hidden-problem visibility or
-  contest record restrictions; existing participant exceptions remain in effect.
+  policy: a submitter may read their own code/replay; reading anyone else's requires
+  the domain's `PERM_READ_RECORD_CODE` or global `PRIV_READ_RECORD_CODE` privilege.
+  Team membership, contest ownership, an accepted solution, and `allowViewCode`
+  do not grant additional source access. List entries, source downloads, and
+  WebSocket snapshots follow the same rule. Hidden-problem visibility, contest
+  record restrictions and proctor authentication still apply.
 - The submit handler keeps the created record ID internally. Replay binding uses
   that ID even when contest rules hide it from the response. Only a successful
   binding returns `codeReplayCommitted: true`; ui-next persists the complete
