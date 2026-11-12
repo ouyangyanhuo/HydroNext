@@ -1,9 +1,9 @@
 import {
-  Button, formatUserName, goBackOrFallback, protectedAccessHeaders, useBuildUrl, useI18n, useNavigate, usePageData, UserAvatar,
-  UserLink, useUiContext,
+  Button, formatUserName, goBackOrFallback, PageHeader, protectedAccessHeaders, useBuildUrl, useI18n, useNavigate, usePageData,
+  UserAvatar, UserLink, useUiContext,
 } from '@hydrooj/ui-next';
-import { Card, Group, Loader, Stack, Text, Title } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { Card, Group, Loader, Stack, Text } from '@mantine/core';
+import { IconArrowLeft, IconPlayerPlay } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { CodeReplay } from '../components/record/code-replay';
 
@@ -58,27 +58,15 @@ export default function CodeReplayPage() {
 
   return (
     <Stack gap="lg" className="hydro-code-replay-page">
-      <Group justify="space-between" align="center" gap="md" wrap="nowrap">
-        <div className="min-w-0 flex-1">
-          <Title order={1} size="h2" className="text-[var(--hydro-text)]">{t('Code Replay')}</Title>
-          <Text size="sm" c="dimmed" mt={4} style={{ overflowWrap: 'anywhere' }}>
+      <PageHeader
+        title={t('Code Replay')}
+        icon={<IconPlayerPlay size={22} stroke={2} />}
+        description={(
+          <span style={{ overflowWrap: 'anywhere' }}>
             {pdoc.pid || pdoc.docId ? `${pdoc.pid || pdoc.docId}. ${pdoc.title || ''}` : t('Replay editing process')}
-          </Text>
-          {submitterUid != null && (
-            <Group gap="xs" mt="sm">
-              <Text size="xs" c="dimmed">{t('Submit By')}</Text>
-              {submitter ? (
-                <>
-                  <UserAvatar user={submitter} size={24} />
-                  <div className="min-w-0" style={{ overflowWrap: 'anywhere' }}>
-                    {submitter._id > 0 ? <UserLink user={submitter} /> : <Text size="sm">{formatUserName(submitter)}</Text>}
-                  </div>
-                  <Text size="xs" c="dimmed">UID {submitterUid}</Text>
-                </>
-              ) : <Text size="sm">UID {submitterUid}</Text>}
-            </Group>
-          )}
-        </div>
+          </span>
+        )}
+      >
         <Button
           onClick={() => goBackOrFallback(window.history, () => {
             void navigate(rdoc._id
@@ -92,7 +80,22 @@ export default function CodeReplayPage() {
         >
           {t('Back')}
         </Button>
-      </Group>
+      </PageHeader>
+
+      {submitterUid != null && (
+        <div className="hydro-code-replay-page__meta">
+          <Text size="sm" c="dimmed">{t('Submit By')}</Text>
+          {submitter ? (
+            <>
+              <UserAvatar user={submitter} size={24} />
+              <div className="min-w-0" style={{ overflowWrap: 'anywhere' }}>
+                {submitter._id > 0 ? <UserLink user={submitter} /> : <Text size="sm">{formatUserName(submitter)}</Text>}
+              </div>
+              <Text size="xs" c="dimmed">UID {submitterUid}</Text>
+            </>
+          ) : <Text size="sm">UID {submitterUid}</Text>}
+        </div>
+      )}
 
       {loading ? (
         <Card withBorder p="xl" className="hydro-content-card">

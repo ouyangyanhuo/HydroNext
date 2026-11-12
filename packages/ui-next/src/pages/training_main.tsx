@@ -23,6 +23,7 @@ import { useDomainId } from '@/hooks/use-domain';
 import { useI18n } from '@/hooks/use-i18n';
 import { hasPermValue, PERM, useHasPerm } from '@/hooks/use-permission';
 import { formatErrorMessage } from '@/utils/error';
+import { siblingIndexStyle } from '@/utils/stagger';
 import { getTrainingViewState, isTrainingEnrolled } from '@/utils/training';
 
 function getTrainingPids(tdoc: any) {
@@ -44,7 +45,9 @@ function trainingProgress(tsdoc: any, total: number) {
   return Math.round(((tsdoc.donePids?.length || 0) / total) * 100);
 }
 
-function TrainingCard({ tdoc, tsdoc, page, query, category }: { tdoc: any, tsdoc?: any, page: number, query: string, category: string }) {
+interface TrainingCardProps { tdoc: any, tsdoc?: any, page: number, query: string, category: string, index: number }
+
+function TrainingCard({ tdoc, tsdoc, page, query, category, index }: TrainingCardProps) {
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
   const pids = getTrainingPids(tdoc);
@@ -63,6 +66,7 @@ function TrainingCard({ tdoc, tsdoc, page, query, category }: { tdoc: any, tsdoc
         ...(category ? { category } : {}),
       })}
       className={`hydro-training-item hydro-training-item--${state}`}
+      style={siblingIndexStyle(index)}
     >
       <div className="hydro-training-item__participants">
         <IconUsers size={18} stroke={1.7} aria-hidden="true" />
@@ -438,9 +442,10 @@ function TrainingMainContent() {
             <EmptyState message={t('Sorry, there are no training plans.')} />
           ) : (
             <div className="hydro-training-list">
-              {tdocs.map((tdoc: any) => (
+              {tdocs.map((tdoc: any, index: number) => (
                 <TrainingCard
                   key={tdoc.docId || tdoc._id}
+                  index={index}
                   tdoc={tdoc}
                   tsdoc={tsdict[tdoc.docId || tdoc._id]}
                   page={page}

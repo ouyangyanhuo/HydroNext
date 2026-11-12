@@ -14,6 +14,7 @@ import { STATUS } from '@/components/record/status-map';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData, useUserContext } from '@/context/page-data';
+import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
@@ -112,6 +113,7 @@ function TrainingProblemTable({
 }) {
   const { t } = useI18n();
   const buildUrl = useBuildUrl();
+  const navigate = useNavigate();
   const pids = node.pids || [];
   const sourceQuery = Object.fromEntries(
     [...new URLSearchParams(window.location.search)].filter(
@@ -167,7 +169,7 @@ function TrainingProblemTable({
               if (e.metaKey || e.ctrlKey) {
                 window.open(targetUrl, '_blank');
               } else {
-                window.location.href = targetUrl;
+                navigate(targetUrl);
               }
             };
 

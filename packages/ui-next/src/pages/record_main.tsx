@@ -12,7 +12,7 @@ import { ShortSelect } from '@/components/common/select';
 import { Link } from '@/components/link';
 import { RecordFilterSelect } from '@/components/record/record-filter-select';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
-import { STATUS_TEXTS } from '@/components/record/status-map';
+import { getScoreTone, judgeBadgeStyle, STATUS_TEXTS } from '@/components/record/status-map';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -242,7 +242,7 @@ function RecordMainContent({ args }: { args: any }) {
           <Badge
             size="sm"
             variant="light"
-            color={Number(r.score) >= 100 ? 'green' : 'yellow'}
+            style={judgeBadgeStyle(getScoreTone(r.score) ?? 'neutral')}
             className="hydro-record-score"
           >
             {formatScore(r.score)}

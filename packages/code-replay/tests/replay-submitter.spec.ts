@@ -28,7 +28,10 @@ test('replay shows the submitting users domain name, username, avatar and domain
     const translate = (value: string) => value === 'Submit By' ? '提交者' : value;
     const mocks: any = {
         '@mantine/core': { Card: box, Group: box, Loader: () => null, Stack: box, Text: box, Title: box },
-        '@tabler/icons-react': { IconArrowLeft: () => null },
+        '@tabler/icons-react': { IconArrowLeft: () => null, IconPlayerPlay: () => null },
+        '@/components/common/page-header': {
+            PageHeader: ({ title, description, children }: any) => h('header', null, title, description, children),
+        },
         '@/components/common/button': { Button: ({ children, onClick }: any) => h('button', { onClick }, children) },
         '@/components/record/code-replay': { CodeReplay: () => h('div', { 'data-replay-player': true }) },
         '@/components/user/user-avatar': { UserAvatar: ({ user }: any) => h('img', { src: user.avatarUrl, alt: formatUserName(user) }) },

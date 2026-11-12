@@ -2,7 +2,7 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 
 import { MantineProvider } from '@mantine/core';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useMemo } from 'react';
 import { HydroNotifications } from '@/components/feedback/hydro-notifications';
 import { useSessionStore } from '@/stores/session';
 import { ACCENT_PRESETS, accentToCssVars, getAccentScheme } from '@/styles/accent-colors';
@@ -47,7 +47,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     };
   }, [autoTheme, syncAutoTheme]);
 
-  useEffect(() => {
+  // Layout effects: these variables must land before the first paint, or the default accent and font flash.
+  useLayoutEffect(() => {
     const root = document.documentElement;
     if (palette) {
       const vars = accentToCssVars(palette);
@@ -67,7 +68,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     };
   }, [accentColor, palette, isDark]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement;
     root.style.setProperty('--hydro-font-family', fontFamily === 'serif'
       ? 'var(--hydro-font-serif)'

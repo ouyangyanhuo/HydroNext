@@ -9,6 +9,7 @@ import { Button } from '@/components/common/button';
 import { ShortSelect } from '@/components/common/select';
 import { TeamIdentity } from '@/components/contest/team-identity';
 import { Link } from '@/components/link';
+import { getScoreTone } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -43,14 +44,6 @@ function starKey(tdoc: any) {
   return `scoreboard-star/${tdoc.domainId}/${tdoc.docId || tdoc._id}`;
 }
 
-function scoreColor(score: any) {
-  const value = Number(score);
-  if (!Number.isFinite(value)) return undefined;
-  if (value >= 100) return 'green';
-  if (value > 0) return 'yellow';
-  return 'gray';
-}
-
 function isContestOngoing(tdoc: any) {
   const now = Date.now();
   return new Date(tdoc.beginAt).getTime() <= now && now <= new Date(tdoc.endAt).getTime();
@@ -77,10 +70,10 @@ function ScoreboardValue({ value }: { value: any }) {
 
 function CellValue({ cell, canViewRecord }: { cell: any, canViewRecord: boolean }) {
   if (cell.type === 'record' && cell.raw && canViewRecord) {
-    const color = scoreColor(cell.score ?? cell.value);
+    const tone = getScoreTone(cell.score ?? cell.value);
     return (
       <Link to="record_detail" params={{ rid: cell.raw }} className="no-underline">
-        <span className={`scoreboard-record-value${color ? ` scoreboard-record-value--${color}` : ''}`}><ScoreboardValue value={cell.value} /></span>
+        <span className={`scoreboard-record-value${tone ? ` scoreboard-record-value--${tone}` : ''}`}><ScoreboardValue value={cell.value} /></span>
       </Link>
     );
   }
@@ -106,9 +99,9 @@ function CellValue({ cell, canViewRecord }: { cell: any, canViewRecord: boolean 
     return <Text size="sm" fw={700}>{String(cell.value) === '0' ? '*' : cell.value}</Text>;
   }
   if (cell.type === 'record') {
-    const color = scoreColor(cell.score ?? cell.value);
+    const tone = getScoreTone(cell.score ?? cell.value);
     return <span
-      className={`scoreboard-record-value${color ? ` scoreboard-record-value--${color}` : ''}`}
+      className={`scoreboard-record-value${tone ? ` scoreboard-record-value--${tone}` : ''}`}
     >
       <ScoreboardValue
         value={cell.value || '-'}

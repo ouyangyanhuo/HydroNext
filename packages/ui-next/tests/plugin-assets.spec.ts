@@ -80,4 +80,7 @@ test('plugin split chunks, CSS and binary assets are served without corrupting H
     await started!();
     await assert.rejects(read('chunk-test.js'));
     assert.match((await read('versions.js')).body, /5\.0\.7/);
+    assert.equal(module.exports.toHtmlLang('zh'), 'zh-CN');
+    assert.equal(module.exports.toHtmlLang('zh_TW'), 'zh-TW');
+    assert.equal(module.exports.toHtmlLang('en'), 'en');
 });
