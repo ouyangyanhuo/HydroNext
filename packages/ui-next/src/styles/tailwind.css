@@ -1568,10 +1568,17 @@ a {
     grid-column: 1 / -1;
   }
 
+  .hydro-home-grid {
+    display: contents;
+  }
+
   .hydro-contest-list,
   .hydro-contest-feature,
   .hydro-training-list,
   .hydro-training-detail-card,
+  .hydro-problem-content-card,
+  .hydro-bulletin,
+  .hydro-data-panel,
   :is(.hydro-problem-list, .hydro-record-list) .hydro-table-wrap {
     margin-inline: calc(-1 * clamp(16px, 3vw, 32px));
     border-left: none !important;
@@ -1593,7 +1600,15 @@ a {
   }
 
   .hydro-training-detail-card:not(.hydro-training-detail-node),
-  .hydro-training-detail-node__header {
+  .hydro-training-detail-node__header,
+  .hydro-problem-content-card,
+  .hydro-bulletin,
+  .hydro-data-panel__header {
+    padding-inline: 16px !important;
+  }
+
+  .hydro-data-row,
+  .hydro-contest-card-row {
     padding-inline: 16px !important;
   }
 
@@ -1605,6 +1620,8 @@ a {
   .hydro-contest-item:focus-visible,
   .hydro-training-item:hover,
   .hydro-training-item:focus-visible,
+  .hydro-data-row:hover,
+  .hydro-data-row:focus-visible,
   :is(.hydro-problem-list, .hydro-record-list) .hydro-data-table tbody tr:hover,
   :is(.hydro-problem-list, .hydro-record-list) .hydro-data-table tbody tr:focus-within {
     transform: none !important;

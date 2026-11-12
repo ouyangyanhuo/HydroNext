@@ -823,7 +823,11 @@ export default function ProblemDetailPage() {
             </Paper>
           )}
 
-          <Paper withBorder p="lg" className="border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]">
+          <Paper
+            withBorder
+            p="lg"
+            className="hydro-content-card hydro-problem-content-card border-[var(--hydro-border)] bg-[var(--hydro-surface-raised)]"
+          >
             {isObjective ? (
               <ObjectiveAnswerForm
                 key={`${user._id}/${ui.domainId}/${pdoc.docId}/${tid || ''}`}

@@ -651,3 +651,83 @@ test('online programming mode shields footer on all viewports and locks outer sc
     const problemSource = read('../src/pages/problem_detail.tsx');
     assert.match(problemSource, /hydro-scratchpad-active/);
 });
+
+test('problem detail content card removes borders, radius and margins on narrow screens', () => {
+    const problemSource = read('../src/pages/problem_detail.tsx');
+    assert.match(problemSource, /className="[^"]*hydro-problem-content-card[^"]*"/);
+
+    const css = readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8');
+    const tailwindCss = postcss.parse(css);
+    let foundNarrowRule = false;
+
+    tailwindCss.walkAtRules('media', (atRule) => {
+        if (atRule.params.includes('max-width: 768px')) {
+            atRule.walkRules((rule) => {
+                if (rule.selector.includes('.hydro-problem-content-card')) {
+                    let hasMargin = false;
+                    let hasBorderLeft = false;
+                    let hasBorderRight = false;
+                    let hasBorderRadius = false;
+                    rule.walkDecls((decl) => {
+                        if (decl.prop === 'margin-inline' && decl.value.includes('calc(-1 * clamp')) hasMargin = true;
+                        if (decl.prop === 'border-left' && decl.value.includes('none')) hasBorderLeft = true;
+                        if (decl.prop === 'border-right' && decl.value.includes('none')) hasBorderRight = true;
+                        if (decl.prop === 'border-radius' && decl.value.includes('0')) hasBorderRadius = true;
+                    });
+                    if (hasMargin && hasBorderLeft && hasBorderRight && hasBorderRadius) {
+                        foundNarrowRule = true;
+                    }
+                }
+            });
+        }
+    });
+
+    assert.ok(foundNarrowRule, 'hydro-problem-content-card must remove borders, radius and horizontal margin on narrow screens');
+});
+
+test('homepage bulletin and data panels remove borders, radius and margins on narrow screens', () => {
+    const css = readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8');
+    const tailwindCss = postcss.parse(css);
+    let foundBulletinRule = false;
+    let foundDataPanelRule = false;
+    let foundHomeGridRule = false;
+    let foundPaddingRule = false;
+
+    tailwindCss.walkAtRules('media', (atRule) => {
+        if (atRule.params.includes('max-width: 768px')) {
+            atRule.walkRules((rule) => {
+                if (rule.selector.includes('.hydro-bulletin') && rule.selector.includes('.hydro-data-panel')) {
+                    let hasMargin = false;
+                    let hasBorderLeft = false;
+                    let hasBorderRight = false;
+                    let hasBorderRadius = false;
+                    rule.walkDecls((decl) => {
+                        if (decl.prop === 'margin-inline' && decl.value.includes('calc(-1 * clamp')) hasMargin = true;
+                        if (decl.prop === 'border-left' && decl.value.includes('none')) hasBorderLeft = true;
+                        if (decl.prop === 'border-right' && decl.value.includes('none')) hasBorderRight = true;
+                        if (decl.prop === 'border-radius' && decl.value.includes('0')) hasBorderRadius = true;
+                    });
+                    if (hasMargin && hasBorderLeft && hasBorderRight && hasBorderRadius) {
+                        foundBulletinRule = true;
+                        foundDataPanelRule = true;
+                    }
+                }
+                if (rule.selector.includes('.hydro-home-grid')) {
+                    rule.walkDecls('display', (decl) => {
+                        if (decl.value === 'contents') foundHomeGridRule = true;
+                    });
+                }
+                if (rule.selector.includes('.hydro-data-panel__header') && rule.selector.includes('.hydro-bulletin')) {
+                    rule.walkDecls('padding-inline', (decl) => {
+                        if (decl.value.includes('16px')) foundPaddingRule = true;
+                    });
+                }
+            });
+        }
+    });
+
+    assert.ok(foundBulletinRule, 'hydro-bulletin must remove borders, radius and horizontal margin on narrow screens');
+    assert.ok(foundDataPanelRule, 'hydro-data-panel must remove borders, radius and horizontal margin on narrow screens');
+    assert.ok(foundHomeGridRule, 'hydro-home-grid must use display: contents on narrow screens');
+    assert.ok(foundPaddingRule, 'homepage sections must align padding-inline on narrow screens');
+});
