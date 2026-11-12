@@ -1613,7 +1613,7 @@ a {
   }
 
   .hydro-training-detail-table {
-    min-width: 580px;
+    min-width: 100%;
   }
 
   .hydro-contest-item:hover,
@@ -1943,6 +1943,67 @@ a {
 
 .hydro-training-paginator {
   margin-top: 24px;
+}
+
+.hydro-training-problem-title {
+  color: #000000 !important;
+  font-weight: 400 !important;
+  font-style: italic !important;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-training-problem-title {
+  color: #ffffff !important;
+}
+
+.hydro-training-detail-table th,
+.hydro-training-detail-table td {
+  vertical-align: middle !important;
+}
+
+.hydro-training-detail-table th:not(:first-child),
+.hydro-training-detail-table td:not(:first-child) {
+  text-align: center !important;
+}
+
+.hydro-training-table tbody tr.hydro-training-row--accepted {
+  background-color: color-mix(in srgb, var(--hydro-judge-ac) 5%, transparent) !important;
+}
+
+.hydro-training-table tbody tr.hydro-training-row--accepted:hover {
+  background-color: color-mix(in srgb, var(--hydro-judge-ac) 9%, transparent) !important;
+}
+
+.hydro-training-table tbody tr.hydro-training-row--rejected {
+  background-color: color-mix(in srgb, var(--hydro-judge-wa) 4.5%, transparent) !important;
+}
+
+.hydro-training-table tbody tr.hydro-training-row--rejected:hover {
+  background-color: color-mix(in srgb, var(--hydro-judge-wa) 8.5%, transparent) !important;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-training-table tbody tr.hydro-training-row--accepted {
+  background-color: color-mix(in srgb, var(--hydro-judge-ac) 7%, transparent) !important;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-training-table tbody tr.hydro-training-row--accepted:hover {
+  background-color: color-mix(in srgb, var(--hydro-judge-ac) 11%, transparent) !important;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-training-table tbody tr.hydro-training-row--rejected {
+  background-color: color-mix(in srgb, var(--hydro-judge-wa) 6.5%, transparent) !important;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-training-table tbody tr.hydro-training-row--rejected:hover {
+  background-color: color-mix(in srgb, var(--hydro-judge-wa) 10.5%, transparent) !important;
+}
+
+.hydro-training-table--not-enrolled thead th {
+  color: var(--hydro-text-muted) !important;
+}
+
+.hydro-training-table--not-enrolled tbody tr {
+  color: var(--hydro-text-muted) !important;
+  opacity: 0.7;
 }
 
 .hydro-sidebar,

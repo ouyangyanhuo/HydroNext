@@ -731,3 +731,141 @@ test('homepage bulletin and data panels remove borders, radius and margins on na
     assert.ok(foundHomeGridRule, 'hydro-home-grid must use display: contents on narrow screens');
     assert.ok(foundPaddingRule, 'homepage sections must align padding-inline on narrow screens');
 });
+
+test('training detail description card uses hydro-training-detail-card while title card retains borders on narrow screens', () => {
+    const trainingSource = read('../src/pages/training_detail.tsx');
+    assert.match(trainingSource, /tdoc\.description[\s\S]*?hydro-training-detail-card/);
+    assert.doesNotMatch(trainingSource, /<Card[^>]*hydro-training-detail-card[^>]*>[\s\S]*?tdoc\.title/);
+});
+
+test('training detail problem table removes status columns and compresses columns with row highlights', () => {
+    const trainingSource = read('../src/pages/training_detail.tsx');
+    assert.doesNotMatch(trainingSource, /Table\.Th[^>]*>\{t\('Status'\)\}/);
+    assert.doesNotMatch(trainingSource, /Table\.Th[^>]*>\{t\('My status'\)\}/);
+    assert.doesNotMatch(trainingSource, /<RecordStatusBadge/);
+
+    assert.match(trainingSource, /hydro-training-row--accepted/);
+    assert.match(trainingSource, /hydro-training-row--rejected/);
+    assert.match(trainingSource, /hydro-training-table--not-enrolled/);
+    assert.match(trainingSource, /onClick=\{handleRowClick\}/);
+    assert.match(trainingSource, /truncate block/);
+    assert.match(trainingSource, /hydro-training-problem-title/);
+    assert.match(trainingSource, /font-normal italic/);
+    assert.match(trainingSource, /<Tooltip[^>]*label=\{fullTitle\}/);
+    assert.doesNotMatch(trainingSource, /<span[^>]*title=\{fullTitle\}/);
+    assert.doesNotMatch(trainingSource, /<Link[^>]*title=\{fullTitle\}/);
+
+    const css = readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8');
+    const tailwindCss = postcss.parse(css);
+
+    let foundAcceptedRow = false;
+    let foundRejectedRow = false;
+    let foundNotEnrolled = false;
+    let foundNarrowTable = false;
+    let foundTitleLight = false;
+    let foundTitleDark = false;
+    let foundTitleItalic = false;
+    let foundVerticalAlign = false;
+    let foundTextAlign = false;
+
+    tailwindCss.walkRules((rule) => {
+        if (rule.selector === '.hydro-training-problem-title') {
+            rule.walkDecls('color', (decl) => {
+                if (decl.value.includes('#000000')) foundTitleLight = true;
+            });
+            rule.walkDecls('font-style', (decl) => {
+                if (decl.value.includes('italic')) foundTitleItalic = true;
+            });
+        }
+        if (rule.selector.includes("[data-mantine-color-scheme='dark']") && rule.selector.includes('.hydro-training-problem-title')) {
+            rule.walkDecls('color', (decl) => {
+                if (decl.value.includes('#ffffff')) foundTitleDark = true;
+            });
+        }
+        if (rule.selector.includes('.hydro-training-detail-table th') && rule.selector.includes('.hydro-training-detail-table td')) {
+            rule.walkDecls('vertical-align', (decl) => {
+                if (decl.value.includes('middle')) foundVerticalAlign = true;
+            });
+        }
+        if (rule.selector.includes('.hydro-training-detail-table th:not(:first-child)')) {
+            rule.walkDecls('text-align', (decl) => {
+                if (decl.value.includes('center')) foundTextAlign = true;
+            });
+        }
+        if (rule.selector.includes('.hydro-training-row--accepted') && !rule.selector.includes('data-mantine-color-scheme')) {
+            rule.walkDecls('background-color', (decl) => {
+                if (decl.value.includes('--hydro-judge-ac') && decl.value.includes('5%')) foundAcceptedRow = true;
+            });
+        }
+        if (rule.selector.includes('.hydro-training-row--rejected') && !rule.selector.includes('data-mantine-color-scheme')) {
+            rule.walkDecls('background-color', (decl) => {
+                if (decl.value.includes('--hydro-judge-wa') && decl.value.includes('4.5%')) foundRejectedRow = true;
+            });
+        }
+        if (rule.selector.includes('.hydro-training-table--not-enrolled')) {
+            foundNotEnrolled = true;
+        }
+    });
+
+    tailwindCss.walkAtRules('media', (atRule) => {
+        if (atRule.params.includes('max-width: 768px')) {
+            atRule.walkRules((rule) => {
+                if (rule.selector.includes('.hydro-training-detail-table')) {
+                    rule.walkDecls('min-width', (decl) => {
+                        if (decl.value === '100%') foundNarrowTable = true;
+                    });
+                }
+            });
+        }
+    });
+
+    assert.ok(foundTitleLight, 'training problem title must be plain black in light mode');
+    assert.ok(foundTitleDark, 'training problem title must be plain white in dark mode');
+    assert.ok(foundTitleItalic, 'training problem title must be italicized and not bold');
+    assert.ok(foundVerticalAlign, 'training table cells and headers must be vertically centered');
+    assert.ok(foundTextAlign, 'training table metric columns must be horizontally centered for vertical alignment');
+    assert.ok(foundAcceptedRow, 'accepted training row must use subtle green tint');
+    assert.ok(foundRejectedRow, 'rejected training row must use subtle red tint');
+    assert.ok(foundNotEnrolled, 'not enrolled table must have muted styles');
+    assert.ok(foundNarrowTable, 'narrow training table must use 100% min-width');
+});
+
+test('training detail metric formatters omit leading zeros and truncate large values', () => {
+    const formatCount = (value: any) => {
+        const num = Number(value);
+        if (!Number.isFinite(num) || num < 0) return { display: '0', full: '0' };
+        const full = String(num);
+        if (full.length <= 4) return { display: full, full };
+        return { display: `${full.slice(0, 1)}...`, full: num.toLocaleString() };
+    };
+
+    const formatDifficulty = (problem: any) => {
+        let pct: number | null = null;
+        if (problem?.difficulty !== undefined && problem?.difficulty !== null && !Number.isNaN(Number(problem.difficulty))) {
+            pct = Math.min(100, Math.max(0, Math.round(Number(problem.difficulty))));
+        } else {
+            const submit = Number(problem?.nSubmit || 0);
+            const accept = Number(problem?.nAccept || 0);
+            if (submit > 0) pct = Math.min(100, Math.max(0, Math.round((accept / submit) * 100)));
+            else pct = 0;
+        }
+        const submit = Number(problem?.nSubmit || 0);
+        const accept = Number(problem?.nAccept || 0);
+        const full = submit > 0 ? `${accept} / ${submit} (${pct}%)` : `${pct}%`;
+        return { display: `${pct}%`, full };
+    };
+
+    assert.equal(formatCount(0).display, '0');
+    assert.equal(formatCount(7).display, '7');
+    assert.equal(formatCount(42).display, '42');
+    assert.equal(formatCount(9999).display, '9999');
+    assert.equal(formatCount(10000).display, '1...');
+    assert.equal(formatCount(25680).display, '2...');
+    assert.equal(formatCount(10000).full, '10,000');
+
+    assert.equal(formatDifficulty({ difficulty: 5 }).display, '5%');
+    assert.equal(formatDifficulty({ difficulty: 50 }).display, '50%');
+    assert.equal(formatDifficulty({ difficulty: 100 }).display, '100%');
+    assert.equal(formatDifficulty({ nSubmit: 100, nAccept: 42 }).display, '42%');
+    assert.equal(formatDifficulty({ nSubmit: 0, nAccept: 0 }).display, '0%');
+});

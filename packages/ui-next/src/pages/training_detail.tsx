@@ -1,5 +1,6 @@
 import {
   Badge, Card, Center, Group, Loader, Modal, Pagination, Progress, SimpleGrid, Stack, Table, Text, TextInput, Title,
+  Tooltip,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconChevronRight, IconSearch, IconUsers } from '@tabler/icons-react';
@@ -9,7 +10,7 @@ import { DeleteResourceButton } from '@/components/common/delete-resource-button
 import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
-import { RecordStatusBadge } from '@/components/record/record-status-badge';
+import { STATUS } from '@/components/record/status-map';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData, useUserContext } from '@/context/page-data';
@@ -37,12 +38,45 @@ function getPids(tdoc: any) {
   return getNodes(tdoc).flatMap((node: any) => node.pids || []);
 }
 
-function difficulty(problem: any) {
-  if (problem?.difficulty !== undefined && problem?.difficulty !== null) return problem.difficulty;
+function formatCount(value: any): { display: string, full: string } {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0) {
+    return { display: '0', full: '0' };
+  }
+  const full = String(num);
+  if (full.length <= 4) {
+    return { display: full, full };
+  }
+  return { display: `${full.slice(0, 1)}...`, full: num.toLocaleString() };
+}
+
+function formatDifficulty(problem: any): { display: string, full: string } {
+  let pct: number | null = null;
+  if (problem?.difficulty !== undefined && problem?.difficulty !== null && !Number.isNaN(Number(problem.difficulty))) {
+    pct = Math.min(100, Math.max(0, Math.round(Number(problem.difficulty))));
+  } else {
+    const submit = Number(problem?.nSubmit || 0);
+    const accept = Number(problem?.nAccept || 0);
+    if (submit > 0) {
+      pct = Math.min(100, Math.max(0, Math.round((accept / submit) * 100)));
+    } else {
+      pct = 0;
+    }
+  }
   const submit = Number(problem?.nSubmit || 0);
   const accept = Number(problem?.nAccept || 0);
-  if (!submit) return '-';
-  return `${Math.round((accept / submit) * 100)}%`;
+  const full = submit > 0 ? `${accept} / ${submit} (${pct}%)` : `${pct}%`;
+  return { display: `${pct}%`, full };
+}
+
+function getRowStatus(psdoc: any, enrolled: boolean): 'accepted' | 'rejected' | 'default' {
+  if (!enrolled) return 'default';
+  if (!psdoc || (psdoc.status === undefined && !psdoc.rid)) return 'default';
+  if (psdoc.status === STATUS.STATUS_ACCEPTED) return 'accepted';
+  if (psdoc.status !== undefined && psdoc.status !== STATUS.STATUS_WAITING && psdoc.status !== STATUS.STATUS_JUDGING) {
+    return 'rejected';
+  }
+  return 'default';
 }
 
 function nodeStatus(nodeState: any, enrolled: boolean) {
@@ -58,7 +92,6 @@ function TrainingProblemTable({
   node,
   pdict,
   psdict,
-  selfPsdict,
   enrolled,
   compare,
   invalid,
@@ -69,7 +102,7 @@ function TrainingProblemTable({
   node: any;
   pdict: Record<string, any>;
   psdict: Record<string, any>;
-  selfPsdict: Record<string, any>;
+  selfPsdict?: Record<string, any>;
   enrolled: boolean;
   compare: boolean;
   invalid: boolean;
@@ -81,67 +114,109 @@ function TrainingProblemTable({
   const buildUrl = useBuildUrl();
   const pids = node.pids || [];
   const sourceQuery = Object.fromEntries(
-    [...new URLSearchParams(window.location.search)].filter(([key]) => ['page', 'q', 'category', 'sort', 'uid', 'viewRecords'].includes(key)),
+    [...new URLSearchParams(window.location.search)].filter(
+      ([key]) => ['page', 'q', 'category', 'sort', 'uid', 'viewRecords'].includes(key),
+    ),
   );
+  const effectiveEnrolled = compare ? true : enrolled;
 
   return (
     <div className="overflow-x-auto">
-      <Table striped highlightOnHover verticalSpacing="sm" className="hydro-training-detail-table">
-        <Table.Thead>
+      <Table
+        striped
+        highlightOnHover
+        verticalSpacing="sm"
+        style={{ tableLayout: 'fixed' }}
+        className={`hydro-training-detail-table hydro-training-table w-full table-fixed ${
+          !effectiveEnrolled ? 'hydro-training-table--not-enrolled' : ''
+        }`}
+      >
+        <Table.Thead className={!effectiveEnrolled ? 'text-[var(--hydro-text-muted)] opacity-70' : ''}>
           <Table.Tr>
-            {enrolled && <Table.Th className="w-28">{t('Status')}</Table.Th>}
-            {compare && <Table.Th className="w-28">{t('My status')}</Table.Th>}
-            <Table.Th>{t('Problem')}</Table.Th>
-            <Table.Th className="w-24 text-right">{t('Tried')}</Table.Th>
-            <Table.Th className="w-24 text-right">{t('AC')}</Table.Th>
-            <Table.Th className="w-28 text-right">{t('Difficulty')}</Table.Th>
+            <Table.Th className="text-left font-semibold align-middle">{t('Problem')}</Table.Th>
+            <Table.Th className="w-16 md:w-20 !text-center font-semibold align-middle">{t('Tried')}</Table.Th>
+            <Table.Th className="w-16 md:w-20 !text-center font-semibold align-middle">{t('AC')}</Table.Th>
+            <Table.Th className="w-20 md:w-24 !text-center font-semibold align-middle">{t('Difficulty')}</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
           {pids.map((pid: any, index: number) => {
             const pdoc = pdict[pid] || {};
             const psdoc = psdict[pid] || {};
-            const selfPsdoc = selfPsdict[pid] || {};
-            const disabled = invalid || !enrolled || pdoc.hidden || !pdoc.docId;
+            const disabled = invalid || !effectiveEnrolled || pdoc.hidden || !pdoc.docId;
+            const rowStatus = getRowStatus(psdoc, effectiveEnrolled);
+            const tried = formatCount(pdoc.nSubmit);
+            const ac = formatCount(pdoc.nAccept);
+            const diff = formatDifficulty(pdoc);
+            const displayTitle = pdoc.title || pid;
+            const prefix = pdoc.pid || pdoc.docId || String.fromCharCode(65 + index);
+            const fullTitle = `${prefix}. ${displayTitle}`;
+
+            const targetUrl = viewRecords && viewedUid
+              ? buildUrl('record_main', {}, {
+                uidOrName: String(viewedUid),
+                pid: String(pdoc.pid || pdoc.docId || pid),
+              })
+              : buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId || pid }, {
+                ...sourceQuery, nav: 'training', training: trainingId, chapter: String(node._id),
+              });
+
+            const handleRowClick = (e: React.MouseEvent) => {
+              if (disabled) return;
+              if ((e.target as HTMLElement).closest('a[href], button')) return;
+              if (e.metaKey || e.ctrlKey) {
+                window.open(targetUrl, '_blank');
+              } else {
+                window.location.href = targetUrl;
+              }
+            };
+
             return (
-              <Table.Tr key={`${pid}-${index}`}>
-                {enrolled && (
-                  <Table.Td>
-                    {psdoc.rid || psdoc.status !== undefined ? <RecordStatusBadge status={psdoc.status} size="xs" /> : null}
-                  </Table.Td>
-                )}
-                {compare && (
-                  <Table.Td>
-                    {selfPsdoc.rid || selfPsdoc.status !== undefined ? <RecordStatusBadge status={selfPsdoc.status} size="xs" /> : null}
-                  </Table.Td>
-                )}
-                <Table.Td>
-                  {disabled ? (
-                    <Text size="sm" c="dimmed">{pdoc.title || pid}</Text>
-                  ) : viewRecords && viewedUid ? (
-                    <Link
-                      href={buildUrl('record_main', {}, {
-                        uidOrName: String(viewedUid),
-                        pid: String(pdoc.pid || pdoc.docId || pid),
-                      })}
-                      className="text-sm font-semibold no-underline hover:underline"
-                    >
-                      {pdoc.pid || pdoc.docId || String.fromCharCode(65 + index)}. {pdoc.title || pid}
-                    </Link>
-                  ) : (
-                    <Link
-                      href={buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId || pid }, {
-                        ...sourceQuery, nav: 'training', training: trainingId, chapter: String(node._id),
-                      })}
-                      className="text-sm font-semibold no-underline hover:underline"
-                    >
-                      {pdoc.pid || pdoc.docId || String.fromCharCode(65 + index)}. {pdoc.title || pid}
-                    </Link>
-                  )}
+              <Table.Tr
+                key={`${pid}-${index}`}
+                onClick={handleRowClick}
+                className={[
+                  'hydro-training-row',
+                  rowStatus === 'accepted' ? 'hydro-training-row--accepted' : '',
+                  rowStatus === 'rejected' ? 'hydro-training-row--rejected' : '',
+                  disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+                ].filter(Boolean).join(' ')}
+              >
+                <Table.Td className="max-w-0 min-w-0 align-middle">
+                  <Tooltip label={fullTitle} withArrow withinPortal multiline maw="min(480px, calc(100vw - 32px))">
+                    <div className="inline-flex items-center min-w-0 max-w-full">
+                      {disabled ? (
+                        <span
+                          className="hydro-training-problem-title truncate block text-sm font-normal italic opacity-60"
+                        >
+                          {fullTitle}
+                        </span>
+                      ) : (
+                        <Link
+                          href={targetUrl}
+                          className="hydro-training-problem-title truncate block text-sm font-normal italic no-underline hover:underline"
+                        >
+                          {fullTitle}
+                        </Link>
+                      )}
+                    </div>
+                  </Tooltip>
                 </Table.Td>
-                <Table.Td className="text-right"><Text size="sm">{pdoc.nSubmit ?? '*'}</Text></Table.Td>
-                <Table.Td className="text-right"><Text size="sm">{pdoc.nAccept ?? '*'}</Text></Table.Td>
-                <Table.Td className="text-right"><Text size="sm">{difficulty(pdoc)}</Text></Table.Td>
+                <Table.Td className="w-16 md:w-20 !text-center font-mono text-xs md:text-sm align-middle">
+                  <Tooltip label={`${t('Tried')}: ${tried.full}`} withArrow withinPortal>
+                    <span className="inline-block cursor-default tabular-nums">{tried.display}</span>
+                  </Tooltip>
+                </Table.Td>
+                <Table.Td className="w-16 md:w-20 !text-center font-mono text-xs md:text-sm align-middle">
+                  <Tooltip label={`${t('AC')}: ${ac.full}`} withArrow withinPortal>
+                    <span className="inline-block cursor-default tabular-nums">{ac.display}</span>
+                  </Tooltip>
+                </Table.Td>
+                <Table.Td className="w-20 md:w-24 !text-center font-mono text-xs md:text-sm align-middle">
+                  <Tooltip label={`${t('Difficulty')}: ${diff.full}`} withArrow withinPortal>
+                    <span className="inline-block cursor-default tabular-nums">{diff.display}</span>
+                  </Tooltip>
+                </Table.Td>
               </Table.Tr>
             );
           })}
@@ -291,7 +366,7 @@ export default function TrainingDetailPage() {
             <Card
               withBorder
               p="md"
-              className="border-[var(--hydro-warning)]"
+              className="hydro-content-card hydro-training-detail-card border-[var(--hydro-warning)]"
               style={{ background: 'rgba(233, 161, 0, 0.08)' }}
             >
               <Text size="sm">{t('Login to join training plan')}</Text>
@@ -301,7 +376,7 @@ export default function TrainingDetailPage() {
             <Card
               withBorder
               p="md"
-              className="border-[var(--hydro-warning)]"
+              className="hydro-content-card hydro-training-detail-card border-[var(--hydro-warning)]"
               style={{ background: 'rgba(233, 161, 0, 0.08)' }}
             >
               <Text size="sm">{t('page.training_detail.invalid_when_not_enrolled')}</Text>
@@ -311,7 +386,7 @@ export default function TrainingDetailPage() {
             <Card
               withBorder
               p="md"
-              className="border-[var(--hydro-warning)]"
+              className="hydro-content-card hydro-training-detail-card border-[var(--hydro-warning)]"
               style={{ background: 'rgba(233, 161, 0, 0.08)' }}
             >
               <Text size="sm" fw={700}>{t('Some problems in the training are missing or you do not have permission to view them.')}</Text>
@@ -320,7 +395,7 @@ export default function TrainingDetailPage() {
           )}
 
           {tdoc.description && (
-            <Card withBorder p="lg" className="hydro-content-card">
+            <Card withBorder p="lg" className="hydro-content-card hydro-training-detail-card">
               <MarkdownRenderer content={tdoc.description} />
             </Card>
           )}
