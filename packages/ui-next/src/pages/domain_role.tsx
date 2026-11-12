@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
+import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
@@ -49,7 +50,7 @@ export default function DomainRolePage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Roles')}>
-        <Button component="a" href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button component={Link} href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
         <Button size="xs" onClick={() => setDialogOpen(true)}>{t('Create Role')}</Button>

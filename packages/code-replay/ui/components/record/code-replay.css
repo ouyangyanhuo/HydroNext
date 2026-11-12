@@ -183,14 +183,15 @@
 
 .hydro-code-replay__action {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
   color: var(--hydro-text);
   font-size: var(--mantine-font-size-xs);
+  line-height: 1.3;
   text-align: start;
   cursor: pointer;
   transition: background-color var(--hydro-duration-fast) var(--hydro-ease-out),
@@ -207,18 +208,6 @@
 
 .hydro-code-replay__action[data-state='current'] {
   background: var(--hydro-primary-soft);
-  box-shadow: inset 3px 0 0 var(--mantine-primary-color-filled);
-}
-
-.hydro-code-replay__action-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--replay-kind) 14%, transparent);
-  color: var(--replay-kind);
 }
 
 .hydro-code-replay [data-kind='template'] { --replay-kind: var(--replay-kind-template); }

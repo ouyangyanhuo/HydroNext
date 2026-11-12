@@ -567,7 +567,7 @@ export default function ProblemStatisticsPage() {
     <Stack gap="lg" className="hydro-problem-statistics">
       <PageHeader title={`${t('Statistics')}${problemName ? ` · ${problemName}` : ''}`}>
         <Button
-          component="a"
+          component={Link}
           href={buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId })}
           variant="subtle"
           size="xs"

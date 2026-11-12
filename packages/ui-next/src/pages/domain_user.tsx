@@ -336,7 +336,7 @@ export default function DomainUserPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Domain Users')}>
-        <Button component="a" href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button component={Link} href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
         <Button size="xs" onClick={() => setDialogOpen(true)}>{t('Add User')}</Button>

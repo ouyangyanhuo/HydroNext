@@ -4,6 +4,7 @@ import { IconArrowLeft } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
+import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSessionStore } from '@/stores/session';
@@ -143,7 +144,7 @@ export default function DomainPermissionPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Permissions')}>
-        <Button component="a" href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button component={Link} href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
         <Button onClick={handleSave} loading={loading} size="xs">{t('Update Permission')}</Button>

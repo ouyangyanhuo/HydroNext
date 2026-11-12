@@ -63,10 +63,13 @@ session ID without its event history.
 ### Access control, private contest records, and draft recovery
 
 - Record details and both replay endpoints use Hydro's shared `getRecordAccess`
-  policy: a submitter may read their own code/replay; reading anyone else's requires
+  policy: a submitter may read their own code/replay; by default, reading anyone else's requires
   the domain's `PERM_READ_RECORD_CODE` or global `PRIV_READ_RECORD_CODE` privilege.
-  Team membership, contest ownership, an accepted solution, and `allowViewCode`
-  do not grant additional source access. List entries, source downloads, and
+  For official contest submissions only, the contest creator may also read that
+  contest's submissions, and registered teammates may read submissions belonging
+  to their team in that contest. Neither exception applies to practice, other
+  contests/domains, or private self-tests. An accepted solution and `allowViewCode`
+  do not grant source access. List entries, source downloads, and
   WebSocket snapshots follow the same rule. Hidden-problem visibility, contest
   record restrictions and proctor authentication still apply.
 - The submit handler keeps the created record ID internally. Replay binding uses

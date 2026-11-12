@@ -276,7 +276,7 @@ export default function RecordDetailPage() {
     if (returnQuery) {
       void navigate(buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId || rdoc.pid }, returnQuery), { replace: true });
     } else if (window.history.length > 1) window.history.back();
-    else window.location.assign(buildUrl('record_main'));
+    else void navigate(buildUrl('record_main'), { replace: true });
   };
 
   const submitOperation = async (operation: 'rejudge' | 'cancel') => {

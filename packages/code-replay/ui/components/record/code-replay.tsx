@@ -3,8 +3,8 @@ import './code-replay.css';
 import { ActionIcon, Button, ButtonBase, CodeEditor, RollingClock, ShortSelect, useI18n } from '@hydrooj/ui-next';
 import { Badge, Group, Paper, Slider, Switch, Text, Tooltip } from '@mantine/core';
 import {
-  IconClipboardText, IconFlask, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconPlayerSkipBack, IconPlayerSkipForward,
-  IconRotateClockwise, IconSend, IconTemplate,
+  IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconPlayerSkipBack, IconPlayerSkipForward,
+  IconRotateClockwise,
 } from '@tabler/icons-react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { buildReplayStates, eventTime, type ReplayAction, type ReplayEvent, type ReplaySnapshot } from '../../../replay';
@@ -33,9 +33,6 @@ const EMPTY_SNAPSHOTS: ReplaySnapshot[] = [];
 const ReplayEditor = memo(CodeEditor);
 const ACTION_LABELS: Record<ReplayAction, string> = {
   template: 'Loaded code template', paste: 'Pasted code', self_test: 'Submitted self-test', submit: 'Submitted solution',
-};
-const ACTION_ICONS: Record<ReplayAction, typeof IconTemplate> = {
-  template: IconTemplate, paste: IconClipboardText, self_test: IconFlask, submit: IconSend,
 };
 
 function formatReplayTime(ms: number) {
@@ -77,9 +74,21 @@ export function CodeReplay({
   const timerRef = useRef<number | null>(null);
   const maxIndex = Math.max(0, states.length - 1);
   const isThinking = Boolean(thinkingRangeAt(thinkingRanges, cursor.time));
-  // The latest action at or before the cursor, so dragging between markers still has a current entry.
+  const ACTION_LOCK_WINDOW_MS = 1000;
   let activeAction = -1;
-  while (activeAction + 1 < actions.length && actions[activeAction + 1].index <= cursor.index) activeAction++;
+  let minDistance = Infinity;
+  for (let i = 0; i < actions.length; i++) {
+    const dist = Math.abs(cursor.time - eventTime(actions[i].event));
+    if (dist <= ACTION_LOCK_WINDOW_MS) {
+      if (dist < minDistance) {
+        minDistance = dist;
+        activeAction = i;
+      } else if (dist === minDistance && actions[i].index <= cursor.index) {
+        activeAction = i;
+      }
+    }
+  }
+  const pastCount = actions.filter(({ event }) => eventTime(event) <= cursor.time).length;
   const actionListRef = useRef<HTMLOListElement>(null);
   const clockStyle = useMemo(() => ({ minInlineSize: `${formatReplayTime(duration).length}ch` }), [duration]);
 
@@ -108,17 +117,26 @@ export function CodeReplay({
   }, [duration, playing, skipThinking, speed, thinkingRanges, times]);
 
   // Keep the current action visible inside the list without scrolling the page itself.
+  // When the event node is outside the visible box, automatically scroll the window to lock onto it.
   useEffect(() => {
+    if (activeAction < 0) return;
     const list = actionListRef.current;
     if (!list) return;
     const item = list.children[activeAction] as HTMLElement | undefined;
-    if (!item) {
-      list.scrollTop = 0;
-      return;
-    }
+    if (!item) return;
     const top = item.offsetTop;
-    if (top >= list.scrollTop && top + item.offsetHeight <= list.scrollTop + list.clientHeight) return;
-    list.scrollTop = top - (list.clientHeight - item.offsetHeight) / 2;
+    const bottom = top + item.offsetHeight;
+    const viewTop = list.scrollTop;
+    const viewBottom = viewTop + list.clientHeight;
+    const isOutOfView = list.clientHeight > 0 && (top < viewTop || bottom > viewBottom);
+    if (isOutOfView) {
+      const targetTop = Math.max(0, top - (list.clientHeight - item.offsetHeight) / 2);
+      if (typeof list.scrollTo === 'function') {
+        list.scrollTo({ top: targetTop, behavior: 'smooth' });
+      } else {
+        list.scrollTop = targetTop;
+      }
+    }
   }, [activeAction]);
 
   const seek = (time: number, index = replayIndexAtTime(times, time)) => {
@@ -297,30 +315,30 @@ export function CodeReplay({
             <header className="hydro-code-replay__log-header">
               <Text size="sm" fw={600}>{t('Recorded actions')}</Text>
               <Text size="xs" c="dimmed" className="hydro-code-replay__log-count">
-                {activeAction + 1} / {actions.length}
+                {activeAction >= 0 ? activeAction + 1 : pastCount} / {actions.length}
               </Text>
             </header>
             <ol ref={actionListRef} className="hydro-code-replay__actions">
               {actions.map(({ event, index }, position) => {
-                const ActionIconComponent = ACTION_ICONS[event.action!];
                 const wallTime = event.timestamp !== undefined && Number.isFinite(new Date(event.timestamp).getTime())
                   ? new Date(event.timestamp) : null;
                 const details = [
                   event.lang,
                   event.action === 'paste' && event.characters !== undefined ? t('{0} characters', event.characters) : '',
                 ].filter(Boolean).join(' · ');
+                const isCurrent = position === activeAction;
+                const isPast = !isCurrent && eventTime(event) <= cursor.time;
+                const state = isCurrent ? 'current' : isPast ? 'past' : 'future';
+
                 return (
                   <li key={event.seq ?? index}>
                     <ButtonBase
                       className="hydro-code-replay__action"
                       data-kind={event.action}
-                      data-state={position === activeAction ? 'current' : position < activeAction ? 'past' : 'future'}
-                      aria-current={position === activeAction ? 'step' : undefined}
+                      data-state={state}
+                      aria-current={isCurrent ? 'step' : undefined}
                       onClick={() => seek(times[index], index)}
                     >
-                      <span className="hydro-code-replay__action-icon" aria-hidden="true">
-                        <ActionIconComponent size={15} stroke={1.8} />
-                      </span>
                       <span className="hydro-code-replay__action-main">
                         <span className="hydro-code-replay__action-label">{t(ACTION_LABELS[event.action!])}</span>
                         {details && <span className="hydro-code-replay__action-detail">{details}</span>}

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
+import { Link } from '@/components/link';
 import { TrainingPlanEditor, type TrainingProblemOption } from '@/components/training/training-plan-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -159,7 +160,7 @@ export default function TrainingEditPage() {
   return (
     <Stack gap="lg" className="hydro-training-edit-page">
       <PageHeader title={isNew ? t('Create Training') : t('Edit Training')}>
-        <Button component="a" href={buildUrl('training_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button component={Link} href={buildUrl('training_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
       </PageHeader>

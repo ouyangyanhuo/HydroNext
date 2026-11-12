@@ -15,12 +15,12 @@ function isModifiedEvent(e: React.MouseEvent): boolean {
   return e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
 }
 
-export const Link: React.FC<React.PropsWithChildren<LinkProps>> = ({
+export const Link = React.forwardRef<HTMLAnchorElement, React.PropsWithChildren<LinkProps>>(({
   href, to, params,
   onClick, target, download = false,
   children,
   ...rest
-}) => {
+}, ref) => {
   const buildUrl = useBuildUrl();
   const navigate = useNavigate();
 
@@ -48,8 +48,9 @@ export const Link: React.FC<React.PropsWithChildren<LinkProps>> = ({
   );
 
   return (
-    <a href={resolvedHref} onClick={handleClick} target={target} download={download} {...rest}>
+    <a ref={ref} href={resolvedHref} onClick={handleClick} target={target} download={download} {...rest}>
       {children}
     </a>
   );
-};
+});
+Link.displayName = 'Link';

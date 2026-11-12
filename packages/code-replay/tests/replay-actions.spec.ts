@@ -55,30 +55,30 @@ test('replay actions show relative/actual times, paste length, and seek to the c
     try {
         const events = [
             { seq: 1, t: 1000, action: 'template', timestamp: 1_000_001_000, changes: [] },
-            { seq: 2, t: 1000, changes: [{ rangeOffset: 0, rangeLength: 0, text: 'abc' }] },
-            { seq: 3, t: 5000, action: 'paste', timestamp: 1_000_005_000, characters: 3, changes: [] },
-            { seq: 4, t: 9000, action: 'self_test', timestamp: 1_000_009_000, changes: [] },
-            { seq: 5, t: 10_000, changes: [{ rangeOffset: 0, rangeLength: 3, text: 'done' }] },
-            { seq: 6, t: 12_000, action: 'submit', timestamp: 1_000_012_000, changes: [] },
+            { seq: 2, t: 4000, changes: [{ rangeOffset: 0, rangeLength: 0, text: 'abc' }] },
+            { seq: 3, t: 7000, action: 'paste', timestamp: 1_000_007_000, characters: 3, changes: [] },
+            { seq: 4, t: 12_000, action: 'self_test', timestamp: 1_000_012_000, changes: [] },
+            { seq: 5, t: 15_000, changes: [{ rangeOffset: 0, rangeLength: 3, text: 'done' }] },
+            { seq: 6, t: 20_000, action: 'submit', timestamp: 1_000_020_000, changes: [] },
         ];
         await act(async () => root.render(h(MantineProvider, {}, h(module.exports.CodeReplay, { events, initialCode: '', finalCode: 'done' }))));
         const actions = [...dom.window.document.querySelectorAll<HTMLButtonElement>('.hydro-code-replay__action')];
         assert.equal(actions.length, 4);
-        assert.ok(actions[1].textContent?.includes('00:05'));
+        assert.ok(actions[1].textContent?.includes('00:07'));
         const clock = dom.window.document.querySelector<HTMLElement>('.hydro-code-replay__clock .hydro-clock')!;
         assert.equal(clock.getAttribute('aria-label'), '00:00');
         assert.equal(clock.style.minInlineSize, '5ch');
         assert.ok(actions[1].textContent?.includes('3 characters'));
-        assert.equal(actions[1].querySelector('time')?.dateTime, new Date(1_000_005_000).toISOString());
+        assert.equal(actions[1].querySelector('time')?.dateTime, new Date(1_000_007_000).toISOString());
         await act(async () => actions[2].click());
-        assert.equal(clock.getAttribute('aria-label'), '00:09');
+        assert.equal(clock.getAttribute('aria-label'), '00:12');
         assert.equal(clock.style.minInlineSize, '5ch');
         assert.equal(dom.window.document.querySelector('[data-testid="code"]')?.textContent, 'abc');
         await act(async () => actions[3].click());
         assert.equal(dom.window.document.querySelector('[data-testid="code"]')?.textContent, 'done');
         assert.equal(dom.window.document.querySelectorAll('.hydro-code-replay__marker').length, 4);
 
-        // Between two actions the earlier one stays current, in the list and on the timeline.
+        // Within 2s of an action node it locks onto it; beyond 2s between operations it does not mark.
         const current = () => actions.findIndex((action) => action.getAttribute('aria-current') === 'step');
         await act(async () => actions[2].click());
         assert.equal(current(), 2);
@@ -86,11 +86,28 @@ test('replay actions show relative/actual times, paste length, and seek to the c
         await act(async () => previousStep.click());
         assert.equal(current(), 1);
         await act(async () => previousStep.click());
-        assert.equal(current(), 0, 'an edit after the template keeps the template current');
-        assert.equal(actions[0].dataset.state, 'current');
+        assert.equal(current(), -1, 'between operations outside 2s window, no action is marked as current');
+        assert.equal(actions[0].dataset.state, 'past');
+        assert.equal(actions[1].dataset.state, 'future');
         assert.equal(actions[3].dataset.state, 'future');
-        const markers = [...dom.window.document.querySelectorAll<HTMLElement>('.hydro-code-replay__marker')];
-        assert.deepEqual(markers.map((marker) => marker.hasAttribute('data-active')), [true, false, false, false]);
+        const markersBetween = [...dom.window.document.querySelectorAll<HTMLElement>('.hydro-code-replay__marker')];
+        assert.deepEqual(markersBetween.map((marker) => marker.hasAttribute('data-active')), [false, false, false, false]);
+        await act(async () => previousStep.click());
+        assert.equal(current(), 0, 'on the template action node (within 2s), it marks current');
+        assert.equal(actions[0].dataset.state, 'current');
+        const markersOnNode = [...dom.window.document.querySelectorAll<HTMLElement>('.hydro-code-replay__marker')];
+        assert.deepEqual(markersOnNode.map((marker) => marker.hasAttribute('data-active')), [true, false, false, false]);
+
+        // When the event node is outside the visible box, it automatically scrolls the list to lock onto it.
+        const list = dom.window.document.querySelector<HTMLElement>('.hydro-code-replay__actions')!;
+        Object.defineProperty(list, 'clientHeight', { value: 100, configurable: true });
+        list.scrollTop = 0;
+        const lastActionItem = list.children[3] as HTMLElement;
+        Object.defineProperty(lastActionItem, 'offsetTop', { value: 300, configurable: true });
+        Object.defineProperty(lastActionItem, 'offsetHeight', { value: 28, configurable: true });
+        await act(async () => actions[3].click());
+        assert.equal(current(), 3);
+        assert.equal(list.scrollTop, 300 - (100 - 28) / 2);
     } finally {
         await act(async () => root.unmount());
         dom.window.close();

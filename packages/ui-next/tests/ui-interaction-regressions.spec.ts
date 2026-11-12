@@ -869,3 +869,29 @@ test('training detail metric formatters omit leading zeros and truncate large va
     assert.equal(formatDifficulty({ nSubmit: 100, nAccept: 42 }).display, '42%');
     assert.equal(formatDifficulty({ nSubmit: 0, nAccept: 0 }).display, '0%');
 });
+
+test('page back buttons and navigation controls use client-side Link component without full page reloads', () => {
+    const trainingSource = read('../src/pages/training_detail.tsx');
+    const problemSource = read('../src/pages/problem_detail.tsx');
+    const contestDetailSource = read('../src/pages/contest_detail.tsx');
+    const contestEditSource = read('../src/pages/contest_edit.tsx');
+    const contestManageSource = read('../src/pages/contest_manage.tsx');
+    const problemEditSource = read('../src/pages/problem_edit.tsx');
+    const problemSolutionSource = read('../src/pages/problem_solution.tsx');
+    const problemStatsSource = read('../src/pages/problem_statistics.tsx');
+    const problemImportSource = read('../src/pages/problem_import.tsx');
+    const domainUserSource = read('../src/pages/domain_user.tsx');
+    const linkSource = read('../src/components/link.tsx');
+
+    assert.match(linkSource, /React\.forwardRef/);
+    assert.match(trainingSource, /Button[^>]*component=\{Link\}[^>]*href=\{trainingListUrl\}/);
+    assert.match(problemSource, /Button[^>]*component=\{Link\}[^>]*href=\{problemListUrl\}/);
+    assert.match(contestDetailSource, /Button[^>]*component=\{Link\}[^>]*href=\{buildUrl\('contest_main'\)\}/);
+    assert.match(contestEditSource, /Button[^>]*component=\{Link\}[^>]*href=\{buildUrl\('contest_main'\)\}/);
+    assert.match(contestManageSource, /Button[^>]*component=\{Link\}[^>]*href=\{buildUrl\('contest_detail'/);
+    assert.match(problemEditSource, /Button[^>]*component=\{Link\}/);
+    assert.match(problemSolutionSource, /Button[^>]*component=\{Link\}/);
+    assert.match(problemStatsSource, /Button[^>]*component=\{Link\}/);
+    assert.match(problemImportSource, /Button[^>]*component=\{Link\}/);
+    assert.match(domainUserSource, /Button[^>]*component=\{Link\}/);
+});

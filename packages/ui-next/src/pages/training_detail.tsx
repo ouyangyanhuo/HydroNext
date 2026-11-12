@@ -346,7 +346,7 @@ export default function TrainingDetailPage() {
             <Group justify="space-between" align="flex-start" gap="md">
               <div className="min-w-0">
                 <Group gap="xs" mb="sm">
-                  <Button component="a" href={trainingListUrl} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                  <Button component={Link} href={trainingListUrl} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
                     {t('Back')}
                   </Button>
                   <Badge variant="light">{t('Training')}</Badge>

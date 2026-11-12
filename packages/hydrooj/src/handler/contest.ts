@@ -107,7 +107,7 @@ export class ContestDetailBaseHandler extends Handler {
 
     @param('tid', Types.ObjectId, true)
     async after(domainId: string, tid: ObjectId) {
-        if (!tid || this.tdoc.rule === 'homework') return;
+        if (!tid || !this.tdoc || this.tdoc.rule === 'homework') return;
         if (this.request.json || !this.response.template) return;
         const pdoc = 'pdoc' in this ? (this as any).pdoc : {};
         this.response.body.overrideNav = [
@@ -543,10 +543,10 @@ export class ContestCodeHandler extends Handler {
     async get(domainId: string, tid: ObjectId, all: boolean) {
         await this.limitRate('contest_code', 60, 10);
         const [tdoc, tsdocs] = await contest.getAndListStatus(domainId, tid);
-        if (!this.user.hasPriv(PRIV.PRIV_READ_RECORD_CODE)) {
-            this.checkPerm(PERM.PERM_READ_RECORD_CODE);
-        }
-        if (!this.user.own(tdoc)) {
+        if (!this.user.own(tdoc, true)) {
+            if (!this.user.hasPriv(PRIV.PRIV_READ_RECORD_CODE)) {
+                this.checkPerm(PERM.PERM_READ_RECORD_CODE);
+            }
             if (!contest.isDone(tdoc)) throw new ContestNotEndedError(domainId, tid);
         }
         if (!contest.canShowRecord.call(this, tdoc as any, true)) {
@@ -570,6 +570,7 @@ export class ContestCodeHandler extends Handler {
         }
         const zip = new ZipWriter(new BlobWriter('application/zip'), { bufferedWrite: true });
         const rdocs = await record.getMulti(domainId, {
+            contest: tid,
             _id: { $in: Array.from(Object.keys(rnames)).map((id) => new ObjectId(id)) },
         }).toArray();
         await Promise.all(rdocs.map(async (rdoc) => {

@@ -636,7 +636,7 @@ export default function ContestDetailPage() {
           <div className="min-w-0 flex-1">
             <Group gap="xs" mb="sm">
               {!isFocusContest && (
-                <Button component="a" href={buildUrl('contest_main')} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
+                <Button component={Link} href={buildUrl('contest_main')} variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={14} />}>
                   {t('Back')}
                 </Button>
               )}

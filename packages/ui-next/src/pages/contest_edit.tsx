@@ -8,6 +8,7 @@ import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect, TagMultiSelect } from '@/components/common/select';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
+import { Link } from '@/components/link';
 import { AvatarView } from '@/components/user/avatar-view';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -421,7 +422,7 @@ export default function ContestEditPage() {
   return (
     <Stack gap="lg" className="hydro-contest-edit-page">
       <PageHeader title={isNew ? t('Create Contest') : t('Edit Contest')}>
-        <Button component="a" href={buildUrl('contest_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button component={Link} href={buildUrl('contest_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
       </PageHeader>

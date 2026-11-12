@@ -47,11 +47,13 @@ async function resolveRecordAccess(handler: Handler | ConnectionHandler, rdoc: R
     if ((!tdoc || !tsdoc?.attend) && pdoc && !problem.canViewBy(pdoc, handler.user)) {
         throw new PermissionError(PERM.PERM_VIEW_PROBLEM_HIDDEN);
     }
-    // Team membership only grants access to contest results, not another submitter's source.
-    // Accepted status, contest ownership and allowViewCode must not grant code/replay access.
+    // Contest exceptions use the record's stored domain/contest and registered team,
+    // never a caller-supplied tid or a team from another contest. Self-tests remain private.
+    const canViewContestCode = tdoc && !isSpecial && (tdoc.owner === handler.user._id || (tdoc.allowTeam && owner));
     const canViewCode = ownSubmission
         || handler.user.hasPriv(PRIV.PRIV_READ_RECORD_CODE)
-        || handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE);
+        || handler.user.hasPerm(PERM.PERM_READ_RECORD_CODE)
+        || canViewContestCode;
     return {
         pdoc, tdoc, tsdoc, canViewDetail, canViewCode: !!canViewCode, accessGrant,
         /** @deprecated Use accessGrant.assert(); this is an opaque grant, not a raw proctor session. */

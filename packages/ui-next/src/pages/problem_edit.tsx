@@ -9,6 +9,7 @@ import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect } from '@/components/common/select';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
+import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -362,7 +363,7 @@ export default function ProblemEditPage() {
     <Stack gap="lg" className="hydro-problem-edit-page">
       <PageHeader title={isNew ? t('Create Problem') : t('Edit Problem')}>
         <Button
-          component="a"
+          component={Link}
           href={isNew ? buildUrl('problem_main') : buildUrl('problem_detail', { pid })}
           variant="subtle"
           size="xs"

@@ -467,7 +467,7 @@ export default function ProblemSolutionPage() {
         <PageHeader title={`${pdoc.pid}. ${pdoc.title}`}>
           <Group gap="xs">
             <Button
-              component="a"
+              component={Link}
               href={buildUrl('problem_detail', { pid: pdoc.pid || pdoc.docId })}
               variant="subtle"
               size="xs"

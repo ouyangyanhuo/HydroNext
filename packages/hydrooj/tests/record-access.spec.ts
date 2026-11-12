@@ -41,8 +41,9 @@ function fixture(options: any = {}) {
         } },
         '../model/builtin': { PERM, PRIV: { PRIV_READ_RECORD_CODE: 'global' }, STATUS: { STATUS_ACCEPTED: 1 } },
         '../model/contest': {
-            get: async () => (options.deletedContest ? null : { docId: 'contest',
-                allowTeam: !!options.teammate, proctorEnabled: !!options.proctor, endAt: new Date(Date.now() + (options.done ? -60000 : 60000)),
+            get: async () => (options.deletedContest ? null : { docId: 'contest', owner: options.contestOwner ? user._id : 9,
+                allowTeam: options.allowTeam ?? !!options.teammate, proctorEnabled: !!options.proctor,
+                endAt: new Date(Date.now() + (options.done ? -60000 : 60000)),
                 allowViewCode: options.allowViewCode }),
             getStatus: async () => ({ attend: options.attend }),
             canShowRecord: () => !!options.showRecord, canShowSelfRecord: () => !!options.showSelf,
@@ -84,7 +85,7 @@ test('navigation hints respect explicit code and hidden-result policies without 
     assert.equal((await fixture({ global: true, hidden: true }).hints())[id], false);
     assert.equal((await fixture({ owner: true, contest: 'contest' }).hints())[id], false);
     const team = fixture({ teammate: true, contest: 'contest', attend: true, showSelf: true, permissions: [], proctor: true });
-    assert.equal((await team.hints())[id], false);
+    assert.equal((await team.hints())[id], true);
     await assert.rejects(team(), /proof required/);
 });
 
@@ -109,8 +110,11 @@ test('contest restrictions remain mandatory and participants retain allowed hidd
     assert.equal((await fixture({ ...released, permissions: ['VIEW_RECORD', 'READ_RECORD_CODE'] })()).canViewCode, true);
     assert.equal((await fixture({ ...released, permissions: ['VIEW_RECORD', 'READ_RECORD_CODE_ACCEPT'] })()).canViewCode, false);
     assert.equal((await fixture({ ...released, permissions: ['VIEW_RECORD', 'READ_RECORD_CODE_ACCEPT'], accepted: true })()).canViewCode, false);
-    assert.equal((await fixture({ ...released, contestOwner: true })()).canViewCode, false);
-    assert.equal((await fixture({ ...released, contestOwner: true }).hints())['abcdef1234567890abcdef12'], false);
+    assert.equal((await fixture({ ...released, contestOwner: true })()).canViewCode, true);
+    assert.equal((await fixture({ ...released, contestOwner: true }).hints())['abcdef1234567890abcdef12'], true);
+    assert.equal((await fixture({ contestOwner: true })()).canViewCode, false, 'Owning a contest cannot expose practice submissions');
+    assert.equal((await fixture({ teammate: true })()).canViewCode, false, 'Team membership cannot expose practice submissions');
+    assert.equal((await fixture({ ...released, teammate: true, allowTeam: false })()).canViewCode, false);
     const own = await fixture({ owner: true, contest: 'contest', hidden: true, attend: true })();
     assert.equal(own.canViewDetail, false);
     assert.equal(own.canViewCode, true);
@@ -122,9 +126,9 @@ test('nonowners still need record visibility and cannot read another users prete
     await assert.rejects(fixture({ contest: 'contest', deletedContest: true })());
 });
 
-test('teammates share contest results but not another submitter\'s code or replay', async () => {
+test('registered teammates share code and replay only in that team contest', async () => {
     const access = await fixture({ teammate: true, contest: 'contest', attend: true, showSelf: true, permissions: [] })();
-    assert.equal(access.canViewCode, false);
+    assert.equal(access.canViewCode, true);
     assert.equal(access.canViewDetail, true);
     assert.equal(access.proctorSession, access.accessGrant);
     assert.equal((await fixture({ teammate: true, contest: 'contest', attend: true, showSelf: true,
@@ -155,7 +159,7 @@ test('监考认证不替代源码权限，本人记录、下载与回放仍需�
         assert.equal(calls[0][4], path);
         assert.equal(calls[0][5].rid, 'abcdef1234567890abcdef12');
     }
-    assert.equal((await fixture({ ...base, proof: true })()).canViewCode, false);
-    assert.equal((await fixture({ ...base, done: true })()).canViewCode, false);
-    assert.equal((await fixture({ ...base, contestOwner: true })()).canViewCode, false);
+    assert.equal((await fixture({ ...base, proof: true })()).canViewCode, true);
+    assert.equal((await fixture({ ...base, done: true })()).canViewCode, true);
+    assert.equal((await fixture({ ...base, contestOwner: true })()).canViewCode, true);
 });

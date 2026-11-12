@@ -217,7 +217,7 @@ export default function ContestManagePage() {
       <PageHeader title={`${t('Manage')} - ${tdoc.title}`}>
         <Group gap="xs">
           <ContestManageActions data={args} />
-          <Button component="a" href={buildUrl('contest_detail', { tid })} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          <Button component={Link} href={buildUrl('contest_detail', { tid })} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
             {t('Back')}
           </Button>
           <Button component={Link} to="contest_edit" params={{ tid }} size="xs" variant="light">{t('Edit')}</Button>

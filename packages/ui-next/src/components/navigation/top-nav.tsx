@@ -354,7 +354,7 @@ export function TopNav() {
     ? 'ranking' : getPageMetadata(name).nav;
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
-  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const tabRefs = useRef<Map<string, HTMLElement>>(new Map());
   const indicatorRef = useRef<HTMLDivElement>(null);
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
   const canViewRanking = useHasPerm(PERM.PERM_VIEW_RANKING);

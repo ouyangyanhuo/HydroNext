@@ -3,6 +3,7 @@ import { IconArrowLeft, IconCheck, IconFileZip, IconUpload, IconX } from '@table
 import { useRef, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
+import { Link } from '@/components/link';
 import { usePageData, useUserContext } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -131,7 +132,7 @@ export default function ProblemImportHydroPage() {
     <Stack gap="lg">
       <PageHeader title={t('Import From Hydro')}>
         <Button
-          component="a"
+          component={Link}
           href={buildUrl('problem_import')}
           variant="subtle"
           size="xs"

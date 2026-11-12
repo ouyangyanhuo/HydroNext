@@ -2,6 +2,7 @@ import { Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft, IconCopy } from '@tabler/icons-react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
+import { Link } from '@/components/link';
 import { usePageData, useUserContext } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
@@ -33,7 +34,7 @@ export default function ProblemImportPage() {
     return (
       <Stack gap="lg">
         <PageHeader title={t('Import Problems')}>
-          <Button component="a" href={buildUrl('problem_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+          <Button component={Link} href={buildUrl('problem_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
             {t('Back')}
           </Button>
         </PageHeader>
@@ -47,7 +48,7 @@ export default function ProblemImportPage() {
   return (
     <Stack gap="lg">
       <PageHeader title={t('Import Problems')}>
-        <Button component="a" href={buildUrl('problem_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
+        <Button component={Link} href={buildUrl('problem_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
           {t('Back')}
         </Button>
       </PageHeader>
@@ -59,7 +60,7 @@ export default function ProblemImportPage() {
             withBorder
             p="lg"
             className="hydro-content-card cursor-pointer transition-all duration-200 hover:shadow-md"
-            component="a"
+            component={Link}
             href={buildUrl(source.route)}
           >
             <Stack gap="sm">

@@ -207,7 +207,7 @@ function ProblemSidebar({ categories, query, sort }: { categories: any, query: s
         <Text c="dimmed" size="sm" mb="md">
           {t('Pick a problem randomly based on the current filter.')}
         </Text>
-        <Button component="a" href={randomUrl} fullWidth variant="light">
+        <Button component={Link} href={randomUrl} fullWidth variant="light">
           {t('Random Problem')}
         </Button>
       </section>
