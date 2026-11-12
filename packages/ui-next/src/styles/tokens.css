@@ -98,6 +98,8 @@
   --hydro-judge-tle-soft: color-mix(in srgb, var(--hydro-judge-tle) 12%, transparent);
   --hydro-judge-pending: #339af0;
   --hydro-judge-pending-soft: color-mix(in srgb, var(--hydro-judge-pending) 12%, transparent);
+  --hydro-judge-waiting: #e9a100;
+  --hydro-judge-waiting-soft: color-mix(in srgb, var(--hydro-judge-waiting) 12%, transparent);
   --hydro-judge-neutral: var(--hydro-text-muted);
   --hydro-judge-neutral-soft: color-mix(in srgb, var(--hydro-judge-neutral) 12%, transparent);
   /* Text on the soft fills: each hue is pulled toward --hydro-text until it reads at >= 4.5:1. */
@@ -105,6 +107,7 @@
   --hydro-judge-wa-text: color-mix(in srgb, var(--hydro-judge-wa) 75%, var(--hydro-text));
   --hydro-judge-tle-text: color-mix(in srgb, var(--hydro-judge-tle) 50%, var(--hydro-text));
   --hydro-judge-pending-text: color-mix(in srgb, var(--hydro-judge-pending) 60%, var(--hydro-text));
+  --hydro-judge-waiting-text: color-mix(in srgb, var(--hydro-judge-waiting) 50%, var(--hydro-text));
   --hydro-judge-neutral-text: var(--hydro-judge-neutral);
 
   /* Judge status compatibility aliases */
@@ -212,12 +215,15 @@
   --hydro-judge-tle-soft: color-mix(in srgb, var(--hydro-judge-tle) 16%, transparent);
   --hydro-judge-pending: #4dabf7;
   --hydro-judge-pending-soft: color-mix(in srgb, var(--hydro-judge-pending) 16%, transparent);
+  --hydro-judge-waiting: #ffd43b;
+  --hydro-judge-waiting-soft: color-mix(in srgb, var(--hydro-judge-waiting) 16%, transparent);
   --hydro-judge-neutral-soft: color-mix(in srgb, var(--hydro-judge-neutral) 16%, transparent);
   /* The dark hues already clear 4.5:1 on their soft fills. */
   --hydro-judge-ac-text: var(--hydro-judge-ac);
   --hydro-judge-wa-text: var(--hydro-judge-wa);
   --hydro-judge-tle-text: var(--hydro-judge-tle);
   --hydro-judge-pending-text: var(--hydro-judge-pending);
+  --hydro-judge-waiting-text: var(--hydro-judge-waiting);
 
   /* Judge status compatibility aliases */
   --hydro-status-accepted: var(--hydro-judge-ac);

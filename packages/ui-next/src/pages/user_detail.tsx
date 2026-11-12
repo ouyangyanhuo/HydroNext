@@ -1,5 +1,5 @@
 import { Anchor, Card, Group, Paper, SimpleGrid, Stack, Tabs, Text, Title } from '@mantine/core';
-import { type CSSProperties, useState } from 'react';
+import { useState } from 'react';
 import { ProfileContentExtras, ProfilePanelExtras, ProfileTabExtras } from '@/components/common/addon-slots';
 import { Button } from '@/components/common/button';
 import { Paginator } from '@/components/common/paginator';
@@ -15,14 +15,8 @@ import { formatUserName } from '@/utils/user-name';
 
 const BACKGROUND_COUNT = 21;
 
-// Each cover ships as AVIF, WebP and JPEG; .hydro-user-profile__cover-image picks the best one.
-function getBackgroundStyle(uid: number): CSSProperties {
-  const base = `/backgrounds/${(uid % BACKGROUND_COUNT) + 1}`;
-  return {
-    '--hydro-cover-avif': `url("${base}.avif")`,
-    '--hydro-cover-webp': `url("${base}.webp")`,
-    '--hydro-cover-jpg': `url("${base}.jpg")`,
-  } as CSSProperties;
+function getBackgroundUrl(uid: number): string {
+  return `/backgrounds/${(uid % BACKGROUND_COUNT) + 1}.webp`;
 }
 
 function formatGender(gender: any, t: (key: string) => string) {
@@ -67,7 +61,7 @@ export default function UserDetailPage() {
   const rank = Number.isFinite(rankValue) && rankValue > 0 ? `#${rankValue}` : '-';
   const rpValue = Number(stats.rp);
   const rp = Number.isFinite(rpValue) ? String(Math.round(rpValue * 100) / 100) : '0';
-  const backgroundStyle = getBackgroundStyle(udoc._id || 0);
+  const backgroundUrl = getBackgroundUrl(udoc._id || 0);
 
   return (
     <main className="hydro-user-profile">
@@ -76,7 +70,7 @@ export default function UserDetailPage() {
           <div className="hydro-user-profile__cover">
             <div
               className="hydro-user-profile__cover-image absolute inset-0 bg-cover bg-center"
-              style={backgroundStyle}
+              style={{ backgroundImage: `url("${backgroundUrl}")` }}
             />
             <div className="hydro-user-profile__cover-overlay" />
           </div>

@@ -353,7 +353,8 @@ export async function apply(ctx: Context) {
             plugins: [hydroPlugins()],
         });
         const middleware = c2k(vite.middlewares);
-        const capture = ['/@vite/', '/src/', '/node_modules/', '/@react-refresh', '/@fs', '/@id/'];
+        // Vite serves profile covers from pub/ in development; Hydro only serves public/ after a build.
+        const capture = ['/@vite/', '/src/', '/node_modules/', '/@react-refresh', '/@fs', '/@id/', '/backgrounds/'];
         for (const route of capture) {
             ctx.server.addCaptureRoute(route, middleware);
         }

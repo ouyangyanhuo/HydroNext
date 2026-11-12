@@ -3817,22 +3817,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   overflow: hidden;
 }
 
-/* The URLs arrive as custom properties, so an unsupported image-set() would void the declaration
- * instead of falling back to the JPEG; gate it with @supports. */
-.hydro-user-profile__cover-image {
-  background-image: var(--hydro-cover-jpg);
-}
-
-@supports (background-image: image-set(url("a.avif") type("image/avif") 1x)) {
-  .hydro-user-profile__cover-image {
-    background-image: image-set(
-      var(--hydro-cover-avif) type("image/avif"),
-      var(--hydro-cover-webp) type("image/webp"),
-      var(--hydro-cover-jpg) type("image/jpeg")
-    );
-  }
-}
-
 .hydro-user-profile__cover-overlay {
   position: absolute;
   inset: 0;

@@ -46,10 +46,10 @@ export const STATUS_TEXTS: Record<number, string> = {
 };
 
 /** Judge colour families; each maps to the --hydro-judge-<tone> token set. */
-export type JudgeTone = 'ac' | 'wa' | 'tle' | 'pending' | 'neutral';
+export type JudgeTone = 'ac' | 'wa' | 'tle' | 'pending' | 'waiting' | 'neutral';
 
 export const STATUS_TONES: Record<number, JudgeTone> = {
-  [STATUS.STATUS_WAITING]: 'pending',
+  [STATUS.STATUS_WAITING]: 'waiting',
   [STATUS.STATUS_ACCEPTED]: 'ac',
   [STATUS.STATUS_WRONG_ANSWER]: 'wa',
   [STATUS.STATUS_TIME_LIMIT_EXCEEDED]: 'tle',

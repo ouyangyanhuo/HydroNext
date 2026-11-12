@@ -69,6 +69,7 @@ test('slot boundary offers reload only for chunk loading failures and keeps real
 
 async function rendererFixture(dev = false) {
     let renderer: any;
+    const captures = new Map<string, any>();
     let html = '<html><script src="/assets/index-first.js"></script><!-- __HYDRO_INJECTION__DO_NOT_REMOVE_THIS__ --></html>';
     let exists = true;
     const connect = () => () => {};
@@ -83,13 +84,13 @@ async function rendererFixture(dev = false) {
         global: { Hydro: { version: { hydrooj: 'test' } } } });
     await apply({
         setting: { get: () => '' }, Route() {}, on() {}, inject() {}, debounce: () => () => {},
-        server: { routeMap: { manage_dashboard: '/manage/dashboard' }, addCaptureRoute() {},
+        server: { routeMap: { manage_dashboard: '/manage/dashboard' }, addCaptureRoute: (route: string, handler: any) => captures.set(route, handler),
             registerRenderer: (_name: string, value: any) => { renderer = value; } },
     });
     const headers = new Map<string, string>();
     const context = { handler: { session: {}, UiContext: {}, context: { req: { url: '/d/team/manage/dashboard' } },
         response: { addHeader: (name: string, value: string) => headers.set(name, value) } } };
-    return { renderer, headers, context,
+    return { renderer, headers, context, captures,
         setHtml: (value: string) => { html = value; }, setExists: (value: boolean) => { exists = value; } };
 }
 
@@ -108,4 +109,6 @@ test('development renderer also keeps its HTML private and uncached', async () =
     const api = await rendererFixture(true);
     await api.renderer.render('manage_dashboard.html', {}, api.context);
     assert.equal(api.headers.get('Cache-Control'), 'no-store');
+    assert.equal(typeof api.captures.get('/backgrounds/'), 'function', 'Profile backgrounds must reach the Vite public-file middleware');
+    assert.equal(api.captures.get('/backgrounds/'), api.captures.get('/src/'));
 });

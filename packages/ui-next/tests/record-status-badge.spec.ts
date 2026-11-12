@@ -6,6 +6,7 @@ import { runInNewContext } from 'node:vm';
 import { buildSync } from 'esbuild';
 import { after, test } from 'node:test';
 import postcss from 'postcss';
+import { getScoreTone } from '../src/components/record/status-map.ts';
 
 const require = createRequire(import.meta.url);
 const { JSDOM } = require('jsdom');
@@ -112,8 +113,13 @@ test('equal-width badge CSS defines fixed 5-glyph width, centered alignment and 
     assert.equal(labelRule['overflow'], 'hidden');
 });
 
-test('record status badges take their colours from the --hydro-judge tokens', async () => {
-    for (const [status, tone] of [[1, 'ac'], [2, 'wa'], [3, 'tle'], [0, 'pending'], [20, 'pending'], [9, 'neutral'], [999, 'neutral']] as const) {
+test('record status badges use judge tokens, with a separate yellow waiting tone', async () => {
+    for (const [status, tone] of [
+        [0, 'waiting'], [1, 'ac'], [2, 'wa'], [3, 'tle'], [4, 'tle'], [5, 'tle'],
+        [6, 'wa'], [7, 'wa'], [8, 'wa'], [9, 'neutral'], [10, 'wa'], [11, 'wa'],
+        [20, 'pending'], [21, 'pending'], [22, 'pending'], [30, 'neutral'], [31, 'wa'], [32, 'ac'],
+        [33, 'neutral'], [999, 'neutral'], [undefined, 'neutral'],
+    ] as const) {
         // Mount one badge at a time: each view owns the shared document body.
         // eslint-disable-next-line no-await-in-loop
         const view = await mount(h(RecordStatusBadge, { status }));
@@ -126,4 +132,12 @@ test('record status badges take their colours from the --hydro-judge tokens', as
             await view.close();
         }
     }
+    for (const [score, tone] of [[100, 'ac'], ['100', 'ac'], [120, 'ac'], [50, 'tle'], [0, 'neutral'],
+        [null, undefined], ['', undefined], ['invalid', undefined]] as const) {
+        assert.equal(getScoreTone(score), tone);
+    }
+    const tokens = postcss.parse(readFileSync(new URL('../src/styles/tokens.css', import.meta.url), 'utf8'));
+    const waitingColors: string[] = [];
+    tokens.walkDecls('--hydro-judge-waiting', (decl) => { waitingColors.push(decl.value); });
+    assert.deepEqual(waitingColors, ['#e9a100', '#ffd43b'], 'Waiting stays yellow in light and dark themes');
 });

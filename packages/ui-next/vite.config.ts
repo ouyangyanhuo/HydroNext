@@ -6,16 +6,16 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-    root: __dirname,
+    root: import.meta.dirname,
     base: '/',
     // Keep dev-time dependency optimization out of node_modules, which can be
     // owned by a different user after a Docker build.
-    cacheDir: path.join(os.tmpdir(), 'hydro-ui-next-vite', createHash('sha1').update(__dirname).digest('hex').slice(0, 12)),
+    cacheDir: path.join(os.tmpdir(), 'hydro-ui-next-vite', createHash('sha1').update(import.meta.dirname).digest('hex').slice(0, 12)),
     plugins: [tailwindcss(), react()],
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, 'src'),
-            '@hydrooj/ui-next': path.resolve(__dirname, 'src/api.ts'),
+            '@': path.resolve(import.meta.dirname, 'src'),
+            '@hydrooj/ui-next': path.resolve(import.meta.dirname, 'src/api.ts'),
         },
     },
     publicDir: 'pub',
