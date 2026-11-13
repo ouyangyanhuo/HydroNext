@@ -136,9 +136,27 @@ function TrainingProblemTable({
         <Table.Thead className={!effectiveEnrolled ? 'text-[var(--hydro-text-muted)] opacity-70' : ''}>
           <Table.Tr>
             <Table.Th className="text-left font-semibold align-middle">{t('Problem')}</Table.Th>
-            <Table.Th className="w-16 md:w-20 !text-center font-semibold align-middle">{t('Tried')}</Table.Th>
-            <Table.Th className="w-16 md:w-20 !text-center font-semibold align-middle">{t('AC')}</Table.Th>
-            <Table.Th className="w-20 md:w-24 !text-center font-semibold align-middle">{t('Difficulty')}</Table.Th>
+            <Table.Th
+              className="w-16 md:w-20 !text-center font-semibold align-middle"
+              ta="center"
+              style={{ textAlign: 'center', verticalAlign: 'middle' }}
+            >
+              {t('Tried')}
+            </Table.Th>
+            <Table.Th
+              className="w-16 md:w-20 !text-center font-semibold align-middle"
+              ta="center"
+              style={{ textAlign: 'center', verticalAlign: 'middle' }}
+            >
+              {t('AC')}
+            </Table.Th>
+            <Table.Th
+              className="w-20 md:w-24 !text-center font-semibold align-middle"
+              ta="center"
+              style={{ textAlign: 'center', verticalAlign: 'middle' }}
+            >
+              {t('Difficulty')}
+            </Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
@@ -204,17 +222,29 @@ function TrainingProblemTable({
                     </div>
                   </Tooltip>
                 </Table.Td>
-                <Table.Td className="w-16 md:w-20 !text-center font-mono text-xs md:text-sm align-middle">
+                <Table.Td
+                  className="w-16 md:w-20 !text-center font-mono text-xs md:text-sm align-middle"
+                  ta="center"
+                  style={{ textAlign: 'center', verticalAlign: 'middle' }}
+                >
                   <Tooltip label={`${t('Tried')}: ${tried.full}`} withArrow withinPortal>
                     <span className="inline-block cursor-default tabular-nums">{tried.display}</span>
                   </Tooltip>
                 </Table.Td>
-                <Table.Td className="w-16 md:w-20 !text-center font-mono text-xs md:text-sm align-middle">
+                <Table.Td
+                  className="w-16 md:w-20 !text-center font-mono text-xs md:text-sm align-middle"
+                  ta="center"
+                  style={{ textAlign: 'center', verticalAlign: 'middle' }}
+                >
                   <Tooltip label={`${t('AC')}: ${ac.full}`} withArrow withinPortal>
                     <span className="inline-block cursor-default tabular-nums">{ac.display}</span>
                   </Tooltip>
                 </Table.Td>
-                <Table.Td className="w-20 md:w-24 !text-center font-mono text-xs md:text-sm align-middle">
+                <Table.Td
+                  className="w-20 md:w-24 !text-center font-mono text-xs md:text-sm align-middle"
+                  ta="center"
+                  style={{ textAlign: 'center', verticalAlign: 'middle' }}
+                >
                   <Tooltip label={`${t('Difficulty')}: ${diff.full}`} withArrow withinPortal>
                     <span className="inline-block cursor-default tabular-nums">{diff.display}</span>
                   </Tooltip>

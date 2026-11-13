@@ -290,9 +290,16 @@ export default function RecordDetailPage() {
       });
       const type = res.headers.get('content-type') || '';
       const data = type.includes('json') ? await res.json() : {};
-      if (!res.ok || data.error) setError(formatErrorMessage(data.error, t('Operation failed')));
-      else if (data.redirect) window.location.href = data.redirect;
-      else window.location.reload();
+      if (!res.ok || data.error) {
+        setError(formatErrorMessage(data.error, t('Operation failed')));
+      } else {
+        const target = data.redirect || data.url;
+        if (target && target !== window.location.href && target !== window.location.pathname + window.location.search) {
+          void navigate(target, { replace: true });
+        } else {
+          void navigate(window.location.pathname + window.location.search, { replace: true });
+        }
+      }
     } catch (err: any) {
       setError(err?.message || t('Network error'));
     } finally {

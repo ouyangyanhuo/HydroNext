@@ -1,8 +1,11 @@
 import { compile } from 'path-to-regexp';
 import { useCallback } from 'react';
 import { useUiContext } from '@/context/page-data';
+import { FALLBACK_ROUTES } from '@/globals';
 import { getDomainPrefix } from '@/utils/domain-url';
 import { useRouteMap } from './use-route-map';
+
+export { FALLBACK_ROUTES };
 
 export interface UrlParams {
   [key: string]: string | number;
@@ -22,7 +25,7 @@ export function useBuildUrl() {
 
   return useCallback(
     (name: string, params: UrlParams = {}, searchParams: Record<string, string> = {}): string => {
-      const pattern = routeMap[name];
+      const pattern = routeMap[name] || FALLBACK_ROUTES[name];
       if (!pattern) {
         console.warn(`[Hydro] Unknown route: ${name}`);
         return '#';

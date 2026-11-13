@@ -2,7 +2,7 @@
 
 import { match } from 'path-to-regexp';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
-import { endpoints, isInjected, routeMapStore } from '../globals';
+import { endpoints, FALLBACK_ROUTES, isInjected, routeMapStore } from '../globals';
 import { protectedAccessHeaders as proctorAccessHeaders } from '../registry/request-security';
 import { useSetPageData } from './page-data';
 
@@ -44,7 +44,8 @@ function resolvePageName(url: string, headerName: string, routeMap: Record<strin
   if (headerName) return headerName;
 
   const pathname = getRoutePath(url);
-  for (const [name, pattern] of Object.entries(routeMap)) {
+  const combinedMap = { ...FALLBACK_ROUTES, ...routeMap };
+  for (const [name, pattern] of Object.entries(combinedMap)) {
     try {
       if (match(pattern)(pathname)) return name;
     } catch {
@@ -70,6 +71,10 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
       return false;
     }
   }, []);
+
+  const fetchPageRef = useRef<((
+    url: string, init?: boolean, push?: boolean, replace?: boolean, preservePage?: boolean,
+  ) => Promise<boolean>) | null>(null);
 
   const fetchPage = useCallback(
     async (url: string, init = false, push = false, replace = false, preservePage = false) => {
@@ -110,9 +115,16 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
           });
           if (!isCurrent()) return false;
 
+          let targetReqUrl = reqUrl;
           if (res.redirected) {
-            window.location.href = res.url;
-            return false;
+            if (!canNavigateInDocument(res.url)) {
+              window.location.href = res.url;
+              return false;
+            }
+            const redirectedUrl = new URL(res.url);
+            url = redirectedUrl.pathname + redirectedUrl.search;
+            targetReqUrl = redirectedUrl.href;
+            replace = true;
           }
           if (!res.ok) {
             let errorMessage = `Navigation failed: ${res.status} ${res.statusText}`;
@@ -157,6 +169,10 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
           const template = res.headers.get('x-hydro-template') || '';
 
           if (body.url && typeof body.url === 'string') {
+            if (canNavigateInDocument(body.url)) {
+              void fetchPageRef.current?.(body.url, false, true, true);
+              return true;
+            }
             window.location.href = body.url;
             return false;
           }
@@ -164,7 +180,7 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
           const nextRouteMap = init && body.routeMap && typeof body.routeMap === 'object'
             ? { ...routeMapStore.getSnapshot(), ...body.routeMap }
             : routeMapStore.getSnapshot();
-          const pageName = resolvePageName(reqUrl, headerPageName, nextRouteMap);
+          const pageName = resolvePageName(targetReqUrl, headerPageName, nextRouteMap);
           // console.log('[Hydro] data from', reqUrl, 'received:', body, 'pageName:', pageName);
 
           if (init && body.routeMap && typeof body.routeMap === 'object') {
@@ -202,8 +218,12 @@ export const RouterProvider: React.FC<React.PropsWithChildren> = ({ children }) 
       else window.location.href = url;
       return false;
     },
-    [setData],
+    [canNavigateInDocument, setData],
   );
+
+  useEffect(() => {
+    fetchPageRef.current = fetchPage;
+  }, [fetchPage]);
 
   useEffect(() => {
     const getCurrentUrl = () => window.location.pathname + window.location.search;

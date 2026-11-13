@@ -20,6 +20,14 @@ export const pluginsUrl: string | undefined = injectionData.plugins_url;
 export const buildIdentifier: string = String(injectionData.build_id || '');
 export const buildTime: string = String(injectionData.build_time || '');
 
+export const FALLBACK_ROUTES: Record<string, string> = {
+  home_settings: '/home/settings/:category',
+  home_honor_frames: '/home/honor-frames',
+  manage_honor_frames: '/manage/honor-frames',
+  manage_honor_frame_upload: '/manage/honor-frames/upload',
+  manage_honor_frame_owners: '/manage/honor-frames/:id/owners',
+};
+
 interface RouteMapStore {
   _routeMap: Record<string, string>;
   _listeners: Set<() => void>;
@@ -30,7 +38,7 @@ interface RouteMapStore {
 
 function createRouteMapStore(initial: Record<string, string>): RouteMapStore {
   const store: RouteMapStore = {
-    _routeMap: initial,
+    _routeMap: { ...FALLBACK_ROUTES, ...initial },
     _listeners: new Set(),
     getSnapshot: () => store._routeMap,
     subscribe: (listener: () => void) => {

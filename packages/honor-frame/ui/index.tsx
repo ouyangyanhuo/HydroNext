@@ -2,7 +2,7 @@
 import './style.css';
 
 import {
-  Button, Link, type PluginDefinition, PRIV, registerUserFields, useHasPriv, useI18n,
+  Button, Link, type PluginDefinition, PRIV, registerUserFields, useBuildUrl, useHasPriv, useI18n,
 } from '@hydrooj/ui-next';
 import { Menu, Tabs } from '@mantine/core';
 import { IconUserCircle } from '@tabler/icons-react';
@@ -22,7 +22,13 @@ function AccountEntry({ variant, onClose }: any) {
 
 function NavigationEntry() {
   const { t } = useI18n();
-  return <Link to="home_honor_frames" className="hydro-settings-nav__item">
+  const buildUrl = useBuildUrl();
+  const resolved = buildUrl('home_honor_frames');
+  return <Link
+    to="home_honor_frames"
+    href={resolved === '#' ? '/home/honor-frames' : resolved}
+    className="hydro-settings-nav__item"
+  >
     <IconUserCircle size={18} stroke={1.8} /><span>{t('Honor avatar frame')}</span>
   </Link>;
 }

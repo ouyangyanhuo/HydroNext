@@ -42,6 +42,7 @@ function fixture(isInjected: boolean) {
     const mocks = {
         '../globals': {
             endpoints: ['https://oj.example/'], isInjected,
+            FALLBACK_ROUTES: { home_settings: '/home/settings/:category', home_honor_frames: '/home/honor-frames' },
             routeMapStore: { getSnapshot: () => ({ record_main: '/record', record_detail: '/record/:rid' }), set() {} },
         },
         './page-data': { useSetPageData: () => setData },

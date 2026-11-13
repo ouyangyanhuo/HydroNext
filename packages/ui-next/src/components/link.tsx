@@ -24,7 +24,13 @@ export const Link = React.forwardRef<HTMLAnchorElement, React.PropsWithChildren<
   const buildUrl = useBuildUrl();
   const navigate = useNavigate();
 
-  const resolvedHref = useMemo(() => (to ? buildUrl(to, params) : (href ?? '#')), [buildUrl, href, to, params]);
+  const resolvedHref = useMemo(() => {
+    if (to) {
+      const url = buildUrl(to, params);
+      if (url && url !== '#') return url;
+    }
+    return href ?? '#';
+  }, [buildUrl, href, to, params]);
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {

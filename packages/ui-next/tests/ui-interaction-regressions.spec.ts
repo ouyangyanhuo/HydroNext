@@ -895,3 +895,36 @@ test('page back buttons and navigation controls use client-side Link component w
     assert.match(problemImportSource, /Button[^>]*component=\{Link\}/);
     assert.match(domainUserSource, /Button[^>]*component=\{Link\}/);
 });
+
+test('record rejudge/cancel and settings honor-frame navigation use SPA routing without page reloads', () => {
+    const recordDetailSource = read('../src/pages/record_detail.tsx');
+    const homeSettingsSource = read('../src/pages/home_settings.tsx');
+    const honorFramePageSource = read('../../honor-frame/ui/pages/home_honor_frames.tsx');
+    const honorFrameEntrySource = read('../../honor-frame/ui/index.tsx');
+    const routerSource = read('../src/context/router.tsx');
+    const linkSource = read('../src/components/link.tsx');
+    const buildUrlSource = read('../src/hooks/use-build-url.ts');
+
+    // record_detail submits rejudge/cancel with SPA navigate instead of window.location.reload()
+    assert.doesNotMatch(recordDetailSource, /submitOperation[\s\S]*?window\.location\.reload/);
+    assert.doesNotMatch(recordDetailSource, /submitOperation[\s\S]*?window\.location\.href\s*=/);
+    assert.match(recordDetailSource, /navigate\(target,\s*\{\s*replace:\s*true\s*\}\)/);
+
+    // Link component falls back to href when route name produces '#'
+    assert.match(linkSource, /if\s*\(url\s*&&\s*url\s*!==\s*'#'\)\s*return\s*url;/);
+
+    // Fallback routes cover honor frames and settings
+    assert.match(buildUrlSource, /FALLBACK_ROUTES/);
+    assert.match(routerSource, /FALLBACK_ROUTES/);
+
+    // Router handles in-document server redirect without hard reload
+    assert.match(routerSource, /if\s*\(res\.redirected\)\s*\{[\s\S]*?canNavigateInDocument\(res\.url\)/);
+    assert.match(routerSource, /if\s*\(body\.url\s*&&[\s\S]*?canNavigateInDocument\(body\.url\)/);
+
+    // Settings and honor-frames links provide fallback hrefs and use Link
+    assert.match(honorFrameEntrySource, /to="home_honor_frames"/);
+    assert.match(honorFrameEntrySource, /href=\{resolved === '#' \? '\/home\/honor-frames' : resolved\}/);
+    assert.match(honorFramePageSource, /to="home_settings"/);
+    assert.match(honorFramePageSource, /to="home_honor_frames"/);
+    assert.match(homeSettingsSource, /to="home_settings"/);
+});

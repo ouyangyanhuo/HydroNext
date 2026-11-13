@@ -421,6 +421,7 @@ test('contest errors only notify, problems load on first open, and drag order sa
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
         '@/utils/request': { formatRequestError: (error: any) => error.message },
         '@/components/common/addon-slots': { ContestEditFields: () => null },
+        '@/components/link': { Link: 'a' },
         '@/utils/error': { formatErrorMessage: () => 'Save failed' },
         '@/utils/lang-display': { LANG_DISPLAY: { cpp: 'C++' }, getLangDisplay: (key: string) => key },
         '@/utils/user-name': { formatUserName: (user: any) => user.uname },
@@ -562,6 +563,7 @@ test('training chapters retain titles and prerequisites while dragging problems,
         '@/context/router': { useNavigate: () => () => {} },
         '@/hooks/use-build-url': { useBuildUrl: () => () => '/d/team/training' },
         '@/hooks/use-domain': { useDomainId: () => 'team' },
+        '@/components/link': { Link: 'a' },
         '@/utils/error': { formatErrorMessage: () => 'Failed' },
     };
     runInNewContext(source('../src/pages/training_edit.tsx'), {

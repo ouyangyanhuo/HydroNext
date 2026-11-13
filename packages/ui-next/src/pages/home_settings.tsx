@@ -125,18 +125,22 @@ export default function HomeSettingsPage() {
       </div>
       <div className="hydro-settings-layout">
         <nav className="hydro-settings-nav" aria-label={t('Settings')}>
-          {sections.map(({ key, label, icon: Icon }) => (
-            <Link
-              key={key}
-              to="home_settings"
-              params={{ category: key }}
-              className="hydro-settings-nav__item"
-              aria-current={category === key ? 'page' : undefined}
-            >
-              <Icon size={18} stroke={1.8} />
-              <span>{label}</span>
-            </Link>
-          ))}
+          {sections.map(({ key, label, icon: Icon }) => {
+            const settingsHref = buildUrl('home_settings', { category: key });
+            return (
+              <Link
+                key={key}
+                to="home_settings"
+                params={{ category: key }}
+                href={settingsHref === '#' ? `/home/settings/${key}` : settingsHref}
+                className="hydro-settings-nav__item"
+                aria-current={category === key ? 'page' : undefined}
+              >
+                <Icon size={18} stroke={1.8} />
+                <span>{label}</span>
+              </Link>
+            );
+          })}
           <SettingsNavigationExtras />
         </nav>
         <Stack gap="lg" className="hydro-settings-content">

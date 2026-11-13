@@ -1953,12 +1953,16 @@ a {
 }
 
 .hydro-training-detail-table th,
-.hydro-training-detail-table td {
+.hydro-training-detail-table td,
+.hydro-training-detail-table .mantine-Table-th,
+.hydro-training-detail-table .mantine-Table-td {
   vertical-align: middle !important;
 }
 
 .hydro-training-detail-table th:not(:first-child),
-.hydro-training-detail-table td:not(:first-child) {
+.hydro-training-detail-table td:not(:first-child),
+.hydro-training-detail-table .mantine-Table-th:not(:first-child),
+.hydro-training-detail-table .mantine-Table-td:not(:first-child) {
   text-align: center !important;
 }
 
