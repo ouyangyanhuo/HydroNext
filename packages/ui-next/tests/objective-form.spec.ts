@@ -50,14 +50,18 @@ test('objective form restores drafts, retains answers across language changes, s
     const updates = new Map<string, any>();
     let successCount = 0;
     let failure = true;
+    let policy: any;
+    let serverPolicy: any;
+    let lostResponse = false;
+    const statusReads: any[] = [];
     let release!: () => void;
     const pending = new Promise<void>((resolve) => { release = resolve; });
     const buildUrl = (name: string, params: any, query: any) => `/${name}/${params.rid || params.tid}?${new URLSearchParams(query)}`;
     const mocks: Record<string, any> = {
-        'js-yaml': { dump: (value: any, options: any) => require('js-yaml').dump(JSON.parse(JSON.stringify(value)), options) },
+        'js-yaml': { load, dump: (value: any, options: any) => require('js-yaml').dump(JSON.parse(JSON.stringify(value)), options) },
         '@/components/common/button': require('@mantine/core'),
         '@/context/page-data': {
-            usePageData: () => ({ args: { tdoc: { docId: tid, proctorEnabled: true } } }),
+            usePageData: () => ({ args: { tdoc: { docId: tid, proctorEnabled: true }, objectiveSubmission: policy } }),
             useUiContext: () => ({ domainId: 'test' }), useUserContext: () => ({ _id: 7 }),
         },
         '@/context/router': { useNavigate: () => (url: string) => navigations.push(url) },
@@ -66,6 +70,7 @@ test('objective form restores drafts, retains answers across language changes, s
         '@/hooks/use-record-socket': { useRecordSocket: (rid?: string) => updates.get(rid || '') || null },
         '@/stores/session': { useSessionStore: (selector: any) => selector({ language: 'en', ui: { domainId: 'test' } }) },
         '@/registry/request-security': {
+            protectedAccessHeaders: async () => ({ 'x-proctor-proof': 'read-proof' }),
             protectedSubmissionHeaders: async (...args: any[]) => { signed.push(args); return { 'x-proctor-proof': 'proof' }; },
         },
         '@/utils/objective-answers': drafts,
@@ -87,8 +92,13 @@ test('objective form restores drafts, retains answers across language changes, s
             module, exports: module.exports, URLSearchParams,
             require: (name: string) => mocks[name] || require(name), window, document, URL, AbortController,
             fetch: async (url: string, options: any) => {
+                if (options.method !== 'POST') {
+                    statusReads.push({ url, ...options });
+                    return { ok: true, json: async () => ({ objectiveSubmission: serverPolicy }) };
+                }
                 requests.push({ url, ...options });
                 await pending;
+                if (lostResponse) throw new Error('Network error');
                 return {
                     ok: !failure,
                     json: async () => failure ? { error: { message: 'Try again' } } : { rid: `record-id-${++successCount}` },
@@ -243,6 +253,55 @@ test('objective form restores drafts, retains answers across language changes, s
             assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, 'still editable');
             assert.match(document.body.textContent!, /Save failed/);
         } finally { Object.defineProperty(dom.window, 'localStorage', storageDescriptor); }
+
+        // A restricted contest asks before submitting a whole answer sheet, including unanswered questions.
+        policy = { once: true, submitted: false };
+        dom.window.localStorage.removeItem(draftKey);
+        await act(async () => render(false, 'en', 'once'));
+        const beforeOnce = requests.length;
+        await act(async () => dispatchSubmit());
+        assert.equal(requests.length, beforeOnce, 'opening confirmation must not consume the submission');
+        assert.match(document.querySelector('[role=dialog]')!.textContent!, /Unanswered questions: 1, 2, 3/);
+        assert.match(document.querySelector('[role=dialog]')!.textContent!, /zero points.*only be submitted once/);
+        const clickDialog = (label: string) => [...document.querySelectorAll<HTMLButtonElement>('[role=dialog] button')]
+            .find((button) => button.textContent === label)!.click();
+        await act(async () => clickDialog('Return to answers'));
+        assert.equal(requests.length, beforeOnce);
+        assert.ok(!document.querySelector<HTMLInputElement>('input[type=text]')!.disabled);
+        failure = true;
+        await act(async () => dispatchSubmit());
+        await act(async () => clickDialog('Confirm submission'));
+        assert.equal(requests.length, beforeOnce + 1);
+        assert.ok(!document.querySelector<HTMLInputElement>('input[type=text]')!.disabled, 'a rejected submission keeps the sheet editable');
+        assert.equal(statusReads.length, 1);
+        assert.equal(statusReads[0].headers['x-proctor-proof'], 'read-proof', 'recovery reads retain contest authentication');
+        failure = false;
+        await act(async () => dispatchSubmit());
+        await act(async () => clickDialog('Confirm submission'));
+        assert.equal(requests.length, beforeOnce + 2);
+        assert.ok(document.querySelector<HTMLInputElement>('input[type=text]')!.disabled);
+        assert.ok(sidebar.querySelector<HTMLButtonElement>('button[type=submit]')!.disabled);
+        await act(async () => dispatchSubmit());
+        assert.equal(requests.length, beforeOnce + 2, 'a successful submission locks direct form events too');
+
+        // Refresh restores the server's actual answers rather than an unsent local draft.
+        policy = { once: true, submitted: true, answers: '1: server-answer\n2: [A]\n3: D\n' };
+        await act(async () => render(false, 'en', 'once-refreshed'));
+        assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, 'server-answer');
+        assert.ok(document.querySelectorAll<HTMLInputElement>('input[type=radio]')[3].checked);
+        assert.ok(document.querySelector<HTMLInputElement>('input[type=text]')!.disabled);
+        assert.match(sidebar.textContent!, /Already submitted/);
+
+        // The record may have committed even when its HTTP response was lost.
+        policy = { once: true, submitted: false };
+        serverPolicy = { once: true, submitted: true, answers: '1: committed-answer\n' };
+        lostResponse = true;
+        await act(async () => render(false, 'en', 'once-response-lost'));
+        await act(async () => dispatchSubmit());
+        await act(async () => clickDialog('Confirm submission'));
+        assert.equal(document.querySelector<HTMLInputElement>('input[type=text]')!.value, 'committed-answer');
+        assert.ok(document.querySelector<HTMLInputElement>('input[type=text]')!.disabled);
+        assert.equal(document.querySelector('[role=alert]'), null, 'successful recovery replaces a transport error with submitted status');
     } finally {
         await act(async () => root.unmount());
         dom.window.close();

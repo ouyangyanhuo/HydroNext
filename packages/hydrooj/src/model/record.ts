@@ -177,7 +177,14 @@ export default class RecordModel {
         } else if (args.type === 'generate') {
             data.contest = RecordModel.RECORD_GENERATE;
         }
-        const res = await RecordModel.coll.insertOne(data);
+        await bus.parallel('record/before-add', data);
+        let res;
+        try {
+            res = await RecordModel.coll.insertOne(data);
+        } catch (error) {
+            await bus.parallel('record/insert-error', data, error);
+            throw error;
+        }
         bus.broadcast('record/change', data);
         if (addTask) {
             const priority = await RecordModel.submissionPriority(uid, args.type === 'pretest' ? -20 : (isContest ? 50 : 0));

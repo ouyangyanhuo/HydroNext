@@ -7,6 +7,7 @@ import { buildSync, transformSync } from 'esbuild';
 import { load } from 'js-yaml';
 import { test } from 'node:test';
 import postcss from 'postcss';
+import { formatTrainingDifficulty } from '../src/utils/training.ts';
 
 const require = createRequire(import.meta.url);
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -830,29 +831,13 @@ test('training detail problem table removes status columns and compresses column
     assert.ok(foundNarrowTable, 'narrow training table must use 100% min-width');
 });
 
-test('training detail metric formatters omit leading zeros and truncate large values', () => {
+test('training detail formats counts compactly and displays actual difficulty levels, never percentages', () => {
     const formatCount = (value: any) => {
         const num = Number(value);
         if (!Number.isFinite(num) || num < 0) return { display: '0', full: '0' };
         const full = String(num);
         if (full.length <= 4) return { display: full, full };
         return { display: `${full.slice(0, 1)}...`, full: num.toLocaleString() };
-    };
-
-    const formatDifficulty = (problem: any) => {
-        let pct: number | null = null;
-        if (problem?.difficulty !== undefined && problem?.difficulty !== null && !Number.isNaN(Number(problem.difficulty))) {
-            pct = Math.min(100, Math.max(0, Math.round(Number(problem.difficulty))));
-        } else {
-            const submit = Number(problem?.nSubmit || 0);
-            const accept = Number(problem?.nAccept || 0);
-            if (submit > 0) pct = Math.min(100, Math.max(0, Math.round((accept / submit) * 100)));
-            else pct = 0;
-        }
-        const submit = Number(problem?.nSubmit || 0);
-        const accept = Number(problem?.nAccept || 0);
-        const full = submit > 0 ? `${accept} / ${submit} (${pct}%)` : `${pct}%`;
-        return { display: `${pct}%`, full };
     };
 
     assert.equal(formatCount(0).display, '0');
@@ -863,11 +848,19 @@ test('training detail metric formatters omit leading zeros and truncate large va
     assert.equal(formatCount(25680).display, '2...');
     assert.equal(formatCount(10000).full, '10,000');
 
-    assert.equal(formatDifficulty({ difficulty: 5 }).display, '5%');
-    assert.equal(formatDifficulty({ difficulty: 50 }).display, '50%');
-    assert.equal(formatDifficulty({ difficulty: 100 }).display, '100%');
-    assert.equal(formatDifficulty({ nSubmit: 100, nAccept: 42 }).display, '42%');
-    assert.equal(formatDifficulty({ nSubmit: 0, nAccept: 0 }).display, '0%');
+    for (const difficulty of [1, 5, 10, '1', '5', '10', ' 5 ']) {
+        assert.equal(formatTrainingDifficulty({ difficulty }), String(Number(difficulty)));
+    }
+    for (const difficulty of [undefined, null, 0, '', ' ', -1, 1.5, 11, 50, 100, NaN, Infinity, 'invalid', true]) {
+        assert.equal(formatTrainingDifficulty({ difficulty }), '-');
+    }
+    const withoutDifficulty = { nSubmit: 100, nAccept: 42 };
+    assert.equal(formatTrainingDifficulty(withoutDifficulty as any), '-');
+    assert.equal(formatTrainingDifficulty({ ...withoutDifficulty, difficulty: 1 }), '1');
+    assert.equal(formatTrainingDifficulty(null), '-');
+    const trainingSource = read('../src/pages/training_detail.tsx');
+    assert.match(trainingSource, /const difficulty = formatTrainingDifficulty\(pdoc\)/);
+    assert.match(trainingSource, /label=\{`\$\{t\('Difficulty'\)\}: \$\{difficulty\}`\}/);
 });
 
 test('page back buttons and navigation controls use client-side Link component without full page reloads', () => {

@@ -19,7 +19,7 @@ import { useBuildUrl } from '@/hooks/use-build-url';
 import { useIsLoggedIn } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
-import { isTrainingEnrolled } from '@/utils/training';
+import { formatTrainingDifficulty, isTrainingEnrolled } from '@/utils/training';
 import { formatUserName } from '@/utils/user-name';
 
 function getNodes(tdoc: any) {
@@ -49,25 +49,6 @@ function formatCount(value: any): { display: string, full: string } {
     return { display: full, full };
   }
   return { display: `${full.slice(0, 1)}...`, full: num.toLocaleString() };
-}
-
-function formatDifficulty(problem: any): { display: string, full: string } {
-  let pct: number | null = null;
-  if (problem?.difficulty !== undefined && problem?.difficulty !== null && !Number.isNaN(Number(problem.difficulty))) {
-    pct = Math.min(100, Math.max(0, Math.round(Number(problem.difficulty))));
-  } else {
-    const submit = Number(problem?.nSubmit || 0);
-    const accept = Number(problem?.nAccept || 0);
-    if (submit > 0) {
-      pct = Math.min(100, Math.max(0, Math.round((accept / submit) * 100)));
-    } else {
-      pct = 0;
-    }
-  }
-  const submit = Number(problem?.nSubmit || 0);
-  const accept = Number(problem?.nAccept || 0);
-  const full = submit > 0 ? `${accept} / ${submit} (${pct}%)` : `${pct}%`;
-  return { display: `${pct}%`, full };
 }
 
 function getRowStatus(psdoc: any, enrolled: boolean): 'accepted' | 'rejected' | 'default' {
@@ -167,7 +148,7 @@ function TrainingProblemTable({
             const rowStatus = getRowStatus(psdoc, effectiveEnrolled);
             const tried = formatCount(pdoc.nSubmit);
             const ac = formatCount(pdoc.nAccept);
-            const diff = formatDifficulty(pdoc);
+            const difficulty = formatTrainingDifficulty(pdoc);
             const displayTitle = pdoc.title || pid;
             const prefix = pdoc.pid || pdoc.docId || String.fromCharCode(65 + index);
             const fullTitle = `${prefix}. ${displayTitle}`;
@@ -245,8 +226,8 @@ function TrainingProblemTable({
                   ta="center"
                   style={{ textAlign: 'center', verticalAlign: 'middle' }}
                 >
-                  <Tooltip label={`${t('Difficulty')}: ${diff.full}`} withArrow withinPortal>
-                    <span className="inline-block cursor-default tabular-nums">{diff.display}</span>
+                  <Tooltip label={`${t('Difficulty')}: ${difficulty}`} withArrow withinPortal>
+                    <span className="inline-block cursor-default tabular-nums">{difficulty}</span>
                   </Tooltip>
                 </Table.Td>
               </Table.Tr>

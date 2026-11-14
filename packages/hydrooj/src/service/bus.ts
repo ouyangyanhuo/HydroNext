@@ -87,6 +87,7 @@ export interface EventMap {
     'problem/delAdditionalFile': (domainId: string, docId: number, name: string[]) => VoidReturn;
 
     'contest/before-add': (payload: Partial<Tdoc>) => VoidReturn;
+    'contest/edit-settings': (handler: Handler, settings: Partial<Tdoc>) => VoidReturn;
     'contest/add': (payload: Partial<Tdoc>, id: ObjectId, domainId: string) => VoidReturn;
     'contest/before-edit': (tdoc: Tdoc, $set: Partial<Tdoc>) => VoidReturn;
     'contest/edit': (payload: Tdoc, changes: Partial<Tdoc>) => VoidReturn;
@@ -96,6 +97,9 @@ export interface EventMap {
         config: ScoreboardConfig, handler: Handler) => VoidReturn;
     'contest/balloon': (domainId: string, tid: ObjectId, bdoc: ContestBalloonDoc) => VoidReturn;
     'contest/del': (domainId: string, tid: ObjectId) => VoidReturn;
+
+    'record/before-add': (record: RecordDoc) => VoidReturn;
+    'record/insert-error': (record: RecordDoc, error: unknown) => VoidReturn;
 
     'oplog/log': (type: string, handler: Handler | ConnectionHandler, args: any, data: any) => VoidReturn;
 

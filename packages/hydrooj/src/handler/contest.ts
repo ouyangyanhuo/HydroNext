@@ -472,10 +472,12 @@ export class ContestEditHandler extends Handler {
         const beginAt = beginAtMoment.toDate();
         const lockAt = lock ? moment(endAt).add(-lock, 'minutes').toDate() : null;
         if (lockAt && contestDuration) throw new ValidationError('lockAt', 'duration');
+        const extraSettings: Partial<Tdoc> = {};
+        await this.ctx.parallel('contest/edit-settings', this, extraSettings);
         await problem.getList(domainId, pids, this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN), true);
         if (tid) {
             await contest.edit(domainId, tid, {
-                title, content, rule, beginAt, endAt, pids, rated, duration: contestDuration,
+                ...extraSettings, title, content, rule, beginAt, endAt, pids, rated, duration: contestDuration,
             });
             if (this.tdoc.beginAt !== beginAt || this.tdoc.endAt !== endAt
                 || diffArray(this.tdoc.pids, pids) || this.tdoc.rule !== rule
@@ -483,7 +485,8 @@ export class ContestEditHandler extends Handler {
                 await contest.recalcStatus(domainId, this.tdoc.docId);
             }
         } else {
-            tid = await contest.add(domainId, title, content, this.user._id, rule, beginAt, endAt, pids, rated, { duration: contestDuration });
+            tid = await contest.add(domainId, title, content, this.user._id, rule, beginAt, endAt, pids, rated,
+                { ...extraSettings, duration: contestDuration });
         }
         const task = {
             type: 'schedule', subType: 'contest', domainId, tid,
