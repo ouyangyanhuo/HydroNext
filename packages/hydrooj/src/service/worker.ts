@@ -13,11 +13,14 @@ declare module 'cordis' {
 const argv = cac().parse();
 
 export default class WorkerService extends Service {
+    static inject = ['db'];
+
     private handlers: Record<string, Function> = {};
     consuming = true;
     running = null;
     promise: Promise<any> = null;
     coll = db.collection('schedule');
+    private loop?: Promise<void>;
 
     constructor(ctx: Context) {
         super(ctx, 'worker');
@@ -25,11 +28,14 @@ export default class WorkerService extends Service {
 
     *[Service.init]() {
         if (argv.options.disableWorker) return;
-        this.consume();
-        yield () => {
-            this.consuming = false;
-            return this.promise;
-        };
+        this.loop = this.consume();
+        this.ctx.on('app/exit', () => this.stop());
+        yield () => this.stop();
+    }
+
+    private async stop() {
+        this.consuming = false;
+        await this.loop;
     }
 
     async getFirst() {

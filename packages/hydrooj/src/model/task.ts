@@ -37,11 +37,13 @@ export class Consumer {
     processing: Set<Task> = new Set();
     running?: any;
     notify: (res?: any) => void;
+    private work = new Set<Promise<void>>();
+    private offExit?: () => void;
 
     constructor(public filter: any, public func: (t: Task) => Promise<void>, public destroyOnError = true, private concurrency = 1) {
         this.consuming = true;
-        this.consume();
-        bus.on('app/exit', this.destroy);
+        this.running = this.consume();
+        this.offExit = bus.on('app/exit', () => this.destroy());
     }
 
     async consume() {
@@ -64,15 +66,17 @@ export class Consumer {
                     continue;
                 }
                 this.processing.add(res);
-                this.func(res)
+                const work = Promise.resolve().then(() => this.func(res))
                     .catch((err) => {
                         logger.error(err);
                         if (this.destroyOnError) this.destroy();
                     })
                     .finally(() => {
+                        this.work.delete(work);
                         this.processing.delete(res);
                         this.notify?.();
                     });
+                this.work.add(work);
             } catch (err) {
                 logger.error(err);
                 if (this.destroyOnError) this.destroy();
@@ -83,6 +87,9 @@ export class Consumer {
     async destroy() {
         this.consuming = false;
         this.notify?.();
+        await this.running;
+        await Promise.allSettled([...this.work]);
+        this.offExit?.();
     }
 
     setConcurrency(concurrency: number) {
@@ -139,51 +146,80 @@ class TaskModel {
 
 const id = process.env.exec_mode === 'cluster_mode' ? hostname() : nanoid();
 
+export const inject = ['db'];
+
 export async function apply(ctx: Context) {
+    let stopping = false;
+    let polling: Promise<void> | undefined;
+    let stream: ReturnType<typeof collEvent.watch> | undefined;
+    const pending = new Set<Promise<void>>();
+    const track = (promise: Promise<unknown>) => {
+        const work = promise.then(() => {}).catch((error) => {
+            if (!stopping) logger.error(error);
+        }).finally(() => { pending.delete(work); });
+        pending.add(work);
+        return work;
+    };
+    const stop = async () => {
+        stopping = true;
+        await stream?.close();
+        await Promise.allSettled([polling, ...pending]);
+    };
+    ctx.on('app/exit', stop);
+    ctx.effect(() => stop);
     ctx.on('domain/delete', (domainId) => coll.deleteMany({ domainId }));
     ctx.on('bus/broadcast', (event, payload, trace) => {
-        collEvent.insertOne({
+        if (stopping) return Promise.resolve();
+        return track(collEvent.insertOne({
             ack: [id],
             event,
             payload: BSON.EJSON.stringify(payload),
             expire: new Date(Date.now() + 10000),
             trace,
-        });
+        }));
     });
 
     if (process.env.NODE_APP_INSTANCE !== '0') return;
-    const stream = collEvent.watch();
+    stream = collEvent.watch();
     const handleEvent = async (doc: EventDoc) => {
         process.send?.({ type: 'hydro:broadcast', data: doc });
         const payload = BSON.EJSON.parse(doc.payload);
         await (bus.parallel as any)(doc.event, ...payload);
     };
     stream.on('change', async (change) => {
+        if (stopping) return;
         if (change.operationType !== 'insert') return;
         if (change.fullDocument.ack.includes(id)) return;
-        await handleEvent(change.fullDocument);
+        await track(handleEvent(change.fullDocument));
     });
-    stream.on('error', async () => {
+    stream.on('error', () => {
+        if (stopping || polling) return;
         // The $changeStream stage is only supported on replica sets
         logger.info('No replica set found.');
-        while (true) {
-            let res;
-            try {
+        polling = (async () => {
+            // Exit/dispose handlers change this flag while the loop awaits database I/O.
+            // eslint-disable-next-line no-unmodified-loop-condition
+            while (!stopping) {
+                let res;
+                try {
+                    // eslint-disable-next-line no-await-in-loop
+                    res = await collEvent.findOneAndUpdate(
+                        { expire: { $gt: new Date() }, ack: { $nin: [id] } },
+                        { $push: { ack: id } },
+                    );
+                } catch (e) {
+                    if (stopping) break;
+                    logger.error(e);
+                    // eslint-disable-next-line no-await-in-loop
+                    await sleep(50);
+                    continue;
+                }
+                if (stopping) break;
+                if (argv.options.showEvent) logger.info('Event: %o', res);
                 // eslint-disable-next-line no-await-in-loop
-                res = await collEvent.findOneAndUpdate(
-                    { expire: { $gt: new Date() }, ack: { $nin: [id] } },
-                    { $push: { ack: id } },
-                );
-            } catch (e) {
-                logger.error(e);
-                // eslint-disable-next-line no-await-in-loop
-                await sleep(50); // This allows exiting when shutting down
-                continue;
+                await (res ? track(handleEvent(res)) : sleep(500));
             }
-            if (argv.options.showEvent) logger.info('Event: %o', res);
-            // eslint-disable-next-line no-await-in-loop
-            await (res ? handleEvent(res) : sleep(500));
-        }
+        })();
     });
     await db.ensureIndexes(collEvent, { name: 'expire', key: { expire: 1 }, expireAfterSeconds: 0 });
     await db.ensureIndexes(coll, { name: 'task', key: { type: 1, subType: 1, priority: -1 } });

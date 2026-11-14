@@ -76,7 +76,9 @@ async function rendererFixture(dev = false) {
     const { apply } = load('../index.ts', {
         fs: { existsSync: () => exists, readFileSync: () => html },
         esbuild: {}, 'koa2-connect/ts': connect,
-        vite: { createServer: async () => ({ middlewares() {}, transformIndexHtml: async (_url: string, value: string) => value }) },
+        './dev-server': { createDevelopmentServer: async () => ({
+            vite: { middlewares() {}, transformIndexHtml: async (_url: string, value: string) => value }, close: async () => {},
+        }) },
         '@hydrooj/framework': { serializer: () => undefined },
         hydrooj: { Handler: class {}, Logger: class {}, Types: {}, param: () => () => {} },
         './build-identifier': { resolveBuildIdentifier: () => 'test-build', resolveBuildTime: () => '2026-10-08T00:00:00Z' },

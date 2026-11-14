@@ -86,7 +86,7 @@ export async function apply(ctx: Context) {
         cors: system.get('server.cors') || '',
         publicOrigin: system.get('server.url') || '',
         upload: system.get('server.upload') || '256m',
-        port: argv.options.port || system.get('server.port'),
+        port: argv.options.port ?? system.get('server.port'),
         host: argv.options.host || system.get('server.host'),
         xff: system.get('server.xff'),
         xhost: system.get('server.xhost'),

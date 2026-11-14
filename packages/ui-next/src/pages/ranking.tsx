@@ -127,9 +127,9 @@ export default function RankingPage() {
               <Link key={user._id} to="user_detail" params={{ uid: user._id }} className={`ranking-podium-card ranking-podium-card--${rank}`}>
                 <span className="ranking-podium-watermark" aria-hidden="true">#{rank}</span>
                 <span className="ranking-podium-medal" aria-hidden="true">
-                  {rank === 1 ? <IconCrown size={34} stroke={1.7} /> : <IconMedal size={30} stroke={1.6} />}
+                  {rank === 1 ? <IconCrown size={36} stroke={1.7} /> : <IconMedal size={30} stroke={1.6} />}
                 </span>
-                <UserAvatar user={user} link={false} size={rank === 1 ? 68 : 58} className="ranking-podium-avatar" />
+                <UserAvatar user={user} link={false} size={rank === 1 ? 70 : 56} className="ranking-podium-avatar" />
                 <Text className="ranking-podium-name" fw={700} truncate>{formatUserName(user)}</Text>
                 <div className="ranking-podium-stats hydro-numeric">
                   <div><strong>{getSolved(user)}</strong><span>{t('Solved')}</span></div>

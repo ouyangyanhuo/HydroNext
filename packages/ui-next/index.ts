@@ -4,13 +4,14 @@ import path from 'path';
 import esbuild from 'esbuild';
 import c2k from 'koa2-connect/ts';
 import { lookup } from 'mime-types';
-import { createServer, type Plugin } from 'vite';
+import type { Plugin } from 'vite';
 import { HandlerCommon, serializer } from '@hydrooj/framework';
 import {
     Context, FiberState, Handler, Logger,
     NotFoundError, param, SettingModel, size, Types,
 } from 'hydrooj';
 import { resolveBuildIdentifier, resolveBuildTime } from './build-identifier';
+import { createDevelopmentServer } from './dev-server';
 
 const logger = new Logger('ui-next');
 export const inject = ['loader'];
@@ -336,14 +337,11 @@ export async function apply(ctx: Context) {
         ctx.on('app/i18n/update', buildI18n);
         ctx.on('system/setting', buildCodeLangs);
 
-        const vite = await createServer({
+        const development = await createDevelopmentServer({
             root: __dirname,
             clearScreen: false,
             server: {
                 middlewareMode: true,
-                hmr: {
-                    port: 3010,
-                },
                 headers: {
                     'Cross-Origin-Opener-Policy': 'same-origin',
                     'Cross-Origin-Embedder-Policy': 'require-corp',
@@ -351,7 +349,8 @@ export async function apply(ctx: Context) {
             },
             appType: 'custom',
             plugins: [hydroPlugins()],
-        });
+        }, ctx.server.config?.host || '127.0.0.1', Number(process.env.HYDRO_UI_NEXT_HMR_PORT || 0));
+        const { vite } = development;
         const middleware = c2k(vite.middlewares);
         // Vite serves profile covers from pub/ in development; Hydro only serves public/ after a build.
         const capture = ['/@vite/', '/src/', '/node_modules/', '/@react-refresh', '/@fs', '/@id/', '/backgrounds/'];
@@ -400,7 +399,7 @@ export async function apply(ctx: Context) {
 
         // eslint-disable-next-line consistent-return
         return async () => {
-            await vite.close().catch((e) => console.error(e));
+            await development.close();
         };
     } else {
         const build = async () => {

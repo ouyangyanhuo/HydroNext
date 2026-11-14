@@ -289,6 +289,10 @@ export function useRouterState(): RouterState {
   return ctx;
 }
 
+export function useOptionalRouterState(): RouterState | null {
+  return useContext(RouterStateContext);
+}
+
 export function useNavigate(): RouterNavigateContextValue['navigate'] {
   const ctx = useContext(RouterNavigateContext);
   if (!ctx) throw new Error('useNavigate must be used within RouterProvider');

@@ -1,0 +1,16 @@
+Allow registration with GitHub: 允许通过 GitHub 注册
+Enable GitHub login: 启用 GitHub 登录
+GitHub Authorization callback URL: GitHub 授权回调地址
+GitHub Client ID: GitHub 客户端 ID
+GitHub Client Secret: GitHub 客户端密钥
+GitHub authorization was canceled.: 已取消 GitHub 授权。
+GitHub login failed. Please try again.: GitHub 登录失败，请重试。
+GitHub login is unavailable. Please contact the administrator.: GitHub 登录暂不可用，请联系管理员。
+GitHub login requires a verified email address.: GitHub 登录需要已验证的邮箱地址。
+GitHub login session expired. Please start again.: GitHub 登录会话已失效，请重新发起登录。
+Leave blank to keep the current Client Secret.: 留空则保留当前客户端密钥。
+Login with GitHub: 使用 GitHub 登录
+login-with-github-next.clientId: GitHub 客户端 ID
+login-with-github-next.clientSecret: GitHub 客户端密钥
+setting_github_login: GitHub 登录
+setting_github_login_desc: 配置 GitHub OAuth 登录及账号注册策略。

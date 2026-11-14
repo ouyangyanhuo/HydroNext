@@ -19,7 +19,7 @@ export { UserAvatar } from './components/user/user-avatar';
 export { UserLink, type UserLinkProps } from './components/user/user-link';
 // Context
 export { type PageData, usePageData, useSetPageData, useUiContext, useUserContext } from './context/page-data';
-export { type RouterState, useNavigate, useRouterState } from './context/router';
+export { type RouterState, useNavigate, useOptionalRouterState, useRouterState } from './context/router';
 // Hooks
 export { useBuildUrl } from './hooks/use-build-url';
 export { useCurrentUser, useIsLoggedIn } from './hooks/use-current-user';

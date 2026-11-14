@@ -37,7 +37,7 @@ export function OAuthButtons({ methods, redirect = '' }: OAuthButtonsProps) {
           onClick={() => handleOAuth(method)}
           leftSection={method.icon ? <img src={method.icon} alt="" style={{ width: 18, height: 18 }} /> : undefined}
         >
-          {method.text || method.name || method.id}
+          {t(method.text || method.name || method.id)}
         </Button>
       ))}
     </Stack>

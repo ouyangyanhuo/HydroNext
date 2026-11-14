@@ -142,6 +142,8 @@ koa.on('error', (error) => {
     }
 });
 wsServer.on('error', (error) => {
+    // HTTP listener failures are reported by listen(); ws forwards the same error as well.
+    if ((error as NodeJS.ErrnoException).code === 'EADDRINUSE') return;
     console.log('Websocket server error:', error);
 });
 
@@ -532,9 +534,21 @@ ${c.response.status} ${endTime - startTime}ms ${c.response.length}`);
             httpServer.close();
             wsServer.close();
         });
-        await new Promise((r) => {
-            httpServer.listen(this.config.port, this.config.host || '127.0.0.1', () => {
-                logger.success('Server listening at: %c', `${this.config.host || '127.0.0.1'}:${this.config.port}`);
+        await new Promise((r, reject) => {
+            const host = this.config.host || '127.0.0.1';
+            const failed = (error: NodeJS.ErrnoException) => {
+                if (error.code === 'EADDRINUSE') {
+                    error.message = `Cannot start Hydro: ${host}:${this.config.port} is already in use. `
+                        + 'Stop the existing instance or choose another --port.';
+                }
+                reject(error);
+            };
+            httpServer.once('error', failed);
+            httpServer.listen(this.config.port, host, () => {
+                httpServer.off('error', failed);
+                const address = httpServer.address();
+                const port = address && typeof address !== 'string' ? address.port : this.config.port;
+                logger.success('Server listening at: %c', `${host}:${port}`);
                 r(true);
             });
         });

@@ -21,6 +21,7 @@
     "vite.config.ts",
     "css.d.ts",
     "build-identifier.ts",
+        "dev-server.ts",
     "locales/"
   ],
   "scripts": {

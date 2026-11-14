@@ -90,13 +90,18 @@ export async function apply(ctx: Context) {
             });
         });
     }
-    ctx.inject(['server'], async ({ server }) => {
-        await server.listen();
+    try {
+        await ctx.server.listen();
         await ctx.parallel('app/listen');
         logger.success('Server started');
         process.title = `HydroOJ (v${global.Hydro.version.hydrooj}, worker ${process.env.NODE_APP_INSTANCE}${process.env.DEV ? ', debug' : ''})`;
         await ctx.parallel('app/ready');
         process.send?.('ready');
-    });
+    } catch (error) {
+        // A failed listener must not leave Vite, background tasks or database handles alive.
+        await ctx.parallel('app/exit').catch((cleanupError) => logger.error(cleanupError));
+        await app.fiber.dispose().catch((cleanupError) => logger.error(cleanupError));
+        throw error;
+    }
     return { fail };
 }

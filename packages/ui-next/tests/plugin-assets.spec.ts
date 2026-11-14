@@ -34,7 +34,7 @@ test('plugin split chunks, CSS and binary assets are served without corrupting H
                 { path: '/plugins-dist/asset-test.png', contents: binary },
             ], metafile: { outputs: { [entry]: { cssBundle: css } } } };
         } },
-        'koa2-connect/ts': connect, vite: {},
+        'koa2-connect/ts': connect, './dev-server': {},
         '@hydrooj/framework': { serializer: () => undefined },
         hydrooj: { Handler: class {}, Types: {}, param: () => () => {}, size: String,
             NotFoundError: Error, SettingModel: { langs: { cc: { display: 'C++' } } },

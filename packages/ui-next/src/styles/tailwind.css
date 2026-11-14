@@ -17,6 +17,77 @@
   to { opacity: 1; }
 }
 
+@keyframes hydro-page-in {
+  0% {
+    opacity: 0;
+    transform: translateY(22px) scale(0.985);
+    filter: blur(2px);
+  }
+  40% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes hydro-page-in-from-right {
+  0% {
+    opacity: 0;
+    transform: translateX(52px) scale(0.985);
+    filter: blur(2px);
+  }
+  40% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes hydro-page-in-from-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-52px) scale(0.985);
+    filter: blur(2px);
+  }
+  40% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.hydro-page-transition {
+  animation: hydro-page-in 280ms var(--hydro-ease-out) both;
+}
+
+.hydro-page-transition.hydro-page-transition--from-right {
+  animation: hydro-page-in-from-right 300ms var(--hydro-ease-out) both;
+}
+
+.hydro-page-transition.hydro-page-transition--from-left {
+  animation: hydro-page-in-from-left 300ms var(--hydro-ease-out) both;
+}
+
+.hydro-page-exiting {
+  opacity: 0.38 !important;
+  transform: translateY(-6px) scale(0.985) !important;
+  filter: blur(1.5px) !important;
+  transition:
+    opacity 240ms var(--hydro-ease-out),
+    transform 240ms var(--hydro-ease-out),
+    filter 240ms var(--hydro-ease-out) !important;
+  pointer-events: none;
+}
+
 @keyframes hydro-ambient-bloom {
   0% {
     opacity: 0;
@@ -5302,9 +5373,16 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   }
 
   .hydro-toast-container,
-  .hydro-toast-card {
+  .hydro-toast-card,
+  .hydro-page-transition,
+  .hydro-page-transition--from-right,
+  .hydro-page-transition--from-left,
+  .hydro-page-exiting {
     animation: none !important;
     transition: none !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
   }
 }
 

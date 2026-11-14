@@ -7,6 +7,7 @@ import { buildSync, transformSync } from 'esbuild';
 import { load } from 'js-yaml';
 import { test } from 'node:test';
 import postcss from 'postcss';
+import { getTopNavIndex, TOP_NAV_ORDER } from '../src/utils/top-nav.ts';
 import { formatTrainingDifficulty } from '../src/utils/training.ts';
 
 const require = createRequire(import.meta.url);
@@ -920,4 +921,164 @@ test('record rejudge/cancel and settings honor-frame navigation use SPA routing 
     assert.match(honorFramePageSource, /to="home_settings"/);
     assert.match(honorFramePageSource, /to="home_honor_frames"/);
     assert.match(homeSettingsSource, /to="home_settings"/);
+});
+
+test('ranking podium card 1 stands clearly taller than card 2 and card 3 on all screen sizes', () => {
+    const css = read('../src/pages/ranking.css');
+    const tsx = read('../src/pages/ranking.tsx');
+
+    // Podium cards have explicit stepping min-heights: card 1 > card 2 > card 3
+    const cardBaseMatch = css.match(/\.ranking-podium-card\s*\{[\s\S]*?min-height:\s*([\d.]+)rem/);
+    const card1Match = css.match(/\.ranking-podium-card--1\s*\{[\s\S]*?min-height:\s*([\d.]+)rem/);
+    const card2Match = css.match(/\.ranking-podium-card--2\s*\{[\s\S]*?min-height:\s*([\d.]+)rem/);
+    const card3Match = css.match(/\.ranking-podium-card--3\s*\{[\s\S]*?min-height:\s*([\d.]+)rem/);
+
+    assert.ok(card1Match, 'Card 1 min-height must be defined');
+    assert.ok(card2Match, 'Card 2 min-height must be defined');
+    const h1 = Number.parseFloat(card1Match[1]);
+    const h2 = Number.parseFloat(card2Match[1]);
+    const h3 = card3Match ? Number.parseFloat(card3Match[1]) : (cardBaseMatch ? Number.parseFloat(cardBaseMatch[1]) : 0);
+
+    assert.ok(h1 > h2, `Card 1 min-height (${h1}rem) must be taller than Card 2 (${h2}rem)`);
+    assert.ok(h2 > h3, `Card 2 min-height (${h2}rem) must be taller than Card 3 (${h3}rem)`);
+    assert.ok(h1 - h2 >= 2.5, 'Card 1 must have at least 2.5rem advantage over Card 2 for podium prominence');
+
+    // Card 1 has elevated z-index and prominent crown
+    assert.match(css, /\.ranking-podium-card--1[\s\S]*?z-index:\s*2/);
+    assert.match(tsx, /rank === 1 \? <IconCrown size=\{36\}/);
+
+    // Narrow screens keep Card 1 taller as full-width banner
+    const mobileMatch = css.match(
+        /@media\s*\(max-width:\s*560px\)[\s\S]*?\.ranking-podium-card--1\s*\{[\s\S]*?min-height:\s*([\d.]+)rem/,
+    );
+    const mobileCard2Match = css.match(
+        /@media\s*\(max-width:\s*560px\)[\s\S]*?\.ranking-podium-card--2\s*\{[\s\S]*?min-height:\s*([\d.]+)rem/,
+    );
+    assert.ok(mobileMatch, 'Mobile Card 1 min-height must be defined');
+    assert.ok(mobileCard2Match, 'Mobile Card 2 min-height must be defined');
+    assert.ok(
+        Number.parseFloat(mobileMatch[1]) > Number.parseFloat(mobileCard2Match[1]),
+        'Mobile Card 1 must be taller than Card 2',
+    );
+});
+
+test('page transitions animate entry on every page navigation and disable motion when requested', () => {
+    const appShellSource = read('../src/components/shell/app-shell.tsx');
+    const tailwindCss = read('../src/styles/tailwind.css');
+
+    // AppShell tracks navigation revision to trigger transitions on all page changes
+    assert.match(appShellSource, /usePageDataRevision/);
+    assert.match(appShellSource, /<div[\s\S]*?key=\{revision\}[\s\S]*?className=\{?["`]?[^"`}]*hydro-page-transition/);
+    assert.match(appShellSource, /useOptionalRouterState/);
+    assert.match(appShellSource, /hydro-page-exiting/);
+
+    // Tailwind CSS defines keyframes and transition class with vertical glide, scale, blur and fade
+    assert.match(
+        tailwindCss,
+        new RegExp(
+            '@keyframes hydro-page-in\\s*\\{[\\s\\S]*?opacity:\\s*0[\\s\\S]*?'
+            + 'transform:\\s*translateY\\(22px\\) scale\\(0\\.985\\)[\\s\\S]*?filter:\\s*blur\\(2px\\)'
+            + '[\\s\\S]*?opacity:\\s*1[\\s\\S]*?transform:\\s*none[\\s\\S]*?filter:\\s*none',
+        ),
+    );
+    assert.match(
+        tailwindCss,
+        /\.hydro-page-transition\s*\{[\s\S]*?animation:\s*hydro-page-in 280ms var\(--hydro-ease-out\) both/,
+    );
+
+    // Enhanced exit styling dims, shrinks and gently blurs while fetching the next page
+    assert.match(
+        tailwindCss,
+        new RegExp(
+            '\\.hydro-page-exiting\\s*\\{[\\s\\S]*?opacity:\\s*0\\.38 !important[\\s\\S]*?'
+            + 'transform:\\s*translateY\\(-6px\\) scale\\(0\\.985\\) !important[\\s\\S]*?filter:\\s*blur\\(1\\.5px\\) !important',
+        ),
+    );
+
+    // Prefers-reduced-motion disables page transitions and exiting effects
+    assert.match(
+        tailwindCss,
+        /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.hydro-page-exiting[\s\S]*?animation:\s*none\s*!important/,
+    );
+});
+
+test('topbar pages animate directional horizontal transitions according to their relative order', () => {
+    const appShellSource = read('../src/components/shell/app-shell.tsx');
+    const tailwindCss = read('../src/styles/tailwind.css');
+
+    // Verify topbar index ordering: Home < Problems < Contests < Training < Records < Ranking
+    assert.equal(TOP_NAV_ORDER.homepage, 0);
+    assert.equal(TOP_NAV_ORDER.problem_main, 1);
+    assert.equal(TOP_NAV_ORDER.contest_main, 2);
+    assert.equal(TOP_NAV_ORDER.training_main, 3);
+    assert.equal(TOP_NAV_ORDER.record_main, 4);
+    assert.equal(TOP_NAV_ORDER.ranking, 5);
+
+    // Sub-pages resolve to their topbar parent nav section
+    assert.equal(getTopNavIndex('homepage'), 0);
+    assert.equal(getTopNavIndex('problem_main'), 1);
+    assert.equal(getTopNavIndex('problem_detail'), 1);
+    assert.equal(getTopNavIndex('contest_main'), 2);
+    assert.equal(getTopNavIndex('contest_detail'), 2);
+    assert.equal(getTopNavIndex('training_main'), 3);
+    assert.equal(getTopNavIndex('record_main'), 4);
+    assert.equal(getTopNavIndex('record_detail'), 4);
+    assert.equal(getTopNavIndex('ranking'), 5);
+    assert.equal(getTopNavIndex('user_detail'), null);
+
+    // Respect domain navigationHidden settings: hidden items return null and remaining items are re-indexed
+    assert.equal(getTopNavIndex('problem_main', { navigationHidden: { problem_main: true } }), null);
+    assert.equal(getTopNavIndex('problem_detail', { navigationHidden: { problem_main: true } }), null);
+    assert.equal(getTopNavIndex('homepage', { navigationHidden: { problem_main: true } }), 0);
+    assert.equal(getTopNavIndex('contest_main', { navigationHidden: { problem_main: true } }), 1);
+    assert.equal(getTopNavIndex('training_main', { navigationHidden: { problem_main: true } }), 2);
+    assert.equal(getTopNavIndex('record_main', { navigationHidden: { problem_main: true } }), 3);
+    assert.equal(getTopNavIndex('ranking', { navigationHidden: { problem_main: true } }), 4);
+
+    // Respect contestMode: homepage, problem_main and training_main are hidden
+    assert.equal(getTopNavIndex('homepage', { contestMode: true }), null);
+    assert.equal(getTopNavIndex('problem_main', { contestMode: true }), null);
+    assert.equal(getTopNavIndex('training_main', { contestMode: true }), null);
+    assert.equal(getTopNavIndex('contest_main', { contestMode: true }), 0);
+    assert.equal(getTopNavIndex('record_main', { contestMode: true }), 1);
+    assert.equal(getTopNavIndex('ranking', { contestMode: true }), 2);
+
+    // Respect ranking permissions
+    assert.equal(getTopNavIndex('ranking', { canViewRanking: false }), null);
+
+    // AppShell handles directional switching between topbar pages with visibility options
+    assert.match(appShellSource, /getTopNavIndex/);
+    assert.match(appShellSource, /navigationHidden/);
+    assert.match(appShellSource, /contestMode/);
+    assert.match(appShellSource, /currNavIndex\s*>\s*(?:state\.)?prevNavIndex/);
+    assert.match(appShellSource, /hydro-page-transition--from-right/);
+    assert.match(appShellSource, /hydro-page-transition--from-left/);
+
+    // Keyframes and CSS classes define left/right translation animations with 52px travel, scale and blur
+    assert.match(
+        tailwindCss,
+        new RegExp(
+            '@keyframes hydro-page-in-from-right\\s*\\{[\\s\\S]*?'
+            + 'transform:\\s*translateX\\(52px\\) scale\\(0\\.985\\)[\\s\\S]*?filter:\\s*blur\\(2px\\)[\\s\\S]*?transform:\\s*none',
+        ),
+    );
+    assert.match(
+        tailwindCss,
+        new RegExp(
+            '@keyframes hydro-page-in-from-left\\s*\\{[\\s\\S]*?'
+            + 'transform:\\s*translateX\\(-52px\\) scale\\(0\\.985\\)[\\s\\S]*?filter:\\s*blur\\(2px\\)[\\s\\S]*?transform:\\s*none',
+        ),
+    );
+    assert.match(tailwindCss, /\.hydro-page-transition--from-right/);
+    assert.match(tailwindCss, /\.hydro-page-transition--from-left/);
+
+    // Prefers-reduced-motion disables all directional transitions
+    assert.match(
+        tailwindCss,
+        /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.hydro-page-transition--from-right[\s\S]*?animation:\s*none\s*!important/,
+    );
+    assert.match(
+        tailwindCss,
+        /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.hydro-page-transition--from-left[\s\S]*?animation:\s*none\s*!important/,
+    );
 });

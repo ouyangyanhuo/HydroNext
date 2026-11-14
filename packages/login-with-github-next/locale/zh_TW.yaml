@@ -1,0 +1,16 @@
+Allow registration with GitHub: 允許透過 GitHub 註冊
+Enable GitHub login: 啟用 GitHub 登入
+GitHub Authorization callback URL: GitHub 授權回呼網址
+GitHub Client ID: GitHub 用戶端 ID
+GitHub Client Secret: GitHub 用戶端密鑰
+GitHub authorization was canceled.: 已取消 GitHub 授權。
+GitHub login failed. Please try again.: GitHub 登入失敗，請重試。
+GitHub login is unavailable. Please contact the administrator.: GitHub 登入暫不可用，請聯絡管理員。
+GitHub login requires a verified email address.: GitHub 登入需要已驗證的電子郵件地址。
+GitHub login session expired. Please start again.: GitHub 登入工作階段已失效，請重新發起登入。
+Leave blank to keep the current Client Secret.: 留空則保留目前的用戶端密鑰。
+Login with GitHub: 使用 GitHub 登入
+login-with-github-next.clientId: GitHub 用戶端 ID
+login-with-github-next.clientSecret: GitHub 用戶端密鑰
+setting_github_login: GitHub 登入
+setting_github_login_desc: 設定 GitHub OAuth 登入及帳號註冊策略。

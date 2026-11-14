@@ -1,0 +1,16 @@
+{
+    "name": "@hydrooj/login-with-github-next",
+    "version": "0.1.0",
+    "main": "index.ts",
+    "license": "AGPL-3.0-or-later",
+    "preferUnplugged": true,
+    "peerDependencies": {
+        "@hydrooj/ui-next": "*",
+        "hydrooj": "^5.0.7"
+    },
+    "peerDependenciesMeta": {
+        "@hydrooj/ui-next": {
+            "optional": true
+        }
+    }
+}
