@@ -735,7 +735,13 @@ a {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
   gap: 20px;
-  align-items: stretch;
+  align-items: start;
+}
+
+@media (width > 900px) {
+  .hydro-home-grid:not(.hydro-home-grid--single) {
+    --hydro-home-row-height: 68px;
+  }
 }
 
 .hydro-home-grid--single,
@@ -780,7 +786,6 @@ a {
 .hydro-data-list {
   display: flex;
   flex-direction: column;
-  min-height: 260px;
 }
 
 .hydro-data-row {
@@ -789,7 +794,7 @@ a {
   grid-template-columns: 72px minmax(0, 1fr) auto 18px;
   gap: 12px;
   align-items: center;
-  min-height: 52px;
+  min-height: var(--hydro-home-row-height, 52px);
   padding: 10px 14px 10px 18px;
   color: var(--hydro-text);
   text-decoration: none;
@@ -911,7 +916,8 @@ a {
 
 .hydro-contest-card-row {
   display: block;
-  min-height: 64px;
+  align-content: center;
+  min-height: var(--hydro-home-row-height, 64px);
   padding: 10px 18px;
 }
 

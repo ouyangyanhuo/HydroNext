@@ -59,6 +59,24 @@ test('homepage problem list box and recent contests box have consistent shadow i
     assert.equal(shadows.get('.hydro-data-panel--problems') ?? shadows.get('.hydro-data-panel'), 'var(--hydro-shadow-sm)');
 });
 
+test('homepage only equalizes row heights in the desktop two-column layout and lets shorter panels end naturally', () => {
+    const css = postcss.parse(readFileSync(new URL('../src/styles/tailwind.css', import.meta.url), 'utf8'));
+    const value = (selector: string, property: string, media?: string) => {
+        let result: string | undefined;
+        css.walkRules(selector, (rule) => {
+            const parent = rule.parent;
+            if (media ? parent?.type !== 'atrule' || parent.name !== 'media' || parent.params !== media : parent !== css) return;
+            rule.walkDecls(property, (decl) => { result = decl.value; });
+        });
+        return result;
+    };
+    assert.equal(value('.hydro-home-grid', 'align-items'), 'start');
+    assert.equal(value('.hydro-data-list', 'min-height'), undefined);
+    assert.equal(value('.hydro-home-grid:not(.hydro-home-grid--single)', '--hydro-home-row-height', '(width > 900px)'), '68px');
+    assert.equal(value('.hydro-data-row', 'min-height'), 'var(--hydro-home-row-height, 52px)');
+    assert.equal(value('.hydro-contest-card-row', 'min-height'), 'var(--hydro-home-row-height, 64px)');
+});
+
 async function mountHomepage(
     args: any = {}, user: any = { _id: 0, perm: 0n }, perms: Record<string, boolean> = {}, realMenu = false, ui: any = {},
 ) {
