@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { buildSync, transformSync } from 'esbuild';
 import { load } from 'js-yaml';
 import { test } from 'node:test';
 import postcss from 'postcss';
+import { highlightCodeLines, resolveHighlightLanguage, splitHighlightedLines } from '../src/utils/highlight.ts';
 import { getTopNavIndex, TOP_NAV_ORDER } from '../src/utils/top-nav.ts';
 import { formatTrainingDifficulty } from '../src/utils/training.ts';
 
@@ -1081,4 +1083,106 @@ test('topbar pages animate directional horizontal transitions according to their
         tailwindCss,
         /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.hydro-page-transition--from-left[\s\S]*?animation:\s*none\s*!important/,
     );
+});
+
+test('record detail provides highlighted source with line numbers, case matrix, collapsible subtasks and cancel confirmation', () => {
+    // Highlighting maps Hydro compiler IDs and preserves spans across multiline tokens
+    assert.equal(resolveHighlightLanguage('cc.cc17o2'), 'cpp');
+    assert.equal(resolveHighlightLanguage('py.py3'), 'python');
+    assert.equal(resolveHighlightLanguage('js.node'), 'javascript');
+    assert.equal(resolveHighlightLanguage('unknown-lang'), 'plaintext');
+
+    const cpp = highlightCodeLines('/* line 1\nline 2 */\n#include <iostream>\nint main() { return 0; }', 'cc.cc17o2');
+    assert.equal(cpp.language, 'cpp');
+    assert.equal(cpp.lines.length, 4);
+    assert.match(cpp.lines[0], /hljs-comment/);
+    assert.match(cpp.lines[1], /hljs-comment/);
+    assert.match(cpp.lines[2], /&lt;iostream&gt;/);
+    assert.match(cpp.lines[3], /hljs-keyword/);
+
+    const split = splitHighlightedLines('<span class="hljs-string">"a\nb"</span>');
+    assert.deepEqual(split, ['<span class="hljs-string">"a</span>', '<span class="hljs-string">b"</span>']);
+
+    const recordDetail = read('../src/pages/record_detail.tsx');
+    const tailwindCss = read('../src/styles/tailwind.css');
+
+    // Source code viewer has syntax highlighting, line numbers, copy button and word wrap toggle
+    assert.match(recordDetail, /highlightCodeLines/);
+    assert.match(recordDetail, /hydro-code-line-no/);
+    assert.match(recordDetail, /hydro-code-viewer--wrapped/);
+    assert.match(recordDetail, /Copy code/);
+    assert.match(recordDetail, /Word wrap/);
+    assert.match(tailwindCss, /\.hydro-code-line-no[\s\S]*?user-select:\s*none/);
+
+    // Test case matrix, subtask collapse/expand, expandable messages, and cancel score ConfirmDialog
+    assert.match(recordDetail, /hydro-record-case-matrix/);
+    assert.match(recordDetail, /hydro-record-case-tile/);
+    assert.match(recordDetail, /Expand all/);
+    assert.match(recordDetail, /Collapse all/);
+    assert.match(recordDetail, /hydro-case-message__toggle/);
+    assert.match(recordDetail, /<ConfirmDialog[\s\S]*?submitOperation\('cancel'\)/);
+});
+
+test('empty state and error page render structured icons, hierarchy and semantic tones', () => {
+    const emptyState = read('../src/components/common/empty-state.tsx');
+    const errorPage = read('../src/pages/error.tsx');
+    const tailwindCss = read('../src/styles/tailwind.css');
+
+    assert.match(emptyState, /IconInbox/);
+    assert.match(emptyState, /hydro-empty-state__icon/);
+    assert.match(emptyState, /description\?:\s*React\.ReactNode/);
+    assert.match(emptyState, /action\?:\s*React\.ReactNode/);
+
+    assert.match(errorPage, /hydro-error-card/);
+    assert.match(errorPage, /IconShieldLock/);
+    assert.match(errorPage, /IconCompassOff/);
+    assert.match(errorPage, /IconAlertTriangle/);
+    assert.match(errorPage, /HTTP \{code\}/);
+    assert.match(tailwindCss, /\.hydro-error-card--warning/);
+    assert.match(tailwindCss, /\.hydro-error-card--danger/);
+});
+
+test('data table scroll shadows and paginator quick jump work seamlessly', () => {
+    const dataTable = read('../src/components/common/data-table.tsx');
+    const paginator = read('../src/components/common/paginator.tsx');
+    const tailwindCss = read('../src/styles/tailwind.css');
+
+    assert.match(dataTable, /data-scroll-left/);
+    assert.match(dataTable, /data-scroll-right/);
+    assert.match(dataTable, /stickyFirstColumn/);
+    assert.match(tailwindCss, /\.hydro-table-wrap\[data-scroll-left='true'\]::before/);
+    assert.match(tailwindCss, /\.hydro-table-wrap\[data-scroll-right='true'\]::after/);
+
+    assert.match(paginator, /showQuickJump\s*=\s*totalPages\s*>\s*5/);
+    assert.match(paginator, /hydro-paginator__jump/);
+    assert.match(paginator, /Math\.max\(1,\s*Math\.min\(totalPages,\s*parsed\)\)/);
+});
+
+test('mobile navigation drawer matches desktop account menu with root-only My Files', () => {
+    const topNav = read('../src/components/navigation/top-nav.tsx');
+    const drawerSection = topNav.slice(topNav.indexOf('<Drawer'));
+
+    assert.match(topNav, /const isRoot = useHasPriv\(PRIV\.PRIV_ALL\)/);
+    assert.match(drawerSection, /to="home_security"/);
+    assert.match(drawerSection, /\{isRoot && \([\s\S]*?to="home_files"[\s\S]*?\)\}/);
+    assert.match(topNav, /<Burger[\s\S]*?aria-label=/);
+});
+
+test('only AppShell renders a semantic main landmark without nested main elements', () => {
+    const srcRoot = fileURLToPath(new URL('../src/', import.meta.url));
+    const filesWithMain: string[] = [];
+    function scan(dir: string) {
+        for (const entry of readdirSync(dir, { withFileTypes: true })) {
+            const fullPath = join(dir, entry.name);
+            if (entry.isDirectory()) scan(fullPath);
+            else if (entry.name.endsWith('.tsx')) {
+                const content = readFileSync(fullPath, 'utf8');
+                if (/<main[\s>]/.test(content)) {
+                    filesWithMain.push(fullPath.slice(srcRoot.length));
+                }
+            }
+        }
+    }
+    scan(srcRoot);
+    assert.deepEqual(filesWithMain, ['components/shell/app-shell.tsx']);
 });

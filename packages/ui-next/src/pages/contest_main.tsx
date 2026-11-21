@@ -207,7 +207,7 @@ export default function ContestMainPage() {
   };
 
   return (
-    <main className="hydro-contest-page">
+    <div className="hydro-contest-page">
       <PageHeader
         title={currentRule ? t('All {0} Contests').replace('{0}', currentRule) : t('Contests')}
         icon={<IconTrophy size={22} stroke={2} />}
@@ -307,6 +307,6 @@ export default function ContestMainPage() {
 
         <Paginator page={page} totalPages={tpcount} />
       </Stack>
-    </main>
+    </div>
   );
 }

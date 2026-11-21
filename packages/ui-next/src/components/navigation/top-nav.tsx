@@ -357,6 +357,7 @@ export function TopNav() {
   const tabRefs = useRef<Map<string, HTMLElement>>(new Map());
   const indicatorRef = useRef<HTMLDivElement>(null);
   const isSu = useHasPriv(PRIV.PRIV_EDIT_SYSTEM);
+  const isRoot = useHasPriv(PRIV.PRIV_ALL);
   const canViewRanking = useHasPerm(PERM.PERM_VIEW_RANKING);
   const canViewContestRanking = useHasPerm(PERM.PERM_VIEW_CONTEST_SCOREBOARD);
   const canViewRecords = useHasPerm(PERM.PERM_VIEW_RECORD);
@@ -455,6 +456,7 @@ export function TopNav() {
               onClick={toggle}
               className="lg:hidden"
               size="sm"
+              aria-label={t('Menu')}
             />
           </Group>
         </div>
@@ -493,7 +495,7 @@ export function TopNav() {
                 <Button
                   component={Link}
                   to="user_detail"
-                  params={{ uid: useSessionStore.getState().user._id }}
+                  params={{ uid: userId }}
                   variant="subtle"
                   fullWidth
                   justify="flex-start"
@@ -508,9 +510,18 @@ export function TopNav() {
                   variant="subtle"
                   fullWidth
                   justify="flex-start"
-                  onClick={close}>
+                  onClick={close}
+                >
                   {t('Settings')}
                 </Button>
+                <Button component={Link} to="home_security" variant="subtle" fullWidth justify="flex-start" onClick={close}>
+                  {t('Security')}
+                </Button>
+                {isRoot && (
+                  <Button component={Link} to="home_files" variant="subtle" fullWidth justify="flex-start" onClick={close}>
+                    {t('My Files')}
+                  </Button>
+                )}
                 <Button component={Link} to="home_domain" variant="subtle" fullWidth justify="flex-start" onClick={close}>
                   {t('My Domains')}
                 </Button>

@@ -1,6 +1,6 @@
 import { ScrollArea, Table } from '@mantine/core';
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { memo } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/hooks/use-i18n';
 import { siblingIndexStyle } from '@/utils/stagger';
 import { EmptyState } from './empty-state';
@@ -21,8 +21,12 @@ interface DataTableProps<T> {
   data: T[];
   keyField?: string;
   emptyMessage?: string;
+  emptyDescription?: React.ReactNode;
+  emptyIcon?: React.ReactNode;
+  emptyAction?: React.ReactNode;
   striped?: boolean;
   highlightOnHover?: boolean;
+  stickyFirstColumn?: boolean;
   onRowClick?: (item: T) => void;
   rowLabel?: (item: T) => string;
 }
@@ -32,25 +36,67 @@ function DataTableComponent<T extends Record<string, any>>({
   data,
   keyField = '_id',
   emptyMessage,
+  emptyDescription,
+  emptyIcon,
+  emptyAction,
   striped = true,
   highlightOnHover = true,
+  stickyFirstColumn = false,
   onRowClick,
   rowLabel,
 }: DataTableProps<T>) {
   const { t } = useI18n();
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [scrollEdges, setScrollEdges] = useState({ left: false, right: false });
+
+  const updateScrollEdges = useCallback(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const left = el.scrollLeft > 2;
+    const right = el.scrollWidth - el.clientWidth - el.scrollLeft > 2;
+    setScrollEdges((prev) => (prev.left === left && prev.right === right ? prev : { left, right }));
+  }, []);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return undefined;
+    updateScrollEdges();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(updateScrollEdges);
+    observer.observe(el);
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
+    return () => observer.disconnect();
+  }, [columns.length, data.length, updateScrollEdges]);
+
   if (!data || data.length === 0) {
-    return <EmptyState message={emptyMessage ?? t('No data')} />;
+    return (
+      <EmptyState
+        message={emptyMessage ?? t('No data')}
+        description={emptyDescription}
+        icon={emptyIcon}
+        action={emptyAction}
+      />
+    );
   }
 
   return (
-    <div className="hydro-table-wrap">
-      <ScrollArea type="auto" scrollbarSize={8}>
+    <div
+      className="hydro-table-wrap"
+      data-scroll-left={scrollEdges.left ? 'true' : undefined}
+      data-scroll-right={scrollEdges.right ? 'true' : undefined}
+    >
+      <ScrollArea
+        type="auto"
+        scrollbarSize={8}
+        viewportRef={viewportRef}
+        onScrollPositionChange={updateScrollEdges}
+      >
         <Table
           striped={striped}
           highlightOnHover={highlightOnHover}
           verticalSpacing="sm"
           horizontalSpacing="md"
-          className="hydro-data-table"
+          className={stickyFirstColumn ? 'hydro-data-table hydro-data-table--sticky-first' : 'hydro-data-table'}
         >
           <Table.Thead>
             <Table.Tr>

@@ -198,7 +198,7 @@ export default function HomeSecurityPage() {
   };
 
   return (
-    <main className="hydro-security-page">
+    <div className="hydro-security-page">
       <div className="hydro-settings-header">
         <PageHeader title={t('Security')} />
       </div>
@@ -519,6 +519,6 @@ export default function HomeSecurityPage() {
           </Group>
         </Stack>
       </Modal>
-    </main>
+    </div>
   );
 }

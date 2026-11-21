@@ -64,7 +64,7 @@ export default function UserDetailPage() {
   const backgroundUrl = getBackgroundUrl(udoc._id || 0);
 
   return (
-    <main className="hydro-user-profile">
+    <div className="hydro-user-profile">
       <Stack gap="lg">
         <Paper withBorder className="hydro-content-card hydro-user-profile__hero overflow-hidden">
           <div className="hydro-user-profile__cover">
@@ -295,6 +295,6 @@ export default function UserDetailPage() {
           </Card>
         )}
       </Stack>
-    </main>
+    </div>
   );
 }

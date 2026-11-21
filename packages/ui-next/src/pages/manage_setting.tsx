@@ -70,7 +70,7 @@ export default function ManageSettingPage() {
   };
 
   return (
-    <main className="hydro-settings-page">
+    <div className="hydro-settings-page">
       <div className="hydro-settings-header">
         <Group justify="space-between" align="center" wrap="wrap" gap="md">
           <div>
@@ -115,6 +115,6 @@ export default function ManageSettingPage() {
           familyDescriptions={familyDescriptions}
         />
       </div>
-    </main>
+    </div>
   );
 }

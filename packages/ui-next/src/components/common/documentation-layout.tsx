@@ -19,7 +19,7 @@ export function DocumentationLayout({ title, description, sections }: Documentat
   const { t } = useI18n();
 
   return (
-    <main className="hydro-doc-page">
+    <div className="hydro-doc-page">
       <PageHeader title={title} />
       {description && <Text className="hydro-doc-page__description">{description}</Text>}
 
@@ -48,6 +48,6 @@ export function DocumentationLayout({ title, description, sections }: Documentat
           ))}
         </article>
       </div>
-    </main>
+    </div>
   );
 }

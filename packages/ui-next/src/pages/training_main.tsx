@@ -393,7 +393,7 @@ function TrainingMainContent() {
   };
 
   return (
-    <main className="hydro-training-page">
+    <div className="hydro-training-page">
       <PageHeader
         title={t('Training')}
         icon={<IconSchool size={22} stroke={2} />}
@@ -730,7 +730,7 @@ function TrainingMainContent() {
         cancelLabel={t('Cancel')}
         loading={categoryLoading}
       />
-    </main>
+    </div>
   );
 }
 

@@ -266,7 +266,7 @@ function RecordMainContent({ args }: { args: any }) {
   }, [buildUrl, navigate]);
 
   return (
-    <main className="hydro-record-page">
+    <div className="hydro-record-page">
       <Stack gap="lg">
         <PageHeader
           title={t('Records')}
@@ -355,7 +355,7 @@ function RecordMainContent({ args }: { args: any }) {
           pageSizes={RECORD_PAGE_SIZES}
         />
       </Stack>
-    </main>
+    </div>
   );
 }
 

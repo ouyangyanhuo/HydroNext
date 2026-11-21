@@ -650,6 +650,7 @@ test('paginator uses the animated shared select while retaining compact dimensio
     const component = { exports: {} as any };
     const destinations: string[] = [];
     const mocks: Record<string, any> = {
+        './button': { ActionIcon: require('@mantine/core').ActionIcon },
         './select': { ShortSelect },
         '@/context/router': { useNavigate: () => (url: string) => destinations.push(url) },
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },

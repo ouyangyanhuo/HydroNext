@@ -1101,7 +1101,49 @@ a {
 }
 
 .hydro-table-wrap {
+  position: relative;
   background: var(--hydro-surface-raised);
+}
+
+.hydro-table-wrap::before,
+.hydro-table-wrap::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 24px;
+  pointer-events: none;
+  content: '';
+  opacity: 0;
+  transition: opacity var(--hydro-duration-fast) var(--hydro-ease-out);
+}
+
+.hydro-table-wrap::before {
+  left: 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--hydro-text) 10%, transparent), transparent);
+}
+
+.hydro-table-wrap::after {
+  right: 0;
+  background: linear-gradient(270deg, color-mix(in srgb, var(--hydro-text) 10%, transparent), transparent);
+}
+
+.hydro-table-wrap[data-scroll-left='true']::before,
+.hydro-table-wrap[data-scroll-right='true']::after {
+  opacity: 1;
+}
+
+.hydro-data-table--sticky-first th:first-child,
+.hydro-data-table--sticky-first td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--hydro-surface-raised);
+}
+
+.hydro-data-table--sticky-first thead th:first-child {
+  z-index: 3;
+  background: color-mix(in srgb, var(--hydro-surface-tint) 92%, var(--hydro-surface-raised));
 }
 
 .hydro-data-table {
@@ -3018,14 +3060,79 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   animation: hydro-fade-in var(--hydro-duration-slow) var(--hydro-ease-out) both;
 }
 
+.hydro-empty-state__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid color-mix(in srgb, var(--hydro-primary) 20%, var(--hydro-border));
+  border-radius: 14px;
+  color: var(--hydro-primary);
+  background: color-mix(in srgb, var(--hydro-primary-soft) 60%, var(--hydro-surface-raised));
+  box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-error-card {
+  width: min(100%, 520px);
+  border-radius: var(--hydro-radius-xl);
+  box-shadow: var(--hydro-shadow-md);
+}
+
+.hydro-error-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  border: 1px solid var(--hydro-border);
+}
+
+.hydro-error-card--primary .hydro-error-card__icon {
+  color: var(--hydro-primary);
+  border-color: color-mix(in srgb, var(--hydro-primary) 28%, var(--hydro-border));
+  background: color-mix(in srgb, var(--hydro-primary-soft) 72%, var(--hydro-surface-raised));
+}
+
+.hydro-error-card--warning .hydro-error-card__icon {
+  color: var(--hydro-warning);
+  border-color: color-mix(in srgb, var(--hydro-warning) 32%, var(--hydro-border));
+  background: color-mix(in srgb, var(--hydro-warning) 12%, var(--hydro-surface-raised));
+}
+
+.hydro-error-card--danger .hydro-error-card__icon {
+  color: var(--hydro-danger);
+  border-color: color-mix(in srgb, var(--hydro-danger) 30%, var(--hydro-border));
+  background: color-mix(in srgb, var(--hydro-danger) 12%, var(--hydro-surface-raised));
+}
+
+.hydro-error-card__code {
+  letter-spacing: 0.06em;
+}
+
 .hydro-paginator {
   width: fit-content;
+  max-width: 100%;
   margin-inline: auto;
   padding: 8px 12px;
   border: 1px solid var(--hydro-border);
   border-radius: var(--hydro-radius-lg);
   background: var(--hydro-surface-raised);
   box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-paginator__jump {
+  display: inline-flex;
+  align-items: center;
+}
+
+.hydro-paginator__jump-input {
+  height: 30px;
+  min-height: 30px;
+  padding-inline: 8px 26px;
+  font-size: var(--mantine-font-size-xs);
+  text-align: center;
 }
 
 .hydro-auth-shell {
@@ -4082,11 +4189,100 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   .hydro-security-session { flex-wrap: wrap; }
 }
 
+.hydro-record-case-matrix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  background: color-mix(in srgb, var(--hydro-bg-soft) 58%, var(--hydro-surface-raised));
+}
+
+.hydro-record-case-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 28px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: var(--hydro-radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    transform var(--hydro-duration-fast) var(--hydro-ease-out),
+    box-shadow var(--hydro-duration-fast) var(--hydro-ease-out),
+    border-color var(--hydro-duration-fast) var(--hydro-ease-out);
+}
+
+.hydro-record-case-tile:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--hydro-shadow-sm);
+}
+
+.hydro-record-case-tile--active {
+  box-shadow: 0 0 0 2px var(--hydro-primary);
+}
+
+.hydro-record-case-tile--ac {
+  color: var(--hydro-judge-ac-text);
+  background: var(--hydro-judge-ac-soft);
+  border-color: color-mix(in srgb, var(--hydro-judge-ac) 30%, transparent);
+}
+
+.hydro-record-case-tile--wa {
+  color: var(--hydro-judge-wa-text);
+  background: var(--hydro-judge-wa-soft);
+  border-color: color-mix(in srgb, var(--hydro-judge-wa) 30%, transparent);
+}
+
+.hydro-record-case-tile--tle {
+  color: var(--hydro-judge-tle-text);
+  background: var(--hydro-judge-tle-soft);
+  border-color: color-mix(in srgb, var(--hydro-judge-tle) 32%, transparent);
+}
+
+.hydro-record-case-tile--pending {
+  color: var(--hydro-judge-pending-text);
+  background: var(--hydro-judge-pending-soft);
+  border-color: color-mix(in srgb, var(--hydro-judge-pending) 30%, transparent);
+}
+
+.hydro-record-case-tile--waiting {
+  color: var(--hydro-judge-waiting-text);
+  background: var(--hydro-judge-waiting-soft);
+  border-color: color-mix(in srgb, var(--hydro-judge-waiting) 30%, transparent);
+}
+
+.hydro-record-case-tile--neutral {
+  color: var(--hydro-judge-neutral-text);
+  background: var(--hydro-judge-neutral-soft);
+  border-color: color-mix(in srgb, var(--hydro-judge-neutral) 28%, transparent);
+}
+
+.hydro-record-case-row--focused {
+  background: color-mix(in srgb, var(--hydro-primary-soft) 72%, transparent) !important;
+  box-shadow: inset 3px 0 0 var(--hydro-primary);
+}
+
 .hydro-record-source {
+  --hydro-code-keyword: #7048a8;
+  --hydro-code-string: #247354;
+  --hydro-code-number: #a85c1b;
+  --hydro-code-variable: #9a4057;
+  --hydro-code-comment: #758287;
+
   height: clamp(280px, 44vh, 520px);
   overscroll-behavior: contain;
   background-color: color-mix(in srgb, var(--hydro-bg-soft) 82%, var(--hydro-surface-raised));
   background-image: none;
+}
+
+[data-mantine-color-scheme='dark'] .hydro-record-source {
+  --hydro-code-keyword: #c7a7ff;
+  --hydro-code-string: #86d7ad;
+  --hydro-code-number: #f0b570;
+  --hydro-code-variable: #f29aae;
+  --hydro-code-comment: #71868d;
 }
 
 .hydro-record-source .mantine-Code-root {
@@ -4095,6 +4291,114 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+}
+
+.hydro-code-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--hydro-font-mono);
+  font-size: 0.84rem;
+  line-height: 1.62;
+  tab-size: 4;
+}
+
+.hydro-code-row:hover {
+  background: color-mix(in srgb, var(--hydro-primary-soft) 34%, transparent);
+}
+
+.hydro-code-line-no {
+  width: 1%;
+  min-width: 3.1rem;
+  padding: 0 0.85rem 0 0.75rem;
+  border-right: 1px solid color-mix(in srgb, var(--hydro-border) 82%, transparent);
+  color: var(--hydro-text-muted);
+  font-size: 0.76rem;
+  text-align: right;
+  vertical-align: top;
+  user-select: none;
+  opacity: 0.72;
+}
+
+.hydro-code-row:first-child .hydro-code-line-no,
+.hydro-code-row:first-child .hydro-code-line-text {
+  padding-top: 0.7rem;
+}
+
+.hydro-code-row:last-child .hydro-code-line-no,
+.hydro-code-row:last-child .hydro-code-line-text {
+  padding-bottom: 0.7rem;
+}
+
+.hydro-code-line-text {
+  padding: 0 1rem;
+  white-space: pre;
+  vertical-align: top;
+}
+
+.hydro-code-viewer--wrapped .hydro-code-line-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.hydro-code-viewer .hljs {
+  background: transparent;
+  color: var(--hydro-text);
+  padding: 0;
+}
+
+.hydro-code-viewer .hljs-comment,
+.hydro-code-viewer .hljs-quote {
+  color: var(--hydro-code-comment);
+  font-style: italic;
+}
+
+.hydro-code-viewer .hljs-keyword,
+.hydro-code-viewer .hljs-selector-tag,
+.hydro-code-viewer .hljs-literal,
+.hydro-code-viewer .hljs-section,
+.hydro-code-viewer .hljs-link {
+  color: var(--hydro-code-keyword);
+}
+
+.hydro-code-viewer .hljs-string,
+.hydro-code-viewer .hljs-regexp,
+.hydro-code-viewer .hljs-attribute,
+.hydro-code-viewer .hljs-attr,
+.hydro-code-viewer .hljs-symbol,
+.hydro-code-viewer .hljs-bullet {
+  color: var(--hydro-code-string);
+}
+
+.hydro-code-viewer .hljs-number,
+.hydro-code-viewer .hljs-meta,
+.hydro-code-viewer .hljs-doctag,
+.hydro-code-viewer .hljs-selector-attr,
+.hydro-code-viewer .hljs-selector-pseudo {
+  color: var(--hydro-code-number);
+}
+
+.hydro-code-viewer .hljs-variable,
+.hydro-code-viewer .hljs-template-variable,
+.hydro-code-viewer .hljs-tag,
+.hydro-code-viewer .hljs-name,
+.hydro-code-viewer .hljs-deletion {
+  color: var(--hydro-code-variable);
+}
+
+.hydro-code-viewer .hljs-title,
+.hydro-code-viewer .hljs-title.class_,
+.hydro-code-viewer .hljs-title.function_,
+.hydro-code-viewer .hljs-built_in,
+.hydro-code-viewer .hljs-type,
+.hydro-code-viewer .hljs-property {
+  color: var(--hydro-primary-strong);
+  font-weight: 650;
+}
+
+.hydro-code-viewer .hljs-params,
+.hydro-code-viewer .hljs-formula,
+.hydro-code-viewer .hljs-subst {
+  color: var(--hydro-text);
 }
 
 .hydro-doc-page__description {

@@ -118,7 +118,7 @@ export default function HomeSettingsPage() {
   const currentSection = sections.find((section) => section.key === category) || sections[0];
 
   return (
-    <main className="hydro-settings-page">
+    <div className="hydro-settings-page">
       <div className="hydro-settings-header">
         <PageHeader title={t('Settings')} />
         <Text size="sm" c="dimmed">{currentSection.label}</Text>
@@ -251,6 +251,6 @@ export default function HomeSettingsPage() {
           />
         </Stack>
       </div>
-    </main>
+    </div>
   );
 }

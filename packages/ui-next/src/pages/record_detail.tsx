@@ -1,15 +1,19 @@
 import { Alert, Badge, Card, Code, Group, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
+import {
+  IconArrowLeft, IconCheck, IconChevronDown, IconChevronRight, IconCopy, IconTextWrap,
+} from '@tabler/icons-react';
 import { load } from 'js-yaml';
 import type { ReactNode } from 'react';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { RecordActionExtras, RecordContentExtras } from '@/components/common/addon-slots';
-import { Button } from '@/components/common/button';
+import { Button, UnstyledButton } from '@/components/common/button';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { TimeDisplay } from '@/components/common/time-display';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
-import { getScoreTone, judgeBadgeStyle, STATUS } from '@/components/record/status-map';
+import { getScoreTone, getStatusTone, judgeBadgeStyle, STATUS, STATUS_TEXTS } from '@/components/record/status-map';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -19,6 +23,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useRecordSocket } from '@/hooks/use-record-socket';
 import { formatErrorMessage } from '@/utils/error';
+import { highlightCodeLines } from '@/utils/highlight';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { normalizeObjectiveAnswers, objectiveCaseId } from '@/utils/objective-answers';
 import { getRecordProblemQuery, getRecordReturnQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
@@ -99,83 +104,407 @@ function groupCases(cases: any[]) {
   return Array.from(groups.entries()).map(([id, items]) => ({ id, items }));
 }
 
+async function copyText(value: string): Promise<boolean> {
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      // Fall through to legacy textarea copy.
+    }
+  }
+  if (typeof document === 'undefined') return false;
+  const textarea = document.createElement('textarea');
+  textarea.value = value;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    return document.execCommand('copy');
+  } catch {
+    return false;
+  } finally {
+    textarea.remove();
+  }
+}
+
 function CaseMessage({ message }: { message?: any }) {
+  const { t } = useI18n();
+  const [expanded, setExpanded] = useState(false);
   const text = formatStructuredText(message);
   if (!text) return null;
+  const isLong = text.length > 140 || text.split('\n').length > 2;
   return (
-    <Text size="xs" c="dimmed" className="mt-1 line-clamp-2 whitespace-pre-wrap">
-      {text}
-    </Text>
+    <div className="mt-1">
+      <Text
+        size="xs"
+        c="dimmed"
+        className={`whitespace-pre-wrap break-words ${isLong && !expanded ? 'line-clamp-2' : ''}`}
+      >
+        {text}
+      </Text>
+      {isLong && (
+        <UnstyledButton
+          type="button"
+          className="hydro-case-message__toggle mt-0.5 text-xs font-medium text-[var(--hydro-primary)] hover:underline"
+          onClick={() => setExpanded((current) => !current)}
+        >
+          {expanded ? t('Show less') : t('Show more')}
+        </UnstyledButton>
+      )}
+    </div>
   );
 }
 
-function CaseTable({ cases, subtasks, objective = false }: { cases: any[], subtasks: Record<string, any>, objective?: boolean }) {
+function getCaseKey(groupId: string, item: any, index: number) {
+  return `${groupId}-${item.id}-${index}`;
+}
+
+function getCaseLabel(groupId: string, item: any, index: number, showSubtask: boolean, objective: boolean) {
+  if (objective) return `#${item.questionId}`;
+  return showSubtask ? `#${groupId}-${item.id}` : `#${index + 1}`;
+}
+
+function TestCasesCard({
+  cases,
+  subtasks,
+  objective = false,
+}: {
+  cases: any[];
+  subtasks: Record<string, any>;
+  objective?: boolean;
+}) {
   const { t } = useI18n();
-  const groups = groupCases(cases);
+  const groups = useMemo(() => groupCases(cases), [cases]);
   const showSubtask = !objective && (groups.length > 1 || groups.some((group) => group.items.length > 1));
+  const canCollapseGroups = showSubtask && groups.length > 1;
+  const acceptedCount = useMemo(
+    () => cases.filter((item) => item.status === STATUS.STATUS_ACCEPTED).length,
+    [cases],
+  );
+  const defaultCollapsed = useMemo(() => {
+    if (!canCollapseGroups || cases.length <= 25) return new Set<string>();
+    const collapsed = new Set<string>();
+    for (const group of groups) {
+      if (group.items.every((item) => item.status === STATUS.STATUS_ACCEPTED)) {
+        collapsed.add(group.id);
+      }
+    }
+    return collapsed;
+  }, [canCollapseGroups, cases.length, groups]);
+  const [manualToggles, setManualToggles] = useState<Record<string, boolean>>({});
+  const [focusedKey, setFocusedKey] = useState('');
+  const focusTimerRef = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (focusTimerRef.current != null) window.clearTimeout(focusTimerRef.current);
+  }, []);
+
+  const isGroupCollapsed = (groupId: string) => {
+    if (!canCollapseGroups) return false;
+    if (groupId in manualToggles) return manualToggles[groupId];
+    return defaultCollapsed.has(groupId);
+  };
+
+  const toggleGroup = (groupId: string) => {
+    setManualToggles((prev) => ({ ...prev, [groupId]: !isGroupCollapsed(groupId) }));
+  };
+
+  const allCollapsed = canCollapseGroups && groups.every((group) => isGroupCollapsed(group.id));
+  const toggleAllGroups = () => {
+    const nextState = !allCollapsed;
+    const next: Record<string, boolean> = {};
+    for (const group of groups) next[group.id] = nextState;
+    setManualToggles(next);
+  };
+
+  const jumpToCase = (groupId: string, caseKey: string) => {
+    if (isGroupCollapsed(groupId)) {
+      setManualToggles((prev) => ({ ...prev, [groupId]: false }));
+    }
+    setFocusedKey(caseKey);
+    if (focusTimerRef.current != null) window.clearTimeout(focusTimerRef.current);
+    focusTimerRef.current = window.setTimeout(() => setFocusedKey(''), 1800);
+    window.requestAnimationFrame(() => {
+      const target = document.getElementById(`record-case-${caseKey}`);
+      target?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+    });
+  };
+
+  const summaryTone = acceptedCount === cases.length ? 'ac' : acceptedCount > 0 ? 'tle' : 'neutral';
 
   return (
-    <div className="overflow-x-auto">
-      <Table striped highlightOnHover verticalSpacing="sm">
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th className="w-24">{objective ? '#' : t('Test Case')}</Table.Th>
-            <Table.Th>{t('Status')}</Table.Th>
-            {!objective && <Table.Th className="w-28 text-right">{t('Time Cost')}</Table.Th>}
-            {!objective && <Table.Th className="w-32 text-right">{t('Memory Cost')}</Table.Th>}
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {groups.map((group) => {
-            const subtask = subtasks?.[group.id];
+    <Card withBorder p={0} className="hydro-content-card hydro-record-card overflow-hidden">
+      <Group justify="space-between" p="lg" gap="sm" wrap="wrap">
+        <Group gap="xs">
+          <Text size="sm" fw={700}>{t('Test Cases')}</Text>
+          {!objective ? (
+            <Badge variant="light" style={judgeBadgeStyle(summaryTone)} className="hydro-numeric">
+              {acceptedCount} / {cases.length}
+            </Badge>
+          ) : (
+            <Badge variant="light" className="hydro-numeric">{cases.length}</Badge>
+          )}
+        </Group>
+        {canCollapseGroups && (
+          <Button
+            type="button"
+            size="compact-xs"
+            variant="subtle"
+            onClick={toggleAllGroups}
+          >
+            {allCollapsed ? t('Expand all') : t('Collapse all')}
+          </Button>
+        )}
+      </Group>
+
+      {!objective && (
+        <div className="hydro-record-case-matrix border-t border-[var(--hydro-border)] px-5 py-3">
+          {groups.flatMap((group) => group.items.map((item, index) => {
+            const caseKey = getCaseKey(group.id, item, index);
+            const label = getCaseLabel(group.id, item, index, showSubtask, false);
+            const tone = getStatusTone(item.status);
+            const statusText = t(STATUS_TEXTS[item.status] || 'Unknown Error');
+            const prefix = shouldShowGreaterEqual(item.status) ? '>= ' : '';
+            const details = [
+              `${label} · ${statusText}`,
+              item.score != null ? `${t('Score')}: ${item.score}` : '',
+              item.time != null ? `${prefix}${formatTime(item.time)}` : '',
+              item.memory != null ? `${prefix}${formatMemory(item.memory)}` : '',
+            ].filter(Boolean).join(' · ');
+
             return (
-              <Fragment key={group.id}>
-                {showSubtask && (
-                  <Table.Tr key={`subtask-${group.id}`} className="bg-[var(--hydro-surface-tint)]">
-                    <Table.Td>
-                      <Text size="xs" fw={800}>#{group.id}</Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Group gap="xs">
-                        {subtask?.status != null && <RecordStatusBadge status={subtask.status} size="xs" equalWidth />}
-                        {subtask?.score != null && <Badge variant="light">{subtask.score}</Badge>}
-                      </Group>
-                    </Table.Td>
-                    <Table.Td />
-                    <Table.Td />
-                  </Table.Tr>
-                )}
-                {group.items.map((item, index) => {
-                  const prefix = shouldShowGreaterEqual(item.status) ? '>= ' : '';
-                  return (
-                    <Table.Tr key={`${group.id}-${item.id}-${index}`}>
+              <Tooltip key={caseKey} label={details} withArrow openDelay={120}>
+                <UnstyledButton
+                  type="button"
+                  aria-label={details}
+                  onClick={() => jumpToCase(group.id, caseKey)}
+                  className={[
+                    'hydro-record-case-tile hydro-numeric',
+                    `hydro-record-case-tile--${tone}`,
+                    focusedKey === caseKey ? 'hydro-record-case-tile--active' : '',
+                  ].filter(Boolean).join(' ')}
+                >
+                  {showSubtask ? `${group.id}-${item.id}` : index + 1}
+                </UnstyledButton>
+              </Tooltip>
+            );
+          }))}
+        </div>
+      )}
+
+      <div className="border-t border-[var(--hydro-border)] overflow-x-auto">
+        <Table striped highlightOnHover verticalSpacing="sm">
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th className="w-28">{objective ? '#' : t('Test Case')}</Table.Th>
+              <Table.Th>{t('Status')}</Table.Th>
+              {!objective && <Table.Th className="w-28 text-right">{t('Time Cost')}</Table.Th>}
+              {!objective && <Table.Th className="w-32 text-right">{t('Memory Cost')}</Table.Th>}
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {groups.map((group) => {
+              const subtask = subtasks?.[group.id];
+              const collapsed = isGroupCollapsed(group.id);
+              const groupPassed = group.items.filter((item) => item.status === STATUS.STATUS_ACCEPTED).length;
+              return (
+                <Fragment key={group.id}>
+                  {showSubtask && (
+                    <Table.Tr key={`subtask-${group.id}`} className="hydro-record-subtask-row bg-[var(--hydro-surface-tint)]">
                       <Table.Td>
-                        <Text size="xs" fw={700}>
-                          {objective ? `#${item.questionId}` : showSubtask ? `#${group.id}-${item.id}` : `#${index + 1}`}
-                        </Text>
+                        {canCollapseGroups ? (
+                          <UnstyledButton
+                            type="button"
+                            onClick={() => toggleGroup(group.id)}
+                            aria-expanded={!collapsed}
+                            className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[var(--hydro-text)]"
+                          >
+                            {collapsed ? <IconChevronRight size={14} /> : <IconChevronDown size={14} />}
+                            <span>#{group.id}</span>
+                          </UnstyledButton>
+                        ) : (
+                          <Text size="xs" fw={800}>#{group.id}</Text>
+                        )}
                       </Table.Td>
                       <Table.Td>
                         <Group gap="xs">
-                          <RecordStatusBadge status={item.status} size="xs" equalWidth />
-                          {item.score != null && <Badge variant="light" color="gray">{item.score}</Badge>}
+                          {subtask?.status != null && <RecordStatusBadge status={subtask.status} size="xs" equalWidth />}
+                          {subtask?.score != null && <Badge variant="light">{subtask.score}</Badge>}
+                          <Text size="xs" c="dimmed" className="hydro-numeric">
+                            {groupPassed}/{group.items.length}
+                          </Text>
                         </Group>
-                        <CaseMessage message={item.message} />
                       </Table.Td>
-                      {!objective && <Table.Td className="text-right">
-                        <Text size="xs">{prefix}{formatTime(item.time)}</Text>
-                      </Table.Td>}
-                      {!objective && <Table.Td className="text-right">
-                        <Text size="xs">{prefix}{formatMemory(item.memory)}</Text>
-                      </Table.Td>}
+                      <Table.Td />
+                      <Table.Td />
                     </Table.Tr>
-                  );
-                })}
-              </Fragment>
-            );
-          })}
-        </Table.Tbody>
-      </Table>
-    </div>
+                  )}
+                  {!collapsed && group.items.map((item, index) => {
+                    const prefix = shouldShowGreaterEqual(item.status) ? '>= ' : '';
+                    const caseKey = getCaseKey(group.id, item, index);
+                    return (
+                      <Table.Tr
+                        key={caseKey}
+                        id={`record-case-${caseKey}`}
+                        className={focusedKey === caseKey ? 'hydro-record-case-row--focused' : undefined}
+                      >
+                        <Table.Td>
+                          <Text size="xs" fw={700} className="hydro-numeric">
+                            {getCaseLabel(group.id, item, index, showSubtask, objective)}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Group gap="xs">
+                            <RecordStatusBadge status={item.status} size="xs" equalWidth />
+                            {item.score != null && <Badge variant="light" color="gray">{item.score}</Badge>}
+                          </Group>
+                          <CaseMessage message={item.message} />
+                        </Table.Td>
+                        {!objective && <Table.Td className="text-right">
+                          <Text size="xs" className="hydro-numeric">{prefix}{formatTime(item.time)}</Text>
+                        </Table.Td>}
+                        {!objective && <Table.Td className="text-right">
+                          <Text size="xs" className="hydro-numeric">{prefix}{formatMemory(item.memory)}</Text>
+                        </Table.Td>}
+                      </Table.Tr>
+                    );
+                  })}
+                </Fragment>
+              );
+            })}
+          </Table.Tbody>
+        </Table>
+      </div>
+    </Card>
+  );
+}
+
+function ObjectiveAnswerTable({ code }: { code: string }) {
+  const { t } = useI18n();
+  let answers = {};
+  try { answers = normalizeObjectiveAnswers(load(code)); } catch { /* Keep malformed historical submissions readable. */ }
+  const entries = Object.entries(answers);
+  if (!entries.length) return <Code block>{code}</Code>;
+  return (
+    <Table style={{ tableLayout: 'fixed' }}>
+      <Table.Thead><Table.Tr><Table.Th className="w-24">#</Table.Th><Table.Th>{t('Content')}</Table.Th></Table.Tr></Table.Thead>
+      <Table.Tbody>
+        {entries.map(([id, answer]) => (
+          <Table.Tr key={id}>
+            <Table.Td>{id}</Table.Td>
+            <Table.Td className="whitespace-pre-wrap break-words">{Array.isArray(answer) ? answer.join(', ') : String(answer)}</Table.Td>
+          </Table.Tr>
+        ))}
+      </Table.Tbody>
+    </Table>
+  );
+}
+
+function SourceCodeCard({
+  code,
+  lang,
+  isObjective,
+  record,
+}: {
+  code: string;
+  lang?: string;
+  isObjective: boolean;
+  record: any;
+}) {
+  const { t } = useI18n();
+  const [wrapped, setWrapped] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef<number | null>(null);
+  const highlighted = useMemo(
+    () => (isObjective ? null : highlightCodeLines(code, lang)),
+    [code, isObjective, lang],
+  );
+
+  useEffect(() => () => {
+    if (copyTimerRef.current != null) window.clearTimeout(copyTimerRef.current);
+  }, []);
+
+  const handleCopy = async () => {
+    const ok = await copyText(code);
+    if (!ok) {
+      notifications.show({ title: t('Copy failed'), message: '', color: 'red' });
+      return;
+    }
+    setCopied(true);
+    if (copyTimerRef.current != null) window.clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = window.setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Card withBorder p="lg" className="hydro-content-card hydro-record-card">
+      <Stack gap="sm">
+        <Group justify="space-between" gap="sm" wrap="wrap">
+          <Group gap="xs">
+            <Text size="sm" fw={700}>{t(isObjective ? 'problem_type.objective' : 'Source Code')}</Text>
+            {!isObjective && highlighted && (
+              <Badge size="xs" variant="light" color="gray" className="hydro-numeric">
+                {highlighted.lines.length} {t('Lines')}
+              </Badge>
+            )}
+          </Group>
+          <Group gap="xs">
+            {!isObjective && (
+              <>
+                <Button
+                  type="button"
+                  size="compact-xs"
+                  variant={wrapped ? 'light' : 'subtle'}
+                  leftSection={<IconTextWrap size={14} />}
+                  onClick={() => setWrapped((current) => !current)}
+                  aria-pressed={wrapped}
+                >
+                  {t('Word wrap')}
+                </Button>
+                <Button
+                  type="button"
+                  size="compact-xs"
+                  variant="subtle"
+                  color={copied ? 'green' : undefined}
+                  leftSection={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+                  onClick={() => void handleCopy()}
+                >
+                  {copied ? t('Copied') : t('Copy code')}
+                </Button>
+              </>
+            )}
+            <RecordActionExtras record={record} />
+          </Group>
+        </Group>
+        {isObjective ? <ObjectiveAnswerTable code={code} /> : (
+          <div
+            className={`hydro-record-source hydro-code-viewer ${wrapped ? 'hydro-code-viewer--wrapped' : ''}`}
+            tabIndex={0}
+            aria-label={t('Source Code')}
+          >
+            <table className="hydro-code-table">
+              <tbody>
+                {(highlighted?.lines || []).map((lineHtml, index) => (
+                  <tr key={index} className="hydro-code-row">
+                    <td className="hydro-code-line-no hydro-numeric" aria-hidden="true">
+                      {index + 1}
+                    </td>
+                    <td className="hydro-code-line-text">
+                      <span
+                        className="hljs"
+                        dangerouslySetInnerHTML={{ __html: lineHtml || ' ' }}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Stack>
+    </Card>
   );
 }
 
@@ -210,27 +539,6 @@ function OutputBlock({ title, content }: { title: string, content: string }) {
   );
 }
 
-function ObjectiveAnswerTable({ code }: { code: string }) {
-  const { t } = useI18n();
-  let answers = {};
-  try { answers = normalizeObjectiveAnswers(load(code)); } catch { /* Keep malformed historical submissions readable. */ }
-  const entries = Object.entries(answers);
-  if (!entries.length) return <Code block>{code}</Code>;
-  return (
-    <Table style={{ tableLayout: 'fixed' }}>
-      <Table.Thead><Table.Tr><Table.Th className="w-24">#</Table.Th><Table.Th>{t('Content')}</Table.Th></Table.Tr></Table.Thead>
-      <Table.Tbody>
-        {entries.map(([id, answer]) => (
-          <Table.Tr key={id}>
-            <Table.Td>{id}</Table.Td>
-            <Table.Td className="whitespace-pre-wrap break-words">{Array.isArray(answer) ? answer.join(', ') : String(answer)}</Table.Td>
-          </Table.Tr>
-        ))}
-      </Table.Tbody>
-    </Table>
-  );
-}
-
 export default function RecordDetailPage() {
   const { args } = usePageData();
   const buildUrl = useBuildUrl();
@@ -239,6 +547,7 @@ export default function RecordDetailPage() {
   const user = useCurrentUser();
   const canJudge = useHasPriv(PRIV.PRIV_JUDGE) || args.canRejudge;
   const [actionLoading, setActionLoading] = useState('');
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [error, setError] = useState('');
 
   // Merge server-side data with real-time WebSocket updates
@@ -386,15 +695,7 @@ export default function RecordDetailPage() {
         <div className="min-w-0 flex-1">
           <Stack gap="md">
             {cases.length > 0 && (
-              <Card withBorder p={0} className="hydro-content-card hydro-record-card overflow-hidden">
-                <Group justify="space-between" p="lg">
-                  <Text size="sm" fw={700}>{t('Test Cases')}</Text>
-                  <Badge variant="light">{cases.length}</Badge>
-                </Group>
-                <div className="border-t border-[var(--hydro-border)]">
-                  <CaseTable cases={cases} subtasks={rdoc.subtasks || {}} objective={isObjective} />
-                </div>
-              </Card>
+              <TestCasesCard cases={cases} subtasks={rdoc.subtasks || {}} objective={isObjective} />
             )}
 
             {compilerTexts.length > 0 && (
@@ -406,19 +707,7 @@ export default function RecordDetailPage() {
             )}
 
             {rdoc.code && (
-              <Card withBorder p="lg" className="hydro-content-card hydro-record-card">
-                <Stack gap="sm">
-                  <Group justify="space-between">
-                    <Text size="sm" fw={700}>{t(isObjective ? 'problem_type.objective' : 'Source Code')}</Text>
-                    <RecordActionExtras record={rdoc} />
-                  </Group>
-                  {isObjective ? <ObjectiveAnswerTable code={rdoc.code} /> : (
-                    <div className="hydro-record-source" tabIndex={0} aria-label={t('Source Code')}>
-                      <Code block className="min-w-max bg-transparent p-4">{rdoc.code}</Code>
-                    </div>
-                  )}
-                </Stack>
-              </Card>
+              <SourceCodeCard code={rdoc.code} lang={rdoc.lang} isObjective={isObjective} record={rdoc} />
             )}
 
             <RecordContentExtras record={rdoc} />
@@ -433,7 +722,13 @@ export default function RecordDetailPage() {
                   <Button size="xs" variant="light" loading={actionLoading === 'rejudge'} onClick={() => submitOperation('rejudge')}>
                     {t('Rejudge')}
                   </Button>
-                  <Button size="xs" variant="subtle" color="red" loading={actionLoading === 'cancel'} onClick={() => submitOperation('cancel')}>
+                  <Button
+                    size="xs"
+                    variant="subtle"
+                    color="red"
+                    loading={actionLoading === 'cancel'}
+                    onClick={() => setCancelConfirmOpen(true)}
+                  >
                     {t('Cancel Score')}
                   </Button>
                 </Stack>
@@ -516,7 +811,7 @@ export default function RecordDetailPage() {
                     {t('Latest Version')}
                   </Link>
                   {Object.entries(allRevs).map(([rid, date]) => (
-                    <a
+                    <Link
                       key={rid}
                       href={buildUrl('record_detail', { rid: rdoc._id }, { ...recordNavigationQuery, rev: rid })}
                       className={[
@@ -527,7 +822,7 @@ export default function RecordDetailPage() {
                       ].join(' ')}
                     >
                       <TimeDisplay date={date as any} format="absolute" />
-                    </a>
+                    </Link>
                   ))}
                 </Stack>
               </section>
@@ -535,6 +830,20 @@ export default function RecordDetailPage() {
           </div>
         </ResponsiveSidebar>
       </div>
+
+      <ConfirmDialog
+        opened={cancelConfirmOpen}
+        onClose={() => setCancelConfirmOpen(false)}
+        onConfirm={async () => {
+          await submitOperation('cancel');
+          setCancelConfirmOpen(false);
+        }}
+        title={t('Cancel Score')}
+        message={t('Are you sure you want to cancel the score for this submission?')}
+        confirmLabel={t('Cancel Score')}
+        confirmColor="red"
+        loading={actionLoading === 'cancel'}
+      />
     </Stack>
   );
 }

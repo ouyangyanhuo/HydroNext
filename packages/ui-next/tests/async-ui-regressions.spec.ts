@@ -72,6 +72,9 @@ const mocks: Record<string, any> = {
         Button: ({ children, loading, disabled, onClick, type = 'button' }: any) => h(
             'button', { type, disabled: loading || disabled, onClick }, children,
         ),
+        UnstyledButton: ({ children, disabled, onClick, type = 'button', ...rest }: any) => h(
+            'button', { type, disabled, onClick, ...rest }, children,
+        ),
     },
     '@/components/common/select': {
         LongSelect: ({ disabled, value, onChange }: any) => h('select', {
@@ -464,6 +467,7 @@ test('submitting and returning through record problem links retains the source n
         '@/components/user/user-link': { UserLink: () => null },
         '@/components/link': { Link: ({ href, children }: any) => h('a', { href }, children) },
         '@/utils/i18n-content': { extractLocalizedContent: (value: string) => value },
+        '@/utils/highlight': component('../src/utils/highlight.ts'),
         '@/registry/request-security': { protectedSubmissionHeaders: async () => ({}) },
         '@/utils/request': { formatRequestError: () => 'Failed' },
     };
