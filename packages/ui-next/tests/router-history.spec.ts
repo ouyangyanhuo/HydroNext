@@ -79,11 +79,14 @@ test('URL-only editor mode updates preserve the page instance while real navigat
     }).code;
     const mocks = {
         '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/hooks/use-permission': { PERM: { PERM_VIEW_RANKING: 1n, PERM_VIEW_CONTEST_SCOREBOARD: 2n }, hasPermValue: () => true },
         '@/registry/page-metadata': { getPageMetadata: () => ({ title: 'Problem' }) },
-        '@/stores/session': { useSessionStore: { getState: () => ({ setSession() {} }) } },
+        '@/stores/domain-navigation-preview': { useDomainNavigationPreview: { getState: () => ({ preview: null }) } },
+        '@/stores/session': { useSessionStore: { getState: () => ({ setSession() {}, ui: {}, user: {} }) } },
         '@/stores/route': {
             useRouteStore: Object.assign((select: any) => select({ setRouteMap() {} }), { getState: () => ({ setPage() {} }) }),
         },
+        '@/utils/top-nav': require('../src/utils/top-nav.ts'),
     };
     runInNewContext(code, {
         module, exports: module.exports, window: dom.window, document: dom.window.document,
@@ -203,5 +206,85 @@ test('contest problem navigation adds a fresh GET client proof without changing 
         delete (dom.window as any).examAPI;
         dispose();
         await router.unmount();
+    }
+});
+
+test('PageDataProvider coordinates View Transitions direction, rapid skip and cleanup', async () => {
+    const module = { exports: {} as any };
+    const code = transformSync(readFileSync(new URL('../src/context/page-data.tsx', import.meta.url), 'utf8'), {
+        loader: 'tsx', format: 'cjs', jsx: 'automatic',
+    }).code;
+    const mocks = {
+        '@/hooks/use-i18n': { useI18n: () => ({ t: (key: string) => key }) },
+        '@/hooks/use-permission': { PERM: { PERM_VIEW_RANKING: 1n, PERM_VIEW_CONTEST_SCOREBOARD: 2n }, hasPermValue: () => true },
+        '@/registry/page-metadata': { getPageMetadata: () => ({ title: 'Page' }) },
+        '@/stores/domain-navigation-preview': { useDomainNavigationPreview: { getState: () => ({ preview: null }) } },
+        '@/stores/session': { useSessionStore: { getState: () => ({ setSession() {}, ui: {}, user: {} }) } },
+        '@/stores/route': {
+            useRouteStore: Object.assign((select: any) => select({ setRouteMap() {} }), { getState: () => ({ setPage() {} }) }),
+        },
+        '@/utils/top-nav': require('../src/utils/top-nav.ts'),
+    };
+    const previousHidden = Object.getOwnPropertyDescriptor(dom.window.document, 'hidden');
+    Object.defineProperty(dom.window.document, 'hidden', { value: false, configurable: true });
+    const transitions: { resolve: () => void, skipped: boolean, direction: string | undefined }[] = [];
+    (dom.window.document as any).startViewTransition = (cb: () => void) => {
+        const entry = {
+            resolve: () => {},
+            skipped: false,
+            direction: dom.window.document.documentElement.dataset.pageTransition,
+        };
+        const finished = new Promise<void>((resolve) => { entry.resolve = resolve; });
+        transitions.push(entry);
+        cb();
+        return {
+            finished,
+            skipTransition: () => { entry.skipped = true; },
+        };
+    };
+    runInNewContext(code, {
+        module, exports: module.exports, window: dom.window, document: dom.window.document,
+        require: (id: string) => mocks[id] || require(id),
+    });
+    let setData: any;
+    let transition: any;
+    function Probe() {
+        setData = module.exports.useSetPageData();
+        transition = module.exports.usePageTransition();
+        return null;
+    }
+    const root = createRoot(dom.window.document.createElement('div'));
+    const initial = { name: 'problem_main', url: '/d/team/p', args: {} };
+    try {
+        await act(async () => root.render(h(module.exports.PageDataProvider, { initial }, h(Probe))));
+        await act(async () => setData({ name: 'contest_main', url: '/d/team/contest', args: {} }));
+        assert.equal(transitions.length, 1);
+        assert.equal(transitions[0].direction, 'from-right');
+        assert.equal(dom.window.document.documentElement.dataset.pageTransition, 'from-right');
+        assert.equal(transition.direction, 'from-right');
+        assert.equal(transition.viaViewTransition, true);
+
+        // Rapid second navigation skips the first transition and preserves the newer direction until it finishes
+        await act(async () => setData({ name: 'homepage', url: '/d/team/', args: {} }));
+        assert.equal(transitions.length, 2);
+        assert.equal(transitions[0].skipped, true);
+        assert.equal(transitions[1].direction, 'from-left');
+        assert.equal(dom.window.document.documentElement.dataset.pageTransition, 'from-left');
+
+        // Stale resolution of the skipped first transition must not clear the active second transition
+        transitions[0].resolve();
+        await act(async () => { await Promise.resolve(); });
+        assert.equal(dom.window.document.documentElement.dataset.pageTransition, 'from-left');
+
+        // Active transition completion clears data-page-transition cleanly
+        transitions[1].resolve();
+        await act(async () => { await Promise.resolve(); });
+        assert.equal(dom.window.document.documentElement.dataset.pageTransition, undefined);
+    } finally {
+        if (previousHidden) Object.defineProperty(dom.window.document, 'hidden', previousHidden);
+        else delete (dom.window.document as any).hidden;
+        delete (dom.window.document as any).startViewTransition;
+        delete dom.window.document.documentElement.dataset.pageTransition;
+        await act(async () => root.unmount());
     }
 });

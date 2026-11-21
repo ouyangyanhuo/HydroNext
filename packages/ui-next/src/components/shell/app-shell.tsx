@@ -1,14 +1,9 @@
-import { useState } from 'react';
 import { ShellOverlays } from '@/components/common/addon-slots';
 import { PluginHealthNotice } from '@/components/feedback/plugin-health-notice';
 import { Footer } from '@/components/navigation/footer';
 import { TopNav } from '@/components/navigation/top-nav';
-import { usePageData, usePageDataRevision } from '@/context/page-data';
+import { usePageDataRevision, usePageTransition } from '@/context/page-data';
 import { useOptionalRouterState } from '@/context/router';
-import { PERM, useHasPerm } from '@/hooks/use-permission';
-import { useDomainNavigationPreview } from '@/stores/domain-navigation-preview';
-import { useSessionStore } from '@/stores/session';
-import { getTopNavIndex } from '@/utils/top-nav';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -16,56 +11,27 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const revision = usePageDataRevision();
-  const { name } = usePageData();
+  const transition = usePageTransition();
   const routerState = useOptionalRouterState();
   const isNavigating = routerState?.loading ?? false;
 
-  const domainId = useSessionStore((s) => s.ui.domainId);
-  const savedNavigationHidden = useSessionStore((s) => s.ui.domain?.navigationHidden);
-  const savedContestMode = useSessionStore((s) => s.ui.domain?.contestMode === true);
-  const savedContestFocus = useSessionStore((s) => s.ui.domain?.contestFocus);
-  const preview = useDomainNavigationPreview((s) => s.preview?.domainId === domainId ? s.preview : null);
-  const navigationHidden = preview ? preview.navigationHidden : savedNavigationHidden;
-  const contestMode = preview ? preview.contestMode : savedContestMode;
-  const focus = preview ? preview.contestFocus : savedContestFocus;
-  const focusContest = contestMode && typeof focus === 'string' && /^[a-f\d]{24}$/i.test(focus) ? focus : '';
-  const canViewRanking = useHasPerm(PERM.PERM_VIEW_RANKING);
-  const canViewContestRanking = useHasPerm(PERM.PERM_VIEW_CONTEST_SCOREBOARD);
-
-  const currNavIndex = getTopNavIndex(name, {
-    navigationHidden,
-    contestMode,
-    focusContest,
-    canViewRanking,
-    canViewContestRanking,
-  });
-
-  const [state, setState] = useState({
-    revision,
-    prevNavIndex: currNavIndex,
-    modifier: '',
-  });
-
-  if (state.revision !== revision) {
-    const prevNavIndex = state.prevNavIndex;
-    let modifier = '';
-    if (prevNavIndex !== null && currNavIndex !== null && prevNavIndex !== currNavIndex) {
-      modifier = currNavIndex > prevNavIndex
-        ? ' hydro-page-transition--from-right'
-        : ' hydro-page-transition--from-left';
+  const stageClasses = ['hydro-page-stage'];
+  if (revision > 0) {
+    if (transition.viaViewTransition) {
+      stageClasses.push('hydro-page-stage--vt');
+    } else {
+      stageClasses.push('hydro-page-transition');
+      if (transition.direction === 'from-right') {
+        stageClasses.push('hydro-page-transition--from-right');
+      } else if (transition.direction === 'from-left') {
+        stageClasses.push('hydro-page-transition--from-left');
+      }
     }
-    setState({
-      revision,
-      prevNavIndex: currNavIndex,
-      modifier,
-    });
   }
-
-  const transitionModifier = state.revision === revision ? state.modifier : '';
-  const exitingClass = isNavigating ? ' hydro-page-exiting' : '';
 
   return (
     <div className="hydro-app-surface relative isolate flex min-h-screen flex-col overflow-x-clip">
+      {isNavigating && <div className="hydro-nav-progress" aria-hidden="true" />}
       <div className="hydro-ambient" aria-hidden="true">
         <div className="hydro-ambient__origin hydro-ambient__origin--primary">
           <span className="hydro-ambient__wash hydro-ambient__wash--primary" />
@@ -79,11 +45,10 @@ export function AppShell({ children }: AppShellProps) {
       </header>
       <PluginHealthNotice />
       <main className="relative z-10 flex-1 overflow-x-clip">
-        <div
-          key={revision}
-          className={`hydro-page-transition${transitionModifier}${exitingClass} hydro-container py-8 md:py-10`}
-        >
-          {children}
+        <div key={revision} className={stageClasses.join(' ')}>
+          <div className="hydro-container py-8 md:py-10">
+            {children}
+          </div>
         </div>
       </main>
       <footer className="relative z-10">

@@ -1,10 +1,30 @@
 /* eslint-disable react-refresh/only-export-components */
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useI18n } from '@/hooks/use-i18n';
+import { hasPermValue, PERM } from '@/hooks/use-permission';
 import { getPageMetadata } from '@/registry/page-metadata';
+import { useDomainNavigationPreview } from '@/stores/domain-navigation-preview';
 import { useRouteStore } from '@/stores/route';
 import { type UiContext, type UserContext, useSessionStore } from '@/stores/session';
+import {
+  type PageTransitionDirection, resolvePageTransitionDirection, type TopNavVisibilityOptions,
+} from '@/utils/top-nav';
+
+interface PageViewTransition {
+  finished: Promise<void>;
+  skipTransition?: () => void;
+}
+
+type PageViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => PageViewTransition;
+};
+
+export interface PageTransitionState {
+  direction: PageTransitionDirection;
+  viaViewTransition: boolean;
+}
 
 export interface PageData {
   name: string;
@@ -20,6 +40,7 @@ export interface PageData {
 interface PageDataContextValue {
   data: PageData;
   revision: number;
+  transition: PageTransitionState;
   setData: (next: React.SetStateAction<PageData>, preservePage?: boolean) => void;
 }
 
@@ -30,30 +51,113 @@ interface PageDataProviderProps {
   children: ReactNode;
 }
 
+function getVisibilityOptions(nextData: PageData): TopNavVisibilityOptions {
+  const session = useSessionStore.getState();
+  const ui = (nextData.args?.UiContext || session?.ui || {}) as Record<string, any>;
+  const user = (nextData.args?.UserContext || session?.user || {}) as Record<string, any>;
+  const domainId = ui.domainId;
+  const previewState = useDomainNavigationPreview.getState?.()?.preview;
+  const preview = previewState && previewState.domainId === domainId ? previewState : null;
+  const navigationHidden = preview ? preview.navigationHidden : ui.domain?.navigationHidden;
+  const contestMode = preview ? preview.contestMode : ui.domain?.contestMode === true;
+  const focus = preview ? preview.contestFocus : ui.domain?.contestFocus;
+  const focusContest = contestMode && typeof focus === 'string' && /^[a-f\d]{24}$/i.test(focus) ? focus : '';
+  const hasPermField = user?.perm !== undefined && user?.perm !== null;
+
+  return {
+    navigationHidden,
+    contestMode,
+    focusContest,
+    canViewRanking: hasPermField ? hasPermValue(user.perm, PERM.PERM_VIEW_RANKING) : undefined,
+    canViewContestRanking: hasPermField ? hasPermValue(user.perm, PERM.PERM_VIEW_CONTEST_SCOREBOARD) : undefined,
+  };
+}
+
 export function PageDataProvider({ initial, children }: PageDataProviderProps) {
-  const [{ data, revision }, setState] = useState({ data: initial, revision: 0 });
+  const [{ data, revision, transition }, setState] = useState<{
+    data: PageData;
+    revision: number;
+    transition: PageTransitionState;
+  }>({
+    data: initial,
+    revision: 0,
+    transition: { direction: 'fade', viaViewTransition: false },
+  });
   const dataRef = useRef(initial);
+  const activeTransitionRef = useRef<PageViewTransition | null>(null);
+  const transitionGenRef = useRef(0);
+
+  useEffect(() => () => {
+    ++transitionGenRef.current;
+    activeTransitionRef.current?.skipTransition?.();
+    activeTransitionRef.current = null;
+    if (typeof document !== 'undefined') {
+      delete document.documentElement.dataset.pageTransition;
+    }
+  }, []);
+
   const setData = useCallback<PageDataContextValue['setData']>((next, preservePage = false) => {
     const previousData = dataRef.current;
     const nextData = typeof next === 'function' ? next(dataRef.current) : next;
     dataRef.current = nextData;
 
-    if (nextData.args?.UserContext && nextData.args?.UiContext) {
-      useSessionStore.getState().setSession({
-        user: nextData.args.UserContext as unknown as UserContext,
-        ui: nextData.args.UiContext as unknown as UiContext,
-      });
-    }
-    useRouteStore.getState().setPage(nextData.name, nextData.url);
+    const shouldRemount = !(preservePage && nextData.name === previousData.name
+      && (nextData.url === previousData.url || nextData.args === previousData.args) && !nextData.args.error);
+    const direction = shouldRemount
+      ? resolvePageTransitionDirection(previousData.name, nextData.name, getVisibilityOptions(nextData))
+      : 'fade';
 
-    setState((prev) => ({
-      data: nextData,
-      // URL-only mode changes and background permission updates must not destroy an open editor's local state.
-      revision: prev.revision + (preservePage && nextData.name === previousData.name
-        && (nextData.url === previousData.url || nextData.args === previousData.args) && !nextData.args.error ? 0 : 1),
-    }));
+    const commitUpdate = (viaViewTransition: boolean) => {
+      if (nextData.args?.UserContext && nextData.args?.UiContext) {
+        useSessionStore.getState().setSession({
+          user: nextData.args.UserContext as unknown as UserContext,
+          ui: nextData.args.UiContext as unknown as UiContext,
+        });
+      }
+      useRouteStore.getState().setPage(nextData.name, nextData.url);
+
+      setState((prev) => ({
+        data: nextData,
+        // URL-only mode changes and background permission updates must not destroy an open editor's local state.
+        revision: shouldRemount ? prev.revision + 1 : prev.revision,
+        transition: shouldRemount ? { direction, viaViewTransition } : prev.transition,
+      }));
+    };
+
+    const transitionDocument = typeof document !== 'undefined' ? (document as PageViewTransitionDocument) : null;
+    const startViewTransition = transitionDocument?.startViewTransition?.bind(transitionDocument);
+    const reducedMotion = typeof window !== 'undefined'
+      && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+
+    if (shouldRemount && previousData.name && startViewTransition && !reducedMotion && !transitionDocument?.hidden) {
+      activeTransitionRef.current?.skipTransition?.();
+      const gen = ++transitionGenRef.current;
+      transitionDocument!.documentElement.dataset.pageTransition = direction;
+      try {
+        const viewTransition = startViewTransition(() => {
+          flushSync(() => {
+            commitUpdate(true);
+          });
+        });
+        activeTransitionRef.current = viewTransition;
+        void viewTransition.finished.catch(() => undefined).finally(() => {
+          if (transitionGenRef.current === gen) {
+            delete transitionDocument!.documentElement.dataset.pageTransition;
+            activeTransitionRef.current = null;
+          }
+        });
+        return;
+      } catch {
+        if (transitionGenRef.current === gen) {
+          delete transitionDocument!.documentElement.dataset.pageTransition;
+          activeTransitionRef.current = null;
+        }
+      }
+    }
+
+    commitUpdate(false);
   }, []);
-  const value = useMemo(() => ({ data, revision, setData }), [data, revision, setData]);
+  const value = useMemo(() => ({ data, revision, transition, setData }), [data, revision, transition, setData]);
   const { t } = useI18n();
 
   const setRouteMap = useRouteStore((s) => s.setRouteMap);
@@ -98,6 +202,10 @@ export function useSetPageData(): PageDataContextValue['setData'] {
 
 export function usePageDataRevision(): number {
   return usePageDataContext().revision;
+}
+
+export function usePageTransition(): PageTransitionState {
+  return usePageDataContext().transition;
 }
 
 export function useUiContext(): PageData['args']['UiContext'] {

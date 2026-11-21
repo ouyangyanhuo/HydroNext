@@ -18,74 +18,186 @@
 }
 
 @keyframes hydro-page-in {
-  0% {
+  from {
     opacity: 0;
-    transform: translateY(22px) scale(0.985);
-    filter: blur(2px);
+    transform: translate3d(0, 10px, 0);
   }
-  40% {
-    opacity: 0.75;
-  }
-  100% {
+  to {
     opacity: 1;
-    transform: none;
-    filter: none;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes hydro-page-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0);
   }
 }
 
 @keyframes hydro-page-in-from-right {
-  0% {
+  from {
     opacity: 0;
-    transform: translateX(52px) scale(0.985);
-    filter: blur(2px);
+    transform: translate3d(28px, 0, 0);
   }
-  40% {
-    opacity: 0.75;
-  }
-  100% {
+  to {
     opacity: 1;
-    transform: none;
-    filter: none;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes hydro-page-out-to-left {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(-24px, 0, 0);
   }
 }
 
 @keyframes hydro-page-in-from-left {
-  0% {
+  from {
     opacity: 0;
-    transform: translateX(-52px) scale(0.985);
-    filter: blur(2px);
+    transform: translate3d(-28px, 0, 0);
   }
-  40% {
-    opacity: 0.75;
-  }
-  100% {
+  to {
     opacity: 1;
-    transform: none;
-    filter: none;
+    transform: translate3d(0, 0, 0);
   }
 }
 
+@keyframes hydro-page-out-to-right {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }
+}
+
+/* Native View Transitions API: GPU-composited push/pull & crossfade */
+html[data-page-transition] .hydro-page-stage {
+  view-transition-name: hydro-page;
+}
+
+::view-transition-group(hydro-page) {
+  animation: none;
+}
+
+::view-transition-image-pair(hydro-page) {
+  isolation: auto;
+}
+
+::view-transition-old(hydro-page),
+::view-transition-new(hydro-page) {
+  width: 100%;
+  height: auto;
+  object-fit: none;
+  object-position: top center;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(hydro-page) {
+  z-index: 0;
+}
+
+::view-transition-new(hydro-page) {
+  z-index: 1;
+}
+
+html[data-page-transition='fade']::view-transition-old(hydro-page) {
+  animation: hydro-page-out 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html[data-page-transition='fade']::view-transition-new(hydro-page) {
+  animation: hydro-page-in 220ms var(--hydro-ease-out) both;
+}
+
+html[data-page-transition='from-right']::view-transition-old(hydro-page) {
+  animation: hydro-page-out-to-left 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html[data-page-transition='from-right']::view-transition-new(hydro-page) {
+  animation: hydro-page-in-from-right 240ms var(--hydro-ease-out) both;
+}
+
+html[data-page-transition='from-left']::view-transition-old(hydro-page) {
+  animation: hydro-page-out-to-right 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html[data-page-transition='from-left']::view-transition-new(hydro-page) {
+  animation: hydro-page-in-from-left 240ms var(--hydro-ease-out) both;
+}
+
+/* Fallback pure-GPU entry transitions for browsers without View Transitions API */
 .hydro-page-transition {
-  animation: hydro-page-in 280ms var(--hydro-ease-out) both;
+  animation: hydro-page-in 220ms var(--hydro-ease-out) both;
 }
 
 .hydro-page-transition.hydro-page-transition--from-right {
-  animation: hydro-page-in-from-right 300ms var(--hydro-ease-out) both;
+  animation: hydro-page-in-from-right 220ms var(--hydro-ease-out) both;
 }
 
 .hydro-page-transition.hydro-page-transition--from-left {
-  animation: hydro-page-in-from-left 300ms var(--hydro-ease-out) both;
+  animation: hydro-page-in-from-left 220ms var(--hydro-ease-out) both;
 }
 
-.hydro-page-exiting {
-  opacity: 0.38 !important;
-  transform: translateY(-6px) scale(0.985) !important;
-  filter: blur(1.5px) !important;
-  transition:
-    opacity 240ms var(--hydro-ease-out),
-    transform 240ms var(--hydro-ease-out),
-    filter 240ms var(--hydro-ease-out) !important;
+/* Prevent nested list/card entrance animations from clashing with page transitions or blanking VT snapshots */
+:is(.hydro-page-stage--vt, .hydro-page-transition--from-right, .hydro-page-transition--from-left)
+  :is(
+    .hydro-reveal,
+    .hydro-problem-list,
+    .hydro-problem-list .hydro-data-table tbody tr,
+    .hydro-contest-feature,
+    .hydro-contest-item,
+    .hydro-training-list,
+    .hydro-record-panel,
+    .hydro-record-list .hydro-data-table tbody tr,
+    .hydro-empty-state
+  ) {
+  animation: none !important;
+}
+
+@keyframes hydro-nav-progress-show {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes hydro-nav-progress-glide {
+  0% { transform: translate3d(-100%, 0, 0); }
+  100% { transform: translate3d(260%, 0, 0); }
+}
+
+.hydro-nav-progress {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 60;
+  height: 2.5px;
+  overflow: hidden;
   pointer-events: none;
+  opacity: 0;
+  background: color-mix(in srgb, var(--hydro-primary) 16%, transparent);
+  animation: hydro-nav-progress-show 140ms ease-out 120ms forwards;
+}
+
+.hydro-nav-progress::after {
+  display: block;
+  width: 38%;
+  height: 100%;
+  content: '';
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, var(--hydro-primary), var(--hydro-primary-strong));
+  animation: hydro-nav-progress-glide 1.05s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes hydro-ambient-bloom {
@@ -5687,7 +5799,10 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
   .hydro-page-transition,
   .hydro-page-transition--from-right,
   .hydro-page-transition--from-left,
-  .hydro-page-exiting {
+  .hydro-nav-progress,
+  .hydro-nav-progress::after,
+  ::view-transition-old(hydro-page),
+  ::view-transition-new(hydro-page) {
     animation: none !important;
     transition: none !important;
     transform: none !important;

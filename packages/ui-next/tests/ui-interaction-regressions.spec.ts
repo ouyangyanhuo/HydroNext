@@ -9,7 +9,9 @@ import { load } from 'js-yaml';
 import { test } from 'node:test';
 import postcss from 'postcss';
 import { highlightCodeLines, resolveHighlightLanguage, splitHighlightedLines } from '../src/utils/highlight.ts';
-import { getTopNavIndex, TOP_NAV_ORDER } from '../src/utils/top-nav.ts';
+import {
+    getTopNavIndex, resolvePageTransitionDirection, TOP_NAV_ORDER,
+} from '../src/utils/top-nav.ts';
 import { formatTrainingDifficulty } from '../src/utils/training.ts';
 
 const require = createRequire(import.meta.url);
@@ -964,48 +966,59 @@ test('ranking podium card 1 stands clearly taller than card 2 and card 3 on all 
     );
 });
 
-test('page transitions animate entry on every page navigation and disable motion when requested', () => {
+test('page transitions use View Transitions API with pure-GPU fallback and delayed progress bar', () => {
     const appShellSource = read('../src/components/shell/app-shell.tsx');
+    const pageDataSource = read('../src/context/page-data.tsx');
     const tailwindCss = read('../src/styles/tailwind.css');
 
-    // AppShell tracks navigation revision to trigger transitions on all page changes
+    // PageDataProvider orchestrates native startViewTransition with flushSync and dataset cleanup
+    assert.match(pageDataSource, /startViewTransition/);
+    assert.match(pageDataSource, /flushSync/);
+    assert.match(pageDataSource, /dataset\.pageTransition\s*=\s*direction/);
+    assert.match(pageDataSource, /delete\s+[\w.!]+\.documentElement\.dataset\.pageTransition/);
+
+    // AppShell uses page transition state, dedicated stage wrapper, and delayed top progress bar
     assert.match(appShellSource, /usePageDataRevision/);
-    assert.match(appShellSource, /<div[\s\S]*?key=\{revision\}[\s\S]*?className=\{?["`]?[^"`}]*hydro-page-transition/);
+    assert.match(appShellSource, /usePageTransition/);
     assert.match(appShellSource, /useOptionalRouterState/);
-    assert.match(appShellSource, /hydro-page-exiting/);
+    assert.match(appShellSource, /hydro-page-stage/);
+    assert.match(appShellSource, /hydro-page-stage--vt/);
+    assert.match(appShellSource, /hydro-nav-progress/);
+    assert.doesNotMatch(appShellSource, /hydro-page-exiting/);
 
-    // Tailwind CSS defines keyframes and transition class with vertical glide, scale, blur and fade
-    assert.match(
-        tailwindCss,
-        new RegExp(
-            '@keyframes hydro-page-in\\s*\\{[\\s\\S]*?opacity:\\s*0[\\s\\S]*?'
-            + 'transform:\\s*translateY\\(22px\\) scale\\(0\\.985\\)[\\s\\S]*?filter:\\s*blur\\(2px\\)'
-            + '[\\s\\S]*?opacity:\\s*1[\\s\\S]*?transform:\\s*none[\\s\\S]*?filter:\\s*none',
-        ),
+    // View Transitions CSS scopes to hydro-page without aspect-ratio stretching or costly filter blur
+    assert.match(tailwindCss, /html\[data-page-transition\]\s*\.hydro-page-stage\s*\{[\s\S]*?view-transition-name:\s*hydro-page/);
+    assert.match(tailwindCss, /::view-transition-group\(hydro-page\)\s*\{[\s\S]*?animation:\s*none/);
+    assert.match(tailwindCss, /::view-transition-old\(hydro-page\),\s*::view-transition-new\(hydro-page\)\s*\{[\s\S]*?object-fit:\s*none/);
+
+    // Pure GPU keyframes (opacity + translate3d only, no blur or scale jitter)
+    const pageTransitionBlock = tailwindCss.slice(
+        tailwindCss.indexOf('@keyframes hydro-page-in'),
+        tailwindCss.indexOf('@keyframes hydro-ambient-bloom'),
     );
     assert.match(
-        tailwindCss,
-        /\.hydro-page-transition\s*\{[\s\S]*?animation:\s*hydro-page-in 280ms var\(--hydro-ease-out\) both/,
+        pageTransitionBlock,
+        /@keyframes hydro-page-in\s*\{[\s\S]*?opacity:\s*0;[\s\S]*?transform:\s*translate3d\(0,\s*10px,\s*0\)[\s\S]*?opacity:\s*1/,
     );
-
-    // Enhanced exit styling dims, shrinks and gently blurs while fetching the next page
+    assert.doesNotMatch(pageTransitionBlock, /filter:\s*blur|scale\(/);
     assert.match(
         tailwindCss,
-        new RegExp(
-            '\\.hydro-page-exiting\\s*\\{[\\s\\S]*?opacity:\\s*0\\.38 !important[\\s\\S]*?'
-            + 'transform:\\s*translateY\\(-6px\\) scale\\(0\\.985\\) !important[\\s\\S]*?filter:\\s*blur\\(1\\.5px\\) !important',
-        ),
+        /\.hydro-page-transition\s*\{[\s\S]*?animation:\s*hydro-page-in 220ms var\(--hydro-ease-out\) both/,
     );
 
-    // Prefers-reduced-motion disables page transitions and exiting effects
+    // Delayed progress bar avoids flashes on fast responses
+    assert.match(tailwindCss, /\.hydro-nav-progress\s*\{[\s\S]*?120ms forwards/);
+
+    // Prefers-reduced-motion disables both View Transitions and fallback transitions
     assert.match(
         tailwindCss,
-        /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.hydro-page-exiting[\s\S]*?animation:\s*none\s*!important/,
+        /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?::view-transition-new\(hydro-page\)[\s\S]*?animation:\s*none\s*!important/,
     );
 });
 
 test('topbar pages animate directional horizontal transitions according to their relative order', () => {
     const appShellSource = read('../src/components/shell/app-shell.tsx');
+    const pageDataSource = read('../src/context/page-data.tsx');
     const tailwindCss = read('../src/styles/tailwind.css');
 
     // Verify topbar index ordering: Home < Problems < Contests < Training < Records < Ranking
@@ -1045,32 +1058,39 @@ test('topbar pages animate directional horizontal transitions according to their
     assert.equal(getTopNavIndex('record_main', { contestMode: true }), 1);
     assert.equal(getTopNavIndex('ranking', { contestMode: true }), 2);
 
-    // Respect ranking permissions
+    // Respect ranking permissions & direction resolution
     assert.equal(getTopNavIndex('ranking', { canViewRanking: false }), null);
+    assert.equal(resolvePageTransitionDirection('homepage', 'contest_main'), 'from-right');
+    assert.equal(resolvePageTransitionDirection('ranking', 'problem_main'), 'from-left');
+    assert.equal(resolvePageTransitionDirection('homepage', 'problem_main', { navigationHidden: { problem_main: true } }), 'fade');
+    assert.equal(resolvePageTransitionDirection('homepage', 'user_detail'), 'fade');
 
-    // AppShell handles directional switching between topbar pages with visibility options
-    assert.match(appShellSource, /getTopNavIndex/);
-    assert.match(appShellSource, /navigationHidden/);
-    assert.match(appShellSource, /contestMode/);
-    assert.match(appShellSource, /currNavIndex\s*>\s*(?:state\.)?prevNavIndex/);
+    // PageDataProvider resolves visibility-aware direction and AppShell applies directional modifiers
+    assert.match(pageDataSource, /resolvePageTransitionDirection/);
+    assert.match(pageDataSource, /navigationHidden/);
+    assert.match(pageDataSource, /contestMode/);
     assert.match(appShellSource, /hydro-page-transition--from-right/);
     assert.match(appShellSource, /hydro-page-transition--from-left/);
 
-    // Keyframes and CSS classes define left/right translation animations with 52px travel, scale and blur
+    // View Transitions and fallback keyframes define crisp pure-GPU push/pull slides
     assert.match(
         tailwindCss,
-        new RegExp(
-            '@keyframes hydro-page-in-from-right\\s*\\{[\\s\\S]*?'
-            + 'transform:\\s*translateX\\(52px\\) scale\\(0\\.985\\)[\\s\\S]*?filter:\\s*blur\\(2px\\)[\\s\\S]*?transform:\\s*none',
-        ),
+        /@keyframes hydro-page-in-from-right\s*\{[\s\S]*?transform:\s*translate3d\(28px,\s*0,\s*0\)/,
     );
     assert.match(
         tailwindCss,
-        new RegExp(
-            '@keyframes hydro-page-in-from-left\\s*\\{[\\s\\S]*?'
-            + 'transform:\\s*translateX\\(-52px\\) scale\\(0\\.985\\)[\\s\\S]*?filter:\\s*blur\\(2px\\)[\\s\\S]*?transform:\\s*none',
-        ),
+        /@keyframes hydro-page-out-to-left\s*\{[\s\S]*?transform:\s*translate3d\(-24px,\s*0,\s*0\)/,
     );
+    assert.match(
+        tailwindCss,
+        /@keyframes hydro-page-in-from-left\s*\{[\s\S]*?transform:\s*translate3d\(-28px,\s*0,\s*0\)/,
+    );
+    assert.match(
+        tailwindCss,
+        /@keyframes hydro-page-out-to-right\s*\{[\s\S]*?transform:\s*translate3d\(24px,\s*0,\s*0\)/,
+    );
+    assert.match(tailwindCss, /html\[data-page-transition='from-right'\]::view-transition-old\(hydro-page\)/);
+    assert.match(tailwindCss, /html\[data-page-transition='from-left'\]::view-transition-new\(hydro-page\)/);
     assert.match(tailwindCss, /\.hydro-page-transition--from-right/);
     assert.match(tailwindCss, /\.hydro-page-transition--from-left/);
 

@@ -56,3 +56,18 @@ export function getTopNavIndex(name: string, options?: TopNavVisibilityOptions):
   const index = visible.findIndex((item) => item.to === targetRoute);
   return index >= 0 ? index : null;
 }
+
+export type PageTransitionDirection = 'fade' | 'from-right' | 'from-left';
+
+export function resolvePageTransitionDirection(
+  prevName: string,
+  nextName: string,
+  options?: TopNavVisibilityOptions,
+): PageTransitionDirection {
+  const prevNavIndex = getTopNavIndex(prevName, options);
+  const nextNavIndex = getTopNavIndex(nextName, options);
+  if (prevNavIndex !== null && nextNavIndex !== null && prevNavIndex !== nextNavIndex) {
+    return nextNavIndex > prevNavIndex ? 'from-right' : 'from-left';
+  }
+  return 'fade';
+}
