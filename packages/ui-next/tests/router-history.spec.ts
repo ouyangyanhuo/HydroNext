@@ -227,16 +227,16 @@ test('PageDataProvider coordinates View Transitions direction, rapid skip and cl
     };
     const previousHidden = Object.getOwnPropertyDescriptor(dom.window.document, 'hidden');
     Object.defineProperty(dom.window.document, 'hidden', { value: false, configurable: true });
-    const transitions: { resolve: () => void, skipped: boolean, direction: string | undefined }[] = [];
+    const transitions: { update: () => void, resolve: () => void, skipped: boolean, direction: string | undefined }[] = [];
     (dom.window.document as any).startViewTransition = (cb: () => void) => {
         const entry = {
+            update: cb,
             resolve: () => {},
             skipped: false,
             direction: dom.window.document.documentElement.dataset.pageTransition,
         };
         const finished = new Promise<void>((resolve) => { entry.resolve = resolve; });
         transitions.push(entry);
-        cb();
         return {
             finished,
             skipTransition: () => { entry.skipped = true; },
@@ -248,32 +248,44 @@ test('PageDataProvider coordinates View Transitions direction, rapid skip and cl
     });
     let setData: any;
     let transition: any;
+    let currentUrl: string;
     function Probe() {
         setData = module.exports.useSetPageData();
         transition = module.exports.usePageTransition();
+        currentUrl = module.exports.usePageData().url;
         return null;
     }
     const root = createRoot(dom.window.document.createElement('div'));
     const initial = { name: 'problem_main', url: '/d/team/p', args: {} };
     try {
         await act(async () => root.render(h(module.exports.PageDataProvider, { initial }, h(Probe))));
+        // Opening /p directly may restore a saved sort. It must render without
+        // waiting for a native snapshot or an asynchronous animation callback.
+        await act(async () => setData({ ...initial, url: '/d/team/p?sort=recent' }));
+        assert.equal(transitions.length, 0);
+        assert.equal(currentUrl!, '/d/team/p?sort=recent');
+        assert.equal(transition.viaViewTransition, false);
+
         await act(async () => setData({ name: 'contest_main', url: '/d/team/contest', args: {} }));
         assert.equal(transitions.length, 1);
         assert.equal(transitions[0].direction, 'from-right');
         assert.equal(dom.window.document.documentElement.dataset.pageTransition, 'from-right');
-        assert.equal(transition.direction, 'from-right');
-        assert.equal(transition.viaViewTransition, true);
-
         // Rapid second navigation skips the first transition and preserves the newer direction until it finishes
         await act(async () => setData({ name: 'homepage', url: '/d/team/', args: {} }));
         assert.equal(transitions.length, 2);
         assert.equal(transitions[0].skipped, true);
         assert.equal(transitions[1].direction, 'from-left');
         assert.equal(dom.window.document.documentElement.dataset.pageTransition, 'from-left');
+        await act(async () => transitions[1].update());
+        assert.equal(transition.direction, 'from-left');
+        assert.equal(transition.viaViewTransition, true);
 
-        // Stale resolution of the skipped first transition must not clear the active second transition
-        transitions[0].resolve();
-        await act(async () => { await Promise.resolve(); });
+        // A skipped transition's callback can still run and must not restore the old page.
+        await act(async () => {
+            transitions[0].update();
+            transitions[0].resolve();
+        });
+        assert.equal(currentUrl!, '/d/team/');
         assert.equal(dom.window.document.documentElement.dataset.pageTransition, 'from-left');
 
         // Active transition completion clears data-page-transition cleanly

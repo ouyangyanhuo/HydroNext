@@ -129,32 +129,35 @@ export function PageDataProvider({ initial, children }: PageDataProviderProps) {
     const reducedMotion = typeof window !== 'undefined'
       && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 
-    if (shouldRemount && previousData.name && startViewTransition && !reducedMotion && !transitionDocument?.hidden) {
-      activeTransitionRef.current?.skipTransition?.();
-      const gen = ++transitionGenRef.current;
+    const gen = ++transitionGenRef.current;
+    activeTransitionRef.current?.skipTransition?.();
+    activeTransitionRef.current = null;
+    const clearTransition = () => {
+      if (transitionGenRef.current !== gen) return;
+      if (transitionDocument) delete transitionDocument.documentElement.dataset.pageTransition;
+      activeTransitionRef.current = null;
+    };
+
+    // Restoring the saved sort on a direct list visit is a same-page update.
+    // Use the CSS entry animation for these updates; don't take over document painting.
+    if (shouldRemount && previousData.name && previousData.name !== nextData.name
+      && startViewTransition && !reducedMotion && !transitionDocument?.hidden) {
       transitionDocument!.documentElement.dataset.pageTransition = direction;
       try {
         const viewTransition = startViewTransition(() => {
-          flushSync(() => {
-            commitUpdate(true);
-          });
+          // Skipping a transition doesn't cancel a callback that is still pending.
+          if (transitionGenRef.current !== gen) return;
+          flushSync(() => commitUpdate(true));
         });
         activeTransitionRef.current = viewTransition;
-        void viewTransition.finished.catch(() => undefined).finally(() => {
-          if (transitionGenRef.current === gen) {
-            delete transitionDocument!.documentElement.dataset.pageTransition;
-            activeTransitionRef.current = null;
-          }
-        });
+        void viewTransition.finished.catch(() => undefined).finally(clearTransition);
         return;
       } catch {
-        if (transitionGenRef.current === gen) {
-          delete transitionDocument!.documentElement.dataset.pageTransition;
-          activeTransitionRef.current = null;
-        }
+        // Fall back to the normal render if native transitions are unavailable.
       }
     }
 
+    clearTransition();
     commitUpdate(false);
   }, []);
   const value = useMemo(() => ({ data, revision, transition, setData }), [data, revision, transition, setData]);

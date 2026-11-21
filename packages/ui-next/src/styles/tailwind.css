@@ -1293,11 +1293,9 @@ a {
 
 @keyframes hydro-problem-list-in {
   from {
-    opacity: 0;
     transform: translateY(8px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
@@ -2663,8 +2661,10 @@ body.hydro-scratchpad-active .hydro-app-surface,
   overflow: hidden !important;
 }
 
-body.hydro-scratchpad-active main,
-.hydro-app-surface:has(.hydro-scratchpad-shell) main {
+body.hydro-scratchpad-active .hydro-app-surface > main,
+.hydro-app-surface:has(.hydro-scratchpad-shell) > main,
+body.hydro-scratchpad-active .hydro-app-surface > main > .hydro-page-stage,
+.hydro-app-surface:has(.hydro-scratchpad-shell) > main > .hydro-page-stage {
   display: flex !important;
   flex-direction: column !important;
   flex: 1 1 0% !important;
@@ -2672,8 +2672,8 @@ body.hydro-scratchpad-active main,
   overflow: hidden !important;
 }
 
-body.hydro-scratchpad-active main > .hydro-container,
-.hydro-app-surface:has(.hydro-scratchpad-shell) main > .hydro-container {
+body.hydro-scratchpad-active .hydro-app-surface > main > .hydro-page-stage > .hydro-container,
+.hydro-app-surface:has(.hydro-scratchpad-shell) > main > .hydro-page-stage > .hydro-container {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
   padding-left: 0 !important;
@@ -5590,7 +5590,6 @@ body.hydro-scratchpad-active .hydro-scratchpad-frame,
 
 @media (prefers-reduced-motion: no-preference) {
   .hydro-reveal,
-  .hydro-problem-list,
   .hydro-contest-feature-grid,
   .hydro-training-list,
   .hydro-record-filter,

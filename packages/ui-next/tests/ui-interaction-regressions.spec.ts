@@ -652,7 +652,26 @@ test('online programming mode shields footer on all viewports and locks outer sc
     assert.match(css, /body\.hydro-scratchpad-active\s+footer[\s\S]*?display:\s*none\s*!important/);
     assert.match(css, /body\.hydro-scratchpad-active[\s\S]*?overflow:\s*hidden\s*!important/);
     assert.match(css, /\.hydro-app-surface:has\(\.hydro-scratchpad-shell\)[\s\S]*?overflow:\s*hidden\s*!important/);
-    assert.match(css, /main\s*>\s*\.hydro-container[\s\S]*?padding-top:\s*0\s*!important/);
+    const sheet = postcss.parse(css);
+    const stage = ' > main > .hydro-page-stage';
+    for (const surface of [
+        'body.hydro-scratchpad-active .hydro-app-surface',
+        '.hydro-app-surface:has(.hydro-scratchpad-shell)',
+    ]) {
+        for (const suffix of [' > main', stage, `${stage} > .hydro-container`]) {
+            let ruleFound = false;
+            sheet.walkRules((rule) => {
+                if (!rule.selectors.includes(surface + suffix)) return;
+                ruleFound = true;
+                assert.match(rule.toString(), /display:\s*flex/);
+                assert.match(rule.toString(), /flex-direction:\s*column/);
+                assert.match(rule.toString(), /flex:\s*1 1 0%/);
+                assert.match(rule.toString(), /min-height:\s*0/);
+                if (suffix.endsWith('.hydro-container')) assert.match(rule.toString(), /padding-top:\s*0/);
+            });
+            assert.ok(ruleFound, `Online editor requires a full-height flex rule for ${surface + suffix}`);
+        }
+    }
 
     const problemSource = read('../src/pages/problem_detail.tsx');
     assert.match(problemSource, /hydro-scratchpad-active/);
