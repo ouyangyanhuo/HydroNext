@@ -740,6 +740,8 @@ Back to Home: 返回首页
 # Scratchpad
 Scratchpad: 在线编辑器
 Code template loaded: 代码模板已加载
+Recover legacy draft: 恢复旧版草稿
+This draft was saved by PID and may belong to another problem. Verify it before replacing your current code.: 这份草稿按 PID 保存，可能属于另一道题。请核对内容；恢复后会替换当前代码。
 Load Code Template: 加载代码模板
 No code template is available for this language.: 当前语言暂无可用的代码模板。
 Open Scratchpad: 打开在线编辑器

@@ -9,7 +9,10 @@ import { memoryRecording, persistRecording, replaceRecording, replayDraftKey, re
 export function createRecorder(context: EditorAddonContext): EditorAddon | null {
   const url = context.ui.editorAddons?.['code-replay']?.sessionUrl;
   if (!url || !context.userId) return null;
-  const storageKey = replayDraftKey(`code-replay/${context.userId}/${context.domainId}/${context.pid}${context.tid ? `@${context.tid}` : ''}`);
+  // Do not reopen an alias-based recording: the alias might have belonged to a different problem.
+  const storageKey = replayDraftKey(context.problemId
+    ? `code-replay/v2/${JSON.stringify([context.userId, context.domainId, context.problemId, context.tid || ''])}`
+    : `code-replay/${context.userId}/${context.domainId}/${context.pid}${context.tid ? `@${context.tid}` : ''}`);
   let recording: ReplayRecording | undefined;
   let warned = false;
   const warn = () => {

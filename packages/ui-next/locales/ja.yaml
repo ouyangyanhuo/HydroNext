@@ -701,6 +701,8 @@ __langname: 日本語
 # Scratchpad
 'Scratchpad': 'スクラッチパッド'
 'Code template loaded': 'コードテンプレートを読み込みました'
+'Recover legacy draft': '旧形式の下書きを復元'
+'This draft was saved by PID and may belong to another problem. Verify it before replacing your current code.': 'この下書きは PID で保存されているため、別の問題のものかもしれません。現在のコードを置き換える前に内容を確認してください。'
 'Load Code Template': 'コードテンプレートを読み込む'
 'No code template is available for this language.': 'この言語で利用できるコードテンプレートはありません。'
 'Open Scratchpad': 'スクラッチパッドを開く'

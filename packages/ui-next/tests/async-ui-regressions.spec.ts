@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { after, test } from 'node:test';
+import { getScratchpadDraftScope } from '../src/components/editor/draft-storage.ts';
 import { formatErrorMessage } from '../src/utils/error.ts';
 import * as objectiveAnswers from '../src/utils/objective-answers.ts';
 
@@ -529,11 +530,18 @@ test('submitting and returning through record problem links retains the source n
         assert.doesNotMatch(view.host.textContent!, /Clear Code/, 'objective answer drafts are separate');
 
         const contestId = '0123456789abcdef01234567';
-        const key = `2/team/P2@${contestId}`;
-        const otherKeys = ['2/team/P2', '2/team/P3', '2/other/P2', `3/team/P2@${contestId}`, `${key}#lang`];
+        const problemId = 'abcdefabcdefabcdefabcdef';
+        const key = getScratchpadDraftScope(2, 'team', problemId, contestId)!.cacheKey;
+        const otherKeys = [
+            getScratchpadDraftScope(2, 'team', problemId)!.cacheKey,
+            getScratchpadDraftScope(2, 'team', '987654abcdef987654abcdef', contestId)!.cacheKey,
+            getScratchpadDraftScope(2, 'other', problemId, contestId)!.cacheKey,
+            getScratchpadDraftScope(3, 'team', problemId, contestId)!.cacheKey,
+            `2/team/P2@${contestId}`, `${key}#lang`,
+        ];
         const storage = dom.window.localStorage;
         args = {
-            ...args, pdoc: { docId: 2, pid: 'P2', title: 'Current problem' },
+            ...args, pdoc: { _id: problemId, docId: 2, pid: 'P2', title: 'Current problem' },
             tdoc: { docId: contestId }, rdoc: { _id: 'rid', uid: 2, domainId: 'team', code: 'Submitted source' },
         };
         for (const draftKey of [key, ...otherKeys]) storage.setItem(draftKey, 'preserved');

@@ -8,6 +8,7 @@ import {
 import { Allotment } from 'allotment';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionIcon, Button, ButtonBase } from '@/components/common/button';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { RollingClock } from '@/components/common/rolling-clock';
 import { LongSelect, ShortSelect } from '@/components/common/select';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
@@ -32,7 +33,7 @@ import {
   saveStoredEditorConfig,
 } from './code-editor';
 import { getCodeTemplate } from './code-templates';
-import { applyDraftReset, getDraftResetReceiptKey, getScratchpadCacheKey, readDraftResetVersion } from './draft-storage';
+import { applyDraftReset, getLegacyScratchpadCacheKey, getScratchpadDraftScope, readDraftResetVersion } from './draft-storage';
 import { resolveLanguagePreference } from './editor-language';
 import { getProblemSubmitUrl, resolveSubmissionContext } from './submission-context';
 
@@ -81,7 +82,15 @@ function ScratchpadEditor({
   cacheKey,
   receiptKey,
   resetVersion,
-}: ScratchpadProps & { cacheKey: string, receiptKey?: string, resetVersion?: number }) {
+  problemId,
+  legacyCacheKey,
+}: ScratchpadProps & {
+  cacheKey: string;
+  receiptKey?: string;
+  resetVersion?: number;
+  problemId?: string;
+  legacyCacheKey?: string;
+}) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const buildUrl = useBuildUrl();
@@ -98,9 +107,9 @@ function ScratchpadEditor({
   const navigationSearch = window.location.search;
   const submissionContext = resolveSubmissionContext({ pdoc: args.pdoc, tdoc: args.tdoc }, navigationSearch, pid);
   const editorAddon = useMemo(() => createEditorAddon({
-    userId, domainId: ui.domainId || '', pid, submitPid: submissionContext.pid, tid: submissionContext.tid,
+    userId, domainId: ui.domainId || '', pid, problemId, submitPid: submissionContext.pid, tid: submissionContext.tid,
     ui: { editorAddons: ui.editorAddons }, translate: t,
-  }), [userId, ui.domainId, pid, submissionContext.pid, submissionContext.tid, ui.editorAddons, t]);
+  }), [userId, ui.domainId, pid, problemId, submissionContext.pid, submissionContext.tid, ui.editorAddons, t]);
   const preferredLanguage = resolveLanguagePreference(langOptions.map((option) => option.value), defaultLang || user.codeLang || ui.codeLang || '');
   const [languageSelection, setLanguageSelection] = useState(() => {
     const cachedLang = getStoredString(`${cacheKey}#lang`, '');
@@ -136,6 +145,7 @@ function ScratchpadEditor({
   const [error, setError] = useState('');
   const [activePanel, setActivePanel] = useState<string | null>('records');
   const [settingsOpened, setSettingsOpened] = useState(false);
+  const [legacyDraft, setLegacyDraft] = useState<string | null>(null);
   const [editorConfig, setEditorConfig] = useState<EditorConfig>(() => loadStoredEditorConfig());
   const [cooldownUntil, setCooldownUntil] = useState({ pretest: 0, submit: 0 });
   const [viewportWidth, setViewportWidth] = useState(() => document.documentElement.clientWidth || window.innerWidth);
@@ -169,6 +179,16 @@ function ScratchpadEditor({
     return !type || type === 'default' || type === 'remote_judge';
   }, [lang, langs, args.pdoc?.config?.type]);
   const selectedCodeTemplate = getCodeTemplate(lang, user.codeTemplate);
+  // Code cached solely under a PID has no reliable owner problem. Preview it only on explicit request.
+  const canRecoverLegacy = !!legacyCacheKey && !resetVersion && addonReady;
+  const hasLegacyDraft = canRecoverLegacy && settingsOpened && !!localStorage.getItem(legacyCacheKey);
+
+  function recoverLegacyDraft() {
+    if (legacyDraft && canRecoverLegacy && receiptKey && !readDraftResetVersion(localStorage, receiptKey)) {
+      setCode(legacyDraft);
+    }
+    setLegacyDraft(null);
+  }
 
   const updateEditorConfig = useCallback((patch: EditorConfig) => {
     setEditorConfig((current) => {
@@ -685,14 +705,41 @@ function ScratchpadEditor({
             searchable
             clearable
           />
+          {hasLegacyDraft && (
+            <Button
+              size="xs"
+              variant="light"
+              onClick={() => {
+                setLegacyDraft(localStorage.getItem(legacyCacheKey));
+                setSettingsOpened(false);
+              }}
+            >
+              {t('Recover legacy draft')}
+            </Button>
+          )}
         </Stack>
       </Drawer>
+      <ConfirmDialog
+        opened={canRecoverLegacy && Boolean(legacyDraft)}
+        onClose={() => setLegacyDraft(null)}
+        onConfirm={recoverLegacyDraft}
+        title={t('Recover legacy draft')}
+        confirmLabel={t('Recover legacy draft')}
+        message={(
+          <>
+            {t('This draft was saved by PID and may belong to another problem. Verify it before replacing your current code.')}
+            <span className="hydro-scratchpad-output mt-2 block max-h-[35vh] overflow-auto whitespace-pre p-2 font-mono">
+              {legacyDraft}
+            </span>
+          </>
+        )}
+      />
     </div>
   );
 }
 
 function CheckedScratchpad({
-  editor, cacheKey, receiptKey, checkUrl, uid, domainId, problemId, tid,
+  editor, cacheKey, receiptKey, checkUrl, uid, domainId, problemId, tid, legacyCacheKey,
 }: {
   editor: ScratchpadProps;
   cacheKey: string;
@@ -702,6 +749,7 @@ function CheckedScratchpad({
   domainId: string;
   problemId: string;
   tid?: string;
+  legacyCacheKey: string;
 }) {
   const { t } = useI18n();
   const [attempt, setAttempt] = useState(0);
@@ -773,7 +821,7 @@ function CheckedScratchpad({
   }, [receiptKey]);
 
   if (version !== null) {
-    return <ScratchpadEditor {...editor} {...{ cacheKey, receiptKey, resetVersion: version }} />;
+    return <ScratchpadEditor {...editor} {...{ cacheKey, receiptKey, resetVersion: version, problemId, legacyCacheKey }} />;
   }
   return (
     <Center className="hydro-scratchpad-shell">
@@ -796,12 +844,12 @@ export function Scratchpad(props: ScratchpadProps) {
   const { _id: uid } = useUserContext();
   const buildUrl = useBuildUrl();
   const { tid } = resolveSubmissionContext({ pdoc: args.pdoc, tdoc: args.tdoc }, window.location.search, props.pid);
-  const cacheKey = getScratchpadCacheKey(uid, domainId, props.pid, tid);
-  const problemId = args.pdoc?._id;
-  if (!uid || uid < 0 || !domainId || typeof problemId !== 'string' || !/^[a-f\d]{24}$/i.test(problemId)) {
-    return <ScratchpadEditor key={cacheKey} {...props} cacheKey={cacheKey} />;
+  const legacyCacheKey = getLegacyScratchpadCacheKey(uid, domainId, props.pid, tid);
+  const scope = getScratchpadDraftScope(uid, domainId, args.pdoc?._id, tid);
+  if (!uid || uid < 0 || !domainId || !scope) {
+    const cacheKey = scope?.cacheKey ?? legacyCacheKey;
+    return <ScratchpadEditor key={cacheKey} {...props} cacheKey={cacheKey} problemId={scope?.problemId} />;
   }
-  const receiptKey = getDraftResetReceiptKey(cacheKey, problemId);
-  const checkUrl = buildUrl('problem_draft_reset', { problemId }, tid ? { tid } : {});
-  return <CheckedScratchpad key={receiptKey} editor={props} {...{ cacheKey, receiptKey, checkUrl, uid, domainId, problemId, tid }} />;
+  const checkUrl = buildUrl('problem_draft_reset', { problemId: scope.problemId }, tid ? { tid } : {});
+  return <CheckedScratchpad key={scope.cacheKey} editor={props} {...scope} {...{ checkUrl, uid, domainId, tid, legacyCacheKey }} />;
 }

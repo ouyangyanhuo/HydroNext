@@ -11,7 +11,7 @@ import { Button, UnstyledButton } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { TimeDisplay } from '@/components/common/time-display';
-import { clearScratchpadDraft, getScratchpadCacheKey } from '@/components/editor/draft-storage';
+import { clearScratchpadDraft, getScratchpadDraftScope } from '@/components/editor/draft-storage';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { getScoreTone, getStatusTone, judgeBadgeStyle, STATUS, STATUS_TEXTS } from '@/components/record/status-map';
@@ -562,10 +562,9 @@ export default function RecordDetailPage() {
   const pdoc = args.pdoc || {};
   const isObjective = pdoc.config?.type === 'objective';
   const tdoc = args.tdoc;
-  const pid = pdoc.pid || pdoc.docId;
   const draftDomainId = serverRdoc.domainId || args.UiContext?.domainId;
-  const draftKey = canJudge && !isObjective && pid && draftDomainId && user._id > 0 && user._id === (serverRdoc.uid ?? udoc._id)
-    ? getScratchpadCacheKey(user._id, draftDomainId, pid, tdoc?.docId || tdoc?._id)
+  const draftKey = canJudge && !isObjective && user._id > 0 && user._id === (serverRdoc.uid ?? udoc._id)
+    ? getScratchpadDraftScope(user._id, draftDomainId, pdoc._id, tdoc?.docId || tdoc?._id)?.cacheKey
     : null;
   const remoteDraftRid = canJudge && args.canClearSubmitterDraft === true && serverRdoc._id ? String(serverRdoc._id) : '';
   const clearTarget = draftKey || (remoteDraftRid ? `record:${remoteDraftRid}` : null);

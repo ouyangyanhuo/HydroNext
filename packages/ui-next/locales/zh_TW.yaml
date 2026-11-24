@@ -662,6 +662,8 @@ Back to Home: 返回首頁
 # Scratchpad
 Scratchpad: 線上編輯器
 Code template loaded: 程式碼模板已載入
+Recover legacy draft: 恢復舊版草稿
+This draft was saved by PID and may belong to another problem. Verify it before replacing your current code.: 這份草稿按 PID 儲存，可能屬於另一道題。請核對內容；恢復後會取代目前的程式碼。
 Load Code Template: 載入程式碼模板
 No code template is available for this language.: 目前語言沒有可用的程式碼模板。
 Open Scratchpad: 開啟線上編輯器

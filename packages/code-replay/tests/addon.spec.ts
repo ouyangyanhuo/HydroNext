@@ -50,12 +50,13 @@ test('optional recorder and protected replay routes are absent until registered 
 test('an outgoing editor cannot publish a restored recording after its initialization is cancelled', async () => {
     let resolve!: (value: any) => void;
     let saved = 0;
+    const keys: string[] = [];
     const mocks = {
         '@mantine/notifications': { notifications: { show() {} } },
         '../replay': { REPLAY_ACTIONS: ['template', 'paste', 'self_test', 'submit'] },
         './components/editor/replay-recording': {},
         './components/editor/replay-storage': {
-            replayDraftKey: (key: string) => key,
+            replayDraftKey: (key: string) => { keys.push(key); return key; },
             restoreRecording: () => new Promise((complete) => { resolve = complete; }),
             persistRecording: async () => { saved++; },
         },
@@ -68,9 +69,15 @@ test('an outgoing editor cannot publish a restored recording after its initializ
             return mocks[name];
         },
     });
-    const recorder = module.exports.createRecorder({
-        userId: 1, domainId: 'exam', pid: 'P1', ui: { editorAddons: { 'code-replay': { sessionUrl: '/code-replay/session' } } },
-    });
+    const context = {
+        userId: 1, domainId: 'exam', pid: 'P1', problemId: '1234567890abcdef12345678',
+        ui: { editorAddons: { 'code-replay': { sessionUrl: '/code-replay/session' } } },
+    };
+    const recorder = module.exports.createRecorder(context);
+    module.exports.createRecorder({ ...context, pid: 'Renamed' });
+    module.exports.createRecorder({ ...context, problemId: 'abcdefabcdefabcdefabcdef' });
+    assert.equal(keys[0], keys[1], 'renaming reuses the same unsubmitted recording');
+    assert.notEqual(keys[0], keys[2], 'the new owner of an alias must not restore the old recording');
     const controller = new AbortController();
     const pending = recorder.initialize('current', controller.signal);
     controller.abort();

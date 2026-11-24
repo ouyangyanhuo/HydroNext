@@ -133,13 +133,14 @@ test('formal editor submissions stay in a compact live modal and close according
     const badge = loadComponent('../src/components/record/record-status-badge.tsx');
     mocks['./record-status-badge'] = badge;
     mocks['@/components/record/record-status-badge'] = badge;
+    mocks['@/components/common/confirm-dialog'] = loadComponent('../src/components/common/confirm-dialog.tsx');
     mocks['@/components/record/submission-result-modal'] = loadComponent('../src/components/record/submission-result-modal.tsx');
     const { Scratchpad } = loadComponent('../src/components/editor/scratchpad.tsx');
     const root = createRoot(document.getElementById('root'));
     const langs = { cc: { display: 'C++', pretest: true }, py: { display: 'Python' }, js: { display: 'NodeJS' } };
-    const render = async (key = 'first') => {
+    const render = async (key = 'first', pid = 'P42') => {
         await act(async () => root.render(h(mantine.MantineProvider, { env: 'test' }, h(StrictMode, {}, h(Scratchpad, {
-            key, pid: 'P42', langs, defaultCode: key === 'cleared' ? 'Submitted source' : '',
+            key, pid, langs, defaultCode: key === 'cleared' ? 'Submitted source' : '',
             onClose: () => { quitCount++; },
         })))));
     };
@@ -258,20 +259,37 @@ test('formal editor submissions stay in a compact live modal and close according
         assert.equal(localStorage.getItem(cacheKey), '');
         assert.equal(captures.at(-1), '', 'replay tracks the clear without losing the earlier history');
 
-        // A server reset is applied before draft or replay restoration, once per browser.
+        // Legacy alias-to-problem ownership cannot be determined. Do not silently open or erase the old value.
         args.pdoc._id = 'abcdefabcdefabcdefabcdef';
-        localStorage.setItem(cacheKey, preservedCode);
+        const first = draftStorage.getScratchpadDraftScope(user._id, ui.domainId, args.pdoc._id, tid)!;
+        const currentTextarea = () => document.querySelector<HTMLTextAreaElement>('[aria-label=Code]')!;
+        localStorage.setItem(cacheKey, 'Unverified legacy draft');
+        addon.initialize = async (code) => code;
+        await render('stable-draft');
+        assert.equal(currentTextarea().value, 'int main() {}');
+        await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Editor Settings"]')!.click());
+        await act(async () => findButton('Recover legacy draft').click());
+        const recovery = document.querySelector('[role=dialog]')!;
+        assert.match(recovery.textContent!, /Unverified legacy draft/);
+        assert.equal(currentTextarea().value, 'int main() {}');
+        await act(async () => findButton('Recover legacy draft', recovery).click());
+        assert.equal(currentTextarea().value, 'Unverified legacy draft');
+        assert.equal(localStorage.getItem(first.cacheKey), 'Unverified legacy draft');
+
+        // A server reset is applied before draft or replay restoration, once for the immutable problem.
+        localStorage.setItem(first.cacheKey, preservedCode);
+        addon.initialize = async () => preservedCode;
         resetVersion = 1;
         await render('remote-reset');
-        assert.equal(document.querySelector<HTMLTextAreaElement>('[aria-label=Code]')!.value, '');
-        assert.equal(localStorage.getItem(cacheKey), '');
-        localStorage.setItem(cacheKey, 'New code after reset');
-        await render('after-remote-reset');
-        assert.equal(document.querySelector<HTMLTextAreaElement>('[aria-label=Code]')!.value, 'New code after reset');
+        assert.equal(currentTextarea().value, '');
+        assert.equal(localStorage.getItem(first.cacheKey), '');
+        assert.equal(localStorage.getItem(cacheKey), 'Unverified legacy draft', 'a reset cannot delete an ambiguous cache');
+        localStorage.setItem(first.cacheKey, 'New code after reset');
+        await render('after-pid-rename', 'RENAMED');
+        assert.equal(currentTextarea().value, 'New code after reset', 'renaming cannot reapply an already processed reset');
         assert.equal(captures.at(-1), 'New code after reset', 'stale replay is not the source of code after a reset');
         assert.equal(draftSocket.domainPath, '/d/team');
         const scope = { uid: user._id, domainId: ui.domainId, problemId: args.pdoc._id, tid };
-        const currentTextarea = () => document.querySelector<HTMLTextAreaElement>('[aria-label=Code]')!;
         await act(async () => {
             draftSocket.onMessage({ ...scope, uid: 8, version: 2 });
             draftSocket.onMessage({ ...scope, tid: '', version: 2 });
@@ -280,7 +298,8 @@ test('formal editor submissions stay in a compact live modal and close according
         assert.equal(currentTextarea().value, 'New code after reset');
         await act(async () => draftSocket.onMessage({ ...scope, version: 2 }));
         assert.equal(currentTextarea().value, '', 'a matching live event clears the open editor without navigation');
-        assert.equal(localStorage.getItem(cacheKey), '');
+        assert.equal(localStorage.getItem(first.cacheKey), '');
+        assert.equal(localStorage.getItem(cacheKey), 'Unverified legacy draft');
         assert.equal(captures.at(-1), '', 'recording continues with the empty editor');
         assert.equal(navigated.length, 1, 'clearing code never leaves the editor');
         await act(async () => {
@@ -292,6 +311,17 @@ test('formal editor submissions stay in a compact live modal and close according
             draftSocket.onMessage({ ...scope, version: 1 });
         });
         assert.equal(currentTextarea().value, 'Newer code', 'duplicates and older snapshots do not erase new edits');
+
+        const secondId = '123456abcdef123456abcdef';
+        const second = draftStorage.getScratchpadDraftScope(user._id, ui.domainId, secondId, tid)!;
+        localStorage.setItem(second.cacheKey, 'Draft on the new problem');
+        args.pdoc._id = secondId;
+        resetVersion = 0;
+        addon.initialize = async (code) => code;
+        await render('pid-reused', 'P42');
+        assert.equal(currentTextarea().value, 'Draft on the new problem');
+        await act(async () => draftSocket.onMessage({ ...scope, version: 3 }));
+        assert.equal(currentTextarea().value, 'Draft on the new problem', 'an old problem cannot clear the problem reusing its PID');
     } finally {
         await act(async () => root.unmount());
         dom.window.close();

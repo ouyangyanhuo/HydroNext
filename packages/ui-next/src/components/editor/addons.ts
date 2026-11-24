@@ -4,6 +4,7 @@ export interface EditorAddonContext {
   userId?: number;
   domainId: string;
   pid: string | number;
+  problemId?: string;
   submitPid: string | number;
   tid?: string;
   ui: Record<string, any>;
