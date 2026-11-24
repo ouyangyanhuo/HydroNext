@@ -540,6 +540,14 @@ function OutputBlock({ title, content }: { title: string, content: string }) {
   );
 }
 
+function wasClearedLocally(key: string) {
+  try {
+    return window.localStorage.getItem(key) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export default function RecordDetailPage() {
   const { args } = usePageData();
   const buildUrl = useBuildUrl();
@@ -551,6 +559,8 @@ export default function RecordDetailPage() {
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [clearCodeTarget, setClearCodeTarget] = useState<string | null>(null);
   const [clearingCode, setClearingCode] = useState(false);
+  const [clearedRecord, setClearedRecord] = useState<string | null>(null);
+  const [rejudgedRecord, setRejudgedRecord] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   // Merge server-side data with real-time WebSocket updates
@@ -563,13 +573,20 @@ export default function RecordDetailPage() {
   const isObjective = pdoc.config?.type === 'objective';
   const tdoc = args.tdoc;
   const draftDomainId = serverRdoc.domainId || args.UiContext?.domainId;
+  const actionRecord = serverRdoc._id ? JSON.stringify([draftDomainId, String(serverRdoc._id), user._id]) : null;
   const draftKey = canJudge && !isObjective && user._id > 0 && user._id === (serverRdoc.uid ?? udoc._id)
     ? getScratchpadDraftScope(user._id, draftDomainId, pdoc._id, tdoc?.docId || tdoc?._id)?.cacheKey
     : null;
   const remoteDraftRid = canJudge && args.canClearSubmitterDraft === true && serverRdoc._id ? String(serverRdoc._id) : '';
-  const clearTarget = draftKey || (remoteDraftRid ? `record:${remoteDraftRid}` : null);
+  const localClearReceipt = draftKey && actionRecord ? `hydro:record-draft-cleared:v1:${actionRecord}` : null;
+  const draftClearDone = (actionRecord !== null && clearedRecord === actionRecord)
+    || args.editorDraftResetQueued === true || rdoc.editorDraftResetQueued === true
+    || (localClearReceipt !== null && wasClearedLocally(localClearReceipt));
+  const clearTarget = !draftClearDone && (draftKey || remoteDraftRid) ? actionRecord : null;
   const draftSubmitter = formatUserName(udoc) || String(serverRdoc.uid ?? '');
   const showJudgeActions = canJudge && !rdoc.files?.hack;
+  const showRejudge = showJudgeActions && rejudgedRecord !== actionRecord
+    && args.detailRejudgeQueued !== true && rdoc.detailRejudgeQueued !== true;
   const allRevs = args.allRevs || {};
   const rev = args.rev;
 
@@ -600,6 +617,7 @@ export default function RecordDetailPage() {
   };
 
   const submitOperation = async (operation: 'rejudge' | 'cancel') => {
+    if ((operation === 'rejudge' && !showRejudge) || actionLoading) return;
     setActionLoading(operation);
     setError('');
     try {
@@ -613,6 +631,7 @@ export default function RecordDetailPage() {
       if (!res.ok || data.error) {
         setError(formatErrorMessage(data.error, t('Operation failed')));
       } else {
+        if (operation === 'rejudge' && data.queued === true) setRejudgedRecord(actionRecord);
         const target = data.redirect || data.url;
         if (target && target !== window.location.href && target !== window.location.pathname + window.location.search) {
           void navigate(target, { replace: true });
@@ -633,6 +652,9 @@ export default function RecordDetailPage() {
     try {
       if (draftKey) {
         clearScratchpadDraft(window.localStorage, draftKey);
+        if (localClearReceipt) {
+          try { window.localStorage.setItem(localClearReceipt, '1'); } catch { /* The draft was already cleared. */ }
+        }
         notifications.show({ color: 'green', message: t('Local code cleared.') });
       } else {
         const response = await fetch(buildUrl('record_detail', { rid: remoteDraftRid }), {
@@ -644,6 +666,7 @@ export default function RecordDetailPage() {
         if (!response.ok || data?.queued !== true) throw new Error(formatErrorMessage(data?.error, t('Operation failed')));
         notifications.show({ color: 'green', message: t('Draft reset scheduled for {0}.', draftSubmitter) });
       }
+      setClearedRecord(clearTarget);
       setClearCodeTarget(null);
     } catch (failure) {
       notifications.show({ color: 'red', message: failure instanceof Error ? t(failure.message) : t('Operation failed') });
@@ -755,21 +778,21 @@ export default function RecordDetailPage() {
             {(showJudgeActions || clearTarget) && (
               <section className="hydro-sidebar-panel">
                 <Stack gap="xs">
+                  {showRejudge && (
+                    <Button size="xs" variant="light" loading={actionLoading === 'rejudge'} onClick={() => submitOperation('rejudge')}>
+                      {t('Rejudge')}
+                    </Button>
+                  )}
                   {showJudgeActions && (
-                    <>
-                      <Button size="xs" variant="light" loading={actionLoading === 'rejudge'} onClick={() => submitOperation('rejudge')}>
-                        {t('Rejudge')}
-                      </Button>
-                      <Button
-                        size="xs"
-                        variant="subtle"
-                        color="red"
-                        loading={actionLoading === 'cancel'}
-                        onClick={() => setCancelConfirmOpen(true)}
-                      >
-                        {t('Cancel Score')}
-                      </Button>
-                    </>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      color="red"
+                      loading={actionLoading === 'cancel'}
+                      onClick={() => setCancelConfirmOpen(true)}
+                    >
+                      {t('Cancel Score')}
+                    </Button>
                   )}
                   {clearTarget && (
                     <Button size="xs" variant="subtle" color="red" onClick={() => setClearCodeTarget(clearTarget)}>

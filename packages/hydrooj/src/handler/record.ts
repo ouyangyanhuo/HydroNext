@@ -220,6 +220,8 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
     async get(domainId: string, rid: ObjectId, download = false, rev?: ObjectId) {
         const canRejudge = this.user.hasPerm(PERM.PERM_REJUDGE) && !this.rdoc.files?.hack
             && !this.rdoc.contest?.toString().startsWith('0'.repeat(23));
+        const detailRejudgeQueued = this.rdoc.detailRejudgeQueued === true || !!(this.rdoc.rejudged && this.rdoc.judgeAt);
+        const editorDraftResetQueued = this.rdoc.editorDraftResetQueued === true;
         let rdoc = this.rdoc;
         const allRev = await record.collHistory.find({ rid }).project({ _id: 1, judgeAt: 1 }).sort({ _id: -1 }).toArray();
         const allRevs: Record<string, Date> = Object.fromEntries(allRev.map((i) => [i._id.toString(), i.judgeAt]));
@@ -257,7 +259,7 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
         this.response.template = 'record_detail.html';
         this.response.body = {
             udoc, rdoc: canViewDetail ? rdoc : pick(rdoc, ['_id', 'lang', 'code']), pdoc, tdoc: this.tdoc, rev, allRevs, canViewCode,
-            canRejudge, canClearSubmitterDraft,
+            canRejudge, canClearSubmitterDraft, detailRejudgeQueued, editorDraftResetQueued,
         };
     }
 
@@ -274,9 +276,12 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
         if (!pdoc?.config || typeof pdoc.config === 'string') throw new ProblemConfigError();
         const priority = await record.submissionPriority(this.user._id, -20);
         const rdoc = await record.reset(domainId, rid, true);
+        if (!rdoc) throw new RecordNotFoundError(rid);
         this.ctx.broadcast('record/change', rdoc);
-        await record.judge(domainId, rid, priority, this.rdoc.contest ? { detail: false } : {});
-        this.back();
+        const queued = await record.judge(domainId, rid, priority, this.rdoc.contest ? { detail: false } : {});
+        if (!queued) throw new RecordNotFoundError(rid);
+        await record.update(domainId, rid, { detailRejudgeQueued: true });
+        this.back({ queued: true });
     }
 
     @param('rid', Types.ObjectId)
@@ -309,6 +314,7 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
         if (!this.canClearDraft(pdoc)) throw new ForbiddenError();
         const { version } = await requestDraftReset(this.rdoc, pdoc._id, this.user._id);
         this.ctx.broadcast('editor/draftReset', { ...draftResetScope(domainId, uid, pdoc._id, tid), version });
+        await record.update(domainId, this.rdoc._id, { editorDraftResetQueued: true });
         await oplog.log(this, 'record.clearEditorDraft', {
             rid: this.rdoc._id, uid, problemId: pdoc._id, tid,
         });
