@@ -30,6 +30,7 @@ import {
   saveStoredEditorConfig,
 } from './code-editor';
 import { getCodeTemplate } from './code-templates';
+import { applyDraftReset, getDraftResetReceiptKey, getScratchpadCacheKey, readDraftResetVersion } from './draft-storage';
 import { resolveLanguagePreference } from './editor-language';
 import { getProblemSubmitUrl, resolveSubmissionContext } from './submission-context';
 
@@ -55,12 +56,6 @@ function getStoredString(key: string, fallback: string) {
   return localStorage.getItem(key) || fallback;
 }
 
-function getScratchpadCacheKey(userId: string | number | undefined, domainId: string | undefined, pid: string | number, contestId?: string | number) {
-  let key = `${userId || 'guest'}/${domainId || ''}/${pid}`;
-  if (contestId) key += `@${contestId}`;
-  return key;
-}
-
 function getSelections(editor: any) {
   return editor.getSelections?.()?.map((selection: any) => ({
     startLineNumber: selection.startLineNumber,
@@ -70,7 +65,7 @@ function getSelections(editor: any) {
   }));
 }
 
-export function Scratchpad({
+function ScratchpadEditor({
   pid,
   langs,
   defaultCode = '',
@@ -81,7 +76,10 @@ export function Scratchpad({
   onSubmit,
   submitUrl,
   submissionDisabled = false,
-}: ScratchpadProps) {
+  cacheKey,
+  receiptKey,
+  resetVersion,
+}: ScratchpadProps & { cacheKey: string, receiptKey?: string, resetVersion?: number }) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const buildUrl = useBuildUrl();
@@ -97,11 +95,6 @@ export function Scratchpad({
   })), [langs]);
   const navigationSearch = window.location.search;
   const submissionContext = resolveSubmissionContext({ pdoc: args.pdoc, tdoc: args.tdoc }, navigationSearch, pid);
-  const contestId = submissionContext.tid || '';
-  const cacheKey = useMemo(
-    () => getScratchpadCacheKey(userId, ui.domainId, pid, contestId),
-    [contestId, pid, ui.domainId, userId],
-  );
   const editorAddon = useMemo(() => createEditorAddon({
     userId, domainId: ui.domainId || '', pid, submitPid: submissionContext.pid, tid: submissionContext.tid,
     ui: { editorAddons: ui.editorAddons }, translate: t,
@@ -121,9 +114,10 @@ export function Scratchpad({
     setLanguageSelection({ value: preferredLanguage || lang, preference: preferredLanguage });
   }
   const setLang = (value: string) => setLanguageSelection({ value, preference: preferredLanguage });
+  const [startsWithEmptyDraft] = useState(() => localStorage.getItem(cacheKey) === '');
   const [code, setCode] = useState(() => {
     const cached = localStorage.getItem(cacheKey);
-    return cached ?? (defaultCode || getCodeTemplate(lang, user.codeTemplate) || '');
+    return cached ?? (resetVersion ? '' : defaultCode || getCodeTemplate(lang, user.codeTemplate) || '');
   });
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -210,8 +204,10 @@ export function Scratchpad({
   }, []);
 
   useEffect(() => {
+    // Another tab may have already cleared this draft while this editor was still mounted.
+    if (receiptKey && readDraftResetVersion(localStorage, receiptKey) !== resetVersion) return;
     localStorage.setItem(cacheKey, code);
-  }, [cacheKey, code]);
+  }, [cacheKey, code, receiptKey, resetVersion]);
 
   useEffect(() => {
     if (lang) localStorage.setItem(`${cacheKey}#lang`, lang);
@@ -228,7 +224,10 @@ export function Scratchpad({
     const controller = new AbortController();
     void editorAddon.initialize(code, controller.signal).then((restoredCode) => {
       if (cancelled) return;
-      setCode(restoredCode);
+      if ((startsWithEmptyDraft && code === '') || resetVersion) {
+        // Preserve the replay history without letting an older tab's recording restore cleared code.
+        if (restoredCode !== code) editorAddon.capture(code, lang);
+      } else setCode(restoredCode);
       setReadyAddon(editorAddon);
     }).catch((failure) => {
       if (!cancelled) notifications.show({ color: 'red', message: t(failure?.message || 'Operation failed') });
@@ -682,4 +681,98 @@ export function Scratchpad({
       </Drawer>
     </div>
   );
+}
+
+function CheckedScratchpad({
+  editor, cacheKey, receiptKey, checkUrl, uid, domainId,
+}: {
+  editor: ScratchpadProps;
+  cacheKey: string;
+  receiptKey: string;
+  checkUrl: string;
+  uid: number;
+  domainId: string;
+}) {
+  const { t } = useI18n();
+  const [attempt, setAttempt] = useState(0);
+  const [version, setVersion] = useState<number | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10000);
+    let disposed = false;
+    async function check() {
+      try {
+        const response = await fetch(checkUrl, {
+          cache: 'no-store', headers: { Accept: 'application/json' }, signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('Draft reset check failed');
+        const data = await response.json();
+        if (disposed) return;
+        if (controller.signal.aborted) throw new Error('Draft reset check timed out');
+        if (data.uid !== uid || data.domainId !== domainId || !Number.isSafeInteger(data.version) || data.version < 0) {
+          throw new Error('Invalid draft reset response');
+        }
+        const storage = window.localStorage;
+        if (applyDraftReset(storage, cacheKey, receiptKey, data.version)) {
+          notifications.show({ color: 'orange', message: t('Your local code draft was cleared by an administrator.') });
+        }
+        setVersion(readDraftResetVersion(storage, receiptKey));
+      } catch {
+        if (!disposed) setFailed(true);
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    }
+    void check();
+    return () => {
+      disposed = true;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [attempt, cacheKey, checkUrl, domainId, receiptKey, t, uid]);
+
+  useEffect(() => {
+    const syncReset = (event: StorageEvent) => {
+      if (event.key !== receiptKey || event.storageArea !== window.localStorage) return;
+      const current = readDraftResetVersion(window.localStorage, receiptKey);
+      setVersion((previous) => (previous === null ? null : Math.max(previous, current)));
+    };
+    window.addEventListener('storage', syncReset);
+    return () => window.removeEventListener('storage', syncReset);
+  }, [receiptKey]);
+
+  if (version !== null) {
+    return <ScratchpadEditor key={version} {...editor} {...{ cacheKey, receiptKey, resetVersion: version }} />;
+  }
+  return (
+    <Center className="hydro-scratchpad-shell">
+      {failed
+        ? <Stack align="center" gap="sm">
+          <Text role="alert">{t('Could not check for editor draft resets.')}</Text>
+          <Group gap="xs">
+            {editor.onClose && <Button size="xs" variant="default" onClick={editor.onClose}>{t('Back')}</Button>}
+            <Button size="xs" onClick={() => { setFailed(false); setAttempt((value) => value + 1); }}>{t('Retry')}</Button>
+          </Group>
+        </Stack>
+        : <Loader aria-label={t('Loading...')} />}
+    </Center>
+  );
+}
+
+export function Scratchpad(props: ScratchpadProps) {
+  const { args } = usePageData();
+  const { domainId } = useUiContext();
+  const { _id: uid } = useUserContext();
+  const buildUrl = useBuildUrl();
+  const { tid } = resolveSubmissionContext({ pdoc: args.pdoc, tdoc: args.tdoc }, window.location.search, props.pid);
+  const cacheKey = getScratchpadCacheKey(uid, domainId, props.pid, tid);
+  const problemId = args.pdoc?._id;
+  if (!uid || uid < 0 || !domainId || typeof problemId !== 'string' || !/^[a-f\d]{24}$/i.test(problemId)) {
+    return <ScratchpadEditor key={cacheKey} {...props} cacheKey={cacheKey} />;
+  }
+  const receiptKey = getDraftResetReceiptKey(cacheKey, problemId);
+  const checkUrl = buildUrl('problem_draft_reset', { problemId }, tid ? { tid } : {});
+  return <CheckedScratchpad key={receiptKey} editor={props} {...{ cacheKey, receiptKey, checkUrl, uid, domainId }} />;
 }

@@ -11,6 +11,7 @@ import { Button, UnstyledButton } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { TimeDisplay } from '@/components/common/time-display';
+import { clearScratchpadDraft, getScratchpadCacheKey } from '@/components/editor/draft-storage';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { getScoreTone, getStatusTone, judgeBadgeStyle, STATUS, STATUS_TEXTS } from '@/components/record/status-map';
@@ -27,6 +28,7 @@ import { highlightCodeLines } from '@/utils/highlight';
 import { extractLocalizedContent } from '@/utils/i18n-content';
 import { normalizeObjectiveAnswers, objectiveCaseId } from '@/utils/objective-answers';
 import { getRecordProblemQuery, getRecordReturnQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
+import { formatUserName } from '@/utils/user-name';
 
 function asArray(value: any) {
   if (!value) return [];
@@ -548,6 +550,8 @@ export default function RecordDetailPage() {
   const canJudge = useHasPriv(PRIV.PRIV_JUDGE) || args.canRejudge;
   const [actionLoading, setActionLoading] = useState('');
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [clearCodeTarget, setClearCodeTarget] = useState<string | null>(null);
+  const [clearingCode, setClearingCode] = useState(false);
   const [error, setError] = useState('');
 
   // Merge server-side data with real-time WebSocket updates
@@ -559,6 +563,15 @@ export default function RecordDetailPage() {
   const pdoc = args.pdoc || {};
   const isObjective = pdoc.config?.type === 'objective';
   const tdoc = args.tdoc;
+  const pid = pdoc.pid || pdoc.docId;
+  const draftDomainId = serverRdoc.domainId || args.UiContext?.domainId;
+  const draftKey = !isObjective && pid && draftDomainId && user._id > 0 && user._id === (serverRdoc.uid ?? udoc._id)
+    ? getScratchpadCacheKey(user._id, draftDomainId, pid, tdoc?.docId || tdoc?._id)
+    : null;
+  const remoteDraftRid = args.canClearSubmitterDraft === true && serverRdoc._id ? String(serverRdoc._id) : '';
+  const clearTarget = draftKey || (remoteDraftRid ? `record:${remoteDraftRid}` : null);
+  const draftSubmitter = formatUserName(udoc) || String(serverRdoc.uid ?? '');
+  const showJudgeActions = canJudge && !rdoc.files?.hack;
   const allRevs = args.allRevs || {};
   const rev = args.rev;
 
@@ -613,6 +626,31 @@ export default function RecordDetailPage() {
       setError(err?.message || t('Network error'));
     } finally {
       setActionLoading('');
+    }
+  };
+
+  const confirmClearCode = async () => {
+    if (!clearTarget || clearCodeTarget !== clearTarget || clearingCode) return;
+    setClearingCode(true);
+    try {
+      if (draftKey) {
+        clearScratchpadDraft(window.localStorage, draftKey);
+        notifications.show({ color: 'green', message: t('Local code cleared.') });
+      } else {
+        const response = await fetch(buildUrl('record_detail', { rid: remoteDraftRid }), {
+          method: 'POST',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ operation: 'clear_draft' }),
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || data?.queued !== true) throw new Error(formatErrorMessage(data?.error, t('Operation failed')));
+        notifications.show({ color: 'green', message: t('Draft reset scheduled for {0}.', draftSubmitter) });
+      }
+      setClearCodeTarget(null);
+    } catch (failure) {
+      notifications.show({ color: 'red', message: failure instanceof Error ? t(failure.message) : t('Operation failed') });
+    } finally {
+      setClearingCode(false);
     }
   };
 
@@ -716,21 +754,30 @@ export default function RecordDetailPage() {
 
         <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Submission detail') || t('Information')}>
           <div className="flex flex-col gap-3.5">
-            {canJudge && !rdoc.files?.hack && (
+            {(showJudgeActions || clearTarget) && (
               <section className="hydro-sidebar-panel">
                 <Stack gap="xs">
-                  <Button size="xs" variant="light" loading={actionLoading === 'rejudge'} onClick={() => submitOperation('rejudge')}>
-                    {t('Rejudge')}
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="subtle"
-                    color="red"
-                    loading={actionLoading === 'cancel'}
-                    onClick={() => setCancelConfirmOpen(true)}
-                  >
-                    {t('Cancel Score')}
-                  </Button>
+                  {showJudgeActions && (
+                    <>
+                      <Button size="xs" variant="light" loading={actionLoading === 'rejudge'} onClick={() => submitOperation('rejudge')}>
+                        {t('Rejudge')}
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        color="red"
+                        loading={actionLoading === 'cancel'}
+                        onClick={() => setCancelConfirmOpen(true)}
+                      >
+                        {t('Cancel Score')}
+                      </Button>
+                    </>
+                  )}
+                  {clearTarget && (
+                    <Button size="xs" variant="subtle" color="red" onClick={() => setClearCodeTarget(clearTarget)}>
+                      {t('Clear Code')}
+                    </Button>
+                  )}
                 </Stack>
               </section>
             )}
@@ -843,6 +890,20 @@ export default function RecordDetailPage() {
         confirmLabel={t('Cancel Score')}
         confirmColor="red"
         loading={actionLoading === 'cancel'}
+      />
+      <ConfirmDialog
+        opened={Boolean(clearTarget && clearCodeTarget === clearTarget)}
+        onClose={() => setClearCodeTarget(null)}
+        onConfirm={confirmClearCode}
+        title={t('Clear Code')}
+        message={draftKey
+          ? t('Clear the code saved in this browser for this problem? Submitted code and scores will not change.')
+          : t(
+            'Clear the local draft for {0} the next time they open this problem? Submissions, scores, and replays are kept.',
+            draftSubmitter,
+          )}
+        confirmLabel={t('Clear Code')}
+        loading={clearingCode}
       />
     </Stack>
   );

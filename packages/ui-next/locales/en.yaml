@@ -649,8 +649,15 @@ All Users: All Users
 View users and reset passwords: View users and reset passwords.
 View users and reset passwords.: View users and reset passwords.
 Search users by username, UID or email: Search users by username, UID or email
+Clear Code: Clear Code
 Clear Search: Clear Search
+Clear the code saved in this browser for this problem? Submitted code and scores will not change.: Clear the code saved in this browser for this problem? Submitted code and scores will not change.
 Last Login: Last Login
+Local code cleared.: Local code cleared.
+Could not check for editor draft resets.: Could not check for editor draft resets.
+Draft reset scheduled for {0}.: Draft reset scheduled for {0}.
+Clear the local draft for {0} the next time they open this problem? Submissions, scores, and replays are kept.: Clear the local draft for {0} the next time they open this problem? Submissions, scores, and replays are kept.
+Your local code draft was cleared by an administrator.: Your local code draft was cleared by an administrator.
 Login IP: Login IP
 Total: Total
 Reset password for: Reset password for

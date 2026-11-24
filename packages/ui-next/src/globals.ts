@@ -26,6 +26,7 @@ export const FALLBACK_ROUTES: Record<string, string> = {
   manage_honor_frames: '/manage/honor-frames',
   manage_honor_frame_upload: '/manage/honor-frames/upload',
   manage_honor_frame_owners: '/manage/honor-frames/:id/owners',
+  problem_draft_reset: '/problem/draft-reset/:problemId',
 };
 
 interface RouteMapStore {

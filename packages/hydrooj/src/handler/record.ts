@@ -3,7 +3,7 @@ import {
 } from 'lodash';
 import { Filter, ObjectId } from 'mongodb';
 import {
-    ContestNotFoundError, ContestNotStartedError, HackRejudgeFailedError,
+    ContestNotFoundError, ContestNotStartedError, ForbiddenError, HackRejudgeFailedError,
     PermissionError, PretestRejudgeFailedError, ProblemConfigError,
     RecordNotFoundError,
 } from '../error';
@@ -14,6 +14,8 @@ import { resolveRecordUserIds } from '../lib/record-filter';
 import { getRecordFilterOptions, RECORD_FILTER_KINDS } from '../lib/record-filter-options';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
+import { requestDraftReset } from '../model/editor-draft-reset';
+import * as oplog from '../model/oplog';
 import problem, { ProblemDoc } from '../model/problem';
 import record from '../model/record';
 import { langs } from '../model/setting';
@@ -185,6 +187,13 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
     canViewRecordDetail = false;
     canViewRecordCode = false;
 
+    private canClearDraft(rdoc: RecordDoc, pdoc: ProblemDoc, canViewDetail: boolean, canViewCode: boolean) {
+        return !!pdoc?._id && canViewDetail && canViewCode
+            && rdoc.uid > 0 && rdoc.uid !== this.user._id && !!rdoc.lang && rdoc.lang !== '_'
+            && !rdoc.files?.hack && !rdoc.contest?.toString().startsWith('0'.repeat(23))
+            && this.user.hasPriv(PRIV.PRIV_USER_PROFILE) && this.user.hasPerm(PERM.PERM_REJUDGE);
+    }
+
     @param('rid', Types.ObjectId)
     async prepare(domainId: string, rid: ObjectId) {
         this.rdoc = await record.get(domainId, rid);
@@ -247,6 +256,7 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
         this.response.template = 'record_detail.html';
         this.response.body = {
             udoc, rdoc: canViewDetail ? rdoc : pick(rdoc, ['_id', 'lang', 'code']), pdoc, tdoc: this.tdoc, rev, allRevs, canViewCode,
+            canClearSubmitterDraft: this.canClearDraft(this.rdoc, pdoc, canViewDetail, canViewCode),
         };
     }
 
@@ -289,6 +299,17 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
             await postJudge(latest);
         }
         this.back();
+    }
+
+    async postClearDraft() {
+        const { pdoc, canViewDetail, canViewCode, accessGrant } = await getRecordAccess(this, this.rdoc);
+        if (!this.canClearDraft(this.rdoc, pdoc, canViewDetail, canViewCode)) throw new ForbiddenError();
+        await accessGrant?.assert();
+        await requestDraftReset(this.rdoc, pdoc._id, this.user._id);
+        await oplog.log(this, 'record.clearEditorDraft', {
+            rid: this.rdoc._id, uid: this.rdoc.uid, problemId: pdoc._id, tid: this.rdoc.contest,
+        });
+        this.response.body = { queued: true };
     }
 }
 

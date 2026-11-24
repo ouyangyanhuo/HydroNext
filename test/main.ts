@@ -252,6 +252,27 @@ describe('App', () => {
             const bounded = await lookup(contestant, 'problem', 'Limited');
             assert.equal(bounded.length, 20);
             assert.ok(bounded.every((doc) => Object.keys(doc).sort().join(',') === 'docId,pid,title'));
+
+            const { record } = global.Hydro.model;
+            const rid = await record.add(a, visible, uid, 'cc', 'submitted code', false, { contest: publicTid, type: 'judge' });
+            const { _id: problemId } = await problem.get(a, visible);
+            const recordUrl = `/d/${a}/record/${rid}`;
+            const resetUrl = `/d/${a}/problem/draft-reset/${problemId}`;
+            const check = async (client, filters = {}) => (await client.get(resetUrl)
+                .query(filters).set('Accept', 'application/json').expect(200)).body;
+            const operation = { operation: 'clear_draft' };
+            await contestant.post(recordUrl).send(operation).expect(403);
+            assert.equal((await check(contestant, { tid: publicTid.toString() })).version, 0);
+            assert.equal((await agent.get(recordUrl).set('Accept', 'application/json').expect(200)).body.canClearSubmitterDraft, true);
+            await agent.post(`/d/${b}/record/${rid}`).send(operation).expect(404);
+            await agent.post(recordUrl).send({ ...operation, uid: peer }).expect(200, { queued: true });
+            const target = { uid, domainId: a, version: 1 };
+            assert.deepEqual(await check(contestant, { tid: publicTid.toString() }), target);
+            assert.deepEqual(await check(contestant, { tid: publicTid.toString() }), target, 'another browser can execute the same reset');
+            assert.equal((await check(contestant)).version, 0, 'practice and contest drafts are independent');
+            assert.equal((await check(contestant, { tid: liveTid.toString() })).version, 0);
+            assert.equal((await check(agent, { tid: publicTid.toString(), uid })).version, 0, 'reads use the logged-in user');
+            assert.equal((await record.get(a, rid)).code, 'submitted code');
         } finally {
             await domain.del(a);
             await domain.del(b);

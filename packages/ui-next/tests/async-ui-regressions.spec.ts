@@ -459,8 +459,10 @@ test('submitting and returning through record problem links retains the source n
         '@/hooks/use-record-socket': { useRecordSocket: () => socketUpdate },
         '@/hooks/use-permission': { PRIV: {}, useHasPriv: () => false },
         '@/context/page-data': { usePageData: () => ({ args }), useUiContext: () => ({}) },
+        '@/components/common/confirm-dialog': component('../src/components/common/confirm-dialog.tsx'),
         '@/components/editor/code-editor': { CodeEditor: () => null },
         '@/components/editor/code-templates': { getCodeTemplate: () => 'int main() {}' },
+        '@/components/editor/draft-storage': component('../src/components/editor/draft-storage.ts'),
         '@/components/record/code-replay': { CodeReplay: () => null },
         '@/components/record/record-status-badge': { RecordStatusBadge: () => null },
         '@/components/record/status-map': component('../src/components/record/status-map.ts'),
@@ -468,6 +470,7 @@ test('submitting and returning through record problem links retains the source n
         '@/components/link': { Link: ({ href, children }: any) => h('a', { href }, children) },
         '@/utils/i18n-content': { extractLocalizedContent: (value: string) => value },
         '@/utils/highlight': component('../src/utils/highlight.ts'),
+        '@/utils/user-name': component('../src/utils/user-name.ts'),
         '@/registry/request-security': { protectedSubmissionHeaders: async () => ({}) },
         '@/utils/request': { formatRequestError: () => 'Failed' },
     };
@@ -523,6 +526,47 @@ test('submitting and returning through record problem links retains the source n
         assert.match(view.host.textContent!, /001/);
         assert.match(view.host.textContent!, /A, C/);
         assert.doesNotMatch(view.host.textContent!, /Source Code|Time Cost|Memory Cost|Language/);
+        assert.doesNotMatch(view.host.textContent!, /Clear Code/, 'objective answer drafts are separate');
+
+        const contestId = '0123456789abcdef01234567';
+        const key = `2/team/P2@${contestId}`;
+        const otherKeys = ['2/team/P2', '2/team/P3', '2/other/P2', `3/team/P2@${contestId}`, `${key}#lang`];
+        const storage = dom.window.localStorage;
+        args = {
+            ...args, pdoc: { docId: 2, pid: 'P2', title: 'Current problem' },
+            tdoc: { docId: contestId }, rdoc: { _id: 'rid', uid: 2, domainId: 'team', code: 'Submitted source' },
+        };
+        for (const draftKey of [key, ...otherKeys]) storage.setItem(draftKey, 'preserved');
+        let operationRequests = 0;
+        request = async () => {
+            operationRequests++;
+            return { ok: true, json: async () => ({}) };
+        };
+        await view.render(h(Record));
+        await act(async () => button('Clear Code', view.host).click());
+        assert.equal(storage.getItem(key), 'preserved', 'opening confirmation does not change the draft');
+        await act(async () => button('Clear Code', document.querySelector('[role="dialog"]')!).click());
+        assert.equal(storage.getItem(key), '');
+        for (const draftKey of otherKeys) assert.equal(storage.getItem(draftKey), 'preserved');
+        assert.match(view.host.textContent!, /Submitted source/);
+        assert.equal(operationRequests, 0, 'changing local code must not submit an operation');
+        args = { ...args, rdoc: { ...args.rdoc, uid: 3 }, canRejudge: true };
+        await view.render(h(Record));
+        assert.ok(button('Cancel Score', view.host));
+        assert.doesNotMatch(view.host.textContent!, /Clear Code/, 'the server must grant the remote action');
+        args = { ...args, udoc: { _id: 3, uname: 'Other' }, canClearSubmitterDraft: true };
+        const remoteRequests: any[] = [];
+        request = async (url, init) => {
+            remoteRequests.push({ url, body: JSON.parse(init.body) });
+            return { ok: true, json: async () => ({ queued: true }) };
+        };
+        await view.render(h(Record));
+        await act(async () => button('Clear Code', view.host).click());
+        await act(async () => button('Clear Code', document.querySelector('[role="dialog"]')!).click());
+        assert.deepEqual(remoteRequests, [{ url: '/d/team/record/rid', body: { operation: 'clear_draft' } }]);
+        for (const draftKey of otherKeys) assert.equal(storage.getItem(draftKey), 'preserved');
+        assert.equal(storage.getItem(key), '');
+        for (const draftKey of [key, ...otherKeys]) storage.removeItem(draftKey);
     } finally {
         await view.close();
         dom.reconfigure({ url: previousUrl });

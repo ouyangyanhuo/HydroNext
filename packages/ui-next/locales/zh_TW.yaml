@@ -703,8 +703,15 @@ All Users: 全部使用者
 View users and reset passwords: 檢視使用者並重設密碼。
 View users and reset passwords.: 檢視使用者並重設密碼。
 Search users by username, UID or email: 透過使用者名稱、UID 或電子郵件搜尋使用者
+Clear Code: 清空程式碼
 Clear Search: 清除搜尋
+Clear the code saved in this browser for this problem? Submitted code and scores will not change.: 確定清空此瀏覽器中儲存的本題程式碼？已提交的程式碼和成績不會改變。
 Last Login: 最近登入
+Local code cleared.: 已清空本機程式碼。
+Could not check for editor draft resets.: 無法檢查編輯器草稿的清空指令。
+Draft reset scheduled for {0}.: 已為 {0} 安排清空草稿。
+Clear the local draft for {0} the next time they open this problem? Submissions, scores, and replays are kept.: 確定為 {0} 安排清空本機草稿？對方下次在編輯器中開啟此題時生效。已提交的程式碼、成績和重播不會改變。
+Your local code draft was cleared by an administrator.: 管理員已清空你在此瀏覽器儲存的程式碼草稿。
 Login IP: 登入 IP
 Total: 總數
 Reset password for: 為使用者重設密碼

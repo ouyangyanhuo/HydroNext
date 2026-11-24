@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { transformSync } from 'esbuild';
 import { test } from 'node:test';
 import postcss from 'postcss';
+import * as draftStorage from '../src/components/editor/draft-storage.ts';
 import { resolveLanguagePreference } from '../src/components/editor/editor-language.ts';
 import * as submissionContext from '../src/components/editor/submission-context.ts';
 import * as statuses from '../src/components/record/status-map.ts';
@@ -55,18 +56,23 @@ test('formal editor submissions stay in a compact live modal and close according
     const signed: any[] = [];
     const completed: string[] = [];
     const actions: string[] = [];
+    const captures: string[] = [];
     const notices: any[] = [];
     const navigated: string[] = [];
     const updates = new Map<string, any>();
     const user: { _id: number, codeLang?: string } = { _id: 7 };
     const ui = { domainId: 'team' };
-    const args = { pdoc: { docId: 42, config: { type: 'default' } }, tdoc: { docId: tid, proctorEnabled: true } };
+    const args = { pdoc: { docId: 42, _id: '', config: { type: 'default' } }, tdoc: { docId: tid, proctorEnabled: true } };
+    let resetVersion = 0;
     const addon = {
-        initialize: async (code: string) => code, capture() {}, change() {},
+        initialize: async (code: string) => code, capture: (code: string) => captures.push(code), change() {},
         action: (action: string) => actions.push(action),
         beforeSubmit: async () => ({ fields: { replaySession: 'session' }, complete: async (data: any) => completed.push(data.rid) }),
     };
-    const buildUrl = (_name: string, params: any, query: any = {}) => `/d/team/record/${params.rid}?${new URLSearchParams(query)}`;
+    const buildUrl = (name: string, params: any, query: any = {}) => {
+        const path = name === 'problem_draft_reset' ? `problem/draft-reset/${params.problemId}` : `record/${params.rid}`;
+        return `/d/team/${path}?${new URLSearchParams(query)}`;
+    };
     const Allotment = Object.assign(({ children }: any) => h('div', {}, children), {
         Pane: ({ children }: any) => h('div', {}, children),
     });
@@ -89,6 +95,7 @@ test('formal editor submissions stay in a compact live modal and close according
         '@/utils/request': { formatRequestError: (error: any) => error.message },
         './addons': { createEditorAddon: () => addon },
         './code-templates': { getCodeTemplate: () => 'int main() {}' },
+        './draft-storage': draftStorage,
         './submission-context': submissionContext,
         './editor-language': { resolveLanguagePreference },
         './code-editor': {
@@ -108,6 +115,11 @@ test('formal editor submissions stay in a compact live modal and close according
             module, exports: module.exports, document, window, localStorage, Date: TestDate, URL, URLSearchParams, AbortController,
             require: (id: string) => mocks[id] || require(id),
             fetch: async (url: string, options: any) => {
+                if (url.includes('/problem/draft-reset/')) {
+                    assert.equal(new URL(url, window.location.href).searchParams.get('tid'), tid);
+                    assert.equal(options.cache, 'no-store');
+                    return { ok: true, json: async () => ({ uid: user._id, domainId: ui.domainId, version: resetVersion }) };
+                }
                 requests.push({ url, ...options });
                 return { ok: !fail, json: async () => fail ? { error: { message: 'Denied' } } : { rid: `record-${++counter}` } };
             },
@@ -123,7 +135,8 @@ test('formal editor submissions stay in a compact live modal and close according
     const langs = { cc: { display: 'C++', pretest: true }, py: { display: 'Python' }, js: { display: 'NodeJS' } };
     const render = async (key = 'first') => {
         await act(async () => root.render(h(mantine.MantineProvider, { env: 'test' }, h(StrictMode, {}, h(Scratchpad, {
-            key, pid: 'P42', langs, onClose: () => { quitCount++; },
+            key, pid: 'P42', langs, defaultCode: key === 'cleared' ? 'Submitted source' : '',
+            onClose: () => { quitCount++; },
         })))));
     };
     const findButton = (text: string, scope: ParentNode = document) => {
@@ -232,6 +245,26 @@ test('formal editor submissions stay in a compact live modal and close according
         user.codeLang = 'java';
         await render('disallowed-preference');
         assert.equal(languageInput().value, 'NodeJS', 'a disallowed preference cannot add a language outside the problem allowlist');
+
+        draftStorage.clearScratchpadDraft(localStorage, cacheKey);
+        addon.initialize = async () => preservedCode;
+        await render('cleared');
+        assert.equal(document.querySelector<HTMLTextAreaElement>('[aria-label=Code]')!.value, '',
+            'neither a previous submission nor restored replay code should refill a cleared draft');
+        assert.equal(localStorage.getItem(cacheKey), '');
+        assert.equal(captures.at(-1), '', 'replay tracks the clear without losing the earlier history');
+
+        // A server reset is applied before draft or replay restoration, once per browser.
+        args.pdoc._id = 'abcdefabcdefabcdefabcdef';
+        localStorage.setItem(cacheKey, preservedCode);
+        resetVersion = 1;
+        await render('remote-reset');
+        assert.equal(document.querySelector<HTMLTextAreaElement>('[aria-label=Code]')!.value, '');
+        assert.equal(localStorage.getItem(cacheKey), '');
+        localStorage.setItem(cacheKey, 'New code after reset');
+        await render('after-remote-reset');
+        assert.equal(document.querySelector<HTMLTextAreaElement>('[aria-label=Code]')!.value, 'New code after reset');
+        assert.equal(captures.at(-1), 'New code after reset', 'stale replay is not the source of code after a reset');
     } finally {
         await act(async () => root.unmount());
         dom.window.close();
