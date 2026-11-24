@@ -30,7 +30,6 @@ import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as discussion from '../model/discussion';
 import domain from '../model/domain';
-import { getDraftResetVersion } from '../model/editor-draft-reset';
 import * as oplog from '../model/oplog';
 import problem from '../model/problem';
 import record from '../model/record';
@@ -382,19 +381,6 @@ export class ProblemRandomHandler extends Handler {
         if (!pid) throw new NoProblemError();
         this.response.body = { pid };
         this.response.redirect = this.url('problem_detail', { pid });
-    }
-}
-
-/** Personalized editor metadata only: never returns problem or contest content. */
-export class ProblemDraftResetHandler extends Handler {
-    @route('problemId', Types.ObjectId)
-    @query('tid', Types.ObjectId, true)
-    async get(domainId: string, problemId: ObjectId, tid?: ObjectId) {
-        this.checkPriv(PRIV.PRIV_USER_PROFILE);
-        this.response.addHeader('Cache-Control', 'private, no-store');
-        this.response.body = {
-            uid: this.user._id, domainId, version: await getDraftResetVersion(domainId, this.user._id, problemId, tid),
-        };
     }
 }
 
@@ -1268,7 +1254,6 @@ declare module '@hydrooj/framework' {
 export async function apply(ctx: Context) {
     ctx.Route('problem_main', '/p', ProblemMainHandler, PERM.PERM_VIEW_PROBLEM);
     ctx.Route('problem_random', '/problem/random', ProblemRandomHandler, PERM.PERM_VIEW_PROBLEM);
-    ctx.Route('problem_draft_reset', '/problem/draft-reset/:problemId', ProblemDraftResetHandler, PERM.PERM_VIEW);
     ctx.Route('problem_detail', '/p/:pid', ProblemDetailHandler);
     ctx.Route('problem_submit', '/p/:pid/submit', ProblemSubmitHandler, PERM.PERM_SUBMIT_PROBLEM);
     ctx.Route('problem_hack', '/p/:pid/hack/:rid', ProblemHackHandler, PERM.PERM_SUBMIT_PROBLEM);

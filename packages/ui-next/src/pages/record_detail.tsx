@@ -21,7 +21,6 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useI18n } from '@/hooks/use-i18n';
-import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useRecordSocket } from '@/hooks/use-record-socket';
 import { formatErrorMessage } from '@/utils/error';
 import { highlightCodeLines } from '@/utils/highlight';
@@ -547,7 +546,7 @@ export default function RecordDetailPage() {
   const navigate = useNavigate();
   const { t, language } = useI18n();
   const user = useCurrentUser();
-  const canJudge = useHasPriv(PRIV.PRIV_JUDGE) || args.canRejudge;
+  const canJudge = args.canRejudge === true;
   const [actionLoading, setActionLoading] = useState('');
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [clearCodeTarget, setClearCodeTarget] = useState<string | null>(null);
@@ -565,10 +564,10 @@ export default function RecordDetailPage() {
   const tdoc = args.tdoc;
   const pid = pdoc.pid || pdoc.docId;
   const draftDomainId = serverRdoc.domainId || args.UiContext?.domainId;
-  const draftKey = !isObjective && pid && draftDomainId && user._id > 0 && user._id === (serverRdoc.uid ?? udoc._id)
+  const draftKey = canJudge && !isObjective && pid && draftDomainId && user._id > 0 && user._id === (serverRdoc.uid ?? udoc._id)
     ? getScratchpadCacheKey(user._id, draftDomainId, pid, tdoc?.docId || tdoc?._id)
     : null;
-  const remoteDraftRid = args.canClearSubmitterDraft === true && serverRdoc._id ? String(serverRdoc._id) : '';
+  const remoteDraftRid = canJudge && args.canClearSubmitterDraft === true && serverRdoc._id ? String(serverRdoc._id) : '';
   const clearTarget = draftKey || (remoteDraftRid ? `record:${remoteDraftRid}` : null);
   const draftSubmitter = formatUserName(udoc) || String(serverRdoc.uid ?? '');
   const showJudgeActions = canJudge && !rdoc.files?.hack;
@@ -899,7 +898,7 @@ export default function RecordDetailPage() {
         message={draftKey
           ? t('Clear the code saved in this browser for this problem? Submitted code and scores will not change.')
           : t(
-            'Clear the local draft for {0} the next time they open this problem? Submissions, scores, and replays are kept.',
+            'Clear the local draft for {0} now or when they reopen the editor? Submissions, scores, and replays are kept.',
             draftSubmitter,
           )}
         confirmLabel={t('Clear Code')}

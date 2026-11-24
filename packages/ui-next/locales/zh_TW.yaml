@@ -710,7 +710,7 @@ Last Login: 最近登入
 Local code cleared.: 已清空本機程式碼。
 Could not check for editor draft resets.: 無法檢查編輯器草稿的清空指令。
 Draft reset scheduled for {0}.: 已為 {0} 安排清空草稿。
-Clear the local draft for {0} the next time they open this problem? Submissions, scores, and replays are kept.: 確定為 {0} 安排清空本機草稿？對方下次在編輯器中開啟此題時生效。已提交的程式碼、成績和重播不會改變。
+Clear the local draft for {0} now or when they reopen the editor? Submissions, scores, and replays are kept.: 確定清空 {0} 的本機草稿？編輯器已開啟時立即生效，否則在對方下次開啟時生效。提交、成績和重播不變。
 Your local code draft was cleared by an administrator.: 管理員已清空你在此瀏覽器儲存的程式碼草稿。
 Login IP: 登入 IP
 Total: 總數

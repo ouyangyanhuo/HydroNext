@@ -14,7 +14,7 @@ import { resolveRecordUserIds } from '../lib/record-filter';
 import { getRecordFilterOptions, RECORD_FILTER_KINDS } from '../lib/record-filter-options';
 import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
-import { requestDraftReset } from '../model/editor-draft-reset';
+import { draftResetScope, requestDraftReset } from '../model/editor-draft-reset';
 import * as oplog from '../model/oplog';
 import problem, { ProblemDoc } from '../model/problem';
 import record from '../model/record';
@@ -187,11 +187,9 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
     canViewRecordDetail = false;
     canViewRecordCode = false;
 
-    private canClearDraft(rdoc: RecordDoc, pdoc: ProblemDoc, canViewDetail: boolean, canViewCode: boolean) {
-        return !!pdoc?._id && canViewDetail && canViewCode
-            && rdoc.uid > 0 && rdoc.uid !== this.user._id && !!rdoc.lang && rdoc.lang !== '_'
-            && !rdoc.files?.hack && !rdoc.contest?.toString().startsWith('0'.repeat(23))
-            && this.user.hasPriv(PRIV.PRIV_USER_PROFILE) && this.user.hasPerm(PERM.PERM_REJUDGE);
+    private canClearDraft(pdoc: ProblemDoc) {
+        return !!pdoc?._id && this.rdoc.uid > 0 && this.rdoc.uid !== this.user._id
+            && !!this.rdoc.lang && this.rdoc.lang !== '_';
     }
 
     @param('rid', Types.ObjectId)
@@ -220,6 +218,8 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
     @param('rev', Types.ObjectId, true)
     // eslint-disable-next-line consistent-return
     async get(domainId: string, rid: ObjectId, download = false, rev?: ObjectId) {
+        const canRejudge = this.user.hasPerm(PERM.PERM_REJUDGE) && !this.rdoc.files?.hack
+            && !this.rdoc.contest?.toString().startsWith('0'.repeat(23));
         let rdoc = this.rdoc;
         const allRev = await record.collHistory.find({ rid }).project({ _id: 1, judgeAt: 1 }).sort({ _id: -1 }).toArray();
         const allRevs: Record<string, Date> = Object.fromEntries(allRev.map((i) => [i._id.toString(), i.judgeAt]));
@@ -227,6 +227,7 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
             rdoc = { ...rdoc, ...omit(await record.collHistory.findOne({ _id: rev }), ['_id']), progress: null };
         }
         const { pdoc, tdoc, tsdoc, canViewDetail, canViewCode } = await getRecordAccess(this, rdoc);
+        const canClearSubmitterDraft = canRejudge && this.canClearDraft(pdoc);
         this.canViewRecordDetail = canViewDetail;
         this.canViewRecordCode = canViewCode;
         this.tdoc = tdoc;
@@ -256,7 +257,7 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
         this.response.template = 'record_detail.html';
         this.response.body = {
             udoc, rdoc: canViewDetail ? rdoc : pick(rdoc, ['_id', 'lang', 'code']), pdoc, tdoc: this.tdoc, rev, allRevs, canViewCode,
-            canClearSubmitterDraft: this.canClearDraft(this.rdoc, pdoc, canViewDetail, canViewCode),
+            canRejudge, canClearSubmitterDraft,
         };
     }
 
@@ -302,12 +303,14 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
     }
 
     async postClearDraft() {
-        const { pdoc, canViewDetail, canViewCode, accessGrant } = await getRecordAccess(this, this.rdoc);
-        if (!this.canClearDraft(this.rdoc, pdoc, canViewDetail, canViewCode)) throw new ForbiddenError();
-        await accessGrant?.assert();
-        await requestDraftReset(this.rdoc, pdoc._id, this.user._id);
+        // post() already enforces the same domain permission and record constraints as rejudge.
+        const { domainId, uid, contest: tid } = this.rdoc;
+        const pdoc = await problem.get(domainId, this.rdoc.pid, ['_id']);
+        if (!this.canClearDraft(pdoc)) throw new ForbiddenError();
+        const { version } = await requestDraftReset(this.rdoc, pdoc._id, this.user._id);
+        this.ctx.broadcast('editor/draftReset', { ...draftResetScope(domainId, uid, pdoc._id, tid), version });
         await oplog.log(this, 'record.clearEditorDraft', {
-            rid: this.rdoc._id, uid: this.rdoc.uid, problemId: pdoc._id, tid: this.rdoc.contest,
+            rid: this.rdoc._id, uid, problemId: pdoc._id, tid,
         });
         this.response.body = { queued: true };
     }

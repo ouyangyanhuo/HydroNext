@@ -788,7 +788,7 @@ Last Login: 最近登录
 Local code cleared.: 已清空本地代码。
 Could not check for editor draft resets.: 无法检查编辑器草稿的清空指令。
 Draft reset scheduled for {0}.: 已为 {0} 安排清空草稿。
-Clear the local draft for {0} the next time they open this problem? Submissions, scores, and replays are kept.: 确定为 {0} 安排清空本地草稿？对方下次在编辑器中打开本题时生效。已提交的代码、成绩和回放不会改变。
+Clear the local draft for {0} now or when they reopen the editor? Submissions, scores, and replays are kept.: 确定清空 {0} 的本地草稿？编辑器已打开时立即生效，否则在对方下次打开时生效。提交、成绩和回放不变。
 Your local code draft was cleared by an administrator.: 管理员已清空你在此浏览器保存的代码草稿。
 Login IP: 登录 IP
 Total: 总数

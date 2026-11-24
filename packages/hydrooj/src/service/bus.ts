@@ -10,6 +10,7 @@ import type {
     ScoreboardConfig, ScoreboardRow, Tdoc, TrainingDoc, User,
 } from '../interface';
 import type { DocType } from '../model/document';
+import type { DraftResetUpdate } from '../model/editor-draft-reset';
 
 export type Disposable = () => void;
 export type VoidReturn = Promise<any> | any;
@@ -108,6 +109,7 @@ export interface EventMap {
 
     'record/change': (rdoc: RecordDoc, $set?: any, $push?: any, body?: any) => void;
     'record/judge': (rdoc: RecordDoc, updated: boolean, pdoc?: ProblemDoc, updater?: any) => VoidReturn;
+    'editor/draftReset': (update: DraftResetUpdate) => void;
 
     'auth/before-login': (ctx: Handler, udoc: User) => VoidReturn;
     'auth/login': (ctx: Handler, udoc: User) => VoidReturn;

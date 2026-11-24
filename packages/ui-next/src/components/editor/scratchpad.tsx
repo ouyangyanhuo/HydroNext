@@ -18,9 +18,11 @@ import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
 import { useRecordSocket } from '@/hooks/use-record-socket';
+import { useWebSocket } from '@/hooks/use-websocket';
 import { protectedSubmissionHeaders as proctorSubmissionHeaders } from '@/registry/request-security';
 import { getProblemEditorUrl, getProblemNavigationQuery, getSubmissionRecordQuery } from '@/utils/problem-navigation';
 import { formatRequestError as proctorError } from '@/utils/request';
+import { pageDomainPath } from '@/utils/websocket-url';
 import { createEditorAddon, type EditorAddon } from './addons';
 import {
   CodeEditor,
@@ -119,6 +121,11 @@ function ScratchpadEditor({
     const cached = localStorage.getItem(cacheKey);
     return cached ?? (resetVersion ? '' : defaultCode || getCodeTemplate(lang, user.codeTemplate) || '');
   });
+  const [appliedResetVersion, setAppliedResetVersion] = useState(resetVersion);
+  if (appliedResetVersion !== resetVersion) {
+    setAppliedResetVersion(resetVersion);
+    setCode(localStorage.getItem(cacheKey) ?? '');
+  }
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [pretesting, setPretesting] = useState(false);
@@ -136,7 +143,7 @@ function ScratchpadEditor({
   const fontSize = Number(editorConfig.fontSize || getStoredNumber('hydro/editor/fontSize', 14));
   const tabSize = Number(editorConfig.tabSize || getStoredNumber('hydro/editor/tabSize', 4));
   const theme = editorConfig.theme || '';
-  const [readyAddon, setReadyAddon] = useState<EditorAddon | null>(null);
+  const [readyAddon, setReadyAddon] = useState<{ addon: EditorAddon, version?: number } | null>(null);
   const judgePending = useRef(false);
   const pretestUpdate = useRecordSocket(pretestRid);
   const submitUpdate = useRecordSocket(submitResult?.rid ? String(submitResult.rid) : undefined);
@@ -153,7 +160,7 @@ function ScratchpadEditor({
   const submitQuery = getProblemNavigationQuery(navigationSearch, args.tdoc);
   const resolvedSubmitUrl = submitUrl || getProblemSubmitUrl(window.location.pathname, submitQuery)
     || buildUrl('problem_submit', { pid: submissionContext.pid }, submitQuery);
-  const addonReady = !editorAddon || readyAddon === editorAddon;
+  const addonReady = !editorAddon || (readyAddon?.addon === editorAddon && readyAddon.version === resetVersion);
   const canUsePretest = useMemo(() => {
     const info = langs[lang] || {};
     if (info.pretest === false) return false;
@@ -228,7 +235,7 @@ function ScratchpadEditor({
         // Preserve the replay history without letting an older tab's recording restore cleared code.
         if (restoredCode !== code) editorAddon.capture(code, lang);
       } else setCode(restoredCode);
-      setReadyAddon(editorAddon);
+      setReadyAddon({ addon: editorAddon, version: resetVersion });
     }).catch((failure) => {
       if (!cancelled) notifications.show({ color: 'red', message: t(failure?.message || 'Operation failed') });
     });
@@ -236,9 +243,9 @@ function ScratchpadEditor({
       cancelled = true;
       controller.abort();
     };
-    // Initial code is recovered once for each editor addon instance.
+    // Reconcile the replay when the editor addon or the draft reset revision changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editorAddon, t]);
+  }, [editorAddon, resetVersion, t]);
 
   const captureAction = useCallback((action: string, characters?: number) => {
     editorAddon?.action(action, lang, characters);
@@ -518,6 +525,7 @@ function ScratchpadEditor({
                 <Allotment vertical>
                   <Allotment.Pane minSize={260}>
                     {addonReady ? <CodeEditor
+                      key={resetVersion}
                       documentOnlySuggestions
                       value={code}
                       onChange={setCode}
@@ -684,7 +692,7 @@ function ScratchpadEditor({
 }
 
 function CheckedScratchpad({
-  editor, cacheKey, receiptKey, checkUrl, uid, domainId,
+  editor, cacheKey, receiptKey, checkUrl, uid, domainId, problemId, tid,
 }: {
   editor: ScratchpadProps;
   cacheKey: string;
@@ -692,11 +700,39 @@ function CheckedScratchpad({
   checkUrl: string;
   uid: number;
   domainId: string;
+  problemId: string;
+  tid?: string;
 }) {
   const { t } = useI18n();
   const [attempt, setAttempt] = useState(0);
   const [version, setVersion] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
+
+  const acceptReset = useCallback((data: any) => {
+    if (data?.uid !== uid || data.domainId !== domainId || !Number.isSafeInteger(data.version) || data.version < 0) return false;
+    const storage = window.localStorage;
+    if (applyDraftReset(storage, cacheKey, receiptKey, data.version)) {
+      notifications.show({ color: 'orange', message: t('Your local code draft was cleared by an administrator.') });
+    }
+    const applied = readDraftResetVersion(storage, receiptKey);
+    setVersion((previous) => Math.max(previous ?? 0, applied));
+    return true;
+  }, [cacheKey, domainId, receiptKey, t, uid]);
+
+  const socketQuery = new URLSearchParams({ problemId, ...(tid ? { tid } : {}) });
+  useWebSocket({
+    url: `/problem-draft-reset-conn?${socketQuery}`,
+    domainPath: pageDomainPath(window.location.pathname),
+    onMessage: (data) => {
+      if (data?.problemId !== problemId || data.tid !== (tid || '')) return;
+      try {
+        acceptReset(data);
+      } catch {
+        setFailed(true);
+        notifications.show({ color: 'red', message: t('Could not check for editor draft resets.') });
+      }
+    },
+  });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -711,14 +747,7 @@ function CheckedScratchpad({
         const data = await response.json();
         if (disposed) return;
         if (controller.signal.aborted) throw new Error('Draft reset check timed out');
-        if (data.uid !== uid || data.domainId !== domainId || !Number.isSafeInteger(data.version) || data.version < 0) {
-          throw new Error('Invalid draft reset response');
-        }
-        const storage = window.localStorage;
-        if (applyDraftReset(storage, cacheKey, receiptKey, data.version)) {
-          notifications.show({ color: 'orange', message: t('Your local code draft was cleared by an administrator.') });
-        }
-        setVersion(readDraftResetVersion(storage, receiptKey));
+        if (!acceptReset(data)) throw new Error('Invalid draft reset response');
       } catch {
         if (!disposed) setFailed(true);
       } finally {
@@ -731,7 +760,7 @@ function CheckedScratchpad({
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [attempt, cacheKey, checkUrl, domainId, receiptKey, t, uid]);
+  }, [acceptReset, attempt, checkUrl]);
 
   useEffect(() => {
     const syncReset = (event: StorageEvent) => {
@@ -744,7 +773,7 @@ function CheckedScratchpad({
   }, [receiptKey]);
 
   if (version !== null) {
-    return <ScratchpadEditor key={version} {...editor} {...{ cacheKey, receiptKey, resetVersion: version }} />;
+    return <ScratchpadEditor {...editor} {...{ cacheKey, receiptKey, resetVersion: version }} />;
   }
   return (
     <Center className="hydro-scratchpad-shell">
@@ -774,5 +803,5 @@ export function Scratchpad(props: ScratchpadProps) {
   }
   const receiptKey = getDraftResetReceiptKey(cacheKey, problemId);
   const checkUrl = buildUrl('problem_draft_reset', { problemId }, tid ? { tid } : {});
-  return <CheckedScratchpad key={receiptKey} editor={props} {...{ cacheKey, receiptKey, checkUrl, uid, domainId }} />;
+  return <CheckedScratchpad key={receiptKey} editor={props} {...{ cacheKey, receiptKey, checkUrl, uid, domainId, problemId, tid }} />;
 }

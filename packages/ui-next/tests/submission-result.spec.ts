@@ -11,6 +11,7 @@ import * as submissionContext from '../src/components/editor/submission-context.
 import * as statuses from '../src/components/record/status-map.ts';
 import { objectiveCaseId } from '../src/utils/objective-answers.ts';
 import * as navigation from '../src/utils/problem-navigation.ts';
+import { pageDomainPath } from '../src/utils/websocket-url.ts';
 
 const require = createRequire(import.meta.url);
 
@@ -64,6 +65,7 @@ test('formal editor submissions stay in a compact live modal and close according
     const ui = { domainId: 'team' };
     const args = { pdoc: { docId: 42, _id: '', config: { type: 'default' } }, tdoc: { docId: tid, proctorEnabled: true } };
     let resetVersion = 0;
+    let draftSocket: any;
     const addon = {
         initialize: async (code: string) => code, capture: (code: string) => captures.push(code), change() {},
         action: (action: string) => actions.push(action),
@@ -87,12 +89,14 @@ test('formal editor submissions stay in a compact live modal and close according
         '@/context/router': { useNavigate: () => async (url: string) => { navigated.push(url); } },
         '@/context/page-data': { usePageData: () => ({ args }), useUiContext: () => ui, useUserContext: () => user },
         '@/hooks/use-record-socket': { useRecordSocket: (rid?: string) => updates.get(rid || '') || null },
+        '@/hooks/use-websocket': { useWebSocket: (options: any) => { draftSocket = options; } },
         '@/registry/request-security': {
             protectedSubmissionHeaders: async (...values: any[]) => { signed.push(values); return { 'x-proctor-proof': 'signed' }; },
         },
         '@/utils/problem-navigation': navigation,
         '@/utils/objective-answers': { objectiveCaseId },
         '@/utils/request': { formatRequestError: (error: any) => error.message },
+        '@/utils/websocket-url': { pageDomainPath },
         './addons': { createEditorAddon: () => addon },
         './code-templates': { getCodeTemplate: () => 'int main() {}' },
         './draft-storage': draftStorage,
@@ -265,6 +269,29 @@ test('formal editor submissions stay in a compact live modal and close according
         await render('after-remote-reset');
         assert.equal(document.querySelector<HTMLTextAreaElement>('[aria-label=Code]')!.value, 'New code after reset');
         assert.equal(captures.at(-1), 'New code after reset', 'stale replay is not the source of code after a reset');
+        assert.equal(draftSocket.domainPath, '/d/team');
+        const scope = { uid: user._id, domainId: ui.domainId, problemId: args.pdoc._id, tid };
+        const currentTextarea = () => document.querySelector<HTMLTextAreaElement>('[aria-label=Code]')!;
+        await act(async () => {
+            draftSocket.onMessage({ ...scope, uid: 8, version: 2 });
+            draftSocket.onMessage({ ...scope, tid: '', version: 2 });
+            draftSocket.onMessage({ ...scope, domainId: 'other', version: 2 });
+        });
+        assert.equal(currentTextarea().value, 'New code after reset');
+        await act(async () => draftSocket.onMessage({ ...scope, version: 2 }));
+        assert.equal(currentTextarea().value, '', 'a matching live event clears the open editor without navigation');
+        assert.equal(localStorage.getItem(cacheKey), '');
+        assert.equal(captures.at(-1), '', 'recording continues with the empty editor');
+        assert.equal(navigated.length, 1, 'clearing code never leaves the editor');
+        await act(async () => {
+            Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value')!.set!.call(currentTextarea(), 'Newer code');
+            currentTextarea().dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        });
+        await act(async () => {
+            draftSocket.onMessage({ ...scope, version: 2 });
+            draftSocket.onMessage({ ...scope, version: 1 });
+        });
+        assert.equal(currentTextarea().value, 'Newer code', 'duplicates and older snapshots do not erase new edits');
     } finally {
         await act(async () => root.unmount());
         dom.window.close();

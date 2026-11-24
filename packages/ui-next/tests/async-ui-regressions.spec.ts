@@ -543,6 +543,9 @@ test('submitting and returning through record problem links retains the source n
             return { ok: true, json: async () => ({}) };
         };
         await view.render(h(Record));
+        assert.doesNotMatch(view.host.textContent!, /Clear Code|Rejudge/, 'both actions require permission to rejudge');
+        args = { ...args, canRejudge: true };
+        await view.render(h(Record));
         await act(async () => button('Clear Code', view.host).click());
         assert.equal(storage.getItem(key), 'preserved', 'opening confirmation does not change the draft');
         await act(async () => button('Clear Code', document.querySelector('[role="dialog"]')!).click());

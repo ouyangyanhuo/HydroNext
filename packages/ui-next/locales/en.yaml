@@ -656,7 +656,7 @@ Last Login: Last Login
 Local code cleared.: Local code cleared.
 Could not check for editor draft resets.: Could not check for editor draft resets.
 Draft reset scheduled for {0}.: Draft reset scheduled for {0}.
-Clear the local draft for {0} the next time they open this problem? Submissions, scores, and replays are kept.: Clear the local draft for {0} the next time they open this problem? Submissions, scores, and replays are kept.
+Clear the local draft for {0} now or when they reopen the editor? Submissions, scores, and replays are kept.: Clear the local draft for {0} now or when they reopen the editor? Submissions, scores, and replays are kept.
 Your local code draft was cleared by an administrator.: Your local code draft was cleared by an administrator.
 Login IP: Login IP
 Total: Total

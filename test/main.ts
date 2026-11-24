@@ -1,5 +1,6 @@
 import assert from 'assert';
 import { generateKeyPairSync } from 'crypto';
+import { once } from 'events';
 import { writeFileSync } from 'fs';
 import autocannon from 'autocannon';
 import {
@@ -153,7 +154,7 @@ describe('App', () => {
         await Promise.all([domain.add(a, 2, 'Filter A', ''), domain.add(b, 2, 'Filter B', '')]);
         const view = PERM.PERM_VIEW | PERM.PERM_VIEW_PROBLEM | PERM.PERM_VIEW_CONTEST;
         await domain.setRoles(a, { guest: 0n, default: view, records: view | PERM.PERM_VIEW_RECORD,
-            noEntities: PERM.PERM_VIEW | PERM.PERM_VIEW_RECORD });
+            noEntities: PERM.PERM_VIEW | PERM.PERM_VIEW_RECORD, rejudge: view | PERM.PERM_VIEW_RECORD | PERM.PERM_REJUDGE });
         await domain.setJoin(a, uid, true);
         await domain.setJoin(a, peer, true);
         await domain.setUserInDomain(a, peer, { displayName: 'Domain peer', phone: 'private-phone' });
@@ -172,7 +173,8 @@ describe('App', () => {
         const liveTid = await contest.add(a, 'Filter team', '', 2, 'acm', start,
             new Date(Date.now() + 3600_000), [visible], false, { allowTeam: true });
         const contestant = supertest.agent(require('hydrooj').httpServer);
-        await contestant.post('/login').send({ uname: 'filter-student', password: 'secret' }).expect(302);
+        const login = await contestant.post('/login').send({ uname: 'filter-student', password: 'secret' }).expect(302);
+        const draftSockets: any[] = [];
         const lookup = async (client: any, kind: string, q: string, extra: Record<string, any> = {}, targetDomain = a) => {
             const response = await client.get(`/d/${targetDomain}/record/filter-options`).query({ kind, q, ...extra })
                 .set('Accept', 'application/json').expect(200);
@@ -262,6 +264,7 @@ describe('App', () => {
                 .query(filters).set('Accept', 'application/json').expect(200)).body;
             const operation = { operation: 'clear_draft' };
             await contestant.post(recordUrl).send(operation).expect(403);
+            await contestant.post(recordUrl).send({ operation: 'rejudge' }).expect(403);
             assert.equal((await check(contestant, { tid: publicTid.toString() })).version, 0);
             assert.equal((await agent.get(recordUrl).set('Accept', 'application/json').expect(200)).body.canClearSubmitterDraft, true);
             await agent.post(`/d/${b}/record/${rid}`).send(operation).expect(404);
@@ -273,7 +276,63 @@ describe('App', () => {
             assert.equal((await check(contestant, { tid: liveTid.toString() })).version, 0);
             assert.equal((await check(agent, { tid: publicTid.toString(), uid })).version, 0, 'reads use the logged-in user');
             assert.equal((await record.get(a, rid)).code, 'submitted code');
+
+            const WebSocket = require('ws');
+            const { port } = require('hydrooj').httpServer.address();
+            const connectDraft = (session: string[], tid: any) => {
+                const cookie = session.map((value) => value.split(';')[0]).join('; ');
+                const socket = new WebSocket(`ws://127.0.0.1:${port}/d/${a}/problem-draft-reset-conn?problemId=${problemId}&tid=${tid}&uid=${uid}`,
+                    { headers: { Cookie: cookie } });
+                socket.on('error', () => {});
+                draftSockets.push(socket);
+                return socket;
+            };
+            const nextFrame = async (socket) => {
+                const [frame] = await once(socket, 'message', { signal: AbortSignal.timeout(5000) });
+                return frame.toString();
+            };
+            const sameScope = { ...target, problemId: String(problemId), tid: String(publicTid) };
+            const ownSocket = connectDraft(login.headers['set-cookie'], publicTid);
+            const otherContestSocket = connectDraft(login.headers['set-cookie'], liveTid);
+            const otherUserSocket = connectDraft(Root.creditionals, publicTid);
+            const [ownInitial, otherContestInitial, otherUserInitial] = (await Promise.all(
+                [ownSocket, otherContestSocket, otherUserSocket].map(nextFrame),
+            )).map((frame) => JSON.parse(frame));
+            assert.deepEqual(ownInitial, sameScope);
+            assert.deepEqual(otherContestInitial, { ...sameScope, tid: String(liveTid), version: 0 });
+            assert.deepEqual(otherUserInitial, { ...sameScope, uid: 2, version: 0 });
+            const leaked: any[] = [];
+            for (const socket of [otherContestSocket, otherUserSocket]) {
+                socket.on('message', (frame: Buffer) => {
+                    if (frame.toString() !== 'pong' && frame.toString() !== 'ping') leaked.push(JSON.parse(frame.toString()));
+                });
+            }
+            const pushed = nextFrame(ownSocket);
+            await agent.post(recordUrl).send(operation).expect(200);
+            assert.deepEqual(JSON.parse(await pushed), { ...sameScope, version: 2 });
+            const pong = [otherContestSocket, otherUserSocket].map((socket) => {
+                const reply = nextFrame(socket);
+                socket.send('ping');
+                return reply;
+            });
+            assert.deepEqual(await Promise.all(pong), ['pong', 'pong']);
+            assert.deepEqual(leaked, [], 'updates are routed only to the target account and contest');
+            ownSocket.terminate();
+            assert.deepEqual(JSON.parse(await nextFrame(connectDraft(login.headers['set-cookie'], publicTid))),
+                { ...sameScope, version: 2 }, 'a reconnect receives the durable reset even if it missed the push');
+
+            // A delegated rejudge role need not also have permission to read someone else's source code.
+            const peerRid = await record.add(a, visible, peer, 'cc', 'peer code', false, { contest: publicTid, type: 'judge' });
+            await domain.setUserRole(a, uid, 'rejudge');
+            const peerPath = `/d/${a}/record/${peerRid}`;
+            const delegated = (await contestant.get(peerPath).set('Accept', 'application/json').expect(200)).body;
+            assert.equal(delegated.canViewCode, false);
+            assert.equal(delegated.canRejudge, true);
+            assert.equal(delegated.canClearSubmitterDraft, true);
+            await contestant.post(peerPath).send(operation).expect(200, { queued: true });
+            assert.equal((await record.get(a, peerRid)).code, 'peer code');
         } finally {
+            draftSockets.forEach((socket) => socket.terminate());
             await domain.del(a);
             await domain.del(b);
             await user.coll.deleteMany({ _id: { $in: [uid, peer, outsider] } });

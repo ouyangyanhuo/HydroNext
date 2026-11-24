@@ -749,7 +749,7 @@ __langname: 日本語
 'Local code cleared.': 'ブラウザーに保存したコードを消去しました。'
 'Could not check for editor draft resets.': 'エディターの下書き消去指示を確認できませんでした。'
 'Draft reset scheduled for {0}.': '{0} の下書き消去を予約しました。'
-'Clear the local draft for {0} the next time they open this problem? Submissions, scores, and replays are kept.': '{0} のローカル下書きの消去を予約しますか？次に本人がエディターでこの問題を開いたときに消去されます。提出済みのコード、得点、リプレイは変わりません。'
+'Clear the local draft for {0} now or when they reopen the editor? Submissions, scores, and replays are kept.': '{0} のローカル下書きを消去しますか？エディターが開いている場合はすぐに、閉じている場合は次回起動時に適用されます。提出済みのコード、得点、リプレイは変わりません。'
 'Your local code draft was cleared by an administrator.': '管理者がこのブラウザーに保存されていたコードの下書きを消去しました。'
 'Login IP': 'ログイン IP'
 'Total': '合計'

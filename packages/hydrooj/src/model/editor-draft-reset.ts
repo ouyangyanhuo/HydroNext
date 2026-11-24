@@ -20,6 +20,18 @@ function key(domainId: string, uid: number, problemId: ObjectId, contestId?: Obj
     return JSON.stringify([domainId, uid, problemId.toHexString(), contestId?.toHexString() || '']);
 }
 
+export interface DraftResetUpdate {
+    domainId: string;
+    uid: number;
+    problemId: string;
+    tid: string;
+    version: number;
+}
+
+export function draftResetScope(domainId: string, uid: number, problemId: ObjectId, tid?: ObjectId) {
+    return { domainId, uid, problemId: problemId.toHexString(), tid: tid?.toHexString() || '' };
+}
+
 export async function getDraftResetVersion(domainId: string, uid: number, problemId: ObjectId, contestId?: ObjectId) {
     const reset = await db.collection('editor.draftReset').findOne(
         { _id: key(domainId, uid, problemId, contestId) }, { projection: { version: 1 } },
