@@ -220,7 +220,6 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
     async get(domainId: string, rid: ObjectId, download = false, rev?: ObjectId) {
         const canRejudge = this.user.hasPerm(PERM.PERM_REJUDGE) && !this.rdoc.files?.hack
             && !this.rdoc.contest?.toString().startsWith('0'.repeat(23));
-        const detailRejudgeQueued = this.rdoc.detailRejudgeQueued === true || !!(this.rdoc.rejudged && this.rdoc.judgeAt);
         const editorDraftResetQueued = this.rdoc.editorDraftResetQueued === true;
         let rdoc = this.rdoc;
         const allRev = await record.collHistory.find({ rid }).project({ _id: 1, judgeAt: 1 }).sort({ _id: -1 }).toArray();
@@ -259,7 +258,7 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
         this.response.template = 'record_detail.html';
         this.response.body = {
             udoc, rdoc: canViewDetail ? rdoc : pick(rdoc, ['_id', 'lang', 'code']), pdoc, tdoc: this.tdoc, rev, allRevs, canViewCode,
-            canRejudge, canClearSubmitterDraft, detailRejudgeQueued, editorDraftResetQueued,
+            canRejudge, canClearSubmitterDraft, editorDraftResetQueued,
         };
     }
 
@@ -280,7 +279,6 @@ export class RecordDetailHandler extends ContestDetailBaseHandler {
         this.ctx.broadcast('record/change', rdoc);
         const queued = await record.judge(domainId, rid, priority, this.rdoc.contest ? { detail: false } : {});
         if (!queued) throw new RecordNotFoundError(rid);
-        await record.update(domainId, rid, { detailRejudgeQueued: true });
         this.back({ queued: true });
     }
 

@@ -231,8 +231,7 @@ export type RecordDoc = {
     contestUid?: number;
     /** Real contest context for a self-test; `contest` remains the pretest sentinel. */
     pretestContest?: ObjectId;
-    /** Detail-page actions acknowledged after their respective queue writes. */
-    detailRejudgeQueued?: true;
+    /** A draft reset was queued from this submission. */
     editorDraftResetQueued?: true;
 };
 

@@ -560,7 +560,6 @@ export default function RecordDetailPage() {
   const [clearCodeTarget, setClearCodeTarget] = useState<string | null>(null);
   const [clearingCode, setClearingCode] = useState(false);
   const [clearedRecord, setClearedRecord] = useState<string | null>(null);
-  const [rejudgedRecord, setRejudgedRecord] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   // Merge server-side data with real-time WebSocket updates
@@ -585,8 +584,6 @@ export default function RecordDetailPage() {
   const clearTarget = !draftClearDone && (draftKey || remoteDraftRid) ? actionRecord : null;
   const draftSubmitter = formatUserName(udoc) || String(serverRdoc.uid ?? '');
   const showJudgeActions = canJudge && !rdoc.files?.hack;
-  const showRejudge = showJudgeActions && rejudgedRecord !== actionRecord
-    && args.detailRejudgeQueued !== true && rdoc.detailRejudgeQueued !== true;
   const allRevs = args.allRevs || {};
   const rev = args.rev;
 
@@ -617,7 +614,7 @@ export default function RecordDetailPage() {
   };
 
   const submitOperation = async (operation: 'rejudge' | 'cancel') => {
-    if ((operation === 'rejudge' && !showRejudge) || actionLoading) return;
+    if (!showJudgeActions || actionLoading) return;
     setActionLoading(operation);
     setError('');
     try {
@@ -631,7 +628,6 @@ export default function RecordDetailPage() {
       if (!res.ok || data.error) {
         setError(formatErrorMessage(data.error, t('Operation failed')));
       } else {
-        if (operation === 'rejudge' && data.queued === true) setRejudgedRecord(actionRecord);
         const target = data.redirect || data.url;
         if (target && target !== window.location.href && target !== window.location.pathname + window.location.search) {
           void navigate(target, { replace: true });
@@ -778,21 +774,21 @@ export default function RecordDetailPage() {
             {(showJudgeActions || clearTarget) && (
               <section className="hydro-sidebar-panel">
                 <Stack gap="xs">
-                  {showRejudge && (
-                    <Button size="xs" variant="light" loading={actionLoading === 'rejudge'} onClick={() => submitOperation('rejudge')}>
-                      {t('Rejudge')}
-                    </Button>
-                  )}
                   {showJudgeActions && (
-                    <Button
-                      size="xs"
-                      variant="subtle"
-                      color="red"
-                      loading={actionLoading === 'cancel'}
-                      onClick={() => setCancelConfirmOpen(true)}
-                    >
-                      {t('Cancel Score')}
-                    </Button>
+                    <>
+                      <Button size="xs" variant="light" loading={actionLoading === 'rejudge'} onClick={() => submitOperation('rejudge')}>
+                        {t('Rejudge')}
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        color="red"
+                        loading={actionLoading === 'cancel'}
+                        onClick={() => setCancelConfirmOpen(true)}
+                      >
+                        {t('Cancel Score')}
+                      </Button>
+                    </>
                   )}
                   {clearTarget && (
                     <Button size="xs" variant="subtle" color="red" onClick={() => setClearCodeTarget(clearTarget)}>

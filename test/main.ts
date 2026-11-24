@@ -333,14 +333,13 @@ describe('App', () => {
             assert.equal((await record.get(a, peerRid)).code, 'peer code');
             const afterClear = (await contestant.get(peerPath).set('Accept', 'application/json').expect(200)).body;
             assert.equal(afterClear.editorDraftResetQueued, true);
-            assert.equal(afterClear.detailRejudgeQueued, false);
             await problem.edit(a, visible, { config: 'type: default' });
             try {
                 const queued = await contestant.post(peerPath).set('Accept', 'application/json').send({ operation: 'rejudge' }).expect(200);
                 assert.equal(queued.body.queued, true);
                 assert.equal(await global.Hydro.model.task.count({ rid: peerRid }), 1);
                 const afterRejudge = (await contestant.get(peerPath).set('Accept', 'application/json').expect(200)).body;
-                assert.equal(afterRejudge.detailRejudgeQueued, true);
+                assert.equal(afterRejudge.canRejudge, true);
                 assert.equal(afterRejudge.editorDraftResetQueued, true);
             } finally {
                 await global.Hydro.model.task.deleteMany({ rid: peerRid });
