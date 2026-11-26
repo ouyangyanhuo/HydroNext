@@ -440,7 +440,7 @@ test('problems, contests, training and records page headers align with ranking t
 
     const pageHeaderSource = read('../src/components/common/page-header.tsx');
     assert.match(pageHeaderSource, /className="hydro-page-title__accent"/);
-    assert.match(rankingSource, /className="hydro-page-title__accent"/);
+    assert.match(rankingSource, /<PageHeader/);
 });
 
 test('problem select-all belongs to its table header instead of the search toolbar', () => {
@@ -898,9 +898,11 @@ test('page back buttons and navigation controls use client-side Link component w
     const problemStatsSource = read('../src/pages/problem_statistics.tsx');
     const problemImportSource = read('../src/pages/problem_import.tsx');
     const domainUserSource = read('../src/pages/domain_user.tsx');
+    const pageHeaderSource = read('../src/components/common/page-header.tsx');
     const linkSource = read('../src/components/link.tsx');
 
     assert.match(linkSource, /React\.forwardRef/);
+    assert.match(pageHeaderSource, /Button[\s\S]*?component=\{Link\}/);
     assert.match(trainingSource, /Button[^>]*component=\{Link\}[^>]*href=\{trainingListUrl\}/);
     assert.match(problemSource, /Button[^>]*component=\{Link\}[^>]*href=\{problemListUrl\}/);
     assert.match(contestDetailSource, /Button[^>]*component=\{Link\}[^>]*href=\{buildUrl\('contest_main'\)\}/);
@@ -910,7 +912,7 @@ test('page back buttons and navigation controls use client-side Link component w
     assert.match(problemSolutionSource, /Button[^>]*component=\{Link\}/);
     assert.match(problemStatsSource, /Button[^>]*component=\{Link\}/);
     assert.match(problemImportSource, /Button[^>]*component=\{Link\}/);
-    assert.match(domainUserSource, /Button[^>]*component=\{Link\}/);
+    assert.match(domainUserSource, /back=\{\{\s*to:\s*'domain_dashboard'/);
 });
 
 test('record rejudge/cancel and settings honor-frame navigation use SPA routing without page reloads', () => {
@@ -1224,4 +1226,53 @@ test('only AppShell renders a semantic main landmark without nested main element
     }
     scan(srcRoot);
     assert.deepEqual(filesWithMain, ['components/shell/app-shell.tsx']);
+});
+
+test('PageHeader unifies section and compact layouts and system management sub-pages provide back links', () => {
+    const pageHeader = read('../src/components/common/page-header.tsx');
+    const ranking = read('../src/pages/ranking.tsx');
+
+    assert.doesNotMatch(pageHeader, /ranking-page-header/);
+    assert.match(pageHeader, /hydro-page-header--section/);
+    assert.match(pageHeader, /hydro-page-header--compact/);
+    assert.match(pageHeader, /hydro-page-header__back/);
+    assert.match(ranking, /<PageHeader[\s\S]*?title=\{t\('Ranking'\)\}/);
+
+    for (const page of [
+        'manage_user', 'manage_user_priv', 'manage_user_import',
+        'manage_system_data', 'manage_script', 'manage_config', 'status',
+    ]) {
+        const source = read(`../src/pages/${page}.tsx`);
+        assert.match(source, /back=\{\{\s*to:\s*'manage_dashboard'/, `${page} links back to manage_dashboard`);
+    }
+
+    for (const page of ['domain_user', 'domain_role', 'domain_permission', 'domain_group', 'domain_join_applications', 'domain_edit']) {
+        const source = read(`../src/pages/${page}.tsx`);
+        assert.match(source, /back=\{\{\s*to:\s*'domain_dashboard'/, `${page} links back to domain_dashboard`);
+    }
+});
+
+test('two-column sidebars, ErrorBanner, manage dashboard cards and tables follow unified design patterns', () => {
+    const problemDetail = read('../src/pages/problem_detail.tsx');
+    const contestDetail = read('../src/pages/contest_detail.tsx');
+    const manageDashboard = read('../src/pages/manage_dashboard.tsx');
+    const errorBanner = read('../src/components/feedback/error-banner.tsx');
+
+    // Reading/detail sidebars standardize on lg:w-72 instead of mixed lg:w-64
+    assert.doesNotMatch(problemDetail, /lg:w-64/);
+    assert.doesNotMatch(contestDetail, /lg:w-64/);
+    assert.match(problemDetail, /lg:w-72/);
+    assert.match(contestDetail, /lg:w-72/);
+
+    // ErrorBanner provides accessible alert container and ManageDashboard aligns with icon cards
+    assert.match(errorBanner, /role="alert"/);
+    assert.match(errorBanner, /withCloseButton/);
+    assert.match(manageDashboard, /hydro-manage-card/);
+    assert.match(manageDashboard, /hydro-manage-card__icon/);
+
+    // Standardized table styling on management and file pages
+    for (const page of ['domain_user', 'domain_role', 'domain_group', 'domain_permission', 'contest_user', 'home_files']) {
+        const source = read(`../src/pages/${page}.tsx`);
+        assert.match(source, /className="hydro-data-table"|className="[^"]*hydro-data-table/, `${page} applies .hydro-data-table`);
+    }
 });

@@ -33,6 +33,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
+import { ErrorBanner } from '@/components/feedback/error-banner';
 import { Link } from '@/components/link';
 import { MarkdownRenderer } from '@/components/markdown/markdown-renderer';
 import { UserLink } from '@/components/user/user-link';
@@ -263,7 +264,7 @@ export default function DomainDashboardPage() {
         </Group>
       </PageHeader>
 
-      {error && <Text c="red" size="sm">{error}</Text>}
+      <ErrorBanner message={error} onClose={() => setError('')} />
 
       {/* Hero Overview Card */}
       <Card withBorder p="xl" className="hydro-content-card hydro-domain-hero">

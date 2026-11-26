@@ -9,6 +9,7 @@ import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect } from '@/components/common/select';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
+import { ErrorBanner } from '@/components/feedback/error-banner';
 import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -374,7 +375,7 @@ export default function ProblemEditPage() {
           {t('Back')}
         </Button>
       </PageHeader>
-      {error && <Text c="red" size="sm">{error}</Text>}
+      <ErrorBanner message={error} onClose={() => setError('')} />
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <Paper withBorder p="lg" className="min-w-0 flex-1">

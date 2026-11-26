@@ -5,6 +5,7 @@ import { Button } from '@/components/common/button';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
+import { ErrorBanner, SuccessBanner } from '@/components/feedback/error-banner';
 import { Link } from '@/components/link';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
@@ -211,13 +212,16 @@ export default function ManageSystemDataPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('System Data')} />
-      {success && <Text c="green" size="sm">{success}</Text>}
+      <PageHeader
+        title={t('System Data')}
+        back={{ to: 'manage_dashboard', label: t('System Management') }}
+      />
+      <SuccessBanner message={success} onClose={() => setSuccess('')} />
 
       <Card withBorder p="lg" className="hydro-content-card">
         <Group justify="space-between" mb="md">
           <Title order={3} size="h4">{t('All Domains')}</Title>
-          <Badge variant="light">{t('Total')}: {args.domainsCount || 0}</Badge>
+          <Badge variant="light" className="hydro-numeric">{t('Total')}: {args.domainsCount || 0}</Badge>
         </Group>
         <DataTable columns={domainColumns} data={domains} emptyMessage={t('No domains')} />
         <SectionPaginator page={args.domainsPage || 1} totalPages={args.domainsPageCount || 1} param="domainsPage" />
@@ -226,7 +230,7 @@ export default function ManageSystemDataPage() {
       <Card withBorder p="lg" className="hydro-content-card">
         <Group justify="space-between" mb="md">
           <Title order={3} size="h4">{t('All Additional Files')}</Title>
-          <Badge variant="light">{t('Total')}: {args.filesCount || 0}</Badge>
+          <Badge variant="light" className="hydro-numeric">{t('Total')}: {args.filesCount || 0}</Badge>
         </Group>
         <DataTable columns={fileColumns} data={files} emptyMessage={t('No additional files')} />
         <SectionPaginator page={args.filesPage || 1} totalPages={args.filesPageCount || 1} param="filesPage" />
@@ -243,9 +247,13 @@ export default function ManageSystemDataPage() {
               ? t('Delete domain confirmation')
               : t('Delete additional file confirmation')}
           </Text>
-          {pending?.type === 'domain' && <Text size="sm" fw={700}>{pending.item._id}</Text>}
-          {pending?.type === 'file' && <Text size="sm" fw={700}>{pending.item.domainId} / {pending.item.docId} / {pending.item.file.name}</Text>}
-          {error && <Text c="red" size="sm">{error}</Text>}
+          {pending?.type === 'domain' && <Text size="sm" fw="var(--hydro-weight-semibold)">{pending.item._id}</Text>}
+          {pending?.type === 'file' && (
+            <Text size="sm" fw="var(--hydro-weight-semibold)">
+              {pending.item.domainId} / {pending.item.docId} / {pending.item.file.name}
+            </Text>
+          )}
+          <ErrorBanner message={error} onClose={() => setError('')} />
           <Group justify="flex-end">
             <Button variant="default" size="xs" onClick={() => setPending(null)}>{t('Cancel')}</Button>
             <Button color="red" size="xs" onClick={submitDelete} loading={loading}>{t('Delete')}</Button>

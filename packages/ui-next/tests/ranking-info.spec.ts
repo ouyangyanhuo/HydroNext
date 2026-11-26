@@ -33,6 +33,7 @@ test('ranking RP help uses a translated portal tooltip on hover and keyboard foc
     const mocks: Record<string, any> = {
         './ranking.css': {},
         '@/components/common/button': { ActionIcon: mantine.ActionIcon, Button: mantine.Button },
+        '@/components/common/page-header': { PageHeader: ({ title, children }: any) => h('header', null, title, children) },
         '@/components/common/paginator': { Paginator: () => null },
         '@/components/link': { Link: forwardRef(({ children, href }: any, ref: any) => h('a', { href, ref }, children)) },
         '@/components/user/user-avatar': { UserAvatar: () => null },

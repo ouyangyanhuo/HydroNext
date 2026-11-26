@@ -79,11 +79,11 @@ function ContestMeta({ tdoc, featured = false }: { tdoc: any, featured?: boolean
       </span>
       <span>
         <IconClock size={15} stroke={1.8} aria-hidden="true" />
-        <span>{durationMinutes(tdoc)} min</span>
+        <span className="hydro-numeric">{durationMinutes(tdoc)} min</span>
       </span>
       <span>
         <IconUsers size={15} stroke={1.8} aria-hidden="true" />
-        <span>{tdoc.attend || 0} {t('Partic.')}</span>
+        <span className="hydro-numeric">{tdoc.attend || 0} {t('Partic.')}</span>
       </span>
     </div>
   );
@@ -108,7 +108,7 @@ function ContestCard({ tdoc, tsdoc, index }: { tdoc: any, tsdoc?: any, index: nu
           {tdoc.rule && <Badge size="xs" variant="outline">{tdoc.rule}</Badge>}
           {tsdoc?.attend && <Badge size="xs" variant="light" color="green">{t('Registered')}</Badge>}
         </Group>
-        <Text component="h2" fw={720} className="hydro-contest-item__title">{tdoc.title}</Text>
+        <Text component="h2" fw="var(--hydro-weight-bold)" className="hydro-contest-item__title">{tdoc.title}</Text>
         <ContestMeta tdoc={tdoc} />
       </div>
       <IconArrowUpRight className="hydro-contest-item__arrow" size={20} stroke={1.8} aria-hidden="true" />

@@ -846,7 +846,7 @@ export default function ProblemDetailPage() {
       </div>
 
       <ResponsiveSidebar
-        className={`w-full lg:w-64 shrink-0${isObjective ? ' hydro-objective-sidebar' : ''}`}
+        className={`w-full lg:w-72 shrink-0${isObjective ? ' hydro-objective-sidebar' : ''}`}
         title={t('Problem Actions') || t('Sidebar')}
       >
         <div className="flex flex-col gap-3.5">

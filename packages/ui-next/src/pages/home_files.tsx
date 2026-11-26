@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { FileDropzone } from '@/components/common/file-dropzone';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
+import { ErrorBanner, SuccessBanner } from '@/components/feedback/error-banner';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -64,8 +65,8 @@ export default function HomeFilesPage() {
   return (
     <Stack gap="lg" className="hydro-home-files-page">
       <PageHeader title={t('My Files')} />
-      {error && <Text c="red" size="sm">{error}</Text>}
-      {success && <Text c="green" size="sm">{success}</Text>}
+      <ErrorBanner message={error} onClose={() => setError('')} />
+      <SuccessBanner message={success} onClose={() => setSuccess('')} />
       <FileDropzone
         action={window.location.href}
         onComplete={() => navigate(window.location.href)}
@@ -75,9 +76,9 @@ export default function HomeFilesPage() {
       {files.length === 0 ? (
         <EmptyState message={t('No files')} />
       ) : (
-        <Paper withBorder className="hydro-content-card">
-          <ScrollArea>
-            <Table striped highlightOnHover miw={640}>
+        <Paper withBorder className="hydro-content-card overflow-hidden">
+          <ScrollArea type="auto" scrollbarSize={8}>
+            <Table striped highlightOnHover miw={640} className="hydro-data-table">
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th w={44}>

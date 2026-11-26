@@ -1,11 +1,10 @@
 import { Group, NumberInput, Paper, SimpleGrid, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { MarkdownEditor } from '@/components/editor/markdown-editor';
-import { Link } from '@/components/link';
+import { ErrorBanner } from '@/components/feedback/error-banner';
 import { TrainingPlanEditor, type TrainingProblemOption } from '@/components/training/training-plan-editor';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
@@ -159,12 +158,11 @@ export default function TrainingEditPage() {
 
   return (
     <Stack gap="lg" className="hydro-training-edit-page">
-      <PageHeader title={isNew ? t('Create Training') : t('Edit Training')}>
-        <Button component={Link} href={buildUrl('training_main')} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
-          {t('Back')}
-        </Button>
-      </PageHeader>
-      {error && <Text c="red" size="sm">{error}</Text>}
+      <PageHeader
+        title={isNew ? t('Create Training') : t('Edit Training')}
+        back={{ href: buildUrl('training_main'), label: t('Back') }}
+      />
+      <ErrorBanner message={error} onClose={() => setError('')} />
       <Paper withBorder p="lg">
         <Stack gap="md">
           <SimpleGrid cols={{ base: 1, sm: 4 }} spacing="md">

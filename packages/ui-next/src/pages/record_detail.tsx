@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { ResponsiveSidebar } from '@/components/common/responsive-sidebar';
 import { TimeDisplay } from '@/components/common/time-display';
 import { clearScratchpadDraft, getScratchpadDraftScope } from '@/components/editor/draft-storage';
+import { ErrorBanner } from '@/components/feedback/error-banner';
 import { Link } from '@/components/link';
 import { RecordStatusBadge } from '@/components/record/record-status-badge';
 import { getScoreTone, getStatusTone, judgeBadgeStyle, STATUS, STATUS_TEXTS } from '@/components/record/status-map';
@@ -673,7 +674,7 @@ export default function RecordDetailPage() {
 
   return (
     <Stack gap="lg" className="hydro-record-detail">
-      {error && <Text c="red" size="sm">{error}</Text>}
+      <ErrorBanner message={error} onClose={() => setError('')} />
       {wsUpdate?.error && (
         <Alert color="orange" title={t('Live results disconnected')} role="alert">
           {t('Showing the last received results. Check your network connection and access permissions; refresh the page if needed.')}

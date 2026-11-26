@@ -586,11 +586,11 @@ export default function ContestDetailPage() {
             </Stack>
           </div>
 
-          <ResponsiveSidebar className="w-full shrink-0 lg:w-64" title={t('Contest Details') || t('Sidebar')}>
+          <ResponsiveSidebar className="w-full shrink-0 lg:w-72" title={t('Contest Details') || t('Sidebar')}>
             <div className="flex flex-col gap-3.5">
               {tdoc.privateFiles?.length > 0 && (
                 <section className="hydro-sidebar-panel">
-                  <Text size="sm" fw={800} mb="xs">{t('Materials')}</Text>
+                  <Text size="sm" fw="var(--hydro-weight-bold)" mb="xs">{t('Materials')}</Text>
                   <Stack gap="xs">
                     {tdoc.privateFiles.map((file: any) => (
                       <Link
@@ -689,7 +689,7 @@ export default function ContestDetailPage() {
           )}
         </div>
 
-        <ResponsiveSidebar className="w-full lg:w-64 shrink-0" title={t('Contest Details') || t('Sidebar')}>
+        <ResponsiveSidebar className="w-full lg:w-72 shrink-0" title={t('Contest Details') || t('Sidebar')}>
           <div className="flex flex-col gap-3.5">
             <ContestInfoCard tdoc={tdoc} tsdoc={tsdoc} owner={owner} />
 

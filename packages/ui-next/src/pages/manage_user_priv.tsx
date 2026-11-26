@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { DataTable } from '@/components/common/data-table';
 import { PageHeader } from '@/components/common/page-header';
+import { ErrorBanner, SuccessBanner } from '@/components/feedback/error-banner';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
@@ -137,7 +138,7 @@ export default function ManageUserPrivPage() {
       key: 'uid',
       title: t('User ID'),
       width: 90,
-      render: (user: any) => <Text size="sm" fw={700}>{user._id}</Text>,
+      render: (user: any) => <Text size="sm" fw="var(--hydro-weight-semibold)" className="hydro-numeric">{user._id}</Text>,
     },
     {
       key: 'user',
@@ -175,14 +176,17 @@ export default function ManageUserPrivPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('User Privileges')} />
-      {error && <Text c="red" size="sm">{error}</Text>}
-      {success && <Text c="green" size="sm">{success}</Text>}
+      <PageHeader
+        title={t('User Privileges')}
+        back={{ to: 'manage_dashboard', label: t('System Management') }}
+      />
+      <ErrorBanner message={error} onClose={() => setError('')} />
+      <SuccessBanner message={success} onClose={() => setSuccess('')} />
 
       <SimpleGrid cols={{ base: 1, lg: 3 }} spacing="md">
         <Card withBorder p="lg" className="hydro-content-card lg:col-span-1">
           <Title order={3} size="h4" mb="sm">{t('Default Privilege')}</Title>
-          <Text size="xl" fw={800} ff="monospace">{defaultPriv}</Text>
+          <Text size="xl" fw="var(--hydro-weight-bold)" ff="monospace" className="hydro-numeric">{defaultPriv}</Text>
           <Stack gap={4} mt="md">
             {Object.entries(privMap).filter(([, value]) => {
               const bit = toBigIntValue(value);

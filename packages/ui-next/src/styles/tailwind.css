@@ -1580,6 +1580,60 @@ a {
   margin-bottom: 1.5rem;
 }
 
+.hydro-page-header--compact {
+  align-items: flex-end;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--hydro-border);
+}
+
+.hydro-page-header__back {
+  margin-bottom: 0.35rem;
+}
+
+.hydro-page-header__back-btn {
+  padding-inline: 0.25rem;
+  margin-left: -0.25rem;
+  color: var(--hydro-text-muted);
+}
+
+.hydro-page-header__back-btn:hover {
+  color: var(--hydro-primary);
+}
+
+.hydro-page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.hydro-manage-card {
+  transition:
+    border-color var(--hydro-duration-normal) var(--hydro-ease-out),
+    box-shadow var(--hydro-duration-normal) var(--hydro-ease-out),
+    transform var(--hydro-duration-normal) var(--hydro-ease-out);
+}
+
+.hydro-manage-card:hover {
+  border-color: color-mix(in srgb, var(--hydro-primary) 38%, var(--hydro-border));
+  box-shadow: var(--hydro-shadow-md);
+  transform: translateY(-2px);
+}
+
+.hydro-manage-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid color-mix(in srgb, var(--hydro-primary) 22%, var(--hydro-border));
+  border-radius: var(--hydro-radius-md);
+  color: var(--hydro-primary);
+  background: color-mix(in srgb, var(--hydro-primary-soft) 68%, var(--hydro-surface-raised));
+}
+
 :is(.mantine-Stack-root, .ranking-page, .hydro-problem-page) > :is(.hydro-page-header, .ranking-page-header, .hydro-contest-page-header) {
   margin-bottom: 0;
 }

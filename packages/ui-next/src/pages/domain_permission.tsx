@@ -1,13 +1,10 @@
 import { Badge, Checkbox, Group, Paper, ScrollArea, Stack, Table, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
-import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
-import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 
 function normalizeRoles(input: any) {
@@ -98,7 +95,6 @@ function initialSelection(roles: any[], families: [string, any[]][]) {
 export default function DomainPermissionPage() {
   const { args } = usePageData();
   const { t } = useI18n();
-  const domainId = useSessionStore((s) => s.ui.domainId);
   const roles = useMemo(() => normalizeRoles(args.roles), [args.roles]);
   const families = useMemo(() => normalizeFamilies(args.PERMS_BY_FAMILY), [args.PERMS_BY_FAMILY]);
   const [selected, setSelected] = useState<Record<string, Set<number>>>(() => initialSelection(roles, families));
@@ -143,18 +139,15 @@ export default function DomainPermissionPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('Permissions')}>
-        <Button component={Link} href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
-          {t('Back')}
-        </Button>
+      <PageHeader title={t('Permissions')} back={{ to: 'domain_dashboard', label: t('Back') }}>
         <Button onClick={handleSave} loading={loading} size="xs">{t('Update Permission')}</Button>
       </PageHeader>
-      <Paper withBorder className="hydro-content-card">
+      <Paper withBorder className="hydro-content-card overflow-hidden">
         {!roles.length || !families.length ? (
           <Text c="dimmed" size="sm" p="md">{t('Permissions data is incomplete')}</Text>
         ) : (
-          <ScrollArea>
-            <Table striped highlightOnHover withColumnBorders miw={720}>
+          <ScrollArea type="auto" scrollbarSize={8}>
+            <Table striped highlightOnHover withColumnBorders miw={720} className="hydro-data-table">
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>{t('Permissions')}</Table.Th>

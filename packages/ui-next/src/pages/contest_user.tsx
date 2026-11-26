@@ -1,4 +1,4 @@
-import { Badge, Checkbox, Group, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Badge, Checkbox, Group, Paper, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/common/button';
@@ -6,7 +6,6 @@ import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { TimeDisplay } from '@/components/common/time-display';
 import { TeamIdentity } from '@/components/contest/team-identity';
-import { Link } from '@/components/link';
 import { UserAvatar } from '@/components/user/user-avatar';
 import { UserLink } from '@/components/user/user-link';
 import { usePageData } from '@/context/page-data';
@@ -70,86 +69,90 @@ export default function ContestUserPage() {
 
   return (
     <Stack gap="lg" className="hydro-contest-user-page">
-      <PageHeader title={`${t('Attendee Manage')} - ${tdoc.title}`}>
-        <Group gap="xs">
-          <Button size="xs" disabled={!!loading} onClick={() => setOpened(true)}>{t('Add User')}</Button>
-          <Button component={Link} to="contest_manage" params={{ tid }} size="xs" variant="subtle">{t('Contest Management')}</Button>
-        </Group>
+      <PageHeader
+        title={`${t('Attendee Manage')} - ${tdoc.title}`}
+        back={{ to: 'contest_manage', params: { tid }, label: t('Contest Management') }}
+      >
+        <Button size="xs" disabled={!!loading} onClick={() => setOpened(true)}>{t('Add User')}</Button>
       </PageHeader>
 
-      <Paper withBorder className="overflow-hidden">
-        <Table striped highlightOnHover>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>{t('User ID')}</Table.Th>
-              <Table.Th>{t('Username')}</Table.Th>
-              <Table.Th>{t('Begin Time')}</Table.Th>
-              <Table.Th>{t('End Time')}</Table.Th>
-              <Table.Th>{t('Rank')}</Table.Th>
-              <Table.Th>{t('Actions')}</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {tsdocs.map((tsdoc: any) => {
-              const udoc = udict[tsdoc.uid] || {};
-              const isTeam = tsdoc.uid < 0 && Array.isArray(tsdoc.members);
-              return (
-                <Table.Tr key={tsdoc.uid}>
-                  <Table.Td>
-                    {isTeam ? <Badge variant="light">{t('Team Participation')}</Badge> : <Text size="xs" ff="monospace">{tsdoc.uid}</Text>}
-                  </Table.Td>
-                  <Table.Td>
-                    {isTeam ? <TeamIdentity
-                      id={tsdoc.uid}
-                      name={tsdoc.displayName || udoc.displayName}
-                      members={tsdoc.members}
-                      udict={udict}
-                      canManage={args.canManageTeams === true}
-                    /> : <Group gap="xs" wrap="nowrap">
-                      <UserAvatar user={udoc} link={false} size="xs" />
-                      <UserLink user={{ ...udoc, _id: tsdoc.uid, ...(tsdoc.displayName ? { displayName: tsdoc.displayName } : {}) }} size="sm" />
-                    </Group>}
-                  </Table.Td>
-                  <Table.Td><TimeDisplay date={tsdoc.startAt || tdoc.beginAt} format="absolute" size="xs" /></Table.Td>
-                  <Table.Td><TimeDisplay date={tsdoc.endAt || tdoc.endAt} format="absolute" size="xs" /></Table.Td>
-                  <Table.Td><Text size="xs">{tsdoc.unrank ? t('UnRank') : t('Rank')}</Text></Table.Td>
-                  <Table.Td>
-                    <Group gap="xs">
-                      <Button
-                        size="compact-xs"
-                        variant="subtle"
-                        disabled={!!loading}
-                        loading={loading === 'rank'}
-                        onClick={() => post({ operation: 'rank', uid: tsdoc.uid }, t('Ranking status updated.'))}
-                      >
-                        {tsdoc.unrank ? t('Rank') : t('UnRank')}
-                      </Button>
-                      {canRemove && tsdoc.attend && (
+      <Paper withBorder className="hydro-content-card overflow-hidden">
+        <ScrollArea type="auto" scrollbarSize={8}>
+          <Table striped highlightOnHover miw={720} className="hydro-data-table">
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>{t('User ID')}</Table.Th>
+                <Table.Th>{t('Username')}</Table.Th>
+                <Table.Th>{t('Begin Time')}</Table.Th>
+                <Table.Th>{t('End Time')}</Table.Th>
+                <Table.Th>{t('Rank')}</Table.Th>
+                <Table.Th>{t('Actions')}</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {tsdocs.map((tsdoc: any) => {
+                const udoc = udict[tsdoc.uid] || {};
+                const isTeam = tsdoc.uid < 0 && Array.isArray(tsdoc.members);
+                return (
+                  <Table.Tr key={tsdoc.uid}>
+                    <Table.Td>
+                      {isTeam
+                        ? <Badge variant="light">{t('Team Participation')}</Badge>
+                        : <Text size="xs" ff="monospace" className="hydro-numeric">{tsdoc.uid}</Text>}
+                    </Table.Td>
+                    <Table.Td>
+                      {isTeam ? <TeamIdentity
+                        id={tsdoc.uid}
+                        name={tsdoc.displayName || udoc.displayName}
+                        members={tsdoc.members}
+                        udict={udict}
+                        canManage={args.canManageTeams === true}
+                      /> : <Group gap="xs" wrap="nowrap">
+                        <UserAvatar user={udoc} link={false} size="xs" />
+                        <UserLink user={{ ...udoc, _id: tsdoc.uid, ...(tsdoc.displayName ? { displayName: tsdoc.displayName } : {}) }} size="sm" />
+                      </Group>}
+                    </Table.Td>
+                    <Table.Td><TimeDisplay date={tsdoc.startAt || tdoc.beginAt} format="absolute" size="xs" /></Table.Td>
+                    <Table.Td><TimeDisplay date={tsdoc.endAt || tdoc.endAt} format="absolute" size="xs" /></Table.Td>
+                    <Table.Td><Text size="xs">{tsdoc.unrank ? t('UnRank') : t('Rank')}</Text></Table.Td>
+                    <Table.Td>
+                      <Group gap="xs">
                         <Button
                           size="compact-xs"
-                          variant="light"
-                          color="red"
+                          variant="subtle"
                           disabled={!!loading}
-                          onClick={() => post({ operation: 'remove_user', uid: tsdoc.uid }, t('Saved'))}>{t('Remove')}</Button>
-                      )}
-                      {canResume(tdoc, tsdoc) && (
-                        <Button
-                          size="compact-xs"
-                          variant="light"
-                          disabled={!!loading}
-                          loading={loading === 'resume'}
-                          onClick={() => post({ operation: 'resume', uid: tsdoc.uid }, t('Contest resumed.'))}
+                          loading={loading === 'rank'}
+                          onClick={() => post({ operation: 'rank', uid: tsdoc.uid }, t('Ranking status updated.'))}
                         >
-                          {t('Resume')}
+                          {tsdoc.unrank ? t('Rank') : t('UnRank')}
                         </Button>
-                      )}
-                    </Group>
-                  </Table.Td>
-                </Table.Tr>
-              );
-            })}
-          </Table.Tbody>
-        </Table>
+                        {canRemove && tsdoc.attend && (
+                          <Button
+                            size="compact-xs"
+                            variant="light"
+                            color="red"
+                            disabled={!!loading}
+                            onClick={() => post({ operation: 'remove_user', uid: tsdoc.uid }, t('Saved'))}>{t('Remove')}</Button>
+                        )}
+                        {canResume(tdoc, tsdoc) && (
+                          <Button
+                            size="compact-xs"
+                            variant="light"
+                            disabled={!!loading}
+                            loading={loading === 'resume'}
+                            onClick={() => post({ operation: 'resume', uid: tsdoc.uid }, t('Contest resumed.'))}
+                          >
+                            {t('Resume')}
+                          </Button>
+                        )}
+                      </Group>
+                    </Table.Td>
+                  </Table.Tr>
+                );
+              })}
+            </Table.Tbody>
+          </Table>
+        </ScrollArea>
       </Paper>
 
       <FormDialog

@@ -8,6 +8,7 @@ import { FilePreviewModal } from '@/components/common/file-preview-modal';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect, TagMultiSelect } from '@/components/common/select';
 import { CodeEditor } from '@/components/editor/code-editor';
+import { ErrorBanner } from '@/components/feedback/error-banner';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -231,10 +232,13 @@ export default function ProblemConfigPage() {
 
   return (
     <Stack gap="lg" className="hydro-problem-config-page">
-      <PageHeader title={`${t('Judge Config')} - ${pdoc.pid}. ${pdoc.title}`}>
+      <PageHeader
+        title={`${t('Judge Config')} - ${pdoc.pid}. ${pdoc.title}`}
+        back={{ to: 'problem_detail', params: { pid }, label: t('Back') }}
+      >
         <Button onClick={handleSave} loading={loading} size="xs">{t('Save')}</Button>
       </PageHeader>
-      {error && <Text c="red" size="sm">{error}</Text>}
+      <ErrorBanner message={error} onClose={() => setError('')} />
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <Stack gap="lg" className="min-w-0 flex-1">

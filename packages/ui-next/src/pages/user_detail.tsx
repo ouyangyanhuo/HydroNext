@@ -178,7 +178,7 @@ export default function UserDetailPage() {
 
         <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" className="hydro-user-profile__stats hydro-numeric">
           <Paper withBorder p="md" ta="center" className="hydro-user-profile__stat">
-            <Text size="xl" fw={700}>{Number(stats.nAccept) || 0}</Text>
+            <Text size="xl" fw="var(--hydro-weight-bold)">{Number(stats.nAccept) || 0}</Text>
             <Text size="xs" c="dimmed">{t('Solved')}</Text>
           </Paper>
           {canViewRecords ? (
@@ -192,7 +192,7 @@ export default function UserDetailPage() {
                 ta="center"
                 className="hydro-user-profile__stat hydro-user-profile__stat--interactive"
               >
-                <Text size="xl" fw={700}>{Number(stats.nSubmit) || 0}</Text>
+                <Text size="xl" fw="var(--hydro-weight-bold)">{Number(stats.nSubmit) || 0}</Text>
                 <Text size="xs" c="dimmed">{t('Submissions')}</Text>
               </Paper>
             </Link>
@@ -205,16 +205,16 @@ export default function UserDetailPage() {
               title={t("View other's records")}
               className="hydro-user-profile__stat hydro-user-profile__stat--disabled"
             >
-              <Text size="xl" fw={700}>{Number(stats.nSubmit) || 0}</Text>
+              <Text size="xl" fw="var(--hydro-weight-bold)">{Number(stats.nSubmit) || 0}</Text>
               <Text size="xs" c="dimmed">{t('Submissions')}</Text>
             </Paper>
           )}
           <Paper withBorder p="md" ta="center" className="hydro-user-profile__stat">
-            <Text size="xl" fw={700}>{rp}</Text>
+            <Text size="xl" fw="var(--hydro-weight-bold)">{rp}</Text>
             <Text size="xs" c="dimmed">{t('RP')}</Text>
           </Paper>
           <Paper withBorder p="md" ta="center" className="hydro-user-profile__stat">
-            <Text size="xl" fw={700}>{rank}</Text>
+            <Text size="xl" fw="var(--hydro-weight-bold)">{rank}</Text>
             <Text size="xs" c="dimmed">{t('Rank')}</Text>
           </Paper>
         </SimpleGrid>

@@ -2,7 +2,9 @@ import { Badge, Card, Group, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
+import { TwoColumnLayout } from '@/components/common/two-column-layout';
 import { CodeEditor } from '@/components/editor/code-editor';
+import { ErrorBanner, SuccessBanner } from '@/components/feedback/error-banner';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
@@ -38,30 +40,36 @@ export default function ManageConfigPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('Configuration')}>
+      <PageHeader
+        title={t('Configuration')}
+        back={{ to: 'manage_dashboard', label: t('System Management') }}
+      >
         <Button onClick={handleSave} loading={loading} size="xs">{t('Save')}</Button>
       </PageHeader>
-      {error && <Text c="red" size="sm">{error}</Text>}
-      {success && <Text c="green" size="sm">{success}</Text>}
+      <ErrorBanner message={error} onClose={() => setError('')} />
+      <SuccessBanner message={success} onClose={() => setSuccess('')} />
 
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <Card withBorder p="lg" className="hydro-content-card min-w-0 flex-1">
+      <TwoColumnLayout
+        sidebarWidth="wide"
+        sidebar={(
+          <Stack gap="lg">
+            <Card withBorder p="lg" className="hydro-content-card">
+              <Title order={3} size="h4" mb="sm">{t('Configuration')}</Title>
+              <Text size="sm" c="dimmed">
+                {t('Secrets marked as hidden keep their old values when left unchanged.')}
+              </Text>
+            </Card>
+          </Stack>
+        )}
+      >
+        <Card withBorder p="lg" className="hydro-content-card">
           <Group justify="space-between" mb="md">
             <Title order={3} size="h4">{t('Config Source')}</Title>
             <Badge variant="light">YAML</Badge>
           </Group>
           <CodeEditor value={value} onChange={setValue} language="yaml" height={680} />
         </Card>
-
-        <Stack gap="lg" className="w-full shrink-0 lg:w-80">
-          <Card withBorder p="lg" className="hydro-content-card">
-            <Title order={3} size="h4" mb="sm">{t('Configuration')}</Title>
-            <Text size="sm" c="dimmed">
-              {t('Secrets marked as hidden keep their old values when left unchanged.')}
-            </Text>
-          </Card>
-        </Stack>
-      </div>
+      </TwoColumnLayout>
     </Stack>
   );
 }

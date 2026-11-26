@@ -82,7 +82,15 @@ const mocks: Record<string, any> = {
             disabled, value, onChange: (event: any) => onChange(event.target.value),
         }, h('option', { value: '0' }, 'General')),
     },
-    '@/components/common/page-header': { PageHeader: ({ children, title }: any) => h('header', null, title, children) },
+    '@/components/common/page-header': {
+        PageHeader: ({ back, children, title }: any) => h('header', null,
+            back ? h('a', { href: back.href ?? `/${back.to}` }, back.label || 'Back') : null,
+            title, children),
+    },
+    '@/components/feedback/error-banner': {
+        ErrorBanner: ({ message }: any) => (message ? h('div', { role: 'alert' }, message) : null),
+        SuccessBanner: ({ message }: any) => (message ? h('div', { role: 'status' }, message) : null),
+    },
     '@/components/common/time-display': { TimeDisplay: () => null },
     '@/components/common/confirm-dialog': { ConfirmDialog: () => null },
     '@/components/common/responsive-sidebar': {

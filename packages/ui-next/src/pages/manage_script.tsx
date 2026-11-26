@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect } from '@/components/common/select';
+import { TwoColumnLayout } from '@/components/common/two-column-layout';
+import { ErrorBanner } from '@/components/feedback/error-banner';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -103,14 +105,35 @@ export default function ManageScriptPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('Scripts')} />
-      {error && <Text c="red" size="sm">{error}</Text>}
+      <PageHeader
+        title={t('Scripts')}
+        back={{ to: 'manage_dashboard', label: t('System Management') }}
+      />
+      <ErrorBanner message={error} onClose={() => setError('')} />
 
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <Card withBorder p="lg" className="hydro-content-card min-w-0 flex-1">
+      <TwoColumnLayout
+        sidebarWidth="wide"
+        sidebar={(
+          <Card withBorder p="lg" className="hydro-content-card">
+            <Title order={3} size="h4" mb="sm">{selectedScript?.id || t('Script')}</Title>
+            <Text size="sm" c="dimmed">{t(selectedScript?.description || 'None')}</Text>
+            {fields.length > 0 && (
+              <Stack gap={4} mt="md">
+                <Badge variant="light" className="hydro-numeric">{fields.length} {t('Params')}</Badge>
+                {fields.map((field) => (
+                  <Text key={field.name} size="xs" c="dimmed">
+                    {field.name}: {field.type}
+                  </Text>
+                ))}
+              </Stack>
+            )}
+          </Card>
+        )}
+      >
+        <Card withBorder p="lg" className="hydro-content-card">
           <Group justify="space-between" mb="md">
             <Title order={3} size="h4">{t('Run script')}</Title>
-            <Badge variant="light">{scripts.length}</Badge>
+            <Badge variant="light" className="hydro-numeric">{scripts.length}</Badge>
           </Group>
           <Stack gap="md">
             <LongSelect
@@ -187,22 +210,7 @@ export default function ManageScriptPage() {
             </Group>
           </Stack>
         </Card>
-
-        <Card withBorder p="lg" className="hydro-content-card w-full shrink-0 lg:w-80">
-          <Title order={3} size="h4" mb="sm">{selectedScript?.id || t('Script')}</Title>
-          <Text size="sm" c="dimmed">{t(selectedScript?.description || 'None')}</Text>
-          {fields.length > 0 && (
-            <Stack gap={4} mt="md">
-              <Badge variant="light">{fields.length} {t('Params')}</Badge>
-              {fields.map((field) => (
-                <Text key={field.name} size="xs" c="dimmed">
-                  {field.name}: {field.type}
-                </Text>
-              ))}
-            </Stack>
-          )}
-        </Card>
-      </div>
+      </TwoColumnLayout>
     </Stack>
   );
 }

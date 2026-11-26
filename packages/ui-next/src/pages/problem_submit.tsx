@@ -1,10 +1,11 @@
-import { Badge, Card, Group, Stack, Text, Title } from '@mantine/core';
+import { Badge, Card, Group, Stack, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { LongSelect } from '@/components/common/select';
 import { CodeEditor } from '@/components/editor/code-editor';
 import { getCodeTemplate } from '@/components/editor/code-templates';
+import { ErrorBanner } from '@/components/feedback/error-banner';
 import { usePageData } from '@/context/page-data';
 import { useNavigate } from '@/context/router';
 import { useBuildUrl } from '@/hooks/use-build-url';
@@ -100,7 +101,7 @@ function CodeSubmitPage() {
 
       <Card withBorder p="lg" className="hydro-content-card">
         <Stack gap="md">
-          {error && <Text c="red" size="sm">{error}</Text>}
+          <ErrorBanner message={error} onClose={() => setError('')} />
           <LongSelect
             label={t('Language')}
             data={langOptions}

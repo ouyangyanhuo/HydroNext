@@ -1,14 +1,11 @@
 import { Checkbox, Group, Paper, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { FormDialog } from '@/components/common/form-dialog';
 import { PageHeader } from '@/components/common/page-header';
-import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
-import { useSessionStore } from '@/stores/session';
 import { formatErrorMessage } from '@/utils/error';
 import { postJsonRequest } from '@/utils/request';
 
@@ -22,7 +19,6 @@ function parseUids(input: string) {
 export default function DomainGroupPage() {
   const { args } = usePageData();
   const { t } = useI18n();
-  const domainId = useSessionStore((s) => s.ui.domainId);
   const groups = args.groups || [];
   const [selected, setSelected] = useState<string[]>([]);
   const [uidsDraft, setUidsDraft] = useState<Record<string, string>>(() => Object.fromEntries(
@@ -71,15 +67,12 @@ export default function DomainGroupPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('Groups')}>
-        <Button component={Link} href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
-          {t('Back')}
-        </Button>
+      <PageHeader title={t('Groups')} back={{ to: 'domain_dashboard', label: t('Back') }}>
         <Button size="xs" onClick={() => setDialogOpen(true)}>{t('Create Group')}</Button>
       </PageHeader>
-      <Paper withBorder className="hydro-content-card">
-        <ScrollArea>
-          <Table striped highlightOnHover miw={680}>
+      <Paper withBorder className="hydro-content-card overflow-hidden">
+        <ScrollArea type="auto" scrollbarSize={8}>
+          <Table striped highlightOnHover miw={680} className="hydro-data-table">
             <Table.Thead>
               <Table.Tr>
                 <Table.Th w={44}>

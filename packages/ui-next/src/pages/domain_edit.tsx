@@ -1,7 +1,6 @@
 import { Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconArrowLeft,
   IconAward,
   IconCode,
   IconFlame,
@@ -11,11 +10,9 @@ import {
   IconTrophy,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect } from '@/components/common/select';
 import { SettingsForm } from '@/components/common/settings-form';
-import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { useDomainNavigationPreview } from '@/stores/domain-navigation-preview';
@@ -121,11 +118,10 @@ export function DomainSettingsPage({ visibility = false }: { visibility?: boolea
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t(visibility ? 'Visibility and contests' : 'Domain Settings')}>
-        <Button component={Link} to="domain_dashboard" variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
-          {t('Back')}
-        </Button>
-      </PageHeader>
+      <PageHeader
+        title={t(visibility ? 'Visibility and contests' : 'Domain Settings')}
+        back={{ to: 'domain_dashboard', label: t('Back') }}
+      />
       <SettingsForm
         settings={settings}
         current={current}

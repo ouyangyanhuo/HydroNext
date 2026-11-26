@@ -169,7 +169,7 @@ export default function ManageUserPage() {
       key: '_id',
       title: t('User ID'),
       width: 90,
-      render: (user: ManagedUser) => <Text size="sm" fw={700}>{user._id}</Text>,
+      render: (user: ManagedUser) => <Text size="sm" fw="var(--hydro-weight-semibold)" className="hydro-numeric">{user._id}</Text>,
     },
     {
       key: 'user',
@@ -244,9 +244,12 @@ export default function ManageUserPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('User Management')}>
+      <PageHeader
+        title={t('User Management')}
+        back={{ to: 'manage_dashboard', label: t('System Management') }}
+      >
         <Group gap="xs">
-          <Badge variant="light">{t('Total')}: {totalUsers}</Badge>
+          <Badge variant="light" className="hydro-numeric">{t('Total')}: {totalUsers}</Badge>
           <Button component={Link} to="manage_user_import" size="xs" variant="default" leftSection={<IconUpload size={14} />}>
             {t('Import User')}
           </Button>

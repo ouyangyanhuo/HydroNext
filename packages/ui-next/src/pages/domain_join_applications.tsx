@@ -1,11 +1,9 @@
 import { Card, Group, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
 import { LongSelect } from '@/components/common/select';
-import { Link } from '@/components/link';
 import { usePageData } from '@/context/page-data';
 import { useBuildUrl } from '@/hooks/use-build-url';
 import { useI18n } from '@/hooks/use-i18n';
@@ -78,10 +76,7 @@ export default function DomainJoinApplicationsPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('Join Applications')}>
-        <Button component={Link} href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
-          {t('Back')}
-        </Button>
+      <PageHeader title={t('Join Applications')} back={{ to: 'domain_dashboard', label: t('Back') }}>
         <Button onClick={handleSave} loading={loading} size="xs">{t('Update Settings')}</Button>
       </PageHeader>
 

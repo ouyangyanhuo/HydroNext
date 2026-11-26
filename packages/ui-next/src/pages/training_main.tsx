@@ -71,7 +71,7 @@ function TrainingCard({ tdoc, tsdoc, page, query, category, index }: TrainingCar
       <div className="hydro-training-item__participants">
         <IconUsers size={18} stroke={1.7} aria-hidden="true" />
         <Text fw={850} size="lg">{tdoc.attend || 0}</Text>
-        <Text size="xs" c="dimmed" fw={650}>{t('Enrollees')}</Text>
+        <Text size="xs" c="dimmed" fw="var(--hydro-weight-semibold)">{t('Enrollees')}</Text>
       </div>
 
       <div className="hydro-training-item__content">
@@ -132,8 +132,8 @@ function EnrolledTraining({ tsdoc, tdoc, page, query, category }: { tsdoc: any, 
       className={`hydro-training-enrolled-item${tsdoc.done ? ' hydro-training-enrolled-item--completed' : ''}`}
     >
       <Group justify="space-between" gap="sm" wrap="nowrap">
-        <Text size="sm" fw={700} truncate>{tdoc.title || tsdoc.docId}</Text>
-        <Text size="xs" c="dimmed" fw={750}>{progress}%</Text>
+        <Text size="sm" fw="var(--hydro-weight-semibold)" truncate>{tdoc.title || tsdoc.docId}</Text>
+        <Text size="xs" c="dimmed" fw="var(--hydro-weight-bold)" className="hydro-numeric">{progress}%</Text>
       </Group>
       <Progress value={progress} size="sm" mt={8} color={tsdoc.done ? 'green' : undefined} />
     </Link>
@@ -563,7 +563,7 @@ function TrainingMainContent() {
         title={(
           <Group gap="xs">
             <IconFolder size={19} />
-            <Text fw={750}>{t('Categories')}</Text>
+            <Text fw="var(--hydro-weight-bold)">{t('Categories')}</Text>
             <Badge size="sm" variant="light">{filteredCategories.length}</Badge>
           </Group>
         )}
@@ -669,7 +669,7 @@ function TrainingMainContent() {
         title={(
           <Group gap="xs">
             <IconBook2 size={19} />
-            <Text fw={750}>{t('Enrolled Training Plans')}</Text>
+            <Text fw="var(--hydro-weight-bold)">{t('Enrolled Training Plans')}</Text>
             <Badge size="sm" variant="light">{enrolledTotal}</Badge>
           </Group>
         )}

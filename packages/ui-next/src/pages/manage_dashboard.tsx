@@ -1,4 +1,7 @@
 import { Badge, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import {
+  IconActivity, IconArrowUpRight, IconDatabase, IconFileCode, IconPuzzle, IconSettings, IconShield, IconTerminal2, IconUsers,
+} from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
@@ -8,6 +11,16 @@ import { usePageData } from '@/context/page-data';
 import { useI18n } from '@/hooks/use-i18n';
 import { PRIV, useHasPriv } from '@/hooks/use-permission';
 import { useManageEntries } from '@/registry/manage-entries';
+
+const ENTRY_ICONS: Record<string, typeof IconSettings> = {
+  manage_user: IconUsers,
+  manage_user_priv: IconShield,
+  manage_system_data: IconDatabase,
+  manage_setting: IconSettings,
+  status: IconActivity,
+  manage_script: IconTerminal2,
+  manage_config: IconFileCode,
+};
 
 const entries = [
   { to: 'manage_user', title: 'User Management', desc: 'View users and reset passwords.', group: 'Users' },
@@ -29,33 +42,47 @@ export default function ManageDashboardPage() {
   if (!isSu) {
     return (
       <Stack gap="lg">
-        <PageHeader title={t('System Management')} />
+        <PageHeader title={t('System Management')} icon={<IconSettings size={22} stroke={2} />} />
         <Text c="dimmed">{t('Access Denied')}</Text>
       </Stack>
     );
   }
 
   return (
-    <Stack gap="lg">
-      <PageHeader title={t('System Management')} />
+    <Stack gap="lg" className="hydro-manage-dashboard">
+      <PageHeader title={t('System Management')} icon={<IconSettings size={22} stroke={2} />} />
       <RuntimeStatusCard runtime={args.runtime} />
       <SimpleGrid cols={{ base: 1, md: 2, xl: 3 }} spacing="md">
-        {allEntries.map((entry) => (
-          <Card key={entry.to} withBorder p="lg" className="hydro-card">
-            <Stack gap="sm" className="h-full">
-              <Group justify="space-between" align="flex-start">
-                <Title order={3} size="h4">{t(entry.title)}</Title>
-                <Badge variant="light">{t(entry.group)}</Badge>
-              </Group>
-              <Text size="sm" c="dimmed" className="min-h-10">{t(entry.desc)}</Text>
-              <Group justify="flex-end" mt="auto">
-                <Button component={Link} to={entry.to} size="xs" variant="light">
-                  {t('Open Panel')}
-                </Button>
-              </Group>
-            </Stack>
-          </Card>
-        ))}
+        {allEntries.map((entry) => {
+          const EntryIcon = ENTRY_ICONS[entry.to] || IconPuzzle;
+          return (
+            <Card key={entry.to} withBorder p="lg" className="hydro-card hydro-manage-card">
+              <Stack gap="sm" className="h-full">
+                <Group justify="space-between" align="flex-start" wrap="nowrap">
+                  <Group gap="sm" align="center" wrap="nowrap" className="min-w-0">
+                    <span className="hydro-manage-card__icon" aria-hidden="true">
+                      <EntryIcon size={20} stroke={1.8} />
+                    </span>
+                    <Title order={3} size="h4" className="truncate">{t(entry.title)}</Title>
+                  </Group>
+                  <Badge variant="light" className="shrink-0">{t(entry.group)}</Badge>
+                </Group>
+                <Text size="sm" c="dimmed" className="min-h-10 leading-relaxed">{t(entry.desc)}</Text>
+                <Group justify="flex-end" mt="auto">
+                  <Button
+                    component={Link}
+                    to={entry.to}
+                    size="xs"
+                    variant="light"
+                    rightSection={<IconArrowUpRight size={14} />}
+                  >
+                    {t('Open Panel')}
+                  </Button>
+                </Group>
+              </Stack>
+            </Card>
+          );
+        })}
       </SimpleGrid>
     </Stack>
   );

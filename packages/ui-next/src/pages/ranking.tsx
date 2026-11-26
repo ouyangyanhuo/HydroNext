@@ -6,6 +6,7 @@ import {
 } from '@tabler/icons-react';
 import { useDeferredValue, useState } from 'react';
 import { ActionIcon, Button } from '@/components/common/button';
+import { PageHeader } from '@/components/common/page-header';
 import { Paginator } from '@/components/common/paginator';
 import { Link } from '@/components/link';
 import { UserAvatar } from '@/components/user/user-avatar';
@@ -88,14 +89,7 @@ export default function RankingPage() {
 
   return (
     <Stack gap="xl" className="ranking-page">
-      <header className="ranking-page-header">
-        <Group gap="md" align="center" wrap="nowrap">
-          <span className="ranking-page-icon" aria-hidden="true"><IconChartBar size={22} stroke={2} /></span>
-          <div className="min-w-0">
-            <Title order={1} className="ranking-page-title">{t('Ranking')}</Title>
-            <div className="hydro-page-title__accent" aria-hidden="true" />
-          </div>
-        </Group>
+      <PageHeader title={t('Ranking')} icon={<IconChartBar size={22} stroke={2} />}>
         <div className="ranking-switch" role="group" aria-label={t('Ranking type')}>
           <Button
             component={Link}
@@ -116,7 +110,7 @@ export default function RankingPage() {
             {t('Solved Ranking')}
           </Button>
         </div>
-      </header>
+      </PageHeader>
 
       {podium.some(Boolean) && (
         <section className="ranking-podium" aria-label={t('Top three')}>

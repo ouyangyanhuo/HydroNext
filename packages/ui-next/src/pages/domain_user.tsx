@@ -1,6 +1,6 @@
 import { Badge, Checkbox, Group, Loader, Modal, Paper, ScrollArea, Stack, Table, Text, TextInput, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft, IconPencil } from '@tabler/icons-react';
+import { IconPencil } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { ActionIcon, Button, ButtonBase } from '@/components/common/button';
 import { FormDialog } from '@/components/common/form-dialog';
@@ -335,15 +335,12 @@ export default function DomainUserPage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('Domain Users')}>
-        <Button component={Link} href={`/d/${domainId}/domain/dashboard`} variant="subtle" size="xs" leftSection={<IconArrowLeft size={14} />}>
-          {t('Back')}
-        </Button>
+      <PageHeader title={t('Domain Users')} back={{ to: 'domain_dashboard', label: t('Back') }}>
         <Button size="xs" onClick={() => setDialogOpen(true)}>{t('Add User')}</Button>
       </PageHeader>
-      <Paper withBorder className="hydro-content-card">
-        <ScrollArea>
-          <Table striped highlightOnHover miw={760}>
+      <Paper withBorder className="hydro-content-card overflow-hidden">
+        <ScrollArea type="auto" scrollbarSize={8}>
+          <Table striped highlightOnHover miw={760} className="hydro-data-table">
             <Table.Thead>
               <Table.Tr>
                 <Table.Th w={44}>
@@ -373,7 +370,7 @@ export default function DomainUserPage() {
                         onChange={(e) => toggle(user._id, e.currentTarget.checked)}
                       />
                     </Table.Td>
-                    <Table.Td><Text size="sm">{user._id}</Text></Table.Td>
+                    <Table.Td><Text size="sm" className="hydro-numeric">{user._id}</Text></Table.Td>
                     <Table.Td>
                       <Group gap="xs">
                         <UserAvatar user={user} size="xs" />

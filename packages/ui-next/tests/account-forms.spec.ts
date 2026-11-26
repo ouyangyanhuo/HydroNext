@@ -106,7 +106,15 @@ async function fixture(page: string, ui: any = {}, response: any = {}, args: any
         '@/components/contest/contest-timer': { ContestTimer: () => null },
         '@/components/contest/team-identity': { TeamIdentity: () => null },
         '@/components/record/record-status-badge': { RecordStatusBadge: () => null },
-        '@/components/common/page-header': { PageHeader: ({ children }: any) => h('header', null, children) },
+        '@/components/common/page-header': {
+            PageHeader: ({ back, children }: any) => h('header', null,
+                back ? h('a', { href: back.href ?? `/${back.to}` }, back.label || 'Back') : null,
+                children),
+        },
+        '@/components/feedback/error-banner': {
+            ErrorBanner: ({ message }: any) => (message ? h('div', { role: 'alert' }, message) : null),
+            SuccessBanner: ({ message }: any) => (message ? h('div', { role: 'status' }, message) : null),
+        },
         '@/components/common/confirm-dialog': { ConfirmDialog: ({ opened, title, message, onConfirm, loading }: any) => opened
             ? h('section', { 'data-confirm-dialog': true }, title, message,
                 h('button', { 'data-confirm': true, disabled: loading, onClick: onConfirm }, 'Confirm')) : null },

@@ -2,6 +2,7 @@ import { Card, Group, List, Stack, Text, Textarea, TextInput } from '@mantine/co
 import { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { PageHeader } from '@/components/common/page-header';
+import { ErrorBanner } from '@/components/feedback/error-banner';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatErrorMessage } from '@/utils/error';
 
@@ -31,8 +32,8 @@ export default function DomainCreatePage() {
 
   return (
     <Stack gap="lg">
-      <PageHeader title={t('Create Domain')} />
-      {error && <Text c="red" size="sm">{error}</Text>}
+      <PageHeader title={t('Create Domain')} back={{ to: 'home_domain', label: t('My Domains') }} />
+      <ErrorBanner message={error} onClose={() => setError('')} />
       <Card withBorder p="lg" className="hydro-content-card">
         <Stack gap="md">
           <Card withBorder p="md" bg="var(--hydro-surface-muted)">
